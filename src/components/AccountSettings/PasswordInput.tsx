@@ -29,7 +29,7 @@ export function PasswordInput({
     <div>
       <Label
         htmlFor={id}
-        className="text-sm font-medium text-gray-700 dark:text-gray-300"
+        className="text-sm font-medium !text-gray-700 dark:!text-white"
       >
         {label}
       </Label>
@@ -45,7 +45,7 @@ export function PasswordInput({
             error
               ? "border-red-500 focus:ring-red-500"
               : "border-input focus:ring-purple-500 focus:border-purple-500"
-          } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 bg-white dark:bg-input/30 focus:outline-none focus:ring-1 transition-all`}
+          } placeholder-gray-500 dark:placeholder-gray-400 !text-gray-900 dark:!text-white bg-white dark:bg-input/30 focus:outline-none focus:ring-1 transition-all`}
         />
         <Button
           type="button"

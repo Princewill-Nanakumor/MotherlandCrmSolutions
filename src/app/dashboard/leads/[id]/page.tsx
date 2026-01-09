@@ -218,7 +218,7 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
   if (error) {
     console.log("❌ LEAD DETAIL PAGE ERROR:", error);
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background dark:bg-gray-900">
+      <div className="flex items-center justify-center min-h-screen bg-background dark:bg-gray-800">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             Error Loading Lead
@@ -236,7 +236,7 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
   // Lead not found
   if (!lead) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background dark:bg-gray-900">
+      <div className="flex items-center justify-center min-h-screen bg-background dark:bg-gray-800">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             Lead Not Found

@@ -213,7 +213,7 @@ const LeadDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   // Error state
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background dark:bg-gray-900">
+      <div className="flex items-center justify-center min-h-screen bg-background dark:bg-gray-800">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             Error Loading Lead
@@ -231,7 +231,7 @@ const LeadDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   // Lead not found
   if (!lead) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background dark:bg-gray-900">
+      <div className="flex items-center justify-center min-h-screen bg-background dark:bg-gray-800">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             Lead Not Found

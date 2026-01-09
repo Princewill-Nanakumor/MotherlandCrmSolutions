@@ -368,7 +368,7 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
           <div className="flex items-center space-x-3">
             <Upload className="w-8 h-8" />
             <div>
-              <h1 className="text-2xl font-bold">Import Guide</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Import Guide</h1>
               <p className="text-purple-100 mt-1">
                 Learn how to bulk import data using CSV files
               </p>

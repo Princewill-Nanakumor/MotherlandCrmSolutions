@@ -131,14 +131,14 @@ export default function SubscriptionPlans({
               )}
 
               <CardHeader className="text-center pb-4">
-                <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
+                <CardTitle className="text-xl font-bold !text-gray-900 dark:!text-white">
                   {plan.name}
                 </CardTitle>
                 <div className="flex items-baseline justify-center space-x-1">
-                  <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                  <span className="text-3xl font-bold !text-gray-900 dark:!text-white">
                     {formatCurrency(plan.price)}
                   </span>
-                  <span className="text-gray-600 dark:text-gray-400">
+                  <span className="!text-gray-600 dark:!text-gray-400">
                     /{plan.billingCycle}
                   </span>
                 </div>
@@ -149,7 +149,7 @@ export default function SubscriptionPlans({
                   {plan.features.map((feature, index) => (
                     <div key={index} className="flex items-center space-x-2">
                       <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                      <span className="text-sm !text-gray-700 dark:!text-gray-300">
                         {feature}
                       </span>
                     </div>
@@ -161,14 +161,14 @@ export default function SubscriptionPlans({
                     {isActiveCurrentPlan ? (
                       <Button
                         disabled
-                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        className="w-full bg-green-600 hover:bg-green-700 !text-white"
                       >
                         Current Plan
                       </Button>
                     ) : isExpiredCurrentPlan ? (
                       <Button
                         onClick={() => onSubscribe(plan)}
-                        className="w-full bg-red-600 hover:bg-red-700 text-white"
+                        className="w-full bg-red-600 hover:bg-red-700 !text-white"
                       >
                         Renew Subscription
                       </Button>
@@ -178,12 +178,12 @@ export default function SubscriptionPlans({
                           onClick={() =>
                             (window.location.href = "/dashboard/billing")
                           }
-                          className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+                          className="w-full bg-amber-600 hover:bg-amber-700 !text-white"
                         >
                           <CreditCard className="h-4 w-4 mr-2" />
                           Add Funds First
                         </Button>
-                        <p className="text-xs text-amber-600 dark:text-amber-400">
+                        <p className="text-xs !text-amber-600 dark:!text-amber-400">
                           Need {formatCurrency(plan.price)} to subscribe
                         </p>
                       </div>
@@ -191,11 +191,11 @@ export default function SubscriptionPlans({
                       <div className="space-y-2">
                         <Button
                           disabled
-                          className="w-full bg-gray-400 text-white cursor-not-allowed"
+                          className="w-full bg-gray-400 !text-white cursor-not-allowed"
                         >
                           Insufficient Balance
                         </Button>
-                        <p className="text-xs text-red-600 dark:text-red-400">
+                        <p className="text-xs !text-red-600 dark:!text-red-400">
                           Need {formatCurrency(plan.price - balance)}
                         </p>
                       </div>
@@ -203,18 +203,18 @@ export default function SubscriptionPlans({
                       <div className="space-y-2">
                         <Button
                           disabled
-                          className="w-full bg-orange-500 text-white cursor-not-allowed"
+                          className="w-full bg-orange-500 !text-white cursor-not-allowed"
                         >
                           Downgrade Not Allowed
                         </Button>
-                        <p className="text-xs text-orange-600 dark:text-orange-400">
+                        <p className="text-xs !text-orange-600 dark:!text-orange-400">
                           Current usage exceeds this plan&apos;s limits
                         </p>
                       </div>
                     ) : (
                       <Button
                         onClick={() => onSubscribe(plan)}
-                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 !text-white"
                       >
                         Subscribe Now
                       </Button>

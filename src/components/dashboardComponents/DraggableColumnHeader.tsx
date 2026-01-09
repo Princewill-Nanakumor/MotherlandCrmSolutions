@@ -74,7 +74,7 @@ export function DraggableColumnHeader({
         className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded absolute left-1 top-1/2 -translate-y-1/2 z-10"
         aria-label="Drag to reorder column"
       >
-        <GripVertical className="w-4 h-4 text-gray-400" />
+        <GripVertical className="w-4 h-4 text-gray-400 dark:text-gray-500" />
       </button>
       <div
         className={`w-full ${paddingClass} flex items-center ${isCenterAligned ? "justify-center" : "justify-start"}`}

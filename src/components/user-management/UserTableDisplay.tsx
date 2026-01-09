@@ -117,12 +117,12 @@ export function UserTableDisplay({
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="h-4 w-4" />;
+      return <ArrowUpDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />;
     }
     return sortDirection === "asc" ? (
-      <ArrowUp className="h-4 w-4" />
+      <ArrowUp className="h-4 w-4 text-gray-600 dark:text-gray-400" />
     ) : (
-      <ArrowDown className="h-4 w-4" />
+      <ArrowDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
     );
   };
 
@@ -168,7 +168,7 @@ export function UserTableDisplay({
         <TableHeader>
           <TableRow className="border-b border-gray-200 dark:border-gray-700">
             <TableHead
-              className="text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="!text-gray-700 dark:!text-gray-300 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
               onClick={() => handleSort("name")}
             >
               <div className="flex items-center gap-2">
@@ -176,17 +176,17 @@ export function UserTableDisplay({
                 {getSortIcon("name")}
               </div>
             </TableHead>
-            <TableHead className="text-gray-700 dark:text-gray-300">
+            <TableHead className="!text-gray-700 dark:!text-gray-300">
               Email
             </TableHead>
-            <TableHead className="text-gray-700 dark:text-gray-300">
+            <TableHead className="!text-gray-700 dark:!text-gray-300">
               Role
             </TableHead>
-            <TableHead className="text-gray-700 dark:text-gray-300">
+            <TableHead className="!text-gray-700 dark:!text-gray-300">
               Status
             </TableHead>
             <TableHead
-              className="text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="!text-gray-700 dark:!text-gray-300 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
               onClick={() => handleSort("createdAt")}
             >
               <div className="flex items-center gap-2">
@@ -195,7 +195,7 @@ export function UserTableDisplay({
               </div>
             </TableHead>
             <TableHead
-              className="text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="!text-gray-700 dark:!text-gray-300 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
               onClick={() => handleSort("lastLogin")}
             >
               <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export function UserTableDisplay({
               </div>
             </TableHead>
             {showActions && (
-              <TableHead className="text-gray-700 dark:text-gray-300">
+              <TableHead className="!text-gray-700 dark:!text-gray-300">
                 Actions
               </TableHead>
             )}

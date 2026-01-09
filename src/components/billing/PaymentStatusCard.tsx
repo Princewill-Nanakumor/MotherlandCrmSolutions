@@ -44,7 +44,7 @@ export default function PaymentStatusCard({
       {/* Status Indicator */}
       <Card className="backdrop-blur-lg bg-white/70 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl">
         <CardHeader>
-          <CardTitle className="text-gray-900 dark:text-white">
+          <CardTitle className="!text-gray-900 dark:!text-white">
             Status
           </CardTitle>
         </CardHeader>
@@ -57,13 +57,13 @@ export default function PaymentStatusCard({
             ) : (
               <AlertCircle className="h-5 w-5 text-red-600" />
             )}
-            <span className="text-sm font-medium text-gray-900 dark:text-white">
+            <span className="text-sm font-medium !text-gray-900 dark:!text-white">
               {payment.status}
             </span>
           </div>
 
           {payment.status === "PENDING" && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <p className="text-xs !text-gray-500 dark:!text-white mt-2">
               Waiting for confirmation
             </p>
           )}
@@ -85,7 +85,7 @@ export default function PaymentStatusCard({
       {/* Quick Actions */}
       <Card className="backdrop-blur-lg bg-white/70 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl">
         <CardHeader>
-          <CardTitle className="text-gray-900 dark:text-white">
+          <CardTitle className="!text-gray-900 dark:!text-white">
             Quick Actions
           </CardTitle>
         </CardHeader>

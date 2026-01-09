@@ -261,7 +261,7 @@ const UserCreationHelp: React.FC = () => {
           <div className="flex items-center space-x-3">
             <Users className="w-8 h-8" />
             <div>
-              <h1 className="text-2xl font-bold">User Creation & Management</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">User Creation & Management</h1>
               <p className="text-green-100 mt-1">
                 Learn how to create and manage team members in your CRM
               </p>

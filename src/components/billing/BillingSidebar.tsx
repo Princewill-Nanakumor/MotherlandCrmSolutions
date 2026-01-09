@@ -38,7 +38,7 @@ export default function BillingSidebar({
       {/* Account Balance */}
       <div className="dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl p-6 shadow-lg dark:border dark:border-white/10 bg-white border border-gray-200 hover:shadow-xl transition-all duration-300">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold dark:text-white text-gray-900">
+          <h3 className="text-lg font-semibold dark:!text-white !text-gray-900">
             Account Balance
           </h3>
           <CircleDollarSign className="h-5 w-5 dark:text-gray-400 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer transition-colors duration-200" />
@@ -63,16 +63,16 @@ export default function BillingSidebar({
         ) : (
           <div className="space-y-4">
             <div className="flex justify-between items-center p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
-              <span className="dark:text-gray-300 text-gray-600 font-medium">
+              <span className="!text-gray-600 dark:!text-white font-medium">
                 Balance
               </span>
-              <span className="font-semibold dark:text-white text-gray-900">
+              <span className="font-semibold !text-gray-900 dark:!text-white">
                 {formatCurrency(balance)}
               </span>
             </div>
 
             <div className="flex justify-between items-center p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
-              <span className="dark:text-gray-300 text-gray-600 font-medium">
+              <span className="!text-gray-600 dark:!text-white font-medium">
                 Pending
               </span>
               <span className="font-semibold text-yellow-600 dark:text-yellow-400">

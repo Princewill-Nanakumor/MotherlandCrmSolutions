@@ -13,7 +13,6 @@
     "Segoe UI",
     sans-serif;
   color: #0f172a;
-  background-color: #f8fafc;
 }
 
 body {
@@ -26,40 +25,25 @@ body {
     "Segoe UI",
     sans-serif;
   color: #0f172a;
-  background-color: #f8fafc;
 }
 
 .dark body {
   color: #e2e8f0;
-  background-color: #0b1220;
+  background-color: #1f2937; /* gray-800 */
 }
 
-/* Allow login/home pages to force transparent backgrounds for background image */
-html[data-homepage="true"],
-html[data-homepage="true"] body,
-body[data-homepage="true"] {
-  background: transparent !important;
-  background-color: transparent !important;
-}
-
-/* Ensure direct children on login/home remain transparent for bg image */
-body[data-homepage="true"] > * {
-  background-color: transparent !important;
-}
-
-/* Prevent nested wrappers from painting over the background */
-body[data-homepage="true"] * {
-  background-color: transparent !important;
-}
+/* Login page backgrounds are handled via inline styles in the component to avoid hydration errors */
 
 h1,
 h2,
 h3,
 h4,
-h5 {
+h5,
+h6 {
   font-family: var(--font-space-grotesk), "Inter", system-ui, sans-serif;
   font-weight: 700;
   letter-spacing: -0.01em;
+  /* Default text color for light mode - dark text */
   color: #0f172a;
 }
 
@@ -67,10 +51,207 @@ h5 {
 .dark h2,
 .dark h3,
 .dark h4,
-.dark h5 {
+.dark h5,
+.dark h6 {
+  /* Default text color for dark mode - light text */
   color: #f8fafc;
 }
 
+/* Ensure headings with Tailwind text color classes override defaults */
+/* Exclude headings with Tailwind text color classes from default color rule */
+h1:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+h2:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+h3:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+h4:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+h5:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+h6:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]) {
+  color: #0f172a;
+}
+
+.dark
+  h1:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+.dark
+  h2:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+.dark
+  h3:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+.dark
+  h4:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+.dark
+  h5:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+.dark
+  h6:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]) {
+  color: #f8fafc;
+}
+
+/* Apply font-family and font-weight to all p, span, a, li, label */
 p,
 a,
 li,
@@ -78,19 +259,259 @@ label,
 span {
   font-family: var(--font-space-grotesk), "Inter", system-ui, sans-serif;
   font-weight: 500;
-  color: #1f2937;
+  /* Color is applied only to elements without Tailwind text color classes (see rules below) */
 }
 
-.dark p,
-.dark a,
-.dark li,
-.dark label,
-.dark span {
+/* Ensure Tailwind text color classes override global colors */
+/* Use :not() to exclude elements with Tailwind text color classes from global color rule */
+/* This allows Tailwind classes to apply their colors naturally */
+p:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+span:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+a:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+li:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+label:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]) {
+  color: #000000;
+}
+
+.dark
+  p:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+.dark
+  span:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+.dark
+  a:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+.dark
+  li:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]),
+.dark
+  label:not([class*="text-gray"]):not([class*="text-blue"]):not(
+    [class*="text-green"]
+  ):not([class*="text-yellow"]):not([class*="text-orange"]):not(
+    [class*="text-red"]
+  ):not([class*="text-white"]):not([class*="text-indigo"]):not(
+    [class*="text-purple"]
+  ):not([class*="text-pink"]):not([class*="text-cyan"]):not(
+    [class*="text-teal"]
+  ):not([class*="text-emerald"]):not([class*="text-lime"]):not(
+    [class*="text-amber"]
+  ):not([class*="text-violet"]):not([class*="text-fuchsia"]):not(
+    [class*="text-rose"]
+  ):not([class*="text-slate"]):not([class*="text-zinc"]):not(
+    [class*="text-neutral"]
+  ):not([class*="text-stone"]):not([class*="text-black"]) {
   color: #e2e8f0;
+}
+
+/* Ensure Tailwind text color classes work properly - especially for filter controls */
+/* Force Tailwind classes to apply their colors with higher specificity */
+/* Light mode - ensure gray classes show dark text */
+span.text-gray-900:not(.dark),
+span[class*="text-gray-900"]:not(.dark),
+.text-gray-900:not(.dark),
+html:not(.dark) span.text-gray-900,
+html:not(.dark) span[class*="text-gray-900"],
+html:not(.dark) .text-gray-900 {
+  color: rgb(17 24 39) !important; /* gray-900 - dark text */
+}
+
+span.text-gray-500:not(.dark),
+span[class*="text-gray-500"]:not(.dark),
+.text-gray-500:not(.dark),
+html:not(.dark) span.text-gray-500,
+html:not(.dark) span[class*="text-gray-500"],
+html:not(.dark) .text-gray-500 {
+  color: rgb(107 114 128) !important; /* gray-500 - medium gray text */
+}
+
+span.text-gray-700:not(.dark),
+span[class*="text-gray-700"]:not(.dark),
+.text-gray-700:not(.dark),
+html:not(.dark) span.text-gray-700,
+html:not(.dark) span[class*="text-gray-700"],
+html:not(.dark) .text-gray-700 {
+  color: rgb(55 65 81) !important; /* gray-700 - darker gray text */
+}
+
+/* Dark mode - ensure white text shows */
+.dark span.text-white,
+.dark span[class*="text-white"],
+.dark .text-white,
+html.dark span.text-white,
+html.dark span[class*="text-white"],
+html.dark .text-white {
+  color: rgb(255 255 255) !important;
+}
+
+/* In light mode, override any dark:text-white classes to use gray-900 instead */
+html:not(.dark) span[class*="dark:text-white"],
+html:not(.dark) span.dark\:text-white {
+  color: rgb(3, 50, 152) !important; /* Use gray-900 in light mode */
 }
 
 a {
   text-decoration: none;
+}
+
+/* Fix select option text colors for dark mode */
+select option {
+  background-color: white;
+  color: #111827; /* gray-900 */
+}
+
+.dark select option {
+  background-color: #1f2937; /* gray-800 */
+  color: #f9fafb; /* white/light */
+}
+
+/* Ensure select elements have proper text colors */
+select {
+  color: #111827 !important; /* gray-900 */
+}
+
+.dark select {
+  color: #f9fafb !important; /* white */
+}
+
+/* Fix SelectItem text colors */
+[data-slot="select-item"] {
+  color: #111827 !important; /* gray-900 */
+}
+
+.dark [data-slot="select-item"] {
+  color: #f9fafb !important; /* white */
+}
+
+/* Fix SelectValue text colors */
+[data-slot="select-value"] {
+  color: #111827 !important; /* gray-900 */
+}
+
+.dark [data-slot="select-value"] {
+  color: #f9fafb !important; /* white */
 }
 
 /* Disable underline on hover for all links */
@@ -117,6 +538,89 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 /* Dark mode styling for time picker indicator */
 .dark input[type="time"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
+}
+
+/* Ensure input elements have proper text colors */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"],
+textarea {
+  color: #111827 !important; /* gray-900 - dark text for light mode */
+}
+
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark input[type="tel"],
+.dark input[type="url"],
+.dark input[type="search"],
+.dark input[type="date"],
+.dark input[type="datetime-local"],
+.dark input[type="month"],
+.dark input[type="week"],
+.dark textarea {
+  color: #f9fafb !important; /* white/light text for dark mode */
+}
+
+/* Ensure input placeholder colors are visible */
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280 !important; /* gray-500 */
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #9ca3af !important; /* gray-400 */
+}
+
+/* Ensure data-slot="input" elements have proper text colors */
+[data-slot="input"] {
+  color: #111827 !important; /* gray-900 */
+}
+
+.dark [data-slot="input"] {
+  color: #f9fafb !important; /* white */
+}
+
+/* Ensure read-only input elements have proper text colors */
+input[readonly],
+input[readOnly] {
+  color: #111827 !important; /* gray-900 */
+}
+
+.dark input[readonly],
+.dark input[readOnly] {
+  color: #f9fafb !important; /* white */
+}
+
+/* Ensure react-phone-number-input library inputs have proper text colors */
+.PhoneInput input,
+.PhoneInputInput {
+  color: #111827 !important; /* gray-900 */
+}
+
+.dark .PhoneInput input,
+.dark .PhoneInputInput {
+  color: #f9fafb !important; /* white */
+}
+
+/* Ensure react-phone-input-2 library inputs have proper text colors */
+.react-tel-input input {
+  color: #111827 !important; /* gray-900 */
+}
+
+.dark .react-tel-input input,
+.phone-input-container.dark .react-tel-input input {
+  color: #f9fafb !important; /* white */
 }
 
 /* Add to your global CSS file */
@@ -315,6 +819,11 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   outline: none !important;
   box-shadow: none !important;
   background: transparent !important;
+  color: #111827 !important; /* gray-900 */
+}
+
+.dark .PhoneInputInput {
+  color: #f9fafb !important; /* white */
 }
 
 /* Override PhoneInput focus styles */
@@ -441,7 +950,7 @@ button,
 }
 
 .dark {
-  --background: #1f2937;
+  --background: #1f2937; /* gray-800 */
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -478,18 +987,20 @@ button,
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    background-color: #ffffff; /* white for light mode */
+  }
+  .dark html {
+    background-color: #1f2937 !important; /* gray-800 for dark mode */
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    /* Use background variable for consistent theming */
+    background-color: var(--background);
   }
-  /* Allow homepage to override body background - More specific selectors */
-  html[data-homepage="true"] body,
-  body[data-homepage="true"] {
-    background: transparent !important;
-    background-color: transparent !important;
-  }
-  html[data-homepage="true"] {
-    background: transparent !important;
-    background-color: transparent !important;
+  /* Override dark mode body background */
+  .dark body {
+    background-color: var(--background) !important; /* gray-800: #1f2937 */
   }
 }
 
@@ -582,4 +1093,75 @@ aside nav a span.text-indigo-700 {
 /* Active indicator bar - ensure indigo-600 color matches gradient start */
 aside nav a span[aria-hidden="true"].bg-indigo-600 {
   background-color: rgb(79 70 229) !important; /* indigo-600 */
+}
+
+/* Override global text color rules for form error messages and button text */
+/* Allow Tailwind text color classes to work on error messages - use higher specificity */
+p.text-red-500,
+p.text-red-600,
+span.text-red-500,
+span.text-red-600,
+p[class*="text-red"],
+span[class*="text-red"] {
+  color: rgb(239 68 68) !important; /* red-500 */
+}
+
+.dark p.text-red-500,
+.dark p.text-red-600,
+.dark span.text-red-500,
+.dark span.text-red-600,
+.dark p[class*="text-red"],
+.dark span[class*="text-red"] {
+  color: rgb(239 68 68) !important; /* red-500 */
+}
+
+/* Allow Tailwind text-white class to work on button text - use higher specificity */
+button span.text-white,
+button.text-white span,
+button span[class*="text-white"],
+[role="button"] span.text-white,
+[role="button"] span[class*="text-white"],
+button[class*="text-white"] span {
+  color: white !important;
+}
+
+.dark button span.text-white,
+.dark button.text-white span,
+.dark button span[class*="text-white"],
+.dark [role="button"] span.text-white,
+.dark [role="button"] span[class*="text-white"],
+.dark button[class*="text-white"] span {
+  color: white !important;
+}
+
+/* Ensure card title elements have proper text colors */
+[data-slot="card-title"] {
+  color: #111827 !important; /* gray-900 */
+}
+
+.dark [data-slot="card-title"] {
+  color: #f9fafb !important; /* white */
+}
+
+/* Override global text color for login page elements */
+h2[class*="text-white"],
+h2[class*="!text-white"],
+p[class*="text-white"],
+p[class*="!text-white"],
+span[class*="text-white"],
+span[class*="!text-white"],
+a[class*="text-white"],
+a[class*="!text-white"] {
+  color: white !important;
+}
+
+.dark h2[class*="text-white"],
+.dark h2[class*="!text-white"],
+.dark p[class*="text-white"],
+.dark p[class*="!text-white"],
+.dark span[class*="text-white"],
+.dark span[class*="!text-white"],
+.dark a[class*="text-white"],
+.dark a[class*="!text-white"] {
+  color: white !important;
 }

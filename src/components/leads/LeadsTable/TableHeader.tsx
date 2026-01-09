@@ -26,7 +26,7 @@ export function TableHeader({
   return (
     <div className="flex justify-between items-center mb-4 my-3">
       <div className="flex items-center space-x-2">
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label className="text-sm font-medium !text-gray-700 dark:!text-white">
           Show
         </label>
         {/* Replaced Radix UI Select with simple HTML select */}
@@ -43,12 +43,12 @@ export function TableHeader({
             </option>
           ))}
         </select>
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <span className="text-sm font-medium !text-gray-700 dark:!text-white">
           entries
         </span>
         <ColumnVisibilityToggle table={table} tableId={tableId} />
       </div>
-      <div className="text-sm text-gray-700 dark:text-gray-300">
+      <div className="text-sm !text-gray-700 dark:!text-white">
         Showing {currentPageStart} to {currentPageEnd} of {totalRows} entries
       </div>
     </div>

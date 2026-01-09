@@ -11,7 +11,6 @@ import {
   AlertCircle,
   Check,
   X,
-  ExternalLink,
   Wallet,
 } from "lucide-react";
 
@@ -331,22 +330,6 @@ export default function PaymentDetails({ payments }: PaymentDetailsProps) {
                           {payment.network}
                         </Badge>
                       )}
-                    </div>
-                    <div className="mt-2">
-                      <a
-                        href={
-                          payment.network === "TRC20"
-                            ? `https://tronscan.org/#/address/${payment.walletAddress}`
-                            : `https://etherscan.io/address/${payment.walletAddress}`
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center text-xs text-purple-600 dark:text-purple-400 hover:underline"
-                      >
-                        View on{" "}
-                        {payment.network === "TRC20" ? "Tronscan" : "Etherscan"}{" "}
-                        <ExternalLink className="ml-1 h-3 w-3" />
-                      </a>
                     </div>
                   </div>
                 )}

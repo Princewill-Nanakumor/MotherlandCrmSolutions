@@ -71,7 +71,7 @@ export default function RecentTransactions({
 
   return (
     <div className="dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl p-6 shadow-lg dark:border dark:border-white/10 bg-white border border-gray-200">
-      <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-4">
+      <h3 className="text-lg font-semibold dark:!text-white !text-gray-900 mb-4">
         Recent Transactions
       </h3>
 
@@ -89,10 +89,10 @@ export default function RecentTransactions({
           ) : transactions.length === 0 ? (
             <div className="text-center py-8">
               <Wallet className="h-12 w-12 mx-auto dark:text-gray-400 text-gray-300 mb-3" />
-              <p className="dark:text-gray-400 text-gray-500 text-sm">
+              <p className="!text-gray-500 dark:!text-white text-sm">
                 No transactions yet
               </p>
-              <p className="dark:text-gray-400 text-gray-500 text-xs">
+              <p className="!text-gray-500 dark:!text-white text-xs">
                 Your deposit history will appear here
               </p>
             </div>
@@ -109,7 +109,7 @@ export default function RecentTransactions({
               >
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium dark:text-white text-gray-900">
+                    <span className="text-sm font-medium dark:!text-white !text-gray-900">
                       {transaction.type}
                     </span>
                     <span
@@ -119,10 +119,10 @@ export default function RecentTransactions({
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs dark:text-gray-400 text-gray-500">
+                    <span className="text-xs !text-gray-500 dark:!text-white">
                       {formatDate(transaction.date)}
                     </span>
-                    <span className="text-sm font-semibold dark:text-white text-gray-900">
+                    <span className="text-sm font-semibold dark:!text-white !text-gray-900">
                       {formatCurrency(transaction.amount)}
                     </span>
                   </div>

@@ -12,7 +12,7 @@ export const RequiredFieldsModal = ({
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white/95 dark:bg-gray-800 backdrop-blur-md p-6 rounded-lg max-w-lg w-full mx-4 shadow-2xl border border-gray-200/50 dark:border-gray-700/50">
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+        <h3 className="text-lg font-semibold mb-4 !text-gray-900 dark:!text-white">
           Required Column Headers
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">

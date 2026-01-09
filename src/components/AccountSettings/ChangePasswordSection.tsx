@@ -52,10 +52,10 @@ export function ChangePasswordSection({
           <Key className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-xl font-semibold !text-gray-900 dark:!text-white">
             Change Password
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:!text-white">
             Update your account password
           </p>
         </div>

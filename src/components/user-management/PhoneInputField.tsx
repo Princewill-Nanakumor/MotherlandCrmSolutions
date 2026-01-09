@@ -35,7 +35,7 @@ export const PhoneInputField: React.FC<PhoneInputFieldProps> = ({
                 : "border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
             }
             bg-white dark:bg-gray-700 
-            text-gray-900 dark:text-white
+            !text-gray-900 dark:!text-white
             focus-within:outline-none focus-within:ring-2 focus-within:border-transparent
           `}
         >

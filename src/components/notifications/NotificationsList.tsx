@@ -144,10 +144,10 @@ export default function NotificationsList({
       <Card className="bg-gray-50 dark:bg-gray-800 border">
         <CardContent className="p-8 text-center">
           <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+          <h3 className="text-lg font-medium !text-gray-900 dark:!text-white mb-2">
             No notifications
           </h3>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="!text-gray-500 dark:!text-white">
             You don&apos;t have any notifications yet.
           </p>
         </CardContent>
@@ -183,15 +183,15 @@ export default function NotificationsList({
                       </Badge>
                     )}
                   </div>
-                  <p className="text-gray-900 dark:text-white mb-2">
+                  <p className="!text-gray-900 dark:!text-white mb-2">
                     {notification.message}
                   </p>
                   {notification.amount && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <p className="text-sm !text-gray-600 dark:!text-white mb-2">
                       Amount: {notification.amount} {notification.currency}
                     </p>
                   )}
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs !text-gray-500 dark:!text-white">
                     {new Date(notification.createdAt).toLocaleString()}
                   </p>
                 </div>

@@ -13,7 +13,7 @@ export default function AdsManager() {
         <h2 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white text-center">
           Ads Manager
         </h2>
-        <p className="text-lg text-gray-700 dark:text-gray-300 mb-2 text-center">
+        <p className="text-lg !text-gray-700 dark:!text-white mb-2 text-center">
           This feature is coming soon!
         </p>
         <span className="inline-block px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-semibold text-sm">

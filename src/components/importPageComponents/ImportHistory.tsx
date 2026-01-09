@@ -40,7 +40,7 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
             ].map((heading) => (
               <th
                 key={heading}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-xs font-medium !text-gray-500 dark:!text-gray-300 uppercase tracking-wider"
               >
                 {heading}
               </th>
@@ -53,22 +53,22 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
               const dateTime = formatDateTime(importItem.timestamp);
               return (
                 <tr key={getItemId(importItem)}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm !text-gray-900 dark:!text-gray-100">
                     Manual Import
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm !text-gray-900 dark:!text-gray-100">
                     {importItem.fileName || "Unnamed File"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm !text-gray-900 dark:!text-gray-100">
                     Admin
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm !text-gray-500 dark:!text-gray-300">
                     <div>{dateTime.relative}</div>
-                    <div className="text-xs text-gray-400 dark:text-gray-500">
+                    <div className="text-xs !text-gray-400 dark:!text-gray-500">
                       {dateTime.exact}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm !text-gray-900 dark:!text-gray-100">
                     {importItem.recordCount}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -85,7 +85,7 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
                         importItem.status.slice(1)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm !text-gray-900 dark:!text-gray-100">
                     {importItem.successCount}/{importItem.failureCount}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -103,7 +103,7 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
             <tr key="no-data">
               <td
                 colSpan={8}
-                className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-center"
+                className="px-6 py-4 whitespace-nowrap text-sm !text-gray-500 dark:!text-gray-400 text-center"
               >
                 No import history available
               </td>

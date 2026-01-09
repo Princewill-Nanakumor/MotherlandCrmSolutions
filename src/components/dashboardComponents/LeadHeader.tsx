@@ -32,20 +32,20 @@ interface LeadsHeaderProps {
 // Loading skeleton components
 const CountSkeleton = () => (
   <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-    <div className="h-3 w-12 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
+    <div className="w-12 h-3 bg-gray-300 rounded dark:bg-gray-600 animate-pulse"></div>
   </div>
 );
 
 const FilteredSkeleton = () => (
   <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300">
-    <div className="h-3 w-16 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
+    <div className="w-16 h-3 bg-gray-300 rounded dark:bg-gray-600 animate-pulse"></div>
   </div>
 );
 
 const CountriesSkeleton = () => (
   <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-    <Globe className="h-3 w-3 mr-1" />
-    <div className="h-3 w-8 bg-blue-300 dark:bg-blue-700 rounded animate-pulse"></div>
+    <Globe className="w-3 h-3 mr-1" />
+    <div className="w-8 h-3 bg-blue-300 rounded dark:bg-blue-700 animate-pulse"></div>
   </div>
 );
 
@@ -67,13 +67,13 @@ export const LeadsHeader: React.FC<LeadsHeaderProps> = ({
   const isLoading = shouldShowLoading;
 
   return (
-    <div className="bg-white dark:bg-gray-800  dark:border-gray-700 px-8 pt-6 rounded-t-xl ">
-      <div className="flex justify-between items-center">
+    <div className="px-8 pt-6 bg-white dark:bg-gray-800 dark:border-gray-700 rounded-t-xl ">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+          <h1 className="items-center gap-3 text-3xl font-boldflex">
             Leads Management
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
             Manage and track all your leads in one centralized dashboard
           </p>
         </div>
@@ -89,7 +89,7 @@ export const LeadsHeader: React.FC<LeadsHeaderProps> = ({
           {isLoading ? (
             <FilteredSkeleton />
           ) : (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-gray-300 !text-gray-700 dark:border-gray-600 dark:!text-white">
               {displayCounts.filtered.toLocaleString()} Filtered
             </span>
           )}
@@ -98,7 +98,7 @@ export const LeadsHeader: React.FC<LeadsHeaderProps> = ({
             <CountriesSkeleton />
           ) : (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-              <Globe className="h-3 w-3 mr-1" />
+              <Globe className="w-3 h-3 mr-1" />
               {displayCounts.countries} Countries
             </span>
           )}

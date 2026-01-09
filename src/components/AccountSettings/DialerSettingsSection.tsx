@@ -15,7 +15,7 @@ function ModernSelect({
       <select
         value={value}
         onChange={onChange}
-        className="appearance-none w-full px-3 py-2 pr-10 rounded-lg bg-white dark:bg-input/30 border border-input text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all"
+        className="appearance-none w-full px-3 py-2 pr-10 rounded-lg bg-white dark:bg-input/30 border border-input !text-gray-900 dark:!text-white focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all"
         {...props}
       >
         {children}
@@ -58,10 +58,10 @@ export function DialerSettingsSection() {
           <Phone className="h-5 w-5 text-blue-600 dark:text-blue-400" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-xl font-semibold !text-gray-900 dark:!text-white">
             Dialer Settings
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:!text-white">
             Choose your preferred VoIP dialer application
           </p>
         </div>
@@ -69,7 +69,7 @@ export function DialerSettingsSection() {
 
       <div className="p-4 bg-gray-50 dark:bg-gray-900/20 border border-border rounded-lg">
         <div>
-          <label className="block text-sm mb-2 font-medium text-gray-700 dark:text-gray-300">
+          <label className="block text-sm mb-2 font-medium !text-gray-700 dark:!text-white">
             Default Dialer
           </label>
           <ModernSelect value={dialer || "none"} onChange={handleDialerChange}>
@@ -77,7 +77,7 @@ export function DialerSettingsSection() {
             <option value="zoiper">Zoiper</option>
             <option value="microsip">MicroSIP</option>
           </ModernSelect>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          <p className="text-xs text-gray-500 dark:!text-white mt-2">
             {dialer === null
               ? "Call button will be disabled. Please select a dialer to enable calling."
               : dialer === "zoiper"

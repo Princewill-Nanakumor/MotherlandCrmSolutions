@@ -42,7 +42,7 @@ export default function ComingSoon() {
               </p>
             </div>
             <div className="bg-white/10 rounded-xl p-6">
-              <h3 className="text-lg font-semibold mb-3">Custom Workflows</h3>
+              <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Custom Workflows</h3>
               <p className="text-white/80 text-sm">
                 Create custom lead processing workflows and automated task
                 assignments.

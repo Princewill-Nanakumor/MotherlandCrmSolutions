@@ -122,6 +122,7 @@ export const config = {
     "/dashboard/:path*",
     "/admin/:path*",
     "/api/protected/:path*",
+    "/login",
     "/signin",
     "/signup",
     "/forgot-password",
@@ -132,6 +133,14 @@ export const config = {
     "/",
     "/about",
     "/contact",
-    "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - *.jpg, *.jpeg, *.png, *.gif, *.svg, *.webp, *.ico (image files)
+     */
+    "/((?!api|_next/static|_next/image|favicon\\.ico|.*\\.(?:jpg|jpeg|png|gif|svg|webp|ico)$).*)",
   ],
 };

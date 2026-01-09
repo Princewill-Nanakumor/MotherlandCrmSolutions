@@ -149,7 +149,7 @@ export function ImportModal({
                 </div>
 
                 <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-800 dark:text-gray-100 mb-2">
+                  <h4 className="font-medium !text-gray-800 dark:!text-white mb-2">
                     Required Column Headers:
                   </h4>
                   <ul className="list-disc list-inside text-sm text-gray-700 dark:text-gray-200 space-y-2">

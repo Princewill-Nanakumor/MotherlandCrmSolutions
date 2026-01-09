@@ -34,7 +34,7 @@ export default function BillingManager() {
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   // React Query hooks
-  const { billingData, isLoading: isBillingLoading } = useBillingSummary();
+  const { billingData, isLoading: isBillingLoading, refetch: refetchBillingData } = useBillingSummary();
   const createPaymentMutation = useCreatePayment();
 
   // Payment storage manager - memoized to prevent recreating on every render
@@ -94,6 +94,8 @@ export default function BillingManager() {
           setCurrentPayment(result.payment);
           setPaymentConfirmed(false);
           setAmount("");
+          // Refetch billing data immediately to show new transaction
+          await refetchBillingData();
         }
       } catch (error) {
         setError(
@@ -101,7 +103,7 @@ export default function BillingManager() {
         );
       }
     },
-    [amount, network, createPaymentMutation]
+    [amount, network, createPaymentMutation, refetchBillingData]
   );
 
   const toggleNetwork = useCallback(() => {
@@ -192,7 +194,7 @@ export default function BillingManager() {
             <div className="dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl p-6 shadow-lg dark:border dark:border-white/10 bg-white border border-gray-200">
               {/* Tab Navigation */}
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold dark:text-white text-gray-900">
+                <h2 className="text-xl font-semibold !text-gray-900 dark:!text-white">
                   Deposit Funds
                 </h2>
                 <div className="flex space-x-1">

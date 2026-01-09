@@ -11,7 +11,6 @@ import {
   DollarSign,
   CreditCard,
   Wallet,
-  ExternalLink,
   Check,
   X,
 } from "lucide-react";
@@ -211,7 +210,7 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4 mx-auto"></div>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="!text-gray-600 dark:!text-white">
                 Loading payment details...
               </p>
             </div>
@@ -229,10 +228,10 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              <h2 className="text-xl font-semibold !text-gray-900 dark:!text-white mb-2">
                 Error Loading Payment
               </h2>
-              <p className="text-red-500 mb-4">{error}</p>
+              <p className="!text-red-500 dark:!text-red-400 mb-4">{error}</p>
               <div className="space-x-2">
                 <Button onClick={() => router.push("/dashboard/notifications")}>
                   View Notifications
@@ -256,10 +255,10 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              <h2 className="text-xl font-semibold !text-gray-900 dark:!text-white mb-2">
                 Payment Not Found
               </h2>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
+              <p className="!text-gray-500 dark:!text-white mb-4">
                 The payment you are looking for does not exist or has been
                 removed.
               </p>
@@ -297,10 +296,10 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
               Back
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-3xl font-bold !text-gray-900 dark:!text-white">
                 Payment Details
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="!text-gray-600 dark:!text-white">
                 Transaction ID: {payment.transactionId}
               </p>
             </div>
@@ -313,7 +312,7 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
             {/* Payment Status Card */}
             <Card className="backdrop-blur-lg bg-white/70 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-white">
+                <CardTitle className="flex items-center space-x-2 !text-gray-900 dark:!text-white">
                   <DollarSign className="h-5 w-5" />
                   <span>Payment Information</span>
                 </CardTitle>
@@ -321,16 +320,16 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="text-sm !text-gray-600 dark:!text-white">
                       Amount
                     </span>
-                    <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <span className="text-lg font-semibold !text-gray-900 dark:!text-white">
                       {formatCurrency(payment.amount, payment.currency)}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="text-sm !text-gray-600 dark:!text-white">
                       Status
                     </span>
                     <Badge className={getStatusColor(payment.status)}>
@@ -339,7 +338,7 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="text-sm !text-gray-600 dark:!text-white">
                       Method
                     </span>
                     <Badge className={getMethodColor(payment.method)}>
@@ -349,7 +348,7 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
 
                   {payment.network && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="text-sm !text-gray-600 dark:!text-white">
                         Network
                       </span>
                       <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200 dark:border-blue-800">
@@ -359,20 +358,20 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
                   )}
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="text-sm !text-gray-600 dark:!text-white">
                       Created
                     </span>
-                    <span className="text-sm text-gray-900 dark:text-white">
+                    <span className="text-sm !text-gray-900 dark:!text-white">
                       {formatDate(payment.createdAt)}
                     </span>
                   </div>
 
                   {payment.approvedAt && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="text-sm !text-gray-600 dark:!text-white">
                         Approved
                       </span>
-                      <span className="text-sm text-gray-900 dark:text-white">
+                      <span className="text-sm !text-gray-900 dark:!text-white">
                         {formatDate(payment.approvedAt)}
                       </span>
                     </div>
@@ -380,10 +379,10 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
 
                   {payment.rejectedAt && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="text-sm !text-gray-600 dark:!text-white">
                         Rejected
                       </span>
-                      <span className="text-sm text-gray-900 dark:text-white">
+                      <span className="text-sm !text-gray-900 dark:!text-white">
                         {formatDate(payment.rejectedAt)}
                       </span>
                     </div>
@@ -395,54 +394,32 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
             {/* Payment Details Card */}
             <Card className="backdrop-blur-lg bg-white/70 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl">
               <CardHeader>
-                <CardTitle className="text-gray-900 dark:text-white">
+                <CardTitle className="!text-gray-900 dark:!text-white">
                   Transaction Details
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="text-sm !text-gray-600 dark:!text-white">
                       Transaction ID
                     </span>
-                    <p className="font-mono text-sm text-gray-900 dark:text-white mt-1">
+                    <p className="font-mono text-sm !text-gray-900 dark:!text-white mt-1">
                       {payment.transactionId}
                     </p>
                   </div>
 
                   {payment.description && (
                     <div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="text-sm !text-gray-600 dark:!text-white">
                         Description
                       </span>
-                      <p className="text-sm text-gray-900 dark:text-white mt-1">
+                      <p className="text-sm !text-gray-900 dark:!text-white mt-1">
                         {payment.description}
                       </p>
                     </div>
                   )}
 
-                  {payment.walletAddress && (
-                    <div>
-                      <div className="mt-2">
-                        <a
-                          href={
-                            payment.network === "TRC20"
-                              ? `https://tronscan.org/#/address/${payment.walletAddress}`
-                              : `https://etherscan.io/address/${payment.walletAddress}`
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                        >
-                          View on{" "}
-                          {payment.network === "TRC20"
-                            ? "Tronscan"
-                            : "Etherscan"}{" "}
-                          <ExternalLink className="ml-1 h-4 w-4" />
-                        </a>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -454,7 +431,7 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
             {payment.status === "PENDING" && (
               <Card className="backdrop-blur-lg bg-white/70 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl">
                 <CardHeader>
-                  <CardTitle className="text-gray-900 dark:text-white">
+                  <CardTitle className="!text-gray-900 dark:!text-white">
                     Payment Actions
                   </CardTitle>
                 </CardHeader>
@@ -504,7 +481,7 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
             {/* Status Indicator */}
             <Card className="backdrop-blur-lg bg-white/70 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl">
               <CardHeader>
-                <CardTitle className="text-gray-900 dark:text-white">
+                <CardTitle className="!text-gray-900 dark:!text-white">
                   Status
                 </CardTitle>
               </CardHeader>
@@ -517,13 +494,13 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
                   ) : (
                     <AlertCircle className="h-5 w-5 text-red-600" />
                   )}
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  <span className="text-sm font-medium !text-gray-900 dark:!text-white">
                     {payment.status}
                   </span>
                 </div>
 
                 {payment.status === "PENDING" && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  <p className="text-xs !text-gray-500 dark:!text-white mt-2">
                     Waiting for admin approval
                   </p>
                 )}
@@ -545,7 +522,7 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
             {/* Quick Actions */}
             <Card className="backdrop-blur-lg bg-white/70 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl">
               <CardHeader>
-                <CardTitle className="text-gray-900 dark:text-white">
+                <CardTitle className="!text-gray-900 dark:!text-white">
                   Quick Actions
                 </CardTitle>
               </CardHeader>

@@ -49,7 +49,7 @@ export const UserLeadsHeader: React.FC<UserLeadsHeaderProps> = ({
           {counts.total.toLocaleString()} Total Leads
         </span>
 
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-gray-300 !text-gray-700 dark:border-gray-600 dark:!text-white">
           {counts.filtered.toLocaleString()} Filtered
         </span>
 

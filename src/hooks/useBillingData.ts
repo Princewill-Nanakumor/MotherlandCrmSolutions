@@ -129,11 +129,13 @@ export const useBillingSummary = () => {
     data: paymentsData,
     isLoading: isLoadingPayments,
     error: paymentsError,
+    refetch: refetchPayments,
   } = usePayments(10);
   const {
     data: balance,
     isLoading: isLoadingBalance,
     error: balanceError,
+    refetch: refetchBalance,
   } = useUserBalance();
 
   // Calculate summary data
@@ -174,8 +176,8 @@ export const useBillingSummary = () => {
     billingData,
     isLoading: isLoadingPayments || isLoadingBalance,
     error: paymentsError || balanceError,
-    refetch: () => {
-      // Will be handled by queryClient.invalidateQueries
+    refetch: async () => {
+      await Promise.all([refetchPayments(), refetchBalance()]);
     },
   };
 };

@@ -122,10 +122,10 @@ export default function NotificationsPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-3xl font-bold !text-gray-900 dark:!text-white mb-2">
             Notifications
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="!text-gray-600 dark:!text-white">
             View all your payment and subscription notifications
           </p>
         </div>

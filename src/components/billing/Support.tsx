@@ -52,17 +52,17 @@ export default function Support({
 
   return (
     <div className="dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl p-6 shadow-lg dark:border dark:border-white/10 bg-white border border-gray-200">
-      <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-4">
+      <h3 className="text-lg font-semibold dark:!text-white !text-gray-900 mb-4">
         {title}
       </h3>
 
-      <p className="dark:text-gray-300 text-gray-600 text-sm mb-4">
+      <p className="dark:!text-gray-300 !text-gray-600 text-sm mb-4">
         {description}
       </p>
 
       <div className="flex items-center gap-2 mb-4 p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
         <Mail className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-        <span className="text-sm text-gray-700 dark:text-gray-300">
+        <span className="text-sm !text-gray-700 dark:!text-gray-300">
           {supportEmail}
         </span>
         <button

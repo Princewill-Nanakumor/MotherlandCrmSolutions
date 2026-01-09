@@ -15,10 +15,10 @@ export default function BillingHeader({}: BillingHeaderProps) {
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold dark:text-white text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold dark:!text-white !text-gray-900 mb-2">
             Billing & Fund Account
           </h1>
-          <p className="dark:text-gray-300 text-gray-600">
+          <p className="!text-gray-600 dark:!text-white">
             Fund your account securely
           </p>
         </div>

@@ -74,9 +74,9 @@ export function ColumnVisibilityToggle({
           className="ml-auto h-8 gap-2 !bg-white dark:!bg-gray-800 !border-gray-300 dark:!border-gray-600 !text-gray-900 dark:!text-white hover:!bg-gray-50 dark:hover:!bg-gray-700"
           title="Toggle columns"
         >
-          <Settings2 className="h-4 w-4" />
-          <span className="hidden sm:inline">Columns</span>
-          <span className="hidden sm:inline text-xs text-muted-foreground">
+          <Settings2 className="h-4 w-4 !text-gray-900 dark:!text-white" />
+          <span className="hidden sm:inline !text-gray-900 dark:!text-white">Columns</span>
+          <span className="hidden sm:inline text-xs !text-gray-600 dark:!text-gray-400">
             ({visibleColumnsCount}/{totalOptionalColumns})
           </span>
         </Button>
@@ -127,9 +127,9 @@ export function ColumnVisibilityToggle({
                   {isVisible ? (
                     <Eye className="h-4 w-4 text-green-600 dark:text-green-400" />
                   ) : (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
+                    <EyeOff className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                   )}
-                  <span>{label}</span>
+                  <span className="!text-gray-900 dark:!text-white">{label}</span>
                 </div>
               </DropdownMenuCheckboxItem>
             );
@@ -139,7 +139,7 @@ export function ColumnVisibilityToggle({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start h-8 text-xs"
+            className="w-full justify-start h-8 text-xs !text-gray-900 dark:!text-white"
             onClick={() => {
               // Clear all visibility state - empty object means all columns are visible
               // (undefined/false means hidden, true/not present means visible)

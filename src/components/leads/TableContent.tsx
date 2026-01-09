@@ -81,7 +81,7 @@ const TableSkeleton = ({
 }) => (
   <>
     <TableHeaderSkeleton columnCount={columnCount} />
-    <TableBody className="dark:bg-gray-900">
+    <TableBody className="dark:bg-gray-800">
       {Array.from({ length: rowCount }).map((_, index) => (
         <TableRowSkeleton
           key={`skeleton-row-${index}`}
@@ -234,7 +234,7 @@ export function TableContent({
                   <TableHead
                     key={generateUniqueKey("header", header.id)}
                     className={`
-                      text-gray-700 dark:text-gray-300 font-semibold
+                      !text-gray-700 dark:!text-gray-300 font-semibold
                       ${
                         isSelectColumn || isActionsColumn
                           ? "text-center"
@@ -268,7 +268,7 @@ export function TableContent({
           </TableRow>
         ))}
       </TableHeader>
-      <TableBody className="dark:bg-gray-900">
+      <TableBody className="dark:bg-gray-800">
         {table.getRowModel().rows.length ? (
           table.getRowModel().rows.map((row) => {
             const lead = row.original;

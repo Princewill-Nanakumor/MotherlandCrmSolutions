@@ -25,7 +25,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   <div className="space-y-6">
     {/* Account Info */}
     <div className="dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl p-6 shadow-lg dark:border dark:border-white/10 bg-white border border-gray-200">
-      <h3 className="text-xl font-semibold dark:text-white text-gray-900 mb-6">
+      <h3 className="text-xl font-semibold dark:!text-white !text-gray-900 mb-6">
         Account Information
       </h3>
       <div className="space-y-6">
@@ -91,7 +91,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
     {/* Permissions */}
     <div className="dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl p-6 shadow-lg dark:border dark:border-white/10 bg-white border border-gray-200">
-      <h3 className="text-xl font-semibold dark:text-white text-gray-900 mb-6">
+      <h3 className="text-xl font-semibold dark:!text-white !text-gray-900 mb-6">
         Permissions
       </h3>
       <div className="space-y-6">

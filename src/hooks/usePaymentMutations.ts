@@ -50,16 +50,27 @@ export const useCreatePayment = () => {
 
       return { previousPayments };
     },
-    onSuccess: (data) => {
-      // Invalidate and refetch payments
+    onSuccess: async (data) => {
+      // Invalidate all payment queries first (marks as stale)
       queryClient.invalidateQueries({
         queryKey: billingKeys.payments(),
         exact: false,
       });
 
-      // Invalidate summary
+      // Invalidate balance query
       queryClient.invalidateQueries({
-        queryKey: billingKeys.summary(),
+        queryKey: billingKeys.balance(),
+      });
+
+      // Force immediate refetch of the payments query used by useBillingSummary (limit: 10)
+      // This ensures recent transactions are updated immediately
+      await queryClient.refetchQueries({
+        queryKey: billingKeys.payments(10),
+      });
+
+      // Force immediate refetch of balance
+      await queryClient.refetchQueries({
+        queryKey: billingKeys.balance(),
       });
 
       toast({

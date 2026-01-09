@@ -48,11 +48,11 @@ export default function PaymentDetailsModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-t-2xl">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-2xl font-bold !text-gray-900 dark:!text-white">
               Payment Details
             </h2>
             {payment && (
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
+              <p className="!text-gray-600 dark:!text-white text-sm">
                 Transaction ID: {payment.transactionId}
               </p>
             )}
@@ -92,7 +92,7 @@ export default function PaymentDetailsModal({
             />
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="!text-gray-600 dark:!text-white">
                 No payment details available
               </p>
             </div>

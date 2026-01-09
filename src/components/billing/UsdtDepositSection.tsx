@@ -61,7 +61,7 @@ export default function UsdtDepositSection({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold dark:text-white text-gray-900">
+        <h2 className="text-xl font-semibold !text-gray-900 dark:!text-white">
           Cryptocurrency (USDT)
         </h2>
       </div>
@@ -71,7 +71,7 @@ export default function UsdtDepositSection({
         <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
           <div className="flex items-center">
             <Info className="h-4 w-4 mr-2 text-red-600 dark:text-red-400" />
-            <span className="text-red-700 dark:text-red-300 text-sm">
+            <span className="!text-red-700 dark:!text-white text-sm">
               {error}
             </span>
           </div>
@@ -80,7 +80,7 @@ export default function UsdtDepositSection({
 
       <div className="space-y-6">
         <div className="flex justify-between items-center mb-4">
-          <p className="dark:text-gray-300 text-gray-600">
+          <p className="!text-gray-600 dark:!text-white">
             Deposit USDT (Tether) to your account. Please ensure you are sending
             funds through the <span className="font-semibold">{network}</span>{" "}
             network.
@@ -97,10 +97,10 @@ export default function UsdtDepositSection({
           <div className="flex items-start">
             <Info className="h-4 w-4 mt-0.5 mr-2 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
             <div>
-              <h4 className="font-medium text-yellow-800 dark:text-yellow-200 text-sm">
+              <h4 className="font-medium !text-yellow-800 dark:!text-white text-sm">
                 Important Notice
               </h4>
-              <p className="text-yellow-700 dark:text-yellow-300 text-xs">
+              <p className="!text-gray-900 dark:!text-white text-xs">
                 {network === "TRC20"
                   ? "TRC20 deposits are faster and have lower fees "
                   : "ERC20 deposits may take longer and have higher gas fees (varies)"}
@@ -117,8 +117,8 @@ export default function UsdtDepositSection({
         </button>
 
         {showInstructions && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 text-sm dark:text-gray-300 text-gray-700 mb-4">
-            <h4 className="font-medium mb-2">Deposit Instructions:</h4>
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 text-sm !text-gray-700 dark:!text-white mb-4">
+            <h4 className="font-medium mb-2 !text-gray-900 dark:!text-white">Deposit Instructions:</h4>
             <ol className="list-decimal pl-5 space-y-1">
               <li>Enter the amount you want to deposit below</li>
               <li>Click &quot;Generate Deposit Address&quot;</li>
@@ -131,7 +131,7 @@ export default function UsdtDepositSection({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium dark:text-gray-300 text-gray-700 mb-1">
+            <label className="block text-sm font-medium dark:!text-gray-300 !text-gray-700 mb-1">
               Deposit Amount (USDT)
             </label>
             <div className="relative">
@@ -141,7 +141,7 @@ export default function UsdtDepositSection({
                 step="0.01"
                 value={amount}
                 onChange={(e) => onAmountChange(e.target.value)}
-                className="w-full pl-4 pr-4 py-3 border border-gray-300 dark:border-white/10 rounded-lg dark:bg-white/5 bg-gray-50 dark:text-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full pl-4 pr-4 py-3 border border-gray-300 dark:border-white/10 rounded-lg dark:bg-white/5 bg-gray-50 !text-gray-900 dark:!text-white focus:outline-none focus:ring-1 focus:ring-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 placeholder="Enter an amount"
                 required
                 disabled={isSubmitting}

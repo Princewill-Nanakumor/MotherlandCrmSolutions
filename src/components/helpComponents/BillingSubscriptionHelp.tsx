@@ -134,7 +134,7 @@ const BillingSubscriptionHelp: React.FC = () => {
                   </div>
                 )}
                 <div className="text-center">
-                  <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+                  <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{plan.name}</h3>
                   <div className="mb-4">
                     <span className="text-3xl font-bold">{plan.price}</span>
                     <span className="text-lg opacity-80">/month</span>

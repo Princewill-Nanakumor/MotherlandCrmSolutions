@@ -52,7 +52,7 @@ export default function Navbar() {
   const buttonBaseClasses =
     "px-4 py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-200 h-10 flex items-center justify-center";
   const signInClasses = `${buttonBaseClasses} border-2 border-indigo-600/20 dark:border-indigo-400/20 text-indigo-600 dark:text-indigo-300 hover:border-indigo-600/40 dark:hover:border-indigo-400/40 hover:bg-indigo-50 dark:hover:bg-gray-800`;
-  const signUpClasses = `${buttonBaseClasses} bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 text-white hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600`;
+  // const signUpClasses = `${buttonBaseClasses} bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 text-white hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600`; // Hidden - will be enabled later
 
   return (
     <motion.nav
@@ -125,7 +125,7 @@ export default function Navbar() {
                 animate="visible"
                 transition={{ duration: 0.4, ease: "easeOut" }}
               >
-                <Link href="/login" className={signInClasses}>
+                <Link href="/login" className={`${signInClasses} !text-white`}>
                   Sign In
                 </Link>
               </motion.div>

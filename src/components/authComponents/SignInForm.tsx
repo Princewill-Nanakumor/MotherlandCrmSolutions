@@ -68,12 +68,12 @@ export default function SignInForm() {
   };
 
   return (
-    <div className="p-4 border shadow-xl bg-white/10 dark:bg-gray-900/10 rounded-xl sm:rounded-2xl border-white/20 dark:border-gray-700/20 sm:p-6 md:p-8 backdrop-blur-md">
+    <div className="p-4 rounded-xl border shadow-xl bg-white/10 dark:bg-gray-900/10 sm:rounded-2xl border-white/20 dark:border-gray-700/20 sm:p-6 md:p-8">
       <div className="mb-6 text-center sm:mb-8">
-        <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 sm:text-3xl dark:from-indigo-400 dark:to-purple-400">
+        <h2 className="text-2xl font-bold !text-white sm:text-3xl">
           Welcome Back
         </h2>
-        <p className="mt-2 text-sm text-gray-600 sm:text-base dark:text-gray-400">
+        <p className="mt-2 text-sm !text-white sm:text-base">
           Sign in to your account to continue
         </p>
       </div>
@@ -104,14 +104,16 @@ export default function SignInForm() {
                   pl-10 pr-3 py-3 w-full rounded-lg border text-sm
                   ${errors.email ? "border-red-500" : "border-gray-300 dark:border-gray-600"}
                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                  bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                  bg-white dark:bg-gray-700 !text-gray-900 dark:!text-white
                   ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
             </div>
             {errors.email && (
-              <p className="flex items-start mt-1 text-xs text-red-500">
-                <span className="ml-1">{errors.email.message}</span>
+              <p className="flex items-start mt-1 text-xs !text-red-500">
+                <span className="ml-1 !text-red-500">
+                  {errors.email.message}
+                </span>
               </p>
             )}
           </div>
@@ -131,14 +133,16 @@ export default function SignInForm() {
                   pl-10 pr-10 py-3 w-full rounded-lg border text-sm
                   ${errors.password ? "border-red-500" : "border-gray-300 dark:border-gray-600"}
                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                  bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                  bg-white dark:bg-gray-700 !text-gray-900 dark:!text-white
                   ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
             </div>
             {errors.password && (
-              <p className="flex items-start mt-1 text-xs text-red-500">
-                <span className="ml-1">{errors.password.message}</span>
+              <p className="flex items-start mt-1 text-xs !text-red-500">
+                <span className="ml-1 !text-red-500">
+                  {errors.password.message}
+                </span>
               </p>
             )}
           </div>
@@ -156,9 +160,7 @@ export default function SignInForm() {
                 ${isFormDisabled ? "opacity-75 cursor-not-allowed" : "cursor-pointer"}
               `}
             />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              Remember me
-            </span>
+            <span className="text-sm !text-white">Remember me</span>
           </label>
           {/* Forgot password hidden */}
         </div>
@@ -176,11 +178,11 @@ export default function SignInForm() {
           {loading ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Signing in...</span>
+              <span className="!text-white">Signing in...</span>
             </>
           ) : (
             <>
-              <span>Sign in</span>
+              <span className="!text-white">Sign in</span>
               <ArrowRight className="w-5 h-5" />
             </>
           )}

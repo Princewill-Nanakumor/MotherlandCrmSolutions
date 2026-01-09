@@ -1,6 +1,5 @@
 // components/PurchaseButton.tsx
 import React from "react";
-import { trackConversion } from "@/lib/conversion-tracking";
 
 interface Product {
   id: string;
@@ -46,13 +45,6 @@ export default function PurchaseButton({
     try {
       // Process the purchase using the product data
       await processPurchase(product);
-
-      // Track the conversion using product details
-      await trackConversion("purchase", product.price, "USD", {
-        productId: product.id,
-        productName: product.name,
-        category: product.category,
-      });
 
       console.log(
         `Successfully purchased ${product.name} for $${product.price}`

@@ -1,5 +1,5 @@
 {
-  "name": "zodashield",
+  "name": "motherland-crm-solution",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,12 +10,7 @@
     "clean": "rm -rf .next && rm -rf node_modules && npm install",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck",
-    "perf:before": "lighthouse https://zodashield.com/ --output json --output-path ./zodashield-performance-reports/before-homepage.json --chrome-flags='--headless'",
-    "perf:after": "lighthouse https://zodashield.com/ --output json --output-path ./zodashield-performance-reports/after-homepage.json --chrome-flags='--headless'",
-    "perf:compare": "ts-node scripts/compare-performance.ts",
-    "perf:full-test": "npm run perf:before && npm run perf:after && npm run perf:compare",
-    "perf:install": "npm install -g lighthouse",
-    "perf:setup": "mkdir -p zodashield-performance-reports"
+    "check-text-colors": "ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/check-text-colors.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
