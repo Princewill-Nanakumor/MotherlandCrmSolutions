@@ -28,7 +28,7 @@ const fetchUserProfile = async (): Promise<UserProfile> => {
 
   if (response.status === 404) {
     console.log("User not found, signing out...");
-    await signOut({ callbackUrl: "/signin" }); // ✅ Uncomment this
+    await signOut({ callbackUrl: "/" }); // ✅ Uncomment this
     throw new Error("User not found");
   }
 
@@ -45,7 +45,7 @@ const fetchSubscriptionData = async (): Promise<SubscriptionData> => {
   if (response.status === 404) {
     // // User not found - likely deleted from database
     // console.log("User not found in database, signing out...");
-    // await signOut({ callbackUrl: "/signin" });
+    // await signOut({ callbackUrl: "/" });
     throw new Error("User not found");
   }
 

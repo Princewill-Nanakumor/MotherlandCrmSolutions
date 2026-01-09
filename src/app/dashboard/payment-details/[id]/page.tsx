@@ -16,7 +16,7 @@ export default function PaymentDetailsPage({ params }: PageProps) {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/signin");
+      router.push("/");
     } else if (status === "authenticated" && session?.user?.role !== "ADMIN") {
       router.push("/dashboard");
     }

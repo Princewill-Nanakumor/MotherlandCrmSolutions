@@ -98,7 +98,7 @@ export function SettingsContent() {
       setConfirmPassword("");
 
       setTimeout(() => {
-        signOut({ callbackUrl: "/signin" });
+        signOut({ callbackUrl: "/" });
       }, 1500);
     } catch {
       setPasswordError("An error occurred while updating your password");
@@ -124,7 +124,7 @@ export function SettingsContent() {
       });
 
       if (response.status === 401) {
-        signOut({ callbackUrl: "/signin" });
+        signOut({ callbackUrl: "/" });
         return;
       }
 
@@ -138,7 +138,7 @@ export function SettingsContent() {
         });
 
         setTimeout(() => {
-          signOut({ callbackUrl: "/signin" });
+          signOut({ callbackUrl: "/" });
         }, 2000);
       } else {
         setDeleteError(data.error || "Failed to delete account");

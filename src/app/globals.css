@@ -2,6 +2,102 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Global crypto-inspired professional typography */
+:root {
+  font-family:
+    var(--font-space-grotesk),
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: #0f172a;
+  background-color: #f8fafc;
+}
+
+body {
+  font-family:
+    var(--font-space-grotesk),
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: #0f172a;
+  background-color: #f8fafc;
+}
+
+.dark body {
+  color: #e2e8f0;
+  background-color: #0b1220;
+}
+
+/* Allow login/home pages to force transparent backgrounds for background image */
+html[data-homepage="true"],
+html[data-homepage="true"] body,
+body[data-homepage="true"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Ensure direct children on login/home remain transparent for bg image */
+body[data-homepage="true"] > * {
+  background-color: transparent !important;
+}
+
+/* Prevent nested wrappers from painting over the background */
+body[data-homepage="true"] * {
+  background-color: transparent !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+  font-family: var(--font-space-grotesk), "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #0f172a;
+}
+
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5 {
+  color: #f8fafc;
+}
+
+p,
+a,
+li,
+label,
+span {
+  font-family: var(--font-space-grotesk), "Inter", system-ui, sans-serif;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.dark p,
+.dark a,
+.dark li,
+.dark label,
+.dark span {
+  color: #e2e8f0;
+}
+
+a {
+  text-decoration: none;
+}
+
+/* Disable underline on hover for all links */
+a:hover {
+  text-decoration: none;
+}
+
 /* Ensure time inputs display in 24-hour format */
 input[type="time"] {
   -webkit-appearance: none;
@@ -385,6 +481,16 @@ button,
   body {
     @apply bg-background text-foreground;
   }
+  /* Allow homepage to override body background - More specific selectors */
+  html[data-homepage="true"] body,
+  body[data-homepage="true"] {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+  html[data-homepage="true"] {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
 }
 
 /* Reminder notification animations */
@@ -426,4 +532,54 @@ button,
 .animate-shake-bell {
   animation: shake-bell 0.8s ease-in-out infinite;
   transform-origin: top center;
+}
+
+/* Sidebar link color overrides to ensure consistency */
+/* Override global span/p/a color rules for sidebar to allow Tailwind classes to work */
+aside nav a {
+  color: inherit !important;
+}
+
+/* Ensure icons (SVG) in sidebar respect their color classes */
+aside nav a svg.text-white {
+  stroke: white !important;
+  color: white !important;
+}
+
+aside nav a svg.text-indigo-700 {
+  stroke: rgb(67 56 202) !important; /* indigo-700 */
+  color: rgb(67 56 202) !important;
+}
+
+aside nav a svg.text-white {
+  stroke: white !important;
+  color: white !important;
+}
+
+/* Ensure labels (span) in sidebar respect their color classes */
+aside nav a span.text-white {
+  color: white !important;
+}
+
+aside nav a span.text-indigo-700 {
+  color: rgb(67 56 202) !important; /* indigo-700 */
+}
+
+/* Dark mode sidebar links should be white */
+.dark aside nav a:not(.bg-gradient-to-r) {
+  color: white !important;
+}
+
+.dark aside nav a:not(.bg-gradient-to-r) svg {
+  stroke: white !important;
+  color: white !important;
+}
+
+.dark aside nav a:not(.bg-gradient-to-r) span {
+  color: white !important;
+}
+
+/* Active indicator bar - ensure indigo-600 color matches gradient start */
+aside nav a span[aria-hidden="true"].bg-indigo-600 {
+  background-color: rgb(79 70 229) !important; /* indigo-600 */
 }

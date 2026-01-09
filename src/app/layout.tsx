@@ -1,12 +1,13 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Space_Grotesk, Geist_Mono } from "next/font/google";
 import "./globals.css";
 // Temporarily removed ClientProviders due to persistent webpack issues
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -18,11 +19,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "ZodaShield - Modern CRM Solution for Excel & CSV Import",
-    template: "%s | ZodaShield",
+    default: "Motherland CRM Solutions - Modern CRM Solution for Excel & CSV Import",
+    template: "%s | Motherland CRM Solutions",
   },
   description:
-    "Transform your Excel & CSV data into actionable leads with ZodaShield. Streamline data processing, import files seamlessly, and manage customer relationships efficiently.",
+    "Transform your Excel & CSV data into actionable leads with Motherland CRM Solutions. Streamline data processing, import files seamlessly, and manage customer relationships efficiently.",
   keywords: [
     "CRM",
     "Customer Relationship Management",
@@ -35,26 +36,26 @@ export const metadata: Metadata = {
     "Contact management",
     "Import tools",
   ],
-  authors: [{ name: "ZodaShield Team" }],
-  creator: "ZodaShield",
-  publisher: "ZodaShield",
+  authors: [{ name: "Motherland CRM Solutions Team" }],
+  creator: "Motherland CRM Solutions",
+  publisher: "Motherland CRM Solutions",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://zodashield.com"),
+  metadataBase: new URL("https://motherland.com"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://zodashield.com",
-    title: "ZodaShield - Modern CRM Solution for Excel & CSV Import",
+    url: "https://motherland.com",
+    title: "Motherland CRM Solutions - Modern CRM Solution for Excel & CSV Import",
     description:
-      "Transform your Excel & CSV data into actionable leads with ZodaShield. Streamline data processing, import files seamlessly, and manage customer relationships efficiently.",
-    siteName: "ZodaShield",
+      "Transform your Excel & CSV data into actionable leads with Motherland CRM Solutions. Streamline data processing, import files seamlessly, and manage customer relationships efficiently.",
+    siteName: "Motherland CRM Solutions",
     images: [
       {
         url: "/og-image.png",
@@ -139,7 +140,7 @@ export default function RootLayout({
               name: "ZodaShield",
               description:
                 "Modern CRM Solution for Excel & CSV file import and lead management",
-              url: "https://zodashield.com",
+              url: "https://motherland.com",
               applicationCategory: "BusinessApplication",
               operatingSystem: "Web Browser",
               offers: {
@@ -149,14 +150,14 @@ export default function RootLayout({
               },
               author: {
                 "@type": "Organization",
-                name: "ZodaShield",
+                name: "Motherland CRM Solutions",
               },
             }),
           }}
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${spaceGrotesk.variable} ${geistMono.variable} antialiased`}
       >
         {children}
       </body>

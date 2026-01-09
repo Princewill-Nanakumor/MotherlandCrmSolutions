@@ -109,12 +109,12 @@ const apiCallWithSessionRefresh = async (
           }
         } else {
           // Refresh failed, redirect to login
-          window.location.href = "/signin";
+          window.location.href = "/";
           throw new Error("Session refresh failed");
         }
       } catch {
         clearTimeout(refreshTimeoutId);
-        window.location.href = "/signin";
+        window.location.href = "/";
         throw new Error("Session refresh failed");
       }
     }
@@ -423,7 +423,7 @@ export const useLeads = () => {
     if (leadsError) {
       if (isUnauthorizedError(leadsError)) {
         console.log("Leads query unauthorized, redirecting to login...");
-        window.location.href = "/signin";
+        window.location.href = "/";
       } else if (
         leadsError instanceof Error &&
         leadsError.message.includes("timed out")
@@ -443,7 +443,7 @@ export const useLeads = () => {
     if (usersError) {
       if (isUnauthorizedError(usersError)) {
         console.log("Users query unauthorized, redirecting to login...");
-        window.location.href = "/signin";
+        window.location.href = "/";
       } else if (
         usersError instanceof Error &&
         usersError.message.includes("timed out")
@@ -463,7 +463,7 @@ export const useLeads = () => {
     if (statusesError) {
       if (isUnauthorizedError(statusesError)) {
         console.log("Statuses query unauthorized, redirecting to login...");
-        window.location.href = "/signin";
+        window.location.href = "/";
       } else if (
         statusesError instanceof Error &&
         statusesError.message.includes("timed out")

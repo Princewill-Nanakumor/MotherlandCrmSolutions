@@ -153,7 +153,7 @@ const LeadDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   // Authentication check
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/signin");
+      router.push("/");
     } else if (status === "authenticated" && session?.user?.role !== "ADMIN") {
       router.push("/dashboard");
     }

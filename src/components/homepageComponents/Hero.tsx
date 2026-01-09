@@ -219,7 +219,7 @@ export default memo(function Hero() {
                 transition={{ duration: 0.2, ease: "easeOut" }}
               >
                 <Link
-                  href="/signin"
+                  href="/"
                   className="px-8 py-3 border-2 border-indigo-600/20 dark:border-indigo-400/20 text-indigo-600 dark:text-indigo-300 rounded-lg hover:border-indigo-600/40 dark:hover:border-indigo-400/40 hover:bg-indigo-50 dark:hover:bg-gray-800 transition-all duration-200 font-medium will-change-transform"
                 >
                   Sign In

@@ -280,7 +280,7 @@ export default function SubscriptionManager() {
   }
 
   if (status === "unauthenticated") {
-    router.push("/signin");
+    router.push("/");
     return null;
   }
 

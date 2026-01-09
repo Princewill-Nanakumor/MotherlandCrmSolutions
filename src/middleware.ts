@@ -8,7 +8,8 @@ export default withAuth(
     const isAuth = !!token;
     const path = request.nextUrl.pathname;
 
-    const isAuthPage = path === "/signin";
+    const isHomePage = path === "/";
+    const isLoginPage = path === "/login";
     const isAdminPage = path.startsWith("/admin");
     const isDashboardPage = path.startsWith("/dashboard");
     const isResetPasswordPage = path.startsWith("/reset-password");
@@ -17,15 +18,16 @@ export default withAuth(
       "/dashboard/admin-management"
     );
 
-    const publicPages = [
-      "/",
-      "/about",
-      "/test-performance",
-      "/contact",
-      "/signup",
-      "/forgot-password",
-      "/verify-email",
-    ];
+        const publicPages = [
+          "/",
+          "/about",
+          "/test-performance",
+          "/contact",
+          "/login",
+          // "/signup", // Hidden - will be enabled later
+          // "/forgot-password", // Hidden - will be enabled later
+          "/verify-email",
+        ];
 
     const isPublicPage = publicPages.includes(path) || isVerifyEmailPage;
     // ✅ Allow access to public pages
@@ -43,14 +45,14 @@ export default withAuth(
       return NextResponse.next();
     }
 
-    // ✅ Redirect authenticated users away from auth pages
-    if (isAuthPage && isAuth) {
+    // ✅ Redirect authenticated users away from login page
+    if (isLoginPage && isAuth) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
     // ✅ Protect dashboard routes
     if (isDashboardPage && !isAuth) {
-      return NextResponse.redirect(new URL("/signin", request.url));
+      return NextResponse.redirect(new URL("/login", request.url));
     }
 
     // ✅ Protect admin routes by role
@@ -70,8 +72,8 @@ export default withAuth(
     }
 
     // ✅ Redirect unauthenticated users trying to access other pages
-    if (!isAuth && !isAuthPage && !isPublicPage) {
-      return NextResponse.redirect(new URL("/signin", request.url));
+    if (!isAuth && !isPublicPage && !isHomePage && !isLoginPage) {
+      return NextResponse.redirect(new URL("/login", request.url));
     }
 
     return NextResponse.next();
@@ -110,7 +112,7 @@ export default withAuth(
       },
     },
     pages: {
-      signIn: "/signin",
+      signIn: "/login",
     },
   }
 );

@@ -152,8 +152,8 @@ export const authOptions: NextAuthOptions = {
     updateAge: 60 * 60,
   },
   pages: {
-    signIn: "/signin",
-    error: "/signin?error=true",
+    signIn: "/login",
+    error: "/login?error=true",
     // Don't protect these pages
     newUser: "/signup",
     verifyRequest: "/forgot-password",

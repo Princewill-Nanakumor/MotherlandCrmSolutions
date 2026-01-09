@@ -5,8 +5,7 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Eye, EyeOff, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
+import { Mail, Lock, Loader2, ArrowRight } from "lucide-react";
 import { LoginSchema } from "@/schemas";
 import { z } from "zod";
 import { FormError } from "./FormError";
@@ -17,7 +16,6 @@ type LoginInput = z.infer<typeof LoginSchema>;
 export default function SignInForm() {
   const { data: session } = useSession();
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -70,12 +68,12 @@ export default function SignInForm() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8">
-      <div className="text-center mb-6 sm:mb-8">
-        <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+    <div className="p-4 border shadow-xl bg-white/10 dark:bg-gray-900/10 rounded-xl sm:rounded-2xl border-white/20 dark:border-gray-700/20 sm:p-6 md:p-8 backdrop-blur-md">
+      <div className="mb-6 text-center sm:mb-8">
+        <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 sm:text-3xl dark:from-indigo-400 dark:to-purple-400">
           Welcome Back
         </h2>
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-2">
+        <p className="mt-2 text-sm text-gray-600 sm:text-base dark:text-gray-400">
           Sign in to your account to continue
         </p>
       </div>
@@ -94,8 +92,8 @@ export default function SignInForm() {
           {/* Email Field */}
           <div>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
+              <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+                <Mail className="w-5 h-5 text-gray-400" />
               </div>
               <input
                 {...register("email")}
@@ -112,7 +110,7 @@ export default function SignInForm() {
               />
             </div>
             {errors.email && (
-              <p className="mt-1 text-xs text-red-500 flex items-start">
+              <p className="flex items-start mt-1 text-xs text-red-500">
                 <span className="ml-1">{errors.email.message}</span>
               </p>
             )}
@@ -121,12 +119,12 @@ export default function SignInForm() {
           {/* Password Field */}
           <div>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
+              <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+                <Lock className="w-5 h-5 text-gray-400" />
               </div>
               <input
                 {...register("password")}
-                type={showPassword ? "text" : "password"}
+                type="password"
                 placeholder="Password"
                 disabled={isFormDisabled}
                 className={`
@@ -137,30 +135,16 @@ export default function SignInForm() {
                   ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
-              <button
-                type="button"
-                onClick={() =>
-                  !isFormDisabled && setShowPassword(!showPassword)
-                }
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                disabled={isFormDisabled}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <Eye className="h-5 w-5 text-gray-400" />
-                )}
-              </button>
             </div>
             {errors.password && (
-              <p className="mt-1 text-xs text-red-500 flex items-start">
+              <p className="flex items-start mt-1 text-xs text-red-500">
                 <span className="ml-1">{errors.password.message}</span>
               </p>
             )}
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex justify-between items-center">
           <label className="flex items-center space-x-2">
             <input
               {...register("remember")}
@@ -176,15 +160,7 @@ export default function SignInForm() {
               Remember me
             </span>
           </label>
-          <Link
-            href="/forgot-password"
-            className={`
-              text-sm text-indigo-600 dark:text-indigo-400 font-medium
-              ${isFormDisabled ? "opacity-75 cursor-not-allowed" : "hover:text-indigo-500 dark:hover:text-indigo-300"}
-            `}
-          >
-            Forgot password?
-          </Link>
+          {/* Forgot password hidden */}
         </div>
 
         <button
@@ -199,31 +175,18 @@ export default function SignInForm() {
         >
           {loading ? (
             <>
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin" />
               <span>Signing in...</span>
             </>
           ) : (
             <>
               <span>Sign in</span>
-              <ArrowRight className="h-5 w-5" />
+              <ArrowRight className="w-5 h-5" />
             </>
           )}
         </button>
 
-        <div className="text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/signup"
-              className={`
-                text-indigo-600 dark:text-indigo-400 font-medium
-                ${isFormDisabled ? "opacity-75 cursor-not-allowed" : "hover:text-indigo-500 dark:hover:text-indigo-300"}
-              `}
-            >
-              Sign up
-            </Link>
-          </p>
-        </div>
+        {/* Signup link hidden */}
       </form>
     </div>
   );

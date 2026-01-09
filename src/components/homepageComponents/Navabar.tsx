@@ -56,7 +56,7 @@ export default function Navbar() {
 
   return (
     <motion.nav
-      className="px-6 py-4 bg-white/70 dark:bg-gray-900/80 backdrop-blur-lg shadow-lg border-b border-gray-200 dark:border-gray-700"
+      className="px-6 py-4 bg-transparent border-b border-white/20"
       initial="hidden"
       animate="visible"
       variants={navVariants}
@@ -73,7 +73,7 @@ export default function Navbar() {
                 <Shield size={30} className="text-white" />
               </div>
               <div className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
-                ZodaShield
+                Motherland CRM Solutions
               </div>
             </div>
           </Link>
@@ -125,21 +125,8 @@ export default function Navbar() {
                 animate="visible"
                 transition={{ duration: 0.4, ease: "easeOut" }}
               >
-                <Link href="/signin" className={signInClasses}>
+                <Link href="/login" className={signInClasses}>
                   Sign In
-                </Link>
-              </motion.div>
-              <motion.div
-                variants={buttonVariants}
-                initial="visible"
-                animate="visible"
-                transition={{ duration: 0.4, ease: "easeOut" }}
-              >
-                <Link
-                  href="/signup"
-                  className={`${signUpClasses} hidden md:flex`}
-                >
-                  Sign Up
                 </Link>
               </motion.div>
             </>

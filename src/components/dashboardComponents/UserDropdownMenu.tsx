@@ -61,7 +61,7 @@ export function UserDropdownMenu({
 
   const handleLogout = async () => {
     setDropdownOpen(false);
-    await signOut({ callbackUrl: "/signin" });
+    await signOut({ callbackUrl: "/" });
   };
 
   return (

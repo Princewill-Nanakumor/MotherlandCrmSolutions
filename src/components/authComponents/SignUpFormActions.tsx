@@ -32,7 +32,7 @@ export function SignUpFormActions({ loading }: SignUpFormActionsProps) {
       {/* Sign In Link */}
       <div className="text-center text-xs sm:text-sm">
         <Link
-          href="/signin"
+          href="/"
           className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors inline-block"
         >
           Already have an account? Sign in

@@ -177,7 +177,7 @@ export default function UserLeadsContent() {
   // Auth check
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/signin");
+      router.push("/");
     }
   }, [status, router]);
 

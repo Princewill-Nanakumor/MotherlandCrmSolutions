@@ -99,7 +99,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/signin");
+      router.push("/");
     }
   }, [status, router]);
 

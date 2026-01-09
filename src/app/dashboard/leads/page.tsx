@@ -16,7 +16,7 @@ export default function UserLeadsPage() {
     if (status === "loading") return;
 
     if (status === "unauthenticated") {
-      router.push("/signin");
+      router.push("/");
       return;
     }
 

@@ -173,7 +173,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
   }
 
   if (status === "unauthenticated") {
-    router.push("/signin");
+    router.push("/");
     return null;
   }
 

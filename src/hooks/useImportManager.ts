@@ -294,7 +294,7 @@ export const useImportManager = () => {
       });
       router.push("/dashboard");
     } else if (status === "unauthenticated") {
-      router.push("/signin");
+      router.push("/");
     }
   }, [status, session, router, toast]);
 

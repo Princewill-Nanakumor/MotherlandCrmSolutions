@@ -18,7 +18,7 @@ const AllLeadsPage: React.FC = () => {
   // Handle navigation in useEffect instead of during render
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/signin");
+      router.push("/");
     } else if (status === "authenticated" && session?.user?.role !== "ADMIN") {
       router.push("/dashboard");
     }

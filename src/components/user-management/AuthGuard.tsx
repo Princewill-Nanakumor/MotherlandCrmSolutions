@@ -23,7 +23,7 @@ export function AuthGuard({
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/signin");
+      router.push("/");
     } else if (session?.user?.role !== requiredRole) {
       router.push(redirectTo);
       toast({

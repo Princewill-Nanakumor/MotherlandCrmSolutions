@@ -106,7 +106,7 @@ export default function ForgotPasswordForm({
               Try different email
             </button>
             <Link
-              href="/signin"
+              href="/"
               className="w-full inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-lg transition-colors shadow-lg"
             >
               Back to Sign In
@@ -168,7 +168,7 @@ export default function ForgotPasswordForm({
 
           <div className="text-center">
             <Link
-              href="/signin"
+              href="/"
               className="inline-flex items-center text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />

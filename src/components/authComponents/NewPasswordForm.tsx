@@ -67,7 +67,7 @@ export function NewPasswordForm({ token }: NewPasswordFormProps) {
       if (response.ok) {
         setSuccess(true);
         setTimeout(() => {
-          router.push("/signin");
+          router.push("/");
         }, 3000);
       } else {
         setError(result.error || "Failed to reset password");
@@ -103,7 +103,7 @@ export function NewPasswordForm({ token }: NewPasswordFormProps) {
             </div>
           </div>
           <button
-            onClick={() => router.push("/signin")}
+            onClick={() => router.push("/")}
             className="w-full inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg transition-colors shadow-lg"
           >
             Go to Sign In
