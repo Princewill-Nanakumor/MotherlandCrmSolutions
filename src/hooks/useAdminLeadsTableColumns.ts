@@ -3,10 +3,10 @@
 import { Lead } from "@/types/leads";
 import { LeadColumn } from "@/components/leads/LeadsTableColumns.tsx/TableColumns";
 import { useCurrentUserPermission } from "./useCurrentUserPermission";
-import { maskPhoneNumber } from "@/utils/phoneMask";
+import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
 
 export function useAdminLeadsTableColumns(): LeadColumn[] {
-  const { canViewPhoneNumbers } = useCurrentUserPermission();
+  const { canViewPhoneNumbers, canViewEmails } = useCurrentUserPermission();
   return [
     {
       id: "leadId",
@@ -57,12 +57,15 @@ export function useAdminLeadsTableColumns(): LeadColumn[] {
       accessorKey: "email",
       header: "Email",
       cell: (info) => {
-        const email = (info.getValue() as string) || "—";
-        // Capitalize first letter of email
-        if (email !== "—" && email.length > 0) {
-          return email.charAt(0).toUpperCase() + email.slice(1);
+        const email = info.row.original.email;
+        if (!email || email === "—") {
+          return "—";
         }
-        return email;
+        // Apply masking based on email visibility permission
+        const displayEmail = canViewEmails
+          ? email.charAt(0).toUpperCase() + email.slice(1) // Capitalize first letter if visible
+          : maskEmail(email);
+        return displayEmail;
       },
       sortingFn: (a, b) =>
         (a.original.email || "—").localeCompare(b.original.email || "—"),

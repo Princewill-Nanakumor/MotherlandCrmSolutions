@@ -14,6 +14,7 @@ interface CurrentUserData {
   status: string;
   permissions: string[];
   canViewPhoneNumbers: boolean;
+  canViewEmails: boolean;
 }
 
 const fetchCurrentUser = async (): Promise<CurrentUserData> => {
@@ -38,6 +39,7 @@ const fetchCurrentUser = async (): Promise<CurrentUserData> => {
     status: data.status || "ACTIVE",
     permissions: data.permissions || [],
     canViewPhoneNumbers: data.canViewPhoneNumbers ?? false,
+    canViewEmails: data.canViewEmails ?? false,
   };
 };
 
@@ -63,12 +65,15 @@ export const useCurrentUserPermission = () => {
     refetchOnMount: true,
   });
 
-  // Admins should always be able to view phone numbers
+  // Admins should always be able to view phone numbers and emails
   const canViewPhoneNumbers = 
     currentUser?.role === "ADMIN" || (currentUser?.canViewPhoneNumbers ?? false);
+  const canViewEmails = 
+    currentUser?.role === "ADMIN" || (currentUser?.canViewEmails ?? false);
 
   return {
     canViewPhoneNumbers,
+    canViewEmails,
     isLoading,
     error,
     currentUser,

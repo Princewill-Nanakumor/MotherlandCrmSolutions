@@ -50,17 +50,17 @@ export default function UsageLimitsDisplay({
       ) : userUsageData ? (
         <Card className="border-gray-200 dark:border-gray-700">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center space-x-2 text-sm">
+            <CardTitle className="flex items-center space-x-2 text-sm text-gray-900 dark:text-white">
               <Users className="h-4 w-4" />
               <span>Team Members Usage</span>
               {userUsageData.currentUsers >= userUsageData.maxUsers * 0.8 && (
-                <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                <AlertTriangle className="h-4 w-4 text-yellow-500 dark:text-yellow-400" />
               )}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
                 <span>{userUsageData.currentUsers} used</span>
                 <span>
                   {userUsageData.maxUsers === -1
@@ -178,16 +178,16 @@ export default function UsageLimitsDisplay({
                   {userUsageData.isOverLimit ? "Upgrade Plan" : "Upgrade Plan"}
                 </Button>
                 {userUsageData.isOverLimit && (
-                  <Button
-                    onClick={() => {
-                      onShowUsageLimit(false); // Close the warning
-                      window.location.href = "/dashboard/users";
-                    }}
-                    variant="outline"
-                    className="border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  >
-                    Manage Team
-                  </Button>
+                <Button
+                  onClick={() => {
+                    onShowUsageLimit(false); // Close the warning
+                    window.location.href = "/dashboard/users";
+                  }}
+                  variant="outline"
+                  className="border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  Manage Team
+                </Button>
                 )}
               </div>
             </div>

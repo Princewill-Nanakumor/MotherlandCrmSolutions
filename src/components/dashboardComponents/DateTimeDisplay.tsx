@@ -37,7 +37,7 @@ export function DateTimeDisplay() {
   }
 
   return (
-    <span className="font-mono text-xs text-white dark:text-gray-200 px-3 font-bold border rounded-xl p-1">
+    <span className="font-mono text-xs !text-white dark:!text-gray-200 px-3 font-bold border rounded-xl p-1">
       {formatDateTime(now)}
     </span>
   );

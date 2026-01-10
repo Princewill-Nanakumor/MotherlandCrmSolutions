@@ -30,7 +30,7 @@ const TableHeaderSkeleton = ({ columnCount }: { columnCount: number }) => (
       {Array.from({ length: columnCount }).map((_, index) => (
         <TableHead
           key={`skeleton-header-${index}`}
-          className={`text-gray-700 dark:text-gray-300 font-semibold text-left ${
+          className={`!text-gray-700 dark:!text-gray-300 font-semibold text-left ${
             index === 0
               ? "w-12 px-3 border-r border-gray-200 dark:border-gray-700"
               : "px-4"
@@ -216,7 +216,7 @@ export function UserLeadsTableContent({
                       key={cell.id}
                       className={`
                         py-3.5
-                        ${isSelected ? "text-gray-900 dark:text-white" : "text-gray-800 dark:text-gray-300"}
+                        ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}
                         ${
                           isActionsCell || isLeadIdCell || isCommentCountCell
                             ? "text-center"
@@ -247,7 +247,7 @@ export function UserLeadsTableContent({
           <TableRow>
             <TableCell
               colSpan={table.getAllColumns().length}
-              className="h-24 text-center text-gray-600 dark:text-gray-400 dark:bg-gray-800"
+              className="h-24 text-center !text-gray-600 dark:!text-gray-400 dark:bg-gray-800"
             >
               No results found
             </TableCell>

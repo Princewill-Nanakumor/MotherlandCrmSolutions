@@ -8,7 +8,7 @@ import { Lead, Status } from "@/types/leads";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
-import { maskPhoneNumber } from "@/utils/phoneMask";
+import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
 
 interface UserLeadRowProps {
   lead: Lead;
@@ -22,7 +22,7 @@ export function UserLeadRow({
   onLeadClick,
   selectedLead,
 }: UserLeadRowProps) {
-  const { canViewPhoneNumbers } = useCurrentUserPermission();
+  const { canViewPhoneNumbers, canViewEmails } = useCurrentUserPermission();
   // Use React Query for consistent status caching
   const { data: statuses = [], isLoading } = useQuery({
     queryKey: ["statuses"],
@@ -149,21 +149,27 @@ export function UserLeadRow({
       onClick={() => onLeadClick(lead)}
     >
       <TableCell
-        className={isSelected ? "dark:text-white" : "dark:text-gray-300"}
+        className={isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}
       >
         <div className="font-medium">
           {lead.firstName} {lead.lastName}
         </div>
       </TableCell>
       <TableCell
-        className={isSelected ? "dark:text-white" : "dark:text-gray-300"}
+        className={isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}
       >
         <div className="flex items-center">
-          <span>{lead.email}</span>
+          <span>
+            {canViewEmails
+              ? lead.email || "—"
+              : lead.email
+                ? maskEmail(lead.email)
+                : "—"}
+          </span>
         </div>
       </TableCell>
       <TableCell
-        className={isSelected ? "dark:text-white" : "dark:text-gray-300"}
+        className={isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}
       >
         <div className="flex items-center">
           <span>
@@ -176,21 +182,21 @@ export function UserLeadRow({
         </div>
       </TableCell>
       <TableCell
-        className={isSelected ? "dark:text-white" : "dark:text-gray-300"}
+        className={isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}
       >
         <span>{lead.country || "—"}</span>
       </TableCell>
       <TableCell>{renderStatus()}</TableCell>
       <TableCell
-        className={isSelected ? "dark:text-white" : "dark:text-gray-300"}
+        className={isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}
       >
         <span>{lead.source || "—"}</span>
       </TableCell>
       <TableCell
-        className={isSelected ? "dark:text-white" : "dark:text-gray-300"}
+        className={isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}
       >
         <span
-          className={!lead.assignedTo ? "text-gray-500 dark:text-gray-400" : ""}
+          className={!lead.assignedTo ? "!text-gray-500 dark:!text-gray-400" : ""}
         >
           {getAssignedUserName()}
         </span>

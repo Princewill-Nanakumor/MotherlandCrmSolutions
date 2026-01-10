@@ -60,9 +60,9 @@ export function UserLeadsDraggableHeader({
       onClick={onSort}
       className="flex gap-1 justify-center items-center h-8 !text-gray-900 dark:!text-white hover:!text-gray-700 dark:hover:!text-gray-200 hover:bg-transparent! dark:hover:bg-transparent!"
     >
-      <span className={`${isSorted ? "font-bold" : "font-medium"} text-gray-900 dark:text-white`}>{children}</span>
+      <span className={`${isSorted ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>{children}</span>
       <ArrowUpDown
-        className={`h-4 w-4 text-gray-600 dark:text-gray-400 ${
+        className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
           isSorted
             ? sortOrder === "asc"
               ? "rotate-180"
@@ -73,7 +73,7 @@ export function UserLeadsDraggableHeader({
     </Button>
   ) : (
     <span
-      className={`block w-full font-medium text-center text-gray-900 dark:text-white ${columnId === "email" || columnId === "phone" ? "cursor-pointer" : ""}`}
+      className={`block w-full font-medium text-center !text-gray-900 dark:!text-white ${columnId === "email" || columnId === "phone" ? "cursor-pointer" : ""}`}
     >
       {children}
     </span>

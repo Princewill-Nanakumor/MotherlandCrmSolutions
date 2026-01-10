@@ -44,7 +44,7 @@ export const AdsImageSlider: FC<AdsImageSliderProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden relative">
+    <div className="relative overflow-hidden bg-white border border-gray-200 dark:bg-gray-800 rounded-xl dark:border-gray-700">
       {/* Floating Ads Pill - Left side */}
       <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-purple-500 text-white text-[10px] font-medium rounded-full shadow-lg border">
         Ads
@@ -53,7 +53,7 @@ export const AdsImageSlider: FC<AdsImageSliderProps> = ({
       {/* Toggle Button - Right side (identical styling) */}
       <button
         onClick={onToggle}
-        className="absolute top-2 right-2 z-10 px-3 py-1 bg-purple-500 text-white text-xs font-medium rounded-full shadow-lg border hover:bg-purple-600 transition-colors"
+        className="absolute z-10 px-3 py-1 text-xs font-medium text-white transition-colors bg-purple-500 border rounded-full shadow-lg top-2 right-2 hover:bg-purple-600"
       >
         {isExpanded ? (
           <ChevronUp className="w-3 h-3" />
@@ -71,10 +71,10 @@ export const AdsImageSlider: FC<AdsImageSliderProps> = ({
         {/* Collapsed State - Clickable area */}
         {!isExpanded && (
           <div
-            className="h-full flex items-center justify-center cursor-pointer"
+            className="flex items-center justify-center h-full cursor-pointer"
             onClick={onToggle}
           >
-            <div className="text-gray-500 dark:text-gray-400 text-sm">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               Click to view ads
             </div>
           </div>
@@ -98,11 +98,13 @@ export const AdsImageSlider: FC<AdsImageSliderProps> = ({
 
                     {/* Ad Content */}
                     <div className="absolute inset-0 flex flex-col justify-center p-6 text-white">
-                      <h4 className="text-lg font-semibold mb-2">{ad.title}</h4>
-                      <p className="text-sm opacity-90 mb-4">
+                      <h4 className="mb-2 text-lg font-semibold !text-white">
+                        {ad.title}
+                      </h4>
+                      <p className="mb-4 text-sm text-white opacity-90">
                         {ad.description}
                       </p>
-                      <button className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                      <button className="px-4 py-2 text-sm font-medium text-white transition-colors rounded-lg bg-white/20 hover:bg-white/30">
                         {ad.cta}
                       </button>
                     </div>
@@ -117,7 +119,7 @@ export const AdsImageSlider: FC<AdsImageSliderProps> = ({
                 e.stopPropagation();
                 prevSlide();
               }}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
+              className="absolute p-2 text-white transition-all duration-200 transform -translate-y-1/2 rounded-full opacity-0 left-2 top-1/2 bg-black/50 hover:bg-black/70 group-hover:opacity-100"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -126,7 +128,7 @@ export const AdsImageSlider: FC<AdsImageSliderProps> = ({
                 e.stopPropagation();
                 nextSlide();
               }}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
+              className="absolute p-2 text-white transition-all duration-200 transform -translate-y-1/2 rounded-full opacity-0 right-2 top-1/2 bg-black/50 hover:bg-black/70 group-hover:opacity-100"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

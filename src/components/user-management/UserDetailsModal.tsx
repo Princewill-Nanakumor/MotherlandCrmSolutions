@@ -33,13 +33,14 @@ interface User {
   createdAt: string;
   lastLogin?: string;
   canViewPhoneNumbers?: boolean;
+  canViewEmails?: boolean;
 }
 
 interface UserDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   user: User | null;
-  onUpdate?: (userData: UserFormEditData & { canViewPhoneNumbers?: boolean }, userId: string) => Promise<void>;
+  onUpdate?: (userData: UserFormEditData & { canViewPhoneNumbers?: boolean; canViewEmails?: boolean }, userId: string) => Promise<void>;
 }
 
 export function UserDetailsModal({
@@ -209,8 +210,9 @@ export function UserDetailsModal({
         status: localUser.status,
         permissions: localUser.permissions || [],
         canViewPhoneNumbers: newValue,
+        canViewEmails: localUser.canViewEmails ?? false,
       };
-      await onUpdate(updateData as UserFormEditData & { canViewPhoneNumbers: boolean }, localUser.id);
+      await onUpdate(updateData as UserFormEditData & { canViewPhoneNumbers: boolean; canViewEmails?: boolean }, localUser.id);
       
       // If updating own profile, refresh the session so the change takes effect immediately
       if (isUpdatingOwnProfile && updateSession) {
@@ -218,6 +220,55 @@ export function UserDetailsModal({
           user: {
             ...session?.user,
             canViewPhoneNumbers: newValue,
+            canViewEmails: localUser.canViewEmails ?? false,
+          },
+        });
+      }
+      
+      // Note: The parent component (UserManagement) will update selectedUserForDetails
+      // which will cause this modal to re-render with the updated user prop via useEffect
+    } catch (error: unknown) {
+      // Revert optimistic update on error
+      setLocalUser(user);
+      handleError(error);
+      setIsLoading(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [localUser, user, onUpdate, isLoading, handleError, isAdmin, isUpdatingOwnProfile, updateSession, session?.user]);
+
+  const handleToggleEmailVisibility = useCallback(async () => {
+    if (!localUser || !onUpdate || isLoading || !isAdmin) return;
+
+    const newValue = !(localUser.canViewEmails === true);
+    
+    // Optimistically update local state for immediate UI feedback
+    setLocalUser({ ...localUser, canViewEmails: newValue });
+    setIsLoading(true);
+
+    try {
+      const updateData = {
+        firstName: localUser.firstName,
+        lastName: localUser.lastName,
+        email: localUser.email,
+        password: "",
+        phoneNumber: localUser.phoneNumber || "",
+        country: localUser.country || "",
+        role: localUser.role,
+        status: localUser.status,
+        permissions: localUser.permissions || [],
+        canViewPhoneNumbers: localUser.canViewPhoneNumbers ?? false,
+        canViewEmails: newValue,
+      };
+      await onUpdate(updateData as UserFormEditData & { canViewPhoneNumbers?: boolean; canViewEmails: boolean }, localUser.id);
+      
+      // If updating own profile, refresh the session so the change takes effect immediately
+      if (isUpdatingOwnProfile && updateSession) {
+        await updateSession({
+          user: {
+            ...session?.user,
+            canViewPhoneNumbers: localUser.canViewPhoneNumbers ?? false,
+            canViewEmails: newValue,
           },
         });
       }
@@ -242,7 +293,7 @@ export function UserDetailsModal({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between pr-10">
-            <DialogTitle className="text-2xl font-bold">
+            <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-white">
               User Details
             </DialogTitle>
             {!isEditing && (
@@ -250,7 +301,7 @@ export function UserDetailsModal({
                 variant="outline"
                 size="sm"
                 onClick={handleEdit}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 dark:text-white dark:border-gray-600"
               >
                 <Edit2 className="w-4 h-4" />
                 Edit
@@ -277,6 +328,7 @@ export function UserDetailsModal({
           <UserDetailsView
             user={displayUser}
             onTogglePhoneVisibility={isAdmin ? handleTogglePhoneVisibility : undefined}
+            onToggleEmailVisibility={isAdmin ? handleToggleEmailVisibility : undefined}
             isAdmin={isAdmin}
           />
         )}

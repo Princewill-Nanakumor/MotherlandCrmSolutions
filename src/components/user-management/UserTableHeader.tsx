@@ -1,25 +1,25 @@
-// src/components/leads/LeadsTable/TableHeader.tsx
-import { Table } from "@tanstack/react-table";
-import { Lead } from "@/types/leads";
-import { ColumnVisibilityToggle } from "@/components/dashboardComponents/ColumnVisibilityToggle";
+// src/components/user-management/UserTableHeader.tsx
+"use client";
 
-interface TableHeaderProps {
-  table: Table<Lead>;
+import { Table } from "@tanstack/react-table";
+import { User } from "./UserTableColumns";
+import { UserColumnVisibilityToggle } from "./UserColumnVisibilityToggle";
+
+interface UserTableHeaderProps {
+  table: Table<User>;
   pageSize: number;
   pageIndex: number;
   totalRows: number;
-  tableId?: "adminLeadsTable" | "userLeadsTable";
 }
 
-const pageSizeOptions = [10, 15, 20, 30, 40, 50, 100, 500];
+const pageSizeOptions = [10, 15, 20, 30, 40, 50, 100];
 
-export function TableHeader({
+export function UserTableHeader({
   table,
   pageSize,
   pageIndex,
   totalRows,
-  tableId = "adminLeadsTable",
-}: TableHeaderProps) {
+}: UserTableHeaderProps) {
   const currentPageStart = pageIndex * pageSize + 1;
   const currentPageEnd = Math.min((pageIndex + 1) * pageSize, totalRows);
 
@@ -29,7 +29,6 @@ export function TableHeader({
         <label className="text-sm font-medium !text-gray-700 dark:!text-white">
           Show
         </label>
-        {/* Replaced Radix UI Select with simple HTML select */}
         <select
           value={pageSize.toString()}
           onChange={(e) => {
@@ -38,7 +37,7 @@ export function TableHeader({
           className="w-[80px] h-8 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 !text-gray-900 dark:!text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
         >
           {pageSizeOptions.map((size) => (
-            <option key={size} value={size.toString()} className="!text-gray-900 dark:!text-white bg-white dark:bg-gray-800">
+            <option key={size} value={size.toString()}>
               {size}
             </option>
           ))}
@@ -46,7 +45,7 @@ export function TableHeader({
         <span className="text-sm font-medium !text-gray-700 dark:!text-white">
           entries
         </span>
-        <ColumnVisibilityToggle table={table} tableId={tableId} />
+        <UserColumnVisibilityToggle table={table} />
       </div>
       <div className="text-sm !text-gray-700 dark:!text-white">
         Showing {currentPageStart} to {currentPageEnd} of {totalRows} entries

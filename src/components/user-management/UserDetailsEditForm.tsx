@@ -92,7 +92,7 @@ export function UserDetailsEditForm({
       <form onSubmit={onSave} className="mt-4 space-y-6">
         {/* Personal Information */}
         <div className="space-y-4">
-          <h3 className="pb-2 text-lg font-semibold text-gray-900 border-b dark:text-white">
+          <h3 className="pb-2 text-lg font-semibold !text-gray-900 border-b dark:!text-white">
             Personal Information
           </h3>
 
@@ -123,7 +123,7 @@ export function UserDetailsEditForm({
                 placeholder={
                   <div className="flex items-center gap-2">
                     <Globe className="w-4 h-5 text-gray-400 dark:text-gray-500" />
-                    <span>Select a country</span>
+                    <span className="text-gray-500 dark:text-gray-400">Select a country</span>
                   </div>
                 }
                 isDisabled={isLoading}
@@ -138,7 +138,7 @@ export function UserDetailsEditForm({
                 menuPlacement="top"
               />
               {getFieldError("country") && (
-                <p className="flex items-center gap-1 mt-1 text-xs text-red-500">
+                <p className="flex items-center gap-1 mt-1 text-xs text-red-500 dark:text-red-400">
                   <AlertCircle className="w-3 h-3" />
                   {getFieldError("country")}
                 </p>
@@ -163,7 +163,7 @@ export function UserDetailsEditForm({
 
         {/* Account Information */}
         <div className="space-y-4">
-          <h3 className="pb-2 text-lg font-semibold text-gray-900 border-b dark:text-white">
+          <h3 className="pb-2 text-lg font-semibold !text-gray-900 border-b dark:!text-white">
             Account Information
           </h3>
           {/* Account information fields can be added here if needed */}
@@ -179,7 +179,7 @@ export function UserDetailsEditForm({
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Member Since
               </p>
-              <p className="text-base font-medium text-gray-900 dark:text-white">
+              <p className="text-base font-medium !text-gray-900 dark:!text-white">
                 {formatDate(user.createdAt)}
               </p>
             </div>
@@ -193,7 +193,7 @@ export function UserDetailsEditForm({
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Last Login
               </p>
-              <p className="text-base font-medium text-gray-900 dark:text-white">
+              <p className="text-base font-medium !text-gray-900 dark:!text-white">
                 {formatDate(user.lastLogin)}
               </p>
             </div>
@@ -207,6 +207,7 @@ export function UserDetailsEditForm({
             variant="outline"
             onClick={onCancel}
             disabled={isLoading}
+            className="dark:text-white dark:border-gray-600"
           >
             <X className="w-4 h-4 mr-2" />
             Cancel

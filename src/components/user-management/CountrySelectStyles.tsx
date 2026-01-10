@@ -36,7 +36,7 @@ export const getCountrySelectStyles = (
             ? "#4B5563"
             : "#D1D5DB", // gray-600 for dark, gray-300 for light
       backgroundColor: isDarkMode ? "rgb(55 65 81)" : "#FFFFFF", // dark:bg-gray-700 or white
-      color: isDarkMode ? "#F3F4F6" : "#111827", // gray-100 for dark, gray-900 for light
+      color: isDarkMode ? "#FFFFFF" : "#111827", // white for dark, gray-900 for light
       fontSize: "0.875rem",
       fontFamily: "inherit",
       outline: "none",
@@ -74,7 +74,7 @@ export const getCountrySelectStyles = (
       gap: "8px",
       fontSize: "0.875rem",
       fontFamily: "inherit",
-      color: isDarkMode ? "#F3F4F6" : "#111827", // gray-100 for dark, gray-900 for light
+      color: isDarkMode ? "#FFFFFF" : "#111827", // white for dark, gray-900 for light
       marginLeft: 0,
       minWidth: 0,
       maxWidth: "100%",
@@ -84,7 +84,7 @@ export const getCountrySelectStyles = (
       margin: 0,
       padding: 0,
       fontFamily: "inherit",
-      color: isDarkMode ? "#F3F4F6" : "#111827", // gray-100 for dark, gray-900 for light
+      color: isDarkMode ? "#FFFFFF" : "#111827", // white for dark, gray-900 for light
       minWidth: 0,
     }),
     placeholder: (provided) => ({
@@ -116,7 +116,7 @@ export const getCountrySelectStyles = (
           : isDarkMode
             ? "#1F2937"
             : "#FFFFFF", // gray-800 for dark, white for light
-      color: isDarkMode ? "#F3F4F6" : "#111827", // gray-100 for dark, gray-900 for light
+      color: isDarkMode ? "#FFFFFF" : "#111827", // white for dark, gray-900 for light
       cursor: state.isDisabled ? "not-allowed" : "pointer",
       opacity: state.isDisabled ? 0.5 : 1,
       "&:active": {
@@ -127,7 +127,7 @@ export const getCountrySelectStyles = (
       ...provided,
       fontFamily: "inherit",
       backgroundColor: isDarkMode ? "#1F2937" : "#FFFFFF", // gray-800 for dark, white for light
-      color: isDarkMode ? "#F3F4F6" : "#111827", // gray-100 for dark, gray-900 for light
+      color: isDarkMode ? "#FFFFFF" : "#111827", // white for dark, gray-900 for light
       borderRadius: "0.5rem",
       border: isDarkMode ? "1px solid #374151" : "1px solid #E5E7EB", // gray-700 for dark, gray-200 for light
       boxShadow: isDarkMode

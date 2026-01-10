@@ -1,20 +1,6 @@
 // src/hooks/useUsersData.ts
 import { useQuery } from "@tanstack/react-query";
-
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  country: string;
-  role: string;
-  status: string;
-  permissions: string[];
-  createdBy: string;
-  createdAt: string;
-  lastLogin?: string;
-}
+import { User } from "@/components/user-management/UserTableColumns";
 
 const fetchUsers = async (): Promise<User[]> => {
   const response = await fetch("/api/users", {

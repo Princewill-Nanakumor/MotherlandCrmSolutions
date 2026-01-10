@@ -29,7 +29,7 @@ const UserCreationHelp: React.FC = () => {
       icon: <Users className="w-5 h-5" />,
       content: (
         <div className="space-y-4">
-          <p className="text-gray-700 dark:text-gray-300">
+          <p className="!text-gray-700 dark:!text-gray-300">
             User management allows you to create and manage team members.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -37,10 +37,10 @@ const UserCreationHelp: React.FC = () => {
               <div className="flex items-start space-x-3">
                 <Crown className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-blue-900 dark:text-blue-200">
+                  <h4 className="font-medium !text-blue-900 dark:!text-blue-200">
                     ADMIN Role
                   </h4>
-                  <p className="text-sm text-blue-800 dark:text-blue-300 mt-1">
+                  <p className="text-sm !text-blue-800 dark:!text-blue-300 mt-1">
                     Full access to all features, can manage users, leads,
                     billing, and settings
                   </p>
@@ -51,10 +51,10 @@ const UserCreationHelp: React.FC = () => {
               <div className="flex items-start space-x-3">
                 <User className="w-6 h-6 text-green-600 dark:text-green-400 mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-green-900 dark:text-green-200">
+                  <h4 className="font-medium !text-green-900 dark:!text-green-200">
                     AGENT Role
                   </h4>
-                  <p className="text-sm text-green-800 dark:text-green-300 mt-1">
+                  <p className="text-sm !text-green-800 dark:!text-green-300 mt-1">
                     Can view and work on assigned leads, limited access to
                     settings
                   </p>
@@ -72,7 +72,7 @@ const UserCreationHelp: React.FC = () => {
       content: (
         <div className="space-y-4">
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 dark:text-white mb-3">
+            <h4 className="font-medium !text-gray-900 dark:!text-white mb-3">
               Step-by-Step Process:
             </h4>
             <ol className="space-y-3 text-sm">
@@ -81,10 +81,10 @@ const UserCreationHelp: React.FC = () => {
                   1
                 </span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium !text-gray-900 dark:!text-white">
                     Navigate to User Management
                   </p>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="!text-gray-600 dark:!text-gray-400">
                     Go to Dashboard → Users
                   </p>
                 </div>
@@ -94,10 +94,10 @@ const UserCreationHelp: React.FC = () => {
                   2
                 </span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium !text-gray-900 dark:!text-white">
                     Click to Create User
                   </p>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="!text-gray-600 dark:!text-gray-400">
                     Look for the button with a user plus icon
                   </p>
                 </div>
@@ -107,10 +107,10 @@ const UserCreationHelp: React.FC = () => {
                   3
                 </span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium !text-gray-900 dark:!text-white">
                     Fill in Personal Information
                   </p>
-                  <div className="mt-2 space-y-1 text-gray-600 dark:text-gray-400">
+                  <div className="mt-2 space-y-1 !text-gray-600 dark:!text-gray-400">
                     <p>• First Name and Last Name</p>
                     <p>• Email Address (used for login)</p>
                     <p>• Phone Number</p>
@@ -124,10 +124,10 @@ const UserCreationHelp: React.FC = () => {
                   ✓
                 </span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium !text-gray-900 dark:!text-white">
                     Save User
                   </p>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="!text-gray-600 dark:!text-gray-400">
                     Click Create User to save the new user
                   </p>
                 </div>
@@ -151,19 +151,19 @@ const UserCreationHelp: React.FC = () => {
                   <Crown className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-semibold text-purple-900 dark:text-purple-200">
+                  <h4 className="text-lg font-semibold !text-purple-900 dark:!text-purple-200">
                     ADMIN
                   </h4>
-                  <p className="text-sm text-purple-700 dark:text-purple-300">
+                  <p className="text-sm !text-purple-700 dark:!text-purple-300">
                     Full system access
                   </p>
                 </div>
               </div>
               <div className="space-y-3">
-                <h5 className="font-medium text-purple-900 dark:text-purple-200">
+                <h5 className="font-medium !text-purple-900 dark:!text-purple-200">
                   Permissions:
                 </h5>
-                <ul className="space-y-1 text-sm text-purple-800 dark:text-purple-300">
+                <ul className="space-y-1 text-sm !text-purple-800 dark:!text-purple-300">
                   <li className="flex items-center space-x-2">
                     <CheckCircle className="w-4 h-4 text-green-600" />
                     <span>Create and manage users</span>
@@ -203,19 +203,19 @@ const UserCreationHelp: React.FC = () => {
                   <User className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-semibold text-green-900 dark:text-green-200">
+                  <h4 className="text-lg font-semibold !text-green-900 dark:!text-green-200">
                     AGENT
                   </h4>
-                  <p className="text-sm text-green-700 dark:text-green-300">
+                  <p className="text-sm !text-green-700 dark:!text-green-300">
                     Limited access for team members
                   </p>
                 </div>
               </div>
               <div className="space-y-3">
-                <h5 className="font-medium text-green-900 dark:text-green-200">
+                <h5 className="font-medium !text-green-900 dark:!text-green-200">
                   Permissions:
                 </h5>
-                <ul className="space-y-1 text-sm text-green-800 dark:text-green-300">
+                <ul className="space-y-1 text-sm !text-green-800 dark:!text-green-300">
                   <li className="flex items-center space-x-2">
                     <CheckCircle className="w-4 h-4 text-green-600" />
                     <span>View assigned leads only</span>
@@ -261,7 +261,7 @@ const UserCreationHelp: React.FC = () => {
           <div className="flex items-center space-x-3">
             <Users className="w-8 h-8" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">User Creation & Management</h1>
+              <h1 className="text-2xl font-bold !text-gray-900 dark:!text-white">User Creation & Management</h1>
               <p className="text-green-100 mt-1">
                 Learn how to create and manage team members in your CRM
               </p>
@@ -286,14 +286,14 @@ const UserCreationHelp: React.FC = () => {
                       <div className="text-green-600 dark:text-green-400">
                         {section.icon}
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                      <h3 className="text-lg font-medium !text-gray-900 dark:!text-white">
                         {section.title}
                       </h3>
                     </div>
                     {expandedSection === section.id ? (
-                      <ChevronDown className="w-5 h-5 text-gray-500" />
+                      <ChevronDown className="w-5 h-5 !text-gray-500 dark:!text-gray-400" />
                     ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-500" />
+                      <ChevronRight className="w-5 h-5 !text-gray-500 dark:!text-gray-400" />
                     )}
                   </div>
                 </button>

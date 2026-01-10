@@ -30,7 +30,7 @@ export default function UserLeadsPage() {
   if (status === "loading") {
     return (
       <div className="flex justify-center items-center h-screen">
-        <p className="text-gray-700 dark:text-gray-300">Loading...</p>
+        <p className="!text-gray-700 dark:!text-white">Loading...</p>
       </div>
     );
   }

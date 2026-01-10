@@ -24,3 +24,45 @@ export function maskPhoneNumber(phone: string | null | undefined): string {
   return `${masked}${last4}`;
 }
 
+/**
+ * Masks an email address, showing only the first 2 characters before @ and the full domain
+ * Example: john.doe@example.com -> jo***@example.com
+ * Example: user@domain.com -> us***@domain.com
+ * Example: a@b.com -> ***@b.com (if local part is too short)
+ */
+export function maskEmail(email: string | null | undefined): string {
+  if (!email || email.trim() === "") {
+    return "Not provided";
+  }
+
+  const trimmedEmail = email.trim().toLowerCase();
+
+  // Check if email contains @
+  const atIndex = trimmedEmail.indexOf("@");
+  if (atIndex === -1) {
+    // Not a valid email format, mask the whole thing except first 2 chars
+    if (trimmedEmail.length <= 2) {
+      return "*".repeat(trimmedEmail.length);
+    }
+    const first2 = trimmedEmail.slice(0, 2);
+    const maskedLength = trimmedEmail.length - 2;
+    const masked = "*".repeat(Math.max(3, maskedLength)); // At least 3 asterisks
+    return `${first2}${masked}`;
+  }
+
+  const localPart = trimmedEmail.slice(0, atIndex);
+  const domain = trimmedEmail.slice(atIndex); // Includes @
+
+  // If local part is 2 characters or less, show all asterisks
+  if (localPart.length <= 2) {
+    const masked = "*".repeat(Math.max(3, localPart.length)); // At least 3 asterisks
+    return `${masked}${domain}`;
+  }
+
+  // Show first 2 characters, mask the rest
+  const first2 = localPart.slice(0, 2);
+  const maskedLength = localPart.length - 2;
+  const masked = "*".repeat(Math.max(3, maskedLength)); // At least 3 asterisks
+
+  return `${first2}${masked}${domain}`;
+}

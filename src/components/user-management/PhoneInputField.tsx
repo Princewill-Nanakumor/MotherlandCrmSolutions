@@ -54,7 +54,7 @@ export const PhoneInputField: React.FC<PhoneInputFieldProps> = ({
           />
         </div>
         {error && (
-          <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+          <p className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1 mt-1">
             <AlertCircle className="h-3 w-3" />
             {error}
           </p>

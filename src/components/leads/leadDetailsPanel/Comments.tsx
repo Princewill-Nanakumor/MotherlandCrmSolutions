@@ -180,14 +180,14 @@ const Comments: FC<CommentsProps> = ({
     >
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 border border-gray-100 dark:border-gray-700 flex-1 min-h-0 flex flex-col">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          <h3 className="text-lg font-semibold !text-gray-800 dark:!text-white">
             Add a comment
           </h3>
           <Button
             onClick={handleToggleTextarea}
             variant="ghost"
             size="sm"
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="!text-gray-500 hover:!text-gray-700 dark:!text-gray-400 dark:hover:!text-gray-200"
             title={`${showTextarea ? "Hide" : "Show"} comment textarea`}
           >
             <Type className="h-4 w-4" />
@@ -208,7 +208,7 @@ const Comments: FC<CommentsProps> = ({
             {/* Textarea with explicit border control to fix thickness inconsistency */}
             <textarea
               placeholder="Write your thoughts about this lead... (Press Cmd/Ctrl + Enter to submit)"
-              className="w-full p-3 rounded-md focus:outline-none resize-none min-h-[120px] text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700/50 transition-all duration-200"
+              className="w-full p-3 rounded-md focus:outline-none resize-none min-h-[120px] !text-gray-700 dark:!text-white bg-white dark:bg-gray-700/50 transition-all duration-200"
               style={{
                 borderTopWidth: "1px",
                 borderRightWidth: "1px",
@@ -284,14 +284,14 @@ const Comments: FC<CommentsProps> = ({
             showTextarea ? "mt-6" : "mt-0"
           } flex-1 min-h-0 flex flex-col`}
         >
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">
+          <h3 className="text-lg font-semibold !text-gray-800 dark:!text-white mb-3">
             Comments ({comments.length})
           </h3>
 
           {comments.length === 0 ? (
             <div className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
               <div className="text-center">
-                <p className="text-gray-500 dark:text-gray-400">
+                <p className="!text-gray-500 dark:!text-gray-400">
                   No comments yet. Be the first to comment!
                 </p>
               </div>
@@ -345,11 +345,11 @@ const Comments: FC<CommentsProps> = ({
 
                     <div className="flex-1">
                       <div className="flex items-baseline flex-wrap gap-2">
-                        <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                        <h4 className="text-sm font-semibold !text-gray-800 dark:!text-white">
                           {comment.createdBy?.firstName}{" "}
                           {comment.createdBy?.lastName}
                         </h4>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                        <span className="text-xs !text-gray-500 dark:!text-gray-400">
                           {formatRelative(comment.createdAt)}
                         </span>
                       </div>
@@ -357,7 +357,7 @@ const Comments: FC<CommentsProps> = ({
                       {editingId === comment._id ? (
                         <div className="mt-2 space-y-2">
                           <textarea
-                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-400 dark:focus:ring-indigo-500 dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-400 dark:focus:ring-indigo-500 dark:bg-gray-800 !text-gray-700 dark:!text-white"
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
                             rows={3}
@@ -390,10 +390,10 @@ const Comments: FC<CommentsProps> = ({
                         </div>
                       ) : (
                         <div className="mt-1">
-                          <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line break-words">
+                          <p className="!text-gray-700 dark:!text-white whitespace-pre-line break-words">
                             {comment.content}
                           </p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                          <p className="text-xs !text-gray-600 dark:!text-gray-400 mt-1">
                             {formatDate(comment.createdAt)}
                           </p>
                         </div>
@@ -405,7 +405,7 @@ const Comments: FC<CommentsProps> = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
+                          className="!text-gray-500 hover:!text-indigo-600 dark:!text-gray-400 dark:hover:!text-indigo-400"
                           onClick={() => handleEdit(comment)}
                           disabled={isEditing}
                         >
@@ -414,7 +414,7 @@ const Comments: FC<CommentsProps> = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400"
+                          className="!text-gray-500 hover:!text-red-500 dark:!text-gray-400 dark:hover:!text-red-400"
                           onClick={() => handleDelete(comment._id)}
                           disabled={deletingId === comment._id || isDeleting}
                         >

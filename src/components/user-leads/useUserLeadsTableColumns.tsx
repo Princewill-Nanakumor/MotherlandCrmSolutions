@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useStatuses } from "@/hooks/useStatuses";
 import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
-import { maskPhoneNumber } from "@/utils/phoneMask";
+import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 
@@ -27,7 +27,7 @@ export const useUserLeadsTableColumns = ({
 }: UseUserLeadsTableColumnsProps) => {
   const searchParams = useSearchParams();
   const { statuses, isLoading: statusesLoading } = useStatuses();
-  const { canViewPhoneNumbers } = useCurrentUserPermission();
+  const { canViewPhoneNumbers, canViewEmails } = useCurrentUserPermission();
 
   const currentParams = searchParams.toString();
 
@@ -80,7 +80,7 @@ export const useUserLeadsTableColumns = ({
       {
         id: "actions",
         header: () => (
-          <div className="h-8 flex items-center justify-center w-full font-medium">
+          <div className="h-8 flex items-center justify-center w-full font-medium !text-gray-900 dark:!text-white">
             Actions
           </div>
         ),
@@ -115,14 +115,14 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("leadId")}
             className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "leadId" ? "font-bold" : "font-medium"}>
+            <span className={`${sortField === "leadId" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               ID
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 ${
+              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
                 sortField === "leadId"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
+                  ? "!text-gray-900 dark:!text-white"
+                  : "!text-gray-600 dark:!text-gray-400"
               }`}
             />
           </Button>
@@ -130,7 +130,7 @@ export const useUserLeadsTableColumns = ({
         cell: ({ row }) => {
           const leadId = row.original.leadId;
           return (
-            <div className="font-medium text-center">
+            <div className="font-medium text-center !text-gray-900 dark:!text-white">
               {leadId ? leadId.toString() : "—"}
             </div>
           );
@@ -145,14 +145,14 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("name")}
             className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "name" ? "font-bold" : "font-medium"}>
+            <span className={`${sortField === "name" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               Name
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 ${
+              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
                 sortField === "name"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
+                  ? "!text-gray-900 dark:!text-white"
+                  : "!text-gray-600 dark:!text-gray-400"
               }`}
             />
           </Button>
@@ -163,7 +163,7 @@ export const useUserLeadsTableColumns = ({
           const lastName = capitalizeName(lead.lastName || "");
           const fullName = lead.name || `${firstName} ${lastName}`.trim();
           return (
-            <div className="font-medium">
+            <div className="font-medium !text-gray-900 dark:!text-white">
               {fullName || "—"}
             </div>
           );
@@ -173,15 +173,24 @@ export const useUserLeadsTableColumns = ({
       {
         id: "email",
         header: () => (
-          <div className="h-8 flex items-center justify-start w-full font-medium">
+          <div className="h-8 flex items-center justify-start w-full font-medium !text-gray-900 dark:!text-white">
             Email
           </div>
         ),
         cell: ({ row }) => {
           const email = row.original.email || "";
+          if (!email || email === "") {
+            return (
+              <div className="text-center !text-gray-900 dark:!text-white">—</div>
+            );
+          }
+          // Apply masking based on email visibility permission
+          const displayEmail = canViewEmails
+            ? capitalizeEmail(email)
+            : maskEmail(email);
           return (
-            <div className="text-center">
-              {email ? capitalizeEmail(email) : "—"}
+            <div className="text-center !text-gray-900 dark:!text-white">
+              {displayEmail}
             </div>
           );
         },
@@ -190,7 +199,7 @@ export const useUserLeadsTableColumns = ({
       {
         id: "phone",
         header: () => (
-          <div className="h-8 flex items-center justify-start w-full font-medium">
+          <div className="h-8 flex items-center justify-start w-full font-medium !text-gray-900 dark:!text-white">
             Phone
           </div>
         ),
@@ -200,7 +209,7 @@ export const useUserLeadsTableColumns = ({
             ? phone
             : maskPhoneNumber(phone);
           return (
-            <div className="text-center">
+            <div className="text-center !text-gray-900 dark:!text-white">
               {displayPhone || "—"}
             </div>
           );
@@ -215,21 +224,21 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("country")}
             className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "country" ? "font-bold" : "font-medium"}>
+            <span className={`${sortField === "country" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               Country
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 ${
+              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
                 sortField === "country"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
+                  ? "!text-gray-900 dark:!text-white"
+                  : "!text-gray-600 dark:!text-gray-400"
               }`}
             />
           </Button>
         ),
         cell: ({ row }) => {
           return (
-            <div className="text-center">
+            <div className="text-center !text-gray-900 dark:!text-white">
               {row.original.country || "—"}
             </div>
           );
@@ -244,14 +253,14 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("status")}
             className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "status" ? "font-bold" : "font-medium"}>
+            <span className={`${sortField === "status" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               Status
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 ${
+              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
                 sortField === "status"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
+                  ? "!text-gray-900 dark:!text-white"
+                  : "!text-gray-600 dark:!text-gray-400"
               }`}
             />
           </Button>
@@ -263,8 +272,8 @@ export const useUserLeadsTableColumns = ({
           if (statusesLoading) {
             return (
               <div className="flex items-center justify-center">
-                <Badge variant="outline" className="flex items-center gap-1.5">
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                <Badge variant="outline" className="flex items-center gap-1.5 !text-gray-900 dark:!text-white">
+                  <Loader2 className="h-3 w-3 animate-spin !text-gray-900 dark:!text-white" />
                   Loading...
                 </Badge>
               </div>
@@ -299,21 +308,21 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("source")}
             className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "source" ? "font-bold" : "font-medium"}>
+            <span className={`${sortField === "source" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               Source
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 ${
+              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
                 sortField === "source"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
+                  ? "!text-gray-900 dark:!text-white"
+                  : "!text-gray-600 dark:!text-gray-400"
               }`}
             />
           </Button>
         ),
         cell: ({ row }) => {
           return (
-            <div className="text-center">
+            <div className="text-center !text-gray-900 dark:!text-white">
               {row.original.source || "—"}
             </div>
           );
@@ -323,7 +332,7 @@ export const useUserLeadsTableColumns = ({
       {
         id: "assignedTo",
         header: () => (
-          <div className="h-8 flex items-center justify-start w-full font-medium">
+          <div className="h-8 flex items-center justify-start w-full font-medium !text-gray-900 dark:!text-white">
             Assigned To
           </div>
         ),
@@ -331,8 +340,8 @@ export const useUserLeadsTableColumns = ({
           const lead = row.original;
           const assignedName = getAssignedUserName(lead);
           return (
-            <div className="text-center">
-              <span className={!lead.assignedTo ? "text-gray-500 dark:text-gray-400" : ""}>
+            <div className="text-center !text-gray-900 dark:!text-white">
+              <span className={!lead.assignedTo ? "!text-gray-500 dark:!text-gray-400" : ""}>
                 {assignedName}
               </span>
             </div>
@@ -348,14 +357,14 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("createdAt")}
             className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "createdAt" ? "font-bold" : "font-medium"}>
+            <span className={`${sortField === "createdAt" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               Created At
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 ${
+              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
                 sortField === "createdAt"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
+                  ? "!text-gray-900 dark:!text-white"
+                  : "!text-gray-600 dark:!text-gray-400"
               }`}
             />
           </Button>
@@ -363,7 +372,7 @@ export const useUserLeadsTableColumns = ({
         cell: ({ row }) => {
           const createdAt = row.original.createdAt;
           return (
-            <div className="text-center text-sm">
+            <div className="text-center text-sm !text-gray-900 dark:!text-white">
               {formatDateDMY(createdAt)}
             </div>
           );
@@ -378,14 +387,14 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("lastComment")}
             className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "lastComment" ? "font-bold" : "font-medium"}>
+            <span className={`${sortField === "lastComment" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               Last Comment
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 ${
+              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
                 sortField === "lastComment"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
+                  ? "!text-gray-900 dark:!text-white"
+                  : "!text-gray-600 dark:!text-gray-400"
               }`}
             />
           </Button>
@@ -393,10 +402,10 @@ export const useUserLeadsTableColumns = ({
         cell: ({ row }) => {
           const lastComment = row.original.lastComment;
           return (
-            <div className="text-center">
+            <div className="text-center !text-gray-900 dark:!text-white">
               {lastComment ? (
                 <div
-                  className="text-sm max-w-[200px] truncate mx-auto"
+                  className="text-sm max-w-[200px] truncate mx-auto !text-gray-900 dark:!text-white"
                   title={lastComment}
                   style={{
                     overflow: "hidden",
@@ -407,7 +416,7 @@ export const useUserLeadsTableColumns = ({
                   {lastComment}
                 </div>
               ) : (
-                <span>—</span>
+                <span className="!text-gray-900 dark:!text-white">—</span>
               )}
             </div>
           );
@@ -422,14 +431,14 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("lastCommentDate")}
             className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "lastCommentDate" ? "font-bold" : "font-medium"}>
+            <span className={`${sortField === "lastCommentDate" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               Last Comment Date
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 ${
+              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
                 sortField === "lastCommentDate"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
+                  ? "!text-gray-900 dark:!text-white"
+                  : "!text-gray-600 dark:!text-gray-400"
               }`}
             />
           </Button>
@@ -437,7 +446,7 @@ export const useUserLeadsTableColumns = ({
         cell: ({ row }) => {
           const lastCommentDate = row.original.lastCommentDate;
           return (
-            <div className="text-center text-sm">
+            <div className="text-center text-sm !text-gray-900 dark:!text-white">
               {formatDateDMY(lastCommentDate)}
             </div>
           );
@@ -452,14 +461,14 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("commentCount")}
             className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "commentCount" ? "font-bold" : "font-medium"}>
+            <span className={`${sortField === "commentCount" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               Comments Numbers
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 ${
+              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
                 sortField === "commentCount"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
+                  ? "!text-gray-900 dark:!text-white"
+                  : "!text-gray-600 dark:!text-gray-400"
               }`}
             />
           </Button>
@@ -467,13 +476,13 @@ export const useUserLeadsTableColumns = ({
         cell: ({ row }) => {
           const commentCount = row.original.commentCount;
           return (
-            <div className="text-center text-sm">
+            <div className="text-center text-sm !text-gray-900 dark:!text-white">
               {commentCount && commentCount > 0 ? (
-                <span className="inline-flex items-center justify-center font-medium">
+                <span className="inline-flex items-center justify-center font-medium !text-gray-900 dark:!text-white">
                   {commentCount}
                 </span>
               ) : (
-                <span className="inline-flex items-center justify-center">—</span>
+                <span className="inline-flex items-center justify-center !text-gray-900 dark:!text-white">—</span>
               )}
             </div>
           );

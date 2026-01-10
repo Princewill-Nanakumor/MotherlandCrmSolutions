@@ -263,7 +263,7 @@ export function NotificationBell() {
         type="button"
         onClick={handleDropdownToggle}
       >
-        <Bell className="h-6 w-6 text-white dark:text-purple-300" />
+        <Bell className="h-6 w-6 !text-white dark:!text-purple-300" />
         {/* Only show badge if there are unread notifications */}
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full px-1.5 py-0.5">
@@ -274,7 +274,7 @@ export function NotificationBell() {
 
       {open && (
         <div className="absolute right-0 mt-2 w-80 max-w-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-[9999]">
-          <div className="p-3 border-b border-gray-100 dark:border-gray-800 font-semibold text-gray-800 dark:text-gray-100 flex justify-between items-center">
+          <div className="p-3 border-b border-gray-100 dark:border-gray-800 font-semibold !text-gray-800 dark:!text-gray-100 flex justify-between items-center">
             <span>Notifications</span>
             <div className="flex items-center space-x-2">
               <Button
@@ -301,7 +301,7 @@ export function NotificationBell() {
                 ))}
               </>
             ) : error ? (
-              <li className="p-4 text-center text-red-500 dark:text-red-400">
+              <li className="p-4 text-center !text-red-500 dark:!text-red-400">
                 <p className="text-sm">Failed to load notifications</p>
                 <Button
                   variant="ghost"
@@ -313,12 +313,12 @@ export function NotificationBell() {
                 </Button>
               </li>
             ) : notifications.length === 0 ? (
-              <li className="p-4 text-center text-gray-500 dark:text-gray-400">
+              <li className="p-4 text-center !text-gray-500 dark:!text-gray-400">
                 No notifications
               </li>
             ) : (
               <>
-                <div className="p-2 text-gray-800 dark:text-white text-xs text-center border-b">
+                <div className="p-2 !text-gray-800 dark:!text-white text-xs text-center border-b">
                   Showing {notifications.length} notifications ({unreadCount}{" "}
                   unread)
                 </div>
@@ -338,19 +338,19 @@ export function NotificationBell() {
                           className={`text-sm ${
                             // Style unread notifications differently
                             !notification.read
-                              ? "font-medium text-gray-900 dark:text-white"
-                              : "text-gray-600 dark:text-gray-300"
+                              ? "font-medium !text-gray-900 dark:!text-white"
+                              : "!text-gray-600 dark:!text-gray-300"
                           }`}
                         >
                           {notification.message}
                         </p>
                         {notification.amount && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          <p className="text-xs !text-gray-500 dark:!text-gray-400 mt-1">
                             Amount: {notification.amount}{" "}
                             {notification.currency}
                           </p>
                         )}
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        <p className="text-xs !text-gray-400 dark:!text-gray-500 mt-1">
                           {new Date(notification.createdAt).toLocaleString()}
                         </p>
                       </div>

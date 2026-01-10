@@ -50,7 +50,7 @@ export const SessionRefreshSpinner = () => (
           <RefreshCw size={28} className="text-white" />
         </div>
       </div>
-      <p className="text-gray-600 dark:text-gray-400">Refreshing session...</p>
+      <p className="!text-gray-600 dark:!text-gray-400">Refreshing session...</p>
     </div>
   </div>
 );
@@ -65,10 +65,10 @@ export const NetworkStatus = ({ isOnline }: { isOnline: boolean }) => (
           <WifiOff className="h-12 w-12 text-red-500 mx-auto" />
         )}
       </div>
-      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+      <h3 className="text-lg font-medium !text-gray-900 dark:!text-white mb-2">
         {isOnline ? "Connected" : "No Internet Connection"}
       </h3>
-      <p className="text-gray-500 dark:text-gray-400 mb-4">
+      <p className="!text-gray-500 dark:!text-gray-400 mb-4">
         {isOnline
           ? "You're back online. Refreshing data..."
           : "Please check your internet connection and try again."}
@@ -130,15 +130,15 @@ export class ErrorBoundary extends Component<
             <div className="mb-4">
               <Shield className="h-12 w-12 text-red-500 mx-auto" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            <h3 className="text-lg font-medium !text-gray-900 dark:!text-white mb-2">
               Something went wrong
             </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
+            <p className="!text-gray-500 dark:!text-gray-400 mb-4">
               {this.state.error?.message || "An unexpected error occurred"}
             </p>
             <button
               onClick={this.handleRetry}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+              className="px-4 py-2 bg-blue-500 !text-white rounded hover:bg-blue-600 transition-colors"
             >
               Try Again
             </button>

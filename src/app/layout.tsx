@@ -19,7 +19,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Motherland CRM Solutions - Modern CRM Solution for Excel & CSV Import",
+    default:
+      "Motherland CRM Solutions - Modern CRM Solution for Excel & CSV Import",
     template: "%s | Motherland CRM Solutions",
   },
   description:
@@ -52,7 +53,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://motherland.com",
-    title: "Motherland CRM Solutions - Modern CRM Solution for Excel & CSV Import",
+    title:
+      "Motherland CRM Solutions - Modern CRM Solution for Excel & CSV Import",
     description:
       "Transform your Excel & CSV data into actionable leads with Motherland CRM Solutions. Streamline data processing, import files seamlessly, and manage customer relationships efficiently.",
     siteName: "Motherland CRM Solutions",
@@ -61,7 +63,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "ZodaShield - Modern CRM Solution",
+        alt: "Motherland - Modern CRM Solution",
       },
     ],
   },

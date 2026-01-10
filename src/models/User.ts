@@ -36,6 +36,7 @@ export interface IUser extends Document {
   maxLeads?: number;
   maxUsers?: number;
   canViewPhoneNumbers?: boolean; // Whether user can view phone numbers in leads
+  canViewEmails?: boolean; // Whether user can view email addresses in leads
 
   createdAt: Date;
   updatedAt: Date;
@@ -164,6 +165,10 @@ const userSchema = new Schema<IUser>(
     canViewPhoneNumbers: {
       type: Boolean,
       default: false, // Default to false - phone numbers are masked by default
+    },
+    canViewEmails: {
+      type: Boolean,
+      default: false, // Default to false - emails are masked by default
     },
   },
   {

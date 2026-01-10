@@ -97,20 +97,20 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
   const getPlanStatusColor = (status: string | undefined) => {
     // If no status but user is admin, assume trial
     if (isAdmin && !status) {
-      return "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30";
+      return "!text-blue-600 dark:!text-blue-400 bg-blue-100 dark:bg-blue-900/30";
     }
 
     switch (status) {
       case "active":
-        return "text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30";
+        return "!text-green-600 dark:!text-green-400 bg-green-100 dark:bg-green-900/30";
       case "trial":
-        return "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30";
+        return "!text-blue-600 dark:!text-blue-400 bg-blue-100 dark:bg-blue-900/30";
       case "expired":
-        return "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30";
+        return "!text-red-600 dark:!text-red-400 bg-red-100 dark:bg-red-900/30";
       case "inactive":
-        return "text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900/30";
+        return "!text-gray-600 dark:!text-gray-400 bg-gray-100 dark:bg-gray-900/30";
       default:
-        return "text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900/30";
+        return "!text-gray-600 dark:!text-gray-400 bg-gray-100 dark:bg-gray-900/30";
     }
   };
 
@@ -185,7 +185,7 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
           ) : (
             <>
               <div className="flex flex-col space-y-1">
-                <span className="text-sm font-bold text-gray-900 dark:text-white">
+                <span className="text-sm font-bold !text-gray-900 dark:!text-white">
                   {formatPlanName(
                     subscriptionData?.currentPlan,
                     subscriptionData?.subscriptionStatus
@@ -200,7 +200,7 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
 
               {remainingDays !== null && (
                 <div className="flex items-center space-x-1.5">
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                  <span className="text-xs font-medium !text-gray-600 dark:!text-gray-300">
                     {getRemainingDaysText(
                       remainingDays,
                       subscriptionData?.subscriptionStatus

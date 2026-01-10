@@ -220,10 +220,10 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background dark:bg-gray-800">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-xl font-semibold !text-gray-900 dark:!text-white mb-2">
             Error Loading Lead
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+          <p className="!text-gray-600 dark:!text-gray-400 mb-4">{error}</p>
           <Button onClick={handleBack} variant="outline">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to My Leads
@@ -238,10 +238,10 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background dark:bg-gray-800">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-xl font-semibold !text-gray-900 dark:!text-white mb-2">
             Lead Not Found
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <p className="!text-gray-600 dark:!text-gray-400 mb-4">
             The lead you&lsquo;re looking for doesn&lsquo;t exist or has been
             removed.
           </p>

@@ -35,22 +35,23 @@ const BillingSubscriptionHelp: React.FC = () => {
   const plans = [
     {
       name: "Starter",
-      price: "$10.99",
+      price: "$30.00",
       leads: "10,000",
       users: "2",
-      features: ["Activity logging", "Basic support", "Lead management"],
+      features: ["Up to 10,000 leads", "2 team members", "CSV/Excel import", "Activity logging"],
       color: "from-blue-500 to-blue-600",
     },
     {
       name: "Professional",
-      price: "$19.99",
+      price: "$60.00",
       leads: "30,000",
       users: "5",
       features: [
-        "Activity logging",
-        "Priority support",
-        "Advanced imports",
-        "Team collaboration",
+        "Up to 30,000 leads",
+        "5 team members",
+        "More Team collaboration",
+        "Custom fields",
+        "Bulk operations",
       ],
       color: "from-purple-500 to-purple-600",
       popular: true,
@@ -61,10 +62,12 @@ const BillingSubscriptionHelp: React.FC = () => {
       leads: "Unlimited",
       users: "Unlimited",
       features: [
-        "All features",
-        "24/7 support",
-        "Custom integrations",
-        "Dedicated manager",
+        "Unlimited leads",
+        "Unlimited members",
+        "All features included",
+        "24/7 dedicated support",
+        "Advanced security",
+        "Custom workflows",
       ],
       color: "from-green-500 to-green-600",
     },
@@ -77,7 +80,7 @@ const BillingSubscriptionHelp: React.FC = () => {
       icon: <CreditCard className="w-5 h-5" />,
       content: (
         <div className="space-y-4">
-          <p className="text-gray-700 dark:text-gray-300">
+          <p className="!text-gray-700 dark:!text-gray-300">
             Our billing system manages your subscription plans, payment
             processing, and account balance. Choose from flexible plans designed
             for your CRM needs
@@ -85,28 +88,28 @@ const BillingSubscriptionHelp: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-center">
               <Calendar className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
-              <h4 className="font-medium text-blue-900 dark:text-blue-200">
+              <h4 className="font-medium !text-blue-900 dark:!text-blue-200">
                 Monthly Billing
               </h4>
-              <p className="text-sm text-blue-800 dark:text-blue-300 mt-1">
+              <p className="text-sm !text-blue-800 dark:!text-blue-300 mt-1">
                 Flexible monthly subscriptions
               </p>
             </div>
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center">
               <Shield className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
-              <h4 className="font-medium text-green-900 dark:text-green-200">
+              <h4 className="font-medium !text-green-900 dark:!text-green-200">
                 Secure Payments
               </h4>
-              <p className="text-sm text-green-800 dark:text-green-300 mt-1">
+              <p className="text-sm !text-green-800 dark:!text-green-300 mt-1">
                 Bank-grade security
               </p>
             </div>
             <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 text-center">
               <Wallet className="w-8 h-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
-              <h4 className="font-medium text-purple-900 dark:text-purple-200">
+              <h4 className="font-medium !text-purple-900 dark:!text-purple-200">
                 Multiple Options
               </h4>
-              <p className="text-sm text-purple-800 dark:text-purple-300 mt-1">
+              <p className="text-sm !text-purple-800 dark:!text-purple-300 mt-1">
                 USDT, Bitcoin, and cards
               </p>
             </div>
@@ -134,7 +137,7 @@ const BillingSubscriptionHelp: React.FC = () => {
                   </div>
                 )}
                 <div className="text-center">
-                  <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{plan.name}</h3>
+                  <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
                   <div className="mb-4">
                     <span className="text-3xl font-bold">{plan.price}</span>
                     <span className="text-lg opacity-80">/month</span>
@@ -165,10 +168,10 @@ const BillingSubscriptionHelp: React.FC = () => {
             <div className="flex items-start space-x-3">
               <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
               <div>
-                <h4 className="font-medium text-amber-900 dark:text-amber-200">
+                <h4 className="font-medium !text-amber-900 dark:!text-amber-200">
                   Free Trial
                 </h4>
-                <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
+                <p className="text-sm !text-amber-800 dark:!text-amber-300 mt-1">
                   All new accounts start with a 3-day free trial with full
                   access to features. No credit card required to start.
                 </p>
@@ -186,20 +189,20 @@ const BillingSubscriptionHelp: React.FC = () => {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-900 dark:text-white">
+              <h4 className="font-medium !text-gray-900 dark:!text-white">
                 Cryptocurrency Payments
               </h4>
               <div className="space-y-3">
                 <div className="flex items-start space-x-3 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
                   <Bitcoin className="w-6 h-6 text-orange-600 dark:text-orange-400 mt-0.5" />
                   <div>
-                    <p className="font-medium text-orange-900 dark:text-orange-200">
+                    <p className="font-medium !text-orange-900 dark:!text-orange-200">
                       USDT (Recommended)
                     </p>
-                    <p className="text-sm text-orange-800 dark:text-orange-300">
+                    <p className="text-sm !text-orange-800 dark:!text-orange-300">
                       Tether USD - stable and fast transactions
                     </p>
-                    <ul className="text-xs text-orange-700 dark:text-orange-400 mt-1 space-y-1">
+                    <ul className="text-xs !text-orange-700 dark:!text-orange-400 mt-1 space-y-1">
                       <li>• TRC20 network supported</li>
                       <li>• Low transaction fees</li>
                       <li>• Instant processing</li>
@@ -209,13 +212,13 @@ const BillingSubscriptionHelp: React.FC = () => {
                 <div className="flex items-start space-x-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
                   <Bitcoin className="w-6 h-6 text-yellow-600 dark:text-yellow-400 mt-0.5" />
                   <div>
-                    <p className="font-medium text-yellow-900 dark:text-yellow-200">
+                    <p className="font-medium !text-yellow-900 dark:!text-yellow-200">
                       Bitcoin
                     </p>
-                    <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                    <p className="text-sm !text-yellow-800 dark:!text-yellow-300">
                       Original cryptocurrency
                     </p>
-                    <ul className="text-xs text-yellow-700 dark:text-yellow-400 mt-1 space-y-1">
+                    <ul className="text-xs !text-yellow-700 dark:!text-yellow-400 mt-1 space-y-1">
                       <li>• Secure blockchain transactions</li>
                       <li>• Global acceptance</li>
                       <li>• Variable confirmation times</li>
@@ -225,20 +228,20 @@ const BillingSubscriptionHelp: React.FC = () => {
               </div>
             </div>
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-900 dark:text-white">
+              <h4 className="font-medium !text-gray-900 dark:!text-white">
                 Traditional Payments
               </h4>
               <div className="space-y-3">
                 <div className="flex items-start space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                   <CreditCard className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-0.5" />
                   <div>
-                    <p className="font-medium text-blue-900 dark:text-blue-200">
+                    <p className="font-medium !text-blue-900 dark:!text-blue-200">
                       Credit/Debit Cards
                     </p>
-                    <p className="text-sm text-blue-800 dark:text-blue-300">
+                    <p className="text-sm !text-blue-800 dark:!text-blue-300">
                       Coming soon - traditional card payments
                     </p>
-                    <ul className="text-xs text-blue-700 dark:text-blue-400 mt-1 space-y-1">
+                    <ul className="text-xs !text-blue-700 dark:!text-blue-400 mt-1 space-y-1">
                       <li>• Visa, Mastercard, Amex</li>
                       <li>• Automatic recurring billing</li>
                       <li>• Instant activation</li>
@@ -246,7 +249,7 @@ const BillingSubscriptionHelp: React.FC = () => {
                   </div>
                 </div>
                 <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg text-center">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm !text-gray-600 dark:!text-gray-400">
                     Card payments will be available soon. Please use USDT for
                     now.
                   </p>
@@ -264,7 +267,7 @@ const BillingSubscriptionHelp: React.FC = () => {
       content: (
         <div className="space-y-4">
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 dark:text-white mb-3">
+            <h4 className="font-medium !text-gray-900 dark:!text-white mb-3">
               How Billing Works:
             </h4>
             <ol className="space-y-4 text-sm">
@@ -273,10 +276,10 @@ const BillingSubscriptionHelp: React.FC = () => {
                   1
                 </span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium !text-gray-900 dark:!text-white">
                     Account Balance System
                   </p>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="!text-gray-600 dark:!text-gray-400">
                     Add funds to your account balance using cryptocurrency or
                     cards
                   </p>
@@ -287,10 +290,10 @@ const BillingSubscriptionHelp: React.FC = () => {
                   2
                 </span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium !text-gray-900 dark:!text-white">
                     Plan Selection
                   </p>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="!text-gray-600 dark:!text-gray-400">
                     Choose your subscription plan based on your needs
                   </p>
                 </div>
@@ -300,10 +303,10 @@ const BillingSubscriptionHelp: React.FC = () => {
                   3
                 </span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium !text-gray-900 dark:!text-white">
                     Automatic Deduction
                   </p>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="!text-gray-600 dark:!text-gray-400">
                     Monthly fees are automatically deducted from your balance
                   </p>
                 </div>
@@ -313,10 +316,10 @@ const BillingSubscriptionHelp: React.FC = () => {
                   ✓
                 </span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium !text-gray-900 dark:!text-white">
                     Service Continuation
                   </p>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="!text-gray-600 dark:!text-gray-400">
                     Your service continues uninterrupted with sufficient balance
                   </p>
                 </div>
@@ -325,11 +328,11 @@ const BillingSubscriptionHelp: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-              <h4 className="font-medium text-green-900 dark:text-green-200 mb-3 flex items-center">
+              <h4 className="font-medium !text-green-900 dark:!text-green-200 mb-3 flex items-center">
                 <Wallet className="w-4 h-4 mr-2" />
                 Adding Funds
               </h4>
-              <ul className="space-y-2 text-sm text-green-800 dark:text-green-300">
+              <ul className="space-y-2 text-sm !text-green-800 dark:!text-green-300">
                 <li>• Generate deposit address</li>
                 <li>• Send USDT or Bitcoin</li>
                 <li>• Funds credited automatically</li>
@@ -337,11 +340,11 @@ const BillingSubscriptionHelp: React.FC = () => {
               </ul>
             </div>
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-3 flex items-center">
+              <h4 className="font-medium !text-blue-900 dark:!text-blue-200 mb-3 flex items-center">
                 <Bell className="w-4 h-4 mr-2" />
                 Notifications
               </h4>
-              <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-300">
+              <ul className="space-y-2 text-sm !text-blue-800 dark:!text-blue-300">
                 <li>• Low balance alerts</li>
                 <li>• Payment confirmations</li>
                 <li>• Billing reminders</li>
@@ -359,7 +362,7 @@ const BillingSubscriptionHelp: React.FC = () => {
       content: (
         <div className="space-y-4">
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 dark:text-white mb-3">
+            <h4 className="font-medium !text-gray-900 dark:!text-white mb-3">
               USDT Deposit Process:
             </h4>
             <ol className="space-y-3 text-sm">
@@ -368,10 +371,10 @@ const BillingSubscriptionHelp: React.FC = () => {
                   1
                 </span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium !text-gray-900 dark:!text-white">
                     Navigate to Billing
                   </p>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="!text-gray-600 dark:!text-gray-400">
                     Go to Dashboard → Billing & Deposits
                   </p>
                 </div>
@@ -381,10 +384,10 @@ const BillingSubscriptionHelp: React.FC = () => {
                   2
                 </span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium !text-gray-900 dark:!text-white">
                     Select USDT Tab
                   </p>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="!text-gray-600 dark:!text-gray-400">
                     Click on the USDT deposit option
                   </p>
                 </div>
@@ -394,10 +397,10 @@ const BillingSubscriptionHelp: React.FC = () => {
                   3
                 </span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium !text-gray-900 dark:!text-white">
                     Generate Deposit Address
                   </p>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="!text-gray-600 dark:!text-gray-400">
                     Click Generate New Address to create your unique wallet
                   </p>
                 </div>
@@ -407,10 +410,10 @@ const BillingSubscriptionHelp: React.FC = () => {
                   4
                 </span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium !text-gray-900 dark:!text-white">
                     Copy Address & QR Code
                   </p>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="!text-gray-600 dark:!text-gray-400">
                     Use the provided address or scan the QR code
                   </p>
                 </div>
@@ -420,10 +423,10 @@ const BillingSubscriptionHelp: React.FC = () => {
                   5
                 </span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium !text-gray-900 dark:!text-white">
                     Send USDT (TRC20)
                   </p>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="!text-gray-600 dark:!text-gray-400">
                     Transfer from your wallet using TRC20 network
                   </p>
                 </div>
@@ -433,10 +436,10 @@ const BillingSubscriptionHelp: React.FC = () => {
                   ✓
                 </span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium !text-gray-900 dark:!text-white">
                     Confirm Payment
                   </p>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="!text-gray-600 dark:!text-gray-400">
                     Click I Have Made the Payment after sending
                   </p>
                 </div>
@@ -447,10 +450,10 @@ const BillingSubscriptionHelp: React.FC = () => {
             <div className="flex items-start space-x-3">
               <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
               <div>
-                <h4 className="font-medium text-amber-900 dark:text-amber-200">
+                <h4 className="font-medium !text-amber-900 dark:!text-amber-200">
                   Important Notes
                 </h4>
-                <ul className="text-sm text-amber-800 dark:text-amber-300 mt-2 space-y-1">
+                <ul className="text-sm !text-amber-800 dark:!text-amber-300 mt-2 space-y-1">
                   <li>• Only send USDT using TRC20 network</li>
                   <li>• Do not send other cryptocurrencies to USDT address</li>
                   <li>• Minimum deposit may apply</li>
@@ -471,10 +474,10 @@ const BillingSubscriptionHelp: React.FC = () => {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 dark:text-white mb-3">
+              <h4 className="font-medium !text-gray-900 dark:!text-white mb-3">
                 Plan Management
               </h4>
-              <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+              <ul className="space-y-2 text-sm !text-gray-700 dark:!text-gray-300">
                 <li className="flex items-start space-x-2">
                   <TrendingUp className="w-4 h-4 text-green-600 mt-0.5" />
                   <span>Upgrade plans anytime</span>
@@ -494,10 +497,10 @@ const BillingSubscriptionHelp: React.FC = () => {
               </ul>
             </div>
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 dark:text-white mb-3">
+              <h4 className="font-medium !text-gray-900 dark:!text-white mb-3">
                 Balance Management
               </h4>
-              <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+              <ul className="space-y-2 text-sm !text-gray-700 dark:!text-gray-300">
                 <li className="flex items-start space-x-2">
                   <DollarSign className="w-4 h-4 text-green-600 mt-0.5" />
                   <span>Check current balance</span>
@@ -521,10 +524,10 @@ const BillingSubscriptionHelp: React.FC = () => {
             <div className="flex items-start space-x-3">
               <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div>
-                <h4 className="font-medium text-blue-900 dark:text-blue-200">
+                <h4 className="font-medium !text-blue-900 dark:!text-blue-200">
                   Account Status Monitoring
                 </h4>
-                <p className="text-sm text-blue-800 dark:text-blue-300 mt-1">
+                <p className="text-sm !text-blue-800 dark:!text-blue-300 mt-1">
                   Your account status is continuously monitored. If your balance
                   is insufficient for the next billing cycle, you will receive
                   notifications to add funds. Services may be suspended if
@@ -544,11 +547,11 @@ const BillingSubscriptionHelp: React.FC = () => {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-              <h4 className="font-medium text-green-900 dark:text-green-200 mb-3 flex items-center">
+              <h4 className="font-medium !text-green-900 dark:!text-green-200 mb-3 flex items-center">
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Common Issues
               </h4>
-              <ul className="space-y-2 text-sm text-green-800 dark:text-green-300">
+              <ul className="space-y-2 text-sm !text-green-800 dark:!text-green-300">
                 <li>• Deposit not credited</li>
                 <li>• Payment confirmation delays</li>
                 <li>• Plan upgrade questions</li>
@@ -557,11 +560,11 @@ const BillingSubscriptionHelp: React.FC = () => {
               </ul>
             </div>
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-3 flex items-center">
+              <h4 className="font-medium !text-blue-900 dark:!text-blue-200 mb-3 flex items-center">
                 <Info className="w-4 h-4 mr-2" />
                 Getting Help
               </h4>
-              <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-300">
+              <ul className="space-y-2 text-sm !text-blue-800 dark:!text-blue-300">
                 <li>• Contact billing support</li>
                 <li>• Check transaction status</li>
                 <li>• Review billing FAQ</li>
@@ -571,10 +574,10 @@ const BillingSubscriptionHelp: React.FC = () => {
             </div>
           </div>
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 dark:text-white mb-3">
+            <h4 className="font-medium !text-gray-900 dark:!text-white mb-3">
               Need Help?
             </h4>
-            <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+            <div className="text-sm !text-gray-700 dark:!text-gray-300 space-y-2">
               <p>
                 If you have any billing questions or issues, our support team is
                 here to help:
@@ -583,7 +586,7 @@ const BillingSubscriptionHelp: React.FC = () => {
                 <li>• Email: support@zodashield.com</li>
                 <li>• Response Time: Usually within 2 hours</li>
               </ul>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <p className="text-xs !text-gray-500 dark:!text-gray-400 mt-2">
                 When contacting support, please include your account email and
                 transaction details for faster assistance.
               </p>
@@ -629,7 +632,7 @@ const BillingSubscriptionHelp: React.FC = () => {
                       <div className="text-green-600 dark:text-green-400">
                         {section.icon}
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                      <h3 className="text-lg font-medium !text-gray-900 dark:!text-white">
                         {section.title}
                       </h3>
                     </div>

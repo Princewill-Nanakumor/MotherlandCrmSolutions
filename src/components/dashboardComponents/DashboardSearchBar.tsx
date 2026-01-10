@@ -55,14 +55,14 @@ export function DashboardSearchBar({
   return (
     <div className="relative w-full max-w-md">
       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <Search className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+        <Search className="h-5 w-5 !text-gray-600 dark:!text-gray-400" />
       </div>
 
       <input
         type="text"
         value={inputValue}
         onChange={handleInputChange}
-        className="block w-full pl-10 pr-10 py-2 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-purple-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-400 focus:border-transparent"
+        className="block w-full pl-10 pr-10 py-2 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-purple-200 dark:border-gray-600 !text-gray-900 dark:!text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-400 focus:border-transparent"
         placeholder={placeholder}
         disabled={isLoading}
       />
@@ -72,7 +72,7 @@ export function DashboardSearchBar({
           onClick={handleClear}
           className="absolute inset-y-0 right-0 pr-3 flex items-center"
         >
-          <X className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+          <X className="h-5 w-5 !text-gray-400 hover:!text-gray-600 dark:hover:!text-gray-300" />
         </button>
       )}
     </div>

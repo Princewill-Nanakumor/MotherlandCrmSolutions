@@ -22,9 +22,9 @@ export const EmailField: FC<EmailFieldProps> = ({
   if (isEditing) {
     return (
       <div className="flex items-start gap-3">
-        <Mail className="w-5 h-5 mt-2 text-gray-400 dark:text-gray-500" />
+        <Mail className="w-5 h-5 mt-2 !text-gray-400 dark:!text-gray-500" />
         <div className="flex-1">
-          <label className="block mb-1 text-sm text-gray-500 dark:text-gray-400">
+          <label className="block mb-1 text-sm !text-gray-500 dark:!text-gray-400">
             Email *
           </label>
           <Input
@@ -44,12 +44,12 @@ export const EmailField: FC<EmailFieldProps> = ({
     : email;
 
   return (
-    <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-      <Mail className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+    <div className="flex items-center gap-3 !text-gray-700 dark:!text-gray-300">
+      <Mail className="w-5 h-5 !text-gray-400 dark:!text-gray-500" />
       <div className="flex-1">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
+        <p className="text-sm !text-gray-500 dark:!text-gray-400">Email</p>
         <div className="flex items-center justify-between">
-          <p>{capitalizedEmail}</p>
+          <p className="!text-gray-900 dark:!text-white">{capitalizedEmail}</p>
           {onCopy && (
             <button
               onClick={(e) => {

@@ -127,8 +127,8 @@ export default function DashboardNavbar({
             <button
               onClick={onToggleHeader}
               className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium 
-                         text-purple-700 hover:text-purple-800 bg-white/20 hover:bg-white/30 
-                         dark:text-gray-200 dark:hover:text-white dark:bg-white/10 dark:hover:bg-white/20 
+                         !text-purple-700 hover:!text-purple-800 bg-white/20 hover:bg-white/30 
+                         dark:!text-gray-200 dark:hover:!text-white dark:bg-white/10 dark:hover:bg-white/20 
                          rounded-md transition-colors border border-white/20 dark:border-gray-600/50"
               title={`${showHeader ? "Hide" : "Show"} Header`}
             >
@@ -142,8 +142,8 @@ export default function DashboardNavbar({
             <button
               onClick={onToggleControls}
               className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium 
-                         text-purple-700 hover:text-purple-800 bg-white/20 hover:bg-white/30 
-                         dark:text-gray-200 dark:hover:text-white dark:bg-white/10 dark:hover:bg-white/20 
+                         !text-purple-700 hover:!text-purple-800 bg-white/20 hover:bg-white/30 
+                         dark:!text-gray-200 dark:hover:!text-white dark:bg-white/10 dark:hover:bg-white/20 
                          rounded-md transition-colors border border-white/20 dark:border-gray-600/50"
               title={`${showControls ? "Hide" : "Show"} Controls`}
             >

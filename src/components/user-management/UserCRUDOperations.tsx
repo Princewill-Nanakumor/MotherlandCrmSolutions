@@ -20,6 +20,7 @@ interface User {
   createdAt: string;
   lastLogin?: string;
   canViewPhoneNumbers?: boolean;
+  canViewEmails?: boolean;
 }
 
 interface UserFormData {

@@ -221,7 +221,7 @@ const StatusModal = ({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-gray-900 dark:text-gray-100">
+          <DialogTitle className="!text-gray-900 dark:!text-white">
             {isEditing ? "Edit Status" : "Create New Status"}
           </DialogTitle>
         </DialogHeader>
@@ -229,7 +229,7 @@ const StatusModal = ({
           {/* Create/Edit Status Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="text-sm font-medium !text-gray-700 dark:!text-white">
                 Status Name
               </label>
               <Input
@@ -243,7 +243,7 @@ const StatusModal = ({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="text-sm font-medium !text-gray-700 dark:!text-white">
                 Select Color
               </label>
               <div className="flex gap-2">
@@ -299,17 +299,17 @@ const StatusModal = ({
           {/* Existing Statuses */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100">
+              <h3 className="font-medium text-sm !text-gray-900 dark:!text-white">
                 Existing Statuses
               </h3>
-              <span className="text-xs  text-black dark:text-gray-400 font-medium  bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+              <span className="text-xs !text-gray-900 dark:!text-white font-medium bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
                 {statuses.length}{" "}
                 {statuses.length === 1 ? "status" : "statuses"}
               </span>
             </div>
             {loading ? (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-500 dark:text-gray-400" />
+                <Loader2 className="h-6 w-6 animate-spin !text-gray-500 dark:!text-gray-400" />
               </div>
             ) : (
               <div
@@ -322,7 +322,7 @@ const StatusModal = ({
                 }}
               >
                 {statuses.length === 0 ? (
-                  <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                  <div className="text-center py-4 !text-gray-500 dark:!text-gray-400 text-sm">
                     No statuses found. Create your first status above.
                   </div>
                 ) : (
@@ -336,10 +336,10 @@ const StatusModal = ({
                           className="w-4 h-4 rounded"
                           style={{ backgroundColor: status.color }}
                         />
-                        <span className="text-gray-800 dark:text-gray-200">
+                        <span className="!text-gray-800 dark:!text-white">
                           {status.name}
                         </span>
-                        <code className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm text-gray-600 dark:text-gray-300">
+                        <code className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm !text-gray-600 dark:!text-white">
                           {status.color}
                         </code>
                       </div>

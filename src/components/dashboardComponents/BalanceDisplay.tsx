@@ -49,18 +49,18 @@ export function BalanceDisplay({
   };
 
   return (
-    <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+    <span className="text-xs font-semibold !text-gray-700 dark:!text-gray-200">
       Balance:{" "}
       {loading || isUpdating ? (
-        <span className="text-gray-500 dark:text-gray-400">Loading...</span>
+        <span className="!text-gray-500 dark:!text-gray-400">Loading...</span>
       ) : (
-        <span className="text-green-600 dark:text-green-400">
+        <span className="!text-green-600 dark:!text-green-400">
           {formatCurrency(localBalance || 0)}
         </span>
       )}
       <button
         onClick={refreshBalance}
-        className="ml-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-xs underline"
+        className="ml-2 !text-blue-600 hover:!text-blue-800 dark:!text-blue-400 dark:hover:!text-blue-300 text-xs underline"
         disabled={isUpdating}
       ></button>
     </span>

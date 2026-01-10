@@ -16,6 +16,7 @@ type UserUpdateFields = {
   permissions?: string[];
   status?: string;
   canViewPhoneNumbers?: boolean;
+  canViewEmails?: boolean;
 };
 
 // Define interfaces for better type safety
@@ -43,6 +44,7 @@ interface UserDocument {
   maxLeads?: number;
   maxUsers?: number;
   canViewPhoneNumbers?: boolean;
+  canViewEmails?: boolean;
 }
 
 interface LeadDocument {
@@ -242,7 +244,7 @@ export async function GET() {
         return [];
       }
 
-      const users = (await db
+      const usersArray = (await db
         .collection("users")
         .find(query, {
           projection: {
@@ -258,10 +260,25 @@ export async function GET() {
             createdAt: 1,
             lastLogin: 1,
             canViewPhoneNumbers: 1,
+            canViewEmails: 1,
           },
         })
-        .sort({ firstName: 1, lastName: 1 })
         .toArray()) as UserDocument[];
+
+      // Sort alphabetically by full name (case-insensitive)
+      const users = usersArray.sort((a, b) => {
+        const aFirstName = (a.firstName || "").trim().toLowerCase();
+        const aLastName = (a.lastName || "").trim().toLowerCase();
+        const bFirstName = (b.firstName || "").trim().toLowerCase();
+        const bLastName = (b.lastName || "").trim().toLowerCase();
+        
+        const aFullName = `${aFirstName} ${aLastName}`.trim();
+        const bFullName = `${bFirstName} ${bLastName}`.trim();
+        
+        if (aFullName < bFullName) return -1;
+        if (aFullName > bFullName) return 1;
+        return 0;
+      });
 
       return users.map((user: UserDocument) => ({
         id: user._id.toString(),
@@ -275,6 +292,7 @@ export async function GET() {
         status: user.status,
         permissions: user.permissions,
         canViewPhoneNumbers: user.canViewPhoneNumbers ?? false,
+        canViewEmails: user.canViewEmails ?? false,
         createdAt: user.createdAt ? user.createdAt.toISOString() : undefined,
         lastLogin: user.lastLogin ? user.lastLogin.toISOString() : undefined,
       }));
@@ -319,6 +337,7 @@ export async function PUT(request: Request) {
       permissions?: string[];
       status?: string;
       canViewPhoneNumbers?: boolean;
+      canViewEmails?: boolean;
     };
 
     console.log("[PUT /api/users] Request data:", requestData);
@@ -361,6 +380,8 @@ export async function PUT(request: Request) {
       updateFields.status = requestData.status;
     if (requestData.canViewPhoneNumbers !== undefined)
       updateFields.canViewPhoneNumbers = requestData.canViewPhoneNumbers;
+    if (requestData.canViewEmails !== undefined)
+      updateFields.canViewEmails = requestData.canViewEmails;
 
     console.log("[PUT /api/users] Update fields:", updateFields);
 
@@ -529,6 +550,7 @@ export async function PUT(request: Request) {
       status: updatedUser.status,
       permissions: updatedUser.permissions ?? [],
       canViewPhoneNumbers: updatedUser.canViewPhoneNumbers ?? false,
+      canViewEmails: updatedUser.canViewEmails ?? false,
       createdBy: updatedUser.createdBy?.toString?.() ?? "",
       createdAt: updatedUser.createdAt.toISOString(),
       lastLogin: updatedUser.lastLogin?.toISOString() ?? null,

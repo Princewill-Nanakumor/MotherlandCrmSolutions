@@ -10,10 +10,12 @@ const DEFAULT_COLUMN_VISIBILITY: VisibilityState = {
   // All other columns are visible by default (undefined means visible)
 };
 
-export const useColumnVisibility = (tableId: "adminLeadsTable" | "userLeadsTable" = "adminLeadsTable") => {
+export const useColumnVisibility = (tableId: "adminLeadsTable" | "userLeadsTable" | "userTable" = "adminLeadsTable") => {
   const storageKey = tableId === "adminLeadsTable" 
     ? "all-leads-table-column-visibility"
-    : "user-leads-table-column-visibility";
+    : tableId === "userLeadsTable"
+    ? "user-leads-table-column-visibility"
+    : "user-table-column-visibility";
 
   const [columnVisibility, setColumnVisibilityState] = useState<VisibilityState>(() => {
     if (typeof window === "undefined") return DEFAULT_COLUMN_VISIBILITY;

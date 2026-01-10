@@ -84,14 +84,14 @@ export function UserDropdownMenu({
           {/* User Info Section */}
           <div className="px-4 py-3">
             <div className="ml-3 max-w-[180px]">
-              <p className="text-sm font-medium text-gray-900 dark:text-white break-all">
+              <p className="text-sm font-medium !text-gray-900 dark:!text-white break-all">
                 {session?.user?.firstName && session?.user?.lastName
                   ? `${session.user.firstName} ${session.user.lastName}`
                   : userProfile?.firstName && userProfile?.lastName
                     ? `${userProfile.firstName} ${userProfile.lastName}`
                     : "User"}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 break-all">
+              <p className="text-xs !text-gray-500 dark:!text-gray-400 break-all">
                 {session?.user?.email
                   ? session.user.email
                   : userProfile?.email
@@ -116,14 +116,14 @@ export function UserDropdownMenu({
           <div className="py-1 ml-4">
             <button
               onClick={handleProfile}
-              className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out"
+              className="flex w-full items-center px-4 py-2.5 text-sm !text-gray-700 dark:!text-gray-200 hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out"
             >
               <User className="h-4 w-4 mr-3 text-purple-500 dark:text-purple-400" />
               Profile
             </button>
             <button
               onClick={handleSettings}
-              className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out"
+              className="flex w-full items-center px-4 py-2.5 text-sm !text-gray-700 dark:!text-gray-200 hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out"
             >
               <Settings className="h-4 w-4 mr-3 text-blue-500 dark:text-blue-400" />
               Settings
@@ -132,7 +132,7 @@ export function UserDropdownMenu({
           <div className="py-1 ml-4">
             <button
               onClick={handleLogout}
-              className="flex w-full items-center px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150 ease-in-out"
+              className="flex w-full items-center px-4 py-2.5 text-sm !text-red-600 dark:!text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150 ease-in-out"
             >
               <LogOut className="h-4 w-4 mr-3" />
               Logout

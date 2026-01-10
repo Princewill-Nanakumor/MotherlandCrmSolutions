@@ -478,18 +478,22 @@ a {
 
 /* Fix select option text colors for dark mode */
 select option {
-  background-color: white;
-  color: #111827; /* gray-900 */
+  background-color: white !important;
+  color: #111827 !important; /* gray-900 */
 }
 
 .dark select option {
-  background-color: #1f2937; /* gray-800 */
-  color: #f9fafb; /* white/light */
+  background-color: #1f2937 !important; /* gray-800 */
+  color: #f9fafb !important; /* white/light */
 }
 
 /* Ensure select elements have proper text colors */
 select {
   color: #111827 !important; /* gray-900 */
+}
+
+.dark select {
+  color: #f9fafb !important; /* white */
 }
 
 .dark select {

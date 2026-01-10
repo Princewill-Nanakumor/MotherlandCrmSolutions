@@ -13,22 +13,7 @@ import UsageLimitsDisplay from "./UsageLimitsDisplay";
 import { useUserUsageData } from "@/hooks/useUserUsageData";
 import { useUsersData } from "@/hooks/useUsersData";
 import { UserDetailsModal } from "./UserDetailsModal";
-
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  country: string;
-  role: string;
-  status: string;
-  permissions: string[];
-  createdBy: string;
-  createdAt: string;
-  lastLogin?: string;
-  canViewPhoneNumbers?: boolean;
-}
+import { User } from "./UserTableColumns";
 
 interface UsersManagementProps {
   onUserDeleted?: (userId: string) => void;

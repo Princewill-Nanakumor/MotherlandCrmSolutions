@@ -208,7 +208,7 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
+            <Plus className="w-5 h-5" />
             Add New Lead
           </DialogTitle>
           <DialogDescription>
@@ -276,8 +276,8 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
                 }
               />
               {isCheckingEmail && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                <div className="absolute -translate-y-1/2 right-3 top-1/2">
+                  <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
                 </div>
               )}
             </div>
@@ -286,7 +286,7 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
             )}
             {emailError && !errors.email && (
               <Alert variant="destructive" className="mt-2">
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className="w-4 h-4" />
                 <AlertDescription>{emailError}</AlertDescription>
               </Alert>
             )}
@@ -408,21 +408,21 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
               disabled={
                 createLeadMutation.isPending || isCheckingEmail || !!emailError
               }
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+              className="text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
             >
               {createLeadMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Creating...
                 </>
               ) : isCheckingEmail ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Validating...
                 </>
               ) : (
                 <>
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus className="w-4 h-4 mr-2" />
                   Create Lead
                 </>
               )}

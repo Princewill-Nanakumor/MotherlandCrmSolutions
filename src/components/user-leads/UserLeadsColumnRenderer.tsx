@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Eye } from "lucide-react";
 import Link from "next/link";
 import { UserLeadsColumnId } from "@/hooks/useUserLeadsColumnOrder";
-import { maskPhoneNumber } from "@/utils/phoneMask";
+import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
 
 interface Status {
   _id: string;
@@ -26,6 +26,7 @@ interface ColumnRendererProps {
   statusesLoading: boolean;
   detailUrl: string;
   canViewPhoneNumbers?: boolean;
+  canViewEmails?: boolean;
 }
 
 export function renderUserLeadCell({
@@ -36,6 +37,7 @@ export function renderUserLeadCell({
   statusesLoading,
   detailUrl,
   canViewPhoneNumbers = false,
+  canViewEmails = false,
 }: ColumnRendererProps): React.ReactElement | null {
 
   const getAssignedUserName = () => {
@@ -65,8 +67,8 @@ export function renderUserLeadCell({
     if (statusesLoading) {
       return (
         <div className="flex items-center justify-center">
-          <Badge variant="outline" className="flex items-center gap-1.5">
-            <Loader2 className="h-3 w-3 animate-spin" />
+          <Badge variant="outline" className="flex items-center gap-1.5 !text-gray-900 dark:!text-white">
+            <Loader2 className="h-3 w-3 animate-spin !text-gray-900 dark:!text-white" />
             Loading...
           </Badge>
         </div>
@@ -89,7 +91,7 @@ export function renderUserLeadCell({
   switch (columnId) {
     case "actions":
       return (
-        <TableCell className={`text-center ${isSelected ? "dark:text-white" : "dark:text-gray-300"}`}>
+        <TableCell className={`text-center ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}`}>
           <div className="flex items-center justify-center">
             <Link
               href={detailUrl}
@@ -107,8 +109,8 @@ export function renderUserLeadCell({
 
     case "leadId":
       return (
-        <TableCell className={`text-center ${isSelected ? "dark:text-white" : "dark:text-gray-300"}`}>
-          <span className="font-medium">{lead.leadId ? lead.leadId.toString() : "—"}</span>
+        <TableCell className={`text-center ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}`}>
+          <span className="font-medium !text-gray-900 dark:!text-white">{lead.leadId ? lead.leadId.toString() : "—"}</span>
         </TableCell>
       );
 
@@ -120,20 +122,30 @@ export function renderUserLeadCell({
       const firstName = capitalizeName(lead.firstName || "");
       const lastName = capitalizeName(lead.lastName || "");
       return (
-        <TableCell className={`text-center ${isSelected ? "dark:text-white" : "dark:text-gray-300"}`}>
-          {firstName} {lastName}
+        <TableCell className={`text-center ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}`}>
+          <span className="!text-gray-900 dark:!text-white">{firstName} {lastName}</span>
         </TableCell>
       );
 
     case "email":
       const email = lead.email || "";
-      const capitalizedEmail = email.length > 0 
-        ? email.charAt(0).toUpperCase() + email.slice(1)
-        : email;
+      if (!email || email === "") {
+        return (
+          <TableCell className={`text-center ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}`}>
+            <div className="flex items-center justify-center">
+              <span className="!text-gray-900 dark:!text-white">—</span>
+            </div>
+          </TableCell>
+        );
+      }
+      // Apply masking based on email visibility permission
+      const displayEmail = canViewEmails
+        ? email.charAt(0).toUpperCase() + email.slice(1) // Capitalize first letter if visible
+        : maskEmail(email);
       return (
-        <TableCell className={`text-center ${isSelected ? "dark:text-white" : "dark:text-gray-300"}`}>
+        <TableCell className={`text-center ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}`}>
           <div className="flex items-center justify-center">
-            <span>{capitalizedEmail}</span>
+            <span className="!text-gray-900 dark:!text-white">{displayEmail}</span>
           </div>
         </TableCell>
       );
@@ -145,17 +157,17 @@ export function renderUserLeadCell({
           ? maskPhoneNumber(lead.phone)
           : "—";
       return (
-        <TableCell className={`text-center ${isSelected ? "dark:text-white" : "dark:text-gray-300"}`}>
+        <TableCell className={`text-center ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}`}>
           <div className="flex items-center justify-center">
-            <span>{displayPhone}</span>
+            <span className="!text-gray-900 dark:!text-white">{displayPhone}</span>
           </div>
         </TableCell>
       );
 
     case "country":
       return (
-        <TableCell className={`text-center ${isSelected ? "dark:text-white" : "dark:text-gray-300"}`}>
-          <span>{lead.country || "—"}</span>
+        <TableCell className={`text-center ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}`}>
+          <span className="!text-gray-900 dark:!text-white">{lead.country || "—"}</span>
         </TableCell>
       );
 
@@ -168,16 +180,16 @@ export function renderUserLeadCell({
 
     case "source":
       return (
-        <TableCell className={`text-center ${isSelected ? "dark:text-white" : "dark:text-gray-300"}`}>
-          <span>{lead.source || "—"}</span>
+        <TableCell className={`text-center ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}`}>
+          <span className="!text-gray-900 dark:!text-white">{lead.source || "—"}</span>
         </TableCell>
       );
 
     case "assignedTo":
       return (
-        <TableCell className={`text-center ${isSelected ? "dark:text-white" : "dark:text-gray-300"}`}>
+        <TableCell className={`text-center ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}`}>
           <span
-            className={!lead.assignedTo ? "text-gray-500 dark:text-gray-400" : ""}
+            className={!lead.assignedTo ? "!text-gray-500 dark:!text-gray-400" : ""}
           >
             {getAssignedUserName()}
           </span>
@@ -186,9 +198,9 @@ export function renderUserLeadCell({
 
     case "createdAt":
       return (
-        <TableCell className={`text-center ${isSelected ? "dark:text-white" : "dark:text-gray-300"}`}>
+        <TableCell className={`text-center ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}`}>
           {lead.createdAt ? (
-            <div className="text-sm text-center">
+            <div className="text-sm text-center !text-gray-900 dark:!text-white">
               {(() => {
                 const date = new Date(lead.createdAt);
                 const day = String(date.getDate()).padStart(2, "0");
@@ -198,7 +210,7 @@ export function renderUserLeadCell({
               })()}
             </div>
           ) : (
-            <div className="text-center">
+            <div className="text-center !text-gray-900 dark:!text-white">
               <span>—</span>
             </div>
           )}
@@ -207,10 +219,10 @@ export function renderUserLeadCell({
 
     case "lastComment":
       return (
-        <TableCell className={`text-center ${isSelected ? "dark:text-white" : "dark:text-gray-300"}`}>
+        <TableCell className={`text-center ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}`}>
           {lead.lastComment ? (
             <div
-              className="text-sm max-w-[200px] truncate mx-auto"
+              className="text-sm max-w-[200px] truncate mx-auto !text-gray-900 dark:!text-white"
               title={lead.lastComment}
               style={{
                 overflow: "hidden",
@@ -221,16 +233,16 @@ export function renderUserLeadCell({
               {lead.lastComment}
             </div>
           ) : (
-            <span>—</span>
+            <span className="!text-gray-900 dark:!text-white">—</span>
           )}
         </TableCell>
       );
 
     case "lastCommentDate":
       return (
-        <TableCell className={`text-center ${isSelected ? "dark:text-white" : "dark:text-gray-300"}`}>
+        <TableCell className={`text-center ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}`}>
           {lead.lastCommentDate ? (
-            <div className="text-sm text-center">
+            <div className="text-sm text-center !text-gray-900 dark:!text-white">
               {(() => {
                 const date = new Date(lead.lastCommentDate);
                 const day = String(date.getDate()).padStart(2, "0");
@@ -240,7 +252,7 @@ export function renderUserLeadCell({
               })()}
             </div>
           ) : (
-            <div className="text-center">
+            <div className="text-center !text-gray-900 dark:!text-white">
               <span>—</span>
             </div>
           )}
@@ -249,14 +261,14 @@ export function renderUserLeadCell({
 
     case "commentCount":
       return (
-        <TableCell className={`text-center ${isSelected ? "dark:text-white" : "dark:text-gray-300"}`}>
-          <div className="text-sm text-center">
+        <TableCell className={`text-center ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}`}>
+          <div className="text-sm text-center !text-gray-900 dark:!text-white">
             {lead.commentCount && lead.commentCount > 0 ? (
-              <span className="inline-flex items-center justify-center font-medium">
+              <span className="inline-flex items-center justify-center font-medium !text-gray-900 dark:!text-white">
                 {lead.commentCount}
               </span>
             ) : (
-              <span className="inline-flex items-center justify-center">—</span>
+              <span className="inline-flex items-center justify-center !text-gray-900 dark:!text-white">—</span>
             )}
           </div>
         </TableCell>

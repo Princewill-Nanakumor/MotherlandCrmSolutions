@@ -27,7 +27,7 @@ export default function ThemeToggle({ isLoading = false }: ThemeToggleProps) {
 
   // Base classes that work for both light and dark
   const baseClasses =
-    "border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300";
+    "border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-700 !text-gray-700 dark:!text-gray-300";
 
   if (!mounted) {
     return (
@@ -62,19 +62,19 @@ export default function ThemeToggle({ isLoading = false }: ThemeToggleProps) {
       <DropdownMenuContent align="end">
         <DropdownMenuItem
           onClick={() => setTheme("light")}
-          className="cursor-pointer"
+          className="cursor-pointer !text-gray-900 dark:!text-white"
         >
           Light
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme("dark")}
-          className="cursor-pointer"
+          className="cursor-pointer !text-gray-900 dark:!text-white"
         >
           Dark
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme("system")}
-          className="cursor-pointer"
+          className="cursor-pointer !text-gray-900 dark:!text-white"
         >
           System
         </DropdownMenuItem>

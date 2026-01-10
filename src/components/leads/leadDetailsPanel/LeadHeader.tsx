@@ -98,7 +98,7 @@ export const LeadHeader: FC<LeadHeaderProps> = ({
             )}
           </div>
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+            <h2 className="text-2xl font-semibold !text-gray-900 dark:!text-white">
               {fullName}
             </h2>
           </div>

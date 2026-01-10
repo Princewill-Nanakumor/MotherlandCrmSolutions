@@ -186,7 +186,7 @@ export function UserFormModal({
         <div className="p-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold !text-gray-900 dark:!text-white">
               {mode === "create" ? "Add New User" : "Edit User"}
             </h2>
             <button
@@ -215,7 +215,7 @@ export function UserFormModal({
                   <div className="flex items-center space-x-2">
                     <Badge
                       variant="outline"
-                      className="text-red-600 dark:text-red-400"
+                      className="text-red-600 dark:text-red-400 dark:border-red-400"
                     >
                       {usageData.currentUsers}/{usageData.maxUsers} Members
                     </Badge>
@@ -280,7 +280,7 @@ export function UserFormModal({
                   placeholder={
                     <div className="flex items-center gap-2">
                       <Globe className="h-5 w-4 text-gray-400 dark:text-gray-500" />
-                      <span>Select a country</span>
+                      <span className="text-gray-500 dark:text-gray-400">Select a country</span>
                     </div>
                   }
                   isDisabled={isLoading || shouldDisableInputs}
@@ -295,7 +295,7 @@ export function UserFormModal({
                   menuPlacement="top"
                 />
                 {getFieldError("country") && (
-                  <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                  <p className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1 mt-1">
                     <AlertCircle className="h-3 w-3" />
                     {getFieldError("country")}
                   </p>
@@ -317,7 +317,7 @@ export function UserFormModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md !text-gray-700 dark:!text-white hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 disabled={isLoading}
               >
                 Cancel
