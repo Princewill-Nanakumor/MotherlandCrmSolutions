@@ -9,6 +9,10 @@ import Activity from "@/models/Activity";
 import Payment from "@/models/Payment";
 import mongoose from "mongoose";
 
+// Force dynamic rendering - this route should not be statically analyzed at build time
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 // Define interface for Ad (placeholder - you can create an Ad model later)
 interface Ad {
   _id: string;
