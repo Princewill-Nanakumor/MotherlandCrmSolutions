@@ -1,8 +1,14 @@
-// next.config.js - SIMPLIFIED VERSION
+// next.config.mjs - SIMPLIFIED VERSION
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Set output file tracing root to silence multiple lockfiles warning
-  outputFileTracingRoot: require("path").join(__dirname),
+  outputFileTracingRoot: path.join(__dirname),
   images: {
     remotePatterns: [
       {
@@ -21,6 +27,9 @@ const nextConfig = {
   },
   typescript: {
     ignoreBuildErrors: false,
+  },
+  eslint: {
+    ignoreDuringBuilds: false,
   },
   experimental: {
     serverActions: {
@@ -81,23 +90,23 @@ const nextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(self), geolocation=()",
           },
-                  {
-                    key: "Content-Security-Policy",
-                    value: [
-                      "default-src 'self'",
-                      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-                      "style-src 'self' 'unsafe-inline'",
-                      "img-src 'self' data: blob: https://*.cloudinary.com https://flagcdn.com",
-                      "media-src 'self' blob:",
-                      "font-src 'self' data:",
-                      "connect-src 'self' https://*.cloudinary.com",
-                      "frame-src 'self'",
-                    ].join("; "),
-                  },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https://*.cloudinary.com https://flagcdn.com",
+              "media-src 'self' blob:",
+              "font-src 'self' data:",
+              "connect-src 'self' https://*.cloudinary.com",
+              "frame-src 'self'",
+            ].join("; "),
+          },
         ],
       },
     ];
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
