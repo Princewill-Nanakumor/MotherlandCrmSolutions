@@ -4,7 +4,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash, KeyRound, Eye, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Trash, KeyRound, Eye, ArrowUpDown, ArrowUp, ArrowDown, PhoneCall } from "lucide-react";
 
 export interface User {
   id: string;
@@ -26,6 +26,7 @@ export interface User {
 interface UserTableColumnsProps {
   showActions: boolean;
   onViewDetails?: (user: User) => void;
+  onViewCallLogs?: (user: User) => void;
   onResetPassword: (userId: string) => void;
   onDeleteUser: (userId: string) => void;
 }
@@ -33,6 +34,7 @@ interface UserTableColumnsProps {
 export function useUserTableColumns({
   showActions,
   onViewDetails,
+  onViewCallLogs,
   onResetPassword,
   onDeleteUser,
 }: UserTableColumnsProps): { columns: ColumnDef<User>[] } {
@@ -214,6 +216,20 @@ export function useUserTableColumns({
               title="View Details"
             >
               <Eye className="h-4 w-4" />
+            </Button>
+          )}
+          {onViewCallLogs && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewCallLogs(row.original);
+              }}
+              className="hover:bg-blue-50 dark:hover:bg-blue-900/20 dark:border-gray-600 dark:text-white text-blue-600 dark:text-blue-400"
+              title="View Call Logs"
+            >
+              <PhoneCall className="h-4 w-4" />
             </Button>
           )}
           <Button

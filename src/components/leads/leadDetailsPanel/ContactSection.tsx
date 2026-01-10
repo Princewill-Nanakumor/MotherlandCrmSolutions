@@ -10,6 +10,8 @@ import { PhoneField } from "./PhoneField";
 import { CountryField } from "./CountryField";
 import { useDialerSettings } from "@/context/DialerSettingsContext";
 import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
+import { useQueryClient } from "@tanstack/react-query";
+import { callLogsKeys } from "@/components/user-management/CallLogsModal";
 
 interface ContactSectionProps {
   lead: Lead | null;
@@ -27,6 +29,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
   const { toast } = useToast();
   const { data: session } = useSession();
   const { dialer } = useDialerSettings();
+  const queryClient = useQueryClient();
   const isAdmin = session?.user?.role === "ADMIN";
   const { canViewPhoneNumbers, isLoading: isLoadingPermission } =
     useCurrentUserPermission();
@@ -76,7 +79,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
   );
 
   const handleCall = useCallback(
-    (phoneNumber: string) => {
+    async (phoneNumber: string) => {
       try {
         // Clean the phone number: remove spaces, dashes, parentheses, but keep + sign
         let cleanedNumber = phoneNumber.replace(/[\s\-\(\)\.]/g, "").trim();
@@ -104,18 +107,15 @@ export const ContactSection: FC<ContactSectionProps> = ({
 
         // Get the dialer URL based on user's preference
         let dialerUrl: string;
-        let dialerName: string;
 
         if (dialer === "microsip") {
           // MicroSIP uses sip: protocol
           // Standard SIP URI format: sip:number or sip:number@domain
           // Always use standard format - PBX configuration handles number hiding
           dialerUrl = `sip:${cleanedNumber}`;
-          dialerName = "MicroSIP";
         } else {
           // Zoiper uses zoiper:// protocol
           dialerUrl = `zoiper://${cleanedNumber}`;
-          dialerName = "Zoiper";
         }
 
         // Try to open the selected dialer with the number
@@ -143,13 +143,40 @@ export const ContactSection: FC<ContactSectionProps> = ({
           });
         }
 
-        // Log dialer usage without exposing the phone number
-        console.log(`Using ${dialerName} (${dialer})`);
+        // Log the call attempt to the database
+        try {
+          const response = await fetch("/api/calls/log", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              leadId: lead?._id || null,
+              phoneNumber: cleanedNumber,
+              dialer: dialer,
+            }),
+          });
+
+          if (response.ok) {
+            // Invalidate call logs for the current user who made the call
+            // React Query will automatically refetch any active queries (if modal is open)
+            // This ensures the call logs modal shows the latest data immediately without page refresh
+            if (session?.user?.id) {
+              queryClient.invalidateQueries({
+                queryKey: callLogsKeys.user(session.user.id),
+                refetchType: "active", // Only refetch if query is currently being used (modal is open)
+              });
+            }
+          }
+        } catch (logError) {
+          // Silently fail if logging fails - don't interrupt the user experience
+          console.error("Failed to log call:", logError);
+        }
       } catch (error) {
         console.error("Error initiating call:", error);
       }
     },
-    [dialer, canViewPhoneNumbers]
+    [dialer, canViewPhoneNumbers, lead, session?.user?.id, queryClient]
   );
 
   const handleEdit = useCallback(() => {

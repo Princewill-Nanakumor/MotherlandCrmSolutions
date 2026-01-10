@@ -21,7 +21,6 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { UserTableSkeleton } from "../dashboardComponents/CreateUserTableSkeleton";
 
 interface UserTableDisplayProps {
   users: User[];
@@ -31,6 +30,7 @@ interface UserTableDisplayProps {
   onDeleteUser: (userId: string) => void;
   onResetPassword: (userId: string) => void;
   onViewDetails?: (user: User) => void;
+  onViewCallLogs?: (user: User) => void;
 }
 
 export function UserTableDisplay({
@@ -41,6 +41,7 @@ export function UserTableDisplay({
   onDeleteUser,
   onResetPassword,
   onViewDetails,
+  onViewCallLogs,
 }: UserTableDisplayProps) {
   // Filter users based on filterActiveOnly
   const filteredUsers = useMemo(() => {
@@ -94,6 +95,7 @@ export function UserTableDisplay({
   const { columns } = useUserTableColumns({
     showActions,
     onViewDetails,
+    onViewCallLogs,
     onResetPassword,
     onDeleteUser,
   });
@@ -136,27 +138,20 @@ export function UserTableDisplay({
     setPageIndex(page);
   }, []);
 
-  // Show loading skeleton
-  if (loading) {
-    return (
-      <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
-        <UserTableSkeleton rows={6} />
-      </div>
-    );
-  }
-
   const totalRows = filteredUsers.length;
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="p-4">
-        <UserTableHeader
-          table={table}
-          pageSize={pageSize}
-          pageIndex={pageIndex}
-          totalRows={totalRows}
-        />
-      </div>
+      {!loading && (
+        <div className="p-4">
+          <UserTableHeader
+            table={table}
+            pageSize={pageSize}
+            pageIndex={pageIndex}
+            totalRows={totalRows}
+          />
+        </div>
+      )}
 
       <DndContext
         sensors={sensors}
@@ -176,7 +171,7 @@ export function UserTableDisplay({
         </Table>
       </DndContext>
 
-      {totalRows > 0 && (
+      {!loading && totalRows > 0 && (
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <TablePagination
             pageIndex={pageIndex}

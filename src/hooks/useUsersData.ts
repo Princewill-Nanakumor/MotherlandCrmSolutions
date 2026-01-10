@@ -22,7 +22,9 @@ export const useUsersData = () => {
     queryFn: fetchUsers,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
+    refetchOnMount: true, // Always refetch on mount to ensure fresh data
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
+    placeholderData: undefined, // Don't use placeholder data - show loading state instead
   });
 };

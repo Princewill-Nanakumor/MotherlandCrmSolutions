@@ -594,13 +594,9 @@ html.dark h4[class*="dark:text-gray-600"] {
 
 /* Override gray-900 in dark mode when dark:text-white or dark:text-gray-* is present */
 .dark [class*="text-gray-900"][class*="dark:text-white"],
-.dark [class*="text-gray-900"][class*="dark:!text-white"],
 .dark h3[class*="text-gray-900"][class*="dark:text-white"],
 .dark h4[class*="text-gray-900"][class*="dark:text-white"],
-.dark h3[class*="text-gray-900"][class*="dark:!text-white"],
-.dark h4[class*="text-gray-900"][class*="dark:!text-white"],
 html.dark [class*="text-gray-900"][class*="dark:text-white"],
-html.dark [class*="text-gray-900"][class*="dark:!text-white"],
 html.dark h3[class*="text-gray-900"][class*="dark:text-white"],
 html.dark h4[class*="text-gray-900"][class*="dark:text-white"] {
   color: rgb(255 255 255) !important;
@@ -1309,14 +1305,11 @@ aside nav a span.text-indigo-700 {
   color: white !important;
 }
 
-.dark aside nav a:not(.bg-gradient-to-r):not(.active-nav-link) span,
-.dark aside nav a:not(.bg-gradient-to-r):not(.active-nav-link) span[class*="dark:!text-white"],
-.dark aside nav a:not(.bg-gradient-to-r):not(.active-nav-link) span.dark\:!text-white {
+.dark aside nav a:not(.bg-gradient-to-r):not(.active-nav-link) span {
   color: white !important;
 }
 
 /* Ensure dark:!text-white works in sidebar */
-.dark aside nav a svg[class*="dark:!text-white"],
 .dark aside nav a svg.dark\:!text-white {
   stroke: white !important;
   color: white !important;

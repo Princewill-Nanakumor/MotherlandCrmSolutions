@@ -13,6 +13,7 @@ import UsageLimitsDisplay from "./UsageLimitsDisplay";
 import { useUserUsageData } from "@/hooks/useUserUsageData";
 import { useUsersData } from "@/hooks/useUsersData";
 import { UserDetailsModal } from "./UserDetailsModal";
+import { CallLogsModal } from "./CallLogsModal";
 import { User } from "./UserTableColumns";
 
 interface UsersManagementProps {
@@ -36,9 +37,12 @@ export default function UsersManagement({
   const [showModal, setShowModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showCallLogsModal, setShowCallLogsModal] = useState(false);
   const [selectedUserForPassword, setSelectedUserForPassword] =
     useState<User | null>(null);
   const [selectedUserForDetails, setSelectedUserForDetails] =
+    useState<User | null>(null);
+  const [selectedUserForCallLogs, setSelectedUserForCallLogs] =
     useState<User | null>(null);
   const [showUsageLimit, setShowUsageLimit] = useState(false);
 
@@ -46,6 +50,7 @@ export default function UsersManagement({
   const {
     data: users = [],
     isLoading: usersLoading,
+    isFetching: usersFetching,
     refetch: refetchUsers,
   } = useUsersData();
 
@@ -161,12 +166,16 @@ export default function UsersManagement({
 
             <UserTableDisplay
               users={users}
-              loading={usersLoading}
+              loading={usersLoading || (usersFetching && users.length === 0)}
               filterActiveOnly={filterActiveOnly}
               showActions={showActions}
               onViewDetails={(user) => {
                 setSelectedUserForDetails(user);
                 setShowDetailsModal(true);
+              }}
+              onViewCallLogs={(user) => {
+                setSelectedUserForCallLogs(user);
+                setShowCallLogsModal(true);
               }}
               onDeleteUser={handleDeleteUser}
               onResetPassword={(userId) => {
@@ -234,6 +243,20 @@ export default function UsersManagement({
                   throw error;
                 }
               }}
+            />
+
+            <CallLogsModal
+              isOpen={showCallLogsModal}
+              onClose={() => {
+                setShowCallLogsModal(false);
+                setSelectedUserForCallLogs(null);
+              }}
+              userId={selectedUserForCallLogs?.id || ""}
+              userName={
+                selectedUserForCallLogs
+                  ? `${selectedUserForCallLogs.firstName} ${selectedUserForCallLogs.lastName}`
+                  : ""
+              }
             />
           </div>
         )}
