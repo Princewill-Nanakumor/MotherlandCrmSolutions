@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { SessionProvider } from "next-auth/react";
-import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
 import Navbar from "@/components/homepageComponents/Navabar";
 import SignInForm from "@/components/authComponents/SignInForm";
 import { useEffect } from "react";
@@ -67,7 +66,7 @@ export default function LoginPage() {
     };
     makeChildrenTransparent();
 
-    // Watch for dark mode and keep background image
+    // Keep background image
     const observer = new MutationObserver(() => {
       body.style.setProperty("background-image", "url('/motherlandImage.jpg')", "important");
       body.style.setProperty("background-size", "cover", "important");
@@ -112,11 +111,7 @@ export default function LoginPage() {
           __html: `
           /* Force transparent backgrounds for all wrappers - background image is on body */
           html, 
-          html.dark, 
-          html.dark body,
-          body.dark,
-          .dark html,
-          .dark body {
+          body {
             background-color: transparent !important;
           }
           /* Override ALL wrapper divs from providers */
@@ -127,49 +122,32 @@ export default function LoginPage() {
             background-color: transparent !important;
             background: transparent !important;
           }
-          /* Ensure navbar doesn't get dark mode background */
+          /* Ensure navbar doesn't get background */
           nav,
-          .dark nav,
-          nav.dark,
-          .dark nav[class*="nav"],
           [class*="Navbar"],
           [class*="navbar"] {
             background-color: transparent !important;
             background: transparent !important;
           }
-          /* Ensure form container doesn't get dark mode background - target the container div */
+          /* Ensure form container background */
           div[class*="bg-white/10"],
-          div[class*="bg-white/10"].dark,
-          .dark div[class*="bg-white/10"],
           [class*="SignInForm"],
-          [class*="signInForm"],
-          .dark [class*="SignInForm"],
-          .dark [class*="signInForm"] {
+          [class*="signInForm"] {
             background-color: rgba(255, 255, 255, 0.1) !important;
             background: rgba(255, 255, 255, 0.1) !important;
           }
-          /* Also ensure form wrapper doesn't get dark background */
+          /* Also ensure form wrapper doesn't get background */
           form {
             background-color: transparent !important;
             background: transparent !important;
           }
-          /* Remove dark mode borders from inputs */
+          /* Input borders */
           input[type="email"],
-          input[type="password"],
-          .dark input[type="email"],
-          .dark input[type="password"] {
+          input[type="password"] {
             border-color: rgb(209, 213, 219) !important; /* gray-300 */
           }
-          /* Remove dark mode background from checkbox - use very specific selectors */
-          input[type="checkbox"],
-          input[type="checkbox"].dark,
-          .dark input[type="checkbox"],
-          html.dark input[type="checkbox"],
-          body.dark input[type="checkbox"],
-          form input[type="checkbox"],
-          .dark form input[type="checkbox"],
-          label input[type="checkbox"],
-          .dark label input[type="checkbox"] {
+          /* Checkbox styling */
+          input[type="checkbox"] {
             background-color: white !important;
             background: white !important;
             background-image: none !important;
@@ -180,14 +158,7 @@ export default function LoginPage() {
             border-width: 1px !important;
             border-style: solid !important;
           }
-          input[type="checkbox"]:checked,
-          .dark input[type="checkbox"]:checked,
-          html.dark input[type="checkbox"]:checked,
-          body.dark input[type="checkbox"]:checked,
-          form input[type="checkbox"]:checked,
-          .dark form input[type="checkbox"]:checked,
-          label input[type="checkbox"]:checked,
-          .dark label input[type="checkbox"]:checked {
+          input[type="checkbox"]:checked {
             background-color: rgb(79, 70, 229) !important; /* indigo-600 */
             background: rgb(79, 70, 229) !important;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") !important;
@@ -201,58 +172,56 @@ export default function LoginPage() {
       />
       
       <SessionProvider>
-        <ThemeProvider>
-          <div
-            className="min-h-screen relative"
-            style={{
-              backgroundColor: "transparent",
-              background: "transparent",
-              position: "relative",
-              zIndex: 1,
-            }}
+        <div
+          className="min-h-screen relative"
+          style={{
+            backgroundColor: "transparent",
+            background: "transparent",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <motion.div
+            className="relative z-10 min-h-screen"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            style={{ backgroundColor: "transparent" }}
           >
             <motion.div
-              className="relative z-10 min-h-screen"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              style={{ backgroundColor: "transparent" }}
+              variants={sectionVariants}
+              transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              <motion.div
-                variants={sectionVariants}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-              >
-                <Navbar />
-              </motion.div>
-
-              <motion.div
-                variants={sectionVariants}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-8"
-              >
-                <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
-                  <SignInForm />
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="fixed bottom-6 right-4 sm:right-6 md:right-8 z-50"
-                variants={sectionVariants}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Link
-                  href="/"
-                  className="flex items-center space-x-2 px-4 py-2.5 text-sm font-medium !text-white bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg transition-all duration-200 border border-white/30 shadow-lg"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  <span className="hidden sm:inline !text-white">Contact Us</span>
-                </Link>
-              </motion.div>
+              <Navbar />
             </motion.div>
-          </div>
-        </ThemeProvider>
+
+            <motion.div
+              variants={sectionVariants}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-8"
+            >
+              <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
+                <SignInForm />
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="fixed bottom-6 right-4 sm:right-6 md:right-8 z-50"
+              variants={sectionVariants}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Link
+                href="/"
+                className="flex items-center space-x-2 px-4 py-2.5 text-sm font-medium !text-white bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg transition-all duration-200 border border-white/30 shadow-lg"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span className="hidden sm:inline !text-white">Contact Us</span>
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
       </SessionProvider>
     </>
   );

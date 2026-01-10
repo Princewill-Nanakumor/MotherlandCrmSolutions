@@ -4,16 +4,11 @@ import React from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { Shield } from "lucide-react";
-import ThemeToggle from "@/components/dashboardComponents/ThemeToggle";
+import { Shield, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
 
 function Skeleton({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded ${className}`}
-    />
-  );
+  return <div className={`animate-pulse bg-gray-200 rounded ${className}`} />;
 }
 
 export default function Navbar() {
@@ -54,29 +49,30 @@ export default function Navbar() {
   // Consistent button classes
   const buttonBaseClasses =
     "px-4 py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-200 h-10 flex items-center justify-center";
-  const signInClasses = `${buttonBaseClasses} border-2 border-indigo-600/20 dark:border-indigo-400/20 text-indigo-600 dark:text-indigo-300 hover:border-indigo-600/40 dark:hover:border-indigo-400/40 hover:bg-indigo-50 dark:hover:bg-gray-800`;
-  // const signUpClasses = `${buttonBaseClasses} bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 text-white hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600`; // Hidden - will be enabled later
 
   return (
     <motion.nav
-      className="px-6 py-4 border-b border-white/20"
-      style={{ backgroundColor: 'transparent' }}
+      className="fixed top-0 left-0 right-0 z-50 px-6 py-4 border-b border-white/20"
+      style={{
+        backgroundColor: "transparent",
+        background: "transparent",
+      }}
       initial="hidden"
       animate="visible"
       variants={navVariants}
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
-      <div className="max-w-7xl mx-auto flex justify-between items-center">
+      <div className="flex items-center justify-between mx-auto max-w-7xl">
         <motion.div
           variants={logoVariants}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
           <Link href="/">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg shadow-md">
+              <div className="p-2 rounded-lg shadow-md bg-gradient-to-r from-indigo-600 to-purple-600">
                 <Shield size={30} className="text-white" />
               </div>
-              <div className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+              <div className="text-2xl font-bold text-white">
                 Motherland CRM Solutions
               </div>
             </div>
@@ -90,8 +86,8 @@ export default function Navbar() {
         >
           {status === "loading" ? (
             <>
-              <Skeleton className="h-10 w-20 hidden md:block" />
-              <Skeleton className="h-10 w-24" />
+              <Skeleton className="hidden w-20 h-10 md:block" />
+              <Skeleton className="w-24 h-10" />
             </>
           ) : session ? (
             <>
@@ -103,14 +99,14 @@ export default function Navbar() {
               >
                 <Link
                   href="/dashboard"
-                  className="px-4 py-2 h-10 items-center text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-100 font-medium hidden md:block transition-colors duration-200"
+                  className="items-center hidden h-10 px-4 py-2 font-medium text-white transition-colors duration-200 hover:text-indigo-800 md:block"
                 >
                   Dashboard
                 </Link>
               </motion.div>
               <motion.button
                 onClick={() => signOut({ callbackUrl: "/" })}
-                className={`${buttonBaseClasses} bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 text-white hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600`}
+                className={`${buttonBaseClasses} bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700`}
                 variants={buttonVariants}
                 initial="visible"
                 animate="visible"
@@ -130,22 +126,16 @@ export default function Navbar() {
                   animate="visible"
                   transition={{ duration: 0.4, ease: "easeOut" }}
                 >
-                  <Link href="/login" className={signInClasses}>
-                    Sign In
+                  <Link
+                    href="/login"
+                    className="flex items-center space-x-2 px-4 py-2.5 text-sm font-medium !text-white bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg transition-all duration-200 border border-white/30 shadow-lg"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span className="!text-white">Sign In</span>
                   </Link>
                 </motion.div>
               )}
             </>
-          )}
-          {!isLoginPage && (
-            <motion.div
-              variants={buttonVariants}
-              initial="visible"
-              animate="visible"
-              transition={{ duration: 0.4, ease: "easeOut" }}
-            >
-              <ThemeToggle />
-            </motion.div>
           )}
         </motion.div>
       </div>

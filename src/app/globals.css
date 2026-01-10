@@ -1396,6 +1396,21 @@ button[class*="text-white"] span {
   color: #f9fafb !important; /* white */
 }
 
+/* Homepage navbar transparency - ensure navbar is transparent on homepage */
+.homepage nav,
+.homepage [class*="Navbar"],
+.homepage [class*="navbar"],
+nav.fixed {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Ensure homepage wrapper divs from providers don't have backgrounds that block hero section */
+.homepage > div:first-child {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
 /* Override global text color for login page elements */
 h2[class*="text-white"],
 h2[class*="!text-white"],

@@ -40,22 +40,22 @@ export default function HeroSection() {
 
   return (
     <section
-      className="hero-section relative min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed"
+      className="relative flex items-center justify-center min-h-screen bg-fixed bg-center bg-no-repeat bg-cover hero-section pt-20"
       style={{
         backgroundImage: "url('/homepageHeroimage.jpg')",
       }}
     >
       {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-black/40 dark:bg-black/50" />
+      <div className="absolute inset-0 bg-black/40" />
 
       <motion.div
-        className="relative z-10 max-w-4xl mx-auto px-6 text-center"
+        className="relative z-10 max-w-4xl px-6 mx-auto text-center"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         <motion.h1
-          className="text-4xl sm:text-5xl md:text-6xl font-bold !text-white mb-6 leading-tight"
+          className="mb-6 text-4xl font-bold leading-tight text-white sm:text-5xl md:text-6xl"
           variants={textVariants}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
@@ -63,7 +63,7 @@ export default function HeroSection() {
         </motion.h1>
 
         <motion.p
-          className="text-lg sm:text-xl md:text-2xl !text-white/90 mb-8 max-w-2xl mx-auto leading-relaxed"
+          className="max-w-2xl mx-auto mb-8 text-lg leading-relaxed sm:text-xl md:text-2xl text-white/90"
           variants={textVariants}
           transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
         >
@@ -72,12 +72,12 @@ export default function HeroSection() {
         </motion.p>
 
         <motion.div
-          className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+          className="flex flex-col items-center justify-center gap-4 sm:flex-row"
           variants={textVariants}
           transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
         >
           {status === "loading" ? (
-            <div className="h-12 w-32 bg-white/20 rounded-lg animate-pulse" />
+            <div className="w-32 h-12 rounded-lg bg-white/20 animate-pulse" />
           ) : session ? (
             <motion.div
               variants={buttonVariants}
@@ -87,7 +87,7 @@ export default function HeroSection() {
             >
               <Link
                 href="/dashboard"
-                className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold text-lg shadow-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 hover:shadow-xl"
+                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-xl"
               >
                 Go to Dashboard
               </Link>
@@ -102,7 +102,7 @@ export default function HeroSection() {
               <a
                 href="#contact-us"
                 onClick={scrollToContact}
-                className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold text-lg shadow-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 hover:shadow-xl cursor-pointer"
+                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-all duration-200 rounded-lg shadow-lg cursor-pointer bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-xl"
               >
                 Get Started
               </a>
