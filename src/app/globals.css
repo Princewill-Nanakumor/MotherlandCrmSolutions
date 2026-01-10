@@ -467,9 +467,9 @@ html.dark .text-white {
 }
 
 /* In light mode, override any dark:text-white classes to use gray-900 instead */
-html:not(.dark) span[class*="dark:text-white"],
-html:not(.dark) span.dark\:text-white {
-  color: rgb(3, 50, 152) !important; /* Use gray-900 in light mode */
+html:not(.dark) span[class*="dark:text-white"]:not([class*="text-gray"]):not([class*="text-blue"]),
+html:not(.dark) span.dark\:text-white:not([class*="text-gray"]):not([class*="text-blue"]) {
+  color: rgb(17, 24, 39) !important; /* gray-900 - dark text for light mode */
 }
 
 a {

@@ -42,7 +42,7 @@ export const CommentForm: FC<CommentFormProps> = ({
     <>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold !text-gray-800 dark:!text-white">
-          Comments & Activity
+          Comment
         </h3>
         <Button
           onClick={handleToggleTextarea}
@@ -51,7 +51,7 @@ export const CommentForm: FC<CommentFormProps> = ({
           className="!text-gray-500 hover:!text-gray-700 dark:!text-gray-400 dark:hover:!text-gray-200"
           title={`${showTextarea ? "Hide" : "Show"} comment textarea`}
         >
-          <Type className="h-4 w-4" />
+          <Type className="w-4 h-4" />
           <ChevronUp
             className={`h-4 w-4 transition-transform duration-300 ease-in-out ${
               showTextarea ? "rotate-0" : "rotate-180"
@@ -66,7 +66,7 @@ export const CommentForm: FC<CommentFormProps> = ({
           showTextarea ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
         }`}
       >
-        <div className="space-y-3 mb-6">
+        <div className="mb-6 space-y-3">
           <textarea
             placeholder="Write your thoughts about this lead... (Press Cmd/Ctrl + Enter to submit)"
             className="w-full p-3 rounded-md focus:outline-none resize-none min-h-[120px] !text-gray-700 dark:!text-white bg-white dark:bg-gray-700/50 transition-all duration-200 border border-gray-300 dark:border-gray-600"
@@ -90,7 +90,7 @@ export const CommentForm: FC<CommentFormProps> = ({
               ) : (
                 <>
                   <Plus className="w-4 h-4" />
-                  Comment
+                  Add Comment
                 </>
               )}
             </button>

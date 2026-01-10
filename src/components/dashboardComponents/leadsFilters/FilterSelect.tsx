@@ -52,13 +52,7 @@ export const FilterSelect = ({
             : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
         }`}
       >
-        <span
-          className={
-            isActiveFilter
-              ? "text-blue-600 dark:text-blue-400 font-medium"
-              : "text-gray-900 dark:text-white"
-          }
-        >
+        <span className="text-gray-900 dark:text-white">
           {displayValue}
         </span>
         <ChevronDown className="h-4 w-4 text-gray-500" />

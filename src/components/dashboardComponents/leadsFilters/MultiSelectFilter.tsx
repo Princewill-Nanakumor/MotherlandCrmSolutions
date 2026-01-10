@@ -149,11 +149,7 @@ export const MultiSelectFilter = ({
         }`}
       >
         <span
-          className={`flex-1 text-left truncate ${
-            isActiveFilter
-              ? "text-blue-600 dark:text-blue-400 font-medium"
-              : "text-gray-900 dark:text-white"
-          }`}
+          className="flex-1 text-left truncate text-gray-900 dark:text-white"
         >
           {getDisplayText()}
         </span>
