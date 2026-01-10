@@ -1,9 +1,9 @@
 // src/components/user-leads/FilterLogic.tsx
 import React, { useMemo, useState, useEffect } from "react";
 import { Lead } from "@/types/leads";
-import { filterLeadsByCountry, filterLeadsByStatus, filterLeadsBySource, searchLeads } from "@/utils/LeadsUtils";
+import { filterLeadsByCountry, filterLeadsByStatus, filterLeadsBySource, searchLeads, getAvailableSources } from "@/utils/LeadsUtils";
 
-type SortField = "leadId" | "name" | "country" | "status" | "source" | "createdAt" | "lastComment" | "lastCommentDate" | "commentCount";
+type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "lastComment" | "lastCommentDate" | "commentCount";
 type SortOrder = "asc" | "desc";
 
 interface FilterLogicProps {
@@ -149,12 +149,10 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
       .sort();
   }, [leads, isDataReady]);
 
-  // Get available sources - filter out undefined values and ensure string type
+  // Get available sources using utility function
   const availableSources = useMemo(() => {
     if (!isDataReady || leads.length === 0) return [];
-    return [...new Set(leads.map((lead) => lead.source))]
-      .filter((source): source is string => Boolean(source) && source !== "-" && source !== "—")
-      .sort();
+    return getAvailableSources(leads);
   }, [leads, isDataReady]);
 
   // Filter leads by country, status, source, and search query
@@ -251,6 +249,23 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
           aValue = a.source?.toLowerCase() || "";
           bValue = b.source?.toLowerCase() || "";
           break;
+        case "assignedTo": {
+          const getAssignedName = (lead: Lead): string => {
+            if (!lead.assignedTo) return "unassigned";
+            // assignedTo is always an object in Lead type, but handle edge cases
+            const assignedTo = lead.assignedTo;
+            if (assignedTo && typeof assignedTo === "object" && "firstName" in assignedTo && "lastName" in assignedTo) {
+              const firstName = String(assignedTo.firstName || "");
+              const lastName = String(assignedTo.lastName || "");
+              const fullName = `${firstName} ${lastName}`.trim();
+              return fullName.toLowerCase() || "unknown user";
+            }
+            return "unknown user";
+          };
+          aValue = getAssignedName(a);
+          bValue = getAssignedName(b);
+          break;
+        }
         case "createdAt":
           aValue = new Date(a.createdAt || "").getTime();
           bValue = new Date(b.createdAt || "").getTime();

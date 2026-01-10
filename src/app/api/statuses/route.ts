@@ -66,6 +66,23 @@ export async function GET() {
       updatedAt: status.updatedAt,
     }));
 
+    // Ensure "NEW" status is always included (for imported leads that default to "NEW")
+    const hasNewStatus = transformedStatuses.some(
+      (s) => s._id === "NEW" || s.id === "NEW" || s.name?.toUpperCase() === "NEW"
+    );
+    if (!hasNewStatus) {
+      transformedStatuses.unshift({
+        _id: "NEW",
+        id: "NEW",
+        name: "New",
+        color: "#3B82F6",
+        adminId: session.user.id,
+        createdBy: session.user.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+
     // Set cache headers
     const headers = new Headers();
     headers.set("Cache-Control", "private, max-age=300"); // 5 minutes

@@ -52,7 +52,7 @@ export const StatusFilter = ({
   };
   // ✅ FIX: Use useQuery to subscribe to cache updates
   const { data: statuses = [] } = useQuery<
-    Array<{ id: string; name: string; color?: string }>
+    Array<{ id: string; _id?: string; name: string; color?: string }>
   >({
     queryKey: ["statuses"],
     queryFn: async () => {
@@ -60,7 +60,28 @@ export const StatusFilter = ({
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to fetch statuses");
-      return response.json();
+      const data = await response.json();
+
+      // Ensure "NEW" status is always included (for imported leads)
+      // Check if "NEW" exists by name (case-insensitive) or by _id/id
+      const hasNewStatus = data.some(
+        (status: { id?: string; _id?: string; name?: string }) =>
+          status._id === "NEW" ||
+          status.id === "NEW" ||
+          status.name?.toUpperCase() === "NEW"
+      );
+
+      if (!hasNewStatus) {
+        // Add "NEW" status at the beginning
+        data.unshift({
+          _id: "NEW",
+          id: "NEW",
+          name: "New",
+          color: "#3B82F6",
+        });
+      }
+
+      return data;
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
@@ -71,12 +92,13 @@ export const StatusFilter = ({
   const options = useMemo(() => {
     return statuses
       .map((status) => ({
-        value: status.id,
+        value: status.id || status._id || "",
         label:
           status.name.charAt(0).toUpperCase() +
           status.name.slice(1).toLowerCase(),
       }))
-      .sort((a, b) => a.label.localeCompare(b.label));
+      .filter((opt) => opt.value) // Filter out any invalid options
+      .sort((a, b) => a.label.localeCompare(b.label)); // Sort alphabetically
   }, [statuses]);
 
   const getPlaceholder = () => {

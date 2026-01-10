@@ -5,6 +5,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Lead } from "@/types/leads";
 import { MultiSelectFilter } from "./MultiSelectFilter";
+import { getAvailableSources } from "@/utils/LeadsUtils";
 
 interface SourceFilterProps {
   value: string[]; // Changed to array
@@ -13,6 +14,7 @@ interface SourceFilterProps {
   isLoading?: boolean;
   mode?: "include" | "exclude"; // Filter mode
   onModeChange?: (mode: "include" | "exclude") => void; // Mode change handler
+  availableSources?: string[]; // Optional: if provided, use these instead of fetching
 }
 
 export const SourceFilter = ({
@@ -22,6 +24,7 @@ export const SourceFilter = ({
   isLoading = false,
   mode: externalMode,
   onModeChange,
+  availableSources: providedSources,
 }: SourceFilterProps) => {
   // Internal mode state if not controlled externally
   const [internalMode, setInternalMode] = useState<"include" | "exclude">(() => {
@@ -51,39 +54,46 @@ export const SourceFilter = ({
       setInternalMode(newMode);
     }
   };
-  // ✅ FIX: Use useQuery to subscribe to cache updates
-  const { data: leads = [] } = useQuery<Lead[]>({
+  // If availableSources are provided, use them directly (for user leads page)
+  // Otherwise, fetch from API (for admin all-leads page)
+  const { data: leads = [], isLoading: isLoadingLeads } = useQuery<Lead[]>({
     queryKey: ["leads"],
     queryFn: async () => {
       const response = await fetch("/api/leads/all", {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to fetch leads");
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
-    staleTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 2 * 60 * 1000, // Match useLeadsPage - 2 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     retry: 2,
+    placeholderData: (previousData) => previousData, // Preserve previous data during refetch
+    enabled: !providedSources, // Only fetch if sources are not provided
   });
 
-  // Extract unique sources from leads
+  // If sources are provided, use them directly
+  // Otherwise, extract unique sources from fetched leads using utility function
   const sources = useMemo(() => {
-    return [
-      ...new Set(
-        leads
-          .map((lead: Lead) => lead.source)
-          .filter((source) => source && source.trim() !== "" && source !== "-" && source !== "—")
-      ),
-    ].sort();
-  }, [leads]);
+    // If sources are provided, use them directly (already sorted from getAvailableSources)
+    if (providedSources && providedSources.length > 0) {
+      return providedSources;
+    }
+    
+    // Otherwise, extract from fetched leads (already sorted from getAvailableSources)
+    return getAvailableSources(leads);
+  }, [leads, providedSources]);
 
   const options = useMemo(
     () =>
-      sources.map((source: string) => ({
-        value: source,
-        label: source,
-      })),
+      sources
+        .map((source: string) => ({
+          value: source,
+          label: source.charAt(0).toUpperCase() + source.slice(1).toLowerCase(),
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
     [sources]
   );
 
@@ -103,8 +113,8 @@ export const SourceFilter = ({
       onChange={onChange}
       options={options}
       placeholder={getPlaceholder()}
-      disabled={disabled}
-      isLoading={isLoading}
+      disabled={disabled || isLoadingLeads}
+      isLoading={isLoading || isLoadingLeads}
       mode={mode}
       onModeChange={handleModeToggle}
     />

@@ -14,7 +14,11 @@ export function useAdminLeadsTableColumns(): LeadColumn[] {
       header: "ID",
       cell: (info) => {
         const leadId = info.getValue() as number | undefined;
-        return leadId ? leadId.toString() : "—";
+        return (
+          <div className="text-center font-medium">
+            {leadId ? leadId.toString() : "—"}
+          </div>
+        );
       },
       sortingFn: (a, b) => {
         const idA = a.original.leadId || 0;
@@ -36,7 +40,11 @@ export function useAdminLeadsTableColumns(): LeadColumn[] {
       header: "Name",
       cell: (info) => {
         const value = info.getValue() as string;
-        return value || "—";
+        return (
+          <div className="font-medium">
+            {value || "—"}
+          </div>
+        );
       },
       sortingFn: (a, b) => {
         const capitalizeName = (name: string) => {
@@ -59,13 +67,19 @@ export function useAdminLeadsTableColumns(): LeadColumn[] {
       cell: (info) => {
         const email = info.row.original.email;
         if (!email || email === "—") {
-          return "—";
+          return (
+            <div className="font-medium">—</div>
+          );
         }
         // Apply masking based on email visibility permission
         const displayEmail = canViewEmails
           ? email.charAt(0).toUpperCase() + email.slice(1) // Capitalize first letter if visible
           : maskEmail(email);
-        return displayEmail;
+        return (
+          <div className="font-medium">
+            {displayEmail}
+          </div>
+        );
       },
       sortingFn: (a, b) =>
         (a.original.email || "—").localeCompare(b.original.email || "—"),
@@ -76,11 +90,16 @@ export function useAdminLeadsTableColumns(): LeadColumn[] {
       header: "Phone",
       cell: (info) => {
         const phone = info.row.original.phone;
-        return canViewPhoneNumbers
+        const displayPhone = canViewPhoneNumbers
           ? phone || "—"
           : phone
             ? maskPhoneNumber(phone)
             : "—";
+        return (
+          <div className="text-center font-medium">
+            {displayPhone}
+          </div>
+        );
       },
       sortingFn: (a, b) =>
         (a.original.phone || "—").localeCompare(b.original.phone || "—"),
@@ -89,6 +108,14 @@ export function useAdminLeadsTableColumns(): LeadColumn[] {
       id: "country",
       accessorFn: (row: Lead) => row.country || "—",
       header: "Country",
+      cell: (info) => {
+        const value = info.getValue() as string;
+        return (
+          <div className="text-center font-medium">
+            {value || "—"}
+          </div>
+        );
+      },
       sortingFn: (a, b) =>
         (a.original.country || "—").localeCompare(b.original.country || "—"),
     },
@@ -96,6 +123,14 @@ export function useAdminLeadsTableColumns(): LeadColumn[] {
       id: "status",
       accessorFn: (row: Lead) => row.status || "—",
       header: "Status",
+      cell: (info) => {
+        const value = info.getValue() as string;
+        return (
+          <div className="text-center font-medium">
+            {value || "—"}
+          </div>
+        );
+      },
       sortingFn: (a, b) =>
         (a.original.status || "—").localeCompare(b.original.status || "—"),
     },
@@ -103,6 +138,14 @@ export function useAdminLeadsTableColumns(): LeadColumn[] {
       id: "source",
       accessorFn: (row: Lead) => row.source || "—",
       header: "Source",
+      cell: (info) => {
+        const value = info.getValue() as string;
+        return (
+          <div className="text-center font-medium">
+            {value || "—"}
+          </div>
+        );
+      },
       sortingFn: (a, b) =>
         (a.original.source || "—").localeCompare(b.original.source || "—"),
     },
@@ -124,6 +167,14 @@ export function useAdminLeadsTableColumns(): LeadColumn[] {
         }
 
         return "Unknown User";
+      },
+      cell: (info) => {
+        const value = info.getValue() as string;
+        return (
+          <div className="text-center font-medium">
+            {value || "—"}
+          </div>
+        );
       },
       sortingFn: (a, b) => {
         const assignedToA = a.original.assignedTo;

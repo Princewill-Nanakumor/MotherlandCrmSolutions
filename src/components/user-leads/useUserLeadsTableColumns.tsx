@@ -14,7 +14,7 @@ import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 
-type SortField = "leadId" | "name" | "country" | "status" | "source" | "createdAt" | "lastComment" | "lastCommentDate" | "commentCount";
+type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "lastComment" | "lastCommentDate" | "commentCount";
 
 interface UseUserLeadsTableColumnsProps {
   sortField: SortField;
@@ -113,7 +113,7 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("leadId")}
-            className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
             <span className={`${sortField === "leadId" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               ID
@@ -181,7 +181,7 @@ export const useUserLeadsTableColumns = ({
           const email = row.original.email || "";
           if (!email || email === "") {
             return (
-              <div className="text-center !text-gray-900 dark:!text-white">—</div>
+              <div className="text-center font-medium !text-gray-900 dark:!text-white">—</div>
             );
           }
           // Apply masking based on email visibility permission
@@ -189,7 +189,7 @@ export const useUserLeadsTableColumns = ({
             ? capitalizeEmail(email)
             : maskEmail(email);
           return (
-            <div className="text-center !text-gray-900 dark:!text-white">
+            <div className="text-center font-medium !text-gray-900 dark:!text-white">
               {displayEmail}
             </div>
           );
@@ -209,7 +209,7 @@ export const useUserLeadsTableColumns = ({
             ? phone
             : maskPhoneNumber(phone);
           return (
-            <div className="text-center !text-gray-900 dark:!text-white">
+            <div className="text-center font-medium !text-gray-900 dark:!text-white">
               {displayPhone || "—"}
             </div>
           );
@@ -222,7 +222,7 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("country")}
-            className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
             <span className={`${sortField === "country" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               Country
@@ -238,7 +238,7 @@ export const useUserLeadsTableColumns = ({
         ),
         cell: ({ row }) => {
           return (
-            <div className="text-center !text-gray-900 dark:!text-white">
+            <div className="text-center font-medium !text-gray-900 dark:!text-white">
               {row.original.country || "—"}
             </div>
           );
@@ -306,7 +306,7 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("source")}
-            className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
             <span className={`${sortField === "source" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               Source
@@ -322,7 +322,7 @@ export const useUserLeadsTableColumns = ({
         ),
         cell: ({ row }) => {
           return (
-            <div className="text-center !text-gray-900 dark:!text-white">
+            <div className="text-center font-medium !text-gray-900 dark:!text-white">
               {row.original.source || "—"}
             </div>
           );
@@ -332,22 +332,43 @@ export const useUserLeadsTableColumns = ({
       {
         id: "assignedTo",
         header: () => (
-          <div className="h-8 flex items-center justify-start w-full font-medium !text-gray-900 dark:!text-white">
-            Assigned To
-          </div>
+          <Button
+            variant="ghost"
+            onClick={() => handleSort("assignedTo")}
+            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+          >
+            <span className={`${sortField === "assignedTo" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
+              Assigned To
+            </span>
+            <ArrowUpDown
+              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
+                sortField === "assignedTo"
+                  ? "!text-gray-900 dark:!text-white"
+                  : "!text-gray-600 dark:!text-gray-400"
+              }`}
+            />
+          </Button>
         ),
         cell: ({ row }) => {
           const lead = row.original;
           const assignedName = getAssignedUserName(lead);
           return (
-            <div className="text-center !text-gray-900 dark:!text-white">
+            <div className="text-center font-medium !text-gray-900 dark:!text-white">
               <span className={!lead.assignedTo ? "!text-gray-500 dark:!text-gray-400" : ""}>
                 {assignedName}
               </span>
             </div>
           );
         },
-        enableSorting: false,
+        sortingFn: (a, b) => {
+          const nameA = getAssignedUserName(a.original).toLowerCase();
+          const nameB = getAssignedUserName(b.original).toLowerCase();
+          if (nameA === "unassigned" && nameB !== "unassigned") return -1;
+          if (nameA !== "unassigned" && nameB === "unassigned") return 1;
+          if (nameA === "unassigned" && nameB === "unassigned") return 0;
+          return nameA.localeCompare(nameB);
+        },
+        enableSorting: true,
       },
       {
         id: "createdAt",
@@ -355,7 +376,7 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("createdAt")}
-            className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
             <span className={`${sortField === "createdAt" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               Created At
@@ -372,7 +393,7 @@ export const useUserLeadsTableColumns = ({
         cell: ({ row }) => {
           const createdAt = row.original.createdAt;
           return (
-            <div className="text-center text-sm !text-gray-900 dark:!text-white">
+            <div className="text-center text-sm font-medium !text-gray-900 dark:!text-white">
               {formatDateDMY(createdAt)}
             </div>
           );
@@ -385,7 +406,7 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("lastComment")}
-            className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
             <span className={`${sortField === "lastComment" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               Last Comment
@@ -405,7 +426,7 @@ export const useUserLeadsTableColumns = ({
             <div className="text-center !text-gray-900 dark:!text-white">
               {lastComment ? (
                 <div
-                  className="text-sm max-w-[200px] truncate mx-auto !text-gray-900 dark:!text-white"
+                  className="text-sm max-w-[200px] truncate mx-auto font-medium !text-gray-900 dark:!text-white"
                   title={lastComment}
                   style={{
                     overflow: "hidden",
@@ -416,7 +437,7 @@ export const useUserLeadsTableColumns = ({
                   {lastComment}
                 </div>
               ) : (
-                <span className="!text-gray-900 dark:!text-white">—</span>
+                <span className="font-medium !text-gray-900 dark:!text-white">—</span>
               )}
             </div>
           );
@@ -429,7 +450,7 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("lastCommentDate")}
-            className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
             <span className={`${sortField === "lastCommentDate" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               Last Comment Date
@@ -446,7 +467,7 @@ export const useUserLeadsTableColumns = ({
         cell: ({ row }) => {
           const lastCommentDate = row.original.lastCommentDate;
           return (
-            <div className="text-center text-sm !text-gray-900 dark:!text-white">
+            <div className="text-center text-sm font-medium !text-gray-900 dark:!text-white">
               {formatDateDMY(lastCommentDate)}
             </div>
           );
@@ -459,7 +480,7 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("commentCount")}
-            className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
             <span className={`${sortField === "commentCount" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
               Comments Numbers
@@ -476,14 +497,8 @@ export const useUserLeadsTableColumns = ({
         cell: ({ row }) => {
           const commentCount = row.original.commentCount;
           return (
-            <div className="text-center text-sm !text-gray-900 dark:!text-white">
-              {commentCount && commentCount > 0 ? (
-                <span className="inline-flex items-center justify-center font-medium !text-gray-900 dark:!text-white">
-                  {commentCount}
-                </span>
-              ) : (
-                <span className="inline-flex items-center justify-center !text-gray-900 dark:!text-white">—</span>
-              )}
+            <div className="text-center text-sm font-medium !text-gray-900 dark:!text-white">
+              {commentCount && commentCount > 0 ? commentCount : "—"}
             </div>
           );
         },

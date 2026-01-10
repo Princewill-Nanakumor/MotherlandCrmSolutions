@@ -215,22 +215,26 @@ export const useTableColumns = ({
         cell: ({ row }) => {
           const email = row.original.email || "";
           // Capitalize first letter of email
-          if (email.length > 0) {
-            return email.charAt(0).toUpperCase() + email.slice(1);
-          }
-          return email;
+          const displayEmail = email.length > 0
+            ? email.charAt(0).toUpperCase() + email.slice(1)
+            : email || "—";
+          return (
+            <div className="font-medium">
+              {displayEmail}
+            </div>
+          );
         },
       },
       {
         id: "phone",
         header: () => (
-          <div className="h-8 flex items-center justify-center w-full font-medium cursor-pointer">
+          <div className="h-8 flex items-center justify-start w-full font-medium cursor-pointer">
             Phone
           </div>
         ),
         cell: ({ row }) => (
-          <div className="text-center">
-            <span>{row.original.phone || "—"}</span>
+          <div className="text-center font-medium">
+            {row.original.phone || "—"}
           </div>
         ),
       },
@@ -255,8 +259,8 @@ export const useTableColumns = ({
           </Button>
         ),
         cell: ({ row }) => (
-          <div className="text-center">
-            <span>{row.original.country || "—"}</span>
+          <div className="text-center font-medium">
+            {row.original.country || "—"}
           </div>
         ),
       },
@@ -325,8 +329,8 @@ export const useTableColumns = ({
           </Button>
         ),
         cell: ({ row }) => (
-          <div className="text-center">
-            <span>{row.original.source || "—"}</span>
+          <div className="text-center font-medium">
+            {row.original.source || "—"}
           </div>
         ),
       },
@@ -354,8 +358,8 @@ export const useTableColumns = ({
           const lead = row.original;
           if (!lead.assignedTo) {
             return (
-              <div className="text-center">
-                <span>Unassigned</span>
+              <div className="text-center font-medium">
+                Unassigned
               </div>
             );
           }
@@ -366,8 +370,8 @@ export const useTableColumns = ({
               : lead.assignedTo?.id || "";
           const user = users.find((u) => u.id === userId);
           return (
-            <div className="text-center">
-              <span>{user ? `${user.firstName} ${user.lastName}` : "Unassigned"}</span>
+            <div className="text-center font-medium">
+              {user ? `${user.firstName} ${user.lastName}` : "Unassigned"}
             </div>
           );
         },
@@ -393,8 +397,8 @@ export const useTableColumns = ({
           </Button>
         ),
         cell: ({ row }) => (
-          <div className="text-center">
-            <span>{new Date(row.original.createdAt).toLocaleDateString()}</span>
+          <div className="text-center font-medium">
+            {new Date(row.original.createdAt).toLocaleDateString()}
           </div>
         ),
       },
@@ -425,15 +429,15 @@ export const useTableColumns = ({
           const comment = lead.lastComment;
           if (!comment) {
             return (
-              <div className="text-center">
-                <span>—</span>
+              <div className="text-center font-medium">
+                —
               </div>
             );
           }
           return (
             <div className="text-center">
               <div
-                className="text-sm max-w-[200px] truncate mx-auto"
+                className="text-sm max-w-[200px] truncate mx-auto font-medium"
                 title={comment}
                 style={{
                   overflow: "hidden",
@@ -471,8 +475,8 @@ export const useTableColumns = ({
           const lead = row.original;
           if (!lead.lastCommentDate) {
             return (
-              <div className="text-center">
-                <span>—</span>
+              <div className="text-center font-medium">
+                —
               </div>
             );
           }
@@ -481,7 +485,7 @@ export const useTableColumns = ({
           const month = String(date.getMonth() + 1).padStart(2, "0");
           const year = date.getFullYear();
           return (
-            <div className="text-sm text-center">
+            <div className="text-sm text-center font-medium">
               {day}/{month}/{year}
             </div>
           );
@@ -511,14 +515,8 @@ export const useTableColumns = ({
           const lead = row.original;
           const count = lead.commentCount || 0;
           return (
-            <div className="text-sm text-center">
-              {count > 0 ? (
-                <span className="inline-flex items-center justify-center font-medium">
-                  {count}
-                </span>
-              ) : (
-                <span className="inline-flex items-center justify-center">—</span>
-              )}
+            <div className="text-sm text-center font-medium">
+              {count > 0 ? count : "—"}
             </div>
           );
         },

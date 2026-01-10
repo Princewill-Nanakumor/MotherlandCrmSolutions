@@ -24,7 +24,7 @@ import { useToggleContext } from "@/context/ToggleContext";
 import { useAssignedLeads } from "@/hooks/useAssignedLeads";
 import { RefetchIndicator } from "@/components/ui/RefetchIndicator";
 
-type SortField = "leadId" | "name" | "country" | "status" | "source" | "createdAt" | "lastComment" | "lastCommentDate" | "commentCount";
+type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "lastComment" | "lastCommentDate" | "commentCount";
 type SortOrder = "asc" | "desc";
 
 export default function UserLeadsContent() {

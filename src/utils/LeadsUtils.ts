@@ -47,10 +47,19 @@ export const filterLeadsByStatus = (
   if (Array.isArray(statusFilter)) {
     if (statusFilter.length === 0) return leads; // Empty array means "all"
     
+    // Ensure "NEW" status is always available for imported leads
+    const statusesWithNew = [...statuses];
+    const hasNewStatus = statuses.some(
+      (s) => s._id === "NEW" || s.name?.toUpperCase() === "NEW"
+    );
+    if (!hasNewStatus) {
+      statusesWithNew.push({ _id: "NEW", name: "New" });
+    }
+    
     // Create mappings
     const statusIdToName: Record<string, string> = {};
     const statusNameToId: Record<string, string> = {};
-    statuses.forEach((status) => {
+    statusesWithNew.forEach((status) => {
       statusIdToName[status._id] = status.name;
       statusNameToId[status.name] = status._id;
       statusNameToId[status.name.toUpperCase()] = status._id;
@@ -391,6 +400,29 @@ export const searchLeads = (leads: Lead[], searchQuery: string): Lead[] => {
 
 export const getAssignedLeadsCount = (leads: Lead[]): number => {
   return leads.filter((lead) => !!getAssignedUserId(lead.assignedTo)).length;
+};
+
+export const getAvailableSources = (leads: Lead[]): string[] => {
+  if (!Array.isArray(leads) || leads.length === 0) {
+    return [];
+  }
+  
+  const uniqueSources = new Set<string>();
+  leads.forEach((lead) => {
+    const source = lead?.source;
+    // Only include valid, non-empty sources
+    if (
+      source &&
+      typeof source === "string" &&
+      source.trim() !== "" &&
+      source.trim() !== "-" &&
+      source.trim() !== "—"
+    ) {
+      uniqueSources.add(source.trim());
+    }
+  });
+  
+  return Array.from(uniqueSources).sort();
 };
 
 export const getAvailableCountries = (leads: Lead[]): string[] => {

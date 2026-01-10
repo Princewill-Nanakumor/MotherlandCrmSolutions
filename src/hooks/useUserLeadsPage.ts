@@ -16,7 +16,7 @@ const STORAGE_KEYS = {
   FILTER_BY_STATUS: "user_leads_filter_by_status",
 } as const;
 
-type SortField = "leadId" | "name" | "country" | "status" | "source" | "createdAt" | "lastComment" | "lastCommentDate" | "commentCount";
+type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "lastComment" | "lastCommentDate" | "commentCount";
 type SortOrder = "asc" | "desc";
 
 export const useUserLeadsPage = (

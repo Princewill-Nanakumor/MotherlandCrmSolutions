@@ -31,7 +31,7 @@ export default function DashboardOverview({
   // Use React Query for data fetching
   const { users, isLoading: isLoadingUsers } = useUsersData();
   const isAdmin = session?.user?.role === "ADMIN";
-  const { stats, isLoading: isLoadingStats } = useLeadsStats(isAdmin);
+  const { stats, isLoading: isLoadingStats, hasData } = useLeadsStats(isAdmin);
 
   if (status === "loading") {
     return (
@@ -46,6 +46,10 @@ export default function DashboardOverview({
   }
 
   const activeUsers = users.filter((user) => user.status === "ACTIVE");
+  
+  // Show skeleton if loading OR if we haven't loaded data yet (prevents showing 0)
+  // This ensures skeleton shows during initial load before API responds
+  const shouldShowStatsSkeleton = isLoadingStats || !hasData;
 
   return (
     <div
@@ -68,7 +72,7 @@ export default function DashboardOverview({
         // Admin Dashboard - All 4 cards in grid
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Total Leads Card */}
-          {isLoadingStats ? (
+          {shouldShowStatsSkeleton ? (
             <StatCardSkeleton />
           ) : (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -110,7 +114,7 @@ export default function DashboardOverview({
           )}
 
           {/* Assigned Leads Card */}
-          {isLoadingStats ? (
+          {shouldShowStatsSkeleton ? (
             <StatCardSkeleton />
           ) : (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -131,7 +135,7 @@ export default function DashboardOverview({
           )}
 
           {/* Unassigned Leads Card */}
-          {isLoadingStats ? (
+          {shouldShowStatsSkeleton ? (
             <StatCardSkeleton />
           ) : (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -154,7 +158,7 @@ export default function DashboardOverview({
       ) : (
         // User/Agent Dashboard - Only My Leads card (no grid, single card)
         <div className="max-w-sm">
-          {isLoadingStats ? (
+          {shouldShowStatsSkeleton ? (
             <StatCardSkeleton />
           ) : (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">

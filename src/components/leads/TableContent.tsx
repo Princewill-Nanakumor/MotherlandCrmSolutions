@@ -138,15 +138,6 @@ export function TableContent({
     retry: 2,
   });
 
-  // Helper to format date as DD/MM/YYYY
-  const formatDateDMY = (dateString: string) => {
-    const date = new Date(dateString);
-    const dd = String(date.getDate()).padStart(2, "0");
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const yyyy = date.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  };
-
   const getStatusStyle = (leadStatus: string) => {
     const status = statuses.find((s) => s._id === leadStatus);
     if (!status) {
@@ -341,16 +332,10 @@ export function TableContent({
                     >
                       {cell.column.id === "status"
                         ? renderStatus(lead.status)
-                        : cell.column.id === "createdAt"
-                          ? (
-                              <div className="text-center">
-                                <span>{formatDateDMY(lead.createdAt)}</span>
-                              </div>
-                            )
-                          : flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
+                        : flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
                     </TableCell>
                   );
                 })}

@@ -40,6 +40,7 @@ export const UserLeadsFilterControls: React.FC<
   onStatusFilterChange,
   onSourceFilterChange,
   availableCountries,
+  availableSources,
 }) => {
   // Normalize filters to arrays
   const normalizeFilter = (filter: string | string[]): string[] => {
@@ -89,6 +90,7 @@ export const UserLeadsFilterControls: React.FC<
             onChange={onSourceFilterChange}
             disabled={shouldShowLoading}
             isLoading={false}
+            availableSources={availableSources}
           />
         </div>
       </div>

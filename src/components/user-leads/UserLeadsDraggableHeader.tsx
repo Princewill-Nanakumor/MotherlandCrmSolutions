@@ -79,13 +79,10 @@ export function UserLeadsDraggableHeader({
     </span>
   );
 
-  // Email, phone, lastComment, and lastCommentDate columns need extra padding to prevent drag icon overlap
-  const needsExtraPadding =
-    columnId === "email" ||
-    columnId === "phone" ||
-    columnId === "lastComment" ||
-    columnId === "lastCommentDate";
-  const paddingClass = needsExtraPadding ? "pl-10" : "pl-8";
+  // Consistent spacing for all columns:
+  // - Drag icon button: left-1 (4px from left), width ~24px (icon 16px + padding 8px)
+  // - Use consistent pl-8 (32px) for all columns to create uniform gap between drag icon and content
+  const consistentLeftPadding = "pl-8"; // 32px - consistent for all columns
 
   return (
     <TableHead
@@ -104,7 +101,7 @@ export function UserLeadsDraggableHeader({
         >
           <GripVertical className="w-4 h-4 text-gray-400 dark:text-gray-500" />
         </button>
-        <div className={`flex justify-center w-full ${paddingClass}`}>
+        <div className={`flex justify-center w-full ${consistentLeftPadding}`}>
           {headerContent}
         </div>
       </div>

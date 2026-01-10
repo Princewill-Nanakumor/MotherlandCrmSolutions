@@ -39,45 +39,43 @@ export function DraggableColumnHeader({
     return <>{children}</>;
   }
 
-  // Check if column is center-aligned (select, actions, commentCount, source, phone, country, assignedTo, createdAt, lastComment, lastCommentDate)
   const isCenterAligned =
-    header.column.id === "select" ||
     header.column.id === "actions" ||
     header.column.id === "commentCount" ||
     header.column.id === "source" ||
-    header.column.id === "phone" ||
     header.column.id === "country" ||
     header.column.id === "assignedTo" ||
     header.column.id === "createdAt" ||
     header.column.id === "lastComment" ||
-    header.column.id === "lastCommentDate";
+    header.column.id === "lastCommentDate" ||
+    header.column.id === "leadId";
 
-  // Email, phone, lastComment, and lastCommentDate columns need extra padding to prevent drag icon overlap
-  const needsExtraPadding =
-    header.column.id === "email" ||
-    header.column.id === "phone" ||
+  const isButtonHeader =
+    header.column.id === "leadId" ||
+    header.column.id === "name" ||
+    header.column.id === "country" ||
+    header.column.id === "status" ||
+    header.column.id === "source" ||
+    header.column.id === "assignedTo" ||
+    header.column.id === "createdAt" ||
     header.column.id === "lastComment" ||
-    header.column.id === "lastCommentDate";
+    header.column.id === "lastCommentDate" ||
+    header.column.id === "commentCount";
 
-  // Determine padding based on column type
-  const paddingClass = needsExtraPadding
-    ? "pl-10"
-    : isCenterAligned
-      ? "pl-8"
-      : "pl-6";
+  const leftPadding = isButtonHeader ? "pl-5" : "pl-8"; // 16px for Button headers, 32px for div headers
 
   return (
-    <div ref={setNodeRef} style={style} className="relative group w-full">
+    <div ref={setNodeRef} style={style} className="relative w-full group">
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded absolute left-1 top-1/2 -translate-y-1/2 z-10"
+        className="absolute z-10 p-1 transition-opacity -translate-y-1/2 rounded opacity-0 cursor-grab active:cursor-grabbing group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-700 left-1 top-1/2"
         aria-label="Drag to reorder column"
       >
         <GripVertical className="w-4 h-4 text-gray-400 dark:text-gray-500" />
       </button>
       <div
-        className={`w-full ${paddingClass} flex items-center ${isCenterAligned ? "justify-center" : "justify-start"}`}
+        className={`w-full ${leftPadding} flex items-center ${isCenterAligned ? "justify-center" : "justify-start"}`}
       >
         {children}
       </div>
