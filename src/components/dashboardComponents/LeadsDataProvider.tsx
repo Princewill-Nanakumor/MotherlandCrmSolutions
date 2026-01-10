@@ -258,6 +258,12 @@ const LeadsDataProvider: React.FC<LeadsDataProviderProps> = ({
         throw new Error("User not found");
       }
 
+      // Store selected leads before clearing (needed for API call)
+      const leadsToAssign = selectedLeads.map((lead) => ({
+        _id: lead._id,
+        status: lead.status,
+      }));
+
       // ✅ Optimistic update with React Query - FIXED: Use consistent query key
       queryClient.setQueryData(["leads"], (oldData: Lead[] | undefined) => {
         if (!oldData) return oldData;
@@ -276,20 +282,17 @@ const LeadsDataProvider: React.FC<LeadsDataProviderProps> = ({
         });
       });
 
-      // Clear selection immediately
+      // Clear selection immediately for UI feedback
       setSelectedLeads([]);
 
       try {
-        // Send the assignment request
-        const leadsToAssign = selectedLeads.map((lead) => ({
-          _id: lead._id,
-          status: lead.status,
-        }));
+        // Send the assignment request using stored leadIds
+        const leadIds = leadsToAssign.map((lead) => lead._id);
 
         const response = await fetch("/api/leads/assign", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ leads: leadsToAssign, userId }),
+          body: JSON.stringify({ leadIds, userId }),
           credentials: "include",
         });
 
@@ -302,12 +305,26 @@ const LeadsDataProvider: React.FC<LeadsDataProviderProps> = ({
         // ✅ SUCCESS - Update success toast
         toastRef.current({
           title: "Success!",
-          description: `Successfully assigned ${selectedLeads.length} lead(s) to ${user.firstName}.`,
+          description: `Successfully assigned ${leadsToAssign.length} lead(s) to ${user.firstName}.`,
           variant: "success",
         });
 
-        // ✅ Invalidate to get fresh data - FIXED: Use consistent query key
-        queryClient.invalidateQueries({ queryKey: ["leads"] });
+        // ✅ Invalidate and immediately refetch to update all components (including dashboard and agent views)
+        // Use predicate to invalidate all leads-related queries (including stats)
+        await queryClient.invalidateQueries({ 
+          predicate: (query) => 
+            Array.isArray(query.queryKey) && 
+            query.queryKey[0] === "leads"
+        });
+        await queryClient.refetchQueries({ 
+          predicate: (query) => 
+            Array.isArray(query.queryKey) && 
+            query.queryKey[0] === "leads" &&
+            query.queryKey.length <= 2 // Refetch main leads queries
+        });
+        // Also invalidate assigned leads queries for agents
+        await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
+        await queryClient.refetchQueries({ queryKey: ["assignedLeads"] });
       } catch (error) {
         // ❌ ROLLBACK - Revert optimistic update on error - FIXED: Use consistent query key
         queryClient.invalidateQueries({ queryKey: ["leads"] });
@@ -324,7 +341,7 @@ const LeadsDataProvider: React.FC<LeadsDataProviderProps> = ({
         throw error;
       }
     },
-    [selectedLeads, users, queryClient]
+    [selectedLeads, users, queryClient, setSelectedLeads]
   );
 
   // ⚡ OPTIMIZED UNASSIGNMENT FUNCTION with React Query
@@ -385,10 +402,26 @@ const LeadsDataProvider: React.FC<LeadsDataProviderProps> = ({
         variant: "success",
       });
 
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      // ✅ Invalidate and immediately refetch to update all components (including dashboard and agent views)
+      // Use predicate to invalidate all leads-related queries (including stats)
+      await queryClient.invalidateQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey[0] === "leads"
+      });
+      await queryClient.refetchQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey[0] === "leads" &&
+          query.queryKey.length <= 2 // Refetch main leads queries
+      });
+      // Also invalidate assigned leads queries for agents
+      await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
+      await queryClient.refetchQueries({ queryKey: ["assignedLeads"] });
     } catch (error) {
       // ❌ ROLLBACK - Revert optimistic update on error - FIXED: Use consistent query key
       queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
 
       console.error("Failed to unassign leads", error);
       toastRef.current({

@@ -60,12 +60,15 @@ export const useLeadsPage = (
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to fetch leads");
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
     staleTime: 2 * 60 * 1000, // ✅ FIXED: Reduced from 30 minutes to 2 minutes
     refetchOnWindowFocus: false,
     retry: 2,
     refetchOnMount: false,
+    // Preserve previous data during refetch to prevent showing 0
+    placeholderData: (previousData) => previousData,
   });
 
   // Fetch users with React Query
@@ -224,7 +227,7 @@ export const useLeadsPage = (
         variant: "destructive",
       });
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       mutationInProgressRef.current = false;
 
       toast({
@@ -233,18 +236,23 @@ export const useLeadsPage = (
         variant: "success",
       });
 
+      // Immediately invalidate and refetch to update dashboard and all components
+      await queryClient.invalidateQueries({ queryKey: ["leads"] });
+      await queryClient.refetchQueries({ queryKey: ["leads"] });
+      
       // Also refresh assigned-leads views (user leads page, badges, etc.)
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
+        queryKey: assignedLeadsKeys.all,
+      });
+      await queryClient.refetchQueries({
         queryKey: assignedLeadsKeys.all,
       });
     },
     onSettled: () => {
-      // Background refresh after delay - FIXED: Use consistent query key
-      setTimeout(() => {
-        if (!mutationInProgressRef.current) {
-          queryClient.invalidateQueries({ queryKey: ["leads"] });
-        }
-      }, 2000);
+      // Only update flag, refetching is handled in onSuccess
+      if (mutationInProgressRef.current) {
+        mutationInProgressRef.current = false;
+      }
     },
   });
 
@@ -301,7 +309,7 @@ export const useLeadsPage = (
         variant: "destructive",
       });
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       mutationInProgressRef.current = false;
 
       toast({
@@ -310,18 +318,20 @@ export const useLeadsPage = (
         variant: "success",
       });
 
+      // Immediately invalidate and refetch to update dashboard and all components
+      await queryClient.invalidateQueries({ queryKey: ["leads"] });
+      await queryClient.refetchQueries({ queryKey: ["leads"] });
+      
       // Also refresh assigned-leads views (user leads page, badges, etc.)
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
+        queryKey: assignedLeadsKeys.all,
+      });
+      await queryClient.refetchQueries({
         queryKey: assignedLeadsKeys.all,
       });
     },
     onSettled: () => {
-      // Background refresh after delay - FIXED: Use consistent query key
-      setTimeout(() => {
-        if (!mutationInProgressRef.current) {
-          queryClient.invalidateQueries({ queryKey: ["leads"] });
-        }
-      }, 2000);
+      mutationInProgressRef.current = false;
     },
   });
 

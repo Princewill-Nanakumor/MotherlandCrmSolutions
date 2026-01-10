@@ -271,6 +271,7 @@ export async function GET() {
     const transformedLeads = await Promise.all(
       leads.map(async (lead: Record<string, unknown>) => {
         let assignedToUser = null;
+        const originalAssignedTo = lead.assignedTo;
 
         if (lead.assignedTo) {
           // Try to get user details using the user map
@@ -279,6 +280,20 @@ export async function GET() {
             lead.assignedTo,
             userMap
           );
+          
+          // If user lookup failed but assignedTo exists, preserve the original value as a fallback
+          // This ensures leads are still counted as assigned even if user details can't be fetched
+          if (!assignedToUser && originalAssignedTo) {
+            const userIdString = safeObjectIdToString(originalAssignedTo);
+            if (userIdString) {
+              // Return minimal object with just the ID to indicate assignment
+              assignedToUser = {
+                id: userIdString,
+                firstName: "Unknown",
+                lastName: "User",
+              };
+            }
+          }
         }
 
         // Get last comment and comment count for this lead

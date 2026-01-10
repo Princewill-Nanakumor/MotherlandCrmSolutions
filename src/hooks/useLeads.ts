@@ -392,7 +392,8 @@ export const useLeads = () => {
           variant: "destructive",
         });
 
-        return [];
+        // Don't return empty array - throw the error so React Query preserves previous data
+        throw error;
       } finally {
         setLoadingLeads(false);
       }
@@ -412,10 +413,12 @@ export const useLeads = () => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     staleTime: 30 * 60 * 1000, // 30 minutes - much longer
     gcTime: 60 * 60 * 1000, // 1 hour cache time
-    refetchOnMount: "always", // Always refetch on mount
+    refetchOnMount: false, // Don't always refetch - use stale data if available to prevent showing 0
     refetchOnWindowFocus: false, // Disable automatic refetch
     refetchOnReconnect: true, // Keep this for network reconnection
     enabled: status === "authenticated",
+    // Preserve previous data during refetch to prevent showing 0 when cache is updating
+    placeholderData: (previousData) => previousData ?? [],
   });
 
   // Add error handling for all queries with better timeout handling
@@ -554,9 +557,25 @@ export const useLeads = () => {
         variant: "destructive",
       });
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       console.log("Assignment successful:", data);
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      // Invalidate and immediately refetch all leads-related queries (including dashboard stats)
+      // Use predicate to catch all leads queries (["leads"], ["leads", "assigned", "stats"], etc.)
+      await queryClient.invalidateQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey[0] === "leads"
+      });
+      await queryClient.refetchQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey[0] === "leads" &&
+          query.queryKey.length <= 3 // Refetch main leads queries (not deeply nested ones)
+      });
+      // Also invalidate assigned leads queries for agents
+      await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
+      await queryClient.refetchQueries({ queryKey: ["assignedLeads"] });
+      
       const { leadIds, userId } = variables;
       const assignedUser = users.find((u) => u.id === userId);
       const leadCount = leadIds.length;
@@ -667,9 +686,24 @@ export const useLeads = () => {
         variant: "destructive",
       });
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: async (data, variables, context) => {
       console.log("Unassignment successful:", data);
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      // Invalidate and immediately refetch all leads-related queries (including dashboard stats)
+      // Use predicate to catch all leads queries (["leads"], ["leads", "assigned", "stats"], etc.)
+      await queryClient.invalidateQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey[0] === "leads"
+      });
+      await queryClient.refetchQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey[0] === "leads" &&
+          query.queryKey.length <= 3 // Refetch main leads queries (not deeply nested ones)
+      });
+      // Also invalidate assigned leads queries for agents
+      await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
+      await queryClient.refetchQueries({ queryKey: ["assignedLeads"] });
 
       const { leadIds } = variables;
       const leadCount = leadIds.length;
