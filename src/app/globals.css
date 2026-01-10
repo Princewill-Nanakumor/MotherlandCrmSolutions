@@ -15,6 +15,13 @@
   color: #0f172a;
 }
 
+/* Smooth scrolling for better UX */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 body {
   font-family:
     var(--font-space-grotesk),
@@ -55,6 +62,27 @@ h6 {
 .dark h6 {
   /* Default text color for dark mode - light text */
   color: #f8fafc;
+}
+
+/* Ensure hero section text is always white (light and dark mode) */
+.hero-section h1,
+.hero-section h2,
+.hero-section h3,
+.hero-section h4,
+.hero-section h5,
+.hero-section h6,
+.hero-section p {
+  color: white !important;
+}
+
+.dark .hero-section h1,
+.dark .hero-section h2,
+.dark .hero-section h3,
+.dark .hero-section h4,
+.dark .hero-section h5,
+.dark .hero-section h6,
+.dark .hero-section p {
+  color: white !important;
 }
 
 /* Ensure dark mode text colors override gray-900 classes */
@@ -1163,8 +1191,87 @@ button,
 
 /* Sidebar link color overrides to ensure consistency */
 /* Override global span/p/a color rules for sidebar to allow Tailwind classes to work */
-aside nav a {
+aside nav a:not(.bg-gradient-to-r):not(.active-nav-link) {
   color: inherit !important;
+}
+
+/* Ensure active sidebar link gradient background works - must come after the reset */
+/* Target elements with active-nav-link class, data-active attribute, aria-current="page", or gradient classes */
+/* CRITICAL: Include base :link state and ALL pseudo-class states to ensure it works after page load */
+aside nav a[data-active="true"],
+aside nav a[data-active="true"]:link,
+aside nav a[data-active="true"]:visited,
+aside nav a[data-active="true"]:hover,
+aside nav a[data-active="true"]:active,
+aside nav a[data-active="true"]:focus,
+aside nav a[data-active="true"]:focus-visible,
+aside nav a.active-nav-link,
+aside nav a.active-nav-link:link,
+aside nav a.active-nav-link:visited,
+aside nav a.active-nav-link:hover,
+aside nav a.active-nav-link:active,
+aside nav a.active-nav-link:focus,
+aside nav a.active-nav-link:focus-visible,
+aside nav a[aria-current="page"],
+aside nav a[aria-current="page"]:link,
+aside nav a[aria-current="page"]:visited,
+aside nav a[aria-current="page"]:hover,
+aside nav a[aria-current="page"]:active,
+aside nav a[aria-current="page"]:focus,
+aside nav a[aria-current="page"]:focus-visible,
+aside nav a.bg-gradient-to-r,
+aside nav a.bg-gradient-to-r:link,
+aside nav a.bg-gradient-to-r:visited,
+aside nav a.bg-gradient-to-r:hover,
+aside nav a[class*="bg-gradient-to-r"],
+aside nav a[class*="!bg-gradient-to-r"] {
+  background: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important; /* from-indigo-600 to-purple-600 */
+  background-image: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
+  background-color: transparent !important;
+  color: white !important;
+}
+
+.dark aside nav a[data-active="true"],
+.dark aside nav a[data-active="true"]:link,
+.dark aside nav a[data-active="true"]:visited,
+.dark aside nav a[data-active="true"]:hover,
+.dark aside nav a[data-active="true"]:active,
+.dark aside nav a[data-active="true"]:focus,
+.dark aside nav a[data-active="true"]:focus-visible,
+.dark aside nav a.active-nav-link,
+.dark aside nav a.active-nav-link:link,
+.dark aside nav a.active-nav-link:visited,
+.dark aside nav a.active-nav-link:hover,
+.dark aside nav a.active-nav-link:active,
+.dark aside nav a.active-nav-link:focus,
+.dark aside nav a.active-nav-link:focus-visible,
+.dark aside nav a[aria-current="page"],
+.dark aside nav a[aria-current="page"]:link,
+.dark aside nav a[aria-current="page"]:visited,
+.dark aside nav a[aria-current="page"]:hover,
+.dark aside nav a[aria-current="page"]:active,
+.dark aside nav a[aria-current="page"]:focus,
+.dark aside nav a[aria-current="page"]:focus-visible,
+.dark aside nav a.bg-gradient-to-r,
+.dark aside nav a[class*="bg-gradient-to-r"],
+.dark aside nav a[class*="!bg-gradient-to-r"] {
+  background: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important; /* from-indigo-600 to-purple-600 */
+  background-image: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
+  background-color: transparent !important;
+  color: white !important;
+}
+
+
+/* Ensure active links keep gradient even with group class and Tailwind hover utilities */
+aside nav a.group[data-active="true"],
+aside nav a.group[data-active="true"]:hover,
+aside nav a.group.active-nav-link,
+aside nav a.group.active-nav-link:hover,
+aside nav a.group[aria-current="page"],
+aside nav a.group[aria-current="page"]:hover {
+  background: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
+  background-image: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
+  background-color: transparent !important;
 }
 
 /* Ensure icons (SVG) in sidebar respect their color classes */
@@ -1192,23 +1299,53 @@ aside nav a span.text-indigo-700 {
   color: rgb(67 56 202) !important; /* indigo-700 */
 }
 
-/* Dark mode sidebar links should be white */
-.dark aside nav a:not(.bg-gradient-to-r) {
+/* Dark mode sidebar links should be white - but exclude active links */
+.dark aside nav a:not(.bg-gradient-to-r):not(.active-nav-link) {
   color: white !important;
 }
 
-.dark aside nav a:not(.bg-gradient-to-r) svg {
+.dark aside nav a:not(.bg-gradient-to-r):not(.active-nav-link) svg {
   stroke: white !important;
   color: white !important;
 }
 
-.dark aside nav a:not(.bg-gradient-to-r) span {
+.dark aside nav a:not(.bg-gradient-to-r):not(.active-nav-link) span,
+.dark aside nav a:not(.bg-gradient-to-r):not(.active-nav-link) span[class*="dark:!text-white"],
+.dark aside nav a:not(.bg-gradient-to-r):not(.active-nav-link) span.dark\:!text-white {
   color: white !important;
 }
 
-/* Active indicator bar - ensure indigo-600 color matches gradient start */
-aside nav a span[aria-hidden="true"].bg-indigo-600 {
-  background-color: rgb(79 70 229) !important; /* indigo-600 */
+/* Ensure dark:!text-white works in sidebar */
+.dark aside nav a svg[class*="dark:!text-white"],
+.dark aside nav a svg.dark\:!text-white {
+  stroke: white !important;
+  color: white !important;
+}
+
+/* Active indicator bar - ensure it shows when parent link is active */
+/* Don't force background color - let Tailwind classes work naturally */
+aside nav a[data-active="true"] span[aria-hidden="true"][class*="opacity-100"],
+aside nav a.active-nav-link span[aria-hidden="true"][class*="opacity-100"],
+aside nav a[aria-current="page"] span[aria-hidden="true"][class*="opacity-100"] {
+  opacity: 1 !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Dark mode active indicator bar */
+.dark aside nav a[data-active="true"] span[aria-hidden="true"][class*="opacity-100"],
+.dark aside nav a.active-nav-link span[aria-hidden="true"][class*="opacity-100"],
+.dark aside nav a[aria-current="page"] span[aria-hidden="true"][class*="opacity-100"] {
+  opacity: 1 !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Override any conflicting background colors for active links */
+aside nav a.bg-gradient-to-r:hover,
+aside nav a[class*="bg-gradient-to-r"]:hover {
+  background-image: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
+  background-color: transparent !important;
 }
 
 /* Override global text color rules for form error messages and button text */

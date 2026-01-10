@@ -127,6 +127,75 @@ export default function LoginPage() {
             background-color: transparent !important;
             background: transparent !important;
           }
+          /* Ensure navbar doesn't get dark mode background */
+          nav,
+          .dark nav,
+          nav.dark,
+          .dark nav[class*="nav"],
+          [class*="Navbar"],
+          [class*="navbar"] {
+            background-color: transparent !important;
+            background: transparent !important;
+          }
+          /* Ensure form container doesn't get dark mode background - target the container div */
+          div[class*="bg-white/10"],
+          div[class*="bg-white/10"].dark,
+          .dark div[class*="bg-white/10"],
+          [class*="SignInForm"],
+          [class*="signInForm"],
+          .dark [class*="SignInForm"],
+          .dark [class*="signInForm"] {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+          }
+          /* Also ensure form wrapper doesn't get dark background */
+          form {
+            background-color: transparent !important;
+            background: transparent !important;
+          }
+          /* Remove dark mode borders from inputs */
+          input[type="email"],
+          input[type="password"],
+          .dark input[type="email"],
+          .dark input[type="password"] {
+            border-color: rgb(209, 213, 219) !important; /* gray-300 */
+          }
+          /* Remove dark mode background from checkbox - use very specific selectors */
+          input[type="checkbox"],
+          input[type="checkbox"].dark,
+          .dark input[type="checkbox"],
+          html.dark input[type="checkbox"],
+          body.dark input[type="checkbox"],
+          form input[type="checkbox"],
+          .dark form input[type="checkbox"],
+          label input[type="checkbox"],
+          .dark label input[type="checkbox"] {
+            background-color: white !important;
+            background: white !important;
+            background-image: none !important;
+            border-color: rgb(209, 213, 219) !important; /* gray-300 */
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            border-width: 1px !important;
+            border-style: solid !important;
+          }
+          input[type="checkbox"]:checked,
+          .dark input[type="checkbox"]:checked,
+          html.dark input[type="checkbox"]:checked,
+          body.dark input[type="checkbox"]:checked,
+          form input[type="checkbox"]:checked,
+          .dark form input[type="checkbox"]:checked,
+          label input[type="checkbox"]:checked,
+          .dark label input[type="checkbox"]:checked {
+            background-color: rgb(79, 70, 229) !important; /* indigo-600 */
+            background: rgb(79, 70, 229) !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") !important;
+            background-size: contain !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            border-color: rgb(79, 70, 229) !important;
+          }
         `,
         }}
       />

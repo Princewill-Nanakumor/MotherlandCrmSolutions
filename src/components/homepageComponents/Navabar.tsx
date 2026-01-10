@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { Shield } from "lucide-react";
 import ThemeToggle from "@/components/dashboardComponents/ThemeToggle";
 import { motion } from "framer-motion";
@@ -17,6 +18,8 @@ function Skeleton({ className = "" }: { className?: string }) {
 
 export default function Navbar() {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
+  const isLoginPage = pathname === "/login";
 
   const logoVariants = {
     hidden: { opacity: 0, x: -50 },
@@ -56,7 +59,8 @@ export default function Navbar() {
 
   return (
     <motion.nav
-      className="px-6 py-4 bg-transparent border-b border-white/20"
+      className="px-6 py-4 border-b border-white/20"
+      style={{ backgroundColor: 'transparent' }}
       initial="hidden"
       animate="visible"
       variants={navVariants}
@@ -119,26 +123,30 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <motion.div
-                variants={buttonVariants}
-                initial="visible"
-                animate="visible"
-                transition={{ duration: 0.4, ease: "easeOut" }}
-              >
-                <Link href="/login" className={signInClasses}>
-                  Sign In
-                </Link>
-              </motion.div>
+              {!isLoginPage && (
+                <motion.div
+                  variants={buttonVariants}
+                  initial="visible"
+                  animate="visible"
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                >
+                  <Link href="/login" className={signInClasses}>
+                    Sign In
+                  </Link>
+                </motion.div>
+              )}
             </>
           )}
-          <motion.div
-            variants={buttonVariants}
-            initial="visible"
-            animate="visible"
-            transition={{ duration: 0.4, ease: "easeOut" }}
-          >
-            <ThemeToggle />
-          </motion.div>
+          {!isLoginPage && (
+            <motion.div
+              variants={buttonVariants}
+              initial="visible"
+              animate="visible"
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            >
+              <ThemeToggle />
+            </motion.div>
+          )}
         </motion.div>
       </div>
     </motion.nav>

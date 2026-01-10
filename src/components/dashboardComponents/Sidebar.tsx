@@ -84,9 +84,9 @@ export default function Sidebar() {
 
   if (status === "loading") {
     return (
-      <aside className="flex h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 shadow-lg">
-        <nav className="w-24 flex flex-col items-center py-6 space-y-2 h-full">
-          <div className="flex-1 w-full flex flex-col gap-2 items-center justify-center">
+      <aside className="flex h-screen shadow-lg bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+        <nav className="flex flex-col items-center w-24 h-full py-6 space-y-2">
+          <div className="flex flex-col items-center justify-center flex-1 w-full gap-2">
             <span className="text-indigo-400">Loading...</span>
           </div>
         </nav>
@@ -95,40 +95,57 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 shadow-lg border-r border-indigo-100 dark:border-gray-700">
-      <nav className="w-24 flex flex-col items-center py-6 space-y-2 h-full">
+    <aside className="flex h-screen border-r border-indigo-100 shadow-lg bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border-gray-700">
+      <nav className="flex flex-col items-center w-24 h-full py-6 space-y-2">
         {/* Logo */}
         <Link
           href="/"
-          className="mb-8 p-3 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg flex items-center justify-center"
+          className="flex items-center justify-center p-3 mb-8 shadow-lg bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl"
           aria-label="Home"
         >
           <Shield size={28} className="text-white" />
         </Link>
 
         {/* Main Navigation */}
-        <div className="flex-1 w-full flex flex-col gap-2">
+        <div className="flex flex-col flex-1 w-full gap-2">
           {filteredNavItems.map((item) => {
+            // Improved active state detection
+            // For "/dashboard" route: exact match only
+            // For other routes: exact match OR pathname starts with item.href + "/"
             const isActive =
               pathname === item.href ||
-              (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              (item.href !== "/dashboard" &&
+                pathname &&
+                pathname.startsWith(item.href + "/"));
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "group relative flex flex-col items-center w-full py-3 transition-all rounded-xl",
+                  "flex relative flex-col items-center py-3 w-full rounded-xl transition-all group",
                   isActive
-                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md"
-                    : "text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white"
+                    ? "text-white shadow-md active-nav-link"
+                    : "text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 dark:!text-white dark:hover:bg-gray-700 dark:hover:!text-white"
                 )}
+                style={
+                  isActive
+                    ? {
+                        background:
+                          "linear-gradient(to right, rgb(79 70 229), rgb(147 51 234))",
+                        backgroundImage:
+                          "linear-gradient(to right, rgb(79 70 229), rgb(147 51 234))",
+                        backgroundColor: "transparent",
+                      }
+                    : undefined
+                }
+                data-active={isActive ? "true" : undefined}
                 aria-current={isActive ? "page" : undefined}
                 title={item.label}
               >
                 {/* Active indicator bar */}
                 <span
                   className={cn(
-                    "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r bg-indigo-600 transition-all",
+                    "absolute left-0 top-1/2 w-1 h-8 bg-indigo-300 rounded-r transition-all -translate-y-1/2",
                     isActive ? "opacity-100" : "opacity-0"
                   )}
                   aria-hidden="true"
@@ -136,13 +153,15 @@ export default function Sidebar() {
                 <item.icon
                   size={24}
                   className={
-                    isActive ? "text-white" : "text-indigo-700 dark:text-white"
+                    isActive ? "text-white" : "text-indigo-700 dark:!text-white"
                   }
                 />
                 <span
                   className={cn(
-                    "text-xs mt-1 font-medium",
-                    isActive ? "text-white" : "text-indigo-700 dark:text-white"
+                    "mt-1 text-xs font-medium",
+                    isActive
+                      ? "text-white"
+                      : "!text-indigo-700 dark:!text-white"
                   )}
                 >
                   {item.label}
@@ -153,18 +172,29 @@ export default function Sidebar() {
         </div>
 
         {/* Divider */}
-        <div className="w-10 border-t border-indigo-200 dark:border-gray-700 my-4" />
+        <div className="w-10 my-4 border-t border-indigo-200 dark:border-gray-700" />
 
         {/* Footer Actions */}
-        <div className="flex flex-col gap-2 w-full">
+        <div className="flex flex-col w-full gap-2">
           <Link
             href="/dashboard/settings"
             className={cn(
               "group relative flex flex-col items-center w-full py-3 transition-all rounded-xl",
               pathname === "/dashboard/settings"
-                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md"
-                : "text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white"
+                ? "text-white shadow-md active-nav-link"
+                : "text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 dark:!text-white dark:hover:bg-gray-700 dark:hover:!text-white"
             )}
+            style={
+              pathname === "/dashboard/settings"
+                ? {
+                    background:
+                      "linear-gradient(to right, rgb(79 70 229), rgb(147 51 234))",
+                    backgroundImage:
+                      "linear-gradient(to right, rgb(79 70 229), rgb(147 51 234))",
+                    backgroundColor: "transparent",
+                  }
+                : undefined
+            }
             aria-current={
               pathname === "/dashboard/settings" ? "page" : undefined
             }
@@ -173,7 +203,7 @@ export default function Sidebar() {
             {/* Active indicator bar */}
             <span
               className={cn(
-                "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r bg-indigo-600 transition-all",
+                "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r bg-red-600 transition-all",
                 pathname === "/dashboard/settings" ? "opacity-100" : "opacity-0"
               )}
               aria-hidden="true"
@@ -183,7 +213,7 @@ export default function Sidebar() {
               className={
                 pathname === "/dashboard/settings"
                   ? "text-white"
-                  : "text-indigo-700 dark:text-white"
+                  : "text-indigo-700 dark:!text-white"
               }
             />
             <span
@@ -191,7 +221,7 @@ export default function Sidebar() {
                 "text-xs mt-1 font-medium",
                 pathname === "/dashboard/settings"
                   ? "text-white"
-                  : "text-indigo-700 dark:text-white"
+                  : "!text-indigo-700 dark:!text-white"
               )}
             >
               Settings
@@ -205,16 +235,28 @@ export default function Sidebar() {
               className={cn(
                 "group relative flex flex-col items-center w-full py-3 transition-all rounded-xl",
                 pathname === "/dashboard/help"
-                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md"
-                  : "text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white"
+                  ? "text-white shadow-md active-nav-link"
+                  : "text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 dark:!text-white dark:hover:bg-gray-700 dark:hover:!text-white"
               )}
+              style={
+                pathname === "/dashboard/help"
+                  ? {
+                      background:
+                        "linear-gradient(to right, rgb(79 70 229), rgb(147 51 234))",
+                      backgroundImage:
+                        "linear-gradient(to right, rgb(79 70 229), rgb(147 51 234))",
+                      backgroundColor: "transparent",
+                    }
+                  : undefined
+              }
+              data-active={pathname === "/dashboard/help" ? "true" : undefined}
               aria-current={pathname === "/dashboard/help" ? "page" : undefined}
               title="Help"
             >
               {/* Active indicator bar */}
               <span
                 className={cn(
-                  "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r bg-indigo-600 transition-all",
+                  "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r bg-red-600 transition-all",
                   pathname === "/dashboard/help" ? "opacity-100" : "opacity-0"
                 )}
                 aria-hidden="true"
@@ -224,7 +266,7 @@ export default function Sidebar() {
                 className={
                   pathname === "/dashboard/help"
                     ? "text-white"
-                    : "text-indigo-700 dark:text-white"
+                    : "text-indigo-700 dark:!text-white"
                 }
               />
               <span
@@ -232,7 +274,7 @@ export default function Sidebar() {
                   "text-xs mt-1 font-medium",
                   pathname === "/dashboard/help"
                     ? "text-white"
-                    : "text-indigo-700 dark:text-white"
+                    : "!text-indigo-700 dark:!text-white"
                 )}
               >
                 Help

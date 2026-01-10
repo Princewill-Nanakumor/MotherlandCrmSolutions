@@ -57,7 +57,7 @@ export default function SignInForm() {
         setLoading(false);
       } else if (result?.ok) {
         setFormSuccess("Signed in successfully! Redirecting...");
-        
+
         // Update session to ensure it's available before redirecting
         // This is important for Vercel where cookies need to be properly set
         try {
@@ -65,7 +65,7 @@ export default function SignInForm() {
         } catch {
           // If update fails, continue with redirect anyway
         }
-        
+
         // Wait briefly for the cookie to be set, then do a hard redirect
         // This ensures the cookie is available when middleware checks
         // Using window.location.href ensures a full page reload with cookies
@@ -84,7 +84,10 @@ export default function SignInForm() {
   };
 
   return (
-    <div className="p-4 rounded-xl border shadow-xl bg-white/10 dark:bg-gray-900/10 sm:rounded-2xl border-white/20 dark:border-gray-700/20 sm:p-6 md:p-8">
+    <div
+      className="p-4 rounded-xl border shadow-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8"
+      style={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+    >
       <div className="mb-6 text-center sm:mb-8">
         <h2 className="text-2xl font-bold !text-white sm:text-3xl">
           Welcome Back
@@ -118,9 +121,9 @@ export default function SignInForm() {
                 disabled={isFormDisabled}
                 className={`
                   pl-10 pr-3 py-3 w-full rounded-lg border text-sm
-                  ${errors.email ? "border-red-500" : "border-gray-300 dark:border-gray-600"}
+                  ${errors.email ? "border-red-500" : "border-gray-300"}
                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                  bg-white dark:bg-gray-700 !text-gray-900 dark:!text-white
+                  bg-white !text-gray-900
                   ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
@@ -147,9 +150,9 @@ export default function SignInForm() {
                 disabled={isFormDisabled}
                 className={`
                   pl-10 pr-10 py-3 w-full rounded-lg border text-sm
-                  ${errors.password ? "border-red-500" : "border-gray-300 dark:border-gray-600"}
+                  ${errors.password ? "border-red-500" : "border-gray-300"}
                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                  bg-white dark:bg-gray-700 !text-gray-900 dark:!text-white
+                  bg-white !text-gray-900
                   ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
@@ -170,9 +173,18 @@ export default function SignInForm() {
               {...register("remember")}
               type="checkbox"
               disabled={isFormDisabled}
+              style={{
+                backgroundColor: "white",
+                background: "white",
+                borderColor: "rgb(209, 213, 219)",
+                appearance: "none",
+                WebkitAppearance: "none",
+                MozAppearance: "none",
+                borderWidth: "1px",
+                borderStyle: "solid",
+              }}
               className={`
-                h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500
-                dark:border-gray-600 dark:bg-gray-700
+                h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 bg-white
                 ${isFormDisabled ? "opacity-75 cursor-not-allowed" : "cursor-pointer"}
               `}
             />
