@@ -1,6 +1,7 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
 import { Space_Grotesk, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 // Temporarily removed ClientProviders due to persistent webpack issues
 
@@ -106,38 +107,40 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "ZodaShield",
+    description:
+      "Modern CRM Solution for Excel & CSV file import and lead management",
+    url: "https://motherland.com",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web Browser",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    author: {
+      "@type": "Organization",
+      name: "Motherland CRM Solutions",
+    },
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* Structured Data for better SEO - using dangerouslySetInnerHTML in head */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "SoftwareApplication",
-              name: "ZodaShield",
-              description:
-                "Modern CRM Solution for Excel & CSV file import and lead management",
-              url: "https://motherland.com",
-              applicationCategory: "BusinessApplication",
-              operatingSystem: "Web Browser",
-              offers: {
-                "@type": "Offer",
-                price: "0",
-                priceCurrency: "USD",
-              },
-              author: {
-                "@type": "Organization",
-                name: "Motherland CRM Solutions",
-              },
-            }),
-          }}
-        />
-      </head>
       <body
         className={`${spaceGrotesk.variable} ${geistMono.variable} antialiased`}
       >
+        {/* Structured Data for better SEO - using afterInteractive for App Router compatibility */}
+        <Script
+          id="structured-data"
+          type="application/ld+json"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData),
+          }}
+        />
         {children}
       </body>
     </html>
