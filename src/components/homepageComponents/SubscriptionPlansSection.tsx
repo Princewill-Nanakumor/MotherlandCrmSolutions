@@ -68,7 +68,7 @@ export default function SubscriptionPlansSection() {
 
   return (
     <section className="py-16 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl px-4 mx-auto sm:px-6 lg:px-8">
         <motion.div
           className="p-6 bg-white shadow-2xl dark:bg-gray-800 rounded-2xl sm:p-8 md:p-12"
           variants={containerVariants}
@@ -141,7 +141,7 @@ export default function SubscriptionPlansSection() {
             </p>
             <div className="flex justify-center">
               <a
-                href="https://t.me/motherlandcrm"
+                href="https://t.me/Motherlandsolutions"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center px-8 py-3 font-medium text-white transition-all duration-200 rounded-lg shadow-md bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600 hover:shadow-lg"
