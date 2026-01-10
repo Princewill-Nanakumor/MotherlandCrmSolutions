@@ -4,9 +4,11 @@ import { motion } from "framer-motion";
 import { SessionProvider } from "next-auth/react";
 import Navbar from "@/components/homepageComponents/Navabar";
 import SignInForm from "@/components/authComponents/SignInForm";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MessageCircle } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 
 // Animation variants
 const containerVariants = {
@@ -32,6 +34,34 @@ const sectionVariants = {
 };
 
 export default function LoginPage() {
+  const { toast } = useToast();
+  const [hasShownExpiredToast, setHasShownExpiredToast] = useState(false);
+
+  // Check if session expired and show toast
+  useEffect(() => {
+    // Only check once on mount
+    if (hasShownExpiredToast) return;
+    
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const expired = urlParams.get("expired");
+      
+      if (expired === "true") {
+        toast({
+          title: "Session Expired",
+          description: "Your session has expired. Please log in again.",
+          variant: "destructive",
+        });
+        setHasShownExpiredToast(true);
+        
+        // Remove the query parameter from URL without reloading
+        const url = new URL(window.location.href);
+        url.searchParams.delete("expired");
+        window.history.replaceState({}, "", url.pathname + url.search);
+      }
+    }
+  }, [toast, hasShownExpiredToast]);
+
   useEffect(() => {
     const body = document.body;
     const html = document.documentElement;
@@ -106,6 +136,7 @@ export default function LoginPage() {
 
   return (
     <>
+      <Toaster />
       <style
         dangerouslySetInnerHTML={{
           __html: `

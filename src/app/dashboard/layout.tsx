@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { useSession, SessionProvider } from "next-auth/react";
+import React, { useEffect, useState } from "react";
+import { useSession, SessionProvider, signOut } from "next-auth/react";
 import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
 import { StatusProvider } from "@/context/StatusContext";
 import { useRouter, usePathname } from "next/navigation";
 import Sidebar from "@/components/dashboardComponents/Sidebar";
@@ -24,6 +23,46 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const { status, data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  
+  // Track when session was created to calculate expiration
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  
+  // Set session start time when session becomes authenticated
+  useEffect(() => {
+    if (status === "authenticated" && session && !sessionStartTime) {
+      const now = new Date();
+      setSessionStartTime(now);
+    } else if (status === "unauthenticated") {
+      setSessionStartTime(null);
+    }
+  }, [status, session, sessionStartTime]);
+  
+  // Check if session has expired based on time elapsed (24 hours)
+  useEffect(() => {
+    if (sessionStartTime && status === "authenticated") {
+      const maxAge = 24 * 60 * 60; // 24 hours in seconds
+      const checkExpiration = setInterval(() => {
+        const now = new Date();
+        const elapsed = (now.getTime() - sessionStartTime.getTime()) / 1000; // seconds
+        const timeRemaining = maxAge - elapsed;
+        
+        if (timeRemaining <= 0) {
+          // Session has expired - use NextAuth signOut to properly invalidate
+          signOut({ 
+            callbackUrl: "/login?expired=true",
+            redirect: true
+          }).catch(() => {
+            // Fallback: hard redirect if signOut fails
+            window.location.href = "/login?expired=true";
+          });
+          
+          clearInterval(checkExpiration);
+        }
+      }, 5 * 60 * 1000); // Check every 5 minutes
+      
+      return () => clearInterval(checkExpiration);
+    }
+  }, [sessionStartTime, status]);
 
   // Use custom hook for localStorage persistence
   const [showHeader, setShowHeader] = useLocalStorage(
@@ -142,11 +181,36 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
   }, [pathname, status, isAdminLeadsPage, isUserLeadsPage]);
 
+  // Check session status on mount and when status changes
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/");
+      // Check if session was previously authenticated (expired) vs never authenticated
+      if (sessionStartTime) {
+        // Session expired - redirect with expired parameter
+        router.push("/login?expired=true");
+      } else {
+        // Never had a session - redirect normally
+        router.push("/login");
+      }
     }
-  }, [status, router]);
+  }, [status, router, sessionStartTime]);
+
+  // Check session on pathname change (navigation) to catch expired sessions immediately
+  useEffect(() => {
+    if (status === "loading") return;
+    
+    // If user is navigating and session is unauthenticated, redirect immediately
+    if (status === "unauthenticated" || !session) {
+      // Check if session was previously authenticated (expired) vs never authenticated
+      if (sessionStartTime) {
+        // Session expired - redirect with expired parameter
+        router.push("/login?expired=true");
+      } else {
+        // Never had a session - redirect normally
+        router.push("/login");
+      }
+    }
+  }, [pathname, status, session, router, sessionStartTime]);
 
   if (status === "loading") {
     return (
@@ -218,7 +282,10 @@ export default function DashboardLayout({
   );
 
   return (
-    <SessionProvider>
+    <SessionProvider
+      refetchInterval={5 * 60} // Refetch session every 5 minutes to check for expiry
+      refetchOnWindowFocus={true} // Refetch when user returns to window
+    >
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <StatusProvider>

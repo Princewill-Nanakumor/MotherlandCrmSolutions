@@ -128,7 +128,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
         className={`${spaceGrotesk.variable} ${geistMono.variable} antialiased`}
       >

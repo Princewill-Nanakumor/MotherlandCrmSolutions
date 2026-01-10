@@ -51,6 +51,7 @@ declare module "next-auth/jwt" {
     country: string;
     adminId?: string;
     canViewPhoneNumbers?: boolean;
+    exp?: number; // Token expiration timestamp
   }
 }
 
@@ -149,7 +150,7 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
     maxAge: 24 * 60 * 60, // 24 hours
-    updateAge: 60 * 60,
+    updateAge: 60 * 60, // 1 hour - refresh session every hour if user is active
   },
   pages: {
     signIn: "/login",
@@ -172,7 +173,11 @@ export const authOptions: NextAuthOptions = {
       return baseUrl;
     },
     async jwt({ token, user, trigger, session }) {
+      const nowTimestamp = Math.floor(Date.now() / 1000);
+      const maxAge = 24 * 60 * 60; // 24 hours
+      
       if (user) {
+        // New token - set user data (user just logged in)
         token.id = user.id;
         token.role = user.role;
         token.permissions = user.permissions;
@@ -183,17 +188,40 @@ export const authOptions: NextAuthOptions = {
         token.country = user.country;
         token.adminId = user.adminId;
         token.canViewPhoneNumbers = user.canViewPhoneNumbers;
+        
+        // Set expiration time ONLY on initial login
+        token.exp = nowTimestamp + maxAge;
+        
+        // Store the original expiration time in iat (issued at) if not already set
+        if (!token.iat) {
+          token.iat = nowTimestamp;
+        }
+      } else if (token) {
+        // Existing token - check if it's expired
+        const currentTime = Math.floor(Date.now() / 1000);
+        
+        if (token.exp && token.exp < currentTime) {
+          // Token expired - throw error to force session invalidation
+          throw new Error("Token expired");
+        }
       }
 
-      // Handle session updates
+      // Handle session updates (but don't change expiration)
       if (trigger === "update" && session) {
-        return { ...token, ...session.user };
+        // Preserve the original expiration time when updating
+        const originalExp = token.exp;
+        const updatedToken = { ...token, ...session.user };
+        updatedToken.exp = originalExp; // Restore original expiration
+        return updatedToken;
       }
 
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      // NextAuth automatically validates token expiration based on maxAge (24 hours)
+      // If token is expired, NextAuth will set session to null automatically
+      
+      if (token && session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
         session.user.permissions = token.permissions;
