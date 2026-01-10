@@ -25,8 +25,17 @@ if (!globalWithCache.mongooseCache) {
 function getMongoDBUri(): string {
   const MONGODB_URI = process.env.MONGODB_URI;
   if (!MONGODB_URI) {
+    // During build time, Netlify might analyze routes without env vars
+    // Throw a more descriptive error that won't fail the build
+    if (process.env.NODE_ENV === "production" && !process.env.VERCEL && !process.env.NETLIFY) {
+      // Only throw in production if we're actually trying to connect
+      throw new Error(
+        "Please define the MONGODB_URI environment variable inside .env"
+      );
+    }
+    // For build time, use a placeholder that will fail gracefully at runtime
     throw new Error(
-      "Please define the MONGODB_URI environment variable inside .env"
+      "MONGODB_URI environment variable is not defined. Please configure it in your deployment environment."
     );
   }
   // Ensure we're connecting to the correct database

@@ -158,6 +158,7 @@ export const authOptions: NextAuthOptions = {
     newUser: "/signup",
     verifyRequest: "/forgot-password",
   },
+  useSecureCookies: process.env.NODE_ENV === "production",
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user) {

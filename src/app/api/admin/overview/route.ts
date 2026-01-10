@@ -82,6 +82,11 @@ function extractLastAgentLogin(data: unknown) {
   };
 }
 
+// Force dynamic rendering - skip build-time analysis
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
+export const runtime = "nodejs";
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);

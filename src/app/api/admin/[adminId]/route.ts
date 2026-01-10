@@ -10,7 +10,10 @@ import Payment from "@/models/Payment";
 import mongoose from "mongoose";
 
 // Force dynamic rendering - this route should not be statically analyzed at build time
+// These exports tell Next.js/Netlify to skip build-time analysis
 export const dynamic = "force-dynamic";
+export const dynamicParams = true;
+export const revalidate = 0;
 export const runtime = "nodejs";
 
 // Define interface for Ad (placeholder - you can create an Ad model later)

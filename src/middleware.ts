@@ -17,17 +17,23 @@ export default withAuth(
     const isAdminManagementPage = path.startsWith(
       "/dashboard/admin-management"
     );
+    const isApiRoute = path.startsWith("/api");
 
-        const publicPages = [
-          "/",
-          "/about",
-          "/test-performance",
-          "/contact",
-          "/login",
-          // "/signup", // Hidden - will be enabled later
-          // "/forgot-password", // Hidden - will be enabled later
-          "/verify-email",
-        ];
+    // Allow all API routes to pass through (they handle auth internally)
+    if (isApiRoute) {
+      return NextResponse.next();
+    }
+
+    const publicPages = [
+      "/",
+      "/about",
+      "/test-performance",
+      "/contact",
+      "/login",
+      // "/signup", // Hidden - will be enabled later
+      // "/forgot-password", // Hidden - will be enabled later
+      "/verify-email",
+    ];
 
     const isPublicPage = publicPages.includes(path) || isVerifyEmailPage;
     // ✅ Allow access to public pages

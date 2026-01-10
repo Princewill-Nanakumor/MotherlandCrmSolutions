@@ -43,19 +43,30 @@ export default function SignInForm() {
     setLoading(true);
 
     try {
+      // Get callbackUrl from window.location.search if available
+      const urlParams = typeof window !== "undefined" 
+        ? new URLSearchParams(window.location.search) 
+        : null;
+      const callbackUrl = urlParams?.get("callbackUrl") || "/dashboard";
+      
+      // Use redirect: true to let NextAuth handle the redirect after session is set
+      // This ensures cookies are properly set before redirecting (prevents loop on Vercel)
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
-        redirect: false,
+        redirect: true,
+        callbackUrl,
         remember: data.remember,
       });
 
+      // If redirect is true, NextAuth handles the redirect, so we just show success
       if (result?.error) {
         setFormError(result.error);
         setLoading(false);
-      } else {
-        setFormSuccess("Signed in successfully! Redirecting to dashboard");
-        router.push("/dashboard");
+      } else if (result?.ok || result === undefined) {
+        // result is undefined when redirect: true is used
+        setFormSuccess("Signed in successfully! Redirecting...");
+        // Don't set loading to false here as we're redirecting
       }
     } catch (error: unknown) {
       setFormError(

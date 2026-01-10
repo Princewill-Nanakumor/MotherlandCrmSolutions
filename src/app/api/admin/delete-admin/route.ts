@@ -7,6 +7,11 @@ import Lead from "@/models/Lead";
 import Status from "@/models/Status";
 import { authOptions } from "@/libs/auth";
 
+// Force dynamic rendering - skip build-time analysis
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
+export const runtime = "nodejs";
+
 export async function DELETE(req: Request) {
   try {
     const session = await getServerSession(authOptions);
