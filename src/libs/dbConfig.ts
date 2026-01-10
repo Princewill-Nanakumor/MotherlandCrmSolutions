@@ -21,29 +21,33 @@ if (!globalWithCache.mongooseCache) {
   };
 }
 
-const MONGODB_URI = process.env.MONGODB_URI;
-if (!MONGODB_URI) {
-  throw new Error(
-    "Please define the MONGODB_URI environment variable inside .env"
-  );
+// Helper function to get MongoDB URI - checked at runtime, not build time
+function getMongoDBUri(): string {
+  const MONGODB_URI = process.env.MONGODB_URI;
+  if (!MONGODB_URI) {
+    throw new Error(
+      "Please define the MONGODB_URI environment variable inside .env"
+    );
+  }
+  // Ensure we're connecting to the correct database
+  return MONGODB_URI.replace(/\/$/, "") + "/your_default_db_name";
 }
 
-// Ensure we're connecting to the correct database
-const MONGODB_URI_WITH_DB =
-  MONGODB_URI.replace(/\/$/, "") + "/your_default_db_name";
-
-const options: mongoose.ConnectOptions = {
-  bufferCommands: true,
-  autoIndex: true,
-  maxPoolSize: 50,
-  minPoolSize: 10,
-  serverSelectionTimeoutMS: 30000,
-  socketTimeoutMS: 45000,
-  family: 4,
-  retryWrites: true,
-  connectTimeoutMS: 30000,
-  dbName: "your_default_db_name", // Explicitly set the database name
-};
+// Helper function to get connection options
+function getConnectionOptions(): mongoose.ConnectOptions {
+  return {
+    bufferCommands: true,
+    autoIndex: true,
+    maxPoolSize: 50,
+    minPoolSize: 10,
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 45000,
+    family: 4,
+    retryWrites: true,
+    connectTimeoutMS: 30000,
+    dbName: "your_default_db_name", // Explicitly set the database name
+  };
+}
 
 let listenersSet = false;
 
@@ -68,6 +72,10 @@ function ensureModelsRegistered() {
 
 export const connectMongoDB = async (): Promise<typeof mongoose> => {
   try {
+    // Check for MONGODB_URI at runtime (not build time)
+    const MONGODB_URI_WITH_DB = getMongoDBUri();
+    const options = getConnectionOptions();
+
     // NEW: Ensure models are registered BEFORE connecting
     ensureModelsRegistered();
 
