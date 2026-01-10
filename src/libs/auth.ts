@@ -158,8 +158,19 @@ export const authOptions: NextAuthOptions = {
     newUser: "/signup",
     verifyRequest: "/forgot-password",
   },
-  useSecureCookies: process.env.NODE_ENV === "production",
+  // Cookie configuration for Vercel/production
+  useSecureCookies: process.env.NEXTAUTH_URL?.startsWith("https://") ?? process.env.NODE_ENV === "production",
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Ensure we only allow redirects to the same domain
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+      return baseUrl;
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;

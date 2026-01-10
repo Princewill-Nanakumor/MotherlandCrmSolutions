@@ -14,7 +14,7 @@ import { FormSuccess } from "./FormSucess";
 type LoginInput = z.infer<typeof LoginSchema>;
 
 export default function SignInForm() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const router = useRouter();
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
@@ -43,30 +43,35 @@ export default function SignInForm() {
     setLoading(true);
 
     try {
-      // Get callbackUrl from window.location.search if available
-      const urlParams = typeof window !== "undefined" 
-        ? new URLSearchParams(window.location.search) 
-        : null;
-      const callbackUrl = urlParams?.get("callbackUrl") || "/dashboard";
-      
-      // Use redirect: true to let NextAuth handle the redirect after session is set
-      // This ensures cookies are properly set before redirecting (prevents loop on Vercel)
+      // Use redirect: false to handle redirect client-side after cookie is set
+      // This is necessary for Vercel where cookies need time to be available
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
-        redirect: true,
-        callbackUrl,
+        redirect: false,
         remember: data.remember,
       });
 
-      // If redirect is true, NextAuth handles the redirect, so we just show success
       if (result?.error) {
         setFormError(result.error);
         setLoading(false);
-      } else if (result?.ok || result === undefined) {
-        // result is undefined when redirect: true is used
+      } else if (result?.ok) {
         setFormSuccess("Signed in successfully! Redirecting...");
-        // Don't set loading to false here as we're redirecting
+        
+        // Update session to ensure it's available before redirecting
+        // This is important for Vercel where cookies need to be properly set
+        try {
+          await update();
+        } catch {
+          // If update fails, continue with redirect anyway
+        }
+        
+        // Wait briefly for the cookie to be set, then do a hard redirect
+        // This ensures the cookie is available when middleware checks
+        // Using window.location.href ensures a full page reload with cookies
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 500);
       }
     } catch (error: unknown) {
       setFormError(
