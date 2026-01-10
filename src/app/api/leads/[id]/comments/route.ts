@@ -5,7 +5,6 @@ import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import Comment, { IComment } from "@/models/Comment";
-import Activity from "@/models/Activity";
 
 function extractLeadIdFromUrl(urlString: string): string {
   const url = new URL(urlString);
@@ -148,25 +147,8 @@ export async function POST(request: Request) {
     const savedComment = await comment.save();
     console.log("Comment saved successfully:", savedComment._id.toString());
 
-    // Create activity log for the comment
-    const activity = new Activity({
-      type: "COMMENT",
-      userId: new mongoose.Types.ObjectId(session.user.id),
-      details: "Added a comment",
-      leadId: leadObjectId,
-      adminId: adminId, // Use consistent adminId
-      timestamp: new Date(),
-      metadata: {
-        commentContent: content.trim(),
-      },
-    });
-
-    console.log(
-      "Saving activity with data:",
-      JSON.stringify(activity, null, 2)
-    );
-    await activity.save();
-    console.log("Activity saved successfully");
+    // Don't create activity log for comments - they are displayed directly in the comments section
+    // Activities should only log non-comment actions like status changes, assignments, etc.
 
     return NextResponse.json(savedComment);
   } catch (error) {

@@ -3,9 +3,8 @@
 
 import { FC, useState } from "react";
 import { Lead } from "@/types/leads";
-import { Notebook, Activity as ActivityIcon, Bell } from "lucide-react";
-import Activities from "./Activities";
-import CommentsTab from "./CommentsTab";
+import { MessageSquare, Bell } from "lucide-react";
+import CommentsAndActivitiesCombined from "./CommentsAndActivitiesCombined";
 import RemindersTab from "./RemindersTab";
 import { useQuery } from "@tanstack/react-query";
 import { Reminder } from "@/types/leads";
@@ -16,9 +15,9 @@ interface CommentsAndActivitiesProps {
 }
 
 const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
-  const [activeTab, setActiveTab] = useState<
-    "comments" | "activity" | "reminders"
-  >("comments");
+  const [activeTab, setActiveTab] = useState<"comments" | "reminders">(
+    "comments"
+  );
 
   // Fetch reminders count for badge
   const { data: reminders = [] } = useQuery({
@@ -45,38 +44,27 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
         <div className="flex gap-1">
           <button
             onClick={() => setActiveTab("comments")}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 !text-gray-900 dark:!text-white ${
               activeTab === "comments"
-                ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
-                : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700/50"
+                ? "bg-blue-50 !text-blue-600 dark:bg-blue-500/10 dark:!text-blue-400"
+                : "!text-gray-500 hover:bg-gray-100 dark:!text-gray-400 dark:hover:bg-gray-700/50"
             }`}
           >
-            <Notebook className="w-5 h-5" />
-            Comments
-          </button>
-          <button
-            onClick={() => setActiveTab("activity")}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-              activeTab === "activity"
-                ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
-                : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700/50"
-            }`}
-          >
-            <ActivityIcon className="w-5 h-5" />
-            Activity
+            <MessageSquare className="w-5 h-5" />
+            Comments & Activity
           </button>
           <button
             onClick={() => setActiveTab("reminders")}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 !text-gray-900 dark:!text-white ${
               activeTab === "reminders"
-                ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
-                : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700/50"
+                ? "bg-blue-50 !text-blue-600 dark:bg-blue-500/10 dark:!text-blue-400"
+                : "!text-gray-500 hover:bg-gray-100 dark:!text-gray-400 dark:hover:bg-gray-700/50"
             }`}
           >
             <Bell className="w-5 h-5" />
             Reminders
             {pendingRemindersCount > 0 && (
-              <span className="px-2 py-0.5 text-xs bg-red-500 text-white rounded-full">
+              <span className="px-2 py-0.5 text-xs bg-red-500 !text-white rounded-full">
                 {pendingRemindersCount}
               </span>
             )}
@@ -86,11 +74,8 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
 
       {/* This is the scrollable/fill area */}
       <div className="flex-1 flex flex-col min-h-0">
-        {activeTab === "comments" && <CommentsTab leadId={lead._id} />}
-        {activeTab === "activity" && (
-          <div className="flex-1 min-h-0 flex flex-col">
-            <Activities leadId={lead._id} />
-          </div>
+        {activeTab === "comments" && (
+          <CommentsAndActivitiesCombined leadId={lead._id} />
         )}
         {activeTab === "reminders" && <RemindersTab leadId={lead._id} />}
       </div>

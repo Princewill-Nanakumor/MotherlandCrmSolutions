@@ -120,8 +120,8 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
         (oldComments: Comment[] = []) => [newComment, ...oldComments]
       );
 
-      // Invalidate activities to refresh them
-      queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+      // Don't invalidate activities - comments don't create activities anymore
+      // Comments are displayed directly, activities only log non-comment actions
 
       // Invalidate all leads queries to update last comment in table
       queryClient.invalidateQueries({ queryKey: ["leads"] });
@@ -167,8 +167,8 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
           oldComments.filter((comment) => comment._id !== deletedCommentId)
       );
 
-      // Invalidate activities to refresh them
-      queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+      // Don't invalidate activities - comments don't create activities anymore
+      // Comments are displayed directly, activities only log non-comment actions
 
       // Invalidate all leads queries to update last comment in table
       queryClient.invalidateQueries({ queryKey: ["leads"] });
@@ -226,8 +226,8 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
           )
       );
 
-      // Invalidate activities to refresh them
-      queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+      // Don't invalidate activities - comments don't create activities anymore
+      // Comments are displayed directly, activities only log non-comment actions
 
       // Invalidate all leads queries to update last comment in table
       queryClient.invalidateQueries({ queryKey: ["leads"] });

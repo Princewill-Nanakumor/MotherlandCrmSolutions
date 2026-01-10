@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import Comment from "@/models/Comment";
-import Activity from "@/models/Activity";
 import mongoose from "mongoose";
 
 function extractParamsFromUrl(urlString: string): {
@@ -118,25 +117,8 @@ export async function PUT(request: Request) {
 
     console.log("Comment updated successfully:", updated._id.toString());
 
-    // Create activity log for comment edit
-    const activity = new Activity({
-      type: "COMMENT",
-      userId: new mongoose.Types.ObjectId(session.user.id),
-      details: "Edited a comment",
-      leadId: new mongoose.Types.ObjectId(id),
-      adminId: adminId, // Use consistent adminId
-      timestamp: new Date(),
-      metadata: {
-        commentContent: content.trim(),
-      },
-    });
-
-    console.log(
-      "Saving edit activity with data:",
-      JSON.stringify(activity, null, 2)
-    );
-    await activity.save();
-    console.log("Edit activity saved successfully");
+    // Don't create activity log for comment edits - they are displayed directly in the comments section
+    // Activities should only log non-comment actions like status changes, assignments, etc.
 
     return NextResponse.json(updated);
   } catch (error) {
@@ -196,22 +178,8 @@ export async function DELETE(request: Request) {
 
     console.log("Comment deleted successfully:", deleted._id.toString());
 
-    // Create activity log for comment deletion
-    const activity = new Activity({
-      type: "COMMENT",
-      userId: new mongoose.Types.ObjectId(session.user.id),
-      details: "Deleted a comment",
-      leadId: new mongoose.Types.ObjectId(id),
-      adminId: adminId, // Use consistent adminId
-      timestamp: new Date(),
-    });
-
-    console.log(
-      "Saving delete activity with data:",
-      JSON.stringify(activity, null, 2)
-    );
-    await activity.save();
-    console.log("Delete activity saved successfully");
+    // Don't create activity log for comment deletions - they are displayed directly in the comments section
+    // Activities should only log non-comment actions like status changes, assignments, etc.
 
     return NextResponse.json({ success: true });
   } catch (error) {

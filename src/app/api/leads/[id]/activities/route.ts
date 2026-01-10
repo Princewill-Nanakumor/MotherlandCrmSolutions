@@ -140,13 +140,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query that handles both old activities (without adminId) and new activities (with adminId)
-    const query: {
-      leadId: mongoose.Types.ObjectId;
-      $or: Array<
-        { adminId?: mongoose.Types.ObjectId } | { adminId: { $exists: false } }
-      >;
-    } = {
+    // Exclude COMMENT type activities since comments are displayed directly in the comments section
+    const query: Record<string, unknown> = {
       leadId: new mongoose.Types.ObjectId(leadId),
+      type: { $ne: "COMMENT" }, // Exclude comment activities - comments are shown directly
       $or: [
         { adminId: adminId }, // New activities with adminId
         { adminId: { $exists: false } }, // Old activities without adminId
