@@ -55,13 +55,13 @@ export default function HomePage() {
   return (
     <SessionProvider>
       <ThemeProvider>
-        <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
           <Navbar />
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 md:p-12">
               {/* Header */}
               <div className="text-center mb-12">
-                <h1 className="text-3xl sm:text-4xl font-bold bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent mb-4">
+                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent mb-4">
                   Contact Us
                 </h1>
               </div>
@@ -70,7 +70,7 @@ export default function HomePage() {
                 {/* Introduction Section */}
                 <div className="text-center space-y-6">
                   <div className="flex justify-center">
-                    <div className="p-4 bg-linear-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-full">
+                    <div className="p-4 bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-full">
                       <Building2 className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
                     </div>
                   </div>
@@ -91,8 +91,8 @@ export default function HomePage() {
                 </div>
 
                 {/* Contact Information */}
-                <div className="bg-linear-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl p-8 border border-indigo-100 dark:border-indigo-800">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 text-center">
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 dark:bg-gray-800/50 rounded-xl p-8 border border-indigo-100 dark:border-indigo-800">
+                  <h3 className="text-xl font-semibold !text-gray-900 dark:!text-white mb-6 text-center">
                     Get in Touch
                   </h3>
                   <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -101,14 +101,14 @@ export default function HomePage() {
                         <MessageCircle className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-sm !text-gray-500 dark:!text-gray-400">
                           Telegram
                         </p>
                         <a
                           href="https://t.me/motherlandcrm"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          className="font-semibold !text-gray-900 dark:!text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                         >
                           @motherlandcrm
                         </a>
@@ -119,12 +119,12 @@ export default function HomePage() {
                         <Mail className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-sm !text-gray-500 dark:!text-gray-400">
                           Email
                         </p>
                         <a
                           href="mailto:support@motherland.com"
-                          className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline transition-colors"
+                          className="font-semibold !text-indigo-600 dark:!text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline transition-colors"
                         >
                           support@motherland.com
                         </a>
@@ -139,10 +139,10 @@ export default function HomePage() {
                         <Coins className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                       </div>
                       <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        <p className="text-sm font-semibold !text-gray-900 dark:!text-white">
                           Crypto Payments Available
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <p className="text-xs !text-gray-500 dark:!text-gray-400 mt-1">
                           Bitcoin, Ethereum, USDT & more accepted
                         </p>
                       </div>
@@ -152,7 +152,7 @@ export default function HomePage() {
 
                 {/* Subscription Plans */}
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-8 text-center">
+                  <h3 className="text-xl font-semibold !text-gray-900 dark:!text-white mb-8 text-center">
                     Our Subscription Plans
                   </h3>
                   <div className="grid md:grid-cols-3 gap-6">
@@ -161,29 +161,29 @@ export default function HomePage() {
                         key={plan.id}
                         className={`relative p-8 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${
                           plan.popular
-                            ? "border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-200 dark:ring-indigo-800 bg-linear-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 shadow-lg"
+                            ? "border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-200 dark:ring-indigo-800 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-800 dark:bg-gray-800/90 shadow-lg"
                             : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300 dark:hover:border-indigo-600"
                         }`}
                       >
                         {plan.popular && (
                           <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                            <span className="bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 text-white px-4 py-2 rounded-full text-xs font-semibold shadow-md">
+                            <span className="bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 text-white px-4 py-2 rounded-full text-xs font-semibold shadow-md">
                               Most Popular
                             </span>
                           </div>
                         )}
                         <div className="text-center mb-6">
-                          <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                          <h4 className="text-xl font-bold !text-gray-900 dark:!text-white mb-2">
                             {plan.name}
                           </h4>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                          <p className="text-sm !text-gray-500 dark:!text-gray-400 mb-4">
                             {plan.description}
                           </p>
                           <div className="flex items-baseline justify-center">
-                            <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                            <span className="text-3xl font-bold !text-gray-900 dark:!text-white">
                               {plan.price}
                             </span>
-                            <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
+                            <span className="text-sm !text-gray-500 dark:!text-gray-400 ml-2">
                               /{plan.period}
                             </span>
                           </div>
@@ -195,7 +195,7 @@ export default function HomePage() {
                               className="flex items-start space-x-3"
                             >
                               <Check className="w-5 h-5 text-green-500 dark:text-green-400 mt-0.5 shrink-0" />
-                              <span className="text-sm text-gray-600 dark:text-gray-300">
+                              <span className="text-sm !text-gray-600 dark:!text-gray-300">
                                 {feature}
                               </span>
                             </li>
@@ -215,7 +215,7 @@ export default function HomePage() {
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <a
                       href="mailto:support@motherland.com"
-                      className="inline-flex items-center justify-center px-8 py-3 bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 text-white font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600 transition-all duration-200 shadow-md hover:shadow-lg"
+                      className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 text-white font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600 transition-all duration-200 shadow-md hover:shadow-lg"
                     >
                       <Mail className="w-5 h-5 mr-2" />
                       Send Email

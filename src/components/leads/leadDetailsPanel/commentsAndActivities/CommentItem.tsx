@@ -36,11 +36,11 @@ export const CommentItem: FC<CommentItemProps> = ({
   onDelete,
 }) => {
   return (
-    <div className="p-4 rounded-md bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
+    <div className="p-4 rounded-md bg-purple-50 dark:bg-gray-700/50 border border-purple-200 dark:border-gray-600">
       <div className="flex gap-3">
         <Avatar className="h-10 w-10 shrink-0">
           <AvatarImage src={comment.createdBy?.avatar} />
-          <AvatarFallback className="bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900 dark:to-indigo-900 !text-purple-800 dark:!text-purple-300">
+          <AvatarFallback className="bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-indigo-900 dark:to-blue-900 !text-purple-800 dark:!text-indigo-300">
             {comment.createdBy?.firstName?.[0]}
             {comment.createdBy?.lastName?.[0]}
           </AvatarFallback>
@@ -49,7 +49,7 @@ export const CommentItem: FC<CommentItemProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline flex-wrap gap-2 mb-1">
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 !text-purple-600 dark:!text-purple-400" />
+              <MessageSquare className="w-4 h-4 !text-purple-600 dark:!text-indigo-400" />
               <h4 className="text-sm font-semibold !text-gray-800 dark:!text-white">
                 {comment.createdBy?.firstName} {comment.createdBy?.lastName}
               </h4>

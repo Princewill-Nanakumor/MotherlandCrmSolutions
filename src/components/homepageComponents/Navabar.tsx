@@ -125,7 +125,7 @@ export default function Navbar() {
                 animate="visible"
                 transition={{ duration: 0.4, ease: "easeOut" }}
               >
-                <Link href="/login" className={`${signInClasses} !text-white`}>
+                <Link href="/login" className={signInClasses}>
                   Sign In
                 </Link>
               </motion.div>

@@ -57,6 +57,39 @@ h6 {
   color: #f8fafc;
 }
 
+/* Ensure dark mode text colors override gray-900 classes */
+.dark h3[class*="dark:text-white"],
+.dark h4[class*="dark:text-white"],
+.dark h3[class*="!text-white"],
+.dark h4[class*="!text-white"],
+.dark p[class*="dark:text-white"],
+.dark p[class*="!text-white"],
+.dark span[class*="dark:text-white"],
+.dark span[class*="!text-white"],
+html.dark h3[class*="dark:text-white"],
+html.dark h4[class*="dark:text-white"],
+html.dark h3[class*="!text-white"],
+html.dark h4[class*="!text-white"],
+html.dark p[class*="dark:text-white"],
+html.dark p[class*="!text-white"],
+html.dark span[class*="dark:text-white"],
+html.dark span[class*="!text-white"] {
+  color: rgb(255 255 255) !important;
+}
+
+.dark h3[class*="dark:text-gray-300"],
+.dark h4[class*="dark:text-gray-300"],
+.dark p[class*="dark:text-gray-300"],
+.dark span[class*="dark:text-gray-300"],
+.dark p[class*="!text-gray-300"],
+.dark span[class*="!text-gray-300"],
+html.dark h3[class*="dark:text-gray-300"],
+html.dark h4[class*="dark:text-gray-300"],
+html.dark p[class*="dark:text-gray-300"],
+html.dark span[class*="dark:text-gray-300"] {
+  color: rgb(209 213 219) !important; /* gray-300 */
+}
+
 /* Ensure headings with Tailwind text color classes override defaults */
 /* Exclude headings with Tailwind text color classes from default color rule */
 h1:not([class*="text-gray"]):not([class*="text-blue"]):not(
@@ -460,9 +493,88 @@ html:not(.dark) .text-gray-700 {
 .dark span.text-white,
 .dark span[class*="text-white"],
 .dark .text-white,
+.dark h3.text-white,
+.dark h4.text-white,
+.dark p.text-white,
+.dark a.text-white,
+.dark span[class*="!text-white"],
+.dark h3[class*="!text-white"],
+.dark h4[class*="!text-white"],
+.dark p[class*="!text-white"],
+.dark a[class*="!text-white"],
 html.dark span.text-white,
 html.dark span[class*="text-white"],
-html.dark .text-white {
+html.dark .text-white,
+html.dark h3[class*="text-white"],
+html.dark h4[class*="text-white"],
+html.dark p[class*="text-white"],
+html.dark a[class*="text-white"] {
+  color: rgb(255 255 255) !important;
+}
+
+/* Dark mode - ensure gray-300 and gray-400 text show properly */
+.dark span.text-gray-300,
+.dark span[class*="text-gray-300"],
+.dark .text-gray-300,
+.dark span[class*="!text-gray-300"],
+.dark p[class*="!text-gray-300"],
+.dark h3[class*="dark:text-gray-300"],
+.dark h4[class*="dark:text-gray-300"],
+.dark h3[class*="dark:!text-gray-300"],
+.dark h4[class*="dark:!text-gray-300"],
+html.dark span.text-gray-300,
+html.dark span[class*="text-gray-300"],
+html.dark .text-gray-300,
+html.dark h3[class*="dark:text-gray-300"],
+html.dark h4[class*="dark:text-gray-300"] {
+  color: rgb(209 213 219) !important; /* gray-300 */
+}
+
+.dark span.text-gray-400,
+.dark span[class*="text-gray-400"],
+.dark .text-gray-400,
+.dark span[class*="!text-gray-400"],
+.dark p[class*="!text-gray-400"],
+.dark h3[class*="dark:text-gray-400"],
+.dark h4[class*="dark:text-gray-400"],
+.dark h3[class*="dark:!text-gray-400"],
+.dark h4[class*="dark:!text-gray-400"],
+html.dark span.text-gray-400,
+html.dark span[class*="text-gray-400"],
+html.dark .text-gray-400,
+html.dark h3[class*="dark:text-gray-400"],
+html.dark h4[class*="dark:text-gray-400"] {
+  color: rgb(156 163 175) !important; /* gray-400 */
+}
+
+.dark span.text-gray-600,
+.dark span[class*="text-gray-600"],
+.dark .text-gray-600,
+.dark span[class*="!text-gray-600"],
+.dark p[class*="!text-gray-600"],
+.dark h3[class*="dark:text-gray-600"],
+.dark h4[class*="dark:text-gray-600"],
+.dark h3[class*="dark:!text-gray-600"],
+.dark h4[class*="dark:!text-gray-600"],
+html.dark span.text-gray-600,
+html.dark span[class*="text-gray-600"],
+html.dark .text-gray-600,
+html.dark h3[class*="dark:text-gray-600"],
+html.dark h4[class*="dark:text-gray-600"] {
+  color: rgb(156 163 175) !important; /* gray-400 for dark mode (lighter than gray-600) */
+}
+
+/* Override gray-900 in dark mode when dark:text-white or dark:text-gray-* is present */
+.dark [class*="text-gray-900"][class*="dark:text-white"],
+.dark [class*="text-gray-900"][class*="dark:!text-white"],
+.dark h3[class*="text-gray-900"][class*="dark:text-white"],
+.dark h4[class*="text-gray-900"][class*="dark:text-white"],
+.dark h3[class*="text-gray-900"][class*="dark:!text-white"],
+.dark h4[class*="text-gray-900"][class*="dark:!text-white"],
+html.dark [class*="text-gray-900"][class*="dark:text-white"],
+html.dark [class*="text-gray-900"][class*="dark:!text-white"],
+html.dark h3[class*="text-gray-900"][class*="dark:text-white"],
+html.dark h4[class*="text-gray-900"][class*="dark:text-white"] {
   color: rgb(255 255 255) !important;
 }
 

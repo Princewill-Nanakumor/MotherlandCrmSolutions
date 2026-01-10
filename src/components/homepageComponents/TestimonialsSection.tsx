@@ -275,7 +275,7 @@ export default function TestimonialsSection() {
                         </div>
                         <div className="text-sm text-gray-600 dark:text-gray-400">
                           {testimonial.role}
-                          <div className="text-indigo-500">
+                          <div className="text-indigo-500 dark:text-indigo-400">
                             {testimonial.company}
                           </div>
                         </div>
