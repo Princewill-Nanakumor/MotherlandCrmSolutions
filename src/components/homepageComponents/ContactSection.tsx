@@ -22,7 +22,7 @@ export default function ContactSection() {
 
   return (
     <section id="contact-us" className="py-16 bg-white dark:bg-gray-800">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl px-4 mx-auto sm:px-6 lg:px-8">
         <motion.div
           className="p-6 bg-white shadow-2xl dark:bg-gray-800 rounded-2xl sm:p-8 md:p-12"
           variants={containerVariants}
@@ -82,12 +82,12 @@ export default function ContactSection() {
                       Telegram
                     </p>
                     <a
-                      href="https://t.me/motherlandcrm"
+                      href="https://t.me/Motherlandsolutions"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="font-semibold !text-gray-900 dark:!text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     >
-                      @motherlandsolutions
+                      @Motherlandsolutions
                     </a>
                   </div>
                 </div>
