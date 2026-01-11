@@ -31,11 +31,11 @@ export async function sendPaymentConfirmationEmail(
       : `${baseUrl}/dashboard/payment-details/${data.paymentId}`;
 
     // Improved plain text email
-    const textContent = `New Payment Submission - ZodaShield
+    const textContent = `New Payment Submission - Motherland CRM
 
 Hello Admin,
 
-A new payment has been submitted to your ZodaShield dashboard and requires review.
+A new payment has been submitted to your Motherland CRM dashboard and requires review.
 
 Payment Details:
 - Amount: ${data.amount} ${data.currency}
@@ -51,11 +51,11 @@ ${paymentDetailsUrl}
 If you have any questions about this payment, please contact our support team.
 
 Best regards,
-The ZodaShield Team
+The Motherland CRM Team
 
 ---
-This is an automated notification from ZodaShield.
-If you received this email in error, please contact support@zodashield.com`;
+This is an automated notification from Motherland CRM.
+If you received this email in error, please contact support@motherlandcrmsolutions.com`;
 
     // Improved HTML email with better structure and spam-resistant content
     const emailHtml = `
@@ -64,7 +64,7 @@ If you received this email in error, please contact support@zodashield.com`;
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New Payment Submission - ZodaShield</title>
+  <title>New Payment Submission - Motherland CRM</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background-color: #f8f9fa;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -79,7 +79,7 @@ If you received this email in error, please contact support@zodashield.com`;
                 New Payment Submission
               </h1>
               <p style="margin: 8px 0 0; font-size: 14px; color: #6c757d;">
-                ZodaShield Admin Dashboard
+                Motherland CRM Admin Dashboard
               </p>
             </td>
           </tr>
@@ -92,7 +92,7 @@ If you received this email in error, please contact support@zodashield.com`;
               </p>
               
               <p style="margin: 0 0 24px; font-size: 16px; color: #212529; line-height: 1.5;">
-                A new payment has been submitted to your ZodaShield dashboard and requires your review.
+                A new payment has been submitted to your Motherland CRM dashboard and requires your review.
               </p>
               
               <!-- Payment Details Table -->
@@ -154,13 +154,13 @@ If you received this email in error, please contact support@zodashield.com`;
             <td style="padding: 24px 32px; border-top: 1px solid #e9ecef; background-color: #f8f9fa;">
               <p style="margin: 0; font-size: 14px; color: #6c757d; line-height: 1.5;">
                 Best regards,<br>
-                The ZodaShield Team
+                The Motherland CRM Team
               </p>
               <hr style="border: none; border-top: 1px solid #dee2e6; margin: 16px 0;">
               <p style="margin: 0; font-size: 12px; color: #868e96; line-height: 1.4;">
-                This is an automated notification from ZodaShield.<br>
+                This is an automated notification from Motherland CRM.<br>
                 If you received this email in error, please contact 
-                <a href="mailto:support@zodashield.com" style="color: #0066cc;">support@zodashield.com</a>
+                <a href="mailto:support@motherlandcrmsolutions.com" style="color: #0066cc;">support@motherlandcrmsolutions.com</a>
               </p>
             </td>
           </tr>
@@ -173,14 +173,14 @@ If you received this email in error, please contact support@zodashield.com`;
 </html>`;
 
     const result = await resend.emails.send({
-      from: "ZodaShield <notifications@zodashield.com>",
+      from: "Motherland CRM <notifications@motherlandcrmsolutions.com>",
       to: [notificationEmail],
-      subject: `New Payment Submission - ${data.amount} ${data.currency} - ZodaShield`,
+      subject: `New Payment Submission - ${data.amount} ${data.currency} - Motherland CRM`,
       html: emailHtml,
       text: textContent,
       headers: {
         "X-Priority": "3",
-        "X-Mailer": "ZodaShield-System-v1.0",
+        "X-Mailer": "MotherlandCRM-System-v1.0",
       },
       // Add tags for tracking (Resend feature)
       tags: [

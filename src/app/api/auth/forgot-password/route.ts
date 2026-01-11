@@ -18,7 +18,7 @@ const createPasswordResetEmail = (firstName: string, resetUrl: string) => `
           </svg>
         </div>
         <div style="font-size: 24px; font-weight: bold; background: linear-gradient(to right, #4f46e5, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-          ZodaShield
+          Motherland CRM
         </div>
       </div>
     </div>
@@ -32,7 +32,7 @@ const createPasswordResetEmail = (firstName: string, resetUrl: string) => `
     </p>
 
     <p style="color: #1a1a1a; font-size: 16px; line-height: 24px; margin-bottom: 32px;">
-      We received a request to reset your password for your ZodaShield account. Click the button below to create a new password:
+      We received a request to reset your password for your Motherland CRM account. Click the button below to create a new password:
     </p>
 
     <div style="text-align: center; margin: 30px 0;">
@@ -63,7 +63,7 @@ const createPasswordResetEmail = (firstName: string, resetUrl: string) => `
 
     <div style="border-top: 1px solid #e5e5e5; margin-top: 40px; padding-top: 20px; text-align: center;">
       <p style="color: #888888; font-size: 12px; line-height: 18px; margin-bottom: 8px;">
-        © ${new Date().getFullYear()} ZodaShield. All rights reserved.
+        © ${new Date().getFullYear()} Motherland CRM. All rights reserved.
       </p>
       <p style="color: #888888; font-size: 12px; line-height: 18px;">
         This is a system-generated email. Please do not reply to this message.
@@ -100,11 +100,11 @@ export async function POST(req: Request) {
         const resetUrl = `${APP_URL}/reset-password/${resetToken}`;
 
         const emailResult = await resend.emails.send({
-          from: "ZodaShield <noreply@zodashield.com>",
+          from: "Motherland CRM <noreply@motherlandcrmsolutions.com>",
           to: email,
-          subject: "Reset Your Password - ZodaShield",
+          subject: "Reset Your Password - Motherland CRM",
           html: createPasswordResetEmail(user.firstName, resetUrl),
-          replyTo: "support@zodashield.com",
+          replyTo: "support@motherlandcrmsolutions.com",
           tags: [
             {
               name: "category",

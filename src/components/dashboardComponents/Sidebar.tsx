@@ -3,6 +3,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -15,7 +16,6 @@ import {
   Settings,
   HelpCircle,
   ShieldUser,
-  Shield,
   LucideIcon,
   Crown,
 } from "lucide-react";
@@ -110,10 +110,18 @@ export default function Sidebar() {
         {/* Logo */}
         <Link
           href="/"
-          className="flex justify-center items-center p-3 mb-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg"
+          className="flex overflow-hidden justify-center items-center p-2 mb-8 rounded-xl shadow-lg"
           aria-label="Home"
         >
-          <Shield size={28} className="text-white" />
+          <div className="relative w-20 h-20">
+            <Image
+              src="/motherlandlogo.png"
+              alt="Motherland CRM Solutions Logo"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
         </Link>
 
         {/* Main Navigation */}

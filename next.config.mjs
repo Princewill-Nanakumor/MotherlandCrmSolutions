@@ -13,7 +13,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "zodashield.com",
+        hostname: "motherlandcrmsolutions.com",
         pathname: "/**",
       },
       {

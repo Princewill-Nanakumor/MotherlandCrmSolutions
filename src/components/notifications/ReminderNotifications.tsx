@@ -101,8 +101,8 @@ export default function ReminderNotifications() {
         try {
           const notification = new Notification("Reminder: " + reminder.title, {
             body: `${reminder.type} - ${leadName}\n${reminder.description || ""}`,
-            icon: "/favicon.ico",
-            badge: "/favicon.ico",
+            icon: "/Motherlandfav.png",
+            badge: "/Motherlandfav.png",
             tag: reminder._id,
             requireInteraction: true,
             silent: true,
@@ -205,18 +205,18 @@ export default function ReminderNotifications() {
   }
 
   return (
-    <div className="fixed z-50 max-w-sm mt-2 space-y-2 border-t top-20 right-2">
+    <div className="fixed right-2 top-20 z-50 mt-2 space-y-2 max-w-sm border-t">
       {notifications.map((reminder) => (
         <div
           key={reminder._id}
-          className="p-4 bg-white border-l-4 border-indigo-500 rounded-lg shadow-lg dark:bg-gray-800 animate-slide-in-right"
+          className="p-4 bg-white rounded-lg border-l-4 border-indigo-500 shadow-lg dark:bg-gray-800 animate-slide-in-right"
         >
-          <div className="flex items-start gap-3">
+          <div className="flex gap-3 items-start">
             <div className="p-2 bg-indigo-100 rounded-lg dark:bg-indigo-900/30">
               <Bell className="w-5 h-5 text-indigo-600 dark:text-indigo-400 animate-shake-bell" />
             </div>
             <div className="flex-1">
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex gap-2 justify-between items-start">
                 <div>
                   <h4 className="mb-1 font-semibold text-gray-900 dark:text-gray-100">
                     {reminder.title}
@@ -224,7 +224,7 @@ export default function ReminderNotifications() {
                   <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
                     {reminder.description}
                   </p>
-                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="flex gap-2 items-center text-xs text-gray-500 dark:text-gray-400">
                     <span className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full dark:bg-blue-900/30 dark:text-blue-300">
                       {reminder.type}
                     </span>
@@ -256,7 +256,7 @@ export default function ReminderNotifications() {
                   onClick={() => handleMarkAsComplete(reminder)}
                   className="text-white bg-green-500 hover:bg-green-600"
                 >
-                  <CheckCircle className="w-3 h-3 mr-1" />
+                  <CheckCircle className="mr-1 w-3 h-3" />
                   Mark as Complete
                 </Button>
                 <Button

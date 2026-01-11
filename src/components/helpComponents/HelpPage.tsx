@@ -85,7 +85,7 @@ const HelpPage: React.FC = () => {
           Help Center
         </h1>
         <p className="text-lg !text-gray-600 dark:!text-gray-400 max-w-2xl mx-auto">
-          Learn how to use the features ZodaShield CRM
+          Learn how to use the features Motherland CRM
         </p>
       </div>
 

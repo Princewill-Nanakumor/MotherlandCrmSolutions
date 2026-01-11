@@ -583,7 +583,7 @@ const BillingSubscriptionHelp: React.FC = () => {
                 here to help:
               </p>
               <ul className="space-y-1 ml-4">
-                <li>• Email: support@zodashield.com</li>
+                <li>• Email: support@motherlandcrmsolutions.com</li>
                 <li>• Response Time: Usually within 2 hours</li>
               </ul>
               <p className="text-xs !text-gray-500 dark:!text-gray-400 mt-2">

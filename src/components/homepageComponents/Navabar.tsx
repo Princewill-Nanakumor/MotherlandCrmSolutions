@@ -2,9 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { Shield, LogIn } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { motion } from "framer-motion";
 
 function Skeleton({ className = "" }: { className?: string }) {
@@ -68,11 +69,17 @@ export default function Navbar() {
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
           <Link href="/">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg shadow-md bg-gradient-to-r from-indigo-600 to-purple-600">
-                <Shield size={30} className="text-white" />
+            <div className="flex items-center space-x-1">
+              <div className="relative w-20 h-20 overflow-hidden md:w-30 md:h-30">
+                <Image
+                  src="/motherlandlogo.png"
+                  alt="Motherland CRM Solutions Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-lg font-bold text-white md:text-2xl ">
                 Motherland CRM Solutions
               </div>
             </div>

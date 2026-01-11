@@ -1309,11 +1309,7 @@ aside nav a span.text-indigo-700 {
   color: white !important;
 }
 
-/* Ensure dark:!text-white works in sidebar */
-.dark aside nav a svg.dark\:!text-white {
-  stroke: white !important;
-  color: white !important;
-}
+/* Ensure dark:!text-white works in sidebar - removed invalid selector */
 
 /* Active indicator bar - ensure it shows when parent link is active */
 /* Don't force background color - let Tailwind classes work naturally */

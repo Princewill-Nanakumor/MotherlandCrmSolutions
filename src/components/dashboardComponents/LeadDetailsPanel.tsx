@@ -173,11 +173,11 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         originalTitleRef.current = document.title;
       }
 
-      // Update title with lead name in format "[Name] - zodaShield"
+      // Update title with lead name in format "[Name] - Motherland CRM"
       const fullName =
         `${currentLead.firstName || ""} ${currentLead.lastName || ""}`.trim();
       const leadTitle = fullName || "Lead Details";
-      const newTitle = `${leadTitle} - zodaShield`;
+      const newTitle = `${leadTitle} - Motherland CRM`;
 
       // Set title immediately
       document.title = newTitle;
@@ -214,7 +214,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     const fullName =
       `${currentLead.firstName || ""} ${currentLead.lastName || ""}`.trim();
     const leadTitle = fullName || "Lead Details";
-    const newTitle = `${leadTitle} - zodaShield`;
+    const newTitle = `${leadTitle} - Motherland CRM`;
 
     // Set up an interval to continuously ensure the title stays correct
     const intervalId = setInterval(() => {

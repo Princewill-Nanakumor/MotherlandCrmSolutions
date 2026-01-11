@@ -9,7 +9,7 @@ import { z } from "zod";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Professional email template with ZodaShield branding
+// Professional email template with Motherland CRM branding
 const createVerificationEmail = (name: string, verificationUrl: string) => `
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
   <div style="border: 1px solid #e5e5e5; border-radius: 16px; padding: 40px; background: white;">
@@ -21,13 +21,13 @@ const createVerificationEmail = (name: string, verificationUrl: string) => `
           </svg>
         </div>
         <div style="font-size: 24px; font-weight: bold; background: linear-gradient(to right, #4f46e5, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-          ZodaShield
+          Motherland CRM
         </div>
       </div>
     </div>
 
     <h1 style="color: #1a1a1a; font-size: 32px; font-weight: bold; margin-bottom: 24px;">
-      Welcome to ZodaShield
+      Welcome to Motherland CRM
     </h1>
 
     <p style="color: #1a1a1a; font-size: 16px; line-height: 24px; margin-bottom: 32px;">
@@ -50,7 +50,7 @@ const createVerificationEmail = (name: string, verificationUrl: string) => `
       </p>
       
       <p style="color: #666666; font-size: 14px; line-height: 20px;">
-        If you didn't sign up for ZodaShield, you can safely ignore this email.
+        If you didn't sign up for Motherland CRM, you can safely ignore this email.
       </p>
     </div>
   </div>
@@ -188,11 +188,11 @@ export async function POST(req: Request) {
 
     try {
       await resend.emails.send({
-        from: "ZodaShield <noreply@zodashield.com>",
+        from: "Motherland CRM <noreply@motherlandcrmsolutions.com>",
         to: [user.email],
-        subject: "Welcome to ZodaShield - Verify your email",
+        subject: "Welcome to Motherland CRM - Verify your email",
         html: createVerificationEmail(user.firstName, verificationUrl),
-        replyTo: "support@zodashield.com",
+        replyTo: "support@motherlandcrmsolutions.com",
         tags: [{ name: "category", value: "email_verification" }],
       });
     } catch (emailError) {

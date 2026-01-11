@@ -46,14 +46,14 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://motherland.com"),
+  metadataBase: new URL("https://motherlandcrmsolutions.com"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://motherland.com",
+    url: "https://motherlandcrmsolutions.com",
     title:
       "Motherland CRM Solutions - Modern CRM Solution for Excel & CSV Import",
     description:
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     siteName: "Motherland CRM Solutions",
     images: [
       {
-        url: "/og-image.png",
+        url: "/Motherlandfav.png",
         width: 1200,
         height: 630,
         alt: "Motherland - Modern CRM Solution",
@@ -84,20 +84,18 @@ export const metadata: Metadata = {
   other: {
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "default",
-    "apple-mobile-web-app-title": "ZodaShield",
-    "application-name": "ZodaShield",
+    "apple-mobile-web-app-title": "Motherland CRM",
+    "application-name": "Motherland CRM",
     "msapplication-TileColor": "#6366F1",
     "theme-color": "#6366F1",
   },
   manifest: "/site.webmanifest",
   icons: {
     icon: [
-      { url: "/favicon.ico" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/Motherlandfav.png", sizes: "any", type: "image/png" },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/Motherlandfav.png", sizes: "180x180", type: "image/png" },
     ],
   },
 };
@@ -110,10 +108,10 @@ export default function RootLayout({
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "ZodaShield",
+    name: "Motherland CRM",
     description:
       "Modern CRM Solution for Excel & CSV file import and lead management",
-    url: "https://motherland.com",
+    url: "https://motherlandcrmsolutions.com",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web Browser",
     offers: {

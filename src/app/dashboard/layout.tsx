@@ -92,7 +92,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   // Page title mapping
   const getPageTitle = (path: string | null): string | null => {
-    if (!path) return "zodaShield - Dashboard";
+    if (!path) return "Motherland CRM - Dashboard";
     
     // Don't set title for lead detail pages (they handle their own titles)
     if (path.startsWith("/dashboard/all-leads/") && path !== "/dashboard/all-leads") {
@@ -111,22 +111,22 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
     
     const titleMap: Record<string, string> = {
-      "/dashboard": "zodaShield - Dashboard",
-      "/dashboard/all-leads": "zodaShield - All Leads",
-      "/dashboard/leads": "zodaShield - My Leads",
-      "/dashboard/import": "zodaShield - Import",
-      "/dashboard/users": "zodaShield - Users",
-      "/dashboard/settings": "zodaShield - Settings",
-      "/dashboard/profile": "zodaShield - Profile",
-      "/dashboard/billing": "zodaShield - Billing",
-      "/dashboard/subscription": "zodaShield - Subscription",
-      "/dashboard/notifications": "zodaShield - Notifications",
-      "/dashboard/help": "zodaShield - Help",
-      "/dashboard/admin-management": "zodaShield - Admin Management",
-      "/dashboard/adsManager": "zodaShield - Ads Manager",
+      "/dashboard": "Motherland CRM - Dashboard",
+      "/dashboard/all-leads": "Motherland CRM - All Leads",
+      "/dashboard/leads": "Motherland CRM - My Leads",
+      "/dashboard/import": "Motherland CRM - Import",
+      "/dashboard/users": "Motherland CRM - Users",
+      "/dashboard/settings": "Motherland CRM - Settings",
+      "/dashboard/profile": "Motherland CRM - Profile",
+      "/dashboard/billing": "Motherland CRM - Billing",
+      "/dashboard/subscription": "Motherland CRM - Subscription",
+      "/dashboard/notifications": "Motherland CRM - Notifications",
+      "/dashboard/help": "Motherland CRM - Help",
+      "/dashboard/admin-management": "Motherland CRM - Admin Management",
+      "/dashboard/adsManager": "Motherland CRM - Ads Manager",
     };
 
-    return titleMap[path] || "zodaShield - Dashboard";
+    return titleMap[path] || "Motherland CRM - Dashboard";
   };
 
   // Set page title based on pathname
@@ -148,23 +148,23 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           const currentTitle = document.title;
           
           // Check if current title is a lead name (not a standard page title)
-          // Lead names will be "[FirstName LastName] - zodaShield" format
+          // Lead names will be "[FirstName LastName] - Motherland CRM" format
           const isLeadNameTitle = 
-            currentTitle.endsWith(" - zodaShield") &&
-            currentTitle !== "zodaShield - All Leads" &&
-            currentTitle !== "zodaShield - My Leads" &&
-            currentTitle !== "zodaShield - Dashboard" &&
-            currentTitle !== "zodaShield - Import" &&
-            currentTitle !== "zodaShield - Users" &&
-            currentTitle !== "zodaShield - Settings" &&
-            currentTitle !== "zodaShield - Profile" &&
-            currentTitle !== "zodaShield - Billing" &&
-            currentTitle !== "zodaShield - Subscription" &&
-            currentTitle !== "zodaShield - Notifications" &&
-            currentTitle !== "zodaShield - Help" &&
-            currentTitle !== "zodaShield - Admin Management" &&
-            currentTitle !== "zodaShield - Ads Manager" &&
-            currentTitle !== "zodaShield - Payment Details" &&
+            currentTitle.endsWith(" - Motherland CRM") &&
+            currentTitle !== "Motherland CRM - All Leads" &&
+            currentTitle !== "Motherland CRM - My Leads" &&
+            currentTitle !== "Motherland CRM - Dashboard" &&
+            currentTitle !== "Motherland CRM - Import" &&
+            currentTitle !== "Motherland CRM - Users" &&
+            currentTitle !== "Motherland CRM - Settings" &&
+            currentTitle !== "Motherland CRM - Profile" &&
+            currentTitle !== "Motherland CRM - Billing" &&
+            currentTitle !== "Motherland CRM - Subscription" &&
+            currentTitle !== "Motherland CRM - Notifications" &&
+            currentTitle !== "Motherland CRM - Help" &&
+            currentTitle !== "Motherland CRM - Admin Management" &&
+            currentTitle !== "Motherland CRM - Ads Manager" &&
+            currentTitle !== "Motherland CRM - Payment Details" &&
             !currentTitle.includes("Modern CRM Solution");
           
           // If it's a lead name title, don't overwrite it - panel is managing it

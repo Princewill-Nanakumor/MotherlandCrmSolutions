@@ -43,7 +43,7 @@ const LeadDetailsPageContent = ({
     if (lead) {
       const fullName = `${lead.firstName || ""} ${lead.lastName || ""}`.trim();
       const leadTitle = fullName || "Lead Details";
-      document.title = `${leadTitle} - zodaShield`;
+      document.title = `${leadTitle} - Motherland CRM`;
     }
   }, [lead]);
 
@@ -192,7 +192,7 @@ const LeadDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
     if (lead) {
       const fullName = `${lead.firstName || ""} ${lead.lastName || ""}`.trim();
       const leadTitle = fullName || "Lead Details";
-      document.title = `${leadTitle} - zodaShield`;
+      document.title = `${leadTitle} - Motherland CRM`;
     }
   }, [lead]);
 

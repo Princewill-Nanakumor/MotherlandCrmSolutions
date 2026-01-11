@@ -1,24 +1,19 @@
 {
-  "name": "ZodaShield - Modern CRM Solution",
-  "short_name": "ZodaShield",
-  "description": "Transform your Excel & CSV data into actionable leads with ZodaShield",
+  "name": "Motherland CRM - Modern CRM Solution",
+  "short_name": "Motherland CRM",
+  "description": "Transform your Excel & CSV data into actionable leads with Motherland CRM",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#6366F1",
   "icons": [
     {
-      "src": "/favicon-16x16.png",
-      "sizes": "16x16",
+      "src": "/Motherlandfav.png",
+      "sizes": "any",
       "type": "image/png"
     },
     {
-      "src": "/favicon-32x32.png",
-      "sizes": "32x32",
-      "type": "image/png"
-    },
-    {
-      "src": "/apple-touch-icon.png",
+      "src": "/Motherlandfav.png",
       "sizes": "180x180",
       "type": "image/png"
     }

@@ -24,7 +24,7 @@ export default function PaymentDetailsPage({ params }: PageProps) {
 
   // Set page title
   useEffect(() => {
-    document.title = "zodaShield - Payment Details";
+    document.title = "Motherland CRM - Payment Details";
   }, []);
 
   if (status === "loading") {
