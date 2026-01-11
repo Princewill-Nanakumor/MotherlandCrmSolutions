@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
@@ -16,6 +16,22 @@ export default function Navbar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Get hero section height (typically viewport height)
+      const heroHeight = window.innerHeight;
+      // Check if scrolled past 99% of hero section
+      setIsScrolled(window.scrollY > heroHeight * 0.95);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    // Check initial scroll position
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const logoVariants = {
     hidden: { opacity: 0, x: -50 },
@@ -53,11 +69,11 @@ export default function Navbar() {
 
   return (
     <motion.nav
-      className="fixed top-0 left-0 right-0 z-50 px-6 py-4 border-b border-white/20"
-      style={{
-        backgroundColor: "transparent",
-        background: "transparent",
-      }}
+      className={`fixed top-0 left-0 right-0 z-50 px-6 transition-all duration-300 ${
+        isScrolled
+          ? "bg-white/95 backdrop-blur-md shadow-md border-b border-gray-200"
+          : "bg-transparent border-b border-white/20"
+      }`}
       initial="hidden"
       animate="visible"
       variants={navVariants}
@@ -70,7 +86,7 @@ export default function Navbar() {
         >
           <Link href="/">
             <div className="flex items-center space-x-1">
-              <div className="relative w-20 h-20 overflow-hidden md:w-30 md:h-30">
+              <div className="relative w-20 h-20 overflow-hidden ">
                 <Image
                   src="/motherlandlogo.png"
                   alt="Motherland CRM Solutions Logo"
@@ -79,7 +95,11 @@ export default function Navbar() {
                   priority
                 />
               </div>
-              <div className="text-lg font-bold text-white md:text-2xl ">
+              <div
+                className={`text-lg font-bold md:text-2xl transition-colors duration-300 ${
+                  isScrolled ? "text-gray-900" : "text-white"
+                }`}
+              >
                 Motherland CRM Solutions
               </div>
             </div>
@@ -106,7 +126,11 @@ export default function Navbar() {
               >
                 <Link
                   href="/dashboard"
-                  className="items-center hidden h-10 px-4 py-2 font-medium text-white transition-colors duration-200 hover:text-indigo-800 md:block"
+                  className={`items-center hidden h-10 px-4 py-2 font-medium transition-colors duration-300 md:block ${
+                    isScrolled
+                      ? "text-gray-900 hover:text-indigo-600"
+                      : "text-white hover:text-indigo-200"
+                  }`}
                 >
                   Dashboard
                 </Link>

@@ -92,10 +92,13 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
   icons: {
     icon: [
-      { url: "/Motherlandfav.png", sizes: "any", type: "image/png" },
+      { url: "/Motherlandfav.png?v=2", sizes: "any", type: "image/png" },
     ],
     apple: [
-      { url: "/Motherlandfav.png", sizes: "180x180", type: "image/png" },
+      { url: "/Motherlandfav.png?v=2", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: [
+      { url: "/Motherlandfav.png?v=2", type: "image/png" },
     ],
   },
 };
