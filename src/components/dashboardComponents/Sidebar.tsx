@@ -94,9 +94,9 @@ export default function Sidebar() {
 
   if (status === "loading") {
     return (
-      <aside className="flex h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 shadow-lg">
-        <nav className="flex flex-col items-center py-6 space-y-2 w-24 h-full">
-          <div className="flex flex-col flex-1 gap-2 justify-center items-center w-full">
+      <aside className="flex h-screen shadow-lg bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+        <nav className="flex flex-col items-center w-24 h-full py-6 space-y-2">
+          <div className="flex flex-col items-center justify-center flex-1 w-full gap-2">
             <span className="text-indigo-400">Loading...</span>
           </div>
         </nav>
@@ -105,12 +105,12 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-r border-indigo-100 shadow-lg dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border-gray-700">
-      <nav className="flex flex-col items-center py-6 space-y-2 w-24 h-full">
+    <aside className="flex h-screen border-r border-indigo-100 shadow-lg bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border-gray-700">
+      <nav className="flex flex-col items-center w-24 h-full py-6 space-y-2">
         {/* Logo */}
         <Link
           href="/"
-          className="flex overflow-hidden justify-center items-center p-2 mb-8 rounded-xl shadow-lg"
+          className="flex items-center justify-center p-2 mb-8 overflow-hidden"
           aria-label="Home"
         >
           <div className="relative w-20 h-20">
@@ -125,7 +125,7 @@ export default function Sidebar() {
         </Link>
 
         {/* Main Navigation */}
-        <div className="flex flex-col flex-1 gap-2 w-full">
+        <div className="flex flex-col flex-1 w-full gap-2">
           {filteredNavItems.map((item) => {
             // Improved active state detection
             // For "/dashboard" route: exact match only
@@ -190,10 +190,10 @@ export default function Sidebar() {
         </div>
 
         {/* Divider */}
-        <div className="my-4 w-10 border-t border-indigo-200 dark:border-gray-700" />
+        <div className="w-10 my-4 border-t border-indigo-200 dark:border-gray-700" />
 
         {/* Footer Actions */}
-        <div className="flex flex-col gap-2 w-full">
+        <div className="flex flex-col w-full gap-2">
           <Link
             href="/dashboard/settings"
             className={cn(

@@ -9,7 +9,7 @@ type DialerSettings = {
 };
 
 const DialerSettingsContext = createContext<DialerSettings>({
-  dialer: null,
+  dialer: "microsip", // Default to microsip
   setDialer: () => {},
 });
 
@@ -22,18 +22,23 @@ export function DialerSettingsProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [dialer, setDialer] = useState<DialerType>(null);
+  const [dialer, setDialer] = useState<DialerType>("microsip"); // Default to microsip
 
   // Load from localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedDialer = localStorage.getItem("dialer");
-      // If no value exists in localStorage, default stays as null (disabled)
-      // Only set if a valid dialer is saved
+      // If a valid dialer is saved, use it
       if (savedDialer === "zoiper" || savedDialer === "microsip") {
         setDialer(savedDialer);
+      } else if (savedDialer === "none") {
+        // Explicitly set to null if user disabled it
+        setDialer(null);
+      } else {
+        // No value exists in localStorage - default to "microsip" and save it
+        setDialer("microsip");
+        localStorage.setItem("dialer", "microsip");
       }
-      // If savedDialer is null, empty, or any other value, keep default as null
     }
   }, []);
 
@@ -41,7 +46,8 @@ export function DialerSettingsProvider({
   useEffect(() => {
     if (typeof window !== "undefined") {
       if (dialer === null) {
-        localStorage.removeItem("dialer");
+        // Save "none" to localStorage when disabled so we know user explicitly disabled it
+        localStorage.setItem("dialer", "none");
       } else {
         localStorage.setItem("dialer", dialer);
       }

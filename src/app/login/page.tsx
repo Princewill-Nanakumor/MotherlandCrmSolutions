@@ -66,24 +66,39 @@ export default function LoginPage() {
     const body = document.body;
     const html = document.documentElement;
 
-    // Test if image exists first
+    // IMMEDIATELY set dark background to prevent white flash
+    body.style.setProperty("background-color", "#1a1a1a", "important");
+    html.style.setProperty("background-color", "#1a1a1a", "important");
+    
+    // Preload the image
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
+    link.href = "/motherlandImage.jpg";
+    document.head.appendChild(link);
+
+    // Apply background image immediately (even if not loaded yet, browser will show it when ready)
+    body.style.setProperty("background-image", "url('/motherlandImage.jpg')", "important");
+    body.style.setProperty("background-size", "cover", "important");
+    body.style.setProperty("background-position", "center", "important");
+    body.style.setProperty("background-repeat", "no-repeat", "important");
+    body.style.setProperty("background-attachment", "fixed", "important");
+    
+    // Test if image exists and update when loaded
     const testImg = new Image();
     testImg.onload = () => {
       console.log("✅ Background image loaded successfully");
-      // Apply background image directly to body
+      // Ensure background is applied
       body.style.setProperty("background-image", "url('/motherlandImage.jpg')", "important");
-      body.style.setProperty("background-size", "cover", "important");
-      body.style.setProperty("background-position", "center", "important");
-      body.style.setProperty("background-repeat", "no-repeat", "important");
-      body.style.setProperty("background-attachment", "fixed", "important");
       body.style.setProperty("background-color", "transparent", "important");
     };
     testImg.onerror = () => {
       console.error("❌ Background image failed to load from /motherlandImage.jpg");
+      // Keep dark background if image fails
+      body.style.setProperty("background-color", "#1a1a1a", "important");
     };
     testImg.src = "/motherlandImage.jpg";
     
-    html.style.setProperty("background-color", "transparent", "important");
     html.style.setProperty("background-image", "none", "important");
 
     // Make all direct children of body transparent
@@ -123,13 +138,19 @@ export default function LoginPage() {
     return () => {
       observer.disconnect();
       bodyObserver.disconnect();
+      // Remove preload link
+      const preloadLink = document.querySelector('link[rel="preload"][href="/motherlandImage.jpg"]');
+      if (preloadLink) {
+        preloadLink.remove();
+      }
+      // Reset to default white background when leaving login page
       body.style.removeProperty("background-image");
       body.style.removeProperty("background-size");
       body.style.removeProperty("background-position");
       body.style.removeProperty("background-repeat");
       body.style.removeProperty("background-attachment");
-      body.style.removeProperty("background-color");
-      html.style.removeProperty("background-color");
+      body.style.setProperty("background-color", "#ffffff", "important");
+      html.style.setProperty("background-color", "#ffffff", "important");
       html.style.removeProperty("background-image");
     };
   }, []);
@@ -140,10 +161,15 @@ export default function LoginPage() {
       <style
         dangerouslySetInnerHTML={{
           __html: `
-          /* Force transparent backgrounds for all wrappers - background image is on body */
+          /* Set initial dark background to prevent white flash - will be overridden when image loads */
           html, 
           body {
-            background-color: transparent !important;
+            background-color: #1a1a1a !important;
+            background-image: url('/motherlandImage.jpg') !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
           }
           /* Override ALL wrapper divs from providers */
           body > div,
