@@ -59,7 +59,7 @@ export async function GET(
       .sort({ createdAt: -1 })
       .populate({
         path: "leadId",
-        select: "firstName lastName leadId",
+        select: "firstName lastName leadId country",
         model: "Lead",
       })
       .lean();
@@ -70,6 +70,7 @@ export async function GET(
       firstName?: string;
       lastName?: string;
       leadId?: number;
+      country?: string;
     }
 
     interface CallLogDoc {
@@ -94,6 +95,7 @@ export async function GET(
           ? `${lead.firstName || ""} ${lead.lastName || ""}`.trim() || "Unknown Lead"
           : null,
         leadDisplayId: lead?.leadId || null,
+        leadCountry: lead?.country || null,
         phoneNumber: log.phoneNumber,
         dialer: log.dialer,
         createdAt: log.createdAt,

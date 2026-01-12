@@ -210,6 +210,24 @@ export const useLeadsPage = (
         });
       });
 
+      // ⚡ Update selectedLeads in store immediately for instant modal button update
+      if (assignedUser) {
+        const currentSelected = selectedLeads.map((lead) => {
+          if (leadIds.includes(lead._id)) {
+            return {
+              ...lead,
+              assignedTo: {
+                id: assignedUser.id,
+                firstName: assignedUser.firstName,
+                lastName: assignedUser.lastName,
+              },
+            };
+          }
+          return lead;
+        });
+        setSelectedLeads(currentSelected);
+      }
+
       // Return context for rollback
       return { previousLeads };
     },
@@ -219,6 +237,15 @@ export const useLeadsPage = (
       // Rollback on error - FIXED: Use consistent query key
       if (context?.previousLeads) {
         queryClient.setQueryData(["leads"], context.previousLeads);
+        // ⚡ Rollback selectedLeads in store to match previous state
+        const previousLeadsMap = new Map(
+          context.previousLeads.map((lead) => [lead._id, lead])
+        );
+        const currentSelected = selectedLeads.map((lead) => {
+          const previousLead = previousLeadsMap.get(lead._id);
+          return previousLead ? previousLead : lead;
+        });
+        setSelectedLeads(currentSelected);
       }
       toast({
         title: "Assignment failed",
@@ -230,21 +257,24 @@ export const useLeadsPage = (
     onSuccess: async (data, variables) => {
       mutationInProgressRef.current = false;
 
+      // ⚡ Clear selection after successful assignment
+      setSelectedLeads([]);
+
       toast({
         title: "Success!",
         description: `Successfully assigned ${variables.leadIds.length} lead(s)`,
         variant: "success",
       });
 
-      // Immediately invalidate and refetch to update dashboard and all components
-      await queryClient.invalidateQueries({ queryKey: ["leads"] });
-      await queryClient.refetchQueries({ queryKey: ["leads"] });
+      // ⚡ Non-blocking refetch - don't await to keep UI responsive
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.refetchQueries({ queryKey: ["leads"] });
       
       // Also refresh assigned-leads views (user leads page, badges, etc.)
-      await queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: assignedLeadsKeys.all,
       });
-      await queryClient.refetchQueries({
+      queryClient.refetchQueries({
         queryKey: assignedLeadsKeys.all,
       });
     },
@@ -293,6 +323,18 @@ export const useLeadsPage = (
         });
       });
 
+      // ⚡ Update selectedLeads in store immediately for instant modal button update
+      const currentSelected = selectedLeads.map((lead) => {
+        if (leadIds.includes(lead._id)) {
+          return {
+            ...lead,
+            assignedTo: null,
+          };
+        }
+        return lead;
+      });
+      setSelectedLeads(currentSelected);
+
       return { previousLeads };
     },
     onError: (err, variables, context) => {
@@ -301,6 +343,15 @@ export const useLeadsPage = (
       // Rollback on error - FIXED: Use consistent query key
       if (context?.previousLeads) {
         queryClient.setQueryData(["leads"], context.previousLeads);
+        // ⚡ Rollback selectedLeads in store to match previous state
+        const previousLeadsMap = new Map(
+          context.previousLeads.map((lead) => [lead._id, lead])
+        );
+        const currentSelected = selectedLeads.map((lead) => {
+          const previousLead = previousLeadsMap.get(lead._id);
+          return previousLead ? previousLead : lead;
+        });
+        setSelectedLeads(currentSelected);
       }
       toast({
         title: "Unassignment failed",
@@ -312,21 +363,24 @@ export const useLeadsPage = (
     onSuccess: async (data, variables) => {
       mutationInProgressRef.current = false;
 
+      // ⚡ Clear selection after successful unassignment
+      setSelectedLeads([]);
+
       toast({
         title: "Success!",
         description: `Successfully unassigned ${variables.leadIds.length} lead(s)`,
         variant: "success",
       });
 
-      // Immediately invalidate and refetch to update dashboard and all components
-      await queryClient.invalidateQueries({ queryKey: ["leads"] });
-      await queryClient.refetchQueries({ queryKey: ["leads"] });
+      // ⚡ Non-blocking refetch - don't await to keep UI responsive
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.refetchQueries({ queryKey: ["leads"] });
       
       // Also refresh assigned-leads views (user leads page, badges, etc.)
-      await queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: assignedLeadsKeys.all,
       });
-      await queryClient.refetchQueries({
+      queryClient.refetchQueries({
         queryKey: assignedLeadsKeys.all,
       });
     },
@@ -791,28 +845,28 @@ export const useLeadsPage = (
       return;
     }
 
-    try {
-      await assignLeadsMutation.mutateAsync({
-        leadIds: selectedLeads.map((l) => l._id),
-        userId: uiState.selectedUser,
-      });
+    // Store leadIds before clearing (needed for mutation)
+    const leadIds = selectedLeads.map((l) => l._id);
+    const userId = uiState.selectedUser;
 
-      // ⚡ Clear selection immediately for instant feedback
-      setSelectedLeads([]);
-      setUiState((prev) => ({
-        ...prev,
-        isDialogOpen: false,
-        selectedUser: "",
-      }));
-    } catch (error) {
-      // Error handling is done in mutation
-      console.error("Assignment error:", error);
-    }
+    // ⚡ Close dialog immediately for instant feedback (before mutation starts)
+    setUiState((prev) => ({
+      ...prev,
+      isDialogOpen: false,
+      selectedUser: "",
+    }));
+
+    // Start mutation without awaiting - let it complete in background
+    // onMutate will update selectedLeads optimistically, then we clear it in onSuccess
+    assignLeadsMutation.mutate({
+      leadIds,
+      userId,
+    });
   }, [
     selectedLeads,
     uiState.selectedUser,
     assignLeadsMutation,
-    setSelectedLeads,
+    setUiState,
     toast,
   ]);
 
@@ -831,19 +885,18 @@ export const useLeadsPage = (
       return;
     }
 
-    try {
-      await unassignLeadsMutation.mutateAsync({
-        leadIds: leadsToUnassign.map((l) => l._id),
-      });
+    // Store leadIds before closing dialog
+    const leadIds = leadsToUnassign.map((l) => l._id);
 
-      // ⚡ Clear selection immediately for instant feedback
-      setSelectedLeads([]);
-      setUiState((prev) => ({ ...prev, isUnassignDialogOpen: false }));
-    } catch (error) {
-      // Error handling is done in mutation
-      console.error("Unassignment error:", error);
-    }
-  }, [selectedLeads, unassignLeadsMutation, setSelectedLeads, toast]);
+    // ⚡ Close dialog immediately for instant feedback (before mutation starts)
+    setUiState((prev) => ({ ...prev, isUnassignDialogOpen: false }));
+
+    // Start mutation without awaiting - let it complete in background
+    // onMutate will update selectedLeads optimistically, then we clear it in onSuccess
+    unassignLeadsMutation.mutate({
+      leadIds,
+    });
+  }, [selectedLeads, unassignLeadsMutation, setUiState, toast]);
 
   const handleBulkStatusChange = useCallback(
     async (statusId: string) => {

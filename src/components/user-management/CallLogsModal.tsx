@@ -19,6 +19,7 @@ interface CallLog {
   leadId: string | null;
   leadName: string | null;
   leadDisplayId: number | null;
+  leadCountry: string | null;
   phoneNumber: string;
   dialer: "microsip" | "zoiper" | "unknown";
   createdAt: string;
@@ -296,6 +297,9 @@ export function CallLogsModal({
                       <th className="text-left py-3 px-6 text-sm font-semibold !text-gray-700 dark:!text-gray-300 sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-[180px]">
                         Lead
                       </th>
+                      <th className="text-left py-3 px-6 text-sm font-semibold !text-gray-700 dark:!text-gray-300 sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-[120px]">
+                        Country
+                      </th>
                       <th className="text-left py-3 px-6 text-sm font-semibold !text-gray-700 dark:!text-gray-300 sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-[150px]">
                         Phone Number
                       </th>
@@ -326,6 +330,9 @@ export function CallLogsModal({
                           ) : (
                             <span className="text-gray-400 dark:text-gray-500">—</span>
                           )}
+                        </td>
+                        <td className="py-3 px-6 text-sm !text-gray-900 dark:!text-white whitespace-nowrap">
+                          {log.leadCountry || <span className="text-gray-400 dark:text-gray-500">—</span>}
                         </td>
                         <td className="py-3 px-6 text-sm !text-gray-900 dark:!text-white font-mono whitespace-nowrap">
                           {log.phoneNumber}
