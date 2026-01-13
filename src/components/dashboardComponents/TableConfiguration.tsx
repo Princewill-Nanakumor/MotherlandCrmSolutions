@@ -87,8 +87,15 @@ export const useTableConfiguration = ({
       if (typeof updater === "function") {
         const newState = updater({ pageIndex, pageSize });
 
-        // Update pageIndex if it changed (including page 0)
-        if (newState.pageIndex !== pageIndex) {
+        // Check if TanStack Table is trying to reset to page 0 when current page is still valid
+        const totalPages = Math.ceil(data.length / pageSize);
+        const currentPageStillValid = pageIndex < totalPages && data.length > 0;
+        const isResettingToPage0 = newState.pageIndex === 0 && pageIndex > 0;
+        
+        if (isResettingToPage0 && currentPageStillValid) {
+          // Don't update pageIndex - keep current page
+          // This prevents unnecessary pagination resets when data changes but current page is still valid
+        } else if (newState.pageIndex !== pageIndex) {
           setPageIndex(newState.pageIndex);
         }
 
@@ -96,8 +103,15 @@ export const useTableConfiguration = ({
           setPageSize(newState.pageSize);
         }
       } else {
-        // Update pageIndex if it changed (including page 0)
-        if (updater.pageIndex !== pageIndex) {
+        // Check if TanStack Table is trying to reset to page 0 when current page is still valid
+        const totalPages = Math.ceil(data.length / pageSize);
+        const currentPageStillValid = pageIndex < totalPages && data.length > 0;
+        const isResettingToPage0 = updater.pageIndex === 0 && pageIndex > 0;
+        
+        if (isResettingToPage0 && currentPageStillValid) {
+          // Don't update pageIndex - keep current page
+          // This prevents unnecessary pagination resets when data changes but current page is still valid
+        } else if (updater.pageIndex !== pageIndex) {
           setPageIndex(updater.pageIndex);
         }
 

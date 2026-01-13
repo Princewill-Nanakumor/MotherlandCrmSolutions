@@ -136,14 +136,24 @@ export default function LeadsTable({
     isInitializedRef.current = true;
   }, [searchParams]);
 
-  // Preserve page position when leads change (but don't fight user interaction)
+  // Preserve page position when URL changes (but don't fight user interaction)
+  // Only sync from URL when searchParams change, NOT when leads.length changes
+  // This prevents resetting pagination when filtered results change
   useEffect(() => {
     const currentPage = searchParams.get("page");
+    
     if (currentPage && !isNaN(Number(currentPage))) {
       const targetPage = Number(currentPage) - 1;
-      setPageIndex(targetPage);
+      // Only update if different to avoid unnecessary updates and infinite loops
+      if (targetPage !== pageIndex) {
+        setPageIndex(targetPage);
+      }
+    } else if (!currentPage && pageIndex !== 0) {
+      // If URL has no page param and we're not on page 0, sync to 0
+      setPageIndex(0);
     }
-  }, [leads.length, searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]); // Only depend on searchParams, not pageIndex to avoid circular updates
 
   // Update URL when page changes
   const handlePageChange = useCallback((page: number) => {
@@ -151,11 +161,8 @@ export default function LeadsTable({
     const currentPathname = window.location.pathname;
     const params = new URLSearchParams(window.location.search);
     params.set("page", String(page + 1));
-    window.history.replaceState(
-      {},
-      "",
-      `${currentPathname}?${params.toString()}`
-    );
+    const newURL = `${currentPathname}?${params.toString()}`;
+    window.history.replaceState({}, "", newURL);
   }, []);
 
   // Use props selectedLeads if provided, otherwise use store
@@ -177,7 +184,46 @@ export default function LeadsTable({
     ),
   });
 
-  // Memoized current page leads WITHOUT automatic page adjustment
+  // ⚡ Adjust pageIndex when filtered results change and current page becomes empty/out of bounds
+  useEffect(() => {
+    if (sortedLeads.length === 0) {
+      // If no leads, go to page 0
+      if (pageIndex !== 0) {
+        setPageIndex(0);
+        const currentPathname = window.location.pathname;
+        const params = new URLSearchParams(window.location.search);
+        params.set("page", "1");
+        window.history.replaceState(
+          {},
+          "",
+          `${currentPathname}?${params.toString()}`
+        );
+      }
+      return;
+    }
+
+    const startIndex = pageIndex * pageSize;
+    const currentPageEmpty = startIndex >= sortedLeads.length;
+    const totalPages = Math.ceil(sortedLeads.length / pageSize);
+    
+    // If current page is out of bounds (e.g., lead was removed from filter), adjust to last available page
+    if (currentPageEmpty && pageIndex > 0 && sortedLeads.length > 0) {
+      const newPageIndex = Math.max(0, totalPages - 1);
+      if (newPageIndex !== pageIndex && newPageIndex >= 0) {
+        setPageIndex(newPageIndex);
+        const currentPathname = window.location.pathname;
+        const params = new URLSearchParams(window.location.search);
+        params.set("page", String(newPageIndex + 1));
+        window.history.replaceState(
+          {},
+          "",
+          `${currentPathname}?${params.toString()}`
+        );
+      }
+    }
+  }, [sortedLeads.length, pageIndex, pageSize]); // Removed filter dependencies to fix React warning
+
+  // Memoized current page leads
   const currentPageLeads = useMemo(() => {
     const startIndex = pageIndex * pageSize;
     const endIndex = startIndex + pageSize;

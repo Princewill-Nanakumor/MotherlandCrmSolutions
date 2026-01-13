@@ -190,18 +190,13 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
           });
         }
 
-        // Invalidate both leads and activities queries to refresh the UI
-        Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: ["leads"],
-            exact: false,
-          }),
-          queryClient.invalidateQueries({
-            queryKey: ["activities", lead._id],
-            exact: false,
-          }),
-        ]).catch((error) => {
-          console.error("Error invalidating queries:", error);
+        // ⚡ Only invalidate activities query, not leads query (to preserve pagination)
+        // The leads query data is already updated optimistically above
+        queryClient.invalidateQueries({
+          queryKey: ["activities", lead._id],
+          exact: false,
+        }).catch((error) => {
+          console.error("Error invalidating activities query:", error);
         });
 
         toast({
