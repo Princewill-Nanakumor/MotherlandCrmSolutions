@@ -42,6 +42,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   const previousStatusRef = useRef<string | undefined>(undefined);
   const previousLeadRef = useRef<Lead | null>(null);
   const originalTitleRef = useRef<string>("");
+  const lastManualUpdateRef = useRef<number>(0);
 
   useEffect(() => {
     if (lead) {
@@ -54,9 +55,14 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   useEffect(() => {
     if (!lead?._id) return;
 
+    let debounceTimeout: NodeJS.Timeout;
+
     const checkAndUpdateLead = () => {
       const leadsData = queryClient.getQueryData(["leads"]);
-      if (!leadsData) return;
+      if (!leadsData) {
+        console.log("🔍 LeadDetailsPanel: No leads data in cache");
+        return;
+      }
 
       let updatedLead: Lead | undefined;
 
@@ -70,24 +76,42 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         }
       }
 
-      if (updatedLead && updatedLead.status !== previousStatusRef.current) {
+      // Only update if we have fresh data AND it's different from current state
+      // AND the updatedAt timestamp is newer (indicating a server update)
+      // AND we haven't had a manual update in the last 500ms (to prevent overriding optimistic updates)
+      const timeSinceLastManualUpdate =
+        Date.now() - lastManualUpdateRef.current;
+      if (
+        updatedLead &&
+        updatedLead.status !== currentLead?.status &&
+        updatedLead.updatedAt !== currentLead?.updatedAt &&
+        (!currentLead?.updatedAt ||
+          new Date(updatedLead.updatedAt) > new Date(currentLead.updatedAt)) &&
+        timeSinceLastManualUpdate > 500
+      ) {
         previousStatusRef.current = updatedLead.status;
         setCurrentLead(updatedLead);
       }
     };
 
+    const debouncedCheckAndUpdateLead = () => {
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(checkAndUpdateLead, 100); // 100ms debounce
+    };
+
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
       if (event.type === "updated" && event.query.queryKey[0] === "leads") {
-        setTimeout(checkAndUpdateLead, 0);
+        debouncedCheckAndUpdateLead();
       }
     });
 
     checkAndUpdateLead();
 
     return () => {
+      clearTimeout(debounceTimeout);
       unsubscribe();
     };
-  }, [lead?._id, queryClient]);
+  }, [lead?._id, queryClient, currentLead?.status, currentLead?.updatedAt]);
 
   const onLeadUpdatedRef = useRef(onLeadUpdated);
   onLeadUpdatedRef.current = onLeadUpdated;
@@ -102,6 +126,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   const handleLeadUpdated = useCallback(async (updatedLead: Lead) => {
     try {
       previousStatusRef.current = updatedLead.status;
+      lastManualUpdateRef.current = Date.now();
       setCurrentLead(updatedLead);
 
       const result = await onLeadUpdatedRef.current(updatedLead);
@@ -135,18 +160,28 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
             }
           }
 
-          if (freshLead && freshLead.status !== currentLead?.status) {
+          // Only update if we have a fresh lead and it's different from current, but avoid rapid updates
+          const timeSinceLastManualUpdate =
+            Date.now() - lastManualUpdateRef.current;
+          if (
+            freshLead &&
+            freshLead.status !== currentLead?.status &&
+            freshLead.updatedAt !== currentLead?.updatedAt &&
+            (!currentLead?.updatedAt ||
+              new Date(freshLead.updatedAt) >
+                new Date(currentLead.updatedAt)) &&
+            timeSinceLastManualUpdate > 500
+          ) {
             setCurrentLead(freshLead);
           }
         }
       };
 
+      // Only check once on mount, don't set up continuous checking
       checkCache();
-      const timeoutId = setTimeout(checkCache, 100);
-
-      return () => clearTimeout(timeoutId);
     }
-  }, [lead?._id, isOpen, queryClient, currentLead?.status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lead?._id, isOpen, queryClient]);
 
   // Handle ESC key to close panel
   useEffect(() => {

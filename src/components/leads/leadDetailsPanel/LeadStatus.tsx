@@ -44,7 +44,6 @@ function hexWithAlpha(hex: string, alpha: string) {
 const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState<string>(lead.status);
   const queryClient = useQueryClient();
   const { statuses, isLoading: isLoadingStatuses } = useStatuses();
   const darkAlpha = "B3";
@@ -57,12 +56,6 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
     match.addEventListener("change", handler);
     return () => match.removeEventListener("change", handler);
   }, []);
-
-  useEffect(() => {
-    if (lead.status !== currentStatus) {
-      setCurrentStatus(lead.status);
-    }
-  }, [lead.status, currentStatus, lead._id]);
 
   const findStatusByIdOrName = useCallback(
     (statusId: string) => {
@@ -78,7 +71,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
     [statuses]
   );
 
-  const currentStatusObj = findStatusByIdOrName(currentStatus);
+  const currentStatusObj = findStatusByIdOrName(lead.status);
 
   const getStatusDisplayName = useCallback(
     (statusId: string) => {
@@ -88,7 +81,9 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
       }
       // Capitalize fallback status name (e.g., "NEW" -> "New")
       if (statusId) {
-        return statusId.charAt(0).toUpperCase() + statusId.slice(1).toLowerCase();
+        return (
+          statusId.charAt(0).toUpperCase() + statusId.slice(1).toLowerCase()
+        );
       }
       return "Unknown";
     },
@@ -97,10 +92,11 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
 
   const handleStatusChange = useCallback(
     async (newStatusId: string) => {
-      if (!lead._id || currentStatus === newStatusId) return;
+      if (!lead._id || lead.status === newStatusId) {
+        return;
+      }
 
-      const previousStatus = currentStatus;
-      setCurrentStatus(newStatusId);
+      const previousStatus = lead.status;
       setIsUpdating(true);
 
       queryClient.setQueryData(["leads"], (oldData: LeadsData) => {
@@ -147,42 +143,51 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
 
         if (!response.ok) {
           const errorText = await response.text();
+          console.error("API call failed", {
+            status: response.status,
+            error: errorText,
+          });
           throw new Error(
             `Failed to update status: ${response.status} - ${errorText}`
           );
         }
 
         const updatedLead = await response.json();
-        setCurrentStatus(updatedLead.status);
 
         if (updatedLead.status !== newStatusId) {
-          queryClient.setQueryData(["leads"], (oldData: LeadsData) => {
-            if (!oldData) return oldData;
-
-            if (Array.isArray(oldData)) {
-              return oldData.map((l: Lead) =>
-                l._id === lead._id ? updatedLead : l
-              );
-            } else if (oldData && typeof oldData === "object") {
-              if ("data" in oldData && Array.isArray(oldData.data)) {
-                return {
-                  ...oldData,
-                  data: oldData.data.map((l: Lead) =>
-                    l._id === lead._id ? updatedLead : l
-                  ),
-                };
-              } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
-                return {
-                  ...oldData,
-                  leads: oldData.leads.map((l: Lead) =>
-                    l._id === lead._id ? updatedLead : l
-                  ),
-                };
-              }
-            }
-            return oldData;
+          console.warn("Status mismatch", {
+            expected: newStatusId,
+            received: updatedLead.status,
           });
         }
+
+        // ✅ FIXED: Move cache update inside try block
+        queryClient.setQueryData(["leads"], (oldData: LeadsData) => {
+          if (!oldData) return oldData;
+
+          if (Array.isArray(oldData)) {
+            return oldData.map((l: Lead) =>
+              l._id === lead._id ? updatedLead : l
+            );
+          } else if (oldData && typeof oldData === "object") {
+            if ("data" in oldData && Array.isArray(oldData.data)) {
+              return {
+                ...oldData,
+                data: oldData.data.map((l: Lead) =>
+                  l._id === lead._id ? updatedLead : l
+                ),
+              };
+            } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
+              return {
+                ...oldData,
+                leads: oldData.leads.map((l: Lead) =>
+                  l._id === lead._id ? updatedLead : l
+                ),
+              };
+            }
+          }
+          return oldData;
+        });
 
         if (onLeadUpdated) {
           onLeadUpdated(updatedLead).catch((error) => {
@@ -192,20 +197,26 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
 
         // ⚡ Only invalidate activities query, not leads query (to preserve pagination)
         // The leads query data is already updated optimistically above
-        queryClient.invalidateQueries({
-          queryKey: ["activities", lead._id],
-          exact: false,
-        }).catch((error) => {
-          console.error("Error invalidating activities query:", error);
-        });
-
+        queryClient
+          .invalidateQueries({
+            queryKey: ["activities", lead._id],
+            exact: false,
+          })
+          .catch((error) => {
+            console.error("Error invalidating activities query:", error);
+          });
         toast({
           title: "Status updated",
           description: `Lead status changed successfully.`,
           variant: "success",
         });
       } catch (error) {
-        setCurrentStatus(previousStatus);
+        console.error("Status update failed, rolling back", {
+          leadId: lead._id,
+          fromStatus: previousStatus,
+          attemptedStatus: newStatusId,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
 
         // ✅ FIXED: Use previousStatus for rollback (this was correct)
         queryClient.setQueryData(["leads"], (oldData: LeadsData) => {
@@ -247,7 +258,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
         setIsUpdating(false);
       }
     },
-    [lead._id, currentStatus, onLeadUpdated, queryClient, toast]
+    [lead._id, lead.status, onLeadUpdated, queryClient, toast]
   );
 
   const currentStatusColor = currentStatusObj?.color || "#3b82f6";
@@ -296,14 +307,16 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
       `}</style>
 
       <div className="flex-1">
-        <p className="text-sm !text-gray-500 dark:!text-gray-400 mb-1">Status</p>
+        <p className="text-sm !text-gray-500 dark:!text-gray-400 mb-1">
+          Status
+        </p>
         {isLoadingStatuses ? (
           <div className="flex items-center">
             <Loader2 className="h-4 w-4 animate-spin text-gray-500 dark:text-gray-400" />
           </div>
         ) : (
           <Select
-            value={currentStatus}
+            value={lead.status}
             onValueChange={handleStatusChange}
             disabled={isUpdating}
           >
@@ -329,7 +342,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
                     color: triggerTextColor,
                   }}
                 >
-                  {getStatusDisplayName(currentStatus)}
+                  {getStatusDisplayName(lead.status)}
                 </span>
                 {isUpdating && (
                   <Loader2

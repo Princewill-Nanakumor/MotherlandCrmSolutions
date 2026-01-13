@@ -82,7 +82,7 @@ export const metadata: Metadata = {
   category: "Business Software",
   classification: "CRM Software",
   other: {
-    "apple-mobile-web-app-capable": "yes",
+    "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "default",
     "apple-mobile-web-app-title": "Motherland CRM",
     "application-name": "Motherland CRM",
@@ -91,15 +91,11 @@ export const metadata: Metadata = {
   },
   manifest: "/site.webmanifest",
   icons: {
-    icon: [
-      { url: "/Motherlandfav.png?v=2", sizes: "any", type: "image/png" },
-    ],
+    icon: [{ url: "/Motherlandfav.png?v=2", sizes: "any", type: "image/png" }],
     apple: [
       { url: "/Motherlandfav.png?v=2", sizes: "180x180", type: "image/png" },
     ],
-    shortcut: [
-      { url: "/Motherlandfav.png?v=2", type: "image/png" },
-    ],
+    shortcut: [{ url: "/Motherlandfav.png?v=2", type: "image/png" }],
   },
 };
 

@@ -13,6 +13,7 @@ export default function Navbar() {
               src="/motherlandlogo.png"
               alt="Motherland CRM Solutions Logo"
               fill
+              sizes="40px"
               className="object-contain"
               priority
             />

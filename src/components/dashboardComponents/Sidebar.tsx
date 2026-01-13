@@ -118,6 +118,7 @@ export default function Sidebar() {
               src="/motherlandlogo.png"
               alt="Motherland CRM Solutions Logo"
               fill
+              sizes="80px"
               className="object-contain"
               priority
             />

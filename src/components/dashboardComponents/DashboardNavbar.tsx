@@ -78,7 +78,6 @@ export default function DashboardNavbar({
 
   const handleSearch = useCallback(
     (query: string) => {
-      console.log("DashboardNavbar: Search triggered with query:", query);
       onSearch(query);
     },
     [onSearch]
