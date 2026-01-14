@@ -184,6 +184,40 @@ export default function LeadsTable({
     ),
   });
 
+  // ✅ FIX: Read lead parameter from URL and open panel automatically
+  useEffect(() => {
+    const leadIdParam = searchParams.get("lead");
+    if (leadIdParam && leads.length > 0) {
+      // Check if it's a numeric leadId (5-6 digits) or MongoDB _id
+      const isNumericId = /^\d{5,6}$/.test(leadIdParam);
+      let lead: Lead | undefined;
+
+      if (isNumericId) {
+        const numericId = parseInt(leadIdParam, 10);
+        // Search in both sortedLeads (filtered) and leads (all available)
+        lead = sortedLeads.find((l) => l.leadId === numericId) 
+          || leads.find((l) => l.leadId === numericId);
+      } else {
+        lead = sortedLeads.find((l) => l._id === leadIdParam)
+          || leads.find((l) => l._id === leadIdParam);
+      }
+
+      if (lead && (!selectedLead || selectedLead._id !== lead._id)) {
+        setSelectedLead(lead);
+        setIsPanelOpen(true);
+      } else if (!lead && selectedLead) {
+        // If lead not found in current list, close panel
+        setSelectedLead(null);
+        setIsPanelOpen(false);
+      }
+    } else if (!leadIdParam && selectedLead) {
+      // If URL has no lead param but panel is open, close it
+      setSelectedLead(null);
+      setIsPanelOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, sortedLeads, leads]); // Depend on searchParams, sortedLeads, and leads
+
   // ⚡ Adjust pageIndex when filtered results change and current page becomes empty/out of bounds
   useEffect(() => {
     if (sortedLeads.length === 0) {

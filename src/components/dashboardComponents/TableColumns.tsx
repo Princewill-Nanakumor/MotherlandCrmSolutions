@@ -119,10 +119,12 @@ export const useTableColumns = ({
         header: () => <div className="h-8 flex items-center justify-center w-full font-medium cursor-pointer">Actions</div>,
         cell: ({ row }) => {
           const lead = row.original;
+          // ✅ FIX: Use leadId (5-6 digit display ID) instead of database _id
+          const leadIdentifier = lead.leadId || lead._id;
           // Preserve current filters in the URL
           const detailUrl = currentParams
-            ? `/dashboard/all-leads/${lead._id}?${currentParams}`
-            : `/dashboard/all-leads/${lead._id}`;
+            ? `/dashboard/all-leads/${leadIdentifier}?${currentParams}`
+            : `/dashboard/all-leads/${leadIdentifier}`;
 
           return (
             <div className="flex items-center justify-center">
