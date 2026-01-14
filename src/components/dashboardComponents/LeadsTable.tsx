@@ -184,39 +184,95 @@ export default function LeadsTable({
     ),
   });
 
-  // ✅ FIX: Read lead parameter from URL and open panel automatically
+  // ✅ FIX: Keep selectedLead in sync with full leads array
+  // This ensures selectedLead always has the latest data, even if filtered out
+  // KEY: Never close panel if URL has lead parameter (lead might just be filtered out)
   useEffect(() => {
     const leadIdParam = searchParams.get("lead");
+    
+    // If URL has lead parameter, NEVER close the panel (lead might be filtered out)
+    if (leadIdParam && selectedLead) {
+      // Just update selectedLead if we have newer data, but keep panel open
+      if (leads.length > 0) {
+        const updatedLead = leads.find((l) => l._id === selectedLead._id);
+        if (updatedLead) {
+          // Update selectedLead if key fields have changed (status, updatedAt, etc.)
+          if (
+            updatedLead.status !== selectedLead.status ||
+            updatedLead.updatedAt !== selectedLead.updatedAt ||
+            updatedLead.firstName !== selectedLead.firstName ||
+            updatedLead.lastName !== selectedLead.lastName ||
+            updatedLead.email !== selectedLead.email ||
+            updatedLead.phone !== selectedLead.phone
+          ) {
+            setSelectedLead(updatedLead);
+          }
+        }
+        // If lead not found but URL has param, keep panel open with current selectedLead
+        // (lead is filtered out, not deleted)
+      }
+      return; // Don't proceed to closing logic if URL has lead param
+    }
+    
+    // Only check for deletion if there's NO lead parameter in URL
+    if (selectedLead && leads.length > 0 && !leadIdParam) {
+      const updatedLead = leads.find((l) => l._id === selectedLead._id);
+      if (updatedLead) {
+        // Update selectedLead if key fields have changed
+        if (
+          updatedLead.status !== selectedLead.status ||
+          updatedLead.updatedAt !== selectedLead.updatedAt ||
+          updatedLead.firstName !== selectedLead.firstName ||
+          updatedLead.lastName !== selectedLead.lastName ||
+          updatedLead.email !== selectedLead.email ||
+          updatedLead.phone !== selectedLead.phone
+        ) {
+          setSelectedLead(updatedLead);
+        }
+      } else {
+        // Lead not found in full leads array AND no URL param - lead was deleted
+        setSelectedLead(null);
+        setIsPanelOpen(false);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leads, selectedLead?._id, searchParams]); // Include searchParams to check for lead param
+
+  // ✅ FIX: Read lead parameter from URL and open panel automatically
+  // ✅ FIX: Keep panel open even if lead is filtered out (only close if lead is deleted)
+  useEffect(() => {
+    const leadIdParam = searchParams.get("lead");
+    
     if (leadIdParam && leads.length > 0) {
-      // Check if it's a numeric leadId (5-6 digits) or MongoDB _id
+      // Always search in full leads array (not filtered sortedLeads)
+      // This ensures we find the lead even if it's been filtered out
       const isNumericId = /^\d{5,6}$/.test(leadIdParam);
       let lead: Lead | undefined;
 
       if (isNumericId) {
         const numericId = parseInt(leadIdParam, 10);
-        // Search in both sortedLeads (filtered) and leads (all available)
-        lead = sortedLeads.find((l) => l.leadId === numericId) 
-          || leads.find((l) => l.leadId === numericId);
+        lead = leads.find((l) => l.leadId === numericId);
       } else {
-        lead = sortedLeads.find((l) => l._id === leadIdParam)
-          || leads.find((l) => l._id === leadIdParam);
+        lead = leads.find((l) => l._id === leadIdParam);
       }
 
-      if (lead && (!selectedLead || selectedLead._id !== lead._id)) {
-        setSelectedLead(lead);
-        setIsPanelOpen(true);
-      } else if (!lead && selectedLead) {
-        // If lead not found in current list, close panel
-        setSelectedLead(null);
-        setIsPanelOpen(false);
+      if (lead) {
+        // Lead exists - update selectedLead if it's different
+        if (!selectedLead || selectedLead._id !== lead._id) {
+          setSelectedLead(lead);
+          setIsPanelOpen(true);
+        }
       }
+      // If lead not found but URL has param, keep panel open with current selectedLead
+      // (lead might be filtered out, not deleted - don't close panel)
     } else if (!leadIdParam && selectedLead) {
       // If URL has no lead param but panel is open, close it
+      // (User manually closed or navigated away)
       setSelectedLead(null);
       setIsPanelOpen(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, sortedLeads, leads]); // Depend on searchParams, sortedLeads, and leads
+  }, [searchParams, leads]); // Depend on searchParams and leads
 
   // ⚡ Adjust pageIndex when filtered results change and current page becomes empty/out of bounds
   useEffect(() => {
