@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 
 interface LeadDoc {
   _id: mongoose.Types.ObjectId | string;
+  leadId?: number;
   firstName: string;
   lastName: string;
   email: string;
@@ -141,6 +142,7 @@ export async function PATCH(req: NextRequest) {
         runValidators: false,
         projection: {
           _id: 1,
+          leadId: 1,
           firstName: 1,
           lastName: 1,
           email: 1,
@@ -233,6 +235,7 @@ export async function PATCH(req: NextRequest) {
 
     const responseData = {
       _id: updatedLead._id.toString(),
+      leadId: updatedLead.leadId,
       firstName: updatedLead.firstName,
       lastName: updatedLead.lastName,
       email: updatedLead.email,
