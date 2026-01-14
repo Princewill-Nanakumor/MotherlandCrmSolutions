@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { SessionProvider } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
 import Navbar from "@/components/homepageComponents/Navabar";
 import SignInForm from "@/components/authComponents/SignInForm";
 import { useEffect, useState } from "react";
@@ -9,6 +9,7 @@ import { MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import { useRouter } from "next/navigation";
 
 // Animation variants
 const containerVariants = {
@@ -37,15 +38,30 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [hasShownExpiredToast, setHasShownExpiredToast] = useState(false);
 
+  // Small child component that can safely call `useSession()` because it's
+  // rendered inside the `SessionProvider` below.
+  function RedirectIfAuthenticated() {
+    const { status } = useSession();
+    const router = useRouter();
+
+    useEffect(() => {
+      if (status === "authenticated") {
+        router.replace("/dashboard");
+      }
+    }, [status, router]);
+
+    return null;
+  }
+
   // Check if session expired and show toast
   useEffect(() => {
     // Only check once on mount
     if (hasShownExpiredToast) return;
-    
+
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
       const expired = urlParams.get("expired");
-      
+
       if (expired === "true") {
         toast({
           title: "Session Expired",
@@ -53,7 +69,7 @@ export default function LoginPage() {
           variant: "destructive",
         });
         setHasShownExpiredToast(true);
-        
+
         // Remove the query parameter from URL without reloading
         const url = new URL(window.location.href);
         url.searchParams.delete("expired");
@@ -69,7 +85,7 @@ export default function LoginPage() {
     // IMMEDIATELY set dark background to prevent white flash
     body.style.setProperty("background-color", "#1a1a1a", "important");
     html.style.setProperty("background-color", "#1a1a1a", "important");
-    
+
     // Preload the image
     const link = document.createElement("link");
     link.rel = "preload";
@@ -78,34 +94,48 @@ export default function LoginPage() {
     document.head.appendChild(link);
 
     // Apply background image immediately (even if not loaded yet, browser will show it when ready)
-    body.style.setProperty("background-image", "url('/motherlandImage.jpg')", "important");
+    body.style.setProperty(
+      "background-image",
+      "url('/motherlandImage.jpg')",
+      "important"
+    );
     body.style.setProperty("background-size", "cover", "important");
     body.style.setProperty("background-position", "center", "important");
     body.style.setProperty("background-repeat", "no-repeat", "important");
     body.style.setProperty("background-attachment", "fixed", "important");
-    
+
     // Test if image exists and update when loaded
     const testImg = new Image();
     testImg.onload = () => {
       console.log("✅ Background image loaded successfully");
       // Ensure background is applied
-      body.style.setProperty("background-image", "url('/motherlandImage.jpg')", "important");
+      body.style.setProperty(
+        "background-image",
+        "url('/motherlandImage.jpg')",
+        "important"
+      );
       body.style.setProperty("background-color", "transparent", "important");
     };
     testImg.onerror = () => {
-      console.error("❌ Background image failed to load from /motherlandImage.jpg");
+      console.error(
+        "❌ Background image failed to load from /motherlandImage.jpg"
+      );
       // Keep dark background if image fails
       body.style.setProperty("background-color", "#1a1a1a", "important");
     };
     testImg.src = "/motherlandImage.jpg";
-    
+
     html.style.setProperty("background-image", "none", "important");
 
     // Make all direct children of body transparent
     const makeChildrenTransparent = () => {
       Array.from(body.children).forEach((child) => {
         if (child instanceof HTMLElement) {
-          child.style.setProperty("background-color", "transparent", "important");
+          child.style.setProperty(
+            "background-color",
+            "transparent",
+            "important"
+          );
         }
       });
     };
@@ -113,7 +143,11 @@ export default function LoginPage() {
 
     // Keep background image
     const observer = new MutationObserver(() => {
-      body.style.setProperty("background-image", "url('/motherlandImage.jpg')", "important");
+      body.style.setProperty(
+        "background-image",
+        "url('/motherlandImage.jpg')",
+        "important"
+      );
       body.style.setProperty("background-size", "cover", "important");
       body.style.setProperty("background-position", "center", "important");
       body.style.setProperty("background-repeat", "no-repeat", "important");
@@ -139,7 +173,9 @@ export default function LoginPage() {
       observer.disconnect();
       bodyObserver.disconnect();
       // Remove preload link
-      const preloadLink = document.querySelector('link[rel="preload"][href="/motherlandImage.jpg"]');
+      const preloadLink = document.querySelector(
+        'link[rel="preload"][href="/motherlandImage.jpg"]'
+      );
       if (preloadLink) {
         preloadLink.remove();
       }
@@ -227,8 +263,9 @@ export default function LoginPage() {
         `,
         }}
       />
-      
+
       <SessionProvider>
+        <RedirectIfAuthenticated />
         <div
           className="min-h-screen relative"
           style={{
@@ -283,4 +320,3 @@ export default function LoginPage() {
     </>
   );
 }
-

@@ -1,9 +1,20 @@
 import { FC, useState, useCallback } from "react";
-import { ChevronUp, ChevronDown, Edit2, Save, X, Hash, Copy, Check } from "lucide-react";
+import {
+  ChevronUp,
+  ChevronDown,
+  Edit2,
+  Save,
+  X,
+  Hash,
+  Copy,
+  Check,
+  Tag,
+} from "lucide-react";
 import { Lead } from "@/types/leads";
 import { useToast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { NameField } from "./NameField";
 import { EmailField } from "./EmailField";
 import { PhoneField } from "./PhoneField";
@@ -37,7 +48,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [copiedField, setCopiedField] = useState<
-    "leadId" | "name" | "email" | "phone" | "country" | null
+    "leadId" | "name" | "email" | "phone" | "country" | "source" | null
   >(null);
 
   // Edit form state
@@ -47,10 +58,14 @@ export const ContactSection: FC<ContactSectionProps> = ({
     email: lead?.email || "",
     phone: lead?.phone || "",
     country: lead?.country || "",
+    source: lead?.source || "",
   });
 
   const handleCopy = useCallback(
-    async (text: string, field: "leadId" | "name" | "email" | "phone" | "country") => {
+    async (
+      text: string,
+      field: "leadId" | "name" | "email" | "phone" | "country" | "source"
+    ) => {
       try {
         await navigator.clipboard.writeText(text);
         setCopiedField(field);
@@ -64,7 +79,9 @@ export const ContactSection: FC<ContactSectionProps> = ({
                   ? "Email"
                   : field === "phone"
                     ? "Phone number"
-                    : "Country"
+                    : field === "country"
+                      ? "Country"
+                      : "Source"
           } copied to clipboard`,
         });
         setTimeout(() => setCopiedField(null), 2000);
@@ -187,6 +204,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
         email: lead.email || "",
         phone: lead.phone || "",
         country: lead.country || "",
+        source: lead.source || "",
       });
       setIsEditing(true);
     }
@@ -201,6 +219,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
         email: lead.email || "",
         phone: lead.phone || "",
         country: lead.country || "",
+        source: lead.source || "",
       });
     }
   }, [lead]);
@@ -247,6 +266,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
         email: editedData.email.trim(),
         phone: editedData.phone.trim(),
         country: editedData.country.trim(),
+        source: editedData.source?.trim(),
       };
 
       const result = await onLeadUpdated(updatedLead);
@@ -361,6 +381,23 @@ export const ContactSection: FC<ContactSectionProps> = ({
                     setEditedData({ ...editedData, country: value })
                   }
                 />
+
+                <div className="flex items-start gap-3">
+                  <Tag className="w-5 h-5 mt-2 !text-gray-400 dark:!text-gray-500" />
+                  <div className="flex-1">
+                    <label className="block mb-1 text-sm !text-gray-500 dark:!text-gray-400">
+                      Source
+                    </label>
+                    <Input
+                      value={editedData.source}
+                      onChange={(e) =>
+                        setEditedData({ ...editedData, source: e.target.value })
+                      }
+                      placeholder="Enter source"
+                      className="w-full"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -396,7 +433,9 @@ export const ContactSection: FC<ContactSectionProps> = ({
                       Lead ID
                     </p>
                     <div className="flex items-center justify-between">
-                      <p className="font-medium !text-gray-900 dark:!text-white">{lead.leadId}</p>
+                      <p className="font-medium !text-gray-900 dark:!text-white">
+                        {lead.leadId}
+                      </p>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -456,6 +495,36 @@ export const ContactSection: FC<ContactSectionProps> = ({
                 onCopy={(text) => handleCopy(text, "country")}
                 copied={copiedField === "country"}
               />
+
+              {lead.source && (
+                <div className="flex items-center gap-3 !text-gray-700 dark:!text-gray-300">
+                  <Tag className="w-5 h-5 !text-gray-400 dark:!text-gray-500" />
+                  <div className="flex-1">
+                    <p className="text-sm !text-gray-500 dark:!text-gray-400">
+                      Source
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium !text-gray-900 dark:!text-white">
+                        {lead.source}
+                      </p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopy(lead.source || "", "source");
+                        }}
+                        className="ml-2 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                        title="Copy source"
+                      >
+                        {copiedField === "source" ? (
+                          <Check className="w-4 h-4 text-green-500 dark:text-green-400" />
+                        ) : (
+                          <Copy className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
