@@ -124,8 +124,8 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
 
   return (
     <>
-      <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 px-8 mt-8 pb-5">
-        <div className="flex items-center justify-between gap-4 rounded-xl border py-4 px-4">
+      <div className="sticky top-0 z-10 px-8 pb-5 mt-8 bg-white dark:bg-gray-800">
+        <div className="flex items-center justify-between gap-4 px-4 py-4 border rounded-xl">
           <div className="flex items-center gap-3 ">
             <ErrorBoundary
               fallback={
@@ -156,9 +156,9 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
                 <Button
                   onClick={() => setIsAddLeadDialogOpen(true)}
                   disabled={isLoading}
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                  className="text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                 >
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus className="w-4 h-4 mr-2" />
                   Add Lead
                 </Button>
               )}
