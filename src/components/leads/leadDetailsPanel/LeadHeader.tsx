@@ -1,6 +1,14 @@
 // src/components/leads/leadDetailsPanel/LeadHeader.tsx
-import { FC } from "react";
-import { X, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
+import { FC, useState, useCallback } from "react";
+import {
+  X,
+  ChevronLeft,
+  ChevronRight,
+  ArrowLeft,
+  Copy,
+  Check,
+} from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Lead } from "@/types/leads";
 
@@ -29,12 +37,32 @@ export const LeadHeader: FC<LeadHeaderProps> = ({
   };
   const capitalizedFirstName = capitalizeName(lead.firstName || "");
   const capitalizedLastName = capitalizeName(lead.lastName || "");
-  const fullName = `${capitalizedFirstName} ${capitalizedLastName}`;
+  // fullName removed — header now shows Lead ID instead
   const initials = `${capitalizedFirstName.charAt(0)}${capitalizedLastName.charAt(0)}`;
+  const { toast } = useToast();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(
+    async (text?: string | number) => {
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(String(text));
+        setCopied(true);
+        toast({ description: "Lead ID copied to clipboard" });
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        toast({
+          variant: "destructive",
+          description: "Failed to copy Lead ID",
+        });
+      }
+    },
+    [toast]
+  );
 
   return (
-    <div className="p-4 border-b-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 relative z-50">
-      <div className="flex justify-between items-start">
+    <div className="relative z-50 p-4 bg-white border-b-2 border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             {/* Only show navigation if not hidden */}
@@ -52,7 +80,7 @@ export const LeadHeader: FC<LeadHeaderProps> = ({
                     }`}
                   aria-label="Previous lead"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  <ChevronLeft className="w-5 h-5" />
                 </button>
 
                 <Avatar className="h-14 w-14">
@@ -73,7 +101,7 @@ export const LeadHeader: FC<LeadHeaderProps> = ({
                     }`}
                   aria-label="Next lead"
                 >
-                  <ChevronRight className="h-5 w-5" />
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               </>
             )}
@@ -84,10 +112,10 @@ export const LeadHeader: FC<LeadHeaderProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200 relative z-50 cursor-pointer"
+                  className="relative z-50 p-2 text-gray-600 transition-all duration-200 rounded-full cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
                   aria-label="Back to all leads"
                 >
-                  <ArrowLeft className="h-5 w-5" />
+                  <ArrowLeft className="w-5 h-5" />
                 </button>
                 <Avatar className="h-14 w-14">
                   <AvatarFallback className="text-lg font-medium bg-gray-100 dark:bg-gray-600 dark:text-gray-200">
@@ -98,9 +126,29 @@ export const LeadHeader: FC<LeadHeaderProps> = ({
             )}
           </div>
           <div>
-            <h2 className="text-2xl font-semibold !text-gray-900 dark:!text-white">
-              {fullName}
-            </h2>
+            <p className="text-sm !text-gray-500 dark:!text-gray-400">
+              Lead ID
+            </p>
+            <div className="flex items-center">
+              <p className="text-md font-semibold !text-gray-900 dark:!text-white">
+                {lead.leadId}
+              </p>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopy(lead.leadId);
+                }}
+                className="ml-1 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                title="Copy Lead ID"
+                aria-label="Copy Lead ID"
+              >
+                {copied ? (
+                  <Check className="w-4 h-4 text-green-500 dark:text-green-400" />
+                ) : (
+                  <Copy className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -109,7 +157,7 @@ export const LeadHeader: FC<LeadHeaderProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-200 relative z-50 cursor-pointer"
+            className="relative z-50 p-2 text-gray-500 transition-all duration-200 rounded-full cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
             aria-label="Close panel"
           >
             <X className="w-7 h-7" />

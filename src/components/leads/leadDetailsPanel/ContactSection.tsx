@@ -5,7 +5,6 @@ import {
   Edit2,
   Save,
   X,
-  Hash,
   Copy,
   Check,
   Tag,
@@ -425,35 +424,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
           ) : (
             // View Mode
             <>
-              {lead.leadId && (
-                <div className="flex items-center gap-3 !text-gray-700 dark:!text-gray-300">
-                  <Hash className="w-5 h-5 !text-gray-400 dark:!text-gray-500" />
-                  <div className="flex-1">
-                    <p className="text-sm !text-gray-500 dark:!text-gray-400">
-                      Lead ID
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium !text-gray-900 dark:!text-white">
-                        {lead.leadId}
-                      </p>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopy(lead.leadId!.toString(), "leadId");
-                        }}
-                        className="ml-2 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                        title="Copy Lead ID"
-                      >
-                        {copiedField === "leadId" ? (
-                          <Check className="w-4 h-4 text-green-500 dark:text-green-400" />
-                        ) : (
-                          <Copy className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Lead ID moved to header */}
               <NameField
                 firstName={lead.firstName}
                 lastName={lead.lastName}

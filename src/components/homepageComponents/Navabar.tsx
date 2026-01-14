@@ -96,7 +96,10 @@ export default function Navbar() {
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
       <div className="flex items-center justify-between mx-auto max-w-7xl">
-        <motion.div variants={logoVariants} transition={{ duration: 0.6, ease: "easeOut" }}>
+        <motion.div
+          variants={logoVariants}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
           <Link href="/">
             <div className="flex items-center space-x-1">
               <div className="relative w-20 h-20 overflow-hidden ">
@@ -140,7 +143,9 @@ export default function Navbar() {
                 >
                   <div
                     className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg h-10 ${
-                      isScrolled ? "text-gray-900 bg-indigo-50" : "!text-white bg-white/20"
+                      isScrolled
+                        ? "text-gray-900 bg-indigo-50"
+                        : "!text-white bg-white/20"
                     }`}
                   >
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -156,7 +161,9 @@ export default function Navbar() {
                   <Link
                     href="/dashboard"
                     className={`items-center hidden h-10 px-4 py-2 font-medium transition-colors duration-300 md:block ${
-                      isScrolled ? "text-gray-900 hover:text-indigo-600" : "text-white hover:text-indigo-200"
+                      isScrolled
+                        ? "text-gray-900 hover:text-indigo-600"
+                        : "text-white hover:text-indigo-200"
                     }`}
                   >
                     Dashboard
@@ -195,7 +202,9 @@ export default function Navbar() {
                     }`}
                   >
                     <LogIn className="w-4 h-4" />
-                    <span className={isScrolled ? "text-gray-900" : "!text-white"}>
+                    <span
+                      className={isScrolled ? "text-gray-900" : "!text-white"}
+                    >
                       Sign In
                     </span>
                   </Link>
