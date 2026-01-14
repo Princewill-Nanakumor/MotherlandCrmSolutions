@@ -116,22 +116,22 @@ export const ReminderCard: FC<ReminderCardProps> = ({
               <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
                 {reminder.type}
               </span>
-              <div className="flex items-center gap-1">
-                <CalendarIcon className="w-3 h-3" />
+              <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                <CalendarIcon className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                 {formatDate(reminder.reminderDate)}
               </div>
-              <div className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
+              <div className="flex items-center gap-1 text-gray-500 dark:text-white">
+                <Clock className="w-3 h-3 text-gray-500 dark:!text-white" />
                 {formatTime24Hour(reminder.reminderTime)}
               </div>
-              <div className="flex items-center gap-1">
-                <Users className="w-3 h-3" />
+              <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                <Users className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                 Created by {reminder.createdBy.firstName}{" "}
                 {reminder.createdBy.lastName}
               </div>
               {reminder.status === "SNOOZED" && (
                 <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
-                  <AlertCircle className="w-3 h-3" />
+                  <AlertCircle className="w-3 h-3 text-orange-600 dark:text-orange-400" />
                   Snoozed
                 </div>
               )}
@@ -144,7 +144,7 @@ export const ReminderCard: FC<ReminderCardProps> = ({
             size="sm"
             variant="ghost"
             onClick={() => onComplete(reminder._id)}
-            className="text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/30"
+            className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30"
             title="Mark as complete"
           >
             <Check className="w-4 h-4" />
@@ -153,7 +153,7 @@ export const ReminderCard: FC<ReminderCardProps> = ({
             size="sm"
             variant="ghost"
             onClick={() => onEdit(reminder)}
-            className="text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30"
             title="Edit reminder"
           >
             <Edit className="w-4 h-4" />
@@ -168,8 +168,8 @@ export const ReminderCard: FC<ReminderCardProps> = ({
             }}
             className={
               reminder.soundEnabled
-                ? "text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
-                : "text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                ? "text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
+                : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
             }
             title={reminder.soundEnabled ? "Mute sound" : "Enable sound"}
           >
@@ -184,28 +184,28 @@ export const ReminderCard: FC<ReminderCardProps> = ({
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
               >
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onSnooze(reminder._id, 15)}>
-                <Clock className="w-4 h-4 mr-2" />
+                <Clock className="w-4 h-4 mr-2 dark:!text-white" />
                 Snooze 15 min
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onSnooze(reminder._id, 60)}>
-                <Clock className="w-4 h-4 mr-2" />
+                <Clock className="w-4 h-4 mr-2 dark:!text-white" />
                 Snooze 1 hour
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onSnooze(reminder._id, 1440)}>
-                <Clock className="w-4 h-4 mr-2" />
+                <Clock className="w-4 h-4 mr-2 dark:!text-white" />
                 Snooze 1 day
               </DropdownMenuItem>
               {canDelete && (
                 <DropdownMenuItem
                   onClick={() => onDelete(reminder._id)}
-                  className="text-red-600"
+                  className="text-red-600 dark:text-red-400"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete

@@ -674,11 +674,20 @@ input[type="time"]::-webkit-datetime-edit-ampm-field {
 
 input[type="time"]::-webkit-calendar-picker-indicator {
   filter: none;
+  opacity: 1;
+  cursor: pointer;
 }
 
-/* Dark mode styling for time picker indicator */
-.dark input[type="time"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
+/* Dark mode styling for time picker indicator - multiple selectors for better coverage */
+.dark input[type="time"]::-webkit-calendar-picker-indicator,
+html.dark input[type="time"]::-webkit-calendar-picker-indicator,
+[data-slot="input"][type="time"]::-webkit-calendar-picker-indicator.dark,
+.dark [data-slot="input"][type="time"]::-webkit-calendar-picker-indicator,
+.dark .time-input-dark::-webkit-calendar-picker-indicator,
+html.dark .time-input-dark::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(2) !important;
+  opacity: 1 !important;
+  cursor: pointer;
 }
 
 /* Ensure input elements have proper text colors */

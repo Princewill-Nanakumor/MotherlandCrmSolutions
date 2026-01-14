@@ -48,7 +48,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
   isSaving,
 }) => {
   return (
-    <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+    <div className="p-4 mb-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700/50 dark:border-gray-600">
       <div className="flex items-center justify-between mb-3">
         <h4 className="font-semibold text-gray-800 dark:text-gray-200">
           {editingId ? "Edit Reminder" : "New Reminder"}
@@ -57,14 +57,14 @@ export const ReminderForm: FC<ReminderFormProps> = ({
           onClick={onCancel}
           variant="ghost"
           size="sm"
-          className="text-gray-500 hover:text-gray-700"
+          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
         >
           <XIcon className="w-4 h-4" />
         </Button>
       </div>
       <div className="space-y-3">
         <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">
+          <label className="block mb-1 text-sm font-medium text-gray-700 dark:!text-white">
             Title *
           </label>
           <Input
@@ -78,7 +78,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">
+          <label className="block mb-1 text-sm font-medium text-gray-700 dark:!text-white">
             Description
           </label>
           <Textarea
@@ -94,7 +94,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">
+            <label className="block mb-1 text-sm font-medium text-gray-700 dark:!text-white">
               Date *
             </label>
             <Input
@@ -108,7 +108,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">
+            <label className="block mb-1 text-sm font-medium text-gray-700 dark:!text-white">
               Time *
             </label>
             <Input
@@ -117,14 +117,14 @@ export const ReminderForm: FC<ReminderFormProps> = ({
               onChange={(e) =>
                 setFormData({ ...formData, reminderTime: e.target.value })
               }
-              className="w-full"
+              className="w-full time-input-dark"
               step="60"
             />
           </div>
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">
+          <label className="block mb-1 text-sm font-medium text-gray-700 dark:!text-white">
             Type
           </label>
           <Select
@@ -136,7 +136,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
               })
             }
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
@@ -148,12 +148,12 @@ export const ReminderForm: FC<ReminderFormProps> = ({
           </Select>
         </div>
 
-        <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700/30 rounded-lg">
+        <div className="flex items-center justify-between p-3 bg-gray-100 rounded-lg dark:bg-gray-700/30">
           <div className="flex items-center gap-2">
             {formData.soundEnabled ? (
               <Volume2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             ) : (
-              <VolumeX className="w-4 h-4 text-gray-400" />
+              <VolumeX className="w-4 h-4 text-gray-400 dark:text-gray-500" />
             )}
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Notification Sound
@@ -191,20 +191,24 @@ export const ReminderForm: FC<ReminderFormProps> = ({
               !formData.reminderTime ||
               !formData.type
             }
-            className="flex-1 bg-indigo-500 hover:bg-indigo-600"
+            className="flex-1 !text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200"
           >
             {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 text-white animate-spin" />
             ) : editingId ? (
-              <Save className="w-4 h-4" />
+              <Save className="w-4 h-4 text-white" />
             ) : (
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 text-white" />
             )}
-            <span className="ml-2">
+            <span className="ml-2 text-white">
               {editingId ? "Update Reminder" : "Create Reminder"}
             </span>
           </Button>
-          <Button onClick={onCancel} variant="outline" className="flex-1">
+          <Button
+            onClick={onCancel}
+            variant="outline"
+            className="flex-1 text-gray-700 border-gray-300 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
             Cancel
           </Button>
         </div>
