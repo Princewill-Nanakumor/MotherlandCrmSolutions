@@ -44,13 +44,24 @@ export async function GET(
       if (!db) throw new Error("Database connection not available");
 
       // Build query with multi-tenancy filter
-      const query: UserQuery = {
+      let query: {
+        _id: ObjectId;
+        $or?: Array<{ createdBy: ObjectId } | { _id: ObjectId }>;
+        adminId?: ObjectId;
+        createdBy?: ObjectId;
+      } = {
         _id: new ObjectId(userId),
       };
 
       if (session.user.role === "ADMIN") {
-        // Admin can only see users they created
-        query.createdBy = new ObjectId(session.user.id);
+        // Admin can see users they created AND themselves
+        query = {
+          _id: new ObjectId(userId),
+          $or: [
+            { createdBy: new ObjectId(session.user.id) }, // Users created by this admin
+            { _id: new ObjectId(session.user.id) }, // The admin themselves
+          ],
+        };
       } else if (session.user.role === "AGENT" && session.user.adminId) {
         // Agent can only see users from their admin
         query.adminId = new ObjectId(session.user.adminId);

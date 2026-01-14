@@ -4,7 +4,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash, KeyRound, Eye, ArrowUpDown, ArrowUp, ArrowDown, PhoneCall } from "lucide-react";
+import { Trash, KeyRound, Eye, ArrowUpDown, ArrowUp, ArrowDown, PhoneCall, Shield, User as UserIcon } from "lucide-react";
 
 export interface User {
   id: string;
@@ -106,14 +106,30 @@ export function useUserTableColumns({
       id: "role",
       accessorKey: "role",
       header: "Role",
-      cell: ({ row }) => (
-        <Badge
-          variant={row.original.role === "ADMIN" ? "default" : "outline"}
-          className="dark:border-gray-600 dark:!text-white"
-        >
-          {row.original.role}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const isAdmin = row.original.role === "ADMIN";
+        return (
+          <div className="flex items-center gap-2">
+            <Badge
+              variant={isAdmin ? "default" : "outline"}
+              className={`dark:border-gray-600 dark:!text-white ${
+                isAdmin 
+                  ? "bg-indigo-600 text-white border-indigo-600" 
+                  : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                {isAdmin ? (
+                  <Shield className="h-3 w-3" />
+                ) : (
+                  <UserIcon className="h-3 w-3" />
+                )}
+                <span>{row.original.role}</span>
+              </div>
+            </Badge>
+          </div>
+        );
+      },
       enableSorting: true,
     },
     {
@@ -202,62 +218,69 @@ export function useUserTableColumns({
     columns.push({
       id: "actions",
       header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex items-center space-x-2">
-          {onViewDetails && (
+      cell: ({ row }) => {
+        const isAdmin = row.original.role === "ADMIN";
+        return (
+          <div className="flex items-center space-x-2">
+            {/* View Details - Always show */}
             <Button
               variant="outline"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                onViewDetails(row.original);
+                onViewDetails?.(row.original);
               }}
               className="hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white"
               title="View Details"
             >
               <Eye className="h-4 w-4" />
             </Button>
-          )}
-          {onViewCallLogs && (
+            {/* View Call Logs - Always show */}
             <Button
               variant="outline"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                onViewCallLogs(row.original);
+                onViewCallLogs?.(row.original);
               }}
               className="hover:bg-blue-50 dark:hover:bg-blue-900/20 dark:border-gray-600 dark:text-white text-blue-600 dark:text-blue-400"
               title="View Call Logs"
             >
               <PhoneCall className="h-4 w-4" />
             </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onResetPassword(row.original.id);
-            }}
-            className="hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white"
-            title="Reset Password"
-          >
-            <KeyRound className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteUser(row.original.id);
-            }}
-            className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-gray-600"
-            title="Delete User"
-          >
-            <Trash className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
+            {/* Reset Password - Hide for admin users */}
+            {!isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onResetPassword(row.original.id);
+                }}
+                className="hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white"
+                title="Reset Password"
+              >
+                <KeyRound className="h-4 w-4" />
+              </Button>
+            )}
+            {/* Delete User - Hide for admin users */}
+            {!isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteUser(row.original.id);
+                }}
+                className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-gray-600"
+                title="Delete User"
+              >
+                <Trash className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        );
+      },
       enableSorting: false,
     });
   }

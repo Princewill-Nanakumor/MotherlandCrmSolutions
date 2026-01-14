@@ -63,6 +63,8 @@ interface LeadDocument {
 interface UserQuery {
   adminId?: mongoose.Types.ObjectId;
   role?: { $ne: string };
+  $or?: Array<{ adminId: mongoose.Types.ObjectId } | { _id: mongoose.Types.ObjectId }>;
+  _id?: mongoose.Types.ObjectId;
 }
 
 // Usage limits for trial users
@@ -234,11 +236,16 @@ export async function GET() {
       const db = mongoose.connection.db;
       if (!db) throw new Error("Database connection not available");
 
-      const query: UserQuery = {};
+      let query: UserQuery = {};
 
       if (session.user.role === "ADMIN") {
-        // Admin sees only users they created (AGENT users with their adminId)
-        query.adminId = new mongoose.Types.ObjectId(session.user.id);
+        // Admin sees users they created (AGENT users with their adminId) AND themselves
+        query = {
+          $or: [
+            { adminId: new mongoose.Types.ObjectId(session.user.id) }, // Users created by this admin
+            { _id: new mongoose.Types.ObjectId(session.user.id) }, // The admin themselves
+          ],
+        };
       } else if (session.user.role === "AGENT") {
         // Agents don't see other users
         return [];
@@ -615,6 +622,14 @@ export async function DELETE(request: Request) {
       return NextResponse.json(
         { message: "User ID is required" },
         { status: 400 }
+      );
+    }
+
+    // Prevent admin from deleting themselves
+    if (id === session.user.id) {
+      return NextResponse.json(
+        { message: "You cannot delete your own account" },
+        { status: 403 }
       );
     }
 
