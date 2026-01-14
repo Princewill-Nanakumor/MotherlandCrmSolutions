@@ -125,28 +125,10 @@ export default withAuth(
 
 export const config = {
   matcher: [
+    // Only protect truly private routes server-side. Let public/static routes
+    // and general navigation be handled client-side to avoid redirect flashes.
     "/dashboard/:path*",
     "/admin/:path*",
     "/api/protected/:path*",
-    "/login",
-    "/signin",
-    "/signup",
-    "/forgot-password",
-    "/reset-password/:path*",
-    "/verify-email/:path*",
-    "/dashboard/subscription",
-    "/billing",
-    "/",
-    "/about",
-    "/contact",
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - *.jpg, *.jpeg, *.png, *.gif, *.svg, *.webp, *.ico (image files)
-     */
-    "/((?!api|_next/static|_next/image|favicon\\.ico|.*\\.(?:jpg|jpeg|png|gif|svg|webp|ico)$).*)",
   ],
 };

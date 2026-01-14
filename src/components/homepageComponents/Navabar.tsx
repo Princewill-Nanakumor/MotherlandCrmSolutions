@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
+import { Loader2, LogIn } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { LogIn } from "lucide-react";
 import { motion } from "framer-motion";
 
 function Skeleton({ className = "" }: { className?: string }) {
@@ -17,53 +17,69 @@ export default function Navbar() {
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      // Get hero section height (typically viewport height)
       const heroHeight = window.innerHeight;
-      // Check if scrolled past 99% of hero section
       setIsScrolled(window.scrollY > heroHeight * 0.95);
     };
 
     window.addEventListener("scroll", handleScroll);
-    // Check initial scroll position
     handleScroll();
-
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    try {
+      const v = sessionStorage.getItem("auth:navigating");
+      setIsNavigating(v === "1");
+    } catch {}
+
+    const onNav = (e: Event) => {
+      try {
+        const d = (e as CustomEvent).detail;
+        if (typeof d === "boolean") setIsNavigating(d);
+        else setIsNavigating(sessionStorage.getItem("auth:navigating") === "1");
+      } catch {
+        setIsNavigating(sessionStorage.getItem("auth:navigating") === "1");
+      }
+    };
+
+    window.addEventListener("auth:navigating", onNav as EventListener);
+    window.addEventListener("storage", onNav as EventListener);
+    return () => {
+      window.removeEventListener("auth:navigating", onNav as EventListener);
+      window.removeEventListener("storage", onNav as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      try {
+        sessionStorage.removeItem("auth:navigating");
+      } catch {}
+      setIsNavigating(false);
+    }
+  }, [status]);
+
   const logoVariants = {
     hidden: { opacity: 0, x: -50 },
-    visible: {
-      opacity: 1,
-      x: 0,
-    },
+    visible: { opacity: 1, x: 0 },
   };
 
   const navVariants = {
     hidden: { opacity: 0, y: -20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-    },
+    visible: { opacity: 1, y: 0 },
   };
 
   const buttonVariants = {
     hidden: { opacity: 0, scale: 0.8 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-    },
-    hover: {
-      scale: 1.05,
-    },
-    tap: {
-      scale: 0.95,
-    },
+    visible: { opacity: 1, scale: 1 },
+    hover: { scale: 1.05 },
+    tap: { scale: 0.95 },
   };
 
-  // Consistent button classes
   const buttonBaseClasses =
     "px-4 py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-200 h-10 flex items-center justify-center";
 
@@ -80,10 +96,7 @@ export default function Navbar() {
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
       <div className="flex items-center justify-between mx-auto max-w-7xl">
-        <motion.div
-          variants={logoVariants}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        >
+        <motion.div variants={logoVariants} transition={{ duration: 0.6, ease: "easeOut" }}>
           <Link href="/">
             <div className="flex items-center space-x-1">
               <div className="relative w-20 h-20 overflow-hidden ">
@@ -118,23 +131,39 @@ export default function Navbar() {
             </>
           ) : session ? (
             <>
-              <motion.div
-                variants={buttonVariants}
-                initial="visible"
-                animate="visible"
-                transition={{ duration: 0.4, ease: "easeOut" }}
-              >
-                <Link
-                  href="/dashboard"
-                  className={`items-center hidden h-10 px-4 py-2 font-medium transition-colors duration-300 md:block ${
-                    isScrolled
-                      ? "text-gray-900 hover:text-indigo-600"
-                      : "text-white hover:text-indigo-200"
-                  }`}
+              {isNavigating ? (
+                <motion.div
+                  variants={buttonVariants}
+                  initial="visible"
+                  animate="visible"
+                  transition={{ duration: 0.4, ease: "easeOut" }}
                 >
-                  Dashboard
-                </Link>
-              </motion.div>
+                  <div
+                    className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg h-10 ${
+                      isScrolled ? "text-gray-900 bg-indigo-50" : "!text-white bg-white/20"
+                    }`}
+                  >
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  variants={buttonVariants}
+                  initial="visible"
+                  animate="visible"
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                >
+                  <Link
+                    href="/dashboard"
+                    className={`items-center hidden h-10 px-4 py-2 font-medium transition-colors duration-300 md:block ${
+                      isScrolled ? "text-gray-900 hover:text-indigo-600" : "text-white hover:text-indigo-200"
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+                </motion.div>
+              )}
+
               <motion.button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className={`${buttonBaseClasses} bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700`}

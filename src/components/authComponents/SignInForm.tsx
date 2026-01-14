@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn, useSession } from "next-auth/react";
@@ -14,7 +14,7 @@ import { FormSuccess } from "./FormSucess";
 type LoginInput = z.infer<typeof LoginSchema>;
 
 export default function SignInForm() {
-  const { data: session, update } = useSession();
+  const { update } = useSession();
   const router = useRouter();
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
@@ -31,11 +31,7 @@ export default function SignInForm() {
 
   const isFormDisabled = loading || !!formSuccess;
 
-  useEffect(() => {
-    if (session) {
-      router.push("/dashboard");
-    }
-  }, [session, router]);
+  // Do not auto-redirect on session changes here; sign-in flow will handle navigation
 
   const onSubmit: SubmitHandler<LoginInput> = async (data) => {
     setFormError("");
@@ -66,12 +62,43 @@ export default function SignInForm() {
           // If update fails, continue with redirect anyway
         }
 
-        // Wait briefly for the cookie to be set, then do a hard redirect
-        // This ensures the cookie is available when middleware checks
-        // Using window.location.href ensures a full page reload with cookies
-        setTimeout(() => {
+        // Indicate we're navigating so UI (Navbar) can show a loading spinner.
+        try {
+          sessionStorage.setItem("auth:navigating", "1");
+          window.dispatchEvent(
+            new CustomEvent("auth:navigating", { detail: true })
+          );
+        } catch {}
+
+        // Wait for the server-side session (cookie) to be available before navigating.
+        // Poll `/api/auth/session` (NextAuth) for up to 5s; if not available, fall back
+        // to a full reload so the cookie is sent to the server.
+        const waitForServerSession = async (timeout = 5000) => {
+          const start = Date.now();
+          while (Date.now() - start < timeout) {
+            try {
+              const res = await fetch("/api/auth/session", {
+                credentials: "include",
+              });
+              if (res.ok) {
+                const json = await res.json();
+                if (json && json.user) return true;
+              }
+            } catch {
+              // ignore and retry
+            }
+            await new Promise((r) => setTimeout(r, 250));
+          }
+          return false;
+        };
+
+        const serverReady = await waitForServerSession(5000);
+        if (serverReady) {
+          router.replace("/dashboard");
+        } else {
+          // Fallback: force full reload so cookies are included on the request
           window.location.href = "/dashboard";
-        }, 500);
+        }
       }
     } catch (error: unknown) {
       setFormError(
@@ -85,7 +112,7 @@ export default function SignInForm() {
 
   return (
     <div
-      className="p-4 rounded-xl border shadow-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8"
+      className="p-4 border shadow-xl rounded-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8"
       style={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
     >
       <div className="mb-6 text-center sm:mb-8">
@@ -111,7 +138,7 @@ export default function SignInForm() {
           {/* Email Field */}
           <div>
             <div className="relative">
-              <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <Mail className="w-5 h-5 text-gray-400" />
               </div>
               <input
@@ -140,7 +167,7 @@ export default function SignInForm() {
           {/* Password Field */}
           <div>
             <div className="relative">
-              <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <Lock className="w-5 h-5 text-gray-400" />
               </div>
               <input
@@ -167,7 +194,7 @@ export default function SignInForm() {
           </div>
         </div>
 
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <label className="flex items-center space-x-2">
             <input
               {...register("remember")}
