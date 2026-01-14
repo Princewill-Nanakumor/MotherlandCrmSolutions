@@ -94,7 +94,7 @@ const LeadDetailsPageContent = ({
             hideClose={true}
           />
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            <LeadStatus lead={currentLead} onLeadUpdated={handleLeadUpdated} />
+            <LeadStatus lead={currentLead} />
             <ContactSection
               lead={currentLead}
               isExpanded={expandedSections.contact}

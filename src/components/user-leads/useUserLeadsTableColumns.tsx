@@ -87,8 +87,8 @@ export const useUserLeadsTableColumns = ({
         cell: ({ row }) => {
           const lead = row.original;
           const detailUrl = currentParams
-            ? `/dashboard/leads/${lead._id}?${currentParams}`
-            : `/dashboard/leads/${lead._id}`;
+            ? `/dashboard/leads/${lead.leadId}?${currentParams}`
+            : `/dashboard/leads/${lead.leadId}`;
 
           return (
             <div className="flex items-center justify-center">
@@ -299,6 +299,11 @@ export const useUserLeadsTableColumns = ({
           );
         },
         enableSorting: true,
+        sortingFn: (rowA, rowB) => {
+          const statusA = getStatus(rowA.original.status);
+          const statusB = getStatus(rowB.original.status);
+          return statusA.name.localeCompare(statusB.name);
+        },
       },
       {
         id: "source",

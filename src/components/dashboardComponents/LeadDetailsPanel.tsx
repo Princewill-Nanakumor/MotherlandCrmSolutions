@@ -267,7 +267,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
   return (
     <div
-      className="flex fixed right-0 z-50 bg-white border-l-2 dark:bg-gray-800"
+      className="fixed right-0 z-50 flex bg-white border-l-2 dark:bg-gray-800"
       style={{
         width: "80vw",
         maxWidth: "1200px",
@@ -276,7 +276,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         height: "calc(100vh - 160px)",
       }}
     >
-      <div className="flex flex-col w-2/5 bg-gray-50 border-r border-gray-200 dark:border-gray-700 dark:bg-gray-800/50">
+      <div className="flex flex-col w-2/5 border-r border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
         <LeadHeader
           lead={currentLead}
           onClose={onClose}
@@ -284,8 +284,8 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           hasPrevious={hasPrevious}
           hasNext={hasNext}
         />
-        <div className="overflow-y-auto flex-1 p-6 space-y-6">
-          <LeadStatus lead={currentLead} onLeadUpdated={handleLeadUpdated} />
+        <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+          <LeadStatus lead={currentLead} />
           <ContactSection
             lead={currentLead}
             isExpanded={expandedSections.contact}

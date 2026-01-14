@@ -12,10 +12,10 @@ import {
 } from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
 import { useStatuses } from "@/context/StatusContext";
+import { useSession } from "next-auth/react";
 
 interface LeadStatusProps {
   lead: Lead;
-  onLeadUpdated?: (updatedLead: Lead) => Promise<boolean>;
 }
 
 type LeadsData =
@@ -41,11 +41,12 @@ function hexWithAlpha(hex: string, alpha: string) {
   return hex + alpha;
 }
 
-const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
+const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const queryClient = useQueryClient();
   const { statuses, isLoading: isLoadingStatuses } = useStatuses();
+  const { data: session } = useSession();
   const darkAlpha = "B3";
   const [isDark, setIsDark] = useState(false);
 
@@ -92,45 +93,54 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
 
   const handleStatusChange = useCallback(
     async (newStatusId: string) => {
-      if (!lead._id || lead.status === newStatusId) {
+      if (!lead._id || lead.status === newStatusId || isUpdating) {
         return;
       }
 
       const previousStatus = lead.status;
       setIsUpdating(true);
 
-      queryClient.setQueryData(["leads"], (oldData: LeadsData) => {
-        if (!oldData) return oldData;
+      // Update multiple cache keys to ensure consistency
+      const cacheKeysToUpdate = [
+        ["leads"], // Generic leads cache
+        ["assignedLeads", "list", session?.user?.id || ""], // Assigned leads cache
+      ];
 
-        if (Array.isArray(oldData)) {
-          return oldData.map((l: Lead) =>
-            l._id === lead._id ? { ...l, status: newStatusId } : l
-          );
-        } else if (oldData && typeof oldData === "object") {
-          if ("data" in oldData && Array.isArray(oldData.data)) {
-            return {
-              ...oldData,
-              data: oldData.data.map(
-                (l: Lead) =>
-                  l._id === lead._id ? { ...l, status: newStatusId } : l // ✅ FIXED
-              ),
-            };
-          } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
-            return {
-              ...oldData,
-              leads: oldData.leads.map(
-                (l: Lead) =>
-                  l._id === lead._id ? { ...l, status: newStatusId } : l // ✅ FIXED
-              ),
-            };
+      // Optimistic update for all relevant cache keys
+      cacheKeysToUpdate.forEach((queryKey) => {
+        queryClient.setQueryData(queryKey, (oldData: LeadsData) => {
+          if (!oldData) return oldData;
+
+          if (Array.isArray(oldData)) {
+            return oldData.map((l: Lead) =>
+              l._id === lead._id ? { ...l, status: newStatusId } : l
+            );
+          } else if (oldData && typeof oldData === "object") {
+            if ("data" in oldData && Array.isArray(oldData.data)) {
+              return {
+                ...oldData,
+                data: oldData.data.map(
+                  (l: Lead) =>
+                    l._id === lead._id ? { ...l, status: newStatusId } : l // ✅ FIXED
+                ),
+              };
+            } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
+              return {
+                ...oldData,
+                leads: oldData.leads.map(
+                  (l: Lead) =>
+                    l._id === lead._id ? { ...l, status: newStatusId } : l // ✅ FIXED
+                ),
+              };
+            }
           }
-        }
-        return oldData;
+          return oldData;
+        });
       });
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased to 10 seconds
 
         const response = await fetch(`/api/leads/${lead._id}/status`, {
           method: "PATCH",
@@ -161,39 +171,35 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
           });
         }
 
-        // ✅ FIXED: Move cache update inside try block
-        queryClient.setQueryData(["leads"], (oldData: LeadsData) => {
-          if (!oldData) return oldData;
+        // ✅ FIXED: Update all cache keys with the full updated lead data
+        cacheKeysToUpdate.forEach((queryKey) => {
+          queryClient.setQueryData(queryKey, (oldData: LeadsData) => {
+            if (!oldData) return oldData;
 
-          if (Array.isArray(oldData)) {
-            return oldData.map((l: Lead) =>
-              l._id === lead._id ? updatedLead : l
-            );
-          } else if (oldData && typeof oldData === "object") {
-            if ("data" in oldData && Array.isArray(oldData.data)) {
-              return {
-                ...oldData,
-                data: oldData.data.map((l: Lead) =>
-                  l._id === lead._id ? updatedLead : l
-                ),
-              };
-            } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
-              return {
-                ...oldData,
-                leads: oldData.leads.map((l: Lead) =>
-                  l._id === lead._id ? updatedLead : l
-                ),
-              };
+            if (Array.isArray(oldData)) {
+              return oldData.map((l: Lead) =>
+                l._id === lead._id ? updatedLead : l
+              );
+            } else if (oldData && typeof oldData === "object") {
+              if ("data" in oldData && Array.isArray(oldData.data)) {
+                return {
+                  ...oldData,
+                  data: oldData.data.map((l: Lead) =>
+                    l._id === lead._id ? updatedLead : l
+                  ),
+                };
+              } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
+                return {
+                  ...oldData,
+                  leads: oldData.leads.map((l: Lead) =>
+                    l._id === lead._id ? updatedLead : l
+                  ),
+                };
+              }
             }
-          }
-          return oldData;
-        });
-
-        if (onLeadUpdated) {
-          onLeadUpdated(updatedLead).catch((error) => {
-            console.error("Error in onLeadUpdated:", error);
+            return oldData;
           });
-        }
+        });
 
         // ⚡ Only invalidate activities query, not leads query (to preserve pagination)
         // The leads query data is already updated optimistically above
@@ -218,47 +224,65 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
           error: error instanceof Error ? error.message : "Unknown error",
         });
 
-        // ✅ FIXED: Use previousStatus for rollback (this was correct)
-        queryClient.setQueryData(["leads"], (oldData: LeadsData) => {
-          if (!oldData) return oldData;
+        // ✅ FIXED: Rollback all cache keys on error
+        cacheKeysToUpdate.forEach((queryKey) => {
+          queryClient.setQueryData(queryKey, (oldData: LeadsData) => {
+            if (!oldData) return oldData;
 
-          if (Array.isArray(oldData)) {
-            return oldData.map((l: Lead) =>
-              l._id === lead._id ? { ...l, status: previousStatus } : l
-            );
-          } else if (oldData && typeof oldData === "object") {
-            if ("data" in oldData && Array.isArray(oldData.data)) {
-              return {
-                ...oldData,
-                data: oldData.data.map((l: Lead) =>
-                  l._id === lead._id ? { ...l, status: previousStatus } : l
-                ),
-              };
-            } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
-              return {
-                ...oldData,
-                leads: oldData.leads.map((l: Lead) =>
-                  l._id === lead._id ? { ...l, status: previousStatus } : l
-                ),
-              };
+            if (Array.isArray(oldData)) {
+              return oldData.map((l: Lead) =>
+                l._id === lead._id ? { ...l, status: previousStatus } : l
+              );
+            } else if (oldData && typeof oldData === "object") {
+              if ("data" in oldData && Array.isArray(oldData.data)) {
+                return {
+                  ...oldData,
+                  data: oldData.data.map((l: Lead) =>
+                    l._id === lead._id ? { ...l, status: previousStatus } : l
+                  ),
+                };
+              } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
+                return {
+                  ...oldData,
+                  leads: oldData.leads.map((l: Lead) =>
+                    l._id === lead._id ? { ...l, status: previousStatus } : l
+                  ),
+                };
+              }
             }
-          }
-          return oldData;
+            return oldData;
+          });
         });
 
         const errorMessage =
           error instanceof Error ? error.message : "Failed to update status";
 
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        // Check if this was an abort error (timeout)
+        const isAbortError =
+          error instanceof Error &&
+          (error.name === "AbortError" ||
+            error.message.includes("aborted") ||
+            error.message.includes("SIGNAL ABORTED"));
+
+        if (isAbortError) {
+          toast({
+            title: "Request timed out",
+            description:
+              "The status update is taking longer than expected. Please check if the change was applied and try again if needed.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        }
       } finally {
         setIsUpdating(false);
       }
     },
-    [lead._id, lead.status, onLeadUpdated, queryClient, toast]
+    [lead._id, lead.status, queryClient, toast, isUpdating, session?.user?.id]
   );
 
   const currentStatusColor = currentStatusObj?.color || "#3b82f6";

@@ -99,6 +99,14 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    // Check if status is actually changing
+    if (currentLead.status === newStatus) {
+      return NextResponse.json(
+        { error: "Status is already set to this value" },
+        { status: 400 }
+      );
+    }
+
     const previousStatus = currentLead.status;
 
     // Get status names for activity log
@@ -203,35 +211,34 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    // Create activity log with both old and new metadata structure for compatibility
-    Promise.resolve().then(async () => {
-      try {
-        const activityDetails = `Status changed from ${previousStatusName} to ${newStatusName}`;
+    // Create activity log synchronously to avoid race conditions
+    try {
+      const activityDetails = `Status changed from ${previousStatusName} to ${newStatusName}`;
 
-        await Activity.create({
-          type: "STATUS_CHANGE",
-          userId: new mongoose.Types.ObjectId(sessionUser.id),
-          details: activityDetails,
-          leadId: updatedLead._id,
-          adminId: getCorrectAdminId(session),
-          timestamp: new Date(),
-          metadata: {
-            // Enhanced metadata with names
-            previousStatus: previousStatus,
-            previousStatusName: previousStatusName,
-            newStatusId: newStatus,
-            newStatusName: newStatusName,
+      await Activity.create({
+        type: "STATUS_CHANGE",
+        userId: new mongoose.Types.ObjectId(sessionUser.id),
+        details: activityDetails,
+        leadId: updatedLead._id,
+        adminId: getCorrectAdminId(session),
+        timestamp: new Date(),
+        metadata: {
+          // Enhanced metadata with names
+          previousStatus: previousStatus,
+          previousStatusName: previousStatusName,
+          newStatusId: newStatus,
+          newStatusName: newStatusName,
 
-            // Backward compatible metadata structure for activities route
-            oldStatusId: previousStatus,
-            oldStatus: previousStatusName,
-            newStatus: newStatusName,
-          },
-        });
-      } catch (err) {
-        console.error("Error creating activity log:", err);
-      }
-    });
+          // Backward compatible metadata structure for activities route
+          oldStatusId: previousStatus,
+          oldStatus: previousStatusName,
+          newStatus: newStatusName,
+        },
+      });
+    } catch (activityError) {
+      console.error("Error creating activity log:", activityError);
+      // Don't fail the entire request if activity logging fails
+    }
 
     const responseData = {
       _id: updatedLead._id.toString(),
