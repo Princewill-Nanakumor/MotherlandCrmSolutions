@@ -127,10 +127,19 @@ const normalizeSource = (source: string): LeadSource | string => {
 
 // Fetch function
 const fetchAssignedLeads = async (): Promise<Lead[]> => {
+  const start =
+    typeof performance !== "undefined" ? performance.now() : Date.now();
   const res = await fetch("/api/leads/assigned", {
     headers: { "Content-Type": "application/json" },
     cache: "no-store",
   });
+  const end =
+    typeof performance !== "undefined" ? performance.now() : Date.now();
+  try {
+    console.log(
+      `client:fetchAssignedLeads /api/leads/assigned took ${Math.round(end - start)}ms`
+    );
+  } catch {}
 
   if (!res.ok) {
     throw new Error("Failed to fetch assigned leads");
@@ -237,7 +246,7 @@ export const useAssignedLeads = () => {
     queryFn: fetchAssignedLeads,
     enabled: !!session?.user?.id, // Only fetch when user is authenticated
     staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    cacheTime: 10 * 60 * 1000, // 10 minutes (formerly gcTime)
     refetchOnWindowFocus: false, // Prevent refetch on window focus
     refetchOnMount: false,
     refetchOnReconnect: true,

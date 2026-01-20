@@ -59,16 +59,17 @@ export const useCurrentUserPermission = () => {
     queryFn: fetchCurrentUser,
     enabled: status === "authenticated" && !!session?.user,
     staleTime: 30 * 1000, // 30 seconds - refresh more frequently
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
     refetchOnWindowFocus: true, // Refetch when user returns to window
     refetchOnMount: true,
   });
 
   // Admins should always be able to view phone numbers and emails
-  const canViewPhoneNumbers = 
-    currentUser?.role === "ADMIN" || (currentUser?.canViewPhoneNumbers ?? false);
-  const canViewEmails = 
+  const canViewPhoneNumbers =
+    currentUser?.role === "ADMIN" ||
+    (currentUser?.canViewPhoneNumbers ?? false);
+  const canViewEmails =
     currentUser?.role === "ADMIN" || (currentUser?.canViewEmails ?? false);
 
   return {
@@ -79,4 +80,3 @@ export const useCurrentUserPermission = () => {
     currentUser,
   };
 };
-

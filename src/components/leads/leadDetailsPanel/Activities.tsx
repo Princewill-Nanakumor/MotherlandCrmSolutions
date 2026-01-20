@@ -41,7 +41,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
       return response.json();
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    cacheTime: 30 * 60 * 1000, // 30 minutes
   });
 
   // Fetch activities
@@ -69,7 +69,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
     },
     enabled: !!leadId,
     staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
       console.error("Activities fetch error:", error);
       return failureCount < 2;

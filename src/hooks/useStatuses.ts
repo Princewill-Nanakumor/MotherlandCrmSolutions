@@ -55,7 +55,7 @@ export const useStatuses = () => {
     queryKey: statusesKeys.all,
     queryFn: fetchStatuses,
     staleTime: 10 * 60 * 1000, // 10 minutes - statuses don't change often
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    cacheTime: 30 * 60 * 1000, // 30 minutes
     refetchOnMount: false, // Don't refetch if we have cached data
     refetchOnWindowFocus: false,
     retry: 2,

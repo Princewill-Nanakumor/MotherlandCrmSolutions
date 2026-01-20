@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useSession, SessionProvider, signOut } from "next-auth/react";
 import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createQueryClient } from "@/lib/queryClient";
 import { StatusProvider } from "@/context/StatusContext";
 import { useRouter, usePathname } from "next/navigation";
 import Sidebar from "@/components/dashboardComponents/Sidebar";
@@ -23,10 +24,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const { status, data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-  
+
   // Track when session was created to calculate expiration
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
-  
+
   // Set session start time when session becomes authenticated
   useEffect(() => {
     if (status === "authenticated" && session && !sessionStartTime) {
@@ -36,30 +37,33 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       setSessionStartTime(null);
     }
   }, [status, session, sessionStartTime]);
-  
+
   // Check if session has expired based on time elapsed (24 hours)
   useEffect(() => {
     if (sessionStartTime && status === "authenticated") {
       const maxAge = 24 * 60 * 60; // 24 hours in seconds
-      const checkExpiration = setInterval(() => {
-        const now = new Date();
-        const elapsed = (now.getTime() - sessionStartTime.getTime()) / 1000; // seconds
-        const timeRemaining = maxAge - elapsed;
-        
-        if (timeRemaining <= 0) {
-          // Session has expired - use NextAuth signOut to properly invalidate
-          signOut({ 
-            callbackUrl: "/login?expired=true",
-            redirect: true
-          }).catch(() => {
-            // Fallback: hard redirect if signOut fails
-            window.location.href = "/login?expired=true";
-          });
-          
-          clearInterval(checkExpiration);
-        }
-      }, 5 * 60 * 1000); // Check every 5 minutes
-      
+      const checkExpiration = setInterval(
+        () => {
+          const now = new Date();
+          const elapsed = (now.getTime() - sessionStartTime.getTime()) / 1000; // seconds
+          const timeRemaining = maxAge - elapsed;
+
+          if (timeRemaining <= 0) {
+            // Session has expired - use NextAuth signOut to properly invalidate
+            signOut({
+              callbackUrl: "/login?expired=true",
+              redirect: true,
+            }).catch(() => {
+              // Fallback: hard redirect if signOut fails
+              window.location.href = "/login?expired=true";
+            });
+
+            clearInterval(checkExpiration);
+          }
+        },
+        5 * 60 * 1000
+      ); // Check every 5 minutes
+
       return () => clearInterval(checkExpiration);
     }
   }, [sessionStartTime, status]);
@@ -76,8 +80,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   // Check if we're on any leads page (admin or user)
   // Use exact path matching to avoid false positives
-  const isAdminLeadsPage = pathname === "/dashboard/all-leads" || pathname?.startsWith("/dashboard/all-leads/");
-  const isUserLeadsPage = pathname === "/dashboard/leads" || pathname?.startsWith("/dashboard/leads/");
+  const isAdminLeadsPage =
+    pathname === "/dashboard/all-leads" ||
+    pathname?.startsWith("/dashboard/all-leads/");
+  const isUserLeadsPage =
+    pathname === "/dashboard/leads" ||
+    pathname?.startsWith("/dashboard/leads/");
 
   const isAdmin = session?.user?.role === "ADMIN";
 
@@ -93,23 +101,29 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   // Page title mapping
   const getPageTitle = (path: string | null): string | null => {
     if (!path) return "Motherland CRM - Dashboard";
-    
+
     // Don't set title for lead detail pages (they handle their own titles)
-    if (path.startsWith("/dashboard/all-leads/") && path !== "/dashboard/all-leads") {
+    if (
+      path.startsWith("/dashboard/all-leads/") &&
+      path !== "/dashboard/all-leads"
+    ) {
       return null; // Let the page handle it
     }
     if (path.startsWith("/dashboard/leads/") && path !== "/dashboard/leads") {
       return null; // Let the page handle it
     }
-    
+
     // Don't set title for other dynamic routes (they should handle their own)
     if (path.startsWith("/dashboard/payment-details/")) {
       return null; // Let the page handle it
     }
-    if (path.startsWith("/dashboard/admin-management/") && path !== "/dashboard/admin-management") {
+    if (
+      path.startsWith("/dashboard/admin-management/") &&
+      path !== "/dashboard/admin-management"
+    ) {
       return null; // Let the page handle it
     }
-    
+
     const titleMap: Record<string, string> = {
       "/dashboard": "Motherland CRM - Dashboard",
       "/dashboard/all-leads": "Motherland CRM - All Leads",
@@ -133,23 +147,25 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   // Only set if it's not a dynamic route (those handle their own titles)
   useEffect(() => {
     if (status === "loading") return;
-    
+
     const title = getPageTitle(pathname);
     if (title) {
       // Only set title if we're not on a leads page (to avoid overwriting panel titles)
       // Or if we're on the base leads pages (not detail pages)
-      const isLeadsDetailPage = 
-        (pathname?.startsWith("/dashboard/all-leads/") && pathname !== "/dashboard/all-leads") ||
-        (pathname?.startsWith("/dashboard/leads/") && pathname !== "/dashboard/leads");
-      
+      const isLeadsDetailPage =
+        (pathname?.startsWith("/dashboard/all-leads/") &&
+          pathname !== "/dashboard/all-leads") ||
+        (pathname?.startsWith("/dashboard/leads/") &&
+          pathname !== "/dashboard/leads");
+
       if (!isLeadsDetailPage) {
         // On leads pages, ALWAYS check if title is a lead name before updating
         if (isAdminLeadsPage || isUserLeadsPage) {
           const currentTitle = document.title;
-          
+
           // Check if current title is a lead name (not a standard page title)
           // Lead names will be "[FirstName LastName] - Motherland CRM" format
-          const isLeadNameTitle = 
+          const isLeadNameTitle =
             currentTitle.endsWith(" - Motherland CRM") &&
             currentTitle !== "Motherland CRM - All Leads" &&
             currentTitle !== "Motherland CRM - My Leads" &&
@@ -166,13 +182,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             currentTitle !== "Motherland CRM - Ads Manager" &&
             currentTitle !== "Motherland CRM - Payment Details" &&
             !currentTitle.includes("Modern CRM Solution");
-          
+
           // If it's a lead name title, don't overwrite it - panel is managing it
           if (isLeadNameTitle) {
             return; // Panel is managing the title, don't interfere
           }
         }
-        
+
         // Only set title if it's different from current title
         if (document.title !== title) {
           document.title = title;
@@ -198,7 +214,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   // Check session on pathname change (navigation) to catch expired sessions immediately
   useEffect(() => {
     if (status === "loading") return;
-    
+
     // If user is navigating and session is unauthenticated, redirect immediately
     if (status === "unauthenticated" || !session) {
       // Check if session was previously authenticated (expired) vs never authenticated
@@ -268,18 +284,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 5 * 60 * 1000, // 5 minutes
-            retry: 1,
-            refetchOnWindowFocus: false,
-          },
-        },
-      })
-  );
+  const [queryClient] = useState(() => createQueryClient());
 
   return (
     <SessionProvider

@@ -7,7 +7,7 @@ import { signOut } from "next-auth/react";
 import { BalanceDisplay } from "./BalanceDisplay";
 import { PlanDisplay } from "./PlanDisplay";
 
-interface UserDropdownMenuProps {
+export interface UserDropdownMenuProps {
   session: {
     user?: {
       firstName?: string;

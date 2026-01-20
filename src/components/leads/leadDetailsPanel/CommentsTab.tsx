@@ -84,7 +84,7 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
     },
     enabled: !!leadId,
     staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
       console.error("Comments fetch error:", error);
       return failureCount < 2;

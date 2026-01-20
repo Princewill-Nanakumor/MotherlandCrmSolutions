@@ -53,7 +53,7 @@ export function UserLeadRow({
       });
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    cacheTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     retry: 2,
@@ -149,14 +149,22 @@ export function UserLeadRow({
       onClick={() => onLeadClick(lead)}
     >
       <TableCell
-        className={isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}
+        className={
+          isSelected
+            ? "!text-gray-900 dark:!text-white"
+            : "!text-gray-800 dark:!text-gray-300"
+        }
       >
         <div className="font-medium">
           {lead.firstName} {lead.lastName}
         </div>
       </TableCell>
       <TableCell
-        className={isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}
+        className={
+          isSelected
+            ? "!text-gray-900 dark:!text-white"
+            : "!text-gray-800 dark:!text-gray-300"
+        }
       >
         <div className="flex items-center">
           <span>
@@ -169,7 +177,11 @@ export function UserLeadRow({
         </div>
       </TableCell>
       <TableCell
-        className={isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}
+        className={
+          isSelected
+            ? "!text-gray-900 dark:!text-white"
+            : "!text-gray-800 dark:!text-gray-300"
+        }
       >
         <div className="flex items-center">
           <span>
@@ -182,21 +194,35 @@ export function UserLeadRow({
         </div>
       </TableCell>
       <TableCell
-        className={isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}
+        className={
+          isSelected
+            ? "!text-gray-900 dark:!text-white"
+            : "!text-gray-800 dark:!text-gray-300"
+        }
       >
         <span>{lead.country || "—"}</span>
       </TableCell>
       <TableCell>{renderStatus()}</TableCell>
       <TableCell
-        className={isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}
+        className={
+          isSelected
+            ? "!text-gray-900 dark:!text-white"
+            : "!text-gray-800 dark:!text-gray-300"
+        }
       >
         <span>{lead.source || "—"}</span>
       </TableCell>
       <TableCell
-        className={isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}
+        className={
+          isSelected
+            ? "!text-gray-900 dark:!text-white"
+            : "!text-gray-800 dark:!text-gray-300"
+        }
       >
         <span
-          className={!lead.assignedTo ? "!text-gray-500 dark:!text-gray-400" : ""}
+          className={
+            !lead.assignedTo ? "!text-gray-500 dark:!text-gray-400" : ""
+          }
         >
           {getAssignedUserName()}
         </span>

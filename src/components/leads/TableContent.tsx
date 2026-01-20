@@ -132,7 +132,7 @@ export function TableContent({
       });
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    cacheTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     retry: 2,
@@ -218,9 +218,10 @@ export function TableContent({
                 const isSelectColumn = header.column.id === "select";
                 const isStatusColumn = header.column.id === "status";
                 const isLastCommentColumn = header.column.id === "lastComment";
-                const isCommentCountColumn = header.column.id === "commentCount";
+                const isCommentCountColumn =
+                  header.column.id === "commentCount";
                 const isActionsColumn = header.column.id === "actions";
-                
+
                 return (
                   <TableHead
                     key={generateUniqueKey("header", header.id)}
@@ -304,8 +305,9 @@ export function TableContent({
                   const isCountryCell = cell.column.id === "country";
                   const isAssignedToCell = cell.column.id === "assignedTo";
                   const isCreatedAtCell = cell.column.id === "createdAt";
-                  const isLastCommentDateCell = cell.column.id === "lastCommentDate";
-                  
+                  const isLastCommentDateCell =
+                    cell.column.id === "lastCommentDate";
+
                   return (
                     <TableCell
                       key={cell.id}
@@ -315,7 +317,14 @@ export function TableContent({
                         ${
                           isSelectCell || isActionsCell
                             ? "text-center"
-                            : isCommentCountCell || isSourceCell || isPhoneCell || isCountryCell || isAssignedToCell || isCreatedAtCell || isLastCommentCell || isLastCommentDateCell
+                            : isCommentCountCell ||
+                                isSourceCell ||
+                                isPhoneCell ||
+                                isCountryCell ||
+                                isAssignedToCell ||
+                                isCreatedAtCell ||
+                                isLastCommentCell ||
+                                isLastCommentDateCell
                               ? "text-center"
                               : "text-left"
                         }

@@ -51,13 +51,13 @@ const formatDateTime = (dateString: string) => {
 const formatDateShort = (date: Date) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
-  
+
   const targetDate = new Date(date);
   targetDate.setHours(0, 0, 0, 0);
-  
+
   if (targetDate.getTime() === today.getTime()) {
     return "Today";
   } else if (targetDate.getTime() === yesterday.getTime()) {
@@ -120,26 +120,27 @@ export function CallLogsModal({
   const [viewMode, setViewMode] = useState<"24h" | "3d">("24h");
 
   // Use React Query to fetch call logs
-  const {
-    data: callLogs = [],
-    isLoading: isLoadingLogs,
-  } = useQuery<CallLog[]>({
-    queryKey: callLogsKeys.user(userId),
-    queryFn: () => fetchCallLogs(userId),
-    enabled: isOpen && !!userId, // Only fetch when modal is open and userId exists
-    refetchOnMount: "always", // Always refetch when modal opens
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-    refetchInterval: isOpen ? 10 * 1000 : false, // Poll every 10 seconds while modal is open to catch new calls
-    staleTime: 0, // Always consider data stale so it refetches when modal opens
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-  });
+  const { data: callLogs = [], isLoading: isLoadingLogs } = useQuery<CallLog[]>(
+    {
+      queryKey: callLogsKeys.user(userId),
+      queryFn: () => fetchCallLogs(userId),
+      enabled: isOpen && !!userId, // Only fetch when modal is open and userId exists
+      refetchOnMount: "always", // Always refetch when modal opens
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+      refetchInterval: isOpen ? 10 * 1000 : false, // Poll every 10 seconds while modal is open to catch new calls
+      staleTime: 0, // Always consider data stale so it refetches when modal opens
+      cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    }
+  );
 
   // Filter logs based on view mode (24 hours or 3 days)
   const filteredLogs = useMemo(() => {
     if (viewMode === "24h") {
       const twentyFourHoursAgo = new Date();
       twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-      return callLogs.filter((log) => new Date(log.createdAt) >= twentyFourHoursAgo);
+      return callLogs.filter(
+        (log) => new Date(log.createdAt) >= twentyFourHoursAgo
+      );
     }
     return callLogs;
   }, [callLogs, viewMode]);
@@ -168,7 +169,7 @@ export function CallLogsModal({
     callLogs.forEach((log) => {
       const logDate = new Date(log.createdAt);
       logDate.setHours(0, 0, 0, 0);
-      
+
       const daySummary = summary.find((day) => isSameDay(day.date, logDate));
       if (daySummary) {
         daySummary.count++;
@@ -182,7 +183,9 @@ export function CallLogsModal({
   const total24Hours = useMemo(() => {
     const twentyFourHoursAgo = new Date();
     twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-    return callLogs.filter((log) => new Date(log.createdAt) >= twentyFourHoursAgo).length;
+    return callLogs.filter(
+      (log) => new Date(log.createdAt) >= twentyFourHoursAgo
+    ).length;
   }, [callLogs]);
 
   return (
@@ -196,7 +199,8 @@ export function CallLogsModal({
             </DialogTitle>
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-            Track daily call activity. Data refreshes daily and is retained for 3 days.
+            Track daily call activity. Data refreshes daily and is retained for
+            3 days.
           </p>
         </DialogHeader>
 
@@ -215,7 +219,8 @@ export function CallLogsModal({
                 No call logs found
               </p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-center max-w-md">
-                This user hasn&apos;t made any calls in the last 3 days. Call logs are automatically deleted after 3 days.
+                This user hasn&apos;t made any calls in the last 3 days. Call
+                logs are automatically deleted after 3 days.
               </p>
             </div>
           ) : (
@@ -253,7 +258,10 @@ export function CallLogsModal({
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       Last 24 Hours:
                     </span>
-                    <Badge variant="outline" className="dark:border-gray-600 dark:!text-white font-semibold">
+                    <Badge
+                      variant="outline"
+                      className="dark:border-gray-600 dark:!text-white font-semibold"
+                    >
                       {total24Hours} {total24Hours === 1 ? "call" : "calls"}
                     </Badge>
                   </div>
@@ -282,8 +290,12 @@ export function CallLogsModal({
                     Last 3 Days
                   </Button>
                 </div>
-                <Badge variant="outline" className="dark:border-gray-600 dark:!text-white">
-                  {filteredLogs.length} {filteredLogs.length === 1 ? "call" : "calls"} shown
+                <Badge
+                  variant="outline"
+                  className="dark:border-gray-600 dark:!text-white"
+                >
+                  {filteredLogs.length}{" "}
+                  {filteredLogs.length === 1 ? "call" : "calls"} shown
                 </Badge>
               </div>
 
@@ -328,11 +340,17 @@ export function CallLogsModal({
                               )}
                             </div>
                           ) : (
-                            <span className="text-gray-400 dark:text-gray-500">—</span>
+                            <span className="text-gray-400 dark:text-gray-500">
+                              —
+                            </span>
                           )}
                         </td>
                         <td className="py-3 px-6 text-sm !text-gray-900 dark:!text-white whitespace-nowrap">
-                          {log.leadCountry || <span className="text-gray-400 dark:text-gray-500">—</span>}
+                          {log.leadCountry || (
+                            <span className="text-gray-400 dark:text-gray-500">
+                              —
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-6 text-sm !text-gray-900 dark:!text-white font-mono whitespace-nowrap">
                           {log.phoneNumber}

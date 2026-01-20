@@ -77,7 +77,7 @@ export const CommentsAndActivitiesCombined: FC<
     },
     enabled: !!leadId,
     staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
+    cacheTime: 5 * 60 * 1000,
     retry: (failureCount) => failureCount < 2,
     refetchOnWindowFocus: false,
   });
@@ -91,7 +91,7 @@ export const CommentsAndActivitiesCombined: FC<
       return response.json();
     },
     staleTime: 10 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
+    cacheTime: 30 * 60 * 1000,
   });
 
   // Fetch activities (excluding COMMENT type)
@@ -111,7 +111,7 @@ export const CommentsAndActivitiesCombined: FC<
     },
     enabled: !!leadId,
     staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
+    cacheTime: 5 * 60 * 1000,
     retry: (failureCount) => failureCount < 2,
     refetchOnWindowFocus: false,
   });
@@ -288,13 +288,10 @@ export const CommentsAndActivitiesCombined: FC<
     addCommentMutation.mutate(commentContent);
   }, [commentContent, addCommentMutation]);
 
-  const handleEdit = useCallback(
-    (comment: Comment) => {
-      setEditingId(comment._id);
-      setEditContent(comment.content);
-    },
-    []
-  );
+  const handleEdit = useCallback((comment: Comment) => {
+    setEditingId(comment._id);
+    setEditContent(comment.content);
+  }, []);
 
   const handleSaveEdit = useCallback(
     async (comment: Comment) => {

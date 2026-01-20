@@ -249,7 +249,7 @@ export const useLeads = () => {
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     staleTime: 60 * 60 * 1000, // 1 hour - statuses rarely change
-    gcTime: 2 * 60 * 60 * 1000, // 2 hours cache time
+    cacheTime: 2 * 60 * 60 * 1000, // 2 hours cache time
     refetchOnMount: "always", // Always refetch on mount
     refetchOnWindowFocus: false, // Disable automatic refetch
     refetchOnReconnect: true, // Keep this for network reconnection
@@ -316,7 +316,7 @@ export const useLeads = () => {
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     staleTime: 15 * 60 * 1000, // 15 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes cache time
+    cacheTime: 30 * 60 * 1000, // 30 minutes cache time
     refetchOnMount: "always", // Always refetch on mount
     refetchOnWindowFocus: false, // Disable automatic refetch
     refetchOnReconnect: true, // Keep this for network reconnection
@@ -412,7 +412,7 @@ export const useLeads = () => {
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     staleTime: 30 * 60 * 1000, // 30 minutes - much longer
-    gcTime: 60 * 60 * 1000, // 1 hour cache time
+    cacheTime: 60 * 60 * 1000, // 1 hour cache time
     refetchOnMount: false, // Don't always refetch - use stale data if available to prevent showing 0
     refetchOnWindowFocus: false, // Disable automatic refetch
     refetchOnReconnect: true, // Keep this for network reconnection
@@ -561,21 +561,20 @@ export const useLeads = () => {
       console.log("Assignment successful:", data);
       // Invalidate and immediately refetch all leads-related queries (including dashboard stats)
       // Use predicate to catch all leads queries (["leads"], ["leads", "assigned", "stats"], etc.)
-      await queryClient.invalidateQueries({ 
-        predicate: (query) => 
-          Array.isArray(query.queryKey) && 
-          query.queryKey[0] === "leads"
+      await queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) && query.queryKey[0] === "leads",
       });
-      await queryClient.refetchQueries({ 
-        predicate: (query) => 
-          Array.isArray(query.queryKey) && 
+      await queryClient.refetchQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) &&
           query.queryKey[0] === "leads" &&
-          query.queryKey.length <= 3 // Refetch main leads queries (not deeply nested ones)
+          query.queryKey.length <= 3, // Refetch main leads queries (not deeply nested ones)
       });
       // Also invalidate assigned leads queries for agents
       await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       await queryClient.refetchQueries({ queryKey: ["assignedLeads"] });
-      
+
       const { leadIds, userId } = variables;
       const assignedUser = users.find((u) => u.id === userId);
       const leadCount = leadIds.length;
@@ -690,16 +689,15 @@ export const useLeads = () => {
       console.log("Unassignment successful:", data);
       // Invalidate and immediately refetch all leads-related queries (including dashboard stats)
       // Use predicate to catch all leads queries (["leads"], ["leads", "assigned", "stats"], etc.)
-      await queryClient.invalidateQueries({ 
-        predicate: (query) => 
-          Array.isArray(query.queryKey) && 
-          query.queryKey[0] === "leads"
+      await queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) && query.queryKey[0] === "leads",
       });
-      await queryClient.refetchQueries({ 
-        predicate: (query) => 
-          Array.isArray(query.queryKey) && 
+      await queryClient.refetchQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) &&
           query.queryKey[0] === "leads" &&
-          query.queryKey.length <= 3 // Refetch main leads queries (not deeply nested ones)
+          query.queryKey.length <= 3, // Refetch main leads queries (not deeply nested ones)
       });
       // Also invalidate assigned leads queries for agents
       await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });

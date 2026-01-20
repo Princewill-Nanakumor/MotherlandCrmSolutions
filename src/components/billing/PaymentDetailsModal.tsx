@@ -53,7 +53,12 @@ export default function PaymentDetailsModal({
             </h2>
             {payment && (
               <p className="!text-gray-600 dark:!text-white text-sm">
-                Transaction ID: {payment.transactionId}
+                Transaction ID:{" "}
+                {
+                  (
+                    payment as unknown as import("@/types/payment.types").Payment
+                  ).transactionId
+                }
               </p>
             )}
           </div>
@@ -86,7 +91,9 @@ export default function PaymentDetailsModal({
             </div>
           ) : payment ? (
             <PaymentDetailsContent
-              payment={payment}
+              payment={
+                payment as unknown as import("@/types/payment.types").Payment
+              }
               onNewPayment={onNewPayment}
               onClose={handleClose}
             />

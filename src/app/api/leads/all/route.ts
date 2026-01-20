@@ -109,13 +109,21 @@ async function getAssignedToUser(
 
 export async function GET() {
   try {
+    // Use a unique timer prefix per request to avoid duplicate console.time labels
+    const __timerPrefix = `api:/api/leads/all:${Date.now()}:${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+    console.time(`${__timerPrefix}:total`);
     const session = await getServerSession(authOptions);
     if (!session) {
+      console.timeEnd(`${__timerPrefix}:total`);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Connect to database
+    console.time(`${__timerPrefix}:dbConnect`);
     await connectMongoDB();
+    console.timeEnd(`${__timerPrefix}:dbConnect`);
 
     const db = mongoose.connection.db;
     if (!db) {
@@ -134,11 +142,13 @@ export async function GET() {
     }
 
     // Fetch leads with multi-tenancy filter
+    console.time(`${__timerPrefix}:fetchLeads`);
     const leads = await db
       .collection("leads")
       .find(query)
       .sort({ createdAt: -1 })
       .toArray();
+    console.timeEnd(`${__timerPrefix}:fetchLeads`);
 
     // Collect unique user IDs for batch lookup
     const uniqueUserIds = new Set<string>();
@@ -155,6 +165,7 @@ export async function GET() {
     // Batch fetch users if there are any
     const userMap = new Map<string, UserData>();
     if (uniqueUserIds.size > 0) {
+      console.time(`${__timerPrefix}:fetchUsers`);
       try {
         const userIds = Array.from(uniqueUserIds).map((id) => new ObjectId(id));
         const users = await db
@@ -168,6 +179,7 @@ export async function GET() {
         users.forEach((user) => {
           userMap.set(user._id.toString(), user as UserData);
         });
+        console.timeEnd(`${__timerPrefix}:fetchUsers`);
       } catch (error) {
         console.error("Error fetching users:", error);
         // Continue without user data rather than failing completely
@@ -175,22 +187,29 @@ export async function GET() {
     }
 
     // Get adminId for comment queries
-    const adminIdForComments = session.user.role === "ADMIN"
-      ? new ObjectId(session.user.id)
-      : session.user.adminId
-        ? new ObjectId(session.user.adminId)
-        : null;
+    const adminIdForComments =
+      session.user.role === "ADMIN"
+        ? new ObjectId(session.user.id)
+        : session.user.adminId
+          ? new ObjectId(session.user.adminId)
+          : null;
 
     // Collect lead IDs for batch comment lookup
-    const leadIds = leads.map((lead: Record<string, unknown>) => 
-      lead._id instanceof ObjectId ? lead._id : new ObjectId(safeObjectIdToString(lead._id) || "")
+    const leadIds = leads.map((lead: Record<string, unknown>) =>
+      lead._id instanceof ObjectId
+        ? lead._id
+        : new ObjectId(safeObjectIdToString(lead._id) || "")
     );
 
     // Fetch last comment and comment count for each lead using aggregation
-    const lastCommentsMap = new Map<string, { content: string; createdAt: Date }>();
+    const lastCommentsMap = new Map<
+      string,
+      { content: string; createdAt: Date }
+    >();
     const commentCountsMap = new Map<string, number>();
-    
+
     if (adminIdForComments && leadIds.length > 0) {
+      console.time(`${__timerPrefix}:commentsAgg`);
       try {
         interface LastCommentResult {
           _id: ObjectId;
@@ -212,27 +231,27 @@ export async function GET() {
                 leadId: { $in: leadIds },
                 $or: [
                   { adminId: adminIdForComments },
-                  { adminId: { $exists: false } }
-                ]
-              }
+                  { adminId: { $exists: false } },
+                ],
+              },
             },
             {
-              $sort: { createdAt: -1 }
+              $sort: { createdAt: -1 },
             },
             {
               $group: {
                 _id: "$leadId",
                 content: { $first: "$content" },
-                createdAt: { $first: "$createdAt" }
-              }
-            }
+                createdAt: { $first: "$createdAt" },
+              },
+            },
           ])
           .toArray();
 
         lastComments.forEach((comment) => {
           lastCommentsMap.set(comment._id.toString(), {
             content: comment.content,
-            createdAt: comment.createdAt
+            createdAt: comment.createdAt,
           });
         });
 
@@ -245,22 +264,23 @@ export async function GET() {
                 leadId: { $in: leadIds },
                 $or: [
                   { adminId: adminIdForComments },
-                  { adminId: { $exists: false } }
-                ]
-              }
+                  { adminId: { $exists: false } },
+                ],
+              },
             },
             {
               $group: {
                 _id: "$leadId",
-                count: { $sum: 1 }
-              }
-            }
+                count: { $sum: 1 },
+              },
+            },
           ])
           .toArray();
 
         commentCounts.forEach((countResult) => {
           commentCountsMap.set(countResult._id.toString(), countResult.count);
         });
+        console.timeEnd(`${__timerPrefix}:commentsAgg`);
       } catch (error) {
         console.error("Error fetching comments:", error);
         // Continue without comment data rather than failing completely
@@ -268,6 +288,7 @@ export async function GET() {
     }
 
     // Transform leads
+    console.time(`${__timerPrefix}:transformLeads`);
     const transformedLeads = await Promise.all(
       leads.map(async (lead: Record<string, unknown>) => {
         let assignedToUser = null;
@@ -280,7 +301,7 @@ export async function GET() {
             lead.assignedTo,
             userMap
           );
-          
+
           // If user lookup failed but assignedTo exists, preserve the original value as a fallback
           // This ensures leads are still counted as assigned even if user details can't be fetched
           if (!assignedToUser && originalAssignedTo) {
@@ -301,9 +322,9 @@ export async function GET() {
         const lastComment = lastCommentsMap.get(leadIdString);
         const lastCommentContent = lastComment?.content || null;
         const lastCommentDate = lastComment?.createdAt
-          ? (lastComment.createdAt instanceof Date
-              ? lastComment.createdAt.toISOString()
-              : (lastComment.createdAt as string))
+          ? lastComment.createdAt instanceof Date
+            ? lastComment.createdAt.toISOString()
+            : (lastComment.createdAt as string)
           : null;
         const commentCount = commentCountsMap.get(leadIdString) || 0;
 
@@ -316,7 +337,13 @@ export async function GET() {
           name: `${(lead.firstName as string) || ""} ${(lead.lastName as string) || ""}`.trim(),
           email: (lead.email as string) || "",
           phone: (lead.phone as string) || "",
-          source: lead.source && typeof lead.source === "string" && lead.source.trim() !== "" && lead.source !== "-" ? lead.source.trim() : "—",
+          source:
+            lead.source &&
+            typeof lead.source === "string" &&
+            lead.source.trim() !== "" &&
+            lead.source !== "-"
+              ? lead.source.trim()
+              : "—",
           status: (lead.status as string) || "NEW",
           country: (lead.country as string) || "",
           assignedTo: assignedToUser,
@@ -337,6 +364,8 @@ export async function GET() {
         return transformedLead;
       })
     );
+    console.timeEnd(`${__timerPrefix}:transformLeads`);
+    console.timeEnd(`${__timerPrefix}:total`);
 
     return NextResponse.json(transformedLeads);
   } catch (error) {

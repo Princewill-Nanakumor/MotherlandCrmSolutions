@@ -37,7 +37,7 @@ export const useImportUsageData = () => {
       return response.json();
     },
     staleTime: 1 * 60 * 1000, // Reduced to 1 minute for more frequent updates
-    gcTime: 5 * 60 * 1000, // Reduced garbage collection time
+    cacheTime: 5 * 60 * 1000, // Reduced garbage collection time
     refetchOnMount: true, // Always refetch on mount
     refetchOnWindowFocus: true, // Refetch when window gains focus
     retry: 2,

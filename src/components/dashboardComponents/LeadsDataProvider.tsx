@@ -83,9 +83,18 @@ const LeadsDataProvider: React.FC<LeadsDataProviderProps> = ({
   } = useQuery({
     queryKey: ["leads"], // ✅ FIXED: Changed from ["leads", "all"] to ["leads"]
     queryFn: async (): Promise<Lead[]> => {
+      const start =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
       const response = await fetch("/api/leads/all", {
         credentials: "include",
       });
+      const end =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
+      try {
+        console.log(
+          `client:LeadsDataProvider fetch /api/leads/all took ${Math.round(end - start)}ms`
+        );
+      } catch {}
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to fetch leads");
@@ -311,16 +320,15 @@ const LeadsDataProvider: React.FC<LeadsDataProviderProps> = ({
 
         // ✅ Invalidate and immediately refetch to update all components (including dashboard and agent views)
         // Use predicate to invalidate all leads-related queries (including stats)
-        await queryClient.invalidateQueries({ 
-          predicate: (query) => 
-            Array.isArray(query.queryKey) && 
-            query.queryKey[0] === "leads"
+        await queryClient.invalidateQueries({
+          predicate: (query) =>
+            Array.isArray(query.queryKey) && query.queryKey[0] === "leads",
         });
-        await queryClient.refetchQueries({ 
-          predicate: (query) => 
-            Array.isArray(query.queryKey) && 
+        await queryClient.refetchQueries({
+          predicate: (query) =>
+            Array.isArray(query.queryKey) &&
             query.queryKey[0] === "leads" &&
-            query.queryKey.length <= 2 // Refetch main leads queries
+            query.queryKey.length <= 2, // Refetch main leads queries
         });
         // Also invalidate assigned leads queries for agents
         await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
@@ -404,16 +412,15 @@ const LeadsDataProvider: React.FC<LeadsDataProviderProps> = ({
 
       // ✅ Invalidate and immediately refetch to update all components (including dashboard and agent views)
       // Use predicate to invalidate all leads-related queries (including stats)
-      await queryClient.invalidateQueries({ 
-        predicate: (query) => 
-          Array.isArray(query.queryKey) && 
-          query.queryKey[0] === "leads"
+      await queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) && query.queryKey[0] === "leads",
       });
-      await queryClient.refetchQueries({ 
-        predicate: (query) => 
-          Array.isArray(query.queryKey) && 
+      await queryClient.refetchQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) &&
           query.queryKey[0] === "leads" &&
-          query.queryKey.length <= 2 // Refetch main leads queries
+          query.queryKey.length <= 2, // Refetch main leads queries
       });
       // Also invalidate assigned leads queries for agents
       await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });

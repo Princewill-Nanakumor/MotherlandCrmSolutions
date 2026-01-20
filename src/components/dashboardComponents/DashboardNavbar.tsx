@@ -12,7 +12,7 @@ import {
 import { DashboardSearchBar } from "./DashboardSearchBar";
 import ThemeToggle from "./ThemeToggle";
 import { DateTimeDisplay } from "./DateTimeDisplay";
-import { UserDropdownMenu } from "./UserDropdownMenu";
+import { UserDropdownMenu, UserDropdownMenuProps } from "./UserDropdownMenu";
 import { NotificationBell } from "../notifications/NotificationBell";
 import { useUserProfileData } from "@/hooks/useNavbarData";
 
@@ -106,7 +106,7 @@ export default function DashboardNavbar({
         <div className="flex items-center flex-shrink-0 w-32 space-x-4">
           <UserDropdownMenu
             session={session}
-            userProfile={userProfile}
+            userProfile={userProfile as UserDropdownMenuProps["userProfile"]}
             balanceLoading={profileLoading}
             dropdownOpen={dropdownOpen}
             setDropdownOpen={setDropdownOpen}
@@ -179,7 +179,7 @@ export default function DashboardNavbar({
         <ThemeToggle isLoading={isLoading} />
         <UserDropdownMenu
           session={session}
-          userProfile={userProfile}
+          userProfile={userProfile as UserDropdownMenuProps["userProfile"]}
           balanceLoading={profileLoading}
           dropdownOpen={dropdownOpen}
           setDropdownOpen={setDropdownOpen}
