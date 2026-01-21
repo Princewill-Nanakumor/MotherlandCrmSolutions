@@ -110,7 +110,7 @@ export function useUserTableColumns({
         const isAdmin = row.original.role === "ADMIN";
         return (
           <div className="flex items-center gap-2">
-            <Badge
+        <Badge
               variant={isAdmin ? "default" : "outline"}
               className={`dark:border-gray-600 dark:!text-white ${
                 isAdmin 
@@ -126,7 +126,7 @@ export function useUserTableColumns({
                 )}
                 <span>{row.original.role}</span>
               </div>
-            </Badge>
+        </Badge>
           </div>
         );
       },
@@ -221,7 +221,7 @@ export function useUserTableColumns({
       cell: ({ row }) => {
         const isAdmin = row.original.role === "ADMIN";
         return (
-          <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2">
             {/* View Details - Always show */}
             <Button
               variant="outline"
@@ -250,35 +250,35 @@ export function useUserTableColumns({
             </Button>
             {/* Reset Password - Hide for admin users */}
             {!isAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onResetPassword(row.original.id);
-                }}
-                className="hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white"
-                title="Reset Password"
-              >
-                <KeyRound className="h-4 w-4" />
-              </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onResetPassword(row.original.id);
+            }}
+            className="hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white"
+            title="Reset Password"
+          >
+            <KeyRound className="h-4 w-4" />
+          </Button>
             )}
             {/* Delete User - Hide for admin users */}
             {!isAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteUser(row.original.id);
-                }}
-                className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-gray-600"
-                title="Delete User"
-              >
-                <Trash className="h-4 w-4" />
-              </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteUser(row.original.id);
+            }}
+            className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-gray-600"
+            title="Delete User"
+          >
+            <Trash className="h-4 w-4" />
+          </Button>
             )}
-          </div>
+        </div>
         );
       },
       enableSorting: false,
