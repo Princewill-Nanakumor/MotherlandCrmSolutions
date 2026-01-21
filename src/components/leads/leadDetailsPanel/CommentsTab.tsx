@@ -61,7 +61,7 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
     data: comments = [],
     isLoading: isLoadingComments,
     error: commentsError,
-  } = useQuery({
+  } = useQuery<Comment[], Error>({
     queryKey: ["comments", leadId],
     queryFn: async (): Promise<Comment[]> => {
       console.log("=== FETCHING COMMENTS WITH REACT QUERY ===");
@@ -84,7 +84,7 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
     },
     enabled: !!leadId,
     staleTime: 30 * 1000, // 30 seconds
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
       console.error("Comments fetch error:", error);
       return failureCount < 2;

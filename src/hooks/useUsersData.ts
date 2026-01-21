@@ -17,11 +17,11 @@ const fetchUsers = async (): Promise<User[]> => {
 };
 
 export const useUsersData = () => {
-  return useQuery({
+  return useQuery<User[], Error>({
     queryKey: ["users"],
     queryFn: fetchUsers,
     staleTime: 2 * 60 * 1000,
-    cacheTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
     refetchOnMount: true, // Always refetch on mount to ensure fresh data
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,

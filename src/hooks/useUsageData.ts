@@ -25,7 +25,7 @@ export const useImportUsageData = () => {
     isLoading,
     error,
     refetch,
-  } = useQuery({
+  } = useQuery<ApiUsageData, Error>({
     queryKey: ["import-usage-data"],
     queryFn: async (): Promise<ApiUsageData> => {
       const response = await fetch("/api/usage", {
@@ -37,7 +37,7 @@ export const useImportUsageData = () => {
       return response.json();
     },
     staleTime: 1 * 60 * 1000, // Reduced to 1 minute for more frequent updates
-    cacheTime: 5 * 60 * 1000, // Reduced garbage collection time
+    gcTime: 5 * 60 * 1000, // Reduced garbage collection time
     refetchOnMount: true, // Always refetch on mount
     refetchOnWindowFocus: true, // Refetch when window gains focus
     retry: 2,

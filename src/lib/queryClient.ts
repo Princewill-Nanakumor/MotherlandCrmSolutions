@@ -6,7 +6,8 @@ export function createQueryClient() {
     defaultOptions: {
       queries: {
         staleTime: 5 * 60 * 1000, // 5 minutes - harmonized default
-        cacheTime: 60 * 60 * 1000, // 1 hour
+        // React Query v5: use gcTime instead of cacheTime
+        gcTime: 60 * 60 * 1000, // 1 hour
         retry: 2,
         refetchOnWindowFocus: false,
         refetchOnReconnect: true,

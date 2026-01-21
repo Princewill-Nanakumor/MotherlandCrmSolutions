@@ -12,7 +12,7 @@ export const useImportHistory = () => {
     isLoading,
     error,
     refetch: refreshImportHistory,
-  } = useQuery({
+  } = useQuery<ImportHistoryItem[], Error>({
     queryKey: ["import-history"],
     queryFn: async (): Promise<ImportHistoryItem[]> => {
       const response = await fetch("/api/imports");
@@ -23,7 +23,7 @@ export const useImportHistory = () => {
       return data.imports;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });

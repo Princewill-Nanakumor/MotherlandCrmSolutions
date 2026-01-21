@@ -24,7 +24,7 @@ export function UserLeadRow({
 }: UserLeadRowProps) {
   const { canViewPhoneNumbers, canViewEmails } = useCurrentUserPermission();
   // Use React Query for consistent status caching
-  const { data: statuses = [], isLoading } = useQuery({
+  const { data: statuses = [], isLoading } = useQuery<Status[], Error>({
     queryKey: ["statuses"],
     queryFn: async (): Promise<Status[]> => {
       const response = await fetch("/api/statuses");
@@ -53,7 +53,7 @@ export function UserLeadRow({
       });
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     retry: 2,

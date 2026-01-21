@@ -31,7 +31,7 @@ export const billingKeys = {
 export const usePayments = (limit: number = 10) => {
   const { status } = useSession();
 
-  return useQuery({
+  return useQuery<PaymentsResponse, Error>({
     queryKey: billingKeys.payments(limit),
     queryFn: async (): Promise<PaymentsResponse> => {
       const response = await fetch(`/api/payments?limit=${limit}`, {
@@ -45,7 +45,7 @@ export const usePayments = (limit: number = 10) => {
       return response.json();
     },
     staleTime: 1 * 60 * 1000, // 1 minute
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     retry: 2,
@@ -59,7 +59,7 @@ export const usePayments = (limit: number = 10) => {
 export const useUserBalance = () => {
   const { status } = useSession();
 
-  return useQuery({
+  return useQuery<number, Error>({
     queryKey: billingKeys.balance(),
     queryFn: async (): Promise<number> => {
       const response = await fetch("/api/user/profile", {
@@ -74,7 +74,7 @@ export const useUserBalance = () => {
       return data.user?.balance || 0;
     },
     staleTime: 30 * 1000, // 30 seconds
-    cacheTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     retry: 2,
@@ -114,7 +114,7 @@ export const usePayment = (paymentId: string | null) => {
       return data as Payment;
     },
     staleTime: 30 * 1000, // 30 seconds
-    cacheTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: true,
     retry: 2,
     enabled: status === "authenticated" && !!paymentId,

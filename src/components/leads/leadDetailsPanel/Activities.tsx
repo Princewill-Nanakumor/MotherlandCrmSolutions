@@ -31,7 +31,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
   const { toast } = useToast();
 
   // Fetch statuses
-  const { data: statuses = [] } = useQuery<Status[]>({
+  const { data: statuses = [] } = useQuery<Status[], Error>({
     queryKey: ["statuses"],
     queryFn: async (): Promise<Status[]> => {
       const response = await fetch("/api/statuses");
@@ -41,7 +41,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
       return response.json();
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
   });
 
   // Fetch activities
@@ -49,7 +49,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
     data: activities = [],
     isLoading,
     error,
-  } = useQuery<Activity[]>({
+  } = useQuery<Activity[], Error>({
     queryKey: ["activities", leadId],
     queryFn: async (): Promise<Activity[]> => {
       console.log("=== FETCHING ACTIVITIES WITH REACT QUERY ===");
@@ -69,7 +69,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
     },
     enabled: !!leadId,
     staleTime: 30 * 1000, // 30 seconds
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
       console.error("Activities fetch error:", error);
       return failureCount < 2;

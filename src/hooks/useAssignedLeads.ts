@@ -241,12 +241,12 @@ export const useAssignedLeads = () => {
     refetch,
     isFetching,
     isRefetching,
-  } = useQuery({
+  } = useQuery<Lead[], Error>({
     queryKey: assignedLeadsKeys.list(session?.user?.id || ""),
     queryFn: fetchAssignedLeads,
     enabled: !!session?.user?.id, // Only fetch when user is authenticated
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes (formerly gcTime)
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
     refetchOnWindowFocus: false, // Prevent refetch on window focus
     refetchOnMount: false,
     refetchOnReconnect: true,

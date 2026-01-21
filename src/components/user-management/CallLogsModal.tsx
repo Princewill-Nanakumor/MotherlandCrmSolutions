@@ -129,7 +129,7 @@ export function CallLogsModal({
       refetchOnWindowFocus: false, // Don't refetch on window focus
       refetchInterval: isOpen ? 10 * 1000 : false, // Poll every 10 seconds while modal is open to catch new calls
       staleTime: 0, // Always consider data stale so it refetches when modal opens
-      cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+      gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
     }
   );
 

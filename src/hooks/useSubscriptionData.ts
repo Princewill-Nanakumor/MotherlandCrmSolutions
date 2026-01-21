@@ -29,11 +29,11 @@ export const useSubscriptionData = () => {
     isLoading,
     error,
     refetch,
-  } = useQuery({
+  } = useQuery<SubscriptionData, Error>({
     queryKey: ["subscription-data"],
     queryFn: fetchSubscriptionData,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 1,
     refetchOnMount: false,
     refetchOnWindowFocus: false,

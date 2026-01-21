@@ -74,11 +74,11 @@ export const useUsersData = () => {
     isLoading,
     error,
     refetch,
-  } = useQuery({
+  } = useQuery<User[], Error>({
     queryKey: ["users"], // ✅ FIXED: Use same query key as other components
     queryFn: fetchUsers,
     staleTime: 2 * 60 * 1000, // ✅ FIXED: Reduced from 5 minutes to 2 minutes
-    cacheTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: 1,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -117,7 +117,7 @@ export const useLeadsStats = (isAdmin: boolean) => {
     refetch,
     isFetching,
     isFetched,
-  } = useQuery({
+  } = useQuery<DashboardStats | undefined, Error>({
     queryKey: ["leads-stats", isAdmin ? "admin" : session?.user?.id || "guest"],
     queryFn: async () => {
       const start =
@@ -136,7 +136,7 @@ export const useLeadsStats = (isAdmin: boolean) => {
       return (await res.json()) as DashboardStats;
     },
     staleTime: 30 * 1000, // 30s
-    cacheTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,
     refetchOnMount: true,
     refetchOnWindowFocus: false,

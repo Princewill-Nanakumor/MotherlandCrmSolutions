@@ -54,12 +54,12 @@ export const useCurrentUserPermission = () => {
     data: currentUser,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<CurrentUserData, Error>({
     queryKey: ["current-user-permission"],
     queryFn: fetchCurrentUser,
     enabled: status === "authenticated" && !!session?.user,
     staleTime: 30 * 1000, // 30 seconds - refresh more frequently
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
     refetchOnWindowFocus: true, // Refetch when user returns to window
     refetchOnMount: true,

@@ -65,7 +65,7 @@ export const CommentsAndActivitiesCombined: FC<
     data: comments = [],
     isLoading: isLoadingComments,
     error: commentsError,
-  } = useQuery({
+  } = useQuery<Comment[], Error>({
     queryKey: ["comments", leadId],
     queryFn: async (): Promise<Comment[]> => {
       const response = await fetch(`/api/leads/${leadId}/comments`);
@@ -77,13 +77,13 @@ export const CommentsAndActivitiesCombined: FC<
     },
     enabled: !!leadId,
     staleTime: 30 * 1000,
-    cacheTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
     retry: (failureCount) => failureCount < 2,
     refetchOnWindowFocus: false,
   });
 
   // Fetch statuses for activities
-  const { data: statuses = [] } = useQuery<Status[]>({
+  const { data: statuses = [] } = useQuery<Status[], Error>({
     queryKey: ["statuses"],
     queryFn: async (): Promise<Status[]> => {
       const response = await fetch("/api/statuses");
@@ -91,7 +91,7 @@ export const CommentsAndActivitiesCombined: FC<
       return response.json();
     },
     staleTime: 10 * 60 * 1000,
-    cacheTime: 30 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   // Fetch activities (excluding COMMENT type)
@@ -99,7 +99,7 @@ export const CommentsAndActivitiesCombined: FC<
     data: activities = [],
     isLoading: isLoadingActivities,
     error: activitiesError,
-  } = useQuery<Activity[]>({
+  } = useQuery<Activity[], Error>({
     queryKey: ["activities", leadId],
     queryFn: async (): Promise<Activity[]> => {
       const response = await fetch(`/api/leads/${leadId}/activities`);
@@ -111,7 +111,7 @@ export const CommentsAndActivitiesCombined: FC<
     },
     enabled: !!leadId,
     staleTime: 30 * 1000,
-    cacheTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
     retry: (failureCount) => failureCount < 2,
     refetchOnWindowFocus: false,
   });
@@ -337,7 +337,7 @@ export const CommentsAndActivitiesCombined: FC<
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full p-6">
+      <div className="flex justify-center items-center p-6 h-full">
         <Loader2 className="w-8 h-8 animate-spin !text-purple-500 dark:!text-blue-400" />
       </div>
     );
@@ -345,10 +345,10 @@ export const CommentsAndActivitiesCombined: FC<
 
   return (
     <div
-      className="flex-1 min-h-0 flex flex-col bg-gray-50 dark:bg-gray-800/50 p-6 border border-gray-200 dark:border-gray-700 shadow-sm"
+      className="flex flex-col flex-1 p-6 min-h-0 bg-gray-50 border border-gray-200 shadow-sm dark:bg-gray-800/50 dark:border-gray-700"
       style={{ height: "100%" }}
     >
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 border border-gray-100 dark:border-gray-700 flex-1 min-h-0 flex flex-col">
+      <div className="flex flex-col flex-1 p-5 min-h-0 bg-white rounded-lg border border-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
         <CommentForm
           commentContent={commentContent}
           setCommentContent={setCommentContent}
@@ -359,7 +359,7 @@ export const CommentsAndActivitiesCombined: FC<
         />
 
         {/* Combined Timeline */}
-        <div className="flex-1 min-h-0 flex flex-col">
+        <div className="flex flex-col flex-1 min-h-0">
           <h3 className="text-lg font-semibold !text-gray-800 dark:!text-white mb-3">
             Timeline ({combinedItems.length})
           </h3>

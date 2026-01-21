@@ -51,11 +51,11 @@ export const useStatuses = () => {
     data: statuses = [],
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<Status[], Error>({
     queryKey: statusesKeys.all,
     queryFn: fetchStatuses,
     staleTime: 10 * 60 * 1000, // 10 minutes - statuses don't change often
-    cacheTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnMount: false, // Don't refetch if we have cached data
     refetchOnWindowFocus: false,
     retry: 2,

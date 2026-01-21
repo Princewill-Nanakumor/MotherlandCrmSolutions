@@ -37,11 +37,11 @@ export const useLeadsData = () => {
     isLoading,
     error,
     refetch,
-  } = useQuery({
+  } = useQuery<Lead[], Error>({
     queryKey: ["leads-data"],
     queryFn: fetchLeads,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: 1,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
