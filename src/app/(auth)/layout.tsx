@@ -16,7 +16,10 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SessionProvider>
+    <SessionProvider
+      refetchInterval={5 * 60} // Refetch session every 5 minutes
+      refetchOnWindowFocus={true} // Refetch when user returns to window (important for offline → online)
+    >
       <ThemeProvider>
         <div
           className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 ${inter.className}`}

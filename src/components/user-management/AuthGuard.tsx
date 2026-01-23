@@ -1,10 +1,11 @@
 // src/components/user-management/AuthGuard.tsx
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
+import { Shield } from "lucide-react";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -20,11 +21,14 @@ export function AuthGuard({
   const { data: session, status } = useSession();
   const router = useRouter();
   const { toast } = useToast();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/");
+      setIsRedirecting(true);
+      router.push("/login");
     } else if (session?.user?.role !== requiredRole) {
+      setIsRedirecting(true);
       router.push(redirectTo);
       toast({
         title: "Unauthorized",
@@ -34,10 +38,19 @@ export function AuthGuard({
     }
   }, [status, session, router, toast, requiredRole, redirectTo]);
 
-  if (status === "loading") {
+  // Show loading screen while checking authentication or redirecting
+  if (status === "loading" || isRedirecting) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-pulse rounded-full w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-500"></div>
+      <div className="min-h-screen font-mono bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950 flex items-center justify-center p-4">
+        <div className="flex items-center gap-3">
+          <div className="relative w-16 h-16 flex items-center justify-center">
+            <div className="absolute inset-0 border-4 border-transparent border-t-blue-400 border-r-purple-500 rounded-full animate-spin w-16 h-16"></div>
+            <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
+              <Shield size={28} className="text-white" />
+            </div>
+          </div>
+          <span className="text-white text-lg">Loading...</span>
+        </div>
       </div>
     );
   }

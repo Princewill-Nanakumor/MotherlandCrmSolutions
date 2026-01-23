@@ -5,7 +5,7 @@ import { SessionProvider, useSession } from "next-auth/react";
 import Navbar from "@/components/homepageComponents/Navabar";
 import SignInForm from "@/components/authComponents/SignInForm";
 import { useEffect, useState } from "react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Shield } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
@@ -38,18 +38,103 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [hasShownExpiredToast, setHasShownExpiredToast] = useState(false);
 
+  // Component that renders the login form (shows immediately, even while checking auth)
+  function LoginFormContent() {
+    const { status } = useSession();
+    
+    // Don't render form if authenticated (AuthStateHandler handles redirect)
+    if (status === "authenticated") {
+      return null;
+    }
+    
+    // Render login form immediately (even if status is "loading" or "unauthenticated")
+    return (
+      <div
+        className="min-h-screen relative"
+        style={{
+          backgroundColor: "transparent",
+          background: "transparent",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <motion.div
+          className="relative z-10 min-h-screen"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          style={{ backgroundColor: "transparent" }}
+        >
+          <motion.div
+            variants={sectionVariants}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            <Navbar />
+          </motion.div>
+
+          <motion.div
+            variants={sectionVariants}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-8"
+          >
+            <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
+              <SignInForm />
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="fixed bottom-6 right-4 sm:right-6 md:right-8 z-50"
+            variants={sectionVariants}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Link
+              href="/"
+              className="flex items-center space-x-2 px-4 py-2.5 text-sm font-medium !text-white bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg transition-all duration-200 border border-white/30 shadow-lg"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden sm:inline !text-white">Contact Us</span>
+            </Link>
+          </motion.div>
+        </motion.div>
+      </div>
+    );
+  }
+
   // Small child component that can safely call `useSession()` because it's
   // rendered inside the `SessionProvider` below.
-  function RedirectIfAuthenticated() {
-    const { status } = useSession();
+  // This component handles authentication state and shows appropriate UI
+  function AuthStateHandler() {
+    const { status, data: session } = useSession();
     const router = useRouter();
 
+    // ✅ FIX: Move useEffect outside conditional - hooks must be called unconditionally
     useEffect(() => {
-      if (status === "authenticated") {
+      // Only redirect if authenticated
+      if (status === "authenticated" && session) {
         router.replace("/dashboard");
       }
-    }, [status, router]);
+    }, [status, session, router]);
 
+    // Show redirecting screen if authenticated (while redirect happens)
+    if (status === "authenticated" && session) {
+      return (
+        <div className="min-h-screen font-mono bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950 flex items-center justify-center p-4">
+          <div className="flex items-center gap-3">
+            <div className="relative w-16 h-16 flex items-center justify-center">
+              <div className="absolute inset-0 border-4 border-transparent border-t-blue-400 border-r-purple-500 rounded-full animate-spin w-16 h-16"></div>
+              <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
+                <Shield size={28} className="text-white" />
+              </div>
+            </div>
+            <span className="text-white text-lg">Redirecting to dashboard...</span>
+          </div>
+        </div>
+      );
+    }
+
+    // If loading or unauthenticated, return null to allow login form to render immediately
     return null;
   }
 
@@ -264,58 +349,12 @@ export default function LoginPage() {
         }}
       />
 
-      <SessionProvider>
-        <RedirectIfAuthenticated />
-        <div
-          className="min-h-screen relative"
-          style={{
-            backgroundColor: "transparent",
-            background: "transparent",
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          <motion.div
-            className="relative z-10 min-h-screen"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            style={{ backgroundColor: "transparent" }}
-          >
-            <motion.div
-              variants={sectionVariants}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-            >
-              <Navbar />
-            </motion.div>
-
-            <motion.div
-              variants={sectionVariants}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-8"
-            >
-              <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
-                <SignInForm />
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="fixed bottom-6 right-4 sm:right-6 md:right-8 z-50"
-              variants={sectionVariants}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link
-                href="/"
-                className="flex items-center space-x-2 px-4 py-2.5 text-sm font-medium !text-white bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg transition-all duration-200 border border-white/30 shadow-lg"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span className="hidden sm:inline !text-white">Contact Us</span>
-              </Link>
-            </motion.div>
-          </motion.div>
-        </div>
+      <SessionProvider
+        refetchInterval={5 * 60} // Refetch session every 5 minutes
+        refetchOnWindowFocus={true} // Refetch when user returns to window (important for offline → online)
+      >
+        <AuthStateHandler />
+        <LoginFormContent />
       </SessionProvider>
     </>
   );

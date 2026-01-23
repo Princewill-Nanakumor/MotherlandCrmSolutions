@@ -13,11 +13,11 @@ import { NextResponse } from "next/server";
  * requirement to remove forgot-password + Resend from the app.
  */
 export async function POST() {
-  return NextResponse.json(
-    {
-      success: false,
+    return NextResponse.json(
+      {
+        success: false,
       error: "Password reset is currently disabled for this application.",
-    },
+      },
     { status: 404 }
-  );
+    );
 }
