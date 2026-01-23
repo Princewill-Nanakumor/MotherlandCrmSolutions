@@ -41,16 +41,16 @@ export default function LoginPage() {
   // Component that renders the login form (shows immediately, even while checking auth)
   function LoginFormContent() {
     const { status } = useSession();
-    
+
     // Don't render form if authenticated (AuthStateHandler handles redirect)
     if (status === "authenticated") {
       return null;
     }
-    
+
     // Render login form immediately (even if status is "loading" or "unauthenticated")
     return (
       <div
-        className="min-h-screen relative"
+        className="relative min-h-screen"
         style={{
           backgroundColor: "transparent",
           background: "transparent",
@@ -83,7 +83,7 @@ export default function LoginPage() {
           </motion.div>
 
           <motion.div
-            className="fixed bottom-6 right-4 sm:right-6 md:right-8 z-50"
+            className="fixed z-50 bottom-6 right-4 sm:right-6 md:right-8"
             variants={sectionVariants}
             transition={{ duration: 0.6, ease: "easeOut" }}
             whileHover={{ scale: 1.05 }}
@@ -120,15 +120,17 @@ export default function LoginPage() {
     // Show redirecting screen if authenticated (while redirect happens)
     if (status === "authenticated" && session) {
       return (
-        <div className="min-h-screen font-mono bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950 flex items-center justify-center p-4">
+        <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950">
           <div className="flex items-center gap-3">
-            <div className="relative w-16 h-16 flex items-center justify-center">
-              <div className="absolute inset-0 border-4 border-transparent border-t-blue-400 border-r-purple-500 rounded-full animate-spin w-16 h-16"></div>
-              <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
+            <div className="relative flex items-center justify-center w-16 h-16">
+              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
+              <div className="relative z-10 flex items-center justify-center w-12 h-12 bg-gray-800 rounded-full to-purple-600">
                 <Shield size={28} className="text-white" />
               </div>
             </div>
-            <span className="text-white text-lg">Redirecting to dashboard...</span>
+            <span className="text-lg text-white">
+              Redirecting to dashboard...
+            </span>
           </div>
         </div>
       );
@@ -182,7 +184,7 @@ export default function LoginPage() {
     body.style.setProperty(
       "background-image",
       "url('/motherlandImage.jpg')",
-      "important"
+      "important",
     );
     body.style.setProperty("background-size", "cover", "important");
     body.style.setProperty("background-position", "center", "important");
@@ -197,13 +199,13 @@ export default function LoginPage() {
       body.style.setProperty(
         "background-image",
         "url('/motherlandImage.jpg')",
-        "important"
+        "important",
       );
       body.style.setProperty("background-color", "transparent", "important");
     };
     testImg.onerror = () => {
       console.error(
-        "❌ Background image failed to load from /motherlandImage.jpg"
+        "❌ Background image failed to load from /motherlandImage.jpg",
       );
       // Keep dark background if image fails
       body.style.setProperty("background-color", "#1a1a1a", "important");
@@ -219,7 +221,7 @@ export default function LoginPage() {
           child.style.setProperty(
             "background-color",
             "transparent",
-            "important"
+            "important",
           );
         }
       });
@@ -231,7 +233,7 @@ export default function LoginPage() {
       body.style.setProperty(
         "background-image",
         "url('/motherlandImage.jpg')",
-        "important"
+        "important",
       );
       body.style.setProperty("background-size", "cover", "important");
       body.style.setProperty("background-position", "center", "important");
@@ -259,7 +261,7 @@ export default function LoginPage() {
       bodyObserver.disconnect();
       // Remove preload link
       const preloadLink = document.querySelector(
-        'link[rel="preload"][href="/motherlandImage.jpg"]'
+        'link[rel="preload"][href="/motherlandImage.jpg"]',
       );
       if (preloadLink) {
         preloadLink.remove();
