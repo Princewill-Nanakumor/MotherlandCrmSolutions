@@ -533,11 +533,29 @@ export const useLeadsPage = (
     useLeadsStore();
 
   // ===== HELPER FUNCTIONS =====
+  // ✅ FIX: Updated to prioritize URL > localStorage > default
   const getInitialFilterValue = (
     key: string,
     urlValue: string | null,
     defaultValue: string[]
   ): string[] => {
+    // Priority 1: URL params (if present)
+    if (urlValue) {
+      try {
+        const parsed = JSON.parse(urlValue);
+        if (Array.isArray(parsed)) return parsed;
+        // Backward compatibility: if it's a string, convert to array
+        if (typeof parsed === "string" && parsed !== "all") {
+          return [parsed];
+        }
+      } catch {
+        if (urlValue !== "all") {
+          return [urlValue];
+        }
+      }
+    }
+    
+    // Priority 2: localStorage (if URL not present)
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(key);
       if (stored) {
@@ -555,25 +573,42 @@ export const useLeadsPage = (
           }
         }
       }
-      // Handle URL params
-      if (urlValue) {
-        try {
-          const parsed = JSON.parse(urlValue);
-          if (Array.isArray(parsed)) return parsed;
-        } catch {
-          if (urlValue !== "all") {
-            return [urlValue];
-          }
-        }
-      }
     }
+    
+    // Priority 3: Default value
     return defaultValue;
   };
 
   // ===== INITIAL FILTER VALUES =====
+  // ✅ FIX: Priority: URL > localStorage > default
   const initialCountry = searchParams.get("country");
   const initialStatus = searchParams.get("status");
   const initialSource = searchParams.get("source");
+  const initialUser = searchParams.get("user");
+  const initialCountryMode = searchParams.get("countryMode");
+  const initialStatusMode = searchParams.get("statusMode");
+  const initialSourceMode = searchParams.get("sourceMode");
+
+  // Helper to get filter mode with priority: URL > localStorage > default
+  const getInitialFilterMode = (
+    urlMode: string | null,
+    localStorageKey: string,
+    defaultValue: "include" | "exclude" = "include"
+  ): "include" | "exclude" => {
+    // Priority 1: URL param
+    if (urlMode === "include" || urlMode === "exclude") {
+      return urlMode;
+    }
+    // Priority 2: localStorage
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(localStorageKey);
+      if (stored === "exclude" || stored === "include") {
+        return stored;
+      }
+    }
+    // Priority 3: Default
+    return defaultValue;
+  };
 
   // ===== UI STATE =====
   const [uiState, setUiState] = useState({
@@ -585,37 +620,31 @@ export const useLeadsPage = (
       initialCountry,
       [] // Empty array = "all"
     ),
-    countryFilterMode: (() => {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("countryFilterMode");
-        return (stored === "exclude" ? "exclude" : "include") as "include" | "exclude";
-      }
-      return "include" as const;
-    })(),
+    countryFilterMode: getInitialFilterMode(
+      initialCountryMode,
+      "countryFilterMode",
+      "include"
+    ),
     filterByStatus: getInitialFilterValue(
       STORAGE_KEYS.FILTER_BY_STATUS,
       initialStatus,
       [] // Empty array = "all"
     ),
-    statusFilterMode: (() => {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("statusFilterMode");
-        return (stored === "exclude" ? "exclude" : "include") as "include" | "exclude";
-      }
-      return "include" as const;
-    })(),
+    statusFilterMode: getInitialFilterMode(
+      initialStatusMode,
+      "statusFilterMode",
+      "include"
+    ),
     filterBySource: getInitialFilterValue(
       STORAGE_KEYS.FILTER_BY_SOURCE,
       initialSource,
       [] // Empty array = "all"
     ),
-    sourceFilterMode: (() => {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("sourceFilterMode");
-        return (stored === "exclude" ? "exclude" : "include") as "include" | "exclude";
-      }
-      return "include" as const;
-    })(),
+    sourceFilterMode: getInitialFilterMode(
+      initialSourceMode,
+      "sourceFilterMode",
+      "include"
+    ),
     searchQuery: searchQuery,
   });
 
@@ -677,6 +706,31 @@ export const useLeadsPage = (
     }
   }, [uiState.filterBySource, isInitialized]);
 
+  // ✅ FIX: Initialize user filter from URL on mount (if URL has it, prioritize over Zustand store)
+  useEffect(() => {
+    const urlUser = searchParams.get("user");
+    if (urlUser) {
+      try {
+        const parsed = JSON.parse(urlUser);
+        if (Array.isArray(parsed)) {
+          const userFilterValue = parsed.length === 0 ? "all" : parsed.join(",");
+          if (filterByUser !== userFilterValue) {
+            setFilterByUser(userFilterValue);
+          }
+        } else if (typeof parsed === "string" && parsed !== "all") {
+          if (filterByUser !== parsed) {
+            setFilterByUser(parsed);
+          }
+        }
+      } catch {
+        // If not JSON, treat as single value
+        if (urlUser !== "all" && filterByUser !== urlUser) {
+          setFilterByUser(urlUser);
+        }
+      }
+    }
+  }, []); // Only run on mount to initialize from URL
+
   useEffect(() => {
     if (isInitialized) {
       // Handle filterByUser - convert to array if needed
@@ -684,10 +738,10 @@ export const useLeadsPage = (
         ? filterByUser 
         : filterByUser === "all" || !filterByUser 
           ? [] 
-          : [filterByUser];
+          : filterByUser.split(","); // ✅ FIX: Split comma-separated string to array
       localStorage.setItem(STORAGE_KEYS.FILTER_BY_USER, JSON.stringify(userFilter));
     }
-  }, [filterByUser, isInitialized]);
+  }, [filterByUser, isInitialized, setFilterByUser]);
 
   // ===== STATE SYNC EFFECTS =====
   useEffect(() => {
@@ -698,6 +752,10 @@ export const useLeadsPage = (
     const urlCountry = searchParams.get("country");
     const urlStatus = searchParams.get("status");
     const urlSource = searchParams.get("source");
+    const urlUser = searchParams.get("user");
+    const urlCountryMode = searchParams.get("countryMode");
+    const urlStatusMode = searchParams.get("statusMode");
+    const urlSourceMode = searchParams.get("sourceMode");
 
     // Parse URL params as arrays
     const parseUrlParam = (param: string | null): string[] => {
@@ -710,25 +768,72 @@ export const useLeadsPage = (
       }
     };
 
+    // ✅ FIX: Priority: URL > localStorage > default
+    // Country filter
     const targetCountry = parseUrlParam(urlCountry);
-    if (JSON.stringify(targetCountry) !== JSON.stringify(uiState.filterByCountry)) {
-      setUiState((prev) => ({ ...prev, filterByCountry: targetCountry }));
+    if (targetCountry.length > 0 || urlCountry === null) {
+      // URL has value or explicitly null - use URL
+      if (JSON.stringify(targetCountry) !== JSON.stringify(uiState.filterByCountry)) {
+        setUiState((prev) => ({ ...prev, filterByCountry: targetCountry }));
+      }
     }
 
+    // Status filter
     const targetStatus = parseUrlParam(urlStatus);
-    if (JSON.stringify(targetStatus) !== JSON.stringify(uiState.filterByStatus)) {
-      setUiState((prev) => ({ ...prev, filterByStatus: targetStatus }));
+    if (targetStatus.length > 0 || urlStatus === null) {
+      // URL has value or explicitly null - use URL
+      if (JSON.stringify(targetStatus) !== JSON.stringify(uiState.filterByStatus)) {
+        setUiState((prev) => ({ ...prev, filterByStatus: targetStatus }));
+      }
     }
 
+    // Source filter
     const targetSource = parseUrlParam(urlSource);
-    if (JSON.stringify(targetSource) !== JSON.stringify(uiState.filterBySource)) {
-      setUiState((prev) => ({ ...prev, filterBySource: targetSource }));
+    if (targetSource.length > 0 || urlSource === null) {
+      // URL has value or explicitly null - use URL
+      if (JSON.stringify(targetSource) !== JSON.stringify(uiState.filterBySource)) {
+        setUiState((prev) => ({ ...prev, filterBySource: targetSource }));
+      }
+    }
+
+    // ✅ FIX: Read user filter from URL
+    const targetUser = parseUrlParam(urlUser);
+    if (urlUser !== null) {
+      // URL has user filter - convert array to string format for Zustand store
+      const userFilterValue = targetUser.length === 0 ? "all" : targetUser.join(",");
+      if (filterByUser !== userFilterValue) {
+        setFilterByUser(userFilterValue);
+      }
+    }
+
+    // ✅ FIX: Read filter modes from URL
+    if (urlCountryMode && (urlCountryMode === "include" || urlCountryMode === "exclude")) {
+      if (uiState.countryFilterMode !== urlCountryMode) {
+        setUiState((prev) => ({ ...prev, countryFilterMode: urlCountryMode }));
+      }
+    }
+
+    if (urlStatusMode && (urlStatusMode === "include" || urlStatusMode === "exclude")) {
+      if (uiState.statusFilterMode !== urlStatusMode) {
+        setUiState((prev) => ({ ...prev, statusFilterMode: urlStatusMode }));
+      }
+    }
+
+    if (urlSourceMode && (urlSourceMode === "include" || urlSourceMode === "exclude")) {
+      if (uiState.sourceFilterMode !== urlSourceMode) {
+        setUiState((prev) => ({ ...prev, sourceFilterMode: urlSourceMode }));
+      }
     }
   }, [
     searchParams,
     uiState.filterByCountry,
     uiState.filterByStatus,
     uiState.filterBySource,
+    uiState.countryFilterMode,
+    uiState.statusFilterMode,
+    uiState.sourceFilterMode,
+    filterByUser,
+    setFilterByUser,
   ]);
 
   useEffect(() => {
@@ -977,9 +1082,14 @@ export const useLeadsPage = (
         params.set("country", JSON.stringify(countries));
       }
 
+      // ✅ FIX: Preserve country mode in URL
+      if (!params.has("countryMode")) {
+        params.set("countryMode", uiState.countryFilterMode);
+      }
+
       window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
     },
-    [pathname, searchParams]
+    [pathname, searchParams, uiState.countryFilterMode]
   );
 
   const handleCountryFilterModeChange = useCallback(
@@ -994,8 +1104,13 @@ export const useLeadsPage = (
         localStorage.setItem("countryFilterMode", mode);
         window.dispatchEvent(new CustomEvent("countryFilterModeChanged"));
       }
+
+      // ✅ FIX: Add filter mode to URL params
+      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      params.set("countryMode", mode);
+      window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
     },
-    []
+    [pathname, searchParams]
   );
 
   const handleStatusFilterModeChange = useCallback(
@@ -1010,8 +1125,13 @@ export const useLeadsPage = (
         localStorage.setItem("statusFilterMode", mode);
         window.dispatchEvent(new CustomEvent("statusFilterModeChanged"));
       }
+
+      // ✅ FIX: Add filter mode to URL params
+      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      params.set("statusMode", mode);
+      window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
     },
-    []
+    [pathname, searchParams]
   );
 
   const handleSourceFilterModeChange = useCallback(
@@ -1026,8 +1146,13 @@ export const useLeadsPage = (
         localStorage.setItem("sourceFilterMode", mode);
         window.dispatchEvent(new CustomEvent("sourceFilterModeChanged"));
       }
+
+      // ✅ FIX: Add filter mode to URL params
+      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      params.set("sourceMode", mode);
+      window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
     },
-    []
+    [pathname, searchParams]
   );
 
   const handleStatusFilterChange = useCallback(
@@ -1044,9 +1169,15 @@ export const useLeadsPage = (
       } else {
         params.set("status", JSON.stringify(statuses));
       }
+
+      // ✅ FIX: Preserve status mode in URL
+      if (!params.has("statusMode")) {
+        params.set("statusMode", uiState.statusFilterMode);
+      }
+
       window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
     },
-    [pathname, searchParams]
+    [pathname, searchParams, uiState.statusFilterMode]
   );
 
   const handleSourceFilterChange = useCallback(
@@ -1063,27 +1194,42 @@ export const useLeadsPage = (
       } else {
         params.set("source", JSON.stringify(sources));
       }
+
+      // ✅ FIX: Preserve source mode in URL
+      if (!params.has("sourceMode")) {
+        params.set("sourceMode", uiState.sourceFilterMode);
+      }
+
       window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
     },
-    [pathname, searchParams]
+    [pathname, searchParams, uiState.sourceFilterMode]
   );
 
   const handleFilterChange = useCallback(
     (values: string[]) => {
-      // Store as comma-separated string for backward compatibility with store
-      // The store expects a string, but we'll parse it back as array when needed
+      // ✅ FIX: Standardize to array format (like other filters)
+      // Store as comma-separated string for backward compatibility with Zustand store
       const value = values.length === 0 ? "all" : values.join(",");
       setFilterByUser(value);
 
-      const params = new URLSearchParams(window.location.search);
+      // ✅ FIX: Add user filter to URL params (was missing)
+      const params = new URLSearchParams(Array.from(searchParams.entries()));
       params.set("page", "1");
+      
+      if (values.length === 0) {
+        params.delete("user");
+      } else {
+        // Store as JSON array in URL (consistent with other filters)
+        params.set("user", JSON.stringify(values));
+      }
+      
       window.history.replaceState(
         {},
         "",
-        `${window.location.pathname}?${params.toString()}`
+        `${pathname}?${params.toString()}`
       );
     },
-    [setFilterByUser]
+    [setFilterByUser, pathname, searchParams]
   );
 
   const hasAssignedLeads = selectedLeads.some(
