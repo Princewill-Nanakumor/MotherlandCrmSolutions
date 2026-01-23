@@ -61,7 +61,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             clearInterval(checkExpiration);
           }
         },
-        5 * 60 * 1000
+        5 * 60 * 1000,
       ); // Check every 5 minutes
 
       return () => clearInterval(checkExpiration);
@@ -71,11 +71,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   // Use custom hook for localStorage persistence
   const [showHeader, setShowHeader] = useLocalStorage(
     "leadsToggle_showHeader",
-    true
+    true,
   );
   const [showControls, setShowControls] = useLocalStorage(
     "leadsToggle_showControls",
-    true
+    true,
   );
 
   // Check if we're on any leads page (admin or user)
@@ -230,10 +230,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   if (status === "loading") {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="relative w-16 h-16 flex items-center justify-center">
-          <div className="absolute inset-0 border-4 border-transparent border-t-blue-400 border-r-purple-500 rounded-full animate-spin w-16 h-16"></div>
-          <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
+      <div className="flex items-center justify-center h-screen">
+        <div className="relative flex items-center justify-center w-16 h-16">
+          <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
+          <div className="relative z-10 flex items-center justify-center w-12 h-12 bg-gray-800 rounded-full">
             <Shield size={28} className="text-white" />
           </div>
         </div>
@@ -255,7 +255,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     <ToggleProvider value={showLeadsToggles ? toggleContextValue : null}>
       <div className="flex h-screen bg-background text-foreground">
         <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex flex-col flex-1 overflow-hidden">
           <DashboardNavbar
             onSearch={setSearchQuery}
             searchQuery={searchQuery}
@@ -267,7 +267,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             onToggleControls={handleToggleControls}
             showSearch={showSearch}
           />
-          <main className="flex-1 overflow-auto p-8 bg-background text-foreground">
+          <main className="flex-1 p-8 overflow-auto bg-background text-foreground">
             {children}
           </main>
           <Footer />
