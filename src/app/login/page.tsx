@@ -34,20 +34,53 @@ const sectionVariants = {
   },
 };
 
+// Loading screen component
+function LoadingScreen() {
+  return (
+    <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950">
+      <div className="flex items-center gap-3">
+        <div className="relative flex items-center justify-center w-16 h-16">
+          <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
+          <div className="relative z-10 flex items-center justify-center w-12 h-12 bg-gray-800 rounded-full to-purple-600">
+            <Shield size={28} className="text-white" />
+          </div>
+        </div>
+        <span className="text-lg text-white">Loading...</span>
+      </div>
+    </div>
+  );
+}
+
+// Redirecting screen component
+function RedirectingScreen() {
+  return (
+    <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950">
+      <div className="flex items-center gap-3">
+        <div className="relative flex items-center justify-center w-16 h-16">
+          <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
+          <div className="relative z-10 flex items-center justify-center w-12 h-12 bg-gray-800 rounded-full to-purple-600">
+            <Shield size={28} className="text-white" />
+          </div>
+        </div>
+        <span className="text-lg text-white">Redirecting to dashboard...</span>
+      </div>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   const { toast } = useToast();
   const [hasShownExpiredToast, setHasShownExpiredToast] = useState(false);
 
-  // Component that renders the login form (shows immediately, even while checking auth)
+  // Component that renders the login form (only when status is confirmed unauthenticated)
   function LoginFormContent() {
     const { status } = useSession();
 
-    // Don't render form if authenticated (AuthStateHandler handles redirect)
-    if (status === "authenticated") {
+    // Only render form when we're certain the user is NOT authenticated
+    if (status !== "unauthenticated") {
       return null;
     }
 
-    // Render login form immediately (even if status is "loading" or "unauthenticated")
     return (
       <div
         className="relative min-h-screen"
@@ -102,41 +135,28 @@ export default function LoginPage() {
     );
   }
 
-  // Small child component that can safely call `useSession()` because it's
-  // rendered inside the `SessionProvider` below.
-  // This component handles authentication state and shows appropriate UI
+  // Auth state handler - manages all three possible states
   function AuthStateHandler() {
     const { status, data: session } = useSession();
     const router = useRouter();
 
-    // ✅ FIX: Move useEffect outside conditional - hooks must be called unconditionally
+    // Redirect when authenticated
     useEffect(() => {
-      // Only redirect if authenticated
       if (status === "authenticated" && session) {
         router.replace("/dashboard");
       }
     }, [status, session, router]);
 
-    // Show redirecting screen if authenticated (while redirect happens)
-    if (status === "authenticated" && session) {
-      return (
-        <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950">
-          <div className="flex items-center gap-3">
-            <div className="relative flex items-center justify-center w-16 h-16">
-              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
-              <div className="relative z-10 flex items-center justify-center w-12 h-12 bg-gray-800 rounded-full to-purple-600">
-                <Shield size={28} className="text-white" />
-              </div>
-            </div>
-            <span className="text-lg text-white">
-              Redirecting to dashboard...
-            </span>
-          </div>
-        </div>
-      );
+    // Show appropriate screen based on auth status
+    if (status === "loading") {
+      return <LoadingScreen />;
     }
 
-    // If loading or unauthenticated, return null to allow login form to render immediately
+    if (status === "authenticated") {
+      return <RedirectingScreen />;
+    }
+
+    // status === "unauthenticated" - return null to allow form to render
     return null;
   }
 
