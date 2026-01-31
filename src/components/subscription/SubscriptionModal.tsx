@@ -68,8 +68,11 @@ export default function SubscriptionModal({
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to subscribe");
+        const data = await response.json().catch(() => ({}));
+        const message = data?.error ?? data?.message ?? "Failed to subscribe";
+        throw new Error(
+          typeof message === "string" ? message : "Failed to subscribe",
+        );
       }
 
       // Remove the unused result variable
@@ -82,14 +85,13 @@ export default function SubscriptionModal({
       });
 
       onSuccess();
-    } catch (error) {
-      console.error("Subscription error:", error);
+    } catch (err) {
+      console.error("Subscription error:", err);
+      const message =
+        err instanceof Error ? err.message : "Failed to subscribe to plan";
       toast({
         title: "Subscription Failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to subscribe to plan",
+        description: message,
         variant: "destructive",
       });
     } finally {

@@ -93,7 +93,7 @@ export default function SubscriptionManager() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showDowngradeModal, setShowDowngradeModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(
-    null
+    null,
   );
 
   // Use React Query to fetch subscription data (same as navbar)
@@ -177,20 +177,27 @@ export default function SubscriptionManager() {
 
   const handleSubscribe = useCallback(
     (plan: SubscriptionPlan) => {
+      // Treat -1 as unlimited for downgrade/limit checks
+      const effectiveMax = (max: number) => (max === -1 ? Infinity : max);
+
       // Check if this would be a downgrade that exceeds limits
       if (subscriptionData && usageData) {
         const currentPlanData = SUBSCRIPTION_PLANS.find(
-          (p) => p.id === subscriptionData.currentPlan
+          (p) => p.id === subscriptionData.currentPlan,
         );
 
         if (currentPlanData) {
           const isDowngrade =
-            plan.maxLeads < currentPlanData.maxLeads ||
-            plan.maxUsers < currentPlanData.maxUsers;
+            effectiveMax(plan.maxLeads) <
+              effectiveMax(currentPlanData.maxLeads) ||
+            effectiveMax(plan.maxUsers) <
+              effectiveMax(currentPlanData.maxUsers);
 
           if (isDowngrade) {
-            const wouldExceedLeads = usageData.currentLeads > plan.maxLeads;
-            const wouldExceedUsers = usageData.currentUsers > plan.maxUsers;
+            const wouldExceedLeads =
+              plan.maxLeads !== -1 && usageData.currentLeads > plan.maxLeads;
+            const wouldExceedUsers =
+              plan.maxUsers !== -1 && usageData.currentUsers > plan.maxUsers;
 
             if (wouldExceedLeads || wouldExceedUsers) {
               setSelectedPlan(plan);
@@ -204,7 +211,7 @@ export default function SubscriptionManager() {
       setSelectedPlan(plan);
       setShowSubscriptionModal(true);
     },
-    [subscriptionData, usageData]
+    [subscriptionData, usageData],
   );
 
   const handleSubscriptionSuccess = useCallback(async () => {
@@ -338,7 +345,7 @@ export default function SubscriptionManager() {
             selectedPlan={selectedPlan}
             currentPlan={
               SUBSCRIPTION_PLANS.find(
-                (p) => p.id === subscriptionData.currentPlan
+                (p) => p.id === subscriptionData.currentPlan,
               ) || null
             }
             usageData={usageData}

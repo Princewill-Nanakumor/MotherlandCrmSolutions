@@ -54,6 +54,9 @@ export default function SubscriptionPlans({
 
   const hasZeroBalance = balance === 0;
 
+  // Treat -1 as unlimited (Infinity) for comparisons
+  const effectiveMax = (max: number) => (max === -1 ? Infinity : max);
+
   // Check if selecting this plan would be a downgrade that exceeds limits
   const wouldExceedLimits = (plan: SubscriptionPlan) => {
     if (!usageData) return false;
@@ -61,16 +64,18 @@ export default function SubscriptionPlans({
     const currentPlanData = plans.find((p) => p.id === currentPlan);
     if (!currentPlanData) return false;
 
-    // Check if this is a downgrade (lower limits than current plan)
+    // Check if this is a downgrade (lower limits than current plan). -1 = unlimited.
     const isDowngrade =
-      plan.maxLeads < currentPlanData.maxLeads ||
-      plan.maxUsers < currentPlanData.maxUsers;
+      effectiveMax(plan.maxLeads) < effectiveMax(currentPlanData.maxLeads) ||
+      effectiveMax(plan.maxUsers) < effectiveMax(currentPlanData.maxUsers);
 
     if (!isDowngrade) return false;
 
-    // Check if current usage would exceed the new plan limits
-    const wouldExceedLeads = usageData.currentLeads > plan.maxLeads;
-    const wouldExceedUsers = usageData.currentUsers > plan.maxUsers;
+    // Check if current usage would exceed the new plan limits (unlimited = -1 never exceeds)
+    const wouldExceedLeads =
+      plan.maxLeads !== -1 && usageData.currentLeads > plan.maxLeads;
+    const wouldExceedUsers =
+      plan.maxUsers !== -1 && usageData.currentUsers > plan.maxUsers;
 
     return wouldExceedLeads || wouldExceedUsers;
   };
