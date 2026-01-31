@@ -18,6 +18,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { ToggleProvider } from "@/context/ToggleContext";
 import ReminderNotifications from "@/components/notifications/ReminderNotifications";
 import { Toaster } from "@/components/ui/toaster";
+import { SelectedLeadsBanner } from "@/components/dashboardComponents/SelectedLeadsBanner";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { searchQuery, setSearchQuery, isLoading } = useSearchContext();
@@ -267,6 +268,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             onToggleControls={handleToggleControls}
             showSearch={showSearch}
           />
+          <SelectedLeadsBanner />
           <main className="flex-1 p-8 overflow-auto bg-background text-foreground">
             {children}
           </main>

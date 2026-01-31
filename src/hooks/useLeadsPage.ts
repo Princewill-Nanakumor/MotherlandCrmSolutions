@@ -29,7 +29,7 @@ const STORAGE_KEYS = {
 
 export const useLeadsPage = (
   searchQuery: string,
-  setLayoutLoading?: (loading: boolean) => void
+  setLayoutLoading?: (loading: boolean) => void,
 ) => {
   // ===== HOOKS & STATE =====
   const { data: session, status } = useSession();
@@ -239,7 +239,7 @@ export const useLeadsPage = (
         queryClient.setQueryData(["leads"], context.previousLeads);
         // ⚡ Rollback selectedLeads in store to match previous state
         const previousLeadsMap = new Map(
-          context.previousLeads.map((lead) => [lead._id, lead])
+          context.previousLeads.map((lead) => [lead._id, lead]),
         );
         const currentSelected = selectedLeads.map((lead) => {
           const previousLead = previousLeadsMap.get(lead._id);
@@ -269,7 +269,7 @@ export const useLeadsPage = (
       // ⚡ Non-blocking refetch - don't await to keep UI responsive
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.refetchQueries({ queryKey: ["leads"] });
-      
+
       // Also refresh assigned-leads views (user leads page, badges, etc.)
       queryClient.invalidateQueries({
         queryKey: assignedLeadsKeys.all,
@@ -345,7 +345,7 @@ export const useLeadsPage = (
         queryClient.setQueryData(["leads"], context.previousLeads);
         // ⚡ Rollback selectedLeads in store to match previous state
         const previousLeadsMap = new Map(
-          context.previousLeads.map((lead) => [lead._id, lead])
+          context.previousLeads.map((lead) => [lead._id, lead]),
         );
         const currentSelected = selectedLeads.map((lead) => {
           const previousLead = previousLeadsMap.get(lead._id);
@@ -375,7 +375,7 @@ export const useLeadsPage = (
       // ⚡ Non-blocking refetch - don't await to keep UI responsive
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.refetchQueries({ queryKey: ["leads"] });
-      
+
       // Also refresh assigned-leads views (user leads page, badges, etc.)
       queryClient.invalidateQueries({
         queryKey: assignedLeadsKeys.all,
@@ -537,7 +537,7 @@ export const useLeadsPage = (
   const getInitialFilterValue = (
     key: string,
     urlValue: string | null,
-    defaultValue: string[]
+    defaultValue: string[],
   ): string[] => {
     // Priority 1: URL params (if present)
     if (urlValue) {
@@ -554,7 +554,7 @@ export const useLeadsPage = (
         }
       }
     }
-    
+
     // Priority 2: localStorage (if URL not present)
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(key);
@@ -574,7 +574,7 @@ export const useLeadsPage = (
         }
       }
     }
-    
+
     // Priority 3: Default value
     return defaultValue;
   };
@@ -593,7 +593,7 @@ export const useLeadsPage = (
   const getInitialFilterMode = (
     urlMode: string | null,
     localStorageKey: string,
-    defaultValue: "include" | "exclude" = "include"
+    defaultValue: "include" | "exclude" = "include",
   ): "include" | "exclude" => {
     // Priority 1: URL param
     if (urlMode === "include" || urlMode === "exclude") {
@@ -618,32 +618,32 @@ export const useLeadsPage = (
     filterByCountry: getInitialFilterValue(
       STORAGE_KEYS.FILTER_BY_COUNTRY,
       initialCountry,
-      [] // Empty array = "all"
+      [], // Empty array = "all"
     ),
     countryFilterMode: getInitialFilterMode(
       initialCountryMode,
       "countryFilterMode",
-      "include"
+      "include",
     ),
     filterByStatus: getInitialFilterValue(
       STORAGE_KEYS.FILTER_BY_STATUS,
       initialStatus,
-      [] // Empty array = "all"
+      [], // Empty array = "all"
     ),
     statusFilterMode: getInitialFilterMode(
       initialStatusMode,
       "statusFilterMode",
-      "include"
+      "include",
     ),
     filterBySource: getInitialFilterValue(
       STORAGE_KEYS.FILTER_BY_SOURCE,
       initialSource,
-      [] // Empty array = "all"
+      [], // Empty array = "all"
     ),
     sourceFilterMode: getInitialFilterMode(
       initialSourceMode,
       "sourceFilterMode",
-      "include"
+      "include",
     ),
     searchQuery: searchQuery,
   });
@@ -662,7 +662,7 @@ export const useLeadsPage = (
     if (isInitialized) {
       localStorage.setItem(
         STORAGE_KEYS.FILTER_BY_COUNTRY,
-        JSON.stringify(uiState.filterByCountry)
+        JSON.stringify(uiState.filterByCountry),
       );
     }
   }, [uiState.filterByCountry, isInitialized]);
@@ -671,7 +671,7 @@ export const useLeadsPage = (
     if (isInitialized) {
       localStorage.setItem(
         STORAGE_KEYS.FILTER_BY_STATUS,
-        JSON.stringify(uiState.filterByStatus)
+        JSON.stringify(uiState.filterByStatus),
       );
     }
   }, [uiState.filterByStatus, isInitialized]);
@@ -701,7 +701,7 @@ export const useLeadsPage = (
     if (isInitialized) {
       localStorage.setItem(
         STORAGE_KEYS.FILTER_BY_SOURCE,
-        JSON.stringify(uiState.filterBySource)
+        JSON.stringify(uiState.filterBySource),
       );
     }
   }, [uiState.filterBySource, isInitialized]);
@@ -713,7 +713,8 @@ export const useLeadsPage = (
       try {
         const parsed = JSON.parse(urlUser);
         if (Array.isArray(parsed)) {
-          const userFilterValue = parsed.length === 0 ? "all" : parsed.join(",");
+          const userFilterValue =
+            parsed.length === 0 ? "all" : parsed.join(",");
           if (filterByUser !== userFilterValue) {
             setFilterByUser(userFilterValue);
           }
@@ -734,12 +735,15 @@ export const useLeadsPage = (
   useEffect(() => {
     if (isInitialized) {
       // Handle filterByUser - convert to array if needed
-      const userFilter = Array.isArray(filterByUser) 
-        ? filterByUser 
-        : filterByUser === "all" || !filterByUser 
-          ? [] 
+      const userFilter = Array.isArray(filterByUser)
+        ? filterByUser
+        : filterByUser === "all" || !filterByUser
+          ? []
           : filterByUser.split(","); // ✅ FIX: Split comma-separated string to array
-      localStorage.setItem(STORAGE_KEYS.FILTER_BY_USER, JSON.stringify(userFilter));
+      localStorage.setItem(
+        STORAGE_KEYS.FILTER_BY_USER,
+        JSON.stringify(userFilter),
+      );
     }
   }, [filterByUser, isInitialized, setFilterByUser]);
 
@@ -773,7 +777,10 @@ export const useLeadsPage = (
     const targetCountry = parseUrlParam(urlCountry);
     if (targetCountry.length > 0 || urlCountry === null) {
       // URL has value or explicitly null - use URL
-      if (JSON.stringify(targetCountry) !== JSON.stringify(uiState.filterByCountry)) {
+      if (
+        JSON.stringify(targetCountry) !==
+        JSON.stringify(uiState.filterByCountry)
+      ) {
         setUiState((prev) => ({ ...prev, filterByCountry: targetCountry }));
       }
     }
@@ -782,7 +789,9 @@ export const useLeadsPage = (
     const targetStatus = parseUrlParam(urlStatus);
     if (targetStatus.length > 0 || urlStatus === null) {
       // URL has value or explicitly null - use URL
-      if (JSON.stringify(targetStatus) !== JSON.stringify(uiState.filterByStatus)) {
+      if (
+        JSON.stringify(targetStatus) !== JSON.stringify(uiState.filterByStatus)
+      ) {
         setUiState((prev) => ({ ...prev, filterByStatus: targetStatus }));
       }
     }
@@ -791,35 +800,49 @@ export const useLeadsPage = (
     const targetSource = parseUrlParam(urlSource);
     if (targetSource.length > 0 || urlSource === null) {
       // URL has value or explicitly null - use URL
-      if (JSON.stringify(targetSource) !== JSON.stringify(uiState.filterBySource)) {
+      if (
+        JSON.stringify(targetSource) !== JSON.stringify(uiState.filterBySource)
+      ) {
         setUiState((prev) => ({ ...prev, filterBySource: targetSource }));
       }
     }
 
-    // ✅ FIX: Read user filter from URL
+    // ✅ FIX: Read user filter from URL (when urlUser is null = no param, sync to "all")
     const targetUser = parseUrlParam(urlUser);
     if (urlUser !== null) {
-      // URL has user filter - convert array to string format for Zustand store
-      const userFilterValue = targetUser.length === 0 ? "all" : targetUser.join(",");
+      const userFilterValue =
+        targetUser.length === 0 ? "all" : targetUser.join(",");
       if (filterByUser !== userFilterValue) {
         setFilterByUser(userFilterValue);
       }
+    } else if (filterByUser !== "all") {
+      // URL has no user param — keep state in sync so one click clears filter
+      setFilterByUser("all");
     }
 
     // ✅ FIX: Read filter modes from URL
-    if (urlCountryMode && (urlCountryMode === "include" || urlCountryMode === "exclude")) {
+    if (
+      urlCountryMode &&
+      (urlCountryMode === "include" || urlCountryMode === "exclude")
+    ) {
       if (uiState.countryFilterMode !== urlCountryMode) {
         setUiState((prev) => ({ ...prev, countryFilterMode: urlCountryMode }));
       }
     }
 
-    if (urlStatusMode && (urlStatusMode === "include" || urlStatusMode === "exclude")) {
+    if (
+      urlStatusMode &&
+      (urlStatusMode === "include" || urlStatusMode === "exclude")
+    ) {
       if (uiState.statusFilterMode !== urlStatusMode) {
         setUiState((prev) => ({ ...prev, statusFilterMode: urlStatusMode }));
       }
     }
 
-    if (urlSourceMode && (urlSourceMode === "include" || urlSourceMode === "exclude")) {
+    if (
+      urlSourceMode &&
+      (urlSourceMode === "include" || urlSourceMode === "exclude")
+    ) {
       if (uiState.sourceFilterMode !== urlSourceMode) {
         setUiState((prev) => ({ ...prev, sourceFilterMode: urlSourceMode }));
       }
@@ -857,8 +880,12 @@ export const useLeadsPage = (
     }
     // Sort leads alphabetically by name (firstName + lastName)
     return [...leads].sort((a, b) => {
-      const nameA = `${a.firstName || ""} ${a.lastName || ""}`.trim().toLowerCase();
-      const nameB = `${b.firstName || ""} ${b.lastName || ""}`.trim().toLowerCase();
+      const nameA = `${a.firstName || ""} ${a.lastName || ""}`
+        .trim()
+        .toLowerCase();
+      const nameB = `${b.firstName || ""} ${b.lastName || ""}`
+        .trim()
+        .toLowerCase();
       if (nameA === "" && nameB === "") return 0;
       if (nameA === "") return 1;
       if (nameB === "") return -1;
@@ -875,7 +902,7 @@ export const useLeadsPage = (
     }
 
     // User filter - handle string (comma-separated) and convert to array
-    const userFilter = 
+    const userFilter =
       filterByUser === "all" || !filterByUser
         ? []
         : filterByUser.includes(",")
@@ -890,7 +917,7 @@ export const useLeadsPage = (
       filtered = filterLeadsByCountry(
         filtered,
         uiState.filterByCountry,
-        uiState.countryFilterMode
+        uiState.countryFilterMode,
       );
     }
 
@@ -898,12 +925,21 @@ export const useLeadsPage = (
     if (uiState.filterByStatus.length > 0) {
       // Convert status array to format expected by filterLeadsByStatus
       const statusIds = statuses.map((s) => ({ _id: s.id, name: s.name }));
-      filtered = filterLeadsByStatus(filtered, uiState.filterByStatus, statusIds, uiState.statusFilterMode);
+      filtered = filterLeadsByStatus(
+        filtered,
+        uiState.filterByStatus,
+        statusIds,
+        uiState.statusFilterMode,
+      );
     }
 
     // Source filter - now array
     if (uiState.filterBySource.length > 0) {
-      filtered = filterLeadsBySource(filtered, uiState.filterBySource, uiState.sourceFilterMode);
+      filtered = filterLeadsBySource(
+        filtered,
+        uiState.filterBySource,
+        uiState.sourceFilterMode,
+      );
     }
 
     return filtered;
@@ -977,7 +1013,7 @@ export const useLeadsPage = (
 
   const handleUnassignLeads = useCallback(async () => {
     const leadsToUnassign = selectedLeads.filter(
-      (lead) => !!getAssignedUserId(lead.assignedTo)
+      (lead) => !!getAssignedUserId(lead.assignedTo),
     );
 
     if (leadsToUnassign.length === 0) {
@@ -1027,7 +1063,7 @@ export const useLeadsPage = (
         console.error("Bulk status change error:", error);
       }
     },
-    [selectedLeads, bulkStatusChangeMutation, setSelectedLeads, toast]
+    [selectedLeads, bulkStatusChangeMutation, setSelectedLeads, toast],
   );
 
   const handleBulkDelete = useCallback(async () => {
@@ -1055,7 +1091,7 @@ export const useLeadsPage = (
 
   const handleSelectionChange = useCallback(
     (newSelectedLeads: Lead[]) => setSelectedLeads(newSelectedLeads),
-    [setSelectedLeads]
+    [setSelectedLeads],
   );
 
   const handleCountryFilterChange = useCallback(
@@ -1069,7 +1105,7 @@ export const useLeadsPage = (
       if (typeof window !== "undefined") {
         localStorage.setItem(
           STORAGE_KEYS.FILTER_BY_COUNTRY,
-          JSON.stringify(countries)
+          JSON.stringify(countries),
         );
       }
 
@@ -1089,7 +1125,7 @@ export const useLeadsPage = (
 
       window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
     },
-    [pathname, searchParams, uiState.countryFilterMode]
+    [pathname, searchParams, uiState.countryFilterMode],
   );
 
   const handleCountryFilterModeChange = useCallback(
@@ -1110,7 +1146,7 @@ export const useLeadsPage = (
       params.set("countryMode", mode);
       window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
     },
-    [pathname, searchParams]
+    [pathname, searchParams],
   );
 
   const handleStatusFilterModeChange = useCallback(
@@ -1131,7 +1167,7 @@ export const useLeadsPage = (
       params.set("statusMode", mode);
       window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
     },
-    [pathname, searchParams]
+    [pathname, searchParams],
   );
 
   const handleSourceFilterModeChange = useCallback(
@@ -1152,7 +1188,7 @@ export const useLeadsPage = (
       params.set("sourceMode", mode);
       window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
     },
-    [pathname, searchParams]
+    [pathname, searchParams],
   );
 
   const handleStatusFilterChange = useCallback(
@@ -1177,7 +1213,7 @@ export const useLeadsPage = (
 
       window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
     },
-    [pathname, searchParams, uiState.statusFilterMode]
+    [pathname, searchParams, uiState.statusFilterMode],
   );
 
   const handleSourceFilterChange = useCallback(
@@ -1202,7 +1238,7 @@ export const useLeadsPage = (
 
       window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
     },
-    [pathname, searchParams, uiState.sourceFilterMode]
+    [pathname, searchParams, uiState.sourceFilterMode],
   );
 
   const handleFilterChange = useCallback(
@@ -1212,28 +1248,23 @@ export const useLeadsPage = (
       const value = values.length === 0 ? "all" : values.join(",");
       setFilterByUser(value);
 
-      // ✅ FIX: Add user filter to URL params (was missing)
+      // ✅ FIX: Use router.replace so searchParams update immediately and sync effect
+      // doesn't overwrite with stale URL (avoids needing to click twice to clear user filter)
       const params = new URLSearchParams(Array.from(searchParams.entries()));
       params.set("page", "1");
-      
       if (values.length === 0) {
         params.delete("user");
       } else {
-        // Store as JSON array in URL (consistent with other filters)
         params.set("user", JSON.stringify(values));
       }
-      
-      window.history.replaceState(
-        {},
-        "",
-        `${pathname}?${params.toString()}`
-      );
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname);
     },
-    [setFilterByUser, pathname, searchParams]
+    [setFilterByUser, pathname, searchParams, router],
   );
 
   const hasAssignedLeads = selectedLeads.some(
-    (lead) => !!getAssignedUserId(lead.assignedTo)
+    (lead) => !!getAssignedUserId(lead.assignedTo),
   );
 
   // ===== RETURN OBJECT =====

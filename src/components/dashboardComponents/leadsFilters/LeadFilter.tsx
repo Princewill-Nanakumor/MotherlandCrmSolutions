@@ -124,9 +124,9 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
 
   return (
     <>
-      <div className="sticky top-0 z-10 px-8 pb-5 mt-8 bg-white dark:bg-gray-800">
-        <div className="flex items-center justify-between gap-4 px-4 py-4 border rounded-xl">
-          <div className="flex items-center gap-3 ">
+      <div className="sticky top-0 z-10 px-4 sm:px-6 lg:px-8 pb-5 mt-8 bg-white dark:bg-gray-800">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-3 py-4 sm:px-4 border rounded-xl">
+          <div className="flex flex-wrap items-center gap-2 min-w-0 w-full md:w-auto order-2 md:order-1">
             <ErrorBoundary
               fallback={
                 <div className="text-red-500">Bulk actions failed to load</div>
@@ -147,7 +147,7 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
             </ErrorBoundary>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0 w-full md:w-auto order-1 md:order-2">
             <ErrorBoundary fallback={<FilterSkeleton />}>
               {/* Add Lead Button - with loading skeleton */}
               {showFilterSkeletons ? (

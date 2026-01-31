@@ -45,8 +45,11 @@ export default function DashboardOverview({
     return null;
   }
 
-  const activeUsers = users.filter((user) => user.status === "ACTIVE");
-  
+  // Active Users = agents managed by admin (exclude the admin themselves)
+  const activeUsers = users.filter(
+    (user) => user.status === "ACTIVE" && user.id !== session?.user?.id,
+  );
+
   // Show skeleton if loading OR if we haven't loaded data yet (prevents showing 0)
   // This ensures skeleton shows during initial load before API responds
   const shouldShowStatsSkeleton = isLoadingStats || !hasData;

@@ -29,21 +29,52 @@ export async function GET() {
 
     if (session.user.role === "ADMIN") {
       // Admin: counts across their adminId
+      const adminObjectId = new ObjectId(session.user.id);
       const total = await db.collection("leads").countDocuments(adminFilter);
-      const assigned = await db.collection("leads").countDocuments({
+
+      // Assigned = only leads assigned to this admin's agents (same definition as all-leads filter "my users")
+      // Get agent IDs: users created by this admin, excluding the admin themselves
+      const agentDocs = await db
+        .collection("users")
+        .find(
+          {
+            adminId: adminObjectId,
+            _id: { $ne: adminObjectId },
+          },
+          { projection: { _id: 1 } },
+        )
+        .toArray();
+      const agentObjectIds = agentDocs.map(
+        (d: { _id: { toString: () => string } }) => d._id,
+      );
+
+      const assigned =
+        agentObjectIds.length === 0
+          ? 0
+          : await db.collection("leads").countDocuments({
+              ...adminFilter,
+              $or: [
+                { "assignedTo._id": { $in: agentObjectIds } },
+                { assignedTo: { $in: agentObjectIds } },
+              ],
+            });
+
+      // Unassigned = leads with no assignee
+      const unassigned = await db.collection("leads").countDocuments({
         ...adminFilter,
-        assignedTo: { $exists: true, $ne: null },
+        $or: [{ assignedTo: null }, { assignedTo: { $exists: false } }],
       });
-      const unassigned = total - assigned;
 
       return NextResponse.json({ total, assigned, unassigned, myLeads: 0 });
     }
 
-    // Agent: only counts assigned to this agent
+    // Agent: only counts leads assigned to this agent
+    // assignedTo can be stored as ObjectId or as object { _id, firstName, lastName }
     const userId = session.user.id;
+    const userObjectId = new ObjectId(userId);
     const myLeads = await db.collection("leads").countDocuments({
       ...adminFilter,
-      assignedTo: new ObjectId(userId),
+      $or: [{ "assignedTo._id": userObjectId }, { assignedTo: userObjectId }],
     });
 
     // Also provide overall counts for admin if available (fast counts)
@@ -64,7 +95,7 @@ export async function GET() {
     console.error("Error in /api/leads/stats:", error);
     return NextResponse.json(
       { error: "Failed to fetch lead stats" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

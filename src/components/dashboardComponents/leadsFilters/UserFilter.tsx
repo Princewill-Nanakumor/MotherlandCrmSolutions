@@ -2,6 +2,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { User } from "@/types/user.types";
 import { MultiSelectFilter } from "./MultiSelectFilter";
@@ -24,13 +25,17 @@ export const UserFilter = ({
   onModeChange,
 }: UserFilterProps) => {
   // Internal mode state if not controlled externally
-  const [internalMode, setInternalMode] = useState<"include" | "exclude">(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("userFilterMode");
-      return (stored === "exclude" ? "exclude" : "include") as "include" | "exclude";
-    }
-    return "include";
-  });
+  const [internalMode, setInternalMode] = useState<"include" | "exclude">(
+    () => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("userFilterMode");
+        return (stored === "exclude" ? "exclude" : "include") as
+          | "include"
+          | "exclude";
+      }
+      return "include";
+    },
+  );
 
   const mode = externalMode ?? internalMode;
 
@@ -51,6 +56,10 @@ export const UserFilter = ({
       setInternalMode(newMode);
     }
   };
+
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id;
+
   // ✅ FIX: Use useQuery to subscribe to cache updates
   const { data: users = [] } = useQuery<User[]>({
     queryKey: ["users"],
@@ -70,19 +79,20 @@ export const UserFilter = ({
   const options = useMemo(() => {
     const dropdownUsers = users.filter((user) => user.status === "ACTIVE");
 
-    // Create user options and sort alphabetically by name
-    const userOptions = dropdownUsers
+    // Don't show current admin in the filter list (all-leads is admin-only)
+    const filteredUsers = currentUserId
+      ? dropdownUsers.filter((user) => user.id !== currentUserId)
+      : dropdownUsers;
+
+    const userOptions = filteredUsers
       .map((user) => ({
         value: user.id,
         label: `${user.firstName} ${user.lastName}`,
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
 
-    return [
-      { value: "unassigned", label: "Unassigned Leads" },
-      ...userOptions,
-    ];
-  }, [users]);
+    return [{ value: "unassigned", label: "Unassigned Leads" }, ...userOptions];
+  }, [users, currentUserId]);
 
   const getPlaceholder = () => {
     if (value.length === 0) {
