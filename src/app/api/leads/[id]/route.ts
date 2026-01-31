@@ -9,7 +9,7 @@ import { Db, ObjectId } from "mongodb";
 // Helper to get user details for assignedTo
 async function getAssignedToUser(
   db: Db,
-  assignedTo: ObjectId | string | null | undefined
+  assignedTo: ObjectId | string | null | undefined,
 ) {
   if (!assignedTo) return null;
 
@@ -21,7 +21,7 @@ async function getAssignedToUser(
             ? new ObjectId(assignedTo)
             : assignedTo,
       },
-      { projection: { firstName: 1, lastName: 1, email: 1 } }
+      { projection: { firstName: 1, lastName: 1, email: 1 } },
     );
 
     if (!user) return null;
@@ -41,7 +41,7 @@ async function getAssignedToUser(
 // GET /api/leads/[id]
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -87,14 +87,30 @@ export async function GET(
     if (!lead) {
       return NextResponse.json(
         { error: "Lead not found or not authorized" },
-        { status: 404 }
+        { status: 404 },
       );
+    }
+
+    // Normalize assignedTo: in DB it can be ObjectId, string, or object { _id, firstName, lastName }
+    let assignedToUserId: ObjectId | string | null = null;
+    if (lead.assignedTo) {
+      if (
+        typeof lead.assignedTo === "object" &&
+        lead.assignedTo !== null &&
+        "_id" in lead.assignedTo
+      ) {
+        assignedToUserId = (lead.assignedTo as { _id: ObjectId })._id;
+      } else if (typeof lead.assignedTo === "string") {
+        assignedToUserId = lead.assignedTo;
+      } else {
+        assignedToUserId = lead.assignedTo as ObjectId;
+      }
     }
 
     // Populate assignedTo with user details
     const assignedToUser = await getAssignedToUser(
       db as unknown as Db,
-      lead.assignedTo
+      assignedToUserId,
     );
 
     const transformedLead = {
@@ -126,7 +142,7 @@ export async function GET(
     console.error("Error fetching lead:", error);
     return NextResponse.json(
       { error: "Failed to fetch lead" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -134,7 +150,7 @@ export async function GET(
 // PUT /api/leads/[id]
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -181,7 +197,7 @@ export async function PUT(
     if (!currentLead) {
       return NextResponse.json(
         { error: "Lead not found or not authorized" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -218,7 +234,7 @@ export async function PUT(
         if (!mongoose.Types.ObjectId.isValid(updateData.assignedTo)) {
           return NextResponse.json(
             { error: "Invalid assignedTo user ID" },
-            { status: 400 }
+            { status: 400 },
           );
         }
         updatePayload.assignedTo = new ObjectId(updateData.assignedTo);
@@ -235,7 +251,7 @@ export async function PUT(
     if (updateResult.matchedCount === 0) {
       return NextResponse.json(
         { error: "Lead not found or not authorized" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -245,7 +261,7 @@ export async function PUT(
       Object.keys(updatePayload).forEach((key) => {
         if (key !== "updatedAt" && currentLead[key] !== updatePayload[key]) {
           changes.push(
-            `${key}: "${currentLead[key]}" → "${updatePayload[key]}"`
+            `${key}: "${currentLead[key]}" → "${updatePayload[key]}"`,
           );
         }
       });
@@ -260,7 +276,7 @@ export async function PUT(
               "The update operation completed but no fields were modified in the database.",
             attemptedChanges: changes,
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -271,14 +287,14 @@ export async function PUT(
     if (!updatedLead || !updatedLead._id) {
       return NextResponse.json(
         { error: "Failed to retrieve updated lead" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     // Populate assignedTo with user details for the response
     const assignedToUser = await getAssignedToUser(
       db as unknown as Db,
-      updatedLead.assignedTo
+      updatedLead.assignedTo,
     );
 
     const transformedLead = {
@@ -313,7 +329,7 @@ export async function PUT(
         error: "Failed to update lead",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

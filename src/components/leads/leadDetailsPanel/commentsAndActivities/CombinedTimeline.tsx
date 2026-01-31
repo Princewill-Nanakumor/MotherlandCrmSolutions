@@ -15,8 +15,8 @@ interface CombinedTimelineProps {
   editContent: string;
   setEditContent: (content: string) => void;
   isAdmin: boolean;
-  deletingId: string | null;
-  isDeleting: boolean;
+  /** Id of the comment currently being deleted (only that row shows spinner) */
+  deletingCommentId: string | null;
   isEditingMutation: boolean;
   onEdit: (comment: Comment) => void;
   onSaveEdit: (comment: Comment) => void;
@@ -31,8 +31,7 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
   editContent,
   setEditContent,
   isAdmin,
-  deletingId,
-  isDeleting,
+  deletingCommentId,
   isEditingMutation,
   onEdit,
   onSaveEdit,
@@ -100,7 +99,8 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
               editContent={editContent}
               setEditContent={setEditContent}
               isAdmin={isAdmin}
-              isDeleting={deletingId === comment._id || isDeleting}
+              isDeleting={deletingCommentId === comment._id}
+              isDeleteDisabled={!!deletingCommentId}
               isEditingMutation={isEditingMutation}
               onEdit={onEdit}
               onSaveEdit={onSaveEdit}

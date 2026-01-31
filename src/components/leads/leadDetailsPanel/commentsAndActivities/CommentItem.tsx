@@ -14,7 +14,10 @@ interface CommentItemProps {
   editContent: string;
   setEditContent: (content: string) => void;
   isAdmin: boolean;
+  /** True only for the comment row currently being deleted (shows spinner) */
   isDeleting: boolean;
+  /** True when any delete is in progress (disables all delete buttons) */
+  isDeleteDisabled?: boolean;
   isEditingMutation: boolean;
   onEdit: (comment: Comment) => void;
   onSaveEdit: (comment: Comment) => void;
@@ -29,6 +32,7 @@ export const CommentItem: FC<CommentItemProps> = ({
   setEditContent,
   isAdmin,
   isDeleting,
+  isDeleteDisabled = false,
   isEditingMutation,
   onEdit,
   onSaveEdit,
@@ -36,7 +40,7 @@ export const CommentItem: FC<CommentItemProps> = ({
   onDelete,
 }) => {
   return (
-    <div className="p-4 rounded-md bg-purple-50 dark:bg-gray-700/50 border border-purple-200 dark:border-gray-600">
+    <div className="group p-4 rounded-md bg-purple-50 dark:bg-gray-700/50 border border-purple-200 dark:border-gray-600">
       <div className="flex gap-3">
         <Avatar className="h-10 w-10 shrink-0">
           <AvatarImage src={comment.createdBy?.avatar} />
@@ -106,7 +110,7 @@ export const CommentItem: FC<CommentItemProps> = ({
         </div>
 
         {isAdmin && !isEditing && (
-          <div className="flex gap-1 shrink-0">
+          <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <Button
               variant="ghost"
               size="sm"
@@ -121,7 +125,7 @@ export const CommentItem: FC<CommentItemProps> = ({
               size="sm"
               className="!text-gray-500 hover:!text-red-500 dark:!text-gray-400 dark:hover:!text-red-400"
               onClick={() => onDelete(comment._id)}
-              disabled={isDeleting}
+              disabled={isDeleting || isDeleteDisabled}
             >
               {isDeleting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

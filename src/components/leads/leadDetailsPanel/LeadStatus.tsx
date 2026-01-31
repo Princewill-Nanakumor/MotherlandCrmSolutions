@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Lead } from "@/types/leads";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, User } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -69,10 +69,22 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
       }
       return status;
     },
-    [statuses]
+    [statuses],
   );
 
   const currentStatusObj = findStatusByIdOrName(lead.status);
+
+  const isAdmin = session?.user?.role === "ADMIN";
+
+  const getAssignedToDisplay = useCallback(() => {
+    if (!lead.assignedTo) return "Unassigned";
+    if (typeof lead.assignedTo === "string") return "Assigned";
+    const a = lead.assignedTo as { firstName?: string; lastName?: string };
+    if (a.firstName && a.lastName) return `${a.firstName} ${a.lastName}`;
+    if (a.firstName) return a.firstName;
+    if (a.lastName) return a.lastName;
+    return "Assigned";
+  }, [lead.assignedTo]);
 
   const getStatusDisplayName = useCallback(
     (statusId: string) => {
@@ -88,7 +100,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
       }
       return "Unknown";
     },
-    [findStatusByIdOrName]
+    [findStatusByIdOrName],
   );
 
   const handleStatusChange = useCallback(
@@ -113,7 +125,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
 
           if (Array.isArray(oldData)) {
             return oldData.map((l: Lead) =>
-              l._id === lead._id ? { ...l, status: newStatusId } : l
+              l._id === lead._id ? { ...l, status: newStatusId } : l,
             );
           } else if (oldData && typeof oldData === "object") {
             if ("data" in oldData && Array.isArray(oldData.data)) {
@@ -121,7 +133,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
                 ...oldData,
                 data: oldData.data.map(
                   (l: Lead) =>
-                    l._id === lead._id ? { ...l, status: newStatusId } : l // ✅ FIXED
+                    l._id === lead._id ? { ...l, status: newStatusId } : l, // ✅ FIXED
                 ),
               };
             } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
@@ -129,7 +141,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
                 ...oldData,
                 leads: oldData.leads.map(
                   (l: Lead) =>
-                    l._id === lead._id ? { ...l, status: newStatusId } : l // ✅ FIXED
+                    l._id === lead._id ? { ...l, status: newStatusId } : l, // ✅ FIXED
                 ),
               };
             }
@@ -158,7 +170,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
             error: errorText,
           });
           throw new Error(
-            `Failed to update status: ${response.status} - ${errorText}`
+            `Failed to update status: ${response.status} - ${errorText}`,
           );
         }
 
@@ -178,21 +190,21 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
 
             if (Array.isArray(oldData)) {
               return oldData.map((l: Lead) =>
-                l._id === lead._id ? updatedLead : l
+                l._id === lead._id ? updatedLead : l,
               );
             } else if (oldData && typeof oldData === "object") {
               if ("data" in oldData && Array.isArray(oldData.data)) {
                 return {
                   ...oldData,
                   data: oldData.data.map((l: Lead) =>
-                    l._id === lead._id ? updatedLead : l
+                    l._id === lead._id ? updatedLead : l,
                   ),
                 };
               } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
                 return {
                   ...oldData,
                   leads: oldData.leads.map((l: Lead) =>
-                    l._id === lead._id ? updatedLead : l
+                    l._id === lead._id ? updatedLead : l,
                   ),
                 };
               }
@@ -210,7 +222,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
           .catch((error) => {
             console.error("Error invalidating activities query:", error);
           });
-        
+
         // ✅ FIX: Invalidate leads query to ensure table re-renders with updated status
         // This ensures the table syncs properly after status updates
         queryClient
@@ -221,7 +233,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
           .catch((error) => {
             console.error("Error invalidating leads query:", error);
           });
-        
+
         toast({
           title: "Status updated",
           description: `Lead status changed successfully.`,
@@ -242,21 +254,21 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
 
             if (Array.isArray(oldData)) {
               return oldData.map((l: Lead) =>
-                l._id === lead._id ? { ...l, status: previousStatus } : l
+                l._id === lead._id ? { ...l, status: previousStatus } : l,
               );
             } else if (oldData && typeof oldData === "object") {
               if ("data" in oldData && Array.isArray(oldData.data)) {
                 return {
                   ...oldData,
                   data: oldData.data.map((l: Lead) =>
-                    l._id === lead._id ? { ...l, status: previousStatus } : l
+                    l._id === lead._id ? { ...l, status: previousStatus } : l,
                   ),
                 };
               } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
                 return {
                   ...oldData,
                   leads: oldData.leads.map((l: Lead) =>
-                    l._id === lead._id ? { ...l, status: previousStatus } : l
+                    l._id === lead._id ? { ...l, status: previousStatus } : l,
                   ),
                 };
               }
@@ -293,7 +305,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
         setIsUpdating(false);
       }
     },
-    [lead._id, lead.status, queryClient, toast, isUpdating, session?.user?.id]
+    [lead._id, lead.status, queryClient, toast, isUpdating, session?.user?.id],
   );
 
   const currentStatusColor = currentStatusObj?.color || "#3b82f6";
@@ -304,7 +316,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
   const maxHeight = statuses.length > 7 ? "280px" : "auto";
 
   return (
-    <div className="flex items-center">
+    <div className="flex flex-wrap items-center gap-3">
       <style jsx>{`
         .smooth-scroll-content {
           scroll-behavior: smooth;
@@ -432,6 +444,21 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
           </Select>
         )}
       </div>
+      {/* Assigned-to badge: show only on shorter viewports (e.g. laptop); hide on tall desktop screens */}
+      {isAdmin && lead.assignedTo && (
+        <>
+          <style>{`.assigned-badge-hide-on-tall { display: flex; } @media (min-height: 1200px) { .assigned-badge-hide-on-tall { display: none !important; } }`}</style>
+          <div className="assigned-badge-hide-on-tall items-center gap-1.5 shrink-0 flex">
+            <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800">
+              <User className="h-3.5 w-3.5" />
+              <span className="text-gray-500 dark:text-gray-400">
+                Assigned to
+              </span>{" "}
+              {getAssignedToDisplay()}
+            </span>
+          </div>
+        </>
+      )}
     </div>
   );
 };

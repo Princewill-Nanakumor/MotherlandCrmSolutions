@@ -170,7 +170,7 @@ export const CommentsAndActivitiesCombined: FC<
     onSuccess: (newComment) => {
       queryClient.setQueryData(
         ["comments", leadId],
-        (oldComments: Comment[] = []) => [newComment, ...oldComments]
+        (oldComments: Comment[] = []) => [newComment, ...oldComments],
       );
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
@@ -191,12 +191,12 @@ export const CommentsAndActivitiesCombined: FC<
     },
   });
 
-  // Delete comment mutation
+  // Delete comment mutation – clear deletingId only in onSettled so only one row shows spinner
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId: string) => {
       const response = await fetch(
         `/api/leads/${leadId}/comments/${commentId}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
 
       if (!response.ok) {
@@ -210,7 +210,7 @@ export const CommentsAndActivitiesCombined: FC<
       queryClient.setQueryData(
         ["comments", leadId],
         (oldComments: Comment[] = []) =>
-          oldComments.filter((comment) => comment._id !== deletedCommentId)
+          oldComments.filter((comment) => comment._id !== deletedCommentId),
       );
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
@@ -227,6 +227,9 @@ export const CommentsAndActivitiesCombined: FC<
         description: "Failed to delete comment",
         variant: "destructive",
       });
+    },
+    onSettled: () => {
+      setDeletingId(null);
     },
   });
 
@@ -245,7 +248,7 @@ export const CommentsAndActivitiesCombined: FC<
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -261,8 +264,8 @@ export const CommentsAndActivitiesCombined: FC<
         ["comments", leadId],
         (oldComments: Comment[] = []) =>
           oldComments.map((comment) =>
-            comment._id === updatedComment._id ? updatedComment : comment
-          )
+            comment._id === updatedComment._id ? updatedComment : comment,
+          ),
       );
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
@@ -301,7 +304,7 @@ export const CommentsAndActivitiesCombined: FC<
         content: editContent,
       });
     },
-    [editContent, editCommentMutation]
+    [editContent, editCommentMutation],
   );
 
   const handleCancelEdit = useCallback(() => {
@@ -311,19 +314,12 @@ export const CommentsAndActivitiesCombined: FC<
 
   const handleDelete = useCallback(
     (commentId: string) => {
-      if (deleteCommentMutation.isPending || deletingId === commentId) return;
+      if (deletingId) return;
       setDeletingId(commentId);
       deleteCommentMutation.mutate(commentId);
     },
-    [deleteCommentMutation, deletingId]
+    [deleteCommentMutation, deletingId],
   );
-
-  // Reset deleting state
-  useEffect(() => {
-    if (!deleteCommentMutation.isPending) {
-      setDeletingId(null);
-    }
-  }, [deleteCommentMutation.isPending]);
 
   const isLoading = isLoadingComments || isLoadingActivities;
   const hasError = commentsError || activitiesError;
@@ -331,7 +327,7 @@ export const CommentsAndActivitiesCombined: FC<
   if (hasError) {
     console.error(
       "Comments/Activities query error:",
-      commentsError || activitiesError
+      commentsError || activitiesError,
     );
   }
 
@@ -371,8 +367,7 @@ export const CommentsAndActivitiesCombined: FC<
             editContent={editContent}
             setEditContent={setEditContent}
             isAdmin={isAdmin}
-            deletingId={deletingId}
-            isDeleting={deleteCommentMutation.isPending}
+            deletingCommentId={deletingId}
             isEditingMutation={editCommentMutation.isPending}
             onEdit={handleEdit}
             onSaveEdit={handleSaveEdit}

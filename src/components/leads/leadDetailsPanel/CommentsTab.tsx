@@ -117,7 +117,7 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
       // Optimistically update the cache
       queryClient.setQueryData(
         ["comments", leadId],
-        (oldComments: Comment[] = []) => [newComment, ...oldComments]
+        (oldComments: Comment[] = []) => [newComment, ...oldComments],
       );
 
       // Don't invalidate activities - comments don't create activities anymore
@@ -144,12 +144,17 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
     },
   });
 
+  // Track which comment is being deleted (local state so only that row shows spinner, no flash)
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(
+    null,
+  );
+
   // Delete comment mutation
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId: string) => {
       const response = await fetch(
         `/api/leads/${leadId}/comments/${commentId}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
 
       if (!response.ok) {
@@ -164,7 +169,7 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
       queryClient.setQueryData(
         ["comments", leadId],
         (oldComments: Comment[] = []) =>
-          oldComments.filter((comment) => comment._id !== deletedCommentId)
+          oldComments.filter((comment) => comment._id !== deletedCommentId),
       );
 
       // Don't invalidate activities - comments don't create activities anymore
@@ -188,6 +193,9 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
         variant: "destructive",
       });
     },
+    onSettled: () => {
+      setDeletingCommentId(null);
+    },
   });
 
   // Edit comment mutation
@@ -205,7 +213,7 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -222,8 +230,8 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
         ["comments", leadId],
         (oldComments: Comment[] = []) =>
           oldComments.map((comment) =>
-            comment._id === updatedComment._id ? updatedComment : comment
-          )
+            comment._id === updatedComment._id ? updatedComment : comment,
+          ),
       );
 
       // Don't invalidate activities - comments don't create activities anymore
@@ -256,10 +264,11 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
   }, [commentContent, addCommentMutation]);
 
   const handleCommentDeleted = useCallback(
-    async (commentId: string) => {
+    (commentId: string) => {
+      setDeletingCommentId(commentId);
       deleteCommentMutation.mutate(commentId);
     },
-    [deleteCommentMutation]
+    [deleteCommentMutation],
   );
 
   const handleCommentEdited = useCallback(
@@ -269,7 +278,7 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
         content: updatedComment.content,
       });
     },
-    [editCommentMutation]
+    [editCommentMutation],
   );
 
   // Handle errors
@@ -285,8 +294,8 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
   // Loading spinner to avoid empty state flash
   if (isLoadingComments) {
     return (
-      <div className="flex items-center justify-center h-full p-6">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500 dark:text-blue-400" />
+      <div className="flex justify-center items-center p-6 h-full">
+        <Loader2 className="w-8 h-8 text-purple-500 animate-spin dark:text-blue-400" />
       </div>
     );
   }
@@ -300,7 +309,7 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
       handleAddComment={handleAddComment}
       onCommentDeleted={handleCommentDeleted}
       onCommentEdited={handleCommentEdited}
-      isDeleting={deleteCommentMutation.isPending}
+      deletingCommentId={deletingCommentId}
       isEditing={editCommentMutation.isPending}
       leadId={leadId}
     />

@@ -57,7 +57,7 @@ export const LeadHeader: FC<LeadHeaderProps> = ({
         });
       }
     },
-    [toast]
+    [toast],
   );
 
   return (

@@ -26,7 +26,8 @@ interface CommentsProps {
   handleAddComment: () => void;
   onCommentDeleted?: (commentId: string) => void;
   onCommentEdited?: (updatedComment: CommentType) => void;
-  isDeleting?: boolean;
+  /** Id of the comment currently being deleted (only that row shows spinner) */
+  deletingCommentId?: string | null;
   isEditing?: boolean;
   leadId: string;
 }
@@ -42,14 +43,13 @@ const Comments: FC<CommentsProps> = ({
   handleAddComment,
   onCommentDeleted,
   onCommentEdited,
-  isDeleting = false,
+  deletingCommentId = null,
   isEditing = false,
   leadId,
 }) => {
   const { data: session } = useSession();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState<string>("");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showTextarea, setShowTextarea] = useState<boolean>(true);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
@@ -133,8 +133,7 @@ const Comments: FC<CommentsProps> = ({
   };
 
   const handleDelete = (commentId: string) => {
-    if (isDeleting || !onCommentDeleted) return;
-    setDeletingId(commentId);
+    if (deletingCommentId || !onCommentDeleted) return;
     onCommentDeleted(commentId);
   };
 
@@ -165,13 +164,6 @@ const Comments: FC<CommentsProps> = ({
       }
     }
   };
-
-  // Reset deleting state when not deleting anymore
-  useEffect(() => {
-    if (!isDeleting) {
-      setDeletingId(null);
-    }
-  }, [isDeleting]);
 
   return (
     <div
@@ -332,7 +324,7 @@ const Comments: FC<CommentsProps> = ({
               {comments.map((comment) => (
                 <div
                   key={comment._id}
-                  className="p-4 rounded-md bg-gray-100 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700"
+                  className="group p-4 rounded-md bg-gray-100 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700"
                 >
                   <div className="flex gap-3">
                     <Avatar className="h-10 w-10">
@@ -401,7 +393,7 @@ const Comments: FC<CommentsProps> = ({
                     </div>
 
                     {isAdmin && editingId !== comment._id && (
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -416,9 +408,9 @@ const Comments: FC<CommentsProps> = ({
                           size="sm"
                           className="!text-gray-500 hover:!text-red-500 dark:!text-gray-400 dark:hover:!text-red-400"
                           onClick={() => handleDelete(comment._id)}
-                          disabled={deletingId === comment._id || isDeleting}
+                          disabled={!!deletingCommentId}
                         >
-                          {deletingId === comment._id ? (
+                          {deletingCommentId === comment._id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <Trash2 className="w-4 h-4" />
