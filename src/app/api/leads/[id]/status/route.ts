@@ -109,7 +109,49 @@ export async function PATCH(req: NextRequest) {
 
     const previousStatus = currentLead.status;
 
-    // Get status names for activity log
+    // Validate new status exists BEFORE updating the lead (so we never update without logging)
+    const commonStatuses = [
+      "new",
+      "NEW",
+      "contacted",
+      "CONTACTED",
+      "qualified",
+      "QUALIFIED",
+      "converted",
+      "CONVERTED",
+    ];
+
+    if (!commonStatuses.includes(newStatus)) {
+      const db = mongoose.connection.db;
+      if (!db) {
+        return NextResponse.json(
+          { error: "Database connection not available" },
+          { status: 500 }
+        );
+      }
+
+      let statusExists = false;
+      if (mongoose.Types.ObjectId.isValid(newStatus)) {
+        const statusDoc = await db
+          .collection("status")
+          .findOne({ _id: new mongoose.Types.ObjectId(newStatus) });
+        statusExists = !!statusDoc;
+      } else {
+        const statusDoc = await db
+          .collection("status")
+          .findOne({ name: newStatus });
+        statusExists = !!statusDoc;
+      }
+
+      if (!statusExists) {
+        return NextResponse.json(
+          { error: "Invalid status ID or name" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Get status names for activity log (before update so we have them for the log)
     let previousStatusName = previousStatus;
     let newStatusName = newStatus;
 
@@ -173,71 +215,44 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const commonStatuses = [
-      "new",
-      "NEW",
-      "contacted",
-      "CONTACTED",
-      "qualified",
-      "QUALIFIED",
-      "converted",
-      "CONVERTED",
-    ];
+    // Create activity log so timeline always shows the change (retry once on failure)
+    const activityDetails = `Status changed from ${previousStatusName} to ${newStatusName}`;
+    const activityPayload = {
+      type: "STATUS_CHANGE" as const,
+      userId: new mongoose.Types.ObjectId(sessionUser.id),
+      details: activityDetails,
+      leadId: updatedLead._id,
+      adminId: getCorrectAdminId(session),
+      timestamp: new Date(),
+      metadata: {
+        previousStatus: previousStatus,
+        previousStatusName: previousStatusName,
+        newStatusId: newStatus,
+        newStatusName: newStatusName,
+        oldStatusId: previousStatus,
+        oldStatusName: previousStatusName,
+        oldStatus: previousStatusName,
+        newStatus: newStatusName,
+      },
+    };
 
-    if (!commonStatuses.includes(newStatus)) {
-      let statusExists = false;
-      const db = mongoose.connection.db;
-      if (!db) {
-        throw new Error("Database connection not available");
-      }
-
-      if (mongoose.Types.ObjectId.isValid(newStatus)) {
-        const statusDoc = await db
-          .collection("status")
-          .findOne({ _id: new mongoose.Types.ObjectId(newStatus) });
-        statusExists = !!statusDoc;
-      } else {
-        const statusDoc = await db
-          .collection("status")
-          .findOne({ name: newStatus });
-        statusExists = !!statusDoc;
-      }
-
-      if (!statusExists) {
-        return NextResponse.json(
-          { error: "Invalid status ID or name" },
-          { status: 400 }
+    let activityCreated = false;
+    for (let attempt = 1; attempt <= 2 && !activityCreated; attempt++) {
+      try {
+        await Activity.create(activityPayload);
+        activityCreated = true;
+      } catch (activityError) {
+        console.error(
+          `Error creating activity log (attempt ${attempt}/2):`,
+          activityError
         );
+        if (attempt === 2) {
+          // Still return 200 with updated lead so UI is correct; timeline may be missing until refetch
+          console.error(
+            "Activity log could not be created after retry. Timeline may not show this status change."
+          );
+        }
       }
-    }
-
-    // Create activity log synchronously to avoid race conditions
-    try {
-      const activityDetails = `Status changed from ${previousStatusName} to ${newStatusName}`;
-
-      await Activity.create({
-        type: "STATUS_CHANGE",
-        userId: new mongoose.Types.ObjectId(sessionUser.id),
-        details: activityDetails,
-        leadId: updatedLead._id,
-        adminId: getCorrectAdminId(session),
-        timestamp: new Date(),
-        metadata: {
-          // Enhanced metadata with names
-          previousStatus: previousStatus,
-          previousStatusName: previousStatusName,
-          newStatusId: newStatus,
-          newStatusName: newStatusName,
-
-          // Backward compatible metadata structure for activities route
-          oldStatusId: previousStatus,
-          oldStatus: previousStatusName,
-          newStatus: newStatusName,
-        },
-      });
-    } catch (activityError) {
-      console.error("Error creating activity log:", activityError);
-      // Don't fail the entire request if activity logging fails
     }
 
     const responseData = {
