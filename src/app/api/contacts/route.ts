@@ -3,39 +3,12 @@
 import { NextResponse } from "next/server";
 import { executeDbOperation } from "@/libs/dbConfig";
 import Contact from "@/models/contact";
+import Activity from "@/models/Activity";
 import { MongoServerError } from "mongodb";
 import * as XLSX from "xlsx";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
-
-const activitySchema = new mongoose.Schema({
-  type: {
-    type: String,
-    required: true,
-    enum: ["CREATE", "UPDATE", "DELETE", "IMPORT"],
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
-  details: {
-    type: String,
-    required: true,
-  },
-  metadata: {
-    type: Object,
-    default: {},
-  },
-  timestamp: {
-    type: Date,
-    default: Date.now,
-  },
-});
-
-const Activity =
-  mongoose.models.Activity || mongoose.model("Activity", activitySchema);
 
 type MetadataValue = string | number | boolean | null | undefined;
 

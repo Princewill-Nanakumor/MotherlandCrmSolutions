@@ -48,9 +48,278 @@ function getCorrectAdminId(session: SessionLike): mongoose.Types.ObjectId {
   throw new Error("Invalid user role or missing adminId for agent");
 }
 
-// Custom errors for transaction flow (so we never commit lead update without activity)
+// Custom errors for transaction flow
 const NOT_FOUND = "STATUS_LEAD_NOT_FOUND";
 const ALREADY_SAME = "STATUS_ALREADY_SAME";
+
+/** True if the error indicates transactions are not supported (e.g. standalone MongoDB / Netlify). */
+function isTransactionUnsupportedError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  const lower = msg.toLowerCase();
+  return (
+    lower.includes("transaction") ||
+    lower.includes("replica set") ||
+    lower.includes("replica set member") ||
+    lower.includes("transaction numbers") ||
+    lower.includes("not supported")
+  );
+}
+
+/** Resolve status display names from DB (for activity log). */
+async function resolveStatusNames(
+  previousStatus: string,
+  newStatus: string
+): Promise<{ previousStatusName: string; newStatusName: string }> {
+  let previousStatusName = previousStatus;
+  let newStatusName = newStatus;
+  try {
+    const db = mongoose.connection.db;
+    if (db) {
+      if (mongoose.Types.ObjectId.isValid(previousStatus)) {
+        const prev = await db.collection("status").findOne({
+          _id: new mongoose.Types.ObjectId(previousStatus),
+        });
+        if (prev?.name) previousStatusName = prev.name;
+      }
+      if (mongoose.Types.ObjectId.isValid(newStatus)) {
+        const next = await db.collection("status").findOne({
+          _id: new mongoose.Types.ObjectId(newStatus),
+        });
+        if (next?.name) newStatusName = next.name;
+      }
+    }
+  } catch (e) {
+    console.error("Status lookup error:", e);
+  }
+  return { previousStatusName, newStatusName };
+}
+
+/** Run status update inside a transaction, or fall back to non-transactional. Returns response data or throws NOT_FOUND / ALREADY_SAME. */
+async function runStatusUpdate(
+  query: { _id: mongoose.Types.ObjectId; adminId?: mongoose.Types.ObjectId },
+  newStatus: string,
+  session: SessionLike
+): Promise<Record<string, unknown>> {
+  const sessionUser =
+    (session as StrictSession).user ?? (session as NextAuthSession).user;
+
+  try {
+    const dbSession = await mongoose.startSession();
+    try {
+      const responseData = (await dbSession.withTransaction(async () => {
+        const currentLead = (await Lead.findOne(query, { status: 1 })
+          .session(dbSession)
+          .lean()) as { status: string } | null;
+
+        if (!currentLead) throw new Error(NOT_FOUND);
+        if (currentLead.status === newStatus) throw new Error(ALREADY_SAME);
+
+        const previousStatus = currentLead.status;
+        const { previousStatusName, newStatusName } = await resolveStatusNames(
+          previousStatus,
+          newStatus
+        );
+
+        const updatedLead = (await Lead.findOneAndUpdate(
+          query,
+          { status: newStatus, updatedAt: new Date() },
+          {
+            new: true,
+            lean: true,
+            runValidators: false,
+            session: dbSession,
+            projection: {
+              _id: 1,
+              leadId: 1,
+              firstName: 1,
+              lastName: 1,
+              email: 1,
+              phone: 1,
+              country: 1,
+              source: 1,
+              status: 1,
+              assignedTo: 1,
+              comments: 1,
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          }
+        )) as LeadDoc | null;
+
+        if (!updatedLead) throw new Error(NOT_FOUND);
+
+        const activityDetails = `Status changed from ${previousStatusName} to ${newStatusName}`;
+        await Activity.create(
+          [
+            {
+              type: "STATUS_CHANGE",
+              userId: new mongoose.Types.ObjectId(sessionUser.id),
+              details: activityDetails,
+              leadId: updatedLead._id,
+              adminId: getCorrectAdminId(session),
+              timestamp: new Date(),
+              metadata: {
+                previousStatus,
+                previousStatusName,
+                newStatusId: newStatus,
+                newStatusName,
+                oldStatusId: previousStatus,
+                oldStatusName: previousStatusName,
+                oldStatus: previousStatusName,
+                newStatus: newStatusName,
+              },
+            },
+          ],
+          { session: dbSession }
+        );
+
+        return {
+          _id: updatedLead._id.toString(),
+          leadId: updatedLead.leadId,
+          firstName: updatedLead.firstName,
+          lastName: updatedLead.lastName,
+          email: updatedLead.email,
+          phone: updatedLead.phone,
+          country: updatedLead.country,
+          source: updatedLead.source,
+          status: updatedLead.status,
+          assignedTo: updatedLead.assignedTo ?? null,
+          comments: updatedLead.comments ?? null,
+          createdAt: updatedLead.createdAt,
+          updatedAt: updatedLead.updatedAt,
+        };
+      })) as Record<string, unknown>;
+      return responseData;
+    } finally {
+      await dbSession.endSession();
+    }
+  } catch (txnError) {
+    if (isTransactionUnsupportedError(txnError)) {
+      console.warn(
+        "Status change: transactions not supported, using fallback (replica set may be required).",
+        txnError
+      );
+      const result = await updateStatusWithoutTransaction(
+        query,
+        newStatus,
+        session
+      );
+      return result.responseData as Record<string, unknown>;
+    }
+    throw txnError;
+  }
+}
+
+/** Update lead status and create activity without a transaction (fallback when transactions unsupported). */
+async function updateStatusWithoutTransaction(
+  query: { _id: mongoose.Types.ObjectId; adminId?: mongoose.Types.ObjectId },
+  newStatus: string,
+  session: SessionLike
+): Promise<{ responseData: Record<string, unknown>; error?: string }> {
+  const sessionUser =
+    (session as StrictSession).user ?? (session as NextAuthSession).user;
+
+  const currentLead = (await Lead.findOne(query, { status: 1 }).lean()) as {
+    status: string;
+  } | null;
+
+  if (!currentLead) {
+    throw new Error(NOT_FOUND);
+  }
+  if (currentLead.status === newStatus) {
+    throw new Error(ALREADY_SAME);
+  }
+
+  const previousStatus = currentLead.status;
+  const { previousStatusName, newStatusName } = await resolveStatusNames(
+    previousStatus,
+    newStatus
+  );
+
+  const updatedLead = (await Lead.findOneAndUpdate(
+    query,
+    { status: newStatus, updatedAt: new Date() },
+    {
+      new: true,
+      lean: true,
+      runValidators: false,
+      projection: {
+        _id: 1,
+        leadId: 1,
+        firstName: 1,
+        lastName: 1,
+        email: 1,
+        phone: 1,
+        country: 1,
+        source: 1,
+        status: 1,
+        assignedTo: 1,
+        comments: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    }
+  )) as LeadDoc | null;
+
+  if (!updatedLead) {
+    throw new Error(NOT_FOUND);
+  }
+
+  const activityDetails = `Status changed from ${previousStatusName} to ${newStatusName}`;
+  const activityPayload = {
+    type: "STATUS_CHANGE" as const,
+    userId: new mongoose.Types.ObjectId(sessionUser.id),
+    details: activityDetails,
+    leadId: updatedLead._id,
+    adminId: getCorrectAdminId(session),
+    timestamp: new Date(),
+    metadata: {
+      previousStatus,
+      previousStatusName,
+      newStatusId: newStatus,
+      newStatusName,
+      oldStatusId: previousStatus,
+      oldStatusName: previousStatusName,
+      oldStatus: previousStatusName,
+      newStatus: newStatusName,
+    },
+  };
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await Activity.create(activityPayload);
+      break;
+    } catch (activityError) {
+      console.error(
+        `Activity log failed (attempt ${attempt}/2):`,
+        activityError
+      );
+      if (attempt === 2) {
+        console.error(
+          "Status change saved but activity log could not be created."
+        );
+      }
+    }
+  }
+
+  return {
+    responseData: {
+      _id: updatedLead._id.toString(),
+      leadId: updatedLead.leadId,
+      firstName: updatedLead.firstName,
+      lastName: updatedLead.lastName,
+      email: updatedLead.email,
+      phone: updatedLead.phone,
+      country: updatedLead.country,
+      source: updatedLead.source,
+      status: updatedLead.status,
+      assignedTo: updatedLead.assignedTo ?? null,
+      comments: updatedLead.comments ?? null,
+      createdAt: updatedLead.createdAt,
+      updatedAt: updatedLead.updatedAt,
+    },
+  };
+}
 
 export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -91,7 +360,7 @@ export async function PATCH(req: NextRequest) {
       query.adminId = new mongoose.Types.ObjectId(sessionUser.adminId);
     }
 
-    // Validate new status exists BEFORE starting transaction (avoid txn for invalid requests)
+    // Validate new status exists before any write
     const commonStatuses = [
       "new",
       "NEW",
@@ -133,153 +402,30 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    const dbSession = await mongoose.startSession();
+    const responseData = await runStatusUpdate(query, newStatus, session);
 
-    try {
-      const responseData = await dbSession.withTransaction(async () => {
-        // Read current lead inside transaction (consistent view for concurrent updates)
-        const currentLead = (await Lead.findOne(query, { status: 1 })
-          .session(dbSession)
-          .lean()) as { status: string } | null;
-
-        if (!currentLead) {
-          throw new Error(NOT_FOUND);
-        }
-
-        if (currentLead.status === newStatus) {
-          throw new Error(ALREADY_SAME);
-        }
-
-        const previousStatus = currentLead.status;
-
-        // Resolve status names for activity log
-        let previousStatusName = previousStatus;
-        let newStatusName = newStatus;
-        try {
-          const db = mongoose.connection.db;
-          if (db) {
-            if (mongoose.Types.ObjectId.isValid(previousStatus)) {
-              const prevStatusDoc = await db.collection("status").findOne({
-                _id: new mongoose.Types.ObjectId(previousStatus),
-              });
-              if (prevStatusDoc?.name) previousStatusName = prevStatusDoc.name;
-            }
-            if (mongoose.Types.ObjectId.isValid(newStatus)) {
-              const newStatusDoc = await db.collection("status").findOne({
-                _id: new mongoose.Types.ObjectId(newStatus),
-              });
-              if (newStatusDoc?.name) newStatusName = newStatusDoc.name;
-            }
-          }
-        } catch (statusLookupError) {
-          console.error("Status lookup error:", statusLookupError);
-        }
-
-        const updatedLead = (await Lead.findOneAndUpdate(
-          query,
-          { status: newStatus, updatedAt: new Date() },
-          {
-            new: true,
-            lean: true,
-            runValidators: false,
-            session: dbSession,
-            projection: {
-              _id: 1,
-              leadId: 1,
-              firstName: 1,
-              lastName: 1,
-              email: 1,
-              phone: 1,
-              country: 1,
-              source: 1,
-              status: 1,
-              assignedTo: 1,
-              comments: 1,
-              createdAt: 1,
-              updatedAt: 1,
-            },
-          }
-        )) as LeadDoc | null;
-
-        if (!updatedLead) {
-          throw new Error(NOT_FOUND);
-        }
-
-        // Create activity in same transaction: lead update and log commit together.
-        // Under concurrency, each request gets its own transaction and its own activity row — no lost logs.
-        const activityDetails = `Status changed from ${previousStatusName} to ${newStatusName}`;
-        await Activity.create(
-          [
-            {
-              type: "STATUS_CHANGE",
-              userId: new mongoose.Types.ObjectId(sessionUser.id),
-              details: activityDetails,
-              leadId: updatedLead._id,
-              adminId: getCorrectAdminId(session),
-              timestamp: new Date(),
-              metadata: {
-                previousStatus,
-                previousStatusName,
-                newStatusId: newStatus,
-                newStatusName,
-                oldStatusId: previousStatus,
-                oldStatusName: previousStatusName,
-                oldStatus: previousStatusName,
-                newStatus: newStatusName,
-              },
-            },
-          ],
-          { session: dbSession }
-        );
-
-        return {
-          _id: updatedLead._id.toString(),
-          leadId: updatedLead.leadId,
-          firstName: updatedLead.firstName,
-          lastName: updatedLead.lastName,
-          email: updatedLead.email,
-          phone: updatedLead.phone,
-          country: updatedLead.country,
-          source: updatedLead.source,
-          status: updatedLead.status,
-          assignedTo: updatedLead.assignedTo ?? null,
-          comments: updatedLead.comments ?? null,
-          createdAt: updatedLead.createdAt,
-          updatedAt: updatedLead.updatedAt,
-        };
-      });
-
-      return NextResponse.json(responseData, {
-        status: 200,
-        headers: {
-          "Cache-Control": "no-cache",
-          "Content-Type": "application/json",
-        },
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (message === NOT_FOUND) {
-        return NextResponse.json(
-          { error: "Lead not found or not authorized" },
-          { status: 404 }
-        );
-      }
-      if (message === ALREADY_SAME) {
-        return NextResponse.json(
-          { error: "Status is already set to this value" },
-          { status: 400 }
-        );
-      }
-      console.error("API Error (status change):", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
-    } finally {
-      await dbSession.endSession();
-    }
+    return NextResponse.json(responseData, {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-cache",
+        "Content-Type": "application/json",
+      },
+    });
   } catch (error) {
-    console.error("API Error:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    if (message === NOT_FOUND) {
+      return NextResponse.json(
+        { error: "Lead not found or not authorized" },
+        { status: 404 }
+      );
+    }
+    if (message === ALREADY_SAME) {
+      return NextResponse.json(
+        { error: "Status is already set to this value" },
+        { status: 400 }
+      );
+    }
+    console.error("API Error (status change):", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
