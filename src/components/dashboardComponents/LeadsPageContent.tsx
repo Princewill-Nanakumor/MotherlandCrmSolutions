@@ -74,8 +74,17 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
     handleSourceFilterChange,
     handleSourceFilterModeChange,
     handleFilterChange,
+    handlePageSizeChange,
+    handleClearFilters,
     hasAssignedLeads,
     isRefetchingLeads,
+    leadsError,
+    usersError,
+    statusesError,
+    refetchAll,
+    leadsTotal,
+    pageSize,
+    page,
   } = useLeadsPage(searchQuery, setLayoutLoading);
 
   // ✅ ADD: Route-based refetch for navigation
@@ -159,7 +168,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 mt-4 text-white transition-colors bg-blue-500 rounded hover:bg-blue-600"
           >
             Retry
           </button>
@@ -184,10 +193,10 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
 
   return (
     <SubscriptionGuard>
-      <div className="flex flex-col h-full bg-background dark:bg-gray-800 border-1 rounded-lg">
+      <div className="flex flex-col h-full rounded-lg bg-background dark:bg-gray-800 border">
         {/* ⚡ Refetch indicator with transition */}
         {isRefetchingLeads && (
-          <div className="animate-in slide-in-from-top-2 duration-200">
+          <div className="duration-200 animate-in slide-in-from-top-2">
             <RefetchIndicator />
           </div>
         )}
@@ -253,14 +262,14 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
           />
         </div>
 
-        <div className="flex-1 overflow-auto px-8 pb-4 ">
+        <div className="flex-1 px-8 pb-4 overflow-auto ">
           <ErrorBoundary
             fallback={
-              <div className="text-red-500 p-4 text-center">
+              <div className="p-4 text-center text-red-500">
                 <p>Table failed to load</p>
                 <button
                   onClick={() => window.location.reload()}
-                  className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                  className="px-4 py-2 mt-2 text-white transition-colors bg-red-500 rounded hover:bg-red-600"
                 >
                   Reload Page
                 </button>
@@ -268,10 +277,33 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
             }
           >
             <Suspense fallback={<TableSkeleton />}>
-              {shouldShowLoading ? (
+              {leadsError || usersError || statusesError ? (
+                <div className="p-8 overflow-hidden text-center bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                  <p className="mb-2 text-red-500 dark:text-red-400">
+                    Failed to load data. This can happen in production if the
+                    server is slow or the request timed out.
+                  </p>
+                  <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                    {leadsError instanceof Error
+                      ? leadsError.message
+                      : usersError instanceof Error
+                        ? usersError.message
+                        : statusesError instanceof Error
+                          ? statusesError.message
+                          : "Unknown error"}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => refetchAll()}
+                    className="px-4 py-2 text-white transition-colors bg-blue-500 rounded hover:bg-blue-600"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : shouldShowLoading ? (
                 <TableSkeleton />
               ) : showEmptyState ? (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
                   <EmptyState
                     filterByUser={
                       filterByUser === "all" || !filterByUser
@@ -284,13 +316,18 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                     filterByStatus={uiState.filterByStatus}
                     filterBySource={uiState.filterBySource}
                     users={users}
+                    onClearFilters={handleClearFilters}
                   />
                 </div>
               ) : (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
                   <LeadsTable
                     key={tableKey}
                     leads={filteredLeads}
+                    totalRows={leadsTotal}
+                    pageSize={pageSize}
+                    serverPage={page}
+                    onPageSizeChange={handlePageSizeChange}
                     onLeadUpdated={handleLeadUpdate}
                     isLoading={shouldShowLoading}
                     selectedLeads={selectedLeads}

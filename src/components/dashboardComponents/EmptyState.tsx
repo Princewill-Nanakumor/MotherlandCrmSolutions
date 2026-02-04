@@ -9,6 +9,8 @@ interface EmptyStateProps {
   filterByStatus: string | string[];
   filterBySource: string | string[];
   users: User[];
+  /** When set, Clear Filters uses this instead of full reload so state/URL stay in sync (fixes production) */
+  onClearFilters?: () => void;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({
@@ -17,6 +19,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   filterByStatus,
   filterBySource,
   users,
+  onClearFilters,
 }) => {
   // Helper to normalize filter values to arrays
   const normalizeFilter = (filter: string | string[]): string[] => {
@@ -128,8 +131,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({
           {hasAnyFilters && (
             <button
               onClick={() => {
-                // Reset filters - you'll need to implement this
-                window.location.href = window.location.pathname;
+                if (onClearFilters) {
+                  onClearFilters();
+                } else {
+                  window.location.href = window.location.pathname;
+                }
               }}
               className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >

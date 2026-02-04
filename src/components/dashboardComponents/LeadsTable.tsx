@@ -43,6 +43,14 @@ import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 
 interface LeadsTableProps {
   leads: Lead[];
+  /** When set, pagination is server-side: leads = current page only, totalRows = total count */
+  totalRows?: number;
+  /** Page size when using server-side pagination (optional; default 15) */
+  pageSize?: number;
+  /** Current page (1-based) when using server-side pagination; keeps table in sync when filters change */
+  serverPage?: number;
+  /** When set (e.g. server-side pagination), page size changes update URL and refetch */
+  onPageSizeChange?: (pageSize: number) => void;
   onLeadUpdated: (lead: Lead) => Promise<boolean>;
   isLoading?: boolean;
   users: User[];
@@ -58,6 +66,10 @@ interface LeadsTableProps {
 
 export default function LeadsTable({
   leads = [],
+  totalRows: serverTotalRows,
+  pageSize: serverPageSize,
+  serverPage: serverPageProp,
+  onPageSizeChange,
   onLeadUpdated,
   isLoading = false,
   users = [],
@@ -70,6 +82,7 @@ export default function LeadsTable({
   filterByStatus = "all",
   filterBySource = "all",
 }: LeadsTableProps) {
+  const isServerPagination = typeof serverTotalRows === "number";
   // Normalize filters to arrays for consistent handling
   const normalizeFilter = (filter: string | string[] | undefined): string[] => {
     if (!filter) return [];
@@ -94,16 +107,33 @@ export default function LeadsTable({
   const setStoreSelectedLeads = useSetSelectedLeads();
   const isInitializedRef = useRef(false);
 
-  // URL and pagination state (LOCAL ONLY - no store)
+  // URL and pagination state (LOCAL ONLY - no store). When server-side, use serverPage prop so filter change shows page 1 immediately.
   const searchParams = useSearchParams();
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(15);
-  
+  const [localPageSize, setLocalPageSize] = useState(15);
+  const pageSize = isServerPagination ? (serverPageSize ?? 15) : localPageSize;
+  const effectivePageIndex =
+    isServerPagination && typeof serverPageProp === "number"
+      ? Math.max(0, serverPageProp - 1)
+      : pageIndex;
+
+  // Keep local pageIndex in sync when parent passes server page (e.g. after filter change)
+  useEffect(() => {
+    if (
+      isServerPagination &&
+      typeof serverPageProp === "number" &&
+      pageIndex !== serverPageProp - 1
+    ) {
+      setPageIndex(Math.max(0, serverPageProp - 1));
+    }
+  }, [isServerPagination, serverPageProp, pageIndex]);
+
   // Column ordering with localStorage persistence
   const { columnOrder, setColumnOrder } = useColumnOrder();
-  
+
   // Column visibility with localStorage persistence
-  const { columnVisibility, setColumnVisibility } = useColumnVisibility("adminLeadsTable");
+  const { columnVisibility, setColumnVisibility } =
+    useColumnVisibility("adminLeadsTable");
 
   // DnD Kit sensors for drag and drop
   const sensors = useSensors(
@@ -141,7 +171,7 @@ export default function LeadsTable({
   // This prevents resetting pagination when filtered results change
   useEffect(() => {
     const currentPage = searchParams.get("page");
-    
+
     if (currentPage && !isNaN(Number(currentPage))) {
       const targetPage = Number(currentPage) - 1;
       // Only update if different to avoid unnecessary updates and infinite loops
@@ -189,7 +219,7 @@ export default function LeadsTable({
   // KEY: Never close panel if URL has lead parameter (lead might just be filtered out)
   useEffect(() => {
     const leadIdParam = searchParams.get("lead");
-    
+
     // If URL has lead parameter, NEVER close the panel (lead might be filtered out)
     if (leadIdParam && selectedLead) {
       // Just update selectedLead if we have newer data, but keep panel open
@@ -213,7 +243,7 @@ export default function LeadsTable({
       }
       return; // Don't proceed to closing logic if URL has lead param
     }
-    
+
     // Only check for deletion if there's NO lead parameter in URL
     if (selectedLead && leads.length > 0 && !leadIdParam) {
       const updatedLead = leads.find((l) => l._id === selectedLead._id);
@@ -242,7 +272,7 @@ export default function LeadsTable({
   // ✅ FIX: Keep panel open even if lead is filtered out (only close if lead is deleted)
   useEffect(() => {
     const leadIdParam = searchParams.get("lead");
-    
+
     if (leadIdParam && leads.length > 0) {
       // Always search in full leads array (not filtered sortedLeads)
       // This ensures we find the lead even if it's been filtered out
@@ -274,8 +304,9 @@ export default function LeadsTable({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, leads]); // Depend on searchParams and leads
 
-  // ⚡ Adjust pageIndex when filtered results change and current page becomes empty/out of bounds
+  // ⚡ Adjust pageIndex when filtered results change (client-side only)
   useEffect(() => {
+    if (isServerPagination) return;
     if (sortedLeads.length === 0) {
       // If no leads, go to page 0
       if (pageIndex !== 0) {
@@ -295,7 +326,7 @@ export default function LeadsTable({
     const startIndex = pageIndex * pageSize;
     const currentPageEmpty = startIndex >= sortedLeads.length;
     const totalPages = Math.ceil(sortedLeads.length / pageSize);
-    
+
     // If current page is out of bounds (e.g., lead was removed from filter), adjust to last available page
     if (currentPageEmpty && pageIndex > 0 && sortedLeads.length > 0) {
       const newPageIndex = Math.max(0, totalPages - 1);
@@ -311,14 +342,20 @@ export default function LeadsTable({
         );
       }
     }
-  }, [sortedLeads.length, pageIndex, pageSize]); // Removed filter dependencies to fix React warning
+  }, [isServerPagination, sortedLeads.length, pageIndex, pageSize]);
 
-  // Memoized current page leads
+  const totalRows = isServerPagination
+    ? (serverTotalRows ?? 0)
+    : sortedLeads.length;
+  const pageCount = Math.max(1, Math.ceil(totalRows / pageSize));
+
+  // Current page: server = leads (one page), client = slice
   const currentPageLeads = useMemo(() => {
+    if (isServerPagination) return sortedLeads;
     const startIndex = pageIndex * pageSize;
     const endIndex = startIndex + pageSize;
     return sortedLeads.slice(startIndex, endIndex);
-  }, [sortedLeads, pageIndex, pageSize]);
+  }, [isServerPagination, sortedLeads, pageIndex, pageSize]);
 
   const {
     rowSelection,
@@ -359,34 +396,37 @@ export default function LeadsTable({
     data: sortedLeads,
     columns,
     pageSize,
-    pageIndex,
+    pageIndex: effectivePageIndex,
     sorting: stableSorting,
     rowSelection,
     columnOrder,
     columnVisibility,
     setSorting,
     setPageIndex: handlePageChange,
-    setPageSize,
+    setPageSize: isServerPagination ? () => {} : setLocalPageSize,
     setColumnOrder,
     setColumnVisibility,
   });
 
   // Handle column drag end - defined after table is created
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (over && active.id !== over.id) {
-      const oldIndex = columnOrder.findIndex((id) => id === active.id);
-      const newIndex = columnOrder.findIndex((id) => id === over.id);
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
 
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newColumnOrder = arrayMove(columnOrder, oldIndex, newIndex);
-        setColumnOrder(newColumnOrder);
-        // Update table column order
-        table.setColumnOrder(newColumnOrder);
+      if (over && active.id !== over.id) {
+        const oldIndex = columnOrder.findIndex((id) => id === active.id);
+        const newIndex = columnOrder.findIndex((id) => id === over.id);
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const newColumnOrder = arrayMove(columnOrder, oldIndex, newIndex);
+          setColumnOrder(newColumnOrder);
+          // Update table column order
+          table.setColumnOrder(newColumnOrder);
+        }
       }
-    }
-  }, [columnOrder, setColumnOrder, table]);
+    },
+    [columnOrder, setColumnOrder, table]
+  );
 
   if (isLoading) {
     return (
@@ -405,9 +445,10 @@ export default function LeadsTable({
           <CustomTableHeader
             table={table}
             pageSize={pageSize}
-            pageIndex={pageIndex}
-            totalRows={sortedLeads.length}
+            pageIndex={effectivePageIndex}
+            totalRows={totalRows}
             tableId="adminLeadsTable"
+            onPageSizeChange={onPageSizeChange}
           />
         </div>
 
@@ -444,8 +485,8 @@ export default function LeadsTable({
 
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <TablePagination
-            pageIndex={pageIndex}
-            pageCount={table.getPageCount()}
+            pageIndex={effectivePageIndex}
+            pageCount={pageCount}
             onPageChange={handlePageChange}
           />
         </div>

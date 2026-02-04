@@ -9,6 +9,8 @@ interface TableHeaderProps {
   pageIndex: number;
   totalRows: number;
   tableId?: "adminLeadsTable" | "userLeadsTable";
+  /** When set (e.g. server-side pagination), changing page size updates URL and refetches */
+  onPageSizeChange?: (pageSize: number) => void;
 }
 
 const pageSizeOptions = [10, 15, 20, 30, 40, 50, 100, 500];
@@ -19,9 +21,16 @@ export function TableHeader({
   pageIndex,
   totalRows,
   tableId = "adminLeadsTable",
+  onPageSizeChange,
 }: TableHeaderProps) {
-  const currentPageStart = pageIndex * pageSize + 1;
+  const currentPageStart = totalRows === 0 ? 0 : pageIndex * pageSize + 1;
   const currentPageEnd = Math.min((pageIndex + 1) * pageSize, totalRows);
+
+  const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSize = Number(e.target.value);
+    table.setPageSize(newSize);
+    onPageSizeChange?.(newSize);
+  };
 
   return (
     <div className="flex justify-between items-center mb-4 my-3">
@@ -32,13 +41,15 @@ export function TableHeader({
         {/* Replaced Radix UI Select with simple HTML select */}
         <select
           value={pageSize.toString()}
-          onChange={(e) => {
-            table.setPageSize(Number(e.target.value));
-          }}
+          onChange={handlePageSizeChange}
           className="w-[80px] h-8 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 !text-gray-900 dark:!text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
         >
           {pageSizeOptions.map((size) => (
-            <option key={size} value={size.toString()} className="!text-gray-900 dark:!text-white bg-white dark:bg-gray-800">
+            <option
+              key={size}
+              value={size.toString()}
+              className="!text-gray-900 dark:!text-white bg-white dark:bg-gray-800"
+            >
               {size}
             </option>
           ))}

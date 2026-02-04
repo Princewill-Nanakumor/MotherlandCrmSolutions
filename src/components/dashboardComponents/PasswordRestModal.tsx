@@ -82,14 +82,14 @@ export function PasswordResetModal({
               User Email
             </label>
             <div className="relative mt-1">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-4 w-4 text-gray-400" />
+              <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+                <Mail className="w-4 h-4 text-gray-400" />
               </div>
               <input
                 id="email"
                 value={userEmail}
                 disabled
-                className="pl-9 h-9 w-full rounded-md border border-input bg-gray-100 dark:bg-gray-800 text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500"
+                className="pl-9 w-full h-9 text-sm bg-gray-100 rounded-md border border-input dark:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500"
               />
             </div>
           </div>
@@ -100,8 +100,8 @@ export function PasswordResetModal({
               New Password
             </label>
             <div className="relative mt-1">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-4 w-4 text-gray-400" />
+              <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+                <Lock className="w-4 h-4 text-gray-400" />
               </div>
               <input
                 id="password"
@@ -114,19 +114,19 @@ export function PasswordResetModal({
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex absolute inset-y-0 right-0 items-center pr-3 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading}
                 tabIndex={-1}
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
+                  <EyeOff className="w-4 h-4" />
                 ) : (
-                  <Eye className="h-4 w-4" />
+                  <Eye className="w-4 h-4" />
                 )}
               </button>
             </div>
             {errors.password && (
-              <p className="text-xs text-red-600 mt-1">
+              <p className="mt-1 text-xs text-red-600">
                 {errors.password.message}
               </p>
             )}
@@ -138,8 +138,8 @@ export function PasswordResetModal({
               Confirm Password
             </label>
             <div className="relative mt-1">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-4 w-4 text-gray-400" />
+              <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+                <Lock className="w-4 h-4 text-gray-400" />
               </div>
               <input
                 id="confirmPassword"
@@ -152,19 +152,19 @@ export function PasswordResetModal({
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword((v) => !v)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex absolute inset-y-0 right-0 items-center pr-3 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading}
                 tabIndex={-1}
               >
                 {showConfirmPassword ? (
-                  <EyeOff className="h-4 w-4" />
+                  <EyeOff className="w-4 h-4" />
                 ) : (
-                  <Eye className="h-4 w-4" />
+                  <Eye className="w-4 h-4" />
                 )}
               </button>
             </div>
             {errors.confirmPassword && (
-              <p className="text-xs text-red-600 mt-1">
+              <p className="mt-1 text-xs text-red-600">
                 {errors.confirmPassword.message}
               </p>
             )}
@@ -172,12 +172,12 @@ export function PasswordResetModal({
 
           {/* Error Message */}
           {serverError && (
-            <div className="p-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-md">
+            <div className="p-2 text-sm text-red-600 bg-red-50 rounded-md dark:text-red-400 dark:bg-red-900/20">
               {serverError}
             </div>
           )}
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex gap-2 justify-end pt-2">
             <Button
               type="button"
               variant="outline"

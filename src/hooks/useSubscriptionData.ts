@@ -1,5 +1,6 @@
 // src/hooks/useSubscriptionData.ts
 import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 
 interface SubscriptionData {
   isOnTrial: boolean;
@@ -10,11 +11,32 @@ interface SubscriptionData {
   balance: number;
 }
 
-// Fetch function outside the hook to prevent recreation
+const SUBSCRIPTION_FETCH_TIMEOUT_MS = 15000;
+
+async function fetchWithTimeout(url: string, ms: number): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(url, {
+      credentials: "include",
+      signal: controller.signal,
+    });
+    clearTimeout(id);
+    return res;
+  } catch (e) {
+    clearTimeout(id);
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new Error("Request timed out. Please try again.");
+    }
+    throw e;
+  }
+}
+
 const fetchSubscriptionData = async (): Promise<SubscriptionData> => {
-  const response = await fetch("/api/subscription/status", {
-    credentials: "include",
-  });
+  const response = await fetchWithTimeout(
+    "/api/subscription/status",
+    SUBSCRIPTION_FETCH_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     throw new Error("Failed to fetch subscription data");
@@ -24,6 +46,8 @@ const fetchSubscriptionData = async (): Promise<SubscriptionData> => {
 };
 
 export const useSubscriptionData = () => {
+  const { status } = useSession();
+
   const {
     data: subscriptionData,
     isLoading,
@@ -38,7 +62,7 @@ export const useSubscriptionData = () => {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    enabled: true,
+    enabled: status === "authenticated",
   });
 
   // Calculate if user has active subscription

@@ -3,9 +3,8 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Lead } from "@/types/leads";
+import { useSession } from "next-auth/react";
 import { MultiSelectFilter } from "./MultiSelectFilter";
-import { getAvailableSources } from "@/utils/LeadsUtils";
 
 interface SourceFilterProps {
   value: string[]; // Changed to array
@@ -27,13 +26,17 @@ export const SourceFilter = ({
   availableSources: providedSources,
 }: SourceFilterProps) => {
   // Internal mode state if not controlled externally
-  const [internalMode, setInternalMode] = useState<"include" | "exclude">(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("sourceFilterMode");
-      return (stored === "exclude" ? "exclude" : "include") as "include" | "exclude";
+  const [internalMode, setInternalMode] = useState<"include" | "exclude">(
+    () => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("sourceFilterMode");
+        return (stored === "exclude" ? "exclude" : "include") as
+          | "include"
+          | "exclude";
+      }
+      return "include";
     }
-    return "include";
-  });
+  );
 
   const mode = externalMode ?? internalMode;
 
@@ -54,37 +57,36 @@ export const SourceFilter = ({
       setInternalMode(newMode);
     }
   };
-  // If availableSources are provided, use them directly (for user leads page)
-  // Otherwise, fetch from API (for admin all-leads page)
-  const { data: leads = [], isLoading: isLoadingLeads } = useQuery<Lead[]>({
-    queryKey: ["leads"],
+  const { status: sessionStatus } = useSession();
+  const isAuthenticated = sessionStatus === "authenticated";
+
+  // If availableSources are provided, use them (e.g. user leads page).
+  // Otherwise fetch distinct sources from API so we get all sources, not just from first page.
+  const { data: fetchedSources = [], isLoading: isLoadingSources } = useQuery<
+    string[]
+  >({
+    queryKey: ["leads", "sources"],
     queryFn: async () => {
-      const response = await fetch("/api/leads/all", {
+      const response = await fetch("/api/leads/sources", {
         credentials: "include",
       });
-      if (!response.ok) throw new Error("Failed to fetch leads");
+      if (!response.ok) throw new Error("Failed to fetch sources");
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
-    staleTime: 2 * 60 * 1000, // Match useLeadsPage - 2 minutes
+    staleTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     retry: 2,
-    placeholderData: (previousData) => previousData, // Preserve previous data during refetch
-    enabled: !providedSources, // Only fetch if sources are not provided
+    enabled: !providedSources && isAuthenticated,
   });
 
-  // If sources are provided, use them directly
-  // Otherwise, extract unique sources from fetched leads using utility function
   const sources = useMemo(() => {
-    // If sources are provided, use them directly (already sorted from getAvailableSources)
-    if (providedSources && providedSources.length > 0) {
-      return providedSources;
-    }
-    
-    // Otherwise, extract from fetched leads (already sorted from getAvailableSources)
-    return getAvailableSources(leads);
-  }, [leads, providedSources]);
+    if (providedSources && providedSources.length > 0) return providedSources;
+    return fetchedSources
+      .filter((s): s is string => Boolean(s))
+      .sort((a, b) => a.localeCompare(b));
+  }, [providedSources, fetchedSources]);
 
   const options = useMemo(
     () =>
@@ -113,8 +115,8 @@ export const SourceFilter = ({
       onChange={onChange}
       options={options}
       placeholder={getPlaceholder()}
-      disabled={disabled || isLoadingLeads}
-      isLoading={isLoading || isLoadingLeads}
+      disabled={disabled || isLoadingSources}
+      isLoading={isLoading || isLoadingSources}
       mode={mode}
       onModeChange={handleModeToggle}
     />

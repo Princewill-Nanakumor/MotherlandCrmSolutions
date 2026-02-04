@@ -34,7 +34,7 @@ export const UserFilter = ({
           | "exclude";
       }
       return "include";
-    },
+    }
   );
 
   const mode = externalMode ?? internalMode;
@@ -57,10 +57,11 @@ export const UserFilter = ({
     }
   };
 
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const currentUserId = session?.user?.id;
+  const isAuthenticated = sessionStatus === "authenticated";
 
-  // ✅ FIX: Use useQuery to subscribe to cache updates
+  // Only fetch users when authenticated so dev doesn't get 401 and empty list
   const { data: users = [] } = useQuery<User[]>({
     queryKey: ["users"],
     queryFn: async () => {
@@ -68,12 +69,14 @@ export const UserFilter = ({
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to fetch users");
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : (data?.users ?? []);
     },
-    staleTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     retry: 2,
+    enabled: isAuthenticated,
   });
 
   const options = useMemo(() => {

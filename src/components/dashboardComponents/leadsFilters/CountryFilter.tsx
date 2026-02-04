@@ -3,7 +3,6 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Lead } from "@/types/leads";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 
 interface CountryFilterProps {
@@ -26,13 +25,17 @@ export const CountryFilter = ({
   availableCountries: providedCountries,
 }: CountryFilterProps) => {
   // Internal mode state if not controlled externally
-  const [internalMode, setInternalMode] = useState<"include" | "exclude">(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("countryFilterMode");
-      return (stored === "exclude" ? "exclude" : "include") as "include" | "exclude";
+  const [internalMode, setInternalMode] = useState<"include" | "exclude">(
+    () => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("countryFilterMode");
+        return (stored === "exclude" ? "exclude" : "include") as
+          | "include"
+          | "exclude";
+      }
+      return "include";
     }
-    return "include";
-  });
+  );
 
   const mode = externalMode ?? internalMode;
 
@@ -55,34 +58,32 @@ export const CountryFilter = ({
   };
 
   // If availableCountries are provided, use them directly (for user leads page)
-  // Otherwise, fetch from API (for admin all-leads page)
-  const { data: leads = [] } = useQuery<Lead[]>({
-    queryKey: ["leads"],
+  // Otherwise, fetch distinct countries from API (for admin all-leads page)
+  const { data: fetchedCountries = [] } = useQuery<string[]>({
+    queryKey: ["leads", "countries"],
     queryFn: async () => {
-      const response = await fetch("/api/leads/all", {
+      const response = await fetch("/api/leads/countries", {
         credentials: "include",
       });
-      if (!response.ok) throw new Error("Failed to fetch leads");
-      return response.json();
+      if (!response.ok) throw new Error("Failed to fetch countries");
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
-    staleTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     retry: 2,
-    enabled: !providedCountries, // Only fetch if countries are not provided
+    enabled: !providedCountries,
   });
 
   const countries = useMemo(() => {
-    // If countries are provided, use them directly
     if (providedCountries && providedCountries.length > 0) {
       return providedCountries.sort((a, b) => a.localeCompare(b));
     }
-    
-    // Otherwise, extract from fetched leads
-    return [...new Set(leads.map((lead: Lead) => lead.country))]
-      .filter((country): country is string => Boolean(country))
+    return fetchedCountries
+      .filter((c): c is string => Boolean(c))
       .sort((a, b) => a.localeCompare(b));
-  }, [leads, providedCountries]);
+  }, [providedCountries, fetchedCountries]);
 
   const options = useMemo(
     () =>

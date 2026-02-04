@@ -1,6 +1,6 @@
 // /Users/safeconnection/Downloads/drivecrm/src/app/api/leads/all/route.ts
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
@@ -15,11 +15,9 @@ interface UserData {
   email: string;
 }
 
-// Define query type for MongoDB filters
-interface LeadQuery {
-  adminId?: ObjectId;
-  assignedTo?: ObjectId;
-}
+// MongoDB filter can have $in, $nin, $or, etc.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LeadFilter = Record<string, any>;
 
 // Helper to safely convert ObjectId to string
 function safeObjectIdToString(id: unknown): string | null {
@@ -107,9 +105,26 @@ async function getAssignedToUser(
   }
 }
 
-export async function GET() {
+function parseStringArray(param: string | null): string[] {
+  if (!param) return [];
   try {
-    // Use a unique timer prefix per request to avoid duplicate console.time labels
+    const parsed = JSON.parse(param);
+    return Array.isArray(parsed)
+      ? parsed.map(String)
+      : param === "all"
+        ? []
+        : [param];
+  } catch {
+    return param === "all" ? [] : [param];
+  }
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export async function GET(request: NextRequest) {
+  try {
     const __timerPrefix = `api:/api/leads/all:${Date.now()}:${Math.random()
       .toString(36)
       .slice(2, 8)}`;
@@ -120,33 +135,125 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Connect to database
-    console.time(`${__timerPrefix}:dbConnect`);
-    await connectMongoDB();
-    console.timeEnd(`${__timerPrefix}:dbConnect`);
+    const url = new URL(request.url);
+    const searchParams = url.searchParams;
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const pageSize = Math.min(
+      500,
+      Math.max(1, parseInt(searchParams.get("pageSize") || "15", 10))
+    );
+    const userFilter = parseStringArray(searchParams.get("user"));
+    const countryFilter = parseStringArray(searchParams.get("country"));
+    const statusFilter = parseStringArray(searchParams.get("status"));
+    const sourceFilter = parseStringArray(searchParams.get("source"));
+    const countryMode =
+      searchParams.get("countryMode") === "exclude" ? "exclude" : "include";
+    const statusMode =
+      searchParams.get("statusMode") === "exclude" ? "exclude" : "include";
+    const sourceMode =
+      searchParams.get("sourceMode") === "exclude" ? "exclude" : "include";
+    const search = (searchParams.get("search") || "").trim();
 
+    await connectMongoDB();
     const db = mongoose.connection.db;
     if (!db) {
       throw new Error("Database connection not available");
     }
 
-    // Build query based on user role
-    const query: LeadQuery = {};
-
+    // Base query (multi-tenancy). assignedTo can be ObjectId or object { _id, firstName, lastName }
+    const baseQuery: LeadFilter = {};
     if (session.user.role === "ADMIN") {
-      // Admin sees all leads that belong to them (adminId matches their ID)
-      query.adminId = new ObjectId(session.user.id);
+      baseQuery.adminId = new ObjectId(session.user.id);
     } else if (session.user.role === "AGENT") {
-      // Agent sees only leads assigned to them
-      query.assignedTo = new ObjectId(session.user.id);
+      const agentId = new ObjectId(session.user.id);
+      baseQuery.$or = [{ assignedTo: agentId }, { "assignedTo._id": agentId }];
     }
 
-    // Fetch leads with multi-tenancy filter
+    // Full filter: base + filters
+    const filter: LeadFilter = { ...baseQuery };
+
+    // User filter: match both ObjectId and object format (assignedTo can be stored either way)
+    if (session.user.role === "ADMIN" && userFilter.length > 0) {
+      const hasUnassigned = userFilter.some(
+        (v) => String(v).toLowerCase() === "unassigned"
+      );
+      const userIds = userFilter
+        .filter((v) => String(v).toLowerCase() !== "unassigned")
+        .map((id) => {
+          try {
+            return new ObjectId(id);
+          } catch {
+            return null;
+          }
+        })
+        .filter((id): id is ObjectId => id !== null);
+
+      if (hasUnassigned && userIds.length === 0) {
+        filter.$or = [{ assignedTo: null }, { assignedTo: { $exists: false } }];
+      } else if (hasUnassigned && userIds.length > 0) {
+        filter.$or = [
+          { assignedTo: null },
+          { assignedTo: { $exists: false } },
+          { assignedTo: { $in: userIds } },
+          { "assignedTo._id": { $in: userIds } },
+        ];
+      } else if (userIds.length > 0) {
+        filter.$or = [
+          { assignedTo: { $in: userIds } },
+          { "assignedTo._id": { $in: userIds } },
+        ];
+      }
+    }
+
+    if (countryFilter.length > 0) {
+      filter.country =
+        countryMode === "exclude"
+          ? { $nin: countryFilter }
+          : { $in: countryFilter };
+    }
+    if (statusFilter.length > 0) {
+      filter.status =
+        statusMode === "exclude"
+          ? { $nin: statusFilter }
+          : { $in: statusFilter };
+    }
+    if (sourceFilter.length > 0) {
+      filter.source =
+        sourceMode === "exclude"
+          ? { $nin: sourceFilter }
+          : { $in: sourceFilter };
+    }
+
+    if (search.length > 0) {
+      const regex = new RegExp(escapeRegex(search), "i");
+      const searchOr = {
+        $or: [
+          { firstName: regex },
+          { lastName: regex },
+          { email: regex },
+          { phone: regex },
+          { country: regex },
+        ],
+      };
+      filter.$and = filter.$and ? [...filter.$and, searchOr] : [searchOr];
+    }
+
+    // Counts: totalAll (no filters), total (with filters)
+    console.time(`${__timerPrefix}:count`);
+    const [totalAllCount, totalCount] = await Promise.all([
+      db.collection("leads").countDocuments(baseQuery),
+      db.collection("leads").countDocuments(filter),
+    ]);
+    console.timeEnd(`${__timerPrefix}:count`);
+
+    const skip = (page - 1) * pageSize;
     console.time(`${__timerPrefix}:fetchLeads`);
     const leads = await db
       .collection("leads")
-      .find(query)
+      .find(filter)
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize)
       .toArray();
     console.timeEnd(`${__timerPrefix}:fetchLeads`);
 
@@ -367,7 +474,11 @@ export async function GET() {
     console.timeEnd(`${__timerPrefix}:transformLeads`);
     console.timeEnd(`${__timerPrefix}:total`);
 
-    return NextResponse.json(transformedLeads);
+    return NextResponse.json({
+      leads: transformedLeads,
+      total: totalCount,
+      totalAll: totalAllCount,
+    });
   } catch (error) {
     console.error("Error fetching leads:", error);
 
