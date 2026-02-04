@@ -16,6 +16,8 @@ import { useSession } from "next-auth/react";
 
 interface LeadStatusProps {
   lead: Lead;
+  /** When provided, called after a successful status update so the panel/store can sync the updated lead */
+  onLeadUpdated?: (updatedLead: Lead) => Promise<boolean>;
 }
 
 type LeadsData =
@@ -41,7 +43,7 @@ function hexWithAlpha(hex: string, alpha: string) {
   return hex + alpha;
 }
 
-const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
+const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const queryClient = useQueryClient();
@@ -69,7 +71,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
       }
       return status;
     },
-    [statuses],
+    [statuses]
   );
 
   const currentStatusObj = findStatusByIdOrName(lead.status);
@@ -100,7 +102,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
       }
       return "Unknown";
     },
-    [findStatusByIdOrName],
+    [findStatusByIdOrName]
   );
 
   const handleStatusChange = useCallback(
@@ -125,7 +127,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
 
           if (Array.isArray(oldData)) {
             return oldData.map((l: Lead) =>
-              l._id === lead._id ? { ...l, status: newStatusId } : l,
+              l._id === lead._id ? { ...l, status: newStatusId } : l
             );
           } else if (oldData && typeof oldData === "object") {
             if ("data" in oldData && Array.isArray(oldData.data)) {
@@ -133,7 +135,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
                 ...oldData,
                 data: oldData.data.map(
                   (l: Lead) =>
-                    l._id === lead._id ? { ...l, status: newStatusId } : l, // ✅ FIXED
+                    l._id === lead._id ? { ...l, status: newStatusId } : l // ✅ FIXED
                 ),
               };
             } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
@@ -141,7 +143,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
                 ...oldData,
                 leads: oldData.leads.map(
                   (l: Lead) =>
-                    l._id === lead._id ? { ...l, status: newStatusId } : l, // ✅ FIXED
+                    l._id === lead._id ? { ...l, status: newStatusId } : l // ✅ FIXED
                 ),
               };
             }
@@ -170,7 +172,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
             error: errorText,
           });
           throw new Error(
-            `Failed to update status: ${response.status} - ${errorText}`,
+            `Failed to update status: ${response.status} - ${errorText}`
           );
         }
 
@@ -190,21 +192,21 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
 
             if (Array.isArray(oldData)) {
               return oldData.map((l: Lead) =>
-                l._id === lead._id ? updatedLead : l,
+                l._id === lead._id ? updatedLead : l
               );
             } else if (oldData && typeof oldData === "object") {
               if ("data" in oldData && Array.isArray(oldData.data)) {
                 return {
                   ...oldData,
                   data: oldData.data.map((l: Lead) =>
-                    l._id === lead._id ? updatedLead : l,
+                    l._id === lead._id ? updatedLead : l
                   ),
                 };
               } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
                 return {
                   ...oldData,
                   leads: oldData.leads.map((l: Lead) =>
-                    l._id === lead._id ? updatedLead : l,
+                    l._id === lead._id ? updatedLead : l
                   ),
                 };
               }
@@ -234,6 +236,13 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
             console.error("Error invalidating leads query:", error);
           });
 
+        // Notify parent so the details panel and selectedLead store stay in sync
+        if (onLeadUpdated) {
+          onLeadUpdated(updatedLead).catch((err) =>
+            console.error("Error notifying parent of status update:", err)
+          );
+        }
+
         toast({
           title: "Status updated",
           description: `Lead status changed successfully.`,
@@ -254,21 +263,21 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
 
             if (Array.isArray(oldData)) {
               return oldData.map((l: Lead) =>
-                l._id === lead._id ? { ...l, status: previousStatus } : l,
+                l._id === lead._id ? { ...l, status: previousStatus } : l
               );
             } else if (oldData && typeof oldData === "object") {
               if ("data" in oldData && Array.isArray(oldData.data)) {
                 return {
                   ...oldData,
                   data: oldData.data.map((l: Lead) =>
-                    l._id === lead._id ? { ...l, status: previousStatus } : l,
+                    l._id === lead._id ? { ...l, status: previousStatus } : l
                   ),
                 };
               } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
                 return {
                   ...oldData,
                   leads: oldData.leads.map((l: Lead) =>
-                    l._id === lead._id ? { ...l, status: previousStatus } : l,
+                    l._id === lead._id ? { ...l, status: previousStatus } : l
                   ),
                 };
               }
@@ -305,7 +314,15 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead }) => {
         setIsUpdating(false);
       }
     },
-    [lead._id, lead.status, queryClient, toast, isUpdating, session?.user?.id],
+    [
+      lead._id,
+      lead.status,
+      queryClient,
+      toast,
+      isUpdating,
+      session?.user?.id,
+      onLeadUpdated,
+    ]
   );
 
   const currentStatusColor = currentStatusObj?.color || "#3b82f6";

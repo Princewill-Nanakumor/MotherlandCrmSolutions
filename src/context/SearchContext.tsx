@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState } from "react";
 
 // Create a context for search state
 interface SearchContextType {
@@ -27,9 +27,6 @@ interface SearchProviderProps {
 export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    }, [searchQuery]);
 
   const contextValue: SearchContextType = {
     searchQuery,

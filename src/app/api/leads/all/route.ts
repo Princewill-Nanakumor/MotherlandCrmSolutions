@@ -152,7 +152,12 @@ export async function GET(request: NextRequest) {
       searchParams.get("statusMode") === "exclude" ? "exclude" : "include";
     const sourceMode =
       searchParams.get("sourceMode") === "exclude" ? "exclude" : "include";
-    const search = (searchParams.get("search") || "").trim();
+    // URL query spec decodes + as space; restore so "+12263868389" is preserved or " 12263868389" -> "+12263868389"
+    const rawSearch = searchParams.get("search") || "";
+    let search = rawSearch.trim();
+    if (/^\s+\d+$/.test(rawSearch)) search = "+" + rawSearch.replace(/\s/g, "");
+    // Digits from raw param so phone matching works even if + was decoded as space
+    const digitsOnlyFromRaw = rawSearch.replace(/\D/g, "");
 
     await connectMongoDB();
     const db = mongoose.connection.db;
@@ -224,17 +229,57 @@ export async function GET(request: NextRequest) {
           : { $in: sourceFilter };
     }
 
-    if (search.length > 0) {
-      const regex = new RegExp(escapeRegex(search), "i");
-      const searchOr = {
-        $or: [
-          { firstName: regex },
-          { lastName: regex },
-          { email: regex },
-          { phone: regex },
-          { country: regex },
-        ],
-      };
+    // Run search when user typed something or when raw param has 5+ digits (e.g. "+12263868389" decoded as " 12263868389")
+    if (search.length > 0 || digitsOnlyFromRaw.length >= 5) {
+      const effectiveSearch = search.length > 0 ? search : digitsOnlyFromRaw;
+      const regex = new RegExp(escapeRegex(effectiveSearch), "i");
+      const searchConditions: LeadFilter[] = [
+        { firstName: regex },
+        { lastName: regex },
+        { email: regex },
+        { phone: regex },
+        { country: regex },
+        // Full name: "Timothy Tooktoo" matches firstName + " " + lastName
+        {
+          $expr: {
+            $regexMatch: {
+              input: {
+                $concat: [
+                  { $ifNull: ["$firstName", ""] },
+                  " ",
+                  { $ifNull: ["$lastName", ""] },
+                ],
+              },
+              regex: escapeRegex(effectiveSearch),
+              options: "i",
+            },
+          },
+        },
+      ];
+      // Lead ID: search "386207" matches leadId (numeric or string in DB)
+      const numericSearch = /^\d+$/.test(effectiveSearch)
+        ? parseInt(effectiveSearch, 10)
+        : null;
+      if (numericSearch !== null && !Number.isNaN(numericSearch)) {
+        searchConditions.push(
+          { leadId: numericSearch },
+          { leadId: effectiveSearch }
+        );
+      }
+      // Phone: use digits from raw param so "+12263868389" always finds DB "12263868389"
+      if (digitsOnlyFromRaw.length >= 5) {
+        searchConditions.push({ phone: digitsOnlyFromRaw });
+        const optionalPlusRegex = "^\\s*\\+?\\s*" + digitsOnlyFromRaw + "\\s*$";
+        searchConditions.push({
+          phone: { $regex: optionalPlusRegex, $options: "i" },
+        });
+        const phoneDigitsRegex =
+          "\\D*" + digitsOnlyFromRaw.split("").join("\\D*");
+        searchConditions.push({
+          phone: { $regex: phoneDigitsRegex, $options: "i" },
+        });
+      }
+      const searchOr = { $or: searchConditions };
       filter.$and = filter.$and ? [...filter.$and, searchOr] : [searchOr];
     }
 

@@ -285,7 +285,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           hasNext={hasNext}
         />
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-          <LeadStatus lead={currentLead} />
+          <LeadStatus lead={currentLead} onLeadUpdated={handleLeadUpdated} />
           <ContactSection
             lead={currentLead}
             isExpanded={expandedSections.contact}

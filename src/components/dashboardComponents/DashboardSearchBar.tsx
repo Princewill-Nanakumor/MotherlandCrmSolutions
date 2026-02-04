@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Search, X } from "lucide-react";
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -32,14 +32,19 @@ export function DashboardSearchBar({
 }: DashboardSearchBarProps) {
   const [inputValue, setInputValue] = useState(searchQuery);
   const debouncedValue = useDebounce(inputValue, 300);
+  const isFirstRunRef = useRef(true);
 
-  // Update input value when searchQuery prop changes
+  // Update input value when searchQuery prop changes (e.g. from context)
   useEffect(() => {
     setInputValue(searchQuery);
   }, [searchQuery]);
 
-  // Trigger search when debounced value changes
+  // Trigger search when debounced value changes (skip first run to avoid clearing context on mount)
   useEffect(() => {
+    if (isFirstRunRef.current) {
+      isFirstRunRef.current = false;
+      return;
+    }
     onSearch(debouncedValue);
   }, [debouncedValue, onSearch]);
 

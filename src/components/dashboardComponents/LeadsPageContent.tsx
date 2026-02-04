@@ -317,6 +317,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                     filterBySource={uiState.filterBySource}
                     users={users}
                     onClearFilters={handleClearFilters}
+                    searchQuery={searchQuery}
                   />
                 </div>
               ) : (

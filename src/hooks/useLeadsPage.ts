@@ -631,7 +631,7 @@ export const useLeadsPage = (
     searchQuery: searchQuery,
   });
 
-  // ===== LEADS QUERY (after state so key + request use current filters for instant refetch) =====
+  // ===== LEADS QUERY (use searchQuery prop in key so navbar search refetches immediately) =====
   const leadsQueryKey = [
     "leads",
     page,
@@ -643,7 +643,7 @@ export const useLeadsPage = (
     uiState.countryFilterMode,
     uiState.statusFilterMode,
     uiState.sourceFilterMode,
-    uiState.searchQuery,
+    searchQuery,
   ] as const;
 
   const {
@@ -673,10 +673,19 @@ export const useLeadsPage = (
         params.set("source", JSON.stringify(uiState.filterBySource));
       params.set("countryMode", uiState.countryFilterMode);
       params.set("statusMode", uiState.statusFilterMode);
-      params.set("sourceMode", uiState.sourceFilterMode);
-      if ((uiState.searchQuery ?? "").trim())
-        params.set("search", uiState.searchQuery.trim());
-      const url = `/api/leads/all?${params.toString()}`;
+      const searchTrimmed = (searchQuery ?? "").trim();
+      if (searchTrimmed) {
+        // Encode so "+15195660267" is sent as %2B15195660267 (not decoded as space)
+        params.set("search", searchTrimmed);
+      }
+      let url = `/api/leads/all?${params.toString()}`;
+      if (searchTrimmed && url.includes("search=")) {
+        // Replace search param with properly encoded value (fixes + in some environments)
+        url = url.replace(
+          /search=[^&]*/,
+          "search=" + encodeURIComponent(searchTrimmed)
+        );
+      }
       const response = await fetchWithTimeout(url);
       if (!response.ok) throw new Error("Failed to fetch leads");
       const data = await response.json();

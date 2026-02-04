@@ -11,6 +11,8 @@ interface EmptyStateProps {
   users: User[];
   /** When set, Clear Filters uses this instead of full reload so state/URL stay in sync (fixes production) */
   onClearFilters?: () => void;
+  /** When set, empty state is due to search; show "no leads match your search" instead of "no leads in system" */
+  searchQuery?: string;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({
@@ -20,6 +22,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   filterBySource,
   users,
   onClearFilters,
+  searchQuery = "",
 }) => {
   // Helper to normalize filter values to arrays
   const normalizeFilter = (filter: string | string[]): string[] => {
@@ -47,7 +50,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({
           if (userNames.length === 1) {
             filters.push(`leads assigned to ${userNames[0]}`);
           } else {
-            filters.push(`leads assigned to ${userNames.slice(0, 2).join(", ")}${userNames.length > 2 ? ` and ${userNames.length - 2} more` : ""}`);
+            filters.push(
+              `leads assigned to ${userNames.slice(0, 2).join(", ")}${userNames.length > 2 ? ` and ${userNames.length - 2} more` : ""}`
+            );
           }
         }
       }
@@ -58,7 +63,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       if (countryFilter.length === 1) {
         filters.push(`leads from ${countryFilter[0]}`);
       } else {
-        filters.push(`leads from ${countryFilter.slice(0, 2).join(", ")}${countryFilter.length > 2 ? ` and ${countryFilter.length - 2} more` : ""}`);
+        filters.push(
+          `leads from ${countryFilter.slice(0, 2).join(", ")}${countryFilter.length > 2 ? ` and ${countryFilter.length - 2} more` : ""}`
+        );
       }
     }
 
@@ -76,15 +83,19 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       if (sourceFilter.length === 1) {
         filters.push(`leads from source "${sourceFilter[0]}"`);
       } else {
-        filters.push(`leads from ${sourceFilter.slice(0, 2).join(", ")}${sourceFilter.length > 2 ? ` and ${sourceFilter.length - 2} more` : ""}`);
+        filters.push(
+          `leads from ${sourceFilter.slice(0, 2).join(", ")}${sourceFilter.length > 2 ? ` and ${sourceFilter.length - 2} more` : ""}`
+        );
       }
     }
 
-    if (filters.length === 0) {
+    if (filters.length === 0 && !(searchQuery && searchQuery.trim())) {
       return "leads in the system";
     }
-
-    return filters.join(" and ");
+    if (searchQuery && searchQuery.trim()) {
+      filters.push(`matching "${searchQuery.trim()}"`);
+    }
+    return filters.length === 0 ? "leads in the system" : filters.join(" and ");
   };
 
   const handleRefresh = () => {
@@ -96,35 +107,37 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   const statusFilter = normalizeFilter(filterByStatus);
   const sourceFilter = normalizeFilter(filterBySource);
 
+  const hasSearch = searchQuery != null && String(searchQuery).trim() !== "";
   const hasAnyFilters =
+    hasSearch ||
     userFilter.length > 0 ||
     countryFilter.length > 0 ||
     statusFilter.length > 0 ||
     sourceFilter.length > 0;
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-6">
+    <div className="flex flex-col justify-center items-center px-6 py-12">
       <div className="text-center">
-        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-          <Users className="h-6 w-6 text-gray-400" />
+        <div className="flex justify-center items-center mx-auto mb-4 w-12 h-12 bg-gray-100 rounded-full dark:bg-gray-800">
+          <Users className="w-6 h-6 text-gray-400" />
         </div>
 
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+        <h3 className="mb-2 text-lg font-medium text-gray-900 dark:text-white">
           No {getFilterDescription()} found
         </h3>
 
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-md">
+        <p className="mb-6 max-w-md text-sm text-gray-500 dark:text-gray-400">
           {!hasAnyFilters
             ? "There are currently no leads in the system. New leads will appear here once they are added."
             : `No ${getFilterDescription()} match your current filters. Try adjusting your filters or check back later.`}
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="flex flex-col gap-3 justify-center sm:flex-row">
           <button
             onClick={handleRefresh}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md border border-transparent transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="mr-2 w-4 h-4" />
             Refresh
           </button>
 
@@ -137,9 +150,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({
                   window.location.href = window.location.pathname;
                 }
               }}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 transition-colors dark:border-gray-600 dark:text-gray-300 dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              <Globe className="h-4 w-4 mr-2" />
+              <Globe className="mr-2 w-4 h-4" />
               Clear Filters
             </button>
           )}

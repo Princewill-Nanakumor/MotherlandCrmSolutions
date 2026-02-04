@@ -380,6 +380,19 @@ export default function LeadsTable({
       setIsPanelOpen,
     });
 
+  // When a lead is updated from the panel, update the store so the panel shows new data
+  // (e.g. after status change the lead may no longer be in the filtered list)
+  const handleLeadUpdatedFromPanel = useCallback(
+    async (updatedLead: Lead) => {
+      const ok = await onLeadUpdated(updatedLead);
+      if (ok) {
+        setSelectedLead(updatedLead);
+      }
+      return ok;
+    },
+    [onLeadUpdated, setSelectedLead]
+  );
+
   const { columns } = useTableColumns({
     sortField: (stableSorting[0]?.id as SortField) || "name",
     handleSort,
@@ -497,7 +510,7 @@ export default function LeadsTable({
           key={selectedLead._id}
           lead={selectedLead}
           isOpen={true}
-          onLeadUpdated={onLeadUpdated}
+          onLeadUpdated={handleLeadUpdatedFromPanel}
           onClose={handlePanelClose}
           onNavigate={handleNavigate}
           hasPrevious={currentIndex > 0}
