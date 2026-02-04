@@ -22,6 +22,9 @@ const STORAGE_KEYS = {
   FILTER_BY_SOURCE: "leads_filter_by_source",
 } as const;
 
+/** Debounce delay before applying filters to URL + query (reduces refetches and router calls) */
+const FILTER_DEBOUNCE_MS = 350;
+
 export const useLeadsPage = (
   searchQuery: string,
   setLayoutLoading?: (loading: boolean) => void
@@ -77,6 +80,17 @@ export const useLeadsPage = (
   );
   const [filterJustChanged, setFilterJustChanged] = useState(false);
   const page = filterJustChanged ? 1 : pageFromUrl;
+  /** When true, URL sync effect must not overwrite state until URL has caught up (avoids delay) */
+  const filterJustChangedRef = useRef(false);
+
+  /** Refs holding latest display filter values for debounced commit (avoids stale closure) */
+  const pendingFilterByStatusRef = useRef<string[] | null>(null);
+  const pendingFilterByCountryRef = useRef<string[] | null>(null);
+  const pendingFilterBySourceRef = useRef<string[] | null>(null);
+  const pendingFilterByUserRef = useRef<string | null>(null);
+  const filterDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
 
   // ===== REACT QUERY HOOKS =====
   const isAuthenticated = status === "authenticated";
@@ -631,6 +645,18 @@ export const useLeadsPage = (
     searchQuery: searchQuery,
   });
 
+  // Display filter values (instant dropdown feedback); committed values live in uiState + filterByUser
+  const [displayFilterByStatus, setDisplayFilterByStatus] = useState(
+    uiState.filterByStatus
+  );
+  const [displayFilterByCountry, setDisplayFilterByCountry] = useState(
+    uiState.filterByCountry
+  );
+  const [displayFilterBySource, setDisplayFilterBySource] = useState(
+    uiState.filterBySource
+  );
+  const [displayFilterByUser, setDisplayFilterByUser] = useState(filterByUser);
+
   // ===== LEADS QUERY (use searchQuery prop in key so navbar search refetches immediately) =====
   const leadsQueryKey = [
     "leads",
@@ -645,6 +671,9 @@ export const useLeadsPage = (
     uiState.sourceFilterMode,
     searchQuery,
   ] as const;
+
+  // Keep last successful data so we don't flash "No leads found" when search/filters change
+  const lastLeadsDataRef = useRef<LeadsResponse | undefined>(undefined);
 
   const {
     data: leadsData,
@@ -704,8 +733,12 @@ export const useLeadsPage = (
     refetchOnWindowFocus: false,
     retry: 2,
     refetchOnMount: false,
-    placeholderData: (previousData) => previousData,
+    placeholderData: (previousData) => previousData ?? lastLeadsDataRef.current,
   });
+
+  if (leadsData !== undefined) {
+    lastLeadsDataRef.current = leadsData;
+  }
 
   const leads = leadsData?.leads ?? [];
   const leadsTotal = leadsData?.total ?? 0;
@@ -883,38 +916,64 @@ export const useLeadsPage = (
       }
     };
 
+    // ✅ INSTANT FILTERS: Don't overwrite state from URL until URL has caught up with our last change.
+    // Otherwise we'd revert the optimistic state and cause a visible delay.
+    if (filterJustChangedRef.current) {
+      const urlStatusParsed = parseUrlParam(urlStatus);
+      const urlCountryParsed = parseUrlParam(urlCountry);
+      const urlSourceParsed = parseUrlParam(urlSource);
+      const urlUserParsed = parseUrlParam(urlUser);
+      const userFilterValue =
+        urlUserParsed.length === 0 ? "all" : urlUserParsed.join(",");
+      const urlMatchesState =
+        JSON.stringify(urlStatusParsed) ===
+          JSON.stringify(uiState.filterByStatus) &&
+        JSON.stringify(urlCountryParsed) ===
+          JSON.stringify(uiState.filterByCountry) &&
+        JSON.stringify(urlSourceParsed) ===
+          JSON.stringify(uiState.filterBySource) &&
+        filterByUser === userFilterValue;
+      if (!urlMatchesState) {
+        return; // URL not updated yet; keep optimistic state so table refetches immediately
+      }
+      filterJustChangedRef.current = false;
+    }
+
     // ✅ FIX: Priority: URL > localStorage > default
     // Country filter
     const targetCountry = parseUrlParam(urlCountry);
     if (targetCountry.length > 0 || urlCountry === null) {
-      // URL has value or explicitly null - use URL
       if (
         JSON.stringify(targetCountry) !==
         JSON.stringify(uiState.filterByCountry)
       ) {
         setUiState((prev) => ({ ...prev, filterByCountry: targetCountry }));
+        setDisplayFilterByCountry(targetCountry);
+        pendingFilterByCountryRef.current = targetCountry;
       }
     }
 
     // Status filter
     const targetStatus = parseUrlParam(urlStatus);
     if (targetStatus.length > 0 || urlStatus === null) {
-      // URL has value or explicitly null - use URL
       if (
         JSON.stringify(targetStatus) !== JSON.stringify(uiState.filterByStatus)
       ) {
         setUiState((prev) => ({ ...prev, filterByStatus: targetStatus }));
+        setDisplayFilterByStatus(targetStatus);
+        pendingFilterByStatusRef.current = targetStatus;
       }
     }
 
     // Source filter
     const targetSource = parseUrlParam(urlSource);
     if (targetSource.length > 0 || urlSource === null) {
-      // URL has value or explicitly null - use URL
       if (
         JSON.stringify(targetSource) !== JSON.stringify(uiState.filterBySource)
       ) {
         setUiState((prev) => ({ ...prev, filterBySource: targetSource }));
+        setDisplayFilterBySource(targetSource);
+        pendingFilterBySourceRef.current = targetSource;
       }
     }
 
@@ -925,10 +984,13 @@ export const useLeadsPage = (
         targetUser.length === 0 ? "all" : targetUser.join(",");
       if (filterByUser !== userFilterValue) {
         setFilterByUser(userFilterValue);
+        setDisplayFilterByUser(userFilterValue);
+        pendingFilterByUserRef.current = userFilterValue;
       }
     } else if (filterByUser !== "all") {
-      // URL has no user param — keep state in sync so one click clears filter
       setFilterByUser("all");
+      setDisplayFilterByUser("all");
+      pendingFilterByUserRef.current = "all";
     }
 
     // ✅ FIX: Read filter modes from URL
@@ -968,6 +1030,10 @@ export const useLeadsPage = (
     uiState.sourceFilterMode,
     filterByUser,
     setFilterByUser,
+    setDisplayFilterByStatus,
+    setDisplayFilterByCountry,
+    setDisplayFilterBySource,
+    setDisplayFilterByUser,
   ]);
 
   useEffect(() => {
@@ -1123,40 +1189,113 @@ export const useLeadsPage = (
     [setSelectedLeads]
   );
 
+  // Debounced commit: apply pending filter refs to state + URL (single refetch + one router.replace)
+  const commitFilters = useCallback(() => {
+    const statuses = pendingFilterByStatusRef.current ?? uiState.filterByStatus;
+    const countries =
+      pendingFilterByCountryRef.current ?? uiState.filterByCountry;
+    const sources = pendingFilterBySourceRef.current ?? uiState.filterBySource;
+    const user = pendingFilterByUserRef.current ?? filterByUser;
+
+    setUiState((prev) => ({
+      ...prev,
+      filterByStatus: statuses,
+      filterByCountry: countries,
+      filterBySource: sources,
+    }));
+    setFilterByUser(user);
+    filterJustChangedRef.current = true;
+    setFilterJustChanged(true);
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        STORAGE_KEYS.FILTER_BY_COUNTRY,
+        JSON.stringify(countries)
+      );
+      localStorage.setItem(
+        STORAGE_KEYS.FILTER_BY_STATUS,
+        JSON.stringify(statuses)
+      );
+      localStorage.setItem(
+        STORAGE_KEYS.FILTER_BY_SOURCE,
+        JSON.stringify(sources)
+      );
+      localStorage.setItem(
+        STORAGE_KEYS.FILTER_BY_USER,
+        JSON.stringify(user === "all" ? [] : user.split(","))
+      );
+    }
+
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set("page", "1");
+    if (countries.length === 0) params.delete("country");
+    else params.set("country", JSON.stringify(countries));
+    if (statuses.length === 0) params.delete("status");
+    else params.set("status", JSON.stringify(statuses));
+    if (sources.length === 0) params.delete("source");
+    else params.set("source", JSON.stringify(sources));
+    if (user === "all") params.delete("user");
+    else params.set("user", JSON.stringify(user.split(",")));
+    if (!params.has("countryMode"))
+      params.set("countryMode", uiState.countryFilterMode);
+    if (!params.has("statusMode"))
+      params.set("statusMode", uiState.statusFilterMode);
+    if (!params.has("sourceMode"))
+      params.set("sourceMode", uiState.sourceFilterMode);
+
+    router.replace(
+      params.toString() ? `${pathname}?${params.toString()}` : pathname
+    );
+
+    pendingFilterByStatusRef.current = null;
+    pendingFilterByCountryRef.current = null;
+    pendingFilterBySourceRef.current = null;
+    pendingFilterByUserRef.current = null;
+  }, [
+    pathname,
+    searchParams,
+    router,
+    setFilterByUser,
+    uiState.filterByStatus,
+    uiState.filterByCountry,
+    uiState.filterBySource,
+    uiState.countryFilterMode,
+    uiState.statusFilterMode,
+    uiState.sourceFilterMode,
+    filterByUser,
+  ]);
+
+  const scheduleFilterCommit = useCallback(() => {
+    if (filterDebounceTimerRef.current) {
+      clearTimeout(filterDebounceTimerRef.current);
+    }
+    filterDebounceTimerRef.current = setTimeout(() => {
+      filterDebounceTimerRef.current = null;
+      commitFilters();
+    }, FILTER_DEBOUNCE_MS);
+  }, [commitFilters]);
+
+  useEffect(() => {
+    return () => {
+      if (filterDebounceTimerRef.current) {
+        clearTimeout(filterDebounceTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleCountryFilterChange = useCallback(
     (countries: string[]) => {
-      setFilterJustChanged(true);
-      setUiState((prev) => ({
-        ...prev,
-        filterByCountry: countries,
-      }));
-
-      // Save to localStorage immediately
+      setDisplayFilterByCountry(countries);
+      pendingFilterByCountryRef.current = countries;
       if (typeof window !== "undefined") {
         localStorage.setItem(
           STORAGE_KEYS.FILTER_BY_COUNTRY,
           JSON.stringify(countries)
         );
       }
-
-      const params = new URLSearchParams(Array.from(searchParams.entries()));
-      params.set("page", "1");
-
-      if (countries.length === 0) {
-        params.delete("country");
-      } else {
-        params.set("country", JSON.stringify(countries));
-      }
-
-      // ✅ FIX: Preserve country mode in URL
-      if (!params.has("countryMode")) {
-        params.set("countryMode", uiState.countryFilterMode);
-      }
-
-      const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname);
+      scheduleFilterCommit();
     },
-    [pathname, searchParams, uiState.countryFilterMode, router]
+    [scheduleFilterCommit]
   );
 
   const handleCountryFilterModeChange = useCallback(
@@ -1227,75 +1366,48 @@ export const useLeadsPage = (
 
   const handleStatusFilterChange = useCallback(
     (statuses: string[]) => {
-      setFilterJustChanged(true);
-      setUiState((prev) => ({
-        ...prev,
-        filterByStatus: statuses,
-      }));
-
-      const params = new URLSearchParams(Array.from(searchParams.entries()));
-      params.set("page", "1");
-      if (statuses.length === 0) {
-        params.delete("status");
-      } else {
-        params.set("status", JSON.stringify(statuses));
+      setDisplayFilterByStatus(statuses);
+      pendingFilterByStatusRef.current = statuses;
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          STORAGE_KEYS.FILTER_BY_STATUS,
+          JSON.stringify(statuses)
+        );
       }
-
-      if (!params.has("statusMode")) {
-        params.set("statusMode", uiState.statusFilterMode);
-      }
-
-      const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname);
+      scheduleFilterCommit();
     },
-    [pathname, searchParams, uiState.statusFilterMode, router]
+    [scheduleFilterCommit]
   );
 
   const handleSourceFilterChange = useCallback(
     (sources: string[]) => {
-      setFilterJustChanged(true);
-      setUiState((prev) => ({
-        ...prev,
-        filterBySource: sources,
-      }));
-
-      const params = new URLSearchParams(Array.from(searchParams.entries()));
-      params.set("page", "1");
-      if (sources.length === 0) {
-        params.delete("source");
-      } else {
-        params.set("source", JSON.stringify(sources));
+      setDisplayFilterBySource(sources);
+      pendingFilterBySourceRef.current = sources;
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          STORAGE_KEYS.FILTER_BY_SOURCE,
+          JSON.stringify(sources)
+        );
       }
-
-      if (!params.has("sourceMode")) {
-        params.set("sourceMode", uiState.sourceFilterMode);
-      }
-
-      const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname);
+      scheduleFilterCommit();
     },
-    [pathname, searchParams, uiState.sourceFilterMode, router]
+    [scheduleFilterCommit]
   );
 
   const handleFilterChange = useCallback(
     (values: string[]) => {
-      setFilterJustChanged(true);
       const value = values.length === 0 ? "all" : values.join(",");
-      setFilterByUser(value);
-
-      // ✅ FIX: Use router.replace so searchParams update immediately and sync effect
-      // doesn't overwrite with stale URL (avoids needing to click twice to clear user filter)
-      const params = new URLSearchParams(Array.from(searchParams.entries()));
-      params.set("page", "1");
-      if (values.length === 0) {
-        params.delete("user");
-      } else {
-        params.set("user", JSON.stringify(values));
+      setDisplayFilterByUser(value);
+      pendingFilterByUserRef.current = value;
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          STORAGE_KEYS.FILTER_BY_USER,
+          JSON.stringify(values)
+        );
       }
-      const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname);
+      scheduleFilterCommit();
     },
-    [setFilterByUser, pathname, searchParams, router]
+    [scheduleFilterCommit]
   );
 
   const handlePageSizeChange = useCallback(
@@ -1311,8 +1423,17 @@ export const useLeadsPage = (
     [pathname, searchParams, router]
   );
 
-  /** Clear all filters and URL params; sync effect will reset state from empty URL. */
+  /** Clear all filters and URL params; apply immediately (no debounce). */
   const handleClearFilters = useCallback(() => {
+    if (filterDebounceTimerRef.current) {
+      clearTimeout(filterDebounceTimerRef.current);
+      filterDebounceTimerRef.current = null;
+    }
+    pendingFilterByStatusRef.current = null;
+    pendingFilterByCountryRef.current = null;
+    pendingFilterBySourceRef.current = null;
+    pendingFilterByUserRef.current = null;
+
     if (typeof window !== "undefined") {
       localStorage.removeItem(STORAGE_KEYS.FILTER_BY_COUNTRY);
       localStorage.removeItem(STORAGE_KEYS.FILTER_BY_STATUS);
@@ -1323,8 +1444,20 @@ export const useLeadsPage = (
       localStorage.removeItem("sourceFilterMode");
     }
     setFilterJustChanged(true);
+    filterJustChangedRef.current = true;
+    setDisplayFilterByStatus([]);
+    setDisplayFilterByCountry([]);
+    setDisplayFilterBySource([]);
+    setDisplayFilterByUser("all");
+    setUiState((prev) => ({
+      ...prev,
+      filterByCountry: [],
+      filterByStatus: [],
+      filterBySource: [],
+    }));
+    setFilterByUser("all");
     router.replace(pathname);
-  }, [pathname, router]);
+  }, [pathname, router, setFilterByUser]);
 
   const hasAssignedLeads = selectedLeads.some(
     (lead) => !!getAssignedUserId(lead.assignedTo)
@@ -1355,6 +1488,10 @@ export const useLeadsPage = (
     filterByUser,
     uiState,
     setUiState,
+    displayFilterByStatus,
+    displayFilterByCountry,
+    displayFilterBySource,
+    displayFilterByUser,
     filteredLeads,
     counts,
     shouldShowLoading,

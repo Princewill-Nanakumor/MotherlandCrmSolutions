@@ -58,6 +58,10 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
     filterByUser,
     uiState,
     setUiState,
+    displayFilterByStatus,
+    displayFilterByCountry,
+    displayFilterBySource,
+    displayFilterByUser,
     filteredLeads,
     counts,
     shouldShowLoading,
@@ -235,25 +239,25 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
             onUnassign={handleUnassignClick}
             onStatusChange={handleBulkStatusChange}
             onDelete={handleBulkDelete}
-            filterByCountry={uiState.filterByCountry}
+            filterByCountry={displayFilterByCountry}
             onCountryFilterChange={handleCountryFilterChange}
             countryFilterMode={uiState.countryFilterMode}
             onCountryFilterModeChange={handleCountryFilterModeChange}
-            filterByStatus={uiState.filterByStatus}
+            filterByStatus={displayFilterByStatus}
             onStatusFilterChange={handleStatusFilterChange}
             statusFilterMode={uiState.statusFilterMode}
             onStatusFilterModeChange={handleStatusFilterModeChange}
-            filterBySource={uiState.filterBySource}
+            filterBySource={displayFilterBySource}
             onSourceFilterChange={handleSourceFilterChange}
             sourceFilterMode={uiState.sourceFilterMode}
             onSourceFilterModeChange={handleSourceFilterModeChange}
             isLoading={shouldShowLoading}
             filterByUser={
-              filterByUser === "all" || !filterByUser
+              displayFilterByUser === "all" || !displayFilterByUser
                 ? []
-                : filterByUser.includes(",")
-                  ? filterByUser.split(",")
-                  : [filterByUser]
+                : displayFilterByUser.includes(",")
+                  ? displayFilterByUser.split(",")
+                  : [displayFilterByUser]
             }
             onFilterChange={handleFilterChange}
             users={users}

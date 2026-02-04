@@ -3,6 +3,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 
 interface StatusFilterProps {
@@ -23,13 +24,17 @@ export const StatusFilter = ({
   onModeChange,
 }: StatusFilterProps) => {
   // Internal mode state if not controlled externally
-  const [internalMode, setInternalMode] = useState<"include" | "exclude">(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("statusFilterMode");
-      return (stored === "exclude" ? "exclude" : "include") as "include" | "exclude";
+  const [internalMode, setInternalMode] = useState<"include" | "exclude">(
+    () => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("statusFilterMode");
+        return (stored === "exclude" ? "exclude" : "include") as
+          | "include"
+          | "exclude";
+      }
+      return "include";
     }
-    return "include";
-  });
+  );
 
   const mode = externalMode ?? internalMode;
 
@@ -50,7 +55,10 @@ export const StatusFilter = ({
       setInternalMode(newMode);
     }
   };
-  // ✅ FIX: Use useQuery to subscribe to cache updates
+
+  const { status } = useSession();
+
+  // All status definitions (from settings)
   const { data: statuses = [] } = useQuery<
     Array<{ id: string; _id?: string; name: string; color?: string }>
   >({
@@ -62,17 +70,11 @@ export const StatusFilter = ({
       if (!response.ok) throw new Error("Failed to fetch statuses");
       const data = await response.json();
 
-      // Ensure "NEW" status is always included (for imported leads)
-      // Check if "NEW" exists by name (case-insensitive) or by _id/id
       const hasNewStatus = data.some(
-        (status: { id?: string; _id?: string; name?: string }) =>
-          status._id === "NEW" ||
-          status.id === "NEW" ||
-          status.name?.toUpperCase() === "NEW"
+        (s: { id?: string; _id?: string; name?: string }) =>
+          s._id === "NEW" || s.id === "NEW" || s.name?.toUpperCase() === "NEW"
       );
-
       if (!hasNewStatus) {
-        // Add "NEW" status at the beginning
         data.unshift({
           _id: "NEW",
           id: "NEW",
@@ -80,26 +82,54 @@ export const StatusFilter = ({
           color: "#3B82F6",
         });
       }
-
       return data;
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     retry: 2,
   });
 
+  // Status values that have at least one lead (only show these in the filter)
+  const { data: statusesWithLeads = [] } = useQuery<string[]>({
+    queryKey: ["leads", "statuses"],
+    queryFn: async () => {
+      const response = await fetch("/api/leads/statuses", {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to fetch lead statuses");
+      return response.json();
+    },
+    enabled: status === "authenticated",
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
   const options = useMemo(() => {
+    const withLeadsSet = new Set(
+      statusesWithLeads.map((s) => String(s).trim().toLowerCase())
+    );
+    const hasAnyLeads = withLeadsSet.size > 0;
+
     return statuses
-      .map((status) => ({
-        value: status.id || status._id || "",
-        label:
-          status.name.charAt(0).toUpperCase() +
-          status.name.slice(1).toLowerCase(),
-      }))
-      .filter((opt) => opt.value) // Filter out any invalid options
-      .sort((a, b) => a.label.localeCompare(b.label)); // Sort alphabetically
-  }, [statuses]);
+      .map((status) => {
+        const id = status.id || status._id || "";
+        const name = status.name ?? "";
+        const hasLeads =
+          !hasAnyLeads ||
+          withLeadsSet.has(String(id).trim().toLowerCase()) ||
+          withLeadsSet.has(String(name).trim().toLowerCase());
+        if (!hasLeads) return null;
+        return {
+          value: id,
+          label: name.charAt(0).toUpperCase() + name.slice(1).toLowerCase(),
+        };
+      })
+      .filter((opt): opt is { value: string; label: string } =>
+        Boolean(opt && opt.value)
+      )
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [statuses, statusesWithLeads]);
 
   const getPlaceholder = () => {
     if (value.length === 0) {

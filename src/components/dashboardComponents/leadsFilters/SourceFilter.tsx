@@ -82,19 +82,31 @@ export const SourceFilter = ({
   });
 
   const sources = useMemo(() => {
-    if (providedSources && providedSources.length > 0) return providedSources;
-    return fetchedSources
-      .filter((s): s is string => Boolean(s))
-      .sort((a, b) => a.localeCompare(b));
+    const raw =
+      providedSources && providedSources.length > 0
+        ? providedSources
+        : fetchedSources.filter((s): s is string => Boolean(s));
+    // Deduplicate by normalized name (trim + lowercase) so "Richer" and "richer" show once
+    const byKey = new Map<string, string>();
+    for (const s of raw) {
+      const t = String(s).trim();
+      if (!t) continue;
+      const key = t.toLowerCase();
+      if (!byKey.has(key)) byKey.set(key, t);
+    }
+    return Array.from(byKey.values()).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" })
+    );
   }, [providedSources, fetchedSources]);
 
   const options = useMemo(
     () =>
       sources
-        .map((source: string) => ({
-          value: source,
-          label: source.charAt(0).toUpperCase() + source.slice(1).toLowerCase(),
-        }))
+        .map((source: string) => {
+          const label =
+            source.charAt(0).toUpperCase() + source.slice(1).toLowerCase();
+          return { value: source, label };
+        })
         .sort((a, b) => a.label.localeCompare(b.label)),
     [sources]
   );
