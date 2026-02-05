@@ -18,7 +18,7 @@ interface UserLeadTableControlsProps {
   table: Table<Lead>;
 }
 
-const PAGE_SIZE_OPTIONS = [10, 15, 20, 30, 40, 50, 100, 200];
+const PAGE_SIZE_OPTIONS = [10, 15, 20, 30, 40, 50, 100, 150, 200, 250, 300];
 
 // Changed to default export
 export default function UserLeadTableControls({
@@ -44,9 +44,7 @@ export default function UserLeadTableControls({
             ))}
           </SelectContent>
         </Select>
-        <span className="text-sm !text-gray-600 dark:!text-white">
-          entries
-        </span>
+        <span className="text-sm !text-gray-600 dark:!text-white">entries</span>
         <ColumnVisibilityToggle table={table} tableId="userLeadsTable" />
       </div>
       <div className="text-sm !text-gray-600 dark:!text-white">

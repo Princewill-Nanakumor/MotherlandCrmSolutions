@@ -13,7 +13,7 @@ interface TableHeaderProps {
   onPageSizeChange?: (pageSize: number) => void;
 }
 
-const pageSizeOptions = [10, 15, 20, 30, 40, 50, 100, 500];
+const pageSizeOptions = [10, 15, 20, 30, 40, 50, 100, 150, 200, 250, 300, 500];
 
 export function TableHeader({
   table,
