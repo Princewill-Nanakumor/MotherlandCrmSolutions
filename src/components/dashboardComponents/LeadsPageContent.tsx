@@ -317,7 +317,12 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                           : [filterByUser]
                     }
                     filterByCountry={uiState.filterByCountry}
-                    filterByStatus={uiState.filterByStatus}
+                    filterByStatus={uiState.filterByStatus.map((statusId) => {
+                      const statusObj = statuses.find(
+                        (s) => s.id === statusId || s.name === statusId
+                      );
+                      return statusObj?.name ?? statusId;
+                    })}
                     filterBySource={uiState.filterBySource}
                     users={users}
                     onClearFilters={handleClearFilters}

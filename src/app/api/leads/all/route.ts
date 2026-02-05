@@ -222,16 +222,22 @@ export async function GET(request: NextRequest) {
           ? { $nin: statusFilter }
           : { $in: statusFilter };
     }
+
+    // Case-insensitive source filtering without conflicting $options
     if (sourceFilter.length > 0) {
       const sourcePattern = sourceFilter
         .map((s) => escapeRegex(String(s).trim()))
         .filter(Boolean)
         .join("|");
-      const sourceRegex = new RegExp(`^(${sourcePattern})$`, "i");
-      filter.source =
-        sourceMode === "exclude"
-          ? { $not: { $regex: sourceRegex, $options: "i" } }
-          : { $regex: sourceRegex, $options: "i" };
+
+      if (sourcePattern) {
+        // Single regex that matches any selected source, case-insensitively
+        const sourceRegex = new RegExp(`^(${sourcePattern})$`, "i");
+
+        // For MongoDB, use a RegExp directly instead of mixing $regex and $options
+        filter.source =
+          sourceMode === "exclude" ? { $not: sourceRegex } : sourceRegex;
+      }
     }
 
     // Run search when user typed something or when raw param has 5+ digits (e.g. "+12263868389" decoded as " 12263868389")

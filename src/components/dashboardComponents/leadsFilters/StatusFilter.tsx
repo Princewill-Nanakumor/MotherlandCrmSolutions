@@ -3,7 +3,6 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 
 interface StatusFilterProps {
@@ -56,8 +55,6 @@ export const StatusFilter = ({
     }
   };
 
-  const { status } = useSession();
-
   // All status definitions (from settings)
   const { data: statuses = [] } = useQuery<
     Array<{ id: string; _id?: string; name: string; color?: string }>
@@ -90,36 +87,12 @@ export const StatusFilter = ({
     retry: 2,
   });
 
-  // Status values that have at least one lead (only show these in the filter)
-  const { data: statusesWithLeads = [] } = useQuery<string[]>({
-    queryKey: ["leads", "statuses"],
-    queryFn: async () => {
-      const response = await fetch("/api/leads/statuses", {
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Failed to fetch lead statuses");
-      return response.json();
-    },
-    enabled: status === "authenticated",
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
+  // Show all statuses from /api/statuses (even if no current leads have them)
   const options = useMemo(() => {
-    const withLeadsSet = new Set(
-      statusesWithLeads.map((s) => String(s).trim().toLowerCase())
-    );
-    const hasAnyLeads = withLeadsSet.size > 0;
-
     return statuses
       .map((status) => {
         const id = status.id || status._id || "";
         const name = status.name ?? "";
-        const hasLeads =
-          !hasAnyLeads ||
-          withLeadsSet.has(String(id).trim().toLowerCase()) ||
-          withLeadsSet.has(String(name).trim().toLowerCase());
-        if (!hasLeads) return null;
         return {
           value: id,
           label: name.charAt(0).toUpperCase() + name.slice(1).toLowerCase(),
@@ -129,7 +102,7 @@ export const StatusFilter = ({
         Boolean(opt && opt.value)
       )
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, [statuses, statusesWithLeads]);
+  }, [statuses]);
 
   const getPlaceholder = () => {
     if (value.length === 0) {
