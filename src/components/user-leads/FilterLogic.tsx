@@ -1,9 +1,25 @@
 // src/components/user-leads/FilterLogic.tsx
 import React, { useMemo, useState, useEffect } from "react";
 import { Lead } from "@/types/leads";
-import { filterLeadsByCountry, filterLeadsByStatus, filterLeadsBySource, searchLeads, getAvailableSources } from "@/utils/LeadsUtils";
+import {
+  filterLeadsByCountry,
+  filterLeadsByStatus,
+  filterLeadsBySource,
+  searchLeads,
+  getAvailableSources,
+} from "@/utils/LeadsUtils";
 
-type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "lastComment" | "lastCommentDate" | "commentCount";
+type SortField =
+  | "leadId"
+  | "name"
+  | "country"
+  | "status"
+  | "source"
+  | "assignedTo"
+  | "createdAt"
+  | "lastComment"
+  | "lastCommentDate"
+  | "commentCount";
 type SortOrder = "asc" | "desc";
 
 interface FilterLogicProps {
@@ -36,26 +52,38 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
   children,
 }) => {
   // Get filter modes from localStorage and sync with changes
-  const [countryFilterMode, setCountryFilterMode] = useState<"include" | "exclude">(() => {
+  const [countryFilterMode, setCountryFilterMode] = useState<
+    "include" | "exclude"
+  >(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("countryFilterMode");
-      return (stored === "exclude" ? "exclude" : "include") as "include" | "exclude";
+      return (stored === "exclude" ? "exclude" : "include") as
+        | "include"
+        | "exclude";
     }
     return "include";
   });
 
-  const [statusFilterMode, setStatusFilterMode] = useState<"include" | "exclude">(() => {
+  const [statusFilterMode, setStatusFilterMode] = useState<
+    "include" | "exclude"
+  >(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("statusFilterMode");
-      return (stored === "exclude" ? "exclude" : "include") as "include" | "exclude";
+      return (stored === "exclude" ? "exclude" : "include") as
+        | "include"
+        | "exclude";
     }
     return "include";
   });
 
-  const [sourceFilterMode, setSourceFilterMode] = useState<"include" | "exclude">(() => {
+  const [sourceFilterMode, setSourceFilterMode] = useState<
+    "include" | "exclude"
+  >(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("sourceFilterMode");
-      return (stored === "exclude" ? "exclude" : "include") as "include" | "exclude";
+      return (stored === "exclude" ? "exclude" : "include") as
+        | "include"
+        | "exclude";
     }
     return "include";
   });
@@ -64,11 +92,23 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "countryFilterMode") {
-        setCountryFilterMode((e.newValue === "exclude" ? "exclude" : "include") as "include" | "exclude");
+        setCountryFilterMode(
+          (e.newValue === "exclude" ? "exclude" : "include") as
+            | "include"
+            | "exclude"
+        );
       } else if (e.key === "statusFilterMode") {
-        setStatusFilterMode((e.newValue === "exclude" ? "exclude" : "include") as "include" | "exclude");
+        setStatusFilterMode(
+          (e.newValue === "exclude" ? "exclude" : "include") as
+            | "include"
+            | "exclude"
+        );
       } else if (e.key === "sourceFilterMode") {
-        setSourceFilterMode((e.newValue === "exclude" ? "exclude" : "include") as "include" | "exclude");
+        setSourceFilterMode(
+          (e.newValue === "exclude" ? "exclude" : "include") as
+            | "include"
+            | "exclude"
+        );
       }
     };
 
@@ -76,7 +116,9 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
     const handleCountryModeChange = () => {
       if (typeof window !== "undefined") {
         const stored = localStorage.getItem("countryFilterMode");
-        const newMode = (stored === "exclude" ? "exclude" : "include") as "include" | "exclude";
+        const newMode = (stored === "exclude" ? "exclude" : "include") as
+          | "include"
+          | "exclude";
         setCountryFilterMode(newMode);
       }
     };
@@ -84,7 +126,9 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
     const handleStatusModeChange = () => {
       if (typeof window !== "undefined") {
         const stored = localStorage.getItem("statusFilterMode");
-        const newMode = (stored === "exclude" ? "exclude" : "include") as "include" | "exclude";
+        const newMode = (stored === "exclude" ? "exclude" : "include") as
+          | "include"
+          | "exclude";
         setStatusFilterMode(newMode);
       }
     };
@@ -92,7 +136,9 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
     const handleSourceModeChange = () => {
       if (typeof window !== "undefined") {
         const stored = localStorage.getItem("sourceFilterMode");
-        const newMode = (stored === "exclude" ? "exclude" : "include") as "include" | "exclude";
+        const newMode = (stored === "exclude" ? "exclude" : "include") as
+          | "include"
+          | "exclude";
         setSourceFilterMode(newMode);
       }
     };
@@ -101,19 +147,25 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
     const interval = setInterval(() => {
       if (typeof window !== "undefined") {
         const countryStored = localStorage.getItem("countryFilterMode");
-        const countryNewMode = (countryStored === "exclude" ? "exclude" : "include") as "include" | "exclude";
+        const countryNewMode = (
+          countryStored === "exclude" ? "exclude" : "include"
+        ) as "include" | "exclude";
         if (countryNewMode !== countryFilterMode) {
           setCountryFilterMode(countryNewMode);
         }
 
         const statusStored = localStorage.getItem("statusFilterMode");
-        const statusNewMode = (statusStored === "exclude" ? "exclude" : "include") as "include" | "exclude";
+        const statusNewMode = (
+          statusStored === "exclude" ? "exclude" : "include"
+        ) as "include" | "exclude";
         if (statusNewMode !== statusFilterMode) {
           setStatusFilterMode(statusNewMode);
         }
 
         const sourceStored = localStorage.getItem("sourceFilterMode");
-        const sourceNewMode = (sourceStored === "exclude" ? "exclude" : "include") as "include" | "exclude";
+        const sourceNewMode = (
+          sourceStored === "exclude" ? "exclude" : "include"
+        ) as "include" | "exclude";
         if (sourceNewMode !== sourceFilterMode) {
           setSourceFilterMode(sourceNewMode);
         }
@@ -121,15 +173,27 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
     }, 200); // Check every 200ms (reduced frequency since we have custom events)
 
     window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("countryFilterModeChanged", handleCountryModeChange);
+    window.addEventListener(
+      "countryFilterModeChanged",
+      handleCountryModeChange
+    );
     window.addEventListener("statusFilterModeChanged", handleStatusModeChange);
     window.addEventListener("sourceFilterModeChanged", handleSourceModeChange);
-    
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("countryFilterModeChanged", handleCountryModeChange);
-      window.removeEventListener("statusFilterModeChanged", handleStatusModeChange);
-      window.removeEventListener("sourceFilterModeChanged", handleSourceModeChange);
+      window.removeEventListener(
+        "countryFilterModeChanged",
+        handleCountryModeChange
+      );
+      window.removeEventListener(
+        "statusFilterModeChanged",
+        handleStatusModeChange
+      );
+      window.removeEventListener(
+        "sourceFilterModeChanged",
+        handleSourceModeChange
+      );
       clearInterval(interval);
     };
   }, [countryFilterMode, statusFilterMode, sourceFilterMode]);
@@ -172,7 +236,11 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
 
     // Apply country filter using the utility function
     if (countryFilter.length > 0) {
-      filtered = filterLeadsByCountry(filtered, countryFilter, countryFilterMode);
+      filtered = filterLeadsByCountry(
+        filtered,
+        countryFilter,
+        countryFilterMode
+      );
     }
 
     // Normalize filterByStatus to array format
@@ -187,7 +255,12 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
     // Apply status filter using the utility function
     if (statusFilter.length > 0) {
       // Note: statuses array is empty here, but filterLeadsByStatus handles it
-      filtered = filterLeadsByStatus(filtered, statusFilter, [], statusFilterMode);
+      filtered = filterLeadsByStatus(
+        filtered,
+        statusFilter,
+        [],
+        statusFilterMode
+      );
     }
 
     // Normalize filterBySource to array format
@@ -254,7 +327,12 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
             if (!lead.assignedTo) return "unassigned";
             // assignedTo is always an object in Lead type, but handle edge cases
             const assignedTo = lead.assignedTo;
-            if (assignedTo && typeof assignedTo === "object" && "firstName" in assignedTo && "lastName" in assignedTo) {
+            if (
+              assignedTo &&
+              typeof assignedTo === "object" &&
+              "firstName" in assignedTo &&
+              "lastName" in assignedTo
+            ) {
               const firstName = String(assignedTo.firstName || "");
               const lastName = String(assignedTo.lastName || "");
               const fullName = `${firstName} ${lastName}`.trim();
@@ -270,6 +348,39 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
           aValue = new Date(a.createdAt || "").getTime();
           bValue = new Date(b.createdAt || "").getTime();
           break;
+        case "leadId": {
+          const idA = a.leadId != null ? Number(a.leadId) : 0;
+          const idB = b.leadId != null ? Number(b.leadId) : 0;
+          return sortOrder === "asc" ? idA - idB : idB - idA;
+        }
+        case "lastComment": {
+          const commentA = (a.lastComment || "").toLowerCase();
+          const commentB = (b.lastComment || "").toLowerCase();
+          if (commentA === "" && commentB !== "")
+            return sortOrder === "asc" ? 1 : -1;
+          if (commentA !== "" && commentB === "")
+            return sortOrder === "asc" ? -1 : 1;
+          if (commentA === "" && commentB === "") return 0;
+          const cmp = commentA.localeCompare(commentB);
+          return sortOrder === "asc" ? cmp : -cmp;
+        }
+        case "lastCommentDate": {
+          const dateA = a.lastCommentDate
+            ? new Date(a.lastCommentDate).getTime()
+            : 0;
+          const dateB = b.lastCommentDate
+            ? new Date(b.lastCommentDate).getTime()
+            : 0;
+          if (dateA === 0 && dateB !== 0) return sortOrder === "asc" ? 1 : -1;
+          if (dateA !== 0 && dateB === 0) return sortOrder === "asc" ? -1 : 1;
+          if (dateA === 0 && dateB === 0) return 0;
+          return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+        }
+        case "commentCount": {
+          const countA = a.commentCount ?? 0;
+          const countB = b.commentCount ?? 0;
+          return sortOrder === "asc" ? countA - countB : countB - countA;
+        }
         default:
           return 0;
       }
