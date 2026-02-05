@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Lead } from "@/types/leads";
 import { CountsData } from "@/types/pagination.types";
 import LeadDetailsPanel from "@/components/dashboardComponents/LeadDetailsPanel";
@@ -24,7 +24,17 @@ import { useToggleContext } from "@/context/ToggleContext";
 import { useAssignedLeads } from "@/hooks/useAssignedLeads";
 import { RefetchIndicator } from "@/components/ui/RefetchIndicator";
 
-type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "lastComment" | "lastCommentDate" | "commentCount";
+type SortField =
+  | "leadId"
+  | "name"
+  | "country"
+  | "status"
+  | "source"
+  | "assignedTo"
+  | "createdAt"
+  | "lastComment"
+  | "lastCommentDate"
+  | "commentCount";
 type SortOrder = "asc" | "desc";
 
 export default function UserLeadsContent() {
@@ -343,21 +353,57 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
   handleLeadUpdated,
   handleNavigation,
 }) => {
+  // URL & router for pagination persistence (like all-leads)
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Initialize from URL with fallback (pageSize default 15, page default 1)
+  const initialPageFromUrl = Math.max(
+    1,
+    parseInt(searchParams.get("page") || "1", 10)
+  );
+  const initialPageSizeFromUrl = Math.min(
+    500,
+    Math.max(1, parseInt(searchParams.get("pageSize") || "15", 10))
+  );
+
   // Local pagination state (TanStack will paginate full sortedLeads)
-  const [pageSize, setPageSize] = useState<number>(10);
-  const [pageIndex, setPageIndex] = useState<number>(0);
+  const [pageSize, setPageSize] = useState<number>(initialPageSizeFromUrl);
+  const [pageIndex, setPageIndex] = useState<number>(initialPageFromUrl - 1);
 
-  const handlePageSizeChange = useCallback((value: string) => {
-    const newSize = parseInt(value, 10);
-    if (!Number.isNaN(newSize) && newSize > 0) {
-      setPageSize(newSize);
+  // Update URL when page size changes; reset to page 1
+  const handlePageSizeChange = useCallback(
+    (value: string) => {
+      const newSize = parseInt(value, 10);
+      if (Number.isNaN(newSize) || newSize <= 0) return;
+
+      const size = Math.min(500, Math.max(1, newSize));
+      setPageSize(size);
       setPageIndex(0);
-    }
-  }, []);
 
-  const handlePageChange = useCallback((newPageIndex: number) => {
-    setPageIndex(newPageIndex);
-  }, []);
+      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      params.set("page", "1");
+      params.set("pageSize", String(size));
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname);
+    },
+    [pathname, router, searchParams]
+  );
+
+  // Update URL when page index changes (preserve pageSize)
+  const handlePageChange = useCallback(
+    (newPageIndex: number) => {
+      setPageIndex(newPageIndex);
+
+      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      params.set("page", String(newPageIndex + 1));
+      params.set("pageSize", String(pageSize));
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname);
+    },
+    [pathname, router, searchParams, pageSize]
+  );
 
   const totalPages = Math.max(
     1,
