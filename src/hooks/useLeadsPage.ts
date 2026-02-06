@@ -79,9 +79,14 @@ export const useLeadsPage = (
     Math.max(1, parseInt(searchParams.get("pageSize") || "15", 10))
   );
   const [filterJustChanged, setFilterJustChanged] = useState(false);
-  const page = filterJustChanged ? 1 : pageFromUrl;
+  // Local page state so pagination updates immediately when user clicks Next/Prev
+  // (useSearchParams can lag after router.replace, so query would stay on page 1 otherwise)
+  const [pageState, setPageState] = useState(pageFromUrl);
+  const page = filterJustChanged ? 1 : pageState;
   /** When true, URL sync effect must not overwrite state until URL has caught up (avoids delay) */
   const filterJustChangedRef = useRef(false);
+  /** After user clicks Next/Prev we set page state and replace URL; don't sync from URL until URL reflects this (pageFromUrl can lag and would reset to 1) */
+  const pendingPageFromPaginationRef = useRef<number | null>(null);
 
   /** Refs holding latest display filter values for debounced commit (avoids stale closure) */
   const pendingFilterByStatusRef = useRef<string[] | null>(null);
@@ -684,6 +689,9 @@ export const useLeadsPage = (
   } = useQuery({
     queryKey: leadsQueryKey,
     queryFn: async (): Promise<LeadsResponse> => {
+      if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
+        console.log("[Leads Pagination] Fetching leads", { page, pageSize });
+      }
       const params = new URLSearchParams();
       params.set("page", String(page));
       params.set("pageSize", String(pageSize));
@@ -790,6 +798,41 @@ export const useLeadsPage = (
   // Clear "filter just changed" when user navigates to another page (so we use URL page again)
   useEffect(() => {
     if (pageFromUrl > 1) setFilterJustChanged(false);
+  }, [pageFromUrl]);
+
+  // Sync page state from URL when URL changes (e.g. filter change set page=1, or external nav).
+  // When we just changed page via pagination, don't overwrite with stale pageFromUrl (often still 1) until the URL has caught up.
+  useEffect(() => {
+    const pending = pendingPageFromPaginationRef.current;
+    const isDev =
+      typeof process !== "undefined" && process.env.NODE_ENV === "development";
+    if (pending !== null) {
+      if (pageFromUrl === pending) {
+        if (isDev) {
+          console.log("[Leads Pagination] Sync effect: URL caught up", {
+            pageFromUrl,
+            pending,
+            action: "setPageState(pageFromUrl), clear pendingRef",
+          });
+        }
+        setPageState(pageFromUrl);
+        pendingPageFromPaginationRef.current = null;
+      } else if (isDev) {
+        console.log("[Leads Pagination] Sync effect: waiting for URL", {
+          pageFromUrl,
+          pending,
+          action: "skip sync (avoid reset to page 1)",
+        });
+      }
+      return;
+    }
+    if (isDev && pageFromUrl !== pageState) {
+      console.log("[Leads Pagination] Sync effect: sync from URL", {
+        pageFromUrl,
+        previousPageState: pageState,
+      });
+    }
+    setPageState(pageFromUrl);
   }, [pageFromUrl]);
 
   // ===== INITIALIZATION EFFECT =====
@@ -1206,6 +1249,7 @@ export const useLeadsPage = (
     setFilterByUser(user);
     filterJustChangedRef.current = true;
     setFilterJustChanged(true);
+    pendingPageFromPaginationRef.current = null;
 
     if (typeof window !== "undefined") {
       localStorage.setItem(
@@ -1414,11 +1458,34 @@ export const useLeadsPage = (
     (newPageSize: number) => {
       const size = Math.min(500, Math.max(1, newPageSize));
       setFilterJustChanged(true);
+      pendingPageFromPaginationRef.current = null;
       const params = new URLSearchParams(Array.from(searchParams.entries()));
       params.set("page", "1");
       params.set("pageSize", String(size));
       const query = params.toString();
       router.replace(query ? `${pathname}?${query}` : pathname);
+    },
+    [pathname, searchParams, router]
+  );
+
+  /** Called when user changes page in table (server-side pagination). Updates state immediately and URL so the next page fetches without relying on useSearchParams. */
+  const handleServerPageChange = useCallback(
+    (newPageOneBased: number) => {
+      if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
+        console.log("[Leads Pagination] handleServerPageChange", {
+          newPageOneBased,
+          setting: "filterJustChanged=false, pendingRef=newPage, pageState=newPage, router.replace",
+        });
+      }
+      setFilterJustChanged(false);
+      pendingPageFromPaginationRef.current = newPageOneBased;
+      setPageState(newPageOneBased);
+      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      params.set("page", String(newPageOneBased));
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
     },
     [pathname, searchParams, router]
   );
@@ -1445,6 +1512,7 @@ export const useLeadsPage = (
     }
     setFilterJustChanged(true);
     filterJustChangedRef.current = true;
+    pendingPageFromPaginationRef.current = null;
     setDisplayFilterByStatus([]);
     setDisplayFilterByCountry([]);
     setDisplayFilterBySource([]);
@@ -1511,6 +1579,7 @@ export const useLeadsPage = (
     handleSourceFilterChange,
     handleFilterChange,
     handlePageSizeChange,
+    handleServerPageChange,
     handleClearFilters,
     hasAssignedLeads,
     isInitializing: !isInitialized,

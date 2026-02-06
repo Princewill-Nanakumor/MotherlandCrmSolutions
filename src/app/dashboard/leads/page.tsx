@@ -29,8 +29,8 @@ export default function UserLeadsPage() {
   // Show loading while checking authentication
   if (status === "loading") {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="!text-gray-700 dark:!text-white">Loading...</p>
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-700 dark:text-white">Loading...</p>
       </div>
     );
   }

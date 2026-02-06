@@ -2,7 +2,7 @@
 "use client";
 
 import { useMemo, useEffect, useState, useCallback, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { EmptyStateAdminLeadsTable } from "./EmptyStateAdminLeadsTable";
 import LeadDetailsPanel from "@/components/dashboardComponents/LeadDetailsPanel";
 import { Lead } from "@/types/leads";
@@ -49,6 +49,8 @@ interface LeadsTableProps {
   pageSize?: number;
   /** Current page (1-based) when using server-side pagination; keeps table in sync when filters change */
   serverPage?: number;
+  /** When set, table calls this on page change (1-based) so parent can update state + URL and refetch */
+  onServerPageChange?: (pageOneBased: number) => void;
   /** When set (e.g. server-side pagination), page size changes update URL and refetch */
   onPageSizeChange?: (pageSize: number) => void;
   onLeadUpdated: (lead: Lead) => Promise<boolean>;
@@ -69,6 +71,7 @@ export default function LeadsTable({
   totalRows: serverTotalRows,
   pageSize: serverPageSize,
   serverPage: serverPageProp,
+  onServerPageChange,
   onPageSizeChange,
   onLeadUpdated,
   isLoading = false,
@@ -82,6 +85,8 @@ export default function LeadsTable({
   filterByStatus = "all",
   filterBySource = "all",
 }: LeadsTableProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const isServerPagination = typeof serverTotalRows === "number";
   // Normalize filters to arrays for consistent handling
   const normalizeFilter = (filter: string | string[] | undefined): string[] => {
@@ -185,15 +190,39 @@ export default function LeadsTable({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]); // Only depend on searchParams, not pageIndex to avoid circular updates
 
-  // Update URL when page changes
-  const handlePageChange = useCallback((page: number) => {
-    setPageIndex(page);
-    const currentPathname = window.location.pathname;
-    const params = new URLSearchParams(window.location.search);
-    params.set("page", String(page + 1));
-    const newURL = `${currentPathname}?${params.toString()}`;
-    window.history.replaceState({}, "", newURL);
-  }, []);
+  // Update URL when page changes. With server pagination, parent's onServerPageChange
+  // updates state + URL immediately so the next page fetches without relying on useSearchParams.
+  const handlePageChange = useCallback(
+    (page: number) => {
+      const pageOneBased = page + 1;
+      if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
+        console.log("[Leads Pagination] Table handlePageChange", {
+          pageIndex: page,
+          pageOneBased,
+          isServerPagination,
+          action: isServerPagination && onServerPageChange ? "calling onServerPageChange" : "router.replace",
+        });
+      }
+      setPageIndex(page);
+      if (isServerPagination && onServerPageChange) {
+        onServerPageChange(pageOneBased);
+      } else {
+        const params = new URLSearchParams(Array.from(searchParams.entries()));
+        params.set("page", String(pageOneBased));
+        const query = params.toString();
+        router.replace(query ? `${pathname}?${query}` : pathname, {
+          scroll: false,
+        });
+      }
+    },
+    [
+      isServerPagination,
+      onServerPageChange,
+      pathname,
+      router,
+      searchParams,
+    ]
+  );
 
   // Use props selectedLeads if provided, otherwise use store
   const displaySelectedLeads =
@@ -349,6 +378,9 @@ export default function LeadsTable({
     : sortedLeads.length;
   const pageCount = Math.max(1, Math.ceil(totalRows / pageSize));
 
+  // With server pagination we only pass one page of data; table must use pageIndex 0 so getPaginationRowModel() shows all rows. Pagination UI still uses effectivePageIndex.
+  const tablePageIndex = isServerPagination ? 0 : effectivePageIndex;
+
   // Current page: server = leads (one page), client = slice
   const currentPageLeads = useMemo(() => {
     if (isServerPagination) return sortedLeads;
@@ -409,7 +441,8 @@ export default function LeadsTable({
     data: sortedLeads,
     columns,
     pageSize,
-    pageIndex: effectivePageIndex,
+    pageIndex: tablePageIndex,
+    isServerPagination,
     sorting: stableSorting,
     rowSelection,
     columnOrder,

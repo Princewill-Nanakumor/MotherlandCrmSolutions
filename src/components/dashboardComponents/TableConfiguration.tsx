@@ -16,6 +16,8 @@ interface TableConfigurationProps {
   columns: ColumnDef<Lead>[];
   pageSize: number;
   pageIndex: number;
+  /** When true, data is only the current page; ignore table's reset-to-page-0 (it thinks there's only one page) */
+  isServerPagination?: boolean;
   sorting: Array<{ id: string; desc: boolean }>;
   rowSelection: Record<string, boolean>;
   columnOrder: ColumnOrderState;
@@ -32,6 +34,7 @@ export const useTableConfiguration = ({
   columns,
   pageSize,
   pageIndex,
+  isServerPagination = false,
   sorting,
   rowSelection,
   columnOrder,
@@ -87,14 +90,16 @@ export const useTableConfiguration = ({
       if (typeof updater === "function") {
         const newState = updater({ pageIndex, pageSize });
 
-        // Check if TanStack Table is trying to reset to page 0 when current page is still valid
+        // With server pagination we only pass one page of data, so the table thinks there's 1 page and resets to 0. Ignore that.
         const totalPages = Math.ceil(data.length / pageSize);
         const currentPageStillValid = pageIndex < totalPages && data.length > 0;
         const isResettingToPage0 = newState.pageIndex === 0 && pageIndex > 0;
-        
-        if (isResettingToPage0 && currentPageStillValid) {
-          // Don't update pageIndex - keep current page
-          // This prevents unnecessary pagination resets when data changes but current page is still valid
+        const ignoreServerReset = isServerPagination && isResettingToPage0;
+
+        if (isResettingToPage0 && currentPageStillValid && !isServerPagination) {
+          // Client-side: don't reset when current page still valid
+        } else if (ignoreServerReset) {
+          // Server-side: table only has one page of data; never accept reset to 0 when we're on page > 1
         } else if (newState.pageIndex !== pageIndex) {
           setPageIndex(newState.pageIndex);
         }
@@ -103,14 +108,13 @@ export const useTableConfiguration = ({
           setPageSize(newState.pageSize);
         }
       } else {
-        // Check if TanStack Table is trying to reset to page 0 when current page is still valid
         const totalPages = Math.ceil(data.length / pageSize);
         const currentPageStillValid = pageIndex < totalPages && data.length > 0;
         const isResettingToPage0 = updater.pageIndex === 0 && pageIndex > 0;
-        
-        if (isResettingToPage0 && currentPageStillValid) {
-          // Don't update pageIndex - keep current page
-          // This prevents unnecessary pagination resets when data changes but current page is still valid
+        const ignoreServerReset = isServerPagination && isResettingToPage0;
+
+        if (isResettingToPage0 && currentPageStillValid && !isServerPagination) {
+        } else if (ignoreServerReset) {
         } else if (updater.pageIndex !== pageIndex) {
           setPageIndex(updater.pageIndex);
         }

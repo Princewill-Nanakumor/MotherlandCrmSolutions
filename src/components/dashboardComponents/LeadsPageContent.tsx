@@ -79,6 +79,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
     handleSourceFilterModeChange,
     handleFilterChange,
     handlePageSizeChange,
+    handleServerPageChange,
     handleClearFilters,
     hasAssignedLeads,
     isRefetchingLeads,
@@ -337,6 +338,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                     totalRows={leadsTotal}
                     pageSize={pageSize}
                     serverPage={page}
+                    onServerPageChange={handleServerPageChange}
                     onPageSizeChange={handlePageSizeChange}
                     onLeadUpdated={handleLeadUpdate}
                     isLoading={shouldShowLoading}
