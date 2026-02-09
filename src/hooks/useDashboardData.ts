@@ -18,28 +18,6 @@ interface User {
   lastLogin?: string;
 }
 
-interface Lead {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber?: string;
-  phone?: string;
-  country: string;
-  status: string;
-  assignedTo?:
-    | string
-    | {
-        id: string;
-        firstName: string;
-        lastName: string;
-        email?: string;
-      }
-    | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
 interface DashboardStats {
   total: number;
   assigned: number;

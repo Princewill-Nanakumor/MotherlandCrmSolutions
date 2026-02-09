@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { SessionProvider, useSession } from "next-auth/react";
 import Navbar from "@/components/homepageComponents/Navabar";
 import SignInForm from "@/components/authComponents/SignInForm";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { MessageCircle, Shield } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
@@ -37,7 +37,7 @@ const sectionVariants = {
 // Loading screen component
 function LoadingScreen() {
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950">
+    <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-linear-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950">
       <div className="flex items-center gap-3">
         <div className="relative flex items-center justify-center w-16 h-16">
           <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
@@ -54,7 +54,7 @@ function LoadingScreen() {
 // Redirecting screen component
 function RedirectingScreen() {
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950">
+    <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-linear-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950">
       <div className="flex items-center gap-3">
         <div className="relative flex items-center justify-center w-16 h-16">
           <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
@@ -68,122 +68,107 @@ function RedirectingScreen() {
   );
 }
 
-export default function LoginPage() {
-  const { toast } = useToast();
-  const [hasShownExpiredToast, setHasShownExpiredToast] = useState(false);
-
-  // Component that renders the login form (only when status is confirmed unauthenticated)
-  function LoginFormContent() {
-    const { status } = useSession();
-
-    // Only render form when we're certain the user is NOT authenticated
-    if (status !== "unauthenticated") {
-      return null;
-    }
-
-    return (
-      <div
-        className="relative min-h-screen"
-        style={{
-          backgroundColor: "transparent",
-          background: "transparent",
-          position: "relative",
-          zIndex: 1,
-        }}
+// Defined at module scope so LoginPage re-renders (e.g. when toast dismisses) don't remount these and retrigger motion animations
+function LoginFormContent() {
+  const { status } = useSession();
+  if (status !== "unauthenticated") return null;
+  return (
+    <div
+      className="relative min-h-screen"
+      style={{
+        backgroundColor: "transparent",
+        background: "transparent",
+        position: "relative",
+        zIndex: 1,
+      }}
+    >
+      <motion.div
+        className="relative z-10 min-h-screen"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        style={{ backgroundColor: "transparent" }}
       >
         <motion.div
-          className="relative z-10 min-h-screen"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          style={{ backgroundColor: "transparent" }}
+          variants={sectionVariants}
+          transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <motion.div
-            variants={sectionVariants}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <Navbar />
-          </motion.div>
-
-          <motion.div
-            variants={sectionVariants}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-8"
-          >
-            <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
-              <SignInForm />
-            </div>
-          </motion.div>
-
-          <motion.div
-            className="fixed z-50 bottom-6 right-4 sm:right-6 md:right-8"
-            variants={sectionVariants}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Link
-              href="/"
-              className="flex items-center space-x-2 px-4 py-2.5 text-sm font-medium !text-white bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg transition-all duration-200 border border-white/30 shadow-lg"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span className="hidden sm:inline !text-white">Contact Us</span>
-            </Link>
-          </motion.div>
+          <Navbar />
         </motion.div>
-      </div>
-    );
-  }
+        <motion.div
+          variants={sectionVariants}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-8"
+        >
+          <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
+            <SignInForm />
+          </div>
+        </motion.div>
+        <motion.div
+          className="fixed z-50 bottom-6 right-4 sm:right-6 md:right-8"
+          variants={sectionVariants}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Link
+            href="/"
+            className="flex items-center space-x-2 px-4 py-2.5 text-sm font-medium text-white! bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg transition-all duration-200 border border-white/30 shadow-lg"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span className="hidden sm:inline text-white!">Contact Us</span>
+          </Link>
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+}
 
-  // Auth state handler - manages all three possible states
-  function AuthStateHandler() {
-    const { status, data: session } = useSession();
-    const router = useRouter();
+function AuthStateHandler() {
+  const { status, data: session } = useSession();
+  const router = useRouter();
 
-    // Redirect when authenticated
-    useEffect(() => {
-      if (status === "authenticated" && session) {
-        router.replace("/dashboard");
-      }
-    }, [status, session, router]);
-
-    // Show appropriate screen based on auth status
-    if (status === "loading") {
-      return <LoadingScreen />;
-    }
-
-    if (status === "authenticated") {
-      return <RedirectingScreen />;
-    }
-
-    // status === "unauthenticated" - return null to allow form to render
-    return null;
-  }
-
-  // Check if session expired and show toast
   useEffect(() => {
-    // Only check once on mount
-    if (hasShownExpiredToast) return;
+    if (status !== "authenticated" || !session) return;
+    const expired =
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("expired") === "true";
+    if (expired) return;
+    router.replace("/dashboard");
+  }, [status, session, router]);
 
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      const expired = urlParams.get("expired");
+  if (status === "loading") return <LoadingScreen />;
 
-      if (expired === "true") {
-        toast({
-          title: "Session Expired",
-          description: "Your session has expired. Please log in again.",
-          variant: "destructive",
-        });
-        setHasShownExpiredToast(true);
+  const isExpiredLanding =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("expired") === "true";
+  if (status === "authenticated") {
+    if (isExpiredLanding) return <LoadingScreen />;
+    return <RedirectingScreen />;
+  }
+  return null;
+}
 
-        // Remove the query parameter from URL without reloading
-        const url = new URL(window.location.href);
-        url.searchParams.delete("expired");
-        window.history.replaceState({}, "", url.pathname + url.search);
-      }
-    }
-  }, [toast, hasShownExpiredToast]);
+export default function LoginPage() {
+  const { toast } = useToast();
+  const hasShownExpiredToastRef = useRef(false);
+
+  // Check if session expired and show toast (ref guard so we only run once; no URL strip to avoid reload when toast dismisses)
+  useEffect(() => {
+    if (hasShownExpiredToastRef.current) return;
+    if (typeof window === "undefined") return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("expired") !== "true") return;
+
+    hasShownExpiredToastRef.current = true;
+    toast({
+      title: "Session Expired",
+      description: "Your session has expired. Please log in again.",
+      variant: "destructive",
+    });
+    // Do not strip ?expired from URL - replaceState can trigger Next.js to refresh when toast dismisses
+  }, [toast]);
 
   useEffect(() => {
     const body = document.body;

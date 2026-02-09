@@ -177,7 +177,6 @@ export const useLeadsPage = (
 
       const previousData =
         queryClient.getQueryData<LeadsResponse>(leadsQueryKey);
-      const previousLeads = previousData?.leads ?? [];
 
       // Find the user for assignment
       const assignedUser = users.find((u) => u.id === userId);
@@ -586,7 +585,6 @@ export const useLeadsPage = (
   const initialCountry = searchParams.get("country");
   const initialStatus = searchParams.get("status");
   const initialSource = searchParams.get("source");
-  const initialUser = searchParams.get("user");
   const initialCountryMode = searchParams.get("countryMode");
   const initialStatusMode = searchParams.get("statusMode");
   const initialSourceMode = searchParams.get("sourceMode");

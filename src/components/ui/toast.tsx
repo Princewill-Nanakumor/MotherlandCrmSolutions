@@ -33,7 +33,7 @@ const toastVariants = cva(
         default:
           "border bg-white text-gray-900 dark:bg-gray-800 dark:text-white",
         destructive:
-          "border-red-500 bg-red-50 text-red-900 dark:bg-red-950 dark:text-red-200",
+          "border-red-600 bg-red-600 text-white",
         success:
           "border-green-400 bg-green-500 text-white dark:bg-green-500 dark:text-white",
         info: "border-blue-500 bg-blue-50 text-blue-900 dark:bg-blue-950 dark:text-blue-200",
@@ -55,9 +55,7 @@ const Toast = React.forwardRef<
   const getDefaultIcon = () => {
     switch (variant) {
       case "destructive":
-        return (
-          <AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400" />
-        );
+        return <AlertCircle className="h-5 w-5 text-white" />;
       case "success":
         return <CheckCircle className="h-5 w-5 text-white dark:text-white" />;
       case "info":

@@ -107,8 +107,9 @@ export default function Navbar() {
                   src="/motherlandlogo.png"
                   alt="Motherland CRM Solutions Logo"
                   fill
+                  sizes="80px"
                   className="object-contain"
-                  priority
+                  priority={!isLoginPage}
                 />
               </div>
               <div

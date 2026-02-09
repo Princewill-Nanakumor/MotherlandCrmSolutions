@@ -8,7 +8,6 @@ import { MongoServerError } from "mongodb";
 import * as XLSX from "xlsx";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
-import mongoose from "mongoose";
 
 type MetadataValue = string | number | boolean | null | undefined;
 
