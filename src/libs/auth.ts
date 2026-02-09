@@ -216,21 +216,18 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      // If token was invalidated (e.g. expired - we set id to undefined in jwt callback), return no session
-      if (!token?.id) {
-        return { ...session, user: null as unknown as typeof session.user };
-      }
+      // When token was invalidated (e.g. expired), keep session shape but with no id so client treats as unauthenticated. Don't return user: null (can cause 500 in NextAuth).
       if (token && session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-        session.user.permissions = token.permissions;
-        session.user.status = token.status;
-        session.user.firstName = token.firstName;
-        session.user.lastName = token.lastName;
-        session.user.phoneNumber = token.phoneNumber;
-        session.user.country = token.country;
-        session.user.adminId = token.adminId;
-        session.user.canViewPhoneNumbers = token.canViewPhoneNumbers;
+        session.user.id = token.id ?? "";
+        session.user.role = token.role ?? "";
+        session.user.permissions = token.permissions ?? [];
+        session.user.status = token.status ?? "";
+        session.user.firstName = token.firstName ?? "";
+        session.user.lastName = token.lastName ?? "";
+        session.user.phoneNumber = token.phoneNumber ?? "";
+        session.user.country = token.country ?? "";
+        session.user.adminId = token.adminId ?? undefined;
+        session.user.canViewPhoneNumbers = token.canViewPhoneNumbers ?? false;
       }
       return session;
     },
