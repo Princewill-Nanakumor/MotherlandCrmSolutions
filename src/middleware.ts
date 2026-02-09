@@ -4,8 +4,9 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   async function middleware(request) {
-    const token = request.nextauth.token;
-    const isAuth = !!token;
+    // If token is missing or invalid (e.g. expired), nextauth.token can be undefined; treat as unauthenticated instead of throwing
+    const token = request.nextauth?.token;
+    const isAuth = !!token?.id;
     const path = request.nextUrl.pathname;
 
     const isHomePage = path === "/";
@@ -66,8 +67,8 @@ export default withAuth(
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    // ✅ Protect admin management routes by specific emails
-    if (isAdminManagementPage && token?.role === "ADMIN" && token?.email) {
+    // ✅ Protect admin management routes by specific emails (token.id ensures valid session)
+    if (isAdminManagementPage && token?.id && token?.role === "ADMIN" && token?.email) {
       const allowedEmails =
         process.env.SUPER_ADMIN_EMAILS?.split(",").map((email) =>
           email.trim()

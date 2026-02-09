@@ -197,12 +197,10 @@ export const authOptions: NextAuthOptions = {
           token.iat = nowTimestamp;
         }
       } else if (token) {
-        // Existing token - check if it's expired
+        // Existing token - check if it's expired. Don't throw (causes 500 on Netlify/serverless); invalidate by returning token without user id so session is null.
         const currentTime = Math.floor(Date.now() / 1000);
-        
         if (token.exp && token.exp < currentTime) {
-          // Token expired - throw error to force session invalidation
-          throw new Error("Token expired");
+          return { ...token, id: undefined, exp: 0 };
         }
       }
 
@@ -218,9 +216,10 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      // NextAuth automatically validates token expiration based on maxAge (24 hours)
-      // If token is expired, NextAuth will set session to null automatically
-      
+      // If token was invalidated (e.g. expired - we set id to undefined in jwt callback), return no session
+      if (!token?.id) {
+        return { ...session, user: null as unknown as typeof session.user };
+      }
       if (token && session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
