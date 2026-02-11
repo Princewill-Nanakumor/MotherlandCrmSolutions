@@ -22,8 +22,8 @@ const STORAGE_KEYS = {
   FILTER_BY_SOURCE: "leads_filter_by_source",
 } as const;
 
-/** Debounce delay before applying filters to URL + query (reduces refetches and router calls) */
-const FILTER_DEBOUNCE_MS = 350;
+/** Debounce filter updates to reduce router.replace and API calls while user is interacting */
+const FILTER_DEBOUNCE_MS = 300;
 
 export const useLeadsPage = (
   searchQuery: string,
@@ -1232,6 +1232,11 @@ export const useLeadsPage = (
 
   // Debounced commit: apply pending filter refs to state + URL (single refetch + one router.replace)
   const commitFilters = useCallback(() => {
+    const t = typeof performance !== "undefined" ? performance.now() : Date.now();
+    if (typeof window !== "undefined") {
+      (window as unknown as { __allLeadsCommitTime?: number }).__allLeadsCommitTime = t;
+      console.log("[All-leads] Commit started (URL + refetch)", { tMs: Math.round(t) });
+    }
     const statuses = pendingFilterByStatusRef.current ?? uiState.filterByStatus;
     const countries =
       pendingFilterByCountryRef.current ?? uiState.filterByCountry;
@@ -1327,6 +1332,11 @@ export const useLeadsPage = (
 
   const handleCountryFilterChange = useCallback(
     (countries: string[]) => {
+      const t = typeof performance !== "undefined" ? performance.now() : Date.now();
+      if (typeof window !== "undefined") {
+        (window as unknown as { __allLeadsFilterClickTime?: number }).__allLeadsFilterClickTime = t;
+        console.log("[All-leads] Filter clicked: country", { tMs: Math.round(t) });
+      }
       setDisplayFilterByCountry(countries);
       pendingFilterByCountryRef.current = countries;
       if (typeof window !== "undefined") {
@@ -1408,6 +1418,11 @@ export const useLeadsPage = (
 
   const handleStatusFilterChange = useCallback(
     (statuses: string[]) => {
+      const t = typeof performance !== "undefined" ? performance.now() : Date.now();
+      if (typeof window !== "undefined") {
+        (window as unknown as { __allLeadsFilterClickTime?: number }).__allLeadsFilterClickTime = t;
+        console.log("[All-leads] Filter clicked: status", { tMs: Math.round(t) });
+      }
       setDisplayFilterByStatus(statuses);
       pendingFilterByStatusRef.current = statuses;
       if (typeof window !== "undefined") {
@@ -1423,6 +1438,11 @@ export const useLeadsPage = (
 
   const handleSourceFilterChange = useCallback(
     (sources: string[]) => {
+      const t = typeof performance !== "undefined" ? performance.now() : Date.now();
+      if (typeof window !== "undefined") {
+        (window as unknown as { __allLeadsFilterClickTime?: number }).__allLeadsFilterClickTime = t;
+        console.log("[All-leads] Filter clicked: source", { tMs: Math.round(t) });
+      }
       setDisplayFilterBySource(sources);
       pendingFilterBySourceRef.current = sources;
       if (typeof window !== "undefined") {
@@ -1438,6 +1458,11 @@ export const useLeadsPage = (
 
   const handleFilterChange = useCallback(
     (values: string[]) => {
+      const t = typeof performance !== "undefined" ? performance.now() : Date.now();
+      if (typeof window !== "undefined") {
+        (window as unknown as { __allLeadsFilterClickTime?: number }).__allLeadsFilterClickTime = t;
+        console.log("[All-leads] Filter clicked: user", { tMs: Math.round(t) });
+      }
       const value = values.length === 0 ? "all" : values.join(",");
       setDisplayFilterByUser(value);
       pendingFilterByUserRef.current = value;

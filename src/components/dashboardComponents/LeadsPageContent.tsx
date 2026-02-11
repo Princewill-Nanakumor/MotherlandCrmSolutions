@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, Suspense, useMemo, useEffect } from "react";
+import { useCallback, Suspense, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -47,7 +47,6 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
   const { updateLeadAsync } = useUpdateLead();
 
   const {
-    leads,
     users,
     statuses,
     isLoadingUsers,
@@ -100,6 +99,31 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
     }
   }, [status, session, queryClient]);
 
+  // Debug: log when table data updates and time since filter click / commit
+  useEffect(() => {
+    if (typeof window === "undefined" || filteredLeads == null) return;
+    const t =
+      typeof performance !== "undefined" ? performance.now() : Date.now();
+    const win = window as unknown as {
+      __allLeadsFilterClickTime?: number;
+      __allLeadsCommitTime?: number;
+    };
+    const deltaFromClick =
+      win.__allLeadsFilterClickTime != null
+        ? Math.round(t - win.__allLeadsFilterClickTime)
+        : null;
+    const deltaFromCommit =
+      win.__allLeadsCommitTime != null
+        ? Math.round(t - win.__allLeadsCommitTime)
+        : null;
+    console.log("[All-leads] Table updated", {
+      tMs: Math.round(t),
+      leadsCount: filteredLeads.length,
+      deltaFromFilterClickMs: deltaFromClick,
+      deltaFromCommitMs: deltaFromCommit,
+    });
+  }, [filteredLeads]);
+
   // Check if any leads are selected
   const hasSelectedLeads = selectedLeads && selectedLeads.length > 0;
 
@@ -117,7 +141,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
         return false;
       }
     },
-    [updateLeadAsync]
+    [updateLeadAsync],
   );
 
   const handleDialogClose = useCallback(() => {
@@ -140,27 +164,14 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
     (user: string) => {
       setUiState((prev) => ({ ...prev, selectedUser: user }));
     },
-    [setUiState]
+    [setUiState],
   );
 
   const handleUnassignDialogChange = useCallback(
     (open: boolean) => {
       setUiState((prev) => ({ ...prev, isUnassignDialogOpen: open }));
     },
-    [setUiState]
-  );
-
-  // ⚡ Memoized table key to prevent unnecessary re-renders
-  const tableKey = useMemo(
-    () =>
-      `leads-table-${leads.length}-${filterByUser}-${uiState.filterByCountry}-${uiState.filterByStatus}-${uiState.filterBySource}`,
-    [
-      leads.length,
-      filterByUser,
-      uiState.filterByCountry,
-      uiState.filterByStatus,
-      uiState.filterBySource,
-    ]
+    [setUiState],
   );
 
   // ⚡ Early returns for better performance
@@ -198,7 +209,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
 
   return (
     <SubscriptionGuard>
-      <div className="flex flex-col h-full rounded-lg bg-background dark:bg-gray-800 border">
+      <div className="flex flex-col h-full border rounded-lg bg-background dark:bg-gray-800">
         {/* ⚡ Refetch indicator with transition */}
         {isRefetchingLeads && (
           <div className="duration-200 animate-in slide-in-from-top-2">
@@ -320,7 +331,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                     filterByCountry={uiState.filterByCountry}
                     filterByStatus={uiState.filterByStatus.map((statusId) => {
                       const statusObj = statuses.find(
-                        (s) => s.id === statusId || s.name === statusId
+                        (s) => s.id === statusId || s.name === statusId,
                       );
                       return statusObj?.name ?? statusId;
                     })}
@@ -333,7 +344,6 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
               ) : (
                 <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
                   <LeadsTable
-                    key={tableKey}
                     leads={filteredLeads}
                     totalRows={leadsTotal}
                     pageSize={pageSize}
@@ -342,6 +352,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                     onPageSizeChange={handlePageSizeChange}
                     onLeadUpdated={handleLeadUpdate}
                     isLoading={shouldShowLoading}
+                    isRefetching={isRefetchingLeads}
                     selectedLeads={selectedLeads}
                     users={users}
                     statuses={statuses}

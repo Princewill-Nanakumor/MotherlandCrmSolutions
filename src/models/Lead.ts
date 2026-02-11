@@ -97,9 +97,14 @@ const leadSchema = new Schema(
 leadSchema.index({ email: 1, adminId: 1 }, { unique: true });
 leadSchema.index({ adminId: 1 });
 leadSchema.index({ status: 1 });
+leadSchema.index({ country: 1 });
+leadSchema.index({ source: 1 });
 leadSchema.index({ createdBy: 1 });
 leadSchema.index({ assignedTo: 1 });
 leadSchema.index({ leadId: 1 }, { unique: true, sparse: true });
+// Compound indexes for filtered list queries (adminId + filter + sort)
+leadSchema.index({ adminId: 1, country: 1, createdAt: -1 });
+leadSchema.index({ adminId: 1, source: 1, createdAt: -1 });
 
 // Function to generate a unique 5-6 digit leadId
 export async function generateLeadId(): Promise<number> {

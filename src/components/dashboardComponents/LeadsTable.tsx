@@ -55,6 +55,8 @@ interface LeadsTableProps {
   onPageSizeChange?: (pageSize: number) => void;
   onLeadUpdated: (lead: Lead) => Promise<boolean>;
   isLoading?: boolean;
+  /** When true, table is refetching (e.g. after filter change); show subtle updating state */
+  isRefetching?: boolean;
   users: User[];
   statuses?: Array<{ id: string; name: string; color?: string }>;
   selectedLeads?: Lead[];
@@ -75,6 +77,7 @@ export default function LeadsTable({
   onPageSizeChange,
   onLeadUpdated,
   isLoading = false,
+  isRefetching = false,
   users = [],
   statuses = [],
   selectedLeads = [],
@@ -145,7 +148,7 @@ export default function LeadsTable({
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   // We'll define handleDragEnd after table is created
@@ -195,12 +198,18 @@ export default function LeadsTable({
   const handlePageChange = useCallback(
     (page: number) => {
       const pageOneBased = page + 1;
-      if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
+      if (
+        typeof process !== "undefined" &&
+        process.env.NODE_ENV === "development"
+      ) {
         console.log("[Leads Pagination] Table handlePageChange", {
           pageIndex: page,
           pageOneBased,
           isServerPagination,
-          action: isServerPagination && onServerPageChange ? "calling onServerPageChange" : "router.replace",
+          action:
+            isServerPagination && onServerPageChange
+              ? "calling onServerPageChange"
+              : "router.replace",
         });
       }
       setPageIndex(page);
@@ -215,13 +224,7 @@ export default function LeadsTable({
         });
       }
     },
-    [
-      isServerPagination,
-      onServerPageChange,
-      pathname,
-      router,
-      searchParams,
-    ]
+    [isServerPagination, onServerPageChange, pathname, router, searchParams],
   );
 
   // Use props selectedLeads if provided, otherwise use store
@@ -239,7 +242,7 @@ export default function LeadsTable({
       (field, order) => {
         setSorting([{ id: field, desc: order === "desc" }]);
       },
-      [setSorting]
+      [setSorting],
     ),
   });
 
@@ -346,7 +349,7 @@ export default function LeadsTable({
         window.history.replaceState(
           {},
           "",
-          `${currentPathname}?${params.toString()}`
+          `${currentPathname}?${params.toString()}`,
         );
       }
       return;
@@ -367,7 +370,7 @@ export default function LeadsTable({
         window.history.replaceState(
           {},
           "",
-          `${currentPathname}?${params.toString()}`
+          `${currentPathname}?${params.toString()}`,
         );
       }
     }
@@ -422,7 +425,7 @@ export default function LeadsTable({
       }
       return ok;
     },
-    [onLeadUpdated, setSelectedLead]
+    [onLeadUpdated, setSelectedLead],
   );
 
   const { columns } = useTableColumns({
@@ -471,12 +474,12 @@ export default function LeadsTable({
         }
       }
     },
-    [columnOrder, setColumnOrder, table]
+    [columnOrder, setColumnOrder, table],
   );
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex items-center justify-center h-screen">
         <Loader />
       </div>
     );
@@ -486,6 +489,12 @@ export default function LeadsTable({
 
   return (
     <>
+      {isRefetching && (
+        <div className="flex items-center justify-center gap-2 py-2 text-sm border-b rounded-t-lg text-muted-foreground bg-muted/50 dark:bg-muted/30">
+          <Loader className="w-4 h-4 animate-spin" />
+          <span>Updating table…</span>
+        </div>
+      )}
       <div className="rounded-lg shadow dark:bg-gray-800 dark:text-white">
         <div className="p-4">
           <CustomTableHeader

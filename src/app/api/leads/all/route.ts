@@ -19,6 +19,44 @@ interface UserData {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LeadFilter = Record<string, any>;
 
+/** In-memory cache for totalAll count to avoid expensive countDocuments on every request. TTL 60s. */
+const totalAllCache = new Map<
+  string,
+  { count: number; ts: number }
+>();
+const TOTAL_ALL_CACHE_TTL_MS = 60_000;
+
+function getCachedTotalAll(cacheKey: string): number | null {
+  const entry = totalAllCache.get(cacheKey);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > TOTAL_ALL_CACHE_TTL_MS) {
+    totalAllCache.delete(cacheKey);
+    return null;
+  }
+  return entry.count;
+}
+
+function setCachedTotalAll(cacheKey: string, count: number): void {
+  totalAllCache.set(cacheKey, { count, ts: Date.now() });
+}
+
+/** Projection: only fields needed for list view to reduce payload and memory */
+const LEADS_LIST_PROJECTION = {
+  _id: 1,
+  leadId: 1,
+  firstName: 1,
+  lastName: 1,
+  email: 1,
+  phone: 1,
+  source: 1,
+  status: 1,
+  country: 1,
+  assignedTo: 1,
+  createdAt: 1,
+  updatedAt: 1,
+  comments: 1,
+} as const;
+
 // Helper to safely convert ObjectId to string
 function safeObjectIdToString(id: unknown): string | null {
   if (!id) return null;
@@ -123,6 +161,31 @@ function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/**
+ * Build status filter values so DB matches whether status is stored as ObjectId or string.
+ * - 24-char hex IDs: include both string and ObjectId.
+ * - "NEW" status ID: include "NEW", "New", "new" so we match DB regardless of casing.
+ */
+function statusFilterValues(statusFilter: string[]): (string | ObjectId)[] {
+  const result: (string | ObjectId)[] = [];
+  for (const s of statusFilter) {
+    const str = String(s).trim();
+    if (/^[a-f0-9]{24}$/i.test(str)) {
+      result.push(str);
+      try {
+        result.push(new ObjectId(str));
+      } catch {
+        // already have string
+      }
+    } else if (str.toUpperCase() === "NEW") {
+      result.push("NEW", "New", "new");
+    } else {
+      result.push(str);
+    }
+  }
+  return result;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const __timerPrefix = `api:/api/leads/all:${Date.now()}:${Math.random()
@@ -217,10 +280,11 @@ export async function GET(request: NextRequest) {
           : { $in: countryFilter };
     }
     if (statusFilter.length > 0) {
+      const statusValues = statusFilterValues(statusFilter);
       filter.status =
         statusMode === "exclude"
-          ? { $nin: statusFilter }
-          : { $in: statusFilter };
+          ? { $nin: statusValues }
+          : { $in: statusValues };
     }
 
     // Case-insensitive source filtering without conflicting $options
@@ -294,12 +358,23 @@ export async function GET(request: NextRequest) {
       filter.$and = filter.$and ? [...filter.$and, searchOr] : [searchOr];
     }
 
-    // Counts: totalAll (no filters), total (with filters)
+    // Counts: totalAll (no filters), total (with filters). Cache totalAll for 60s.
+    const countCacheKey =
+      session.user.role === "ADMIN"
+        ? `admin:${session.user.id}`
+        : `agent:${session.user.id}`;
+    let totalAllCount = getCachedTotalAll(countCacheKey);
+    let totalCount: number;
     console.time(`${__timerPrefix}:count`);
-    const [totalAllCount, totalCount] = await Promise.all([
-      db.collection("leads").countDocuments(baseQuery),
-      db.collection("leads").countDocuments(filter),
-    ]);
+    if (totalAllCount === null) {
+      [totalAllCount, totalCount] = await Promise.all([
+        db.collection("leads").countDocuments(baseQuery),
+        db.collection("leads").countDocuments(filter),
+      ]);
+      setCachedTotalAll(countCacheKey, totalAllCount);
+    } else {
+      totalCount = await db.collection("leads").countDocuments(filter);
+    }
     console.timeEnd(`${__timerPrefix}:count`);
 
     const skip = (page - 1) * pageSize;
@@ -307,6 +382,7 @@ export async function GET(request: NextRequest) {
     const leads = await db
       .collection("leads")
       .find(filter)
+      .project(LEADS_LIST_PROJECTION)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(pageSize)
@@ -385,31 +461,51 @@ export async function GET(request: NextRequest) {
           count: number;
         }
 
-        // Get last comment for each lead
-        const lastComments = await db
-          .collection("comments")
-          .aggregate<LastCommentResult>([
-            {
-              $match: {
-                leadId: { $in: leadIds },
-                $or: [
-                  { adminId: adminIdForComments },
-                  { adminId: { $exists: false } },
-                ],
+        // Get last comment and comment count in parallel
+        const [lastComments, commentCounts] = await Promise.all([
+          db
+            .collection("comments")
+            .aggregate<LastCommentResult>([
+              {
+                $match: {
+                  leadId: { $in: leadIds },
+                  $or: [
+                    { adminId: adminIdForComments },
+                    { adminId: { $exists: false } },
+                  ],
+                },
               },
-            },
-            {
-              $sort: { createdAt: -1 },
-            },
-            {
-              $group: {
-                _id: "$leadId",
-                content: { $first: "$content" },
-                createdAt: { $first: "$createdAt" },
+              { $sort: { createdAt: -1 } },
+              {
+                $group: {
+                  _id: "$leadId",
+                  content: { $first: "$content" },
+                  createdAt: { $first: "$createdAt" },
+                },
               },
-            },
-          ])
-          .toArray();
+            ])
+            .toArray(),
+          db
+            .collection("comments")
+            .aggregate<CommentCountResult>([
+              {
+                $match: {
+                  leadId: { $in: leadIds },
+                  $or: [
+                    { adminId: adminIdForComments },
+                    { adminId: { $exists: false } },
+                  ],
+                },
+              },
+              {
+                $group: {
+                  _id: "$leadId",
+                  count: { $sum: 1 },
+                },
+              },
+            ])
+            .toArray(),
+        ]);
 
         lastComments.forEach((comment) => {
           lastCommentsMap.set(comment._id.toString(), {
@@ -417,29 +513,6 @@ export async function GET(request: NextRequest) {
             createdAt: comment.createdAt,
           });
         });
-
-        // Get comment count for each lead
-        const commentCounts = await db
-          .collection("comments")
-          .aggregate<CommentCountResult>([
-            {
-              $match: {
-                leadId: { $in: leadIds },
-                $or: [
-                  { adminId: adminIdForComments },
-                  { adminId: { $exists: false } },
-                ],
-              },
-            },
-            {
-              $group: {
-                _id: "$leadId",
-                count: { $sum: 1 },
-              },
-            },
-          ])
-          .toArray();
-
         commentCounts.forEach((countResult) => {
           commentCountsMap.set(countResult._id.toString(), countResult.count);
         });
