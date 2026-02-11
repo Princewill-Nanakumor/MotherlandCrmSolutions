@@ -681,7 +681,7 @@ export const useLeadsPage = (
   const {
     data: leadsData,
     isLoading: isLoadingLeads,
-    isFetching: isRefetchingLeads,
+    isRefetching: isRefetchingLeads,
     error: leadsError,
     refetch: refetchLeads,
   } = useQuery({
