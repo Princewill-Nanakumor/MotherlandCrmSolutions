@@ -62,9 +62,9 @@ export default function UserLeadsContent() {
   // Local state for UI
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [filterByCountry, setFilterByCountry] = useState<string>("all");
-  const [filterByStatus, setFilterByStatus] = useState<string>("all");
-  const [filterBySource, setFilterBySource] = useState<string>("all");
+  const [filterByCountry, setFilterByCountry] = useState<string[]>([]);
+  const [filterByStatus, setFilterByStatus] = useState<string[]>([]);
+  const [filterBySource, setFilterBySource] = useState<string[]>([]);
 
   // Get sort parameters from URL or use defaults
   const [sortField, setSortField] = useState<SortField>(() => {
@@ -76,14 +76,37 @@ export default function UserLeadsContent() {
     return urlSortOrder || "asc";
   });
 
-  // Initialize filters from URL
+  // Helper to parse URL params into string arrays (JSON array or legacy string)
+  const parseUrlParamToArray = (param: string | null): string[] => {
+    if (!param || param === "all") return [];
+
+    // Prefer JSON array format (same as /dashboard/all-leads)
+    try {
+      const parsed = JSON.parse(param);
+      if (Array.isArray(parsed)) {
+        return parsed.map((v) => String(v)).filter(Boolean);
+      }
+    } catch {
+      // Fallback to legacy formats below
+    }
+
+    // Legacy formats: "Austria,Germany" or "Austria"
+    if (param.includes(",")) {
+      return param.split(",").map((v) => v.trim()).filter(Boolean);
+    }
+
+    return [param];
+  };
+
+  // Initialize filters from URL (kept in sync with query params)
   useEffect(() => {
-    const urlCountry = searchParams.get("country") || "all";
-    const urlStatus = searchParams.get("status") || "all";
-    const urlSource = searchParams.get("source") || "all";
-    setFilterByCountry(urlCountry);
-    setFilterByStatus(urlStatus);
-    setFilterBySource(urlSource);
+    const urlCountry = searchParams.get("country");
+    const urlStatus = searchParams.get("status");
+    const urlSource = searchParams.get("source");
+
+    setFilterByCountry(parseUrlParamToArray(urlCountry));
+    setFilterByStatus(parseUrlParamToArray(urlStatus));
+    setFilterBySource(parseUrlParamToArray(urlSource));
   }, [searchParams]);
 
   // Custom hooks - called at component level
@@ -159,27 +182,36 @@ export default function UserLeadsContent() {
   // Filter change handlers - convert arrays to strings for state/URL compatibility
   const handleCountryFilterChange = useCallback(
     (countries: string[]) => {
-      const country = countries.length === 0 ? "all" : countries.join(",");
-      setFilterByCountry(country);
-      handleURLCountryChange(countries.length === 0 ? "all" : countries[0]);
+      setFilterByCountry(countries);
+
+      // Persist the full selection in the URL using JSON arrays
+      const urlValue =
+        countries.length === 0 ? "all" : JSON.stringify(countries);
+      handleURLCountryChange(urlValue);
     },
     [handleURLCountryChange]
   );
 
   const handleStatusFilterChange = useCallback(
     (statuses: string[]) => {
-      const status = statuses.length === 0 ? "all" : statuses.join(",");
-      setFilterByStatus(status);
-      handleURLStatusChange(statuses.length === 0 ? "all" : statuses[0]);
+      setFilterByStatus(statuses);
+
+      // Persist the full selection in the URL using JSON arrays
+      const urlValue =
+        statuses.length === 0 ? "all" : JSON.stringify(statuses);
+      handleURLStatusChange(urlValue);
     },
     [handleURLStatusChange]
   );
 
   const handleSourceFilterChange = useCallback(
     (sources: string[]) => {
-      const source = sources.length === 0 ? "all" : sources.join(",");
-      setFilterBySource(source);
-      handleURLSourceChange(sources.length === 0 ? "all" : sources[0]);
+      setFilterBySource(sources);
+
+      // Persist the full selection in the URL using JSON arrays
+      const urlValue =
+        sources.length === 0 ? "all" : JSON.stringify(sources);
+      handleURLSourceChange(urlValue);
     },
     [handleURLSourceChange]
   );
@@ -300,9 +332,9 @@ interface UserLeadsMainContentProps {
   availableSources: string[];
   selectedLead: Lead | null;
   isPanelOpen: boolean;
-  filterByCountry: string;
-  filterByStatus: string;
-  filterBySource: string;
+  filterByCountry: string[];
+  filterByStatus: string[];
+  filterBySource: string[];
   sortField: SortField;
   sortOrder: SortOrder;
   shouldShowLoading: boolean;
@@ -464,27 +496,9 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
       >
         <UserLeadsFilterControls
           shouldShowLoading={shouldShowLoading}
-          filterByCountry={
-            filterByCountry === "all" || !filterByCountry
-              ? []
-              : filterByCountry.includes(",")
-                ? filterByCountry.split(",")
-                : [filterByCountry]
-          }
-          filterByStatus={
-            filterByStatus === "all" || !filterByStatus
-              ? []
-              : filterByStatus.includes(",")
-                ? filterByStatus.split(",")
-                : [filterByStatus]
-          }
-          filterBySource={
-            filterBySource === "all" || !filterBySource
-              ? []
-              : filterBySource.includes(",")
-                ? filterBySource.split(",")
-                : [filterBySource]
-          }
+          filterByCountry={filterByCountry}
+          filterByStatus={filterByStatus}
+          filterBySource={filterBySource}
           onCountryFilterChange={handleCountryFilterChange}
           onStatusFilterChange={handleStatusFilterChange}
           onSourceFilterChange={handleSourceFilterChange}

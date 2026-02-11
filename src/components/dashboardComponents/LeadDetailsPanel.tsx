@@ -261,6 +261,16 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     return () => clearInterval(intervalId);
   }, [isOpen, currentLead]);
 
+  // Ensure original title is restored when the panel component unmounts
+  useEffect(() => {
+    return () => {
+      if (originalTitleRef.current) {
+        document.title = originalTitleRef.current;
+        originalTitleRef.current = "";
+      }
+    };
+  }, []);
+
   if (!currentLead?._id || !isOpen) {
     return null;
   }

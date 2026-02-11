@@ -86,9 +86,23 @@ export const useUserLeadsTableColumns = ({
         ),
         cell: ({ row }) => {
           const lead = row.original;
-          const detailUrl = currentParams
-            ? `/dashboard/leads/${lead._id}?${currentParams}`
-            : `/dashboard/leads/${lead._id}`;
+          // Use user-friendly leadId in the URL when available, fall back to database _id
+          const leadIdentifier = lead.leadId || lead._id;
+
+          // Preserve current filters and add lead + name params (similar to /dashboard/all-leads)
+          const params = new URLSearchParams(currentParams);
+          if (leadIdentifier) {
+            params.set("lead", String(leadIdentifier));
+          }
+          const fullName = `${lead.firstName || ""}-${lead.lastName || ""}`.trim();
+          if (fullName && fullName !== "-") {
+            params.set("name", fullName);
+          }
+
+          const queryString = params.toString();
+          const detailUrl = queryString
+            ? `/dashboard/leads/${leadIdentifier}?${queryString}`
+            : `/dashboard/leads/${leadIdentifier}`;
 
           return (
             <div className="flex items-center justify-center">
