@@ -179,21 +179,29 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   }, [pathname, status, isAdminLeadsPage, isUserLeadsPage]);
 
   // Check session status on mount and when status changes
+  // Use signOut (not router.push) so the session cookie is cleared - otherwise the user could
+  // navigate back to dashboard and still appear logged in with a stale cookie.
   useEffect(() => {
     if (redirectingDueToExpiryRef.current) return;
     if (status === "unauthenticated") {
-      router.push("/login?expired=true");
+      redirectingDueToExpiryRef.current = true;
+      localStorage.setItem("sessionExpired", "true");
+      signOut({ redirect: true, callbackUrl: "/login?expired=true" });
     }
-  }, [status, router]);
+  }, [status]);
 
   // Check session on pathname change to catch expired sessions immediately
+  // Only redirect on status "unauthenticated" - avoid !session to prevent false redirects
+  // during SessionProvider refetches when session can briefly be undefined.
   useEffect(() => {
     if (redirectingDueToExpiryRef.current) return;
     if (status === "loading") return;
-    if (status === "unauthenticated" || !session) {
-      router.push("/login?expired=true");
+    if (status === "unauthenticated") {
+      redirectingDueToExpiryRef.current = true;
+      localStorage.setItem("sessionExpired", "true");
+      signOut({ redirect: true, callbackUrl: "/login?expired=true" });
     }
-  }, [pathname, status, session, router]);
+  }, [pathname, status]);
 
   if (status === "loading") {
     return (
