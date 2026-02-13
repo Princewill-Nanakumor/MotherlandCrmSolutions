@@ -489,12 +489,6 @@ export default function LeadsTable({
 
   return (
     <>
-      {isRefetching && (
-        <div className="flex items-center justify-center gap-2 py-2 text-sm border-b rounded-t-lg text-muted-foreground bg-muted/50 dark:bg-muted/30">
-          <Loader className="w-4 h-4 animate-spin" />
-          <span>Updating table…</span>
-        </div>
-      )}
       <div className="rounded-lg shadow dark:bg-gray-800 dark:text-white">
         <div className="p-4">
           <CustomTableHeader
@@ -504,6 +498,7 @@ export default function LeadsTable({
             totalRows={totalRows}
             tableId="adminLeadsTable"
             onPageSizeChange={onPageSizeChange}
+            isRefetching={isRefetching}
           />
         </div>
 

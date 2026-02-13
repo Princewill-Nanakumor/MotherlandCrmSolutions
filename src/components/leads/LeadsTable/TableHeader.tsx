@@ -2,6 +2,7 @@
 import { Table } from "@tanstack/react-table";
 import { Lead } from "@/types/leads";
 import { ColumnVisibilityToggle } from "@/components/dashboardComponents/ColumnVisibilityToggle";
+import { Loader } from "lucide-react";
 
 interface TableHeaderProps {
   table: Table<Lead>;
@@ -11,6 +12,8 @@ interface TableHeaderProps {
   tableId?: "adminLeadsTable" | "userLeadsTable";
   /** When set (e.g. server-side pagination), changing page size updates URL and refetches */
   onPageSizeChange?: (pageSize: number) => void;
+  /** When true, show updating indicator next to entries count (e.g. filter refetch) */
+  isRefetching?: boolean;
 }
 
 const pageSizeOptions = [10, 15, 20, 30, 40, 50, 100, 150, 200, 250, 300, 500];
@@ -22,6 +25,7 @@ export function TableHeader({
   totalRows,
   tableId = "adminLeadsTable",
   onPageSizeChange,
+  isRefetching = false,
 }: TableHeaderProps) {
   const currentPageStart = totalRows === 0 ? 0 : pageIndex * pageSize + 1;
   const currentPageEnd = Math.min((pageIndex + 1) * pageSize, totalRows);
@@ -33,7 +37,7 @@ export function TableHeader({
   };
 
   return (
-    <div className="flex justify-between items-center mb-4 my-3">
+    <div className="flex items-center justify-between my-3 mb-4">
       <div className="flex items-center space-x-2">
         <label className="text-sm font-medium !text-gray-700 dark:!text-white">
           Show
@@ -54,13 +58,23 @@ export function TableHeader({
             </option>
           ))}
         </select>
-        <span className="text-sm font-medium !text-gray-700 dark:!text-white">
+        <span className="text-sm font-medium !text-gray-700 dark:!text-white dark:text-white!">
           entries
         </span>
         <ColumnVisibilityToggle table={table} tableId={tableId} />
       </div>
-      <div className="text-sm !text-gray-700 dark:!text-white">
-        Showing {currentPageStart} to {currentPageEnd} of {totalRows} entries
+      <div className="flex items-center gap-2 text-sm !text-gray-700 dark:!text-white">
+        {isRefetching ? (
+          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <Loader className="w-3.5 h-3.5 animate-spin shrink-0" />
+            <span>Updating</span>
+          </span>
+        ) : (
+          <span>
+            Showing {currentPageStart} to {currentPageEnd} of {totalRows}{" "}
+            entries
+          </span>
+        )}
       </div>
     </div>
   );
