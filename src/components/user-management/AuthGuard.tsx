@@ -2,8 +2,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter, usePathname } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { Shield } from "lucide-react";
 
@@ -20,6 +20,7 @@ export function AuthGuard({
 }: AuthGuardProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
@@ -27,7 +28,18 @@ export function AuthGuard({
     if (status === "unauthenticated") {
       setIsRedirecting(true);
       router.push("/login");
-    } else if (session?.user?.role !== requiredRole) {
+      return;
+    }
+
+    // Check session expiry (session.expires from token.exp)
+    if (session?.expires && new Date() >= new Date(session.expires)) {
+      setIsRedirecting(true);
+      localStorage.setItem("sessionExpired", "true");
+      signOut({ redirect: true, callbackUrl: `/login?expired=true&callbackUrl=${encodeURIComponent(pathname ?? "/dashboard")}` });
+      return;
+    }
+
+    if (session?.user?.role !== requiredRole) {
       setIsRedirecting(true);
       router.push(redirectTo);
       toast({
@@ -36,7 +48,7 @@ export function AuthGuard({
         variant: "destructive",
       });
     }
-  }, [status, session, router, toast, requiredRole, redirectTo]);
+  }, [status, session, session?.expires, router, pathname, toast, requiredRole, redirectTo]);
 
   // Show loading screen while checking authentication or redirecting
   if (status === "loading" || isRedirecting) {

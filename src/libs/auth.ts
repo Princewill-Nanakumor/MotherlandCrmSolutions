@@ -22,6 +22,7 @@ declare module "next-auth" {
   }
 
   interface Session {
+    expires?: string; // ISO date string from token.exp; used by AuthGuard for expiry check
     user: {
       id: string;
       email: string;
@@ -150,7 +151,10 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
     maxAge: 24 * 60 * 60, // 24 hours
-    updateAge: 60 * 60, // 1 hour - refresh session every hour if user is active
+    updateAge: 60 * 60, // Ignored for JWT
+  },
+  jwt: {
+    maxAge: 24 * 60 * 60, // 24 hours - explicit; NextAuth default is 30 days
   },
   pages: {
     signIn: "/login",
@@ -228,6 +232,10 @@ export const authOptions: NextAuthOptions = {
         session.user.country = token.country ?? "";
         session.user.adminId = token.adminId ?? undefined;
         session.user.canViewPhoneNumbers = token.canViewPhoneNumbers ?? false;
+        // Set expires from token.exp so client can check session expiry (AuthGuard, dashboard)
+        if (token.exp) {
+          session.expires = new Date(token.exp * 1000).toISOString();
+        }
       }
       return session;
     },

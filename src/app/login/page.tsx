@@ -153,21 +153,26 @@ export default function LoginPage() {
   const { toast } = useToast();
   const hasShownExpiredToastRef = useRef(false);
 
-  // Check if session expired and show toast (ref guard so we only run once; no URL strip to avoid reload when toast dismisses)
+  // Check if session expired and show toast (from ?expired=true or localStorage.sessionExpired)
   useEffect(() => {
     if (hasShownExpiredToastRef.current) return;
     if (typeof window === "undefined") return;
 
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("expired") !== "true") return;
+    const fromUrl = urlParams.get("expired") === "true";
+    const fromStorage = localStorage.getItem("sessionExpired") === "true";
+
+    if (!fromUrl && !fromStorage) return;
 
     hasShownExpiredToastRef.current = true;
+    if (fromStorage) {
+      localStorage.removeItem("sessionExpired");
+    }
     toast({
       title: "Session Expired",
       description: "Your session has expired. Please log in again.",
       variant: "destructive",
     });
-    // Do not strip ?expired from URL - replaceState can trigger Next.js to refresh when toast dismisses
   }, [toast]);
 
   useEffect(() => {

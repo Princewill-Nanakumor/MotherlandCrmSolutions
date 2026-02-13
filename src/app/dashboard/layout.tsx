@@ -26,54 +26,28 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Track when session was created to calculate expiration
-  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
-  // Prevent double redirect: when we signOut due to expiry, skip the unauthenticated useEffects
+  // Prevent double redirect when we signOut due to expiry
   const redirectingDueToExpiryRef = useRef(false);
 
-  // Set session start time when session becomes authenticated
+  // Check if session has expired using session.expires (set from token.exp in auth callback)
   useEffect(() => {
-    if (status === "authenticated" && session && !sessionStartTime) {
+    if (status !== "authenticated" || !session?.expires) return;
+
+    const checkExpiration = () => {
       const now = new Date();
-      setSessionStartTime(now);
-    } else if (status === "unauthenticated") {
-      setSessionStartTime(null);
-    }
-  }, [status, session, sessionStartTime]);
+      const expiryDate = new Date(session.expires!);
+      if (now >= expiryDate) {
+        redirectingDueToExpiryRef.current = true;
+        localStorage.setItem("sessionExpired", "true");
+        signOut({ redirect: true, callbackUrl: "/login?expired=true" });
+      }
+    };
 
-  // Check if session has expired based on time elapsed (24 hours)
-  useEffect(() => {
-    if (sessionStartTime && status === "authenticated") {
-      const maxAge = 24 * 60 * 60; // 24 hours in seconds
-      const checkIntervalMs = 5 * 60 * 1000; // Check every 5 minutes
-      const checkExpiration = setInterval(
-        () => {
-          const now = new Date();
-          const elapsed = (now.getTime() - sessionStartTime.getTime()) / 1000; // seconds
-          const timeRemaining = maxAge - elapsed;
-
-          if (timeRemaining <= 0) {
-            console.log("[Session expiry] Timer: session expired, setting redirectingDueToExpiryRef and calling signOut(redirect: false)");
-            redirectingDueToExpiryRef.current = true;
-            clearInterval(checkExpiration);
-            // Sign out without full-page redirect, then navigate once (avoids double reload on login page)
-            signOut({ redirect: false })
-              .then(() => {
-                console.log("[Session expiry] signOut done, router.replace(/login?expired=true)");
-                router.replace("/login?expired=true");
-              })
-              .catch((err) => {
-                console.log("[Session expiry] signOut failed, fallback window.location", err);
-                window.location.href = "/login?expired=true";
-              });
-          }
-        },
-        checkIntervalMs,
-      );
-
-      return () => clearInterval(checkExpiration);
-    }
-  }, [sessionStartTime, status, router]);
+    const checkIntervalMs = 5 * 60 * 1000; // Check every 5 minutes
+    checkExpiration(); // Check immediately
+    const interval = setInterval(checkExpiration, checkIntervalMs);
+    return () => clearInterval(interval);
+  }, [status, session?.expires]);
 
   // Use custom hook for localStorage persistence
   const [showHeader, setShowHeader] = useLocalStorage(
@@ -206,39 +180,20 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   // Check session status on mount and when status changes
   useEffect(() => {
-    if (redirectingDueToExpiryRef.current) {
-      console.log("[Session expiry] Dashboard: skip redirect (status effect) - redirectingDueToExpiryRef is set");
-      return;
-    }
+    if (redirectingDueToExpiryRef.current) return;
     if (status === "unauthenticated") {
-      if (sessionStartTime) {
-        console.log("[Session expiry] Dashboard: status unauthenticated + had sessionStartTime -> router.push(/login?expired=true)");
-        router.push("/login?expired=true");
-      } else {
-        console.log("[Session expiry] Dashboard: status unauthenticated, no sessionStartTime -> router.push(/login)");
-        router.push("/login");
-      }
+      router.push("/login?expired=true");
     }
-  }, [status, router, sessionStartTime]);
+  }, [status, router]);
 
-  // Check session on pathname change (navigation) to catch expired sessions immediately
+  // Check session on pathname change to catch expired sessions immediately
   useEffect(() => {
-    if (redirectingDueToExpiryRef.current) {
-      console.log("[Session expiry] Dashboard: skip redirect (pathname effect) - redirectingDueToExpiryRef is set");
-      return;
-    }
+    if (redirectingDueToExpiryRef.current) return;
     if (status === "loading") return;
-
     if (status === "unauthenticated" || !session) {
-      if (sessionStartTime) {
-        console.log("[Session expiry] Dashboard: pathname effect, unauthenticated + sessionStartTime -> router.push(/login?expired=true)");
-        router.push("/login?expired=true");
-      } else {
-        console.log("[Session expiry] Dashboard: pathname effect, unauthenticated -> router.push(/login)");
-        router.push("/login");
-      }
+      router.push("/login?expired=true");
     }
-  }, [pathname, status, session, router, sessionStartTime]);
+  }, [pathname, status, session, router]);
 
   if (status === "loading") {
     return (
