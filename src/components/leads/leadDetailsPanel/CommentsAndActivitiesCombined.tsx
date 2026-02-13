@@ -30,6 +30,8 @@ export const CommentsAndActivitiesCombined: FC<
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState<string>("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingActivityId, setDeletingActivityId] =
+    useState<string | null>(null);
   const [showTextarea, setShowTextarea] = useState<boolean>(true);
 
   const isAdmin = session?.user?.role === "ADMIN";
@@ -233,6 +235,46 @@ export const CommentsAndActivitiesCombined: FC<
     },
   });
 
+  // Delete activity mutation
+  const deleteActivityMutation = useMutation({
+    mutationFn: async (activityId: string) => {
+      const response = await fetch(
+        `/api/leads/${leadId}/activities/${activityId}`,
+        { method: "DELETE" },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to delete activity: ${errorText}`);
+      }
+
+      return activityId;
+    },
+    onSuccess: (deletedActivityId) => {
+      queryClient.setQueryData(
+        ["activities", leadId],
+        (oldActivities: Activity[] = []) =>
+          oldActivities.filter((a) => a._id !== deletedActivityId),
+      );
+      toast({
+        title: "Success",
+        description: "Activity deleted successfully",
+        variant: "success",
+      });
+    },
+    onError: (error) => {
+      console.error("Error deleting activity:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete activity",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setDeletingActivityId(null);
+    },
+  });
+
   // Edit comment mutation
   const editCommentMutation = useMutation({
     mutationFn: async ({
@@ -321,6 +363,15 @@ export const CommentsAndActivitiesCombined: FC<
     [deleteCommentMutation, deletingId],
   );
 
+  const handleDeleteActivity = useCallback(
+    (activityId: string) => {
+      if (deletingActivityId) return;
+      setDeletingActivityId(activityId);
+      deleteActivityMutation.mutate(activityId);
+    },
+    [deleteActivityMutation, deletingActivityId],
+  );
+
   const isLoading = isLoadingComments || isLoadingActivities;
   const hasError = commentsError || activitiesError;
 
@@ -368,11 +419,13 @@ export const CommentsAndActivitiesCombined: FC<
             setEditContent={setEditContent}
             isAdmin={isAdmin}
             deletingCommentId={deletingId}
+            deletingActivityId={deletingActivityId}
             isEditingMutation={editCommentMutation.isPending}
             onEdit={handleEdit}
             onSaveEdit={handleSaveEdit}
             onCancelEdit={handleCancelEdit}
             onDelete={handleDelete}
+            onDeleteActivity={handleDeleteActivity}
           />
         </div>
       </div>

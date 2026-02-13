@@ -2,7 +2,8 @@
 "use client";
 
 import { FC } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { Activity, Status } from "@/types/leads";
 import { formatTime24Hour } from "@/lib/utils";
 import {
@@ -16,11 +17,22 @@ import { formatDate, getUserDisplayName } from "./utils";
 interface ActivityItemProps {
   activity: Activity;
   statuses: Status[];
+  isAdmin?: boolean;
+  isDeleting?: boolean;
+  isDeleteDisabled?: boolean;
+  onDelete?: (activityId: string) => void;
 }
 
-export const ActivityItem: FC<ActivityItemProps> = ({ activity, statuses }) => {
+export const ActivityItem: FC<ActivityItemProps> = ({
+  activity,
+  statuses,
+  isAdmin = false,
+  isDeleting = false,
+  isDeleteDisabled = false,
+  onDelete,
+}) => {
   return (
-    <div className="p-4 rounded-md bg-gray-100 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700">
+    <div className="group p-4 rounded-md bg-gray-100 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700">
       <div className="flex gap-3">
         <div
           className={`p-2.5 rounded-full ${getActivityBackground(activity.type)} shrink-0`}
@@ -104,9 +116,26 @@ export const ActivityItem: FC<ActivityItemProps> = ({ activity, statuses }) => {
               </span>
             </div>
 
-            <span className="text-xs !text-gray-600 dark:!text-gray-400 font-sans bg-gray-100 dark:bg-gray-700 px-2 py-2 rounded-md border border-gray-200 dark:border-gray-600 whitespace-nowrap shrink-0">
-              {formatDate(activity.createdAt)}
-            </span>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="text-xs !text-gray-600 dark:!text-gray-400 font-sans bg-gray-100 dark:bg-gray-700 px-2 py-2 rounded-md border border-gray-200 dark:border-gray-600 whitespace-nowrap">
+                {formatDate(activity.createdAt)}
+              </span>
+              {isAdmin && onDelete && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 !text-gray-500 hover:!text-red-500 dark:!text-gray-400 dark:hover:!text-red-400"
+                  onClick={() => onDelete(activity._id)}
+                  disabled={isDeleting || isDeleteDisabled}
+                >
+                  {isDeleting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Reminder metadata */}

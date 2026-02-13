@@ -17,11 +17,14 @@ interface CombinedTimelineProps {
   isAdmin: boolean;
   /** Id of the comment currently being deleted (only that row shows spinner) */
   deletingCommentId: string | null;
+  /** Id of the activity currently being deleted (only that row shows spinner) */
+  deletingActivityId?: string | null;
   isEditingMutation: boolean;
   onEdit: (comment: Comment) => void;
   onSaveEdit: (comment: Comment) => void;
   onCancelEdit: () => void;
   onDelete: (commentId: string) => void;
+  onDeleteActivity?: (activityId: string) => void;
 }
 
 export const CombinedTimeline: FC<CombinedTimelineProps> = ({
@@ -32,11 +35,13 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
   setEditContent,
   isAdmin,
   deletingCommentId,
+  deletingActivityId = null,
   isEditingMutation,
   onEdit,
   onSaveEdit,
   onCancelEdit,
   onDelete,
+  onDeleteActivity,
 }) => {
   if (combinedItems.length === 0) {
     return (
@@ -109,11 +114,16 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
             />
           );
         } else if (item.type === "activity" && item.activity) {
+          const activity = item.activity;
           return (
             <ActivityItem
               key={item.id}
-              activity={item.activity}
+              activity={activity}
               statuses={statuses}
+              isAdmin={isAdmin}
+              isDeleting={deletingActivityId === activity._id}
+              isDeleteDisabled={!!deletingActivityId}
+              onDelete={onDeleteActivity}
             />
           );
         }

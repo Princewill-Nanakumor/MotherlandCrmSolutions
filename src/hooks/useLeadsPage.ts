@@ -281,9 +281,13 @@ export const useLeadsPage = (
       queryClient.refetchQueries({
         queryKey: assignedLeadsKeys.all,
       });
+
+      // Refresh timeline for affected leads (assign/unassign logs appear without page refresh)
+      variables.leadIds.forEach((leadId) => {
+        queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+      });
     },
     onSettled: () => {
-      // Only update flag, refetching is handled in onSuccess
       if (mutationInProgressRef.current) {
         mutationInProgressRef.current = false;
       }
@@ -389,6 +393,11 @@ export const useLeadsPage = (
       });
       queryClient.refetchQueries({
         queryKey: assignedLeadsKeys.all,
+      });
+
+      // Refresh timeline for affected leads (assign/unassign logs appear without page refresh)
+      variables.leadIds.forEach((leadId) => {
+        queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
       });
     },
     onSettled: () => {
