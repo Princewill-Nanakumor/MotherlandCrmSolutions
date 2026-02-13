@@ -96,6 +96,8 @@ export const useLeadsPage = (
   const filterDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
+  /** When true, skip URL→state sync for filter modes (avoids flicker when we just changed mode) */
+  const filterModeChangeInProgressRef = useRef(false);
 
   // ===== REACT QUERY HOOKS =====
   const isAuthenticated = status === "authenticated";
@@ -148,6 +150,10 @@ export const useLeadsPage = (
   });
 
   // ===== OPTIMIZED MUTATIONS =====
+  // Refs for closing dialogs from mutation onSuccess (setUiState is defined later in hook)
+  const closeAssignDialogRef = useRef<() => void>(() => {});
+  const closeUnassignDialogRef = useRef<() => void>(() => {});
+
   const assignLeadsMutation = useMutation({
     mutationFn: async ({
       leadIds,
@@ -251,6 +257,9 @@ export const useLeadsPage = (
     },
     onSuccess: async (data, variables) => {
       mutationInProgressRef.current = false;
+
+      // ⚡ Close assign dialog only after success (fixes premature modal closure)
+      closeAssignDialogRef.current();
 
       // ⚡ Clear selection after successful assignment
       setSelectedLeads([]);
@@ -357,6 +366,9 @@ export const useLeadsPage = (
     },
     onSuccess: async (data, variables) => {
       mutationInProgressRef.current = false;
+
+      // ⚡ Close unassign dialog and assign dialog (both may be open) only after success
+      closeUnassignDialogRef.current();
 
       // ⚡ Clear selection after successful unassignment
       setSelectedLeads([]);
@@ -648,6 +660,22 @@ export const useLeadsPage = (
     searchQuery: searchQuery,
   });
 
+  // Wire refs for mutation onSuccess to close dialogs (setUiState is now in scope)
+  closeAssignDialogRef.current = () => {
+    setUiState((prev) => ({
+      ...prev,
+      isDialogOpen: false,
+      selectedUser: "",
+    }));
+  };
+  closeUnassignDialogRef.current = () => {
+    setUiState((prev) => ({
+      ...prev,
+      isDialogOpen: false,
+      isUnassignDialogOpen: false,
+    }));
+  };
+
   // Display filter values (instant dropdown feedback); committed values live in uiState + filterByUser
   const [displayFilterByStatus, setDisplayFilterByStatus] = useState(
     uiState.filterByStatus
@@ -708,6 +736,7 @@ export const useLeadsPage = (
         params.set("source", JSON.stringify(uiState.filterBySource));
       params.set("countryMode", uiState.countryFilterMode);
       params.set("statusMode", uiState.statusFilterMode);
+      params.set("sourceMode", uiState.sourceFilterMode);
       const searchTrimmed = (searchQuery ?? "").trim();
       if (searchTrimmed) {
         // Encode so "+15195660267" is sent as %2B15195660267 (not decoded as space)
@@ -1034,32 +1063,36 @@ export const useLeadsPage = (
       pendingFilterByUserRef.current = "all";
     }
 
-    // ✅ FIX: Read filter modes from URL
-    if (
-      urlCountryMode &&
-      (urlCountryMode === "include" || urlCountryMode === "exclude")
-    ) {
-      if (uiState.countryFilterMode !== urlCountryMode) {
-        setUiState((prev) => ({ ...prev, countryFilterMode: urlCountryMode }));
+    // ✅ FIX: Read filter modes from URL (skip when we just changed mode - avoids flicker from stale URL)
+    if (!filterModeChangeInProgressRef.current) {
+      if (
+        urlCountryMode &&
+        (urlCountryMode === "include" || urlCountryMode === "exclude")
+      ) {
+        if (uiState.countryFilterMode !== urlCountryMode) {
+          setUiState((prev) => ({ ...prev, countryFilterMode: urlCountryMode }));
+        }
       }
-    }
 
-    if (
-      urlStatusMode &&
-      (urlStatusMode === "include" || urlStatusMode === "exclude")
-    ) {
-      if (uiState.statusFilterMode !== urlStatusMode) {
-        setUiState((prev) => ({ ...prev, statusFilterMode: urlStatusMode }));
+      if (
+        urlStatusMode &&
+        (urlStatusMode === "include" || urlStatusMode === "exclude")
+      ) {
+        if (uiState.statusFilterMode !== urlStatusMode) {
+          setUiState((prev) => ({ ...prev, statusFilterMode: urlStatusMode }));
+        }
       }
-    }
 
-    if (
-      urlSourceMode &&
-      (urlSourceMode === "include" || urlSourceMode === "exclude")
-    ) {
-      if (uiState.sourceFilterMode !== urlSourceMode) {
-        setUiState((prev) => ({ ...prev, sourceFilterMode: urlSourceMode }));
+      if (
+        urlSourceMode &&
+        (urlSourceMode === "include" || urlSourceMode === "exclude")
+      ) {
+        if (uiState.sourceFilterMode !== urlSourceMode) {
+          setUiState((prev) => ({ ...prev, sourceFilterMode: urlSourceMode }));
+        }
       }
+    } else {
+      filterModeChangeInProgressRef.current = false;
     }
   }, [
     searchParams,
@@ -1126,14 +1159,8 @@ export const useLeadsPage = (
     const leadIds = selectedLeads.map((l) => l._id);
     const userId = uiState.selectedUser;
 
-    // ⚡ Close dialog immediately for instant feedback (before mutation starts)
-    setUiState((prev) => ({
-      ...prev,
-      isDialogOpen: false,
-      selectedUser: "",
-    }));
-
-    // Start mutation without awaiting - let it complete in background
+    // Don't close dialog here - close in onSuccess after mutation completes
+    // Start mutation without awaiting - dialog stays open with loading state
     // onMutate will update selectedLeads optimistically, then we clear it in onSuccess
     assignLeadsMutation.mutate({
       leadIds,
@@ -1162,13 +1189,11 @@ export const useLeadsPage = (
       return;
     }
 
-    // Store leadIds before closing dialog
+    // Store leadIds before mutation
     const leadIds = leadsToUnassign.map((l) => l._id);
 
-    // ⚡ Close dialog immediately for instant feedback (before mutation starts)
-    setUiState((prev) => ({ ...prev, isUnassignDialogOpen: false }));
-
-    // Start mutation without awaiting - let it complete in background
+    // Don't close dialog here - close in onSuccess after mutation completes
+    // Start mutation without awaiting - dialog stays open with loading state
     // onMutate will update selectedLeads optimistically, then we clear it in onSuccess
     unassignLeadsMutation.mutate({
       leadIds,
@@ -1352,7 +1377,9 @@ export const useLeadsPage = (
 
   const handleCountryFilterModeChange = useCallback(
     (mode: "include" | "exclude") => {
+      filterModeChangeInProgressRef.current = true;
       setFilterJustChanged(true);
+      setPageState(1);
       setUiState((prev) => ({
         ...prev,
         countryFilterMode: mode,
@@ -1365,6 +1392,7 @@ export const useLeadsPage = (
       }
 
       const params = new URLSearchParams(Array.from(searchParams.entries()));
+      params.set("page", "1");
       params.set("countryMode", mode);
       const query = params.toString();
       router.replace(query ? `${pathname}?${query}` : pathname);
@@ -1374,7 +1402,9 @@ export const useLeadsPage = (
 
   const handleStatusFilterModeChange = useCallback(
     (mode: "include" | "exclude") => {
+      filterModeChangeInProgressRef.current = true;
       setFilterJustChanged(true);
+      setPageState(1);
       setUiState((prev) => ({
         ...prev,
         statusFilterMode: mode,
@@ -1387,6 +1417,7 @@ export const useLeadsPage = (
       }
 
       const params = new URLSearchParams(Array.from(searchParams.entries()));
+      params.set("page", "1");
       params.set("statusMode", mode);
       const query = params.toString();
       router.replace(query ? `${pathname}?${query}` : pathname);
@@ -1396,7 +1427,9 @@ export const useLeadsPage = (
 
   const handleSourceFilterModeChange = useCallback(
     (mode: "include" | "exclude") => {
+      filterModeChangeInProgressRef.current = true;
       setFilterJustChanged(true);
+      setPageState(1);
       setUiState((prev) => ({
         ...prev,
         sourceFilterMode: mode,
@@ -1409,6 +1442,7 @@ export const useLeadsPage = (
       }
 
       const params = new URLSearchParams(Array.from(searchParams.entries()));
+      params.set("page", "1");
       params.set("sourceMode", mode);
       const query = params.toString();
       router.replace(query ? `${pathname}?${query}` : pathname);

@@ -71,32 +71,38 @@ export default function SignInForm() {
         } catch {}
 
         // Wait for the server-side session (cookie) to be available before navigating.
-        // Poll `/api/auth/session` (NextAuth) for up to 5s; if not available, fall back
-        // to a full reload so the cookie is sent to the server.
+        // Fixes Vercel/cookie race: browser may not have written the cookie before
+        // the next navigation. Poll until session is live, then redirect.
         const waitForServerSession = async (timeout = 5000) => {
+          const pollInterval = 150;
+          // Give the browser a moment to process Set-Cookie before first check
+          await new Promise((r) => setTimeout(r, 100));
+
           const start = Date.now();
           while (Date.now() - start < timeout) {
             try {
               const res = await fetch("/api/auth/session", {
                 credentials: "include",
+                cache: "no-store", // Avoid cached empty session response
               });
               if (res.ok) {
                 const json = await res.json();
-                if (json && json.user) return true;
+                if (json?.user?.id) return true;
               }
             } catch {
               // ignore and retry
             }
-            await new Promise((r) => setTimeout(r, 250));
+            await new Promise((r) => setTimeout(r, pollInterval));
           }
           return false;
         };
 
         const serverReady = await waitForServerSession(5000);
         if (serverReady) {
+          router.refresh(); // Ensure server components see the new session
           router.replace("/dashboard");
         } else {
-          // Fallback: force full reload so cookies are included on the request
+          // Fallback: full reload so cookies are definitely included
           window.location.href = "/dashboard";
         }
       }

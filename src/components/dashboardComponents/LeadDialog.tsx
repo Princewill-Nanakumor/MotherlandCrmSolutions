@@ -58,6 +58,7 @@ export const LeadsDialogs: React.FC<LeadsDialogsProps> = ({
         setSelectedUser={setSelectedUser}
         isLoadingUsers={isLoadingUsers}
         isAssigning={isAssigning}
+        isUnassigning={isUnassigning}
         onAssign={onAssign}
         onUnassign={onUnassign}
         selectedLeads={selectedLeads}
@@ -65,7 +66,10 @@ export const LeadsDialogs: React.FC<LeadsDialogsProps> = ({
 
       <AlertDialog
         open={isUnassignDialogOpen}
-        onOpenChange={onUnassignDialogChange}
+        onOpenChange={(open) => {
+          if (!open && isUnassigning) return; // Don't close while unassigning
+          onUnassignDialogChange(open);
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -79,8 +83,18 @@ export const LeadsDialogs: React.FC<LeadsDialogsProps> = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onUnassign} disabled={isUnassigning}>
+            <AlertDialogCancel disabled={isUnassigning}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                if (isUnassigning) {
+                  e.preventDefault();
+                  return;
+                }
+                e.preventDefault(); // Prevent Radix from closing - we close on success
+                onUnassign();
+              }}
+              disabled={isUnassigning}
+            >
               {isUnassigning ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

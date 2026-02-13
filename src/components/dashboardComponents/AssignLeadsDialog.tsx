@@ -15,6 +15,7 @@ interface AssignLeadsDialogProps {
   setSelectedUser: (value: string) => void;
   isLoadingUsers: boolean;
   isAssigning: boolean;
+  isUnassigning?: boolean;
   onAssign: () => Promise<void>;
   onUnassign?: () => Promise<void>;
   selectedLeads: Lead[];
@@ -28,6 +29,7 @@ export function AssignLeadsDialog({
   setSelectedUser,
   isLoadingUsers,
   isAssigning,
+  isUnassigning = false,
   onAssign,
   onUnassign,
   selectedLeads,
@@ -36,6 +38,7 @@ export function AssignLeadsDialog({
   const [isUnassignDialogOpen, setIsUnassignDialogOpen] = useState(false);
 
   const handleClose = () => {
+    if (isAssigning || isUnassigning) return; // Don't close while operation in progress
     setSelectedUser(""); // Reset when closing
     onClose();
   };
@@ -207,7 +210,7 @@ export function AssignLeadsDialog({
               </Button>
               <Button
                 onClick={handleAssignClick}
-                disabled={isAssigning || !selectedUser}
+                disabled={isAssigning || isUnassigning || !selectedUser}
                 className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
               >
                 {isAssigning ? (
@@ -226,12 +229,12 @@ export function AssignLeadsDialog({
         </div>
       </div>
 
-      {/* Confirmation Dialog */}
+      {/* Reassign Confirmation Dialog */}
       {isConfirmOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
           <div
             className="fixed inset-0 bg-black/50"
-            onClick={() => setIsConfirmOpen(false)}
+            onClick={() => !isAssigning && setIsConfirmOpen(false)}
           />
           <div className="assign-dialog relative bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md mx-4 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -242,26 +245,38 @@ export function AssignLeadsDialog({
               change the owner.
             </p>
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsConfirmOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsConfirmOpen(false)}
+                disabled={isAssigning}
+              >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleConfirmAssign}
+                disabled={isAssigning}
                 className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
               >
-                Yes, Reassign
+                {isAssigning ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Reassigning...
+                  </>
+                ) : (
+                  "Yes, Reassign"
+                )}
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Unassign Dialog */}
+      {/* Unassign Confirmation Dialog */}
       {isUnassignDialogOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
           <div
             className="fixed inset-0 bg-black/50"
-            onClick={() => setIsUnassignDialogOpen(false)}
+            onClick={() => !isUnassigning && setIsUnassignDialogOpen(false)}
           />
           <div className="assign-dialog relative bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md mx-4 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -274,14 +289,23 @@ export function AssignLeadsDialog({
               <Button
                 variant="outline"
                 onClick={() => setIsUnassignDialogOpen(false)}
+                disabled={isUnassigning}
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleUnassignConfirm}
+                disabled={isUnassigning}
                 className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
               >
-                Yes, Unassign
+                {isUnassigning ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Unassigning...
+                  </>
+                ) : (
+                  "Yes, Unassign"
+                )}
               </Button>
             </div>
           </div>
