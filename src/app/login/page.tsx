@@ -71,7 +71,11 @@ function RedirectingScreen() {
 // Defined at module scope so LoginPage re-renders (e.g. when toast dismisses) don't remount these and retrigger motion animations
 function LoginFormContent() {
   const { status } = useSession();
-  if (status !== "unauthenticated") return null;
+  const isExpiredLanding =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("expired") === "true";
+  // Show form when unauthenticated OR when landing with ?expired=true (user was just signed out, session may still be "loading")
+  if (status !== "unauthenticated" && !isExpiredLanding) return null;
   return (
     <div
       className="relative min-h-screen"
@@ -128,20 +132,19 @@ function AuthStateHandler() {
   const { status, data: session } = useSession();
   const router = useRouter();
 
-  useEffect(() => {
-    if (status !== "authenticated" || !session) return;
-    const expired =
-      typeof window !== "undefined" &&
-      new URLSearchParams(window.location.search).get("expired") === "true";
-    if (expired) return;
-    router.replace("/dashboard");
-  }, [status, session, router]);
-
-  if (status === "loading") return <LoadingScreen />;
-
   const isExpiredLanding =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get("expired") === "true";
+
+  useEffect(() => {
+    if (status !== "authenticated" || !session) return;
+    if (isExpiredLanding) return;
+    router.replace("/dashboard");
+  }, [status, session, router, isExpiredLanding]);
+
+  // When landing with ?expired=true, we know the user was just signed out - show the form, don't block on loading
+  if (status === "loading" && !isExpiredLanding) return <LoadingScreen />;
+
   if (status === "authenticated") {
     if (isExpiredLanding) return <LoadingScreen />;
     return <RedirectingScreen />;
