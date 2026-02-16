@@ -6,6 +6,7 @@ import { useLeadsStore } from "@/stores/leadsStore";
 import { useToast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
 import { useEffect, useRef } from "react";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 interface ApiLead {
   _id?: string;
@@ -36,101 +37,6 @@ interface AssignedToObject {
   lastName: string;
 }
 
-// Helper function to handle API calls with session refresh and better timeout handling
-const apiCallWithSessionRefresh = async (
-  url: string,
-  options: RequestInit = {}
-) => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-  // Get cached ETag if available
-  const cachedETag = localStorage.getItem(`etag-${url}`);
-
-  try {
-    const response = await fetch(url, {
-      ...options,
-      credentials: "include",
-      signal: controller.signal,
-      headers: {
-        ...options.headers,
-        ...(cachedETag && { "If-None-Match": cachedETag }),
-      },
-    });
-
-    clearTimeout(timeoutId);
-
-    // Handle 304 Not Modified
-    if (response.status === 304) {
-      return response;
-    }
-
-    // Store new ETag if provided
-    const newETag = response.headers.get("ETag");
-    if (newETag) {
-      localStorage.setItem(`etag-${url}`, newETag);
-    }
-
-    // If unauthorized, try to refresh session
-    if (response.status === 401) {
-      const refreshController = new AbortController();
-      const refreshTimeoutId = setTimeout(
-        () => refreshController.abort(),
-        15000
-      );
-
-      try {
-        const refreshResponse = await fetch("/api/auth/session", {
-          credentials: "include",
-          signal: refreshController.signal,
-        });
-
-        clearTimeout(refreshTimeoutId);
-
-        if (refreshResponse.ok) {
-          // Retry the original request
-          const retryController = new AbortController();
-          const retryTimeoutId = setTimeout(
-            () => retryController.abort(),
-            60000
-          );
-
-          try {
-            const retryResponse = await fetch(url, {
-              ...options,
-              credentials: "include",
-              signal: retryController.signal,
-            });
-            clearTimeout(retryTimeoutId);
-            return retryResponse;
-          } catch (retryError) {
-            clearTimeout(retryTimeoutId);
-            throw retryError;
-          }
-        } else {
-          // Refresh failed, redirect to login
-          window.location.href = "/";
-          throw new Error("Session refresh failed");
-        }
-      } catch {
-        clearTimeout(refreshTimeoutId);
-        window.location.href = "/";
-        throw new Error("Session refresh failed");
-      }
-    }
-
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    console.error("API call failed:", error);
-
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("Request timed out. Please try again.");
-    }
-
-    throw error;
-  }
-};
 
 // Helper function to check if error is unauthorized
 const isUnauthorizedError = (error: unknown): boolean => {

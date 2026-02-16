@@ -6,6 +6,7 @@ import { Reminder } from "@/types/leads";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Reminders from "./Reminders";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 interface RemindersTabProps {
   leadId: string;
@@ -19,7 +20,7 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
   const { data: reminders = [], isLoading: isLoadingReminders } = useQuery({
     queryKey: ["reminders", leadId],
     queryFn: async (): Promise<Reminder[]> => {
-      const response = await fetch(`/api/leads/${leadId}/reminders`);
+      const response = await apiCallWithSessionRefresh(`/api/leads/${leadId}/reminders`);
       if (!response.ok) {
         throw new Error(`Failed to fetch reminders: ${response.status}`);
       }
@@ -41,7 +42,7 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
       type: string;
       soundEnabled: boolean;
     }) => {
-      const response = await fetch(`/api/leads/${leadId}/reminders`, {
+      const response = await apiCallWithSessionRefresh(`/api/leads/${leadId}/reminders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(reminderData),
@@ -58,6 +59,8 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+      queryClient.refetchQueries({ queryKey: ["activities", leadId] });
       toast({
         title: "Success",
         description: "Reminder created successfully",
@@ -83,7 +86,7 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
       reminderId: string;
       updates: Partial<Reminder>;
     }) => {
-      const response = await fetch(
+      const response = await apiCallWithSessionRefresh(
         `/api/leads/${leadId}/reminders/${reminderId}`,
         {
           method: "PUT",
@@ -138,6 +141,10 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
         exact: true,
       });
 
+      // Refresh timeline - reminder updates create activity logs
+      queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+      queryClient.refetchQueries({ queryKey: ["activities", leadId] });
+
       // Only show toast for non-sound toggle updates
       if (!variables.updates.hasOwnProperty("soundEnabled")) {
         toast({
@@ -152,7 +159,7 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
   // Delete reminder mutation
   const deleteReminderMutation = useMutation({
     mutationFn: async (reminderId: string) => {
-      const response = await fetch(
+      const response = await apiCallWithSessionRefresh(
         `/api/leads/${leadId}/reminders/${reminderId}`,
         { method: "DELETE" }
       );
@@ -160,6 +167,8 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+      queryClient.refetchQueries({ queryKey: ["activities", leadId] });
       toast({
         title: "Success",
         description: "Reminder deleted",

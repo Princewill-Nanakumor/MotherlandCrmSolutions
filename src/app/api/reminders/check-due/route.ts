@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import Reminder from "@/models/Reminder";
 import mongoose from "mongoose";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -15,7 +15,28 @@ export async function GET() {
     await connectMongoDB();
 
     const now = new Date();
-    const currentDateStr = now.toISOString().split("T")[0]; // YYYY-MM-DD
+    const { searchParams } = new URL(request.url);
+
+    // Use user's local date/time from client when provided (fixes timezone mismatch)
+    // reminderDate + reminderTime are stored in user's local context, so we must compare against user's local now
+    const userDateParam = searchParams.get("userDate"); // YYYY-MM-DD
+    const userTimeParam = searchParams.get("userTime"); // HH:mm or HH:mm:ss
+
+    let currentDateStr: string;
+    let currentMinutes: number;
+    let currentSeconds: number;
+
+    if (userDateParam && userTimeParam) {
+      currentDateStr = userDateParam;
+      const [h, m, s] = userTimeParam.split(":").map(Number);
+      currentMinutes = (h || 0) * 60 + (m || 0);
+      currentSeconds = s || 0;
+    } else {
+      // Fallback to server time (existing behavior)
+      currentDateStr = now.toISOString().split("T")[0];
+      currentMinutes = now.getHours() * 60 + now.getMinutes();
+      currentSeconds = now.getSeconds();
+    }
 
     const adminId =
       session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
@@ -54,15 +75,12 @@ export async function GET() {
             return false; // Future date
           }
 
-          // If it's today, check if time has passed
+          // If it's today, check if time has passed (using user's local time when provided)
           if (reminderDateStr === currentDateStr) {
-            // Same day - check time with a small buffer (30 seconds early)
             const [reminderHour, reminderMinute] = reminder.reminderTime
               .split(":")
               .map(Number);
             const reminderMinutes = reminderHour * 60 + reminderMinute;
-            const currentMinutes = now.getHours() * 60 + now.getMinutes();
-            const currentSeconds = now.getSeconds();
 
             // Allow reminder to trigger 30 seconds before the exact time
             const bufferMinutes = currentSeconds >= 30 ? 0.5 : 0;

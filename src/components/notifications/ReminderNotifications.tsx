@@ -3,15 +3,19 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, X, Clock, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reminder } from "@/types/leads";
 import { alarmSound, stopNotificationSound } from "@/lib/notificationSound";
 import { formatTime24Hour } from "@/lib/utils";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 export default function ReminderNotifications() {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [notifications, setNotifications] = useState<Reminder[]>([]);
   const [permissionGranted, setPermissionGranted] = useState(false);
   const soundPlayingRef = useRef<boolean>(false);
@@ -32,12 +36,16 @@ export default function ReminderNotifications() {
     }
   }, [status]);
 
-  // Poll for due reminders
+  // Poll for due reminders - pass user's local date/time for correct timezone comparison
   const { data: dueReminders = [] } = useQuery<Reminder[]>({
     queryKey: ["dueReminders"],
     queryFn: async () => {
       try {
-        const response = await fetch("/api/reminders/check-due");
+        const now = new Date();
+        const userDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`; // YYYY-MM-DD in user's local time
+        const userTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+        const url = `/api/reminders/check-due?userDate=${encodeURIComponent(userDate)}&userTime=${encodeURIComponent(userTime)}`;
+        const response = await apiCallWithSessionRefresh(url);
         if (!response.ok) {
           return [];
         }
@@ -111,7 +119,12 @@ export default function ReminderNotifications() {
           notification.onclick = () => {
             window.focus();
             if (typeof reminder.leadId === "object") {
-              window.location.href = `/dashboard/all-leads/${reminder.leadId._id}`;
+              const leadId = reminder.leadId._id;
+              const path =
+                session?.user?.role === "ADMIN"
+                  ? `/dashboard/all-leads/${leadId}`
+                  : `/dashboard/leads/${leadId}`;
+              router.push(path);
             }
             notification.close();
           };
@@ -120,18 +133,53 @@ export default function ReminderNotifications() {
         }
       });
     }
-  }, [reminderIdsString, permissionGranted]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [reminderIdsString, permissionGranted, dueReminders, router, session?.user?.role]);
 
-  const dismissNotification = useCallback((id: string) => {
-    setNotifications((prev) => {
-      const updated = prev.filter((n) => n._id !== id);
-      if (updated.length === 0 && soundPlayingRef.current) {
-        stopNotificationSound();
-        soundPlayingRef.current = false;
+  const dismissNotification = useCallback(
+    async (reminder: Reminder, options?: { persistToDb?: boolean }) => {
+      const { persistToDb = true } = options ?? {};
+
+      // Optimistically remove from local state
+      setNotifications((prev) => {
+        const updated = prev.filter((n) => n._id !== reminder._id);
+        if (updated.length === 0 && soundPlayingRef.current) {
+          stopNotificationSound();
+          soundPlayingRef.current = false;
+        }
+        return updated;
+      });
+
+      if (!persistToDb) {
+        queryClient.invalidateQueries({ queryKey: ["dueReminders"] });
+        return;
       }
-      return updated;
-    });
-  }, []);
+
+      try {
+        const leadId =
+          typeof reminder.leadId === "object"
+            ? reminder.leadId._id
+            : reminder.leadId;
+
+        const response = await apiCallWithSessionRefresh(
+          `/api/leads/${leadId}/reminders/${reminder._id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "DISMISSED" }),
+          }
+        );
+
+        if (response.ok) {
+          queryClient.invalidateQueries({ queryKey: ["dueReminders"] });
+          queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+          queryClient.refetchQueries({ queryKey: ["activities", leadId] });
+        }
+      } catch (error) {
+        console.error("Error dismissing reminder:", error);
+      }
+    },
+    [queryClient]
+  );
 
   const handleNotificationClick = useCallback(
     (reminder: Reminder) => {
@@ -145,17 +193,15 @@ export default function ReminderNotifications() {
         const currentPath = window.location.pathname;
 
         if (currentPath.includes("/all-leads")) {
-          // Admin leads page
-          window.location.href = `/dashboard/all-leads/${leadId}`;
+          router.push(`/dashboard/all-leads/${leadId}`);
         } else {
-          // User leads page
-          window.location.href = `/dashboard/leads/${leadId}`;
+          router.push(`/dashboard/leads/${leadId}`);
         }
       }
 
-      dismissNotification(reminder._id);
+      dismissNotification(reminder);
     },
-    [dismissNotification]
+    [dismissNotification, router]
   );
 
   const handleMarkAsComplete = useCallback(
@@ -172,7 +218,7 @@ export default function ReminderNotifications() {
             ? reminder.leadId._id
             : reminder.leadId;
 
-        const response = await fetch(
+        const response = await apiCallWithSessionRefresh(
           `/api/leads/${leadId}/reminders/${reminder._id}`,
           {
             method: "PUT",
@@ -182,13 +228,17 @@ export default function ReminderNotifications() {
         );
 
         if (response.ok) {
-          dismissNotification(reminder._id);
+          // Remove from UI only - don't overwrite COMPLETED with DISMISSED in DB
+          dismissNotification(reminder, { persistToDb: false });
+          queryClient.invalidateQueries({ queryKey: ["dueReminders"] });
+          queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+          queryClient.refetchQueries({ queryKey: ["activities", leadId] });
         }
       } catch (error) {
         console.error("Error marking reminder as complete:", error);
       }
     },
-    [dismissNotification]
+    [dismissNotification, queryClient]
   );
 
   // Don't render anything until authentication is complete
@@ -243,7 +293,7 @@ export default function ReminderNotifications() {
                       stopNotificationSound();
                       soundPlayingRef.current = false;
                     }
-                    dismissNotification(reminder._id);
+                    dismissNotification(reminder);
                   }}
                   className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
