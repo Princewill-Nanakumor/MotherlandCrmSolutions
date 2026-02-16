@@ -333,6 +333,12 @@ const LeadsDataProvider: React.FC<LeadsDataProviderProps> = ({
         // Also invalidate assigned leads queries for agents
         await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
         await queryClient.refetchQueries({ queryKey: ["assignedLeads"] });
+
+        // Refresh timeline for affected leads
+        leadIds.forEach((leadId) => {
+          queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+          queryClient.refetchQueries({ queryKey: ["activities", leadId] });
+        });
       } catch (error) {
         // ❌ ROLLBACK - Revert optimistic update on error - FIXED: Use consistent query key
         queryClient.invalidateQueries({ queryKey: ["leads"] });
@@ -425,6 +431,12 @@ const LeadsDataProvider: React.FC<LeadsDataProviderProps> = ({
       // Also invalidate assigned leads queries for agents
       await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       await queryClient.refetchQueries({ queryKey: ["assignedLeads"] });
+
+      // Refresh timeline for affected leads
+      leadIds.forEach((leadId) => {
+        queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+        queryClient.refetchQueries({ queryKey: ["activities", leadId] });
+      });
     } catch (error) {
       // ❌ ROLLBACK - Revert optimistic update on error - FIXED: Use consistent query key
       queryClient.invalidateQueries({ queryKey: ["leads"] });

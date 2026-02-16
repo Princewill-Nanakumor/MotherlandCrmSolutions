@@ -283,8 +283,10 @@ export const useLeadsPage = (
       });
 
       // Refresh timeline for affected leads (assign/unassign logs appear without page refresh)
+      // Use refetchQueries (not just invalidateQueries) so the Activity Log updates immediately
       variables.leadIds.forEach((leadId) => {
         queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+        queryClient.refetchQueries({ queryKey: ["activities", leadId] });
       });
     },
     onSettled: () => {
@@ -396,8 +398,10 @@ export const useLeadsPage = (
       });
 
       // Refresh timeline for affected leads (assign/unassign logs appear without page refresh)
+      // Use refetchQueries (not just invalidateQueries) so the Activity Log updates immediately
       variables.leadIds.forEach((leadId) => {
         queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+        queryClient.refetchQueries({ queryKey: ["activities", leadId] });
       });
     },
     onSettled: () => {

@@ -151,6 +151,12 @@ export const useUpdateLead = () => {
           );
         }
       );
+
+      // Refresh timeline for the updated lead
+      queryClient.invalidateQueries({
+        queryKey: ["activities", updatedLead._id],
+      });
+      queryClient.refetchQueries({ queryKey: ["activities", updatedLead._id] });
     },
     onError: (error) => {
       console.error("Error updating lead:", error);

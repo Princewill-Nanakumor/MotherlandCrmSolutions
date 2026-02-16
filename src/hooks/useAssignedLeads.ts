@@ -293,11 +293,19 @@ export const useAssignedLeads = () => {
         );
       }
     },
-    onSettled: () => {
+    onSettled: (data, error, variables) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({
         queryKey: assignedLeadsKeys.list(session?.user?.id || ""),
       });
+
+      // Refresh timeline for the updated lead
+      if (variables._id) {
+        queryClient.invalidateQueries({
+          queryKey: ["activities", variables._id],
+        });
+        queryClient.refetchQueries({ queryKey: ["activities", variables._id] });
+      }
     },
   });
 

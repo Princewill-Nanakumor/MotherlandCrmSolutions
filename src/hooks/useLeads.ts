@@ -575,6 +575,12 @@ export const useLeads = () => {
       await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       await queryClient.refetchQueries({ queryKey: ["assignedLeads"] });
 
+      // Refresh timeline for affected leads
+      variables.leadIds.forEach((leadId: string) => {
+        queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+        queryClient.refetchQueries({ queryKey: ["activities", leadId] });
+      });
+
       const { leadIds, userId } = variables;
       const assignedUser = users.find((u) => u.id === userId);
       const leadCount = leadIds.length;
@@ -702,6 +708,12 @@ export const useLeads = () => {
       // Also invalidate assigned leads queries for agents
       await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       await queryClient.refetchQueries({ queryKey: ["assignedLeads"] });
+
+      // Refresh timeline for affected leads
+      variables.leadIds.forEach((leadId: string) => {
+        queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+        queryClient.refetchQueries({ queryKey: ["activities", leadId] });
+      });
 
       const { leadIds } = variables;
       const leadCount = leadIds.length;
