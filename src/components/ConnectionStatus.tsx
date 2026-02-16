@@ -27,7 +27,7 @@ export const ConnectionStatus = () => {
     },
     retry: 1,
     retryDelay: 2000,
-    refetchInterval: 30000,
+    refetchInterval: 120000, // Check every 2 minutes (increased from 30s to lower Netlify usage)
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     staleTime: 5000,

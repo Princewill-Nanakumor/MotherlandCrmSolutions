@@ -56,8 +56,8 @@ export default function ReminderNotifications() {
       }
     },
     enabled: status === "authenticated",
-    refetchInterval: 10000, // Check every 10 seconds for accurate timing
-    staleTime: 5000,
+    refetchInterval: 60 * 1000, // Check every 1 minute (reduced from 10s to lower Netlify function usage)
+    staleTime: 30 * 1000,
   });
 
   // Create a stable reminder IDs string for comparison

@@ -107,8 +107,8 @@ export function NotificationBell() {
     },
     select: (data) => normalizeNotifications(data),
     enabled: !!session?.user,
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 60000, // 1 minute
+    refetchInterval: 300000, // 5 minutes (increased from 1m to lower Netlify usage)
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
