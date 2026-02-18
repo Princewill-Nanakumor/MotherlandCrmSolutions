@@ -133,7 +133,9 @@ export default function ReminderNotifications() {
         }
       });
     }
-  }, [reminderIdsString, permissionGranted, dueReminders, router, session?.user?.role]);
+  // Depend only on reminderIdsString (stable) - not dueReminders, to avoid infinite loop
+  // (dueReminders = [] creates a new array ref each render when query is loading/empty)
+  }, [reminderIdsString, permissionGranted, router, session?.user?.role]);
 
   const dismissNotification = useCallback(
     async (reminder: Reminder, options?: { persistToDb?: boolean }) => {

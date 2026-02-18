@@ -353,6 +353,16 @@ export async function GET(request: NextRequest) {
         searchConditions.push({
           phone: { $regex: phoneDigitsRegex, $options: "i" },
         });
+        // Match phone when stored as number: $regex on field only matches strings; use $expr + $toString so numeric phone matches
+        searchConditions.push({
+          $expr: {
+            $regexMatch: {
+              input: { $ifNull: [{ $toString: "$phone" }, ""] },
+              regex: digitsOnlyFromRaw,
+              options: "i",
+            },
+          },
+        });
       }
       const searchOr = { $or: searchConditions };
       filter.$and = filter.$and ? [...filter.$and, searchOr] : [searchOr];

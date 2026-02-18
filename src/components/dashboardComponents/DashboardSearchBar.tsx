@@ -33,9 +33,12 @@ export function DashboardSearchBar({
   const [inputValue, setInputValue] = useState(searchQuery);
   const debouncedValue = useDebounce(inputValue, 300);
   const isFirstRunRef = useRef(true);
+  const skipNextDebounceRef = useRef(false);
+  const isUserTypingRef = useRef(false);
 
-  // Update input value when searchQuery prop changes (e.g. from context)
+  // Sync from context/URL only when searchQuery changes from outside (e.g. init from URL, clear), not while user is typing
   useEffect(() => {
+    if (isUserTypingRef.current) return;
     setInputValue(searchQuery);
   }, [searchQuery]);
 
@@ -45,22 +48,30 @@ export function DashboardSearchBar({
       isFirstRunRef.current = false;
       return;
     }
+    if (skipNextDebounceRef.current) {
+      skipNextDebounceRef.current = false;
+      return;
+    }
+    isUserTypingRef.current = false; // done with this typing gesture
     onSearch(debouncedValue);
   }, [debouncedValue, onSearch]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    isUserTypingRef.current = true;
     setInputValue(e.target.value);
   };
 
   const handleClear = useCallback(() => {
+    isUserTypingRef.current = false;
     setInputValue("");
     onSearch("");
+    skipNextDebounceRef.current = true; // Skip debounce effect when it catches up - avoid redundant onSearch
   }, [onSearch]);
 
   return (
-    <div className="relative w-full max-w-md">
+    <div className="relative w-full max-w-md" role="search">
       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <Search className="h-5 w-5 !text-gray-600 dark:!text-gray-400" />
+        <Search className="h-5 w-5 !text-gray-600 dark:!text-gray-400" aria-hidden="true" />
       </div>
 
       <input
@@ -70,12 +81,15 @@ export function DashboardSearchBar({
         className="block w-full pl-10 pr-10 py-2 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-purple-200 dark:border-gray-600 !text-gray-900 dark:!text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-400 focus:border-transparent"
         placeholder={placeholder}
         disabled={isLoading}
+        aria-label="Search leads by name, email, or phone"
       />
 
       {inputValue && (
         <button
+          type="button"
           onClick={handleClear}
           className="absolute inset-y-0 right-0 pr-3 flex items-center"
+          aria-label="Clear search"
         >
           <X className="h-5 w-5 !text-gray-400 hover:!text-gray-600 dark:hover:!text-gray-300" />
         </button>

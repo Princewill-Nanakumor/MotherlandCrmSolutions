@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { useSession, SessionProvider, signOut } from "next-auth/react";
 import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createQueryClient } from "@/lib/queryClient";
 import { StatusProvider } from "@/context/StatusContext";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/dashboardComponents/Sidebar";
 import DashboardNavbar from "@/components/dashboardComponents/DashboardNavbar";
 import { SearchProvider, useSearchContext } from "@/context/SearchContext";
@@ -25,6 +25,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const { status, data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Prevent double redirect when we signOut due to expiry
   const redirectingDueToExpiryRef = useRef(false);
@@ -78,6 +79,33 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   // Show search bar only on leads pages
   const showSearch = isAdminLeadsPage || isUserLeadsPage;
+
+  // Initialize search from URL only when pathname changes (navigation), not on every render.
+  // Otherwise we overwrite the user's input when they type (sync effect updates URL → effect could run with stale deps and clear input).
+  const lastInitPathnameRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!showSearch) return;
+    if (lastInitPathnameRef.current === pathname) return;
+    lastInitPathnameRef.current = pathname;
+    const urlSearch = searchParams.get("search") ?? "";
+    setSearchQuery(urlSearch);
+  }, [pathname, showSearch, searchParams, setSearchQuery]);
+
+  // Sync search query to URL when user types (leads pages only)
+  const prevSearchQueryRef = useRef(searchQuery);
+  useEffect(() => {
+    if (!showSearch) return;
+    if (prevSearchQueryRef.current === searchQuery) return;
+    prevSearchQueryRef.current = searchQuery;
+    const params = new URLSearchParams(searchParams.toString());
+    if (searchQuery.trim()) {
+      params.set("search", searchQuery.trim());
+    } else {
+      params.delete("search");
+    }
+    params.set("page", "1");
+    router.replace(`${pathname}?${params.toString()}`);
+  }, [searchQuery, showSearch, pathname, searchParams, router]);
 
   // Page title mapping
   const getPageTitle = (path: string | null): string | null => {
@@ -271,11 +299,19 @@ export default function DashboardLayout({
         <QueryClientProvider client={queryClient}>
           <StatusProvider>
             <SearchProvider>
-              <DateTimeSettingsProvider>
-                <DialerSettingsProvider>
-                  <DashboardContent>{children}</DashboardContent>
-                </DialerSettingsProvider>
-              </DateTimeSettingsProvider>
+              <Suspense
+                fallback={
+                  <div className="flex h-screen items-center justify-center">
+                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
+                  </div>
+                }
+              >
+                <DateTimeSettingsProvider>
+                  <DialerSettingsProvider>
+                    <DashboardContent>{children}</DashboardContent>
+                  </DialerSettingsProvider>
+                </DateTimeSettingsProvider>
+              </Suspense>
             </SearchProvider>
           </StatusProvider>
         </QueryClientProvider>

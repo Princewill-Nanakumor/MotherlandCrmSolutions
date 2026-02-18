@@ -34,38 +34,36 @@ export const useTableSorting = ({
   searchQuery = "",
   onSortChange,
 }: TableSortingProps) => {
-  // Search function
+  // Search function: matches leadId, name, email, phone. Normalizes phone to digits so e.g. "+1 819-962-5286" matches "18199625286".
   const searchLeads = (leads: Lead[], query: string): Lead[] => {
     if (!query.trim()) return leads;
 
     const trimmedQuery = query.trim();
     const searchTerm = trimmedQuery.toLowerCase();
+    const searchDigitsOnly = trimmedQuery.replace(/\D/g, "");
 
-    // Check if query is a numeric ID (5-6 digits) - check original trimmed query
-    const isNumericIdSearch = /^\d{5,6}$/.test(trimmedQuery);
-    const numericId = isNumericIdSearch ? parseInt(trimmedQuery, 10) : null;
-    
+    const isAllDigits = /^\d+$/.test(trimmedQuery);
+    const numericId = isAllDigits ? parseInt(trimmedQuery, 10) : null;
+
     return leads.filter((lead) => {
-      // Search by leadId if query is numeric (exact match)
-      if (numericId !== null && lead.leadId === numericId) {
+      if (numericId !== null && !Number.isNaN(numericId) && lead.leadId === numericId) {
         return true;
       }
 
-      // If query is numeric but doesn't match leadId, don't search in other fields
-      if (isNumericIdSearch) {
-        return false;
-      }
-
-      // Search in name, email, phone for non-numeric queries
-      const fullName = `${lead.firstName} ${lead.lastName}`.toLowerCase();
-      const email = lead.email.toLowerCase();
+      const fullName = `${lead.firstName ?? ""} ${lead.lastName ?? ""}`.toLowerCase().trim();
+      const email = (lead.email || "").toLowerCase();
       const phone = (lead.phone || "").toLowerCase();
+      const phoneDigitsOnly = String(lead.phone ?? "").replace(/\D/g, "");
 
-      return (
-        fullName.includes(searchTerm) ||
-        email.includes(searchTerm) ||
-        phone.includes(searchTerm)
-      );
+      const nameOrEmailMatch =
+        fullName.includes(searchTerm) || email.includes(searchTerm);
+      const literalPhoneMatch = phone.includes(searchTerm);
+      const normalizedPhoneMatch =
+        searchDigitsOnly.length > 0 &&
+        phoneDigitsOnly.length > 0 &&
+        phoneDigitsOnly.includes(searchDigitsOnly);
+
+      return nameOrEmailMatch || literalPhoneMatch || normalizedPhoneMatch;
     });
   };
 

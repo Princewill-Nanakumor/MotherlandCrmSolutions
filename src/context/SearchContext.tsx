@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
 // Create a context for search state
 interface SearchContextType {
@@ -24,6 +25,25 @@ interface SearchProviderProps {
   children: React.ReactNode;
 }
 
+/**
+ * Reads search from URL once on mount (for refresh persistence).
+ * Must not sync on every searchParams change, or we overwrite the user's input
+ * while they type (URL updates async after setSearchQuery).
+ */
+function SearchURLSync() {
+  const searchParams = useSearchParams();
+  const { setSearchQuery } = useSearchContext();
+
+  useEffect(() => {
+    const query = searchParams.get("search") || "";
+    setSearchQuery(query);
+    // Only on mount: restore search from URL so refresh keeps the query
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return null;
+}
+
 export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +57,9 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
 
   return (
     <SearchContext.Provider value={contextValue}>
+      <Suspense fallback={null}>
+        <SearchURLSync />
+      </Suspense>
       {children}
     </SearchContext.Provider>
   );

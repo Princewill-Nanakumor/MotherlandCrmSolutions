@@ -347,7 +347,7 @@ export const searchLeads = (leads: Lead[], searchQuery: string): Lead[] => {
   const numericId = isNumericId ? parseInt(trimmedQuery, 10) : null;
 
   const results = leads.filter((lead) => {
-    // Search by leadId if query is numeric (exact match)
+    // Search by leadId if query is all digits (exact match)
     if (numericId !== null && lead.leadId === numericId) {
       console.log("searchLeads: Match found by leadId:", {
         id: lead._id,
@@ -357,23 +357,22 @@ export const searchLeads = (leads: Lead[], searchQuery: string): Lead[] => {
       return true;
     }
 
-    // If query is numeric but doesn't match leadId, don't search in other fields
-    // (user is clearly searching for an ID)
-    if (isNumericId) {
-      return false;
-    }
-
-    // Search in name, email, phone for non-numeric queries
+    // Name, email, phone (literal). Normalize phone to digits so "+1 819-962-5286" matches "18199625286".
     const fullName = `${lead.firstName || ""} ${lead.lastName || ""}`
       .toLowerCase()
       .trim();
     const email = (lead.email || "").toLowerCase();
     const phone = (lead.phone || "").toLowerCase();
+    const searchDigitsOnly = trimmedQuery.replace(/\D/g, "");
+    const phoneDigitsOnly = String(lead.phone ?? "").replace(/\D/g, "");
 
     const matches =
       fullName.includes(query) ||
       email.includes(query) ||
-      phone.includes(query);
+      phone.includes(query) ||
+      (searchDigitsOnly.length > 0 &&
+        phoneDigitsOnly.length > 0 &&
+        phoneDigitsOnly.includes(searchDigitsOnly));
 
     if (matches) {
       console.log("searchLeads: Match found:", {

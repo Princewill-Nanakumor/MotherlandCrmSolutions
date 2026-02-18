@@ -723,6 +723,7 @@ export const useLeadsPage = (
     data: leadsData,
     isLoading: isLoadingLeads,
     isRefetching: isRefetchingLeads,
+    isPlaceholderData,
     error: leadsError,
     refetch: refetchLeads,
   } = useQuery({
@@ -974,6 +975,35 @@ export const useLeadsPage = (
     }
   }, [filterByUser, isInitialized, setFilterByUser]);
 
+  // Reset page to 1 when search changes and sync to URL
+  const prevSearchQueryRef = useRef(searchQuery);
+  useEffect(() => {
+    if (prevSearchQueryRef.current !== searchQuery) {
+      prevSearchQueryRef.current = searchQuery;
+      filterJustChangedRef.current = true;
+      setFilterJustChanged(true);
+      setPageState(1);
+      pendingPageFromPaginationRef.current = null;
+
+      // Sync search query to URL for persistence
+      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      const currentSearch = params.get("search") || "";
+      if (searchQuery !== currentSearch) {
+        if (searchQuery) {
+          params.set("search", searchQuery);
+        } else {
+          params.delete("search");
+        }
+        params.set("page", "1"); // Always reset page in URL too
+
+        const query = params.toString();
+        router.replace(query ? `${pathname}?${query}` : pathname, {
+          scroll: false,
+        });
+      }
+    }
+  }, [searchQuery, pathname, router, searchParams]);
+
   // ===== STATE SYNC EFFECTS =====
   useEffect(() => {
     setUiState((prev) => ({ ...prev, searchQuery }));
@@ -1154,7 +1184,10 @@ export const useLeadsPage = (
   );
 
   const shouldShowLoading =
-    isLoadingLeads || isLoadingUsers || isLoadingStatuses;
+    isLoadingLeads ||
+    isLoadingUsers ||
+    isLoadingStatuses ||
+    (isPlaceholderData && isRefetchingLeads);
   const showEmptyState = !shouldShowLoading && leadsTotal === 0;
 
   // ===== OPTIMIZED EVENT HANDLERS =====
