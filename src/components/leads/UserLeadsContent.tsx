@@ -304,6 +304,7 @@ export default function UserLeadsContent() {
                       : -1
                   }
                   totalLeads={leads.length}
+                  searchQuery={searchQuery}
                   handleCountryFilterChange={handleCountryFilterChange}
                   handleStatusFilterChange={handleStatusFilterChange}
                   handleSourceFilterChange={handleSourceFilterChange}
@@ -342,6 +343,7 @@ interface UserLeadsMainContentProps {
   showControls: boolean;
   currentIndex: number;
   totalLeads: number;
+  searchQuery?: string;
   handleCountryFilterChange: (countries: string[]) => void;
   handleStatusFilterChange: (statuses: string[]) => void;
   handleSourceFilterChange: (sources: string[]) => void;
@@ -376,6 +378,7 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
   showControls,
   currentIndex,
   totalLeads,
+  searchQuery = "",
   handleCountryFilterChange,
   handleStatusFilterChange,
   handleSourceFilterChange,
@@ -509,10 +512,69 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
         />
       </div>
 
-      {/* Main content area */}
+      {/* Main content area: loading skeleton, search/filter empty state, or table (match all-leads behavior) */}
       <div className="flex-1 overflow-auto px-8 pb-4">
         {shouldShowLoading ? (
           <TableSkeleton />
+        ) : filteredLeads.length === 0 ? (
+          <div className="flex items-center justify-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-2 min-h-[280px]">
+            <div className="text-center space-y-4 max-w-md mx-auto px-6 py-12">
+              {searchQuery.trim() ? (
+                <>
+                  <div className="flex justify-center text-gray-400">
+                    <svg
+                      className="h-12 w-12"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    No leads found
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+                    No leads match your search for &quot;{searchQuery.trim()}&quot;. Try
+                    adjusting your search terms or clearing the search.
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    Clear search or try different keywords
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-center text-gray-400">
+                    <svg
+                      className="h-12 w-12"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    No leads available
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+                    You don&apos;t have any assigned leads yet, or no leads match
+                    your current filters.
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-2">
             <UserLeadsTableContainer
