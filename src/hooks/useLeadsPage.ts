@@ -723,7 +723,6 @@ export const useLeadsPage = (
     data: leadsData,
     isLoading: isLoadingLeads,
     isRefetching: isRefetchingLeads,
-    isPlaceholderData,
     error: leadsError,
     refetch: refetchLeads,
   } = useQuery({
@@ -1183,11 +1182,9 @@ export const useLeadsPage = (
     [leadsTotalAll, leadsTotal, selectedLeads, availableCountries.length]
   );
 
+  // Full skeleton only on initial load (no data yet). Filter/search refetches keep table visible + RefetchIndicator.
   const shouldShowLoading =
-    isLoadingLeads ||
-    isLoadingUsers ||
-    isLoadingStatuses ||
-    (isPlaceholderData && isRefetchingLeads);
+    isLoadingLeads || isLoadingUsers || isLoadingStatuses;
   const showEmptyState = !shouldShowLoading && leadsTotal === 0;
 
   // ===== OPTIMIZED EVENT HANDLERS =====

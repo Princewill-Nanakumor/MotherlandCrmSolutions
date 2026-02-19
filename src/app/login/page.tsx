@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { SessionProvider, useSession } from "next-auth/react";
 import Navbar from "@/components/homepageComponents/Navabar";
 import SignInForm from "@/components/authComponents/SignInForm";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { MessageCircle, Shield } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
@@ -178,116 +178,29 @@ export default function LoginPage() {
     });
   }, [toast]);
 
-  useEffect(() => {
+  // Use layout effect so class is applied before first paint (avoids white flash).
+  // All login visuals are scoped to .is-login-page via the <style> below;
+  // we do not mutate body.children or set inline styles on body/html, so cleanup
+  // is trivial and dashboard/theme are never left with login styles.
+  useLayoutEffect(() => {
     const body = document.body;
     const html = document.documentElement;
+    body.classList.add("is-login-page");
+    html.classList.add("is-login-page");
 
-    // IMMEDIATELY set dark background to prevent white flash
-    body.style.setProperty("background-color", "#1a1a1a", "important");
-    html.style.setProperty("background-color", "#1a1a1a", "important");
-
-    // Preload the image
     const link = document.createElement("link");
     link.rel = "preload";
     link.as = "image";
     link.href = "/motherlandImage.jpg";
     document.head.appendChild(link);
 
-    // Apply background image immediately (even if not loaded yet, browser will show it when ready)
-    body.style.setProperty(
-      "background-image",
-      "url('/motherlandImage.jpg')",
-      "important",
-    );
-    body.style.setProperty("background-size", "cover", "important");
-    body.style.setProperty("background-position", "center", "important");
-    body.style.setProperty("background-repeat", "no-repeat", "important");
-    body.style.setProperty("background-attachment", "fixed", "important");
-
-    // Test if image exists and update when loaded
-    const testImg = new Image();
-    testImg.onload = () => {
-      console.log("✅ Background image loaded successfully");
-      // Ensure background is applied
-      body.style.setProperty(
-        "background-image",
-        "url('/motherlandImage.jpg')",
-        "important",
-      );
-      body.style.setProperty("background-color", "transparent", "important");
-    };
-    testImg.onerror = () => {
-      console.error(
-        "❌ Background image failed to load from /motherlandImage.jpg",
-      );
-      // Keep dark background if image fails
-      body.style.setProperty("background-color", "#1a1a1a", "important");
-    };
-    testImg.src = "/motherlandImage.jpg";
-
-    html.style.setProperty("background-image", "none", "important");
-
-    // Make all direct children of body transparent
-    const makeChildrenTransparent = () => {
-      Array.from(body.children).forEach((child) => {
-        if (child instanceof HTMLElement) {
-          child.style.setProperty(
-            "background-color",
-            "transparent",
-            "important",
-          );
-        }
-      });
-    };
-    makeChildrenTransparent();
-
-    // Keep background image
-    const observer = new MutationObserver(() => {
-      body.style.setProperty(
-        "background-image",
-        "url('/motherlandImage.jpg')",
-        "important",
-      );
-      body.style.setProperty("background-size", "cover", "important");
-      body.style.setProperty("background-position", "center", "important");
-      body.style.setProperty("background-repeat", "no-repeat", "important");
-      body.style.setProperty("background-attachment", "fixed", "important");
-      body.style.setProperty("background-color", "transparent", "important");
-      html.style.setProperty("background-color", "transparent", "important");
-      makeChildrenTransparent();
-    });
-
-    observer.observe(html, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    // Also watch body children changes
-    const bodyObserver = new MutationObserver(makeChildrenTransparent);
-    bodyObserver.observe(body, {
-      childList: true,
-      subtree: true,
-    });
-
     return () => {
-      observer.disconnect();
-      bodyObserver.disconnect();
-      // Remove preload link
+      body.classList.remove("is-login-page");
+      html.classList.remove("is-login-page");
       const preloadLink = document.querySelector(
         'link[rel="preload"][href="/motherlandImage.jpg"]',
       );
-      if (preloadLink) {
-        preloadLink.remove();
-      }
-      // Reset to default white background when leaving login page
-      body.style.removeProperty("background-image");
-      body.style.removeProperty("background-size");
-      body.style.removeProperty("background-position");
-      body.style.removeProperty("background-repeat");
-      body.style.removeProperty("background-attachment");
-      body.style.setProperty("background-color", "#ffffff", "important");
-      html.style.setProperty("background-color", "#ffffff", "important");
-      html.style.removeProperty("background-image");
+      if (preloadLink) preloadLink.remove();
     };
   }, []);
 
@@ -297,9 +210,12 @@ export default function LoginPage() {
       <style
         dangerouslySetInnerHTML={{
           __html: `
-          /* Set initial dark background to prevent white flash - will be overridden when image loads */
-          html, 
-          body {
+          /* Login page only: scoped so removing .is-login-page restores theme/globals */
+          html.is-login-page {
+            background-color: #1a1a1a !important;
+            background-image: none !important;
+          }
+          body.is-login-page {
             background-color: #1a1a1a !important;
             background-image: url('/motherlandImage.jpg') !important;
             background-size: cover !important;
@@ -307,52 +223,46 @@ export default function LoginPage() {
             background-repeat: no-repeat !important;
             background-attachment: fixed !important;
           }
-          /* Override ALL wrapper divs from providers */
-          body > div,
-          body > div > div,
-          body > div > div > div,
-          body > div > div > div > div {
+          body.is-login-page > div,
+          body.is-login-page > div > div,
+          body.is-login-page > div > div > div,
+          body.is-login-page > div > div > div > div {
             background-color: transparent !important;
             background: transparent !important;
           }
-          /* Ensure navbar doesn't get background */
-          nav,
-          [class*="Navbar"],
-          [class*="navbar"] {
+          body.is-login-page nav,
+          body.is-login-page [class*="Navbar"],
+          body.is-login-page [class*="navbar"] {
             background-color: transparent !important;
             background: transparent !important;
           }
-          /* Ensure form container background */
-          div[class*="bg-white/10"],
-          [class*="SignInForm"],
-          [class*="signInForm"] {
+          body.is-login-page div[class*="bg-white/10"],
+          body.is-login-page [class*="SignInForm"],
+          body.is-login-page [class*="signInForm"] {
             background-color: rgba(255, 255, 255, 0.1) !important;
             background: rgba(255, 255, 255, 0.1) !important;
           }
-          /* Also ensure form wrapper doesn't get background */
-          form {
+          body.is-login-page form {
             background-color: transparent !important;
             background: transparent !important;
           }
-          /* Input borders */
-          input[type="email"],
-          input[type="password"] {
-            border-color: rgb(209, 213, 219) !important; /* gray-300 */
+          body.is-login-page input[type="email"],
+          body.is-login-page input[type="password"] {
+            border-color: rgb(209, 213, 219) !important;
           }
-          /* Checkbox styling */
-          input[type="checkbox"] {
+          body.is-login-page input[type="checkbox"] {
             background-color: white !important;
             background: white !important;
             background-image: none !important;
-            border-color: rgb(209, 213, 219) !important; /* gray-300 */
+            border-color: rgb(209, 213, 219) !important;
             appearance: none !important;
             -webkit-appearance: none !important;
             -moz-appearance: none !important;
             border-width: 1px !important;
             border-style: solid !important;
           }
-          input[type="checkbox"]:checked {
-            background-color: rgb(79, 70, 229) !important; /* indigo-600 */
+          body.is-login-page input[type="checkbox"]:checked {
+            background-color: rgb(79, 70, 229) !important;
             background: rgb(79, 70, 229) !important;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") !important;
             background-size: contain !important;
