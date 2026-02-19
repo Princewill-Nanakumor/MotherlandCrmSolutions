@@ -236,7 +236,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       <div className="flex items-center justify-center h-screen">
         <div className="relative flex items-center justify-center w-16 h-16">
           <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
-          <div className="relative z-10 flex items-center justify-center w-12 h-12 bg-gray-800 rounded-full">
+          <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
             <Shield size={28} className="text-white" />
           </div>
         </div>
@@ -302,7 +302,12 @@ export default function DashboardLayout({
               <Suspense
                 fallback={
                   <div className="flex h-screen items-center justify-center">
-                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
+                    <div className="relative flex items-center justify-center w-16 h-16">
+                      <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin" />
+                      <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
+                        <Shield size={28} className="text-white" />
+                      </div>
+                    </div>
                   </div>
                 }
               >

@@ -3,9 +3,9 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import SubscriptionPlans from "./SubscriptionPlans";
+import { SubscriptionPageSkeleton } from "./SubscriptionPageSkeleton";
 import TrialStatus from "./TrialStatus";
 import SubscriptionModal from "./SubscriptionModal";
 import DowngradeWarningModal from "./DowngradeWarningModal";
@@ -277,13 +277,7 @@ export default function SubscriptionManager() {
   }, []);
 
   if (status === "loading" || loading || usageLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="w-6 h-6 animate-spin" />
-        </div>
-      </div>
-    );
+    return <SubscriptionPageSkeleton />;
   }
 
   if (status === "unauthenticated") {
