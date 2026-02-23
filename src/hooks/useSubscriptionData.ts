@@ -32,9 +32,15 @@ async function fetchWithTimeout(url: string, ms: number): Promise<Response> {
   }
 }
 
-const fetchSubscriptionData = async (): Promise<SubscriptionData> => {
+const fetchSubscriptionData = async (
+  role?: string
+): Promise<SubscriptionData> => {
+  const endpoint =
+    role === "AGENT"
+      ? "/api/subscription/agent-status"
+      : "/api/subscription/status";
   const response = await fetchWithTimeout(
-    "/api/subscription/status",
+    endpoint,
     SUBSCRIPTION_FETCH_TIMEOUT_MS
   );
 
@@ -46,7 +52,8 @@ const fetchSubscriptionData = async (): Promise<SubscriptionData> => {
 };
 
 export const useSubscriptionData = () => {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
+  const role = session?.user?.role;
 
   const {
     data: subscriptionData,
@@ -54,8 +61,8 @@ export const useSubscriptionData = () => {
     error,
     refetch,
   } = useQuery<SubscriptionData, Error>({
-    queryKey: ["subscription-data"],
-    queryFn: fetchSubscriptionData,
+    queryKey: ["subscription-data", role],
+    queryFn: () => fetchSubscriptionData(role),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 1,
