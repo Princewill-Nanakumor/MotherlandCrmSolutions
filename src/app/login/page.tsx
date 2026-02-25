@@ -138,15 +138,13 @@ function AuthStateHandler() {
 
   useEffect(() => {
     if (status !== "authenticated" || !session) return;
-    if (isExpiredLanding) return;
     router.replace("/dashboard");
-  }, [status, session, router, isExpiredLanding]);
+  }, [status, session, router]);
 
   // When landing with ?expired=true, we know the user was just signed out - show the form, don't block on loading
   if (status === "loading" && !isExpiredLanding) return <LoadingScreen />;
 
   if (status === "authenticated") {
-    if (isExpiredLanding) return <LoadingScreen />;
     return <RedirectingScreen />;
   }
   return null;
