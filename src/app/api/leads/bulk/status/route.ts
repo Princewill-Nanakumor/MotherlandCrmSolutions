@@ -174,6 +174,11 @@ export async function POST(request: Request) {
             oldStatusId: previousStatus,
             oldStatus: previousStatusName,
             newStatus: newStatusName,
+            performedBy: {
+              id: session.user.id,
+              firstName: (session.user as { firstName?: string }).firstName ?? "",
+              lastName: (session.user as { lastName?: string }).lastName ?? "",
+            },
           },
         });
       } catch (activityError) {

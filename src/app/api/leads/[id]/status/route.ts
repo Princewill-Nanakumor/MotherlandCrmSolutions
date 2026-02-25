@@ -167,6 +167,11 @@ async function runStatusUpdate(
                 oldStatusName: previousStatusName,
                 oldStatus: previousStatusName,
                 newStatus: newStatusName,
+                performedBy: {
+                  id: sessionUser.id,
+                  firstName: sessionUser.firstName ?? "",
+                  lastName: sessionUser.lastName ?? "",
+                },
               },
             },
           ],
@@ -282,6 +287,11 @@ async function updateStatusWithoutTransaction(
       oldStatusName: previousStatusName,
       oldStatus: previousStatusName,
       newStatus: newStatusName,
+      performedBy: {
+        id: sessionUser.id,
+        firstName: sessionUser.firstName ?? "",
+        lastName: sessionUser.lastName ?? "",
+      },
     },
   };
 

@@ -183,7 +183,7 @@ export async function GET(request: NextRequest) {
     const transformedActivities = activities.map((activity: unknown) => {
       const act = activity as ActivityDocument;
 
-      // Handle populated userId
+      // Handle populated userId (user may be deleted - populate returns null; use metadata.performedBy as fallback)
       let createdBy = {
         _id: "unknown",
         firstName: "Unknown",
@@ -202,7 +202,7 @@ export async function GET(request: NextRequest) {
               lastName: act.userId.lastName || "User",
             };
           } else {
-            // It's just an ObjectId
+            // It's just an ObjectId (populate failed)
             createdBy = {
               _id: act.userId.toString(),
               firstName: "Unknown",
@@ -210,6 +210,22 @@ export async function GET(request: NextRequest) {
             };
           }
         }
+      }
+
+      // Fallback: user was deleted, use denormalized performedBy from metadata (e.g. STATUS_CHANGE)
+      const performedBy = act.metadata?.performedBy as
+        | { id?: string; firstName?: string; lastName?: string }
+        | undefined;
+      if (
+        (createdBy.firstName === "Unknown" && createdBy.lastName === "User") &&
+        performedBy?.firstName &&
+        performedBy?.lastName
+      ) {
+        createdBy = {
+          _id: performedBy.id ?? "unknown",
+          firstName: performedBy.firstName,
+          lastName: performedBy.lastName,
+        };
       }
 
       // Resolve status names
