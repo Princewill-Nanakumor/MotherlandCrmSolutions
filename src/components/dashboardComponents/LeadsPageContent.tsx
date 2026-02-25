@@ -347,7 +347,9 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                     users={users}
                     statuses={statuses}
                     onSelectionChange={handleSelectionChange}
-                    searchQuery={uiState.searchQuery}
+                    searchQuery={
+                      isRefetchingLeads ? "" : (uiState.searchQuery ?? "")
+                    }
                     filterByUser={filterByUser}
                     filterByCountry={uiState.filterByCountry}
                     filterByStatus={uiState.filterByStatus}
