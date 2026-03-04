@@ -157,6 +157,10 @@ export const useUpdateLead = () => {
         queryKey: ["activities", updatedLead._id],
       });
       queryClient.refetchQueries({ queryKey: ["activities", updatedLead._id] });
+
+      // Ensure all leads lists (including paginated/filtered ones) refetch with fresh data
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.refetchQueries({ queryKey: ["leads"] });
     },
     onError: (error) => {
       console.error("Error updating lead:", error);
