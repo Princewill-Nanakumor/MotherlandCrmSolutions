@@ -174,10 +174,6 @@ export function UserLeadsTableContent({
                 key={row.id}
                 data-state={isSelected ? "selected" : undefined}
                 onClick={(event) => {
-                  const firstCell = event.currentTarget.querySelector("td");
-                  if (firstCell && firstCell.contains(event.target as Node)) {
-                    return;
-                  }
                   onRowClick(lead, event);
                 }}
                 className={`

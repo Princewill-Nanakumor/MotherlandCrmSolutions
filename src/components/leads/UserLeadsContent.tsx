@@ -220,15 +220,28 @@ export default function UserLeadsContent() {
     [handleURLSourceChange]
   );
 
-  // Row click handler: open panel immediately and keep URL in sync
+  // Row click handler: open panel on modern browsers, fall back to full page navigation on limited browsers (e.g. Opera Mini)
   const handleRowClick = useCallback(
     (lead: Lead) => {
+      // Detect very limited browsers like Opera Mini which often break SPA behavior
+      if (typeof navigator !== "undefined") {
+        const ua = navigator.userAgent || "";
+        const isOperaMini = /Opera Mini/i.test(ua);
+
+        if (isOperaMini) {
+          // Fallback: navigate to the dedicated lead details page instead of using the side panel
+          const leadIdentifier = lead.leadId ? lead.leadId.toString() : lead._id;
+          router.push(`/dashboard/leads/${leadIdentifier}`);
+          return;
+        }
+      }
+
       setSelectedLead(lead);
       setIsPanelOpen(true);
       // Update URL to match LeadsTable behavior
       handleLeadClick(lead);
     },
-    [handleLeadClick]
+    [handleLeadClick, router]
   );
 
   // Panel close handler: update local state
