@@ -109,48 +109,13 @@ export default function UserLeadsContent() {
     setFilterBySource(parseUrlParamToArray(urlSource));
   }, [searchParams]);
 
-  // Custom hooks - called at component level
+  // Custom hooks - called at component level (only for sort + filters on this page)
   const {
     handleSort: handleURLSort,
     handleCountryFilterChange: handleURLCountryChange,
     handleStatusFilterChange: handleURLStatusChange,
     handleSourceFilterChange: handleURLSourceChange,
-    handleLeadClick,
-    handlePanelClose,
-    handleNavigation,
   } = useLeadsURLManagement();
-
-  // Lead selection from URL (syncs on mount and when URL changes)
-  useEffect(() => {
-    const leadIdParam = searchParams.get("lead");
-    
-    if (!leadIdParam) {
-      // If URL no longer has a lead, but we have one selected locally, close panel
-      if (selectedLead) {
-        setIsPanelOpen(false);
-        setSelectedLead(null);
-      }
-      return;
-    }
-
-    if (leadIdParam && leads.length > 0) {
-      const isNumericId = /^\d{5,6}$/.test(leadIdParam);
-      let lead: Lead | undefined;
-
-      if (isNumericId) {
-        const numericId = parseInt(leadIdParam, 10);
-        lead = leads.find((l) => l.leadId === numericId);
-      } else {
-        lead = leads.find((l) => l._id === leadIdParam);
-      }
-
-      // Only update state if the lead from URL is different from currently selected lead
-      if (lead && lead._id !== selectedLead?._id) {
-        setSelectedLead(lead);
-        setIsPanelOpen(true);
-      }
-    }
-  }, [leads, searchParams, selectedLead]);
 
   // Lead update handler with React Query mutation
   const handleLeadUpdated = useCallback(
@@ -220,38 +185,22 @@ export default function UserLeadsContent() {
     [handleURLSourceChange]
   );
 
-  // Row click handler: open panel on modern browsers, fall back to full page navigation on limited browsers (e.g. Opera Mini)
+  // Row click handler: open side panel using local state only (no route change)
   const handleRowClick = useCallback(
     (lead: Lead) => {
-      // Detect very limited browsers like Opera Mini which often break SPA behavior
-      if (typeof navigator !== "undefined") {
-        const ua = navigator.userAgent || "";
-        const isOperaMini = /Opera Mini/i.test(ua);
-
-        if (isOperaMini) {
-          // Fallback: navigate to the dedicated lead details page instead of using the side panel
-          const leadIdentifier = lead.leadId ? lead.leadId.toString() : lead._id;
-          router.push(`/dashboard/leads/${leadIdentifier}`);
-          return;
-        }
-      }
-
       setSelectedLead(lead);
       setIsPanelOpen(true);
-      // Update URL to match LeadsTable behavior
-      handleLeadClick(lead);
     },
-    [handleLeadClick, router]
+    []
   );
 
-  // Panel close handler: update local state
+  // Panel close handler: update local state only
   const handlePanelCloseLocal = useCallback(() => {
     setIsPanelOpen(false);
     setSelectedLead(null);
-    handlePanelClose();
-  }, [handlePanelClose]);
+  }, []);
 
-  // Panel navigation handler: move to prev/next lead and keep URL in sync
+  // Panel navigation handler: move to prev/next lead using local state only
   const handlePanelNavigationLocal = useCallback(
     (
       direction: "prev" | "next",
@@ -271,10 +220,8 @@ export default function UserLeadsContent() {
       const newLead = sortedLeads[newIndex];
       setSelectedLead(newLead);
       setIsPanelOpen(true);
-      handleNavigation("prev", currentSelectedLead, sortedLeads); // direction doesn't matter for the URL manager, it computes it internally, wait actually the URL manager uses its own logic, let's use the explicit handleNavigation hook. Actually wait, handleNavigation in useLeadsURLManagement takes direction, selectedLead, sortedLeads. Let's just use it directly.
-      handleNavigation(direction, currentSelectedLead, sortedLeads);
     },
-    [handleNavigation]
+    []
   );
 
   // Auth check
