@@ -120,14 +120,19 @@ export default function UserLeadsContent() {
     handleNavigation,
   } = useLeadsURLManagement();
 
-  // Lead selection from URL (initial mount only) so notifications / deep-links work,
-  // but subsequent clicks are driven by local state and not continuously overridden.
-  const [hasInitializedFromUrl, setHasInitializedFromUrl] = useState(false);
-
+  // Lead selection from URL (syncs on mount and when URL changes)
   useEffect(() => {
-    if (hasInitializedFromUrl) return;
-
     const leadIdParam = searchParams.get("lead");
+    
+    if (!leadIdParam) {
+      // If URL no longer has a lead, but we have one selected locally, close panel
+      if (selectedLead) {
+        setIsPanelOpen(false);
+        setSelectedLead(null);
+      }
+      return;
+    }
+
     if (leadIdParam && leads.length > 0) {
       const isNumericId = /^\d{5,6}$/.test(leadIdParam);
       let lead: Lead | undefined;
@@ -139,14 +144,13 @@ export default function UserLeadsContent() {
         lead = leads.find((l) => l._id === leadIdParam);
       }
 
-      if (lead) {
+      // Only update state if the lead from URL is different from currently selected lead
+      if (lead && lead._id !== selectedLead?._id) {
         setSelectedLead(lead);
         setIsPanelOpen(true);
       }
     }
-
-    setHasInitializedFromUrl(true);
-  }, [hasInitializedFromUrl, leads, searchParams]);
+  }, [leads, searchParams, selectedLead]);
 
   // Lead update handler with React Query mutation
   const handleLeadUpdated = useCallback(
