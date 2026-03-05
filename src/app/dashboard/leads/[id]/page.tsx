@@ -67,7 +67,7 @@ const LeadDetailsPageContent = ({
         return false;
       }
     },
-    [onLeadUpdated]
+    [onLeadUpdated],
   );
 
   const handleNavigate = () => {};
@@ -75,15 +75,15 @@ const LeadDetailsPageContent = ({
   const hasNext = false;
 
   return (
-    <div className="h-screen bg-white dark:bg-gray-800 flex flex-col">
+    <div className="flex flex-col h-screen bg-white dark:bg-gray-800">
       <div
-        className="flex bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg"
+        className="flex bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700"
         style={{
           height: "calc(100vh - 0px)",
         }}
       >
         {/* Left Panel - Lead Details */}
-        <div className="w-2/5 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-800/50">
+        <div className="flex flex-col w-2/5 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <LeadHeader
             lead={currentLead}
             onClose={onBack}
@@ -93,7 +93,7 @@ const LeadDetailsPageContent = ({
             hideNavigation={true}
             hideClose={true}
           />
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="flex-1 p-6 space-y-6 overflow-y-auto">
             <LeadStatus lead={currentLead} />
             <ContactSection
               lead={currentLead}
@@ -140,7 +140,7 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
 
   // ✅ Use React Query hook for fetching lead
   const { lead, isLoading, error, refetch } = useLeadDetails(
-    status === "authenticated" ? id : null
+    status === "authenticated" ? id : null,
   );
 
   // ✅ Use React Query mutation for updating lead
@@ -181,12 +181,12 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
         return false;
       }
     },
-    [updateLeadAsync, refetch]
+    [updateLeadAsync, refetch],
   );
 
   // Handle back navigation - preserve filters
   const handleBack = useCallback(() => {
-    const params = searchParams.toString();
+    const params = searchParams?.toString() ?? "";
     const backUrl = params ? `/dashboard/leads?${params}` : "/dashboard/leads";
     router.push(backUrl);
   }, [router, searchParams]);
@@ -220,10 +220,10 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background dark:bg-gray-800">
         <div className="text-center">
-          <h2 className="text-xl font-semibold !text-gray-900 dark:!text-white mb-2">
+          <h2 className="text-xl font-semibold text-gray-900! dark:text-white! mb-2">
             Error Loading Lead
           </h2>
-          <p className="!text-gray-600 dark:!text-gray-400 mb-4">{error}</p>
+          <p className="text-gray-600! dark:text-gray-400! mb-4">{error}</p>
           <Button onClick={handleBack} variant="outline">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to My Leads
@@ -238,10 +238,10 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background dark:bg-gray-800">
         <div className="text-center">
-          <h2 className="text-xl font-semibold !text-gray-900 dark:!text-white mb-2">
+          <h2 className="text-xl font-semibold text-gray-900! dark:text-white! mb-2">
             Lead Not Found
           </h2>
-          <p className="!text-gray-600 dark:!text-gray-400 mb-4">
+          <p className="text-gray-600! dark:text-gray-400! mb-4">
             The lead you&lsquo;re looking for doesn&lsquo;t exist or has been
             removed.
           </p>
