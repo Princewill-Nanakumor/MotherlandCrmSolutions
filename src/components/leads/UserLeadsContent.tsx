@@ -112,19 +112,23 @@ export default function UserLeadsContent() {
   // Custom hooks - called at component level
   const {
     handleSort: handleURLSort,
-    handleLeadClick,
-    handlePanelClose,
     handleCountryFilterChange: handleURLCountryChange,
     handleStatusFilterChange: handleURLStatusChange,
     handleSourceFilterChange: handleURLSourceChange,
+    handleLeadClick,
+    handlePanelClose,
     handleNavigation,
   } = useLeadsURLManagement();
 
-  // Lead selection effect
+  // Lead selection from URL (initial mount only) so notifications / deep-links work,
+  // but subsequent clicks are driven by local state and not continuously overridden.
+  const [hasInitializedFromUrl, setHasInitializedFromUrl] = useState(false);
+
   useEffect(() => {
+    if (hasInitializedFromUrl) return;
+
     const leadIdParam = searchParams.get("lead");
     if (leadIdParam && leads.length > 0) {
-      // Check if it's a numeric leadId (5-6 digits) or MongoDB _id
       const isNumericId = /^\d{5,6}$/.test(leadIdParam);
       let lead: Lead | undefined;
 
@@ -138,15 +142,11 @@ export default function UserLeadsContent() {
       if (lead) {
         setSelectedLead(lead);
         setIsPanelOpen(true);
-      } else {
-        setIsPanelOpen(false);
-        setSelectedLead(null);
       }
-    } else {
-      setIsPanelOpen(false);
-      setSelectedLead(null);
     }
-  }, [leads, searchParams]);
+
+    setHasInitializedFromUrl(true);
+  }, [hasInitializedFromUrl, leads, searchParams]);
 
   // Lead update handler with React Query mutation
   const handleLeadUpdated = useCallback(
@@ -214,6 +214,50 @@ export default function UserLeadsContent() {
       handleURLSourceChange(urlValue);
     },
     [handleURLSourceChange]
+  );
+
+  // Row click handler: open panel immediately and keep URL in sync
+  const handleRowClick = useCallback(
+    (lead: Lead) => {
+      setSelectedLead(lead);
+      setIsPanelOpen(true);
+      // Update URL to match LeadsTable behavior
+      handleLeadClick(lead);
+    },
+    [handleLeadClick]
+  );
+
+  // Panel close handler: update local state
+  const handlePanelCloseLocal = useCallback(() => {
+    setIsPanelOpen(false);
+    setSelectedLead(null);
+    handlePanelClose();
+  }, [handlePanelClose]);
+
+  // Panel navigation handler: move to prev/next lead and keep URL in sync
+  const handlePanelNavigationLocal = useCallback(
+    (
+      direction: "prev" | "next",
+      currentSelectedLead: Lead,
+      sortedLeads: Lead[]
+    ) => {
+      if (!currentSelectedLead || !sortedLeads.length) return;
+
+      const index = sortedLeads.findIndex(
+        (lead) => lead._id === currentSelectedLead._id
+      );
+      if (index === -1) return;
+
+      const newIndex = direction === "prev" ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= sortedLeads.length) return;
+
+      const newLead = sortedLeads[newIndex];
+      setSelectedLead(newLead);
+      setIsPanelOpen(true);
+      handleNavigation("prev", currentSelectedLead, sortedLeads); // direction doesn't matter for the URL manager, it computes it internally, wait actually the URL manager uses its own logic, let's use the explicit handleNavigation hook. Actually wait, handleNavigation in useLeadsURLManagement takes direction, selectedLead, sortedLeads. Let's just use it directly.
+      handleNavigation(direction, currentSelectedLead, sortedLeads);
+    },
+    [handleNavigation]
   );
 
   // Auth check
@@ -308,11 +352,11 @@ export default function UserLeadsContent() {
                   handleCountryFilterChange={handleCountryFilterChange}
                   handleStatusFilterChange={handleStatusFilterChange}
                   handleSourceFilterChange={handleSourceFilterChange}
-                  handleLeadClick={handleLeadClick}
+                  handleLeadClick={handleRowClick}
                   handleSort={handleSort}
-                  handlePanelClose={handlePanelClose}
+                  handlePanelClose={handlePanelCloseLocal}
                   handleLeadUpdated={handleLeadUpdated}
-                  handleNavigation={handleNavigation}
+                  handleNavigation={handlePanelNavigationLocal}
                 />
               );
             }}
@@ -599,6 +643,7 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
       {/* Lead Details Panel */}
       {isPanelOpen && selectedLead && isDataReady && selectedLead && (
         <LeadDetailsPanel
+          key={selectedLead._id}
           lead={selectedLead}
           isOpen={isPanelOpen}
           onClose={handlePanelClose}
