@@ -10,7 +10,7 @@ import { useColumnOrder } from "@/hooks/useColumnOrder";
 import { useColumnVisibility } from "@/hooks/useColumnVisibility";
 import { useMemo, useCallback } from "react";
 
-type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "lastComment" | "lastCommentDate" | "commentCount";
+type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "statusChangedAt" | "lastComment" | "lastCommentDate" | "commentCount";
 type SortOrder = "asc" | "desc";
 
 interface UserLeadsTableContainerProps {

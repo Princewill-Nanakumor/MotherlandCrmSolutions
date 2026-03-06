@@ -17,6 +17,7 @@ type SortField =
   | "source"
   | "assignedTo"
   | "createdAt"
+  | "statusChangedAt"
   | "lastComment"
   | "lastCommentDate"
   | "commentCount";
@@ -348,6 +349,14 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
           aValue = new Date(a.createdAt || "").getTime();
           bValue = new Date(b.createdAt || "").getTime();
           break;
+        case "statusChangedAt": {
+          const timeA = a.statusChangedAt ? new Date(a.statusChangedAt).getTime() : 0;
+          const timeB = b.statusChangedAt ? new Date(b.statusChangedAt).getTime() : 0;
+          if (timeA === 0 && timeB !== 0) return sortOrder === "asc" ? 1 : -1;
+          if (timeA !== 0 && timeB === 0) return sortOrder === "asc" ? -1 : 1;
+          if (timeA === 0 && timeB === 0) return 0;
+          return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
+        }
         case "leadId": {
           const idA = a.leadId != null ? Number(a.leadId) : 0;
           const idB = b.leadId != null ? Number(b.leadId) : 0;

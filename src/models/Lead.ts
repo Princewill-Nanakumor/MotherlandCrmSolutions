@@ -14,7 +14,8 @@ export interface ILead {
   importId?: mongoose.Types.ObjectId;
   createdBy: mongoose.Types.ObjectId;
   assignedTo?: mongoose.Types.ObjectId | null;
-  adminId: mongoose.Types.ObjectId; // For multi-tenancy
+  adminId: mongoose.Types.ObjectId;
+  statusChangedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   __v: number;
@@ -87,10 +88,14 @@ const leadSchema = new Schema(
       ref: "User",
       required: true,
     },
+    statusChangedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Compound unique index for email + adminId to ensure emails are unique per admin
@@ -156,6 +161,14 @@ export async function generateLeadId(): Promise<number> {
   const lastResortId = Math.floor(Math.random() * (999999 - 10000 + 1)) + 10000;
   return lastResortId;
 }
+
+// Pre-save hook: set statusChangedAt when status changes
+leadSchema.pre("save", function (next) {
+  if (this.isModified("status")) {
+    this.statusChangedAt = new Date();
+  }
+  next();
+});
 
 // Pre-save hook to auto-generate leadId if it doesn't exist
 leadSchema.pre("save", async function (next) {

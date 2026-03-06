@@ -25,6 +25,7 @@ const COLUMN_LABELS: Record<UserLeadsColumnId, string> = {
   source: "Source",
   assignedTo: "Assigned To",
   createdAt: "Created At",
+  statusChangedAt: "Last status change",
   lastComment: "Last Comment",
   lastCommentDate: "Last Comment Date",
   commentCount: "Comments Numbers",

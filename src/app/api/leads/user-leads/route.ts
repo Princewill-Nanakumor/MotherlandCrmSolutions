@@ -62,7 +62,7 @@ export async function GET() {
 
     const leads = await Lead.find(query)
       .select(
-        "leadId firstName lastName email phone country source status createdAt updatedAt"
+        "leadId firstName lastName email phone country source status createdAt updatedAt statusChangedAt"
       )
       .sort({ createdAt: -1 })
       .lean<LeadDocument[]>();
@@ -81,6 +81,9 @@ export async function GET() {
         status: lead.status || "NEW",
         createdAt: new Date(lead.createdAt).toISOString(),
         updatedAt: new Date(lead.updatedAt).toISOString(),
+        statusChangedAt: lead.statusChangedAt
+          ? new Date(lead.statusChangedAt).toISOString()
+          : undefined,
       })
     );
 

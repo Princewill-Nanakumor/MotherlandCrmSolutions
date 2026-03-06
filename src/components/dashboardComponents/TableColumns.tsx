@@ -19,6 +19,7 @@ type SortField =
   | "source"
   | "createdAt"
   | "assignedTo"
+  | "statusChangedAt"
   | "lastComment"
   | "lastCommentDate"
   | "commentCount";
@@ -403,6 +404,39 @@ export const useTableColumns = ({
             {new Date(row.original.createdAt).toLocaleDateString()}
           </div>
         ),
+      },
+      {
+        id: "statusChangedAt",
+        header: () => (
+          <Button
+            variant="ghost"
+            onClick={() => handleSort("statusChangedAt")}
+            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+          >
+            <span className={sortField === "statusChangedAt" ? "font-bold" : "font-medium"}>
+              Last status change
+            </span>
+            <ArrowUpDown
+              className={`h-4 w-4 ${
+                sortField === "statusChangedAt"
+                  ? "text-foreground"
+                  : "text-muted-foreground"
+              }`}
+            />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const lead = row.original;
+          if (!lead.statusChangedAt) {
+            return <div className="text-center font-medium">—</div>;
+          }
+          const date = new Date(lead.statusChangedAt);
+          return (
+            <div className="text-center font-medium">
+              {date.toLocaleDateString()}
+            </div>
+          );
+        },
       },
       {
         id: "lastComment",

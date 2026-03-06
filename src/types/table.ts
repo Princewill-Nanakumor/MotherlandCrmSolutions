@@ -5,5 +5,6 @@ export type SortField =
   | "status"
   | "source"
   | "createdAt"
-  | "assignedTo";
+  | "assignedTo"
+  | "statusChangedAt";
 export type SortOrder = "asc" | "desc";

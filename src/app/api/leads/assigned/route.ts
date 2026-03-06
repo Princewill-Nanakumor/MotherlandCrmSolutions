@@ -217,6 +217,11 @@ export async function GET() {
         assignedTo: assignedToUser,
         createdAt: lead.createdAt,
         updatedAt: lead.updatedAt,
+        statusChangedAt: lead.statusChangedAt
+          ? lead.statusChangedAt instanceof Date
+            ? lead.statusChangedAt.toISOString()
+            : (lead.statusChangedAt as string)
+          : undefined,
       };
     });
 

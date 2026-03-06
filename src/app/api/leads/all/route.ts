@@ -54,6 +54,7 @@ const LEADS_LIST_PROJECTION = {
   assignedTo: 1,
   createdAt: 1,
   updatedAt: 1,
+  statusChangedAt: 1,
   comments: 1,
 } as const;
 
@@ -601,6 +602,11 @@ export async function GET(request: NextRequest) {
             lead.updatedAt instanceof Date
               ? lead.updatedAt.toISOString()
               : (lead.updatedAt as string) || new Date().toISOString(),
+          statusChangedAt: lead.statusChangedAt
+            ? lead.statusChangedAt instanceof Date
+              ? lead.statusChangedAt.toISOString()
+              : (lead.statusChangedAt as string)
+            : undefined,
           comments: (lead.comments as string) || "",
           lastComment: lastCommentContent,
           lastCommentDate: lastCommentDate,

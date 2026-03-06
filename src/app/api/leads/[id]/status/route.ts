@@ -20,6 +20,7 @@ interface LeadDoc {
   comments?: unknown;
   createdAt: Date;
   updatedAt: Date;
+  statusChangedAt?: Date;
 }
 
 interface SessionUser {
@@ -120,9 +121,10 @@ async function runStatusUpdate(
           newStatus
         );
 
+        const now = new Date();
         const updatedLead = (await Lead.findOneAndUpdate(
           query,
-          { status: newStatus, updatedAt: new Date() },
+          { status: newStatus, updatedAt: now, statusChangedAt: now },
           {
             new: true,
             lean: true,
@@ -142,6 +144,7 @@ async function runStatusUpdate(
               comments: 1,
               createdAt: 1,
               updatedAt: 1,
+              statusChangedAt: 1,
             },
           }
         )) as LeadDoc | null;
@@ -192,6 +195,7 @@ async function runStatusUpdate(
           comments: updatedLead.comments ?? null,
           createdAt: updatedLead.createdAt,
           updatedAt: updatedLead.updatedAt,
+          statusChangedAt: (updatedLead as LeadDoc & { statusChangedAt?: Date }).statusChangedAt ?? undefined,
         };
       })) as Record<string, unknown>;
       return responseData;
@@ -241,9 +245,10 @@ async function updateStatusWithoutTransaction(
     newStatus
   );
 
+  const now = new Date();
   const updatedLead = (await Lead.findOneAndUpdate(
     query,
-    { status: newStatus, updatedAt: new Date() },
+    { status: newStatus, updatedAt: now, statusChangedAt: now },
     {
       new: true,
       lean: true,
@@ -262,6 +267,7 @@ async function updateStatusWithoutTransaction(
         comments: 1,
         createdAt: 1,
         updatedAt: 1,
+        statusChangedAt: 1,
       },
     }
   )) as LeadDoc | null;
@@ -327,6 +333,7 @@ async function updateStatusWithoutTransaction(
       comments: updatedLead.comments ?? null,
       createdAt: updatedLead.createdAt,
       updatedAt: updatedLead.updatedAt,
+      statusChangedAt: updatedLead.statusChangedAt ?? undefined,
     },
   };
 }

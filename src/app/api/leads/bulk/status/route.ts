@@ -147,12 +147,14 @@ export async function POST(request: Request) {
       }
 
       // Update lead
+      const now = new Date();
       await db.collection("leads").findOneAndUpdate(
         { _id: lead._id },
         {
           $set: {
             status: newStatus,
-            updatedAt: new Date(),
+            updatedAt: now,
+            statusChangedAt: now,
           },
         }
       );

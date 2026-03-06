@@ -72,7 +72,7 @@ export async function GET(request: Request) {
       const [leads, total] = await Promise.all([
         Lead.find(query)
           .select(
-            "leadId firstName lastName email phone country source status createdAt updatedAt"
+            "leadId firstName lastName email phone country source status createdAt updatedAt statusChangedAt"
           )
           .sort({ createdAt: -1 })
           .skip(skip)
@@ -95,6 +95,9 @@ export async function GET(request: Request) {
           status: lead.status || "NEW",
           createdAt: new Date(lead.createdAt).toISOString(),
           updatedAt: new Date(lead.updatedAt).toISOString(),
+          statusChangedAt: lead.statusChangedAt
+            ? new Date(lead.statusChangedAt).toISOString()
+            : undefined,
         })
       );
 

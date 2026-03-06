@@ -27,6 +27,7 @@ interface LeadFromAPI {
   commentCount?: number;
   assignedAt?: string;
   assignedTo: AssignedToUser | string | null; // Can be object, string, or null
+  statusChangedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -168,6 +169,7 @@ const fetchAssignedLeads = async (): Promise<Lead[]> => {
       commentCount: lead.commentCount,
       assignedTo: normalizeAssignedTo(lead.assignedTo),
       assignedAt: lead.assignedAt,
+      statusChangedAt: lead.statusChangedAt,
       createdAt: lead.createdAt,
       updatedAt: lead.updatedAt,
     })

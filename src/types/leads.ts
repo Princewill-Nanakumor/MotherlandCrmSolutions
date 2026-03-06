@@ -136,6 +136,7 @@ export interface ILead {
   source: string;
   comments: string;
   assignedTo?: mongoose.Types.ObjectId;
+  statusChangedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   __v?: number;
@@ -180,6 +181,7 @@ export interface Lead {
   } | null;
   assignedAt?: string;
   company?: string;
+  statusChangedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

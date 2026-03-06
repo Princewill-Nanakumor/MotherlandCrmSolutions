@@ -16,7 +16,7 @@ const STORAGE_KEYS = {
   FILTER_BY_STATUS: "user_leads_filter_by_status",
 } as const;
 
-type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "lastComment" | "lastCommentDate" | "commentCount";
+type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "statusChangedAt" | "lastComment" | "lastCommentDate" | "commentCount";
 type SortOrder = "asc" | "desc";
 
 export const useUserLeadsPage = (
@@ -327,6 +327,13 @@ export const useUserLeadsPage = (
           aValue = new Date(a.createdAt || "").getTime();
           bValue = new Date(b.createdAt || "").getTime();
           break;
+        case "statusChangedAt": {
+          const timeA = a.statusChangedAt ? new Date(a.statusChangedAt).getTime() : 0;
+          const timeB = b.statusChangedAt ? new Date(b.statusChangedAt).getTime() : 0;
+          aValue = timeA;
+          bValue = timeB;
+          break;
+        }
         case "lastComment":
           aValue = (a.lastComment || "").toLowerCase();
           bValue = (b.lastComment || "").toLowerCase();
@@ -347,8 +354,8 @@ export const useUserLeadsPage = (
           return 0;
       }
 
-      // Special handling for lastCommentDate - leads without dates should go to the end
-      if (uiState.sortField === "lastCommentDate") {
+      // Special handling for lastCommentDate / statusChangedAt - leads without dates go to the end
+      if (uiState.sortField === "lastCommentDate" || uiState.sortField === "statusChangedAt") {
         if (aValue === 0 && bValue !== 0) return uiState.sortOrder === "asc" ? 1 : -1;
         if (aValue !== 0 && bValue === 0) return uiState.sortOrder === "asc" ? -1 : 1;
         if (aValue === 0 && bValue === 0) return 0;

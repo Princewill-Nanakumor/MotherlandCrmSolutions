@@ -12,6 +12,7 @@ type SortField =
   | "source"
   | "createdAt"
   | "assignedTo"
+  | "statusChangedAt"
   | "lastComment"
   | "lastCommentDate"
   | "commentCount";
@@ -121,6 +122,14 @@ export const useTableSorting = ({
               new Date(b.createdAt).getTime()) *
             multiplier
           );
+        case "statusChangedAt": {
+          const timeA = a.statusChangedAt ? new Date(a.statusChangedAt).getTime() : 0;
+          const timeB = b.statusChangedAt ? new Date(b.statusChangedAt).getTime() : 0;
+          if (timeA === 0 && timeB !== 0) return 1 * multiplier;
+          if (timeA !== 0 && timeB === 0) return -1 * multiplier;
+          if (timeA === 0 && timeB === 0) return 0;
+          return (timeA - timeB) * multiplier;
+        }
         case "lastComment": {
           const commentA = (a.lastComment || "").toLowerCase();
           const commentB = (b.lastComment || "").toLowerCase();

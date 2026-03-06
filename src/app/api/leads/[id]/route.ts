@@ -134,6 +134,11 @@ export async function GET(
         lead.updatedAt instanceof Date
           ? lead.updatedAt.toISOString()
           : lead.updatedAt,
+      statusChangedAt: lead.statusChangedAt
+        ? lead.statusChangedAt instanceof Date
+          ? lead.statusChangedAt.toISOString()
+          : String(lead.statusChangedAt)
+        : undefined,
       comments: lead.comments || "",
     };
 
@@ -221,8 +226,10 @@ export async function PUT(
       updatePayload.phone = String(updateData.phone || "").trim();
     if (updateData.source !== undefined)
       updatePayload.source = String(updateData.source || "").trim();
-    if (updateData.status !== undefined)
+    if (updateData.status !== undefined) {
       updatePayload.status = updateData.status;
+      updatePayload.statusChangedAt = new Date();
+    }
     if (updateData.country !== undefined)
       updatePayload.country = String(updateData.country || "").trim();
     if (updateData.comments !== undefined)
@@ -318,6 +325,11 @@ export async function PUT(
         updatedLead.updatedAt instanceof Date
           ? updatedLead.updatedAt.toISOString()
           : updatedLead.updatedAt,
+      statusChangedAt: updatedLead.statusChangedAt
+        ? (updatedLead.statusChangedAt instanceof Date
+            ? updatedLead.statusChangedAt.toISOString()
+            : String(updatedLead.statusChangedAt))
+        : undefined,
       comments: updatedLead.comments || "",
     };
 

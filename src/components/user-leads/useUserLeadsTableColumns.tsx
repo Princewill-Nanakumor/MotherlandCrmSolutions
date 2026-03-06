@@ -14,7 +14,7 @@ import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 
-type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "lastComment" | "lastCommentDate" | "commentCount";
+type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "statusChangedAt" | "lastComment" | "lastCommentDate" | "commentCount";
 
 interface UseUserLeadsTableColumnsProps {
   sortField: SortField;
@@ -409,6 +409,36 @@ export const useUserLeadsTableColumns = ({
           return (
             <div className="text-center text-sm font-medium !text-gray-900 dark:!text-white">
               {formatDateDMY(createdAt)}
+            </div>
+          );
+        },
+        enableSorting: true,
+      },
+      {
+        id: "statusChangedAt",
+        header: () => (
+          <Button
+            variant="ghost"
+            onClick={() => handleSort("statusChangedAt")}
+            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+          >
+            <span className={`${sortField === "statusChangedAt" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
+              Last status change
+            </span>
+            <ArrowUpDown
+              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
+                sortField === "statusChangedAt"
+                  ? "!text-gray-900 dark:!text-white"
+                  : "!text-gray-600 dark:!text-gray-400"
+              }`}
+            />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const statusChangedAt = row.original.statusChangedAt;
+          return (
+            <div className="text-center text-sm font-medium !text-gray-900 dark:!text-white">
+              {formatDateDMY(statusChangedAt)}
             </div>
           );
         },
