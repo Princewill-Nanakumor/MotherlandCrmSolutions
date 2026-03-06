@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { SessionProvider, useSession } from "next-auth/react";
 import Navbar from "@/components/homepageComponents/Navabar";
 import SignInForm from "@/components/authComponents/SignInForm";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MessageCircle, Shield } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
@@ -131,18 +131,36 @@ function LoginFormContent() {
 function AuthStateHandler() {
   const { status, data: session } = useSession();
   const router = useRouter();
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
 
   const isExpiredLanding =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get("expired") === "true";
 
+  // If session stays "loading" (e.g. /api/auth/session slow or fails in production), show form after 2.5s so user can sign in
+  useEffect(() => {
+    if (status !== "loading") return;
+    const t = setTimeout(() => setLoadingTimedOut(true), 2500);
+    return () => clearTimeout(t);
+  }, [status]);
+
   useEffect(() => {
     if (status !== "authenticated" || !session) return;
-    router.replace("/dashboard");
+    const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const callbackUrl = params?.get("callbackUrl");
+    const target = callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard";
+    router.replace(target);
+    // Fallback: if client nav doesn't complete (e.g. production), full navigate after 2s
+    const fallback = setTimeout(() => {
+      if (typeof window !== "undefined" && window.location.pathname === "/login") {
+        window.location.href = target;
+      }
+    }, 2000);
+    return () => clearTimeout(fallback);
   }, [status, session, router]);
 
-  // When landing with ?expired=true, we know the user was just signed out - show the form, don't block on loading
-  if (status === "loading" && !isExpiredLanding) return <LoadingScreen />;
+  // When landing with ?expired=true, show form; if session stuck loading, show form after timeout
+  if (status === "loading" && !isExpiredLanding && !loadingTimedOut) return <LoadingScreen />;
 
   if (status === "authenticated") {
     return <RedirectingScreen />;
