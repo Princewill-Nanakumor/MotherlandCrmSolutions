@@ -28,7 +28,7 @@ const COLUMN_LABELS: Record<UserLeadsColumnId, string> = {
   statusChangedAt: "Last status change",
   lastComment: "Last Comment",
   lastCommentDate: "Last Comment Date",
-  commentCount: "Comments Numbers",
+  commentCount: "Timeline",
 };
 
 interface UserLeadsColumnVisibilityToggleProps {

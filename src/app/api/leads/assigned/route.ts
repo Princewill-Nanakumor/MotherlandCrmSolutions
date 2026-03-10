@@ -81,12 +81,13 @@ export async function GET() {
       (lead: { _id: mongoose.Types.ObjectId }) => lead._id
     );
 
-    // Fetch last comment and comment count for each lead using aggregation
+    // Fetch last comment and timeline count (comments + activities) for each lead using aggregation
     const lastCommentsMap = new Map<
       string,
       { content: string; createdAt: Date }
     >();
     const commentCountsMap = new Map<string, number>();
+    const activityCountsMap = new Map<string, number>();
 
     if (adminIdForComments && leadIds.length > 0) {
       try {
@@ -101,8 +102,14 @@ export async function GET() {
           count: number;
         }
 
-        // Get last comment for each lead
-        const lastComments = await mongoose.connection.db
+        interface ActivityCountResult {
+          _id: mongoose.Types.ObjectId;
+          count: number;
+        }
+
+        // Get last comment, comment count and activity count
+        const [lastComments, commentCounts, activityCounts] = await Promise.all([
+          mongoose.connection.db
           .collection("comments")
           .aggregate<LastCommentResult>([
             {
@@ -125,7 +132,49 @@ export async function GET() {
               },
             },
           ])
-          .toArray();
+          .toArray(),
+          mongoose.connection.db
+            .collection("comments")
+            .aggregate<CommentCountResult>([
+              {
+                $match: {
+                  leadId: { $in: leadIds },
+                  $or: [
+                    { adminId: adminIdForComments },
+                    { adminId: { $exists: false } },
+                  ],
+                },
+              },
+              {
+                $group: {
+                  _id: "$leadId",
+                  count: { $sum: 1 },
+                },
+              },
+            ])
+            .toArray(),
+          mongoose.connection.db
+            .collection("activities")
+            .aggregate<ActivityCountResult>([
+              {
+                $match: {
+                  leadId: { $in: leadIds },
+                  type: { $ne: "COMMENT" },
+                  $or: [
+                    { adminId: adminIdForComments },
+                    { adminId: { $exists: false } },
+                  ],
+                },
+              },
+              {
+                $group: {
+                  _id: "$leadId",
+                  count: { $sum: 1 },
+                },
+              },
+            ])
+            .toArray(),
+        ]);
 
         lastComments.forEach((comment) => {
           lastCommentsMap.set(comment._id.toString(), {
@@ -134,30 +183,12 @@ export async function GET() {
           });
         });
 
-        // Get comment count for each lead
-        const commentCounts = await mongoose.connection.db
-          .collection("comments")
-          .aggregate<CommentCountResult>([
-            {
-              $match: {
-                leadId: { $in: leadIds },
-                $or: [
-                  { adminId: adminIdForComments },
-                  { adminId: { $exists: false } },
-                ],
-              },
-            },
-            {
-              $group: {
-                _id: "$leadId",
-                count: { $sum: 1 },
-              },
-            },
-          ])
-          .toArray();
-
         commentCounts.forEach((countResult) => {
           commentCountsMap.set(countResult._id.toString(), countResult.count);
+        });
+
+        activityCounts.forEach((countResult) => {
+          activityCountsMap.set(countResult._id.toString(), countResult.count);
         });
       } catch (error) {
         console.error("Error fetching comments:", error);
@@ -187,7 +218,7 @@ export async function GET() {
         }
       }
 
-      // Get last comment and comment count for this lead
+      // Get last comment and timeline count (comments + activities) for this lead
       const leadIdString = lead._id.toString();
       const lastComment = lastCommentsMap.get(leadIdString);
       const lastCommentContent = lastComment?.content || null;
@@ -197,6 +228,8 @@ export async function GET() {
           : (lastComment.createdAt as string)
         : null;
       const commentCount = commentCountsMap.get(leadIdString) || 0;
+      const activityCount = activityCountsMap.get(leadIdString) || 0;
+      const timelineCount = commentCount + activityCount;
 
       return {
         _id: leadIdString,
@@ -212,7 +245,8 @@ export async function GET() {
         comments: lead.comments || "",
         lastComment: lastCommentContent,
         lastCommentDate: lastCommentDate,
-        commentCount: commentCount,
+        // commentCount now represents full timeline length: comments + activities
+        commentCount: timelineCount,
         assignedAt: lead.assignedAt || lead.updatedAt,
         assignedTo: assignedToUser,
         createdAt: lead.createdAt,

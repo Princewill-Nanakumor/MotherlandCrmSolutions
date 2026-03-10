@@ -413,7 +413,11 @@ export const useTableColumns = ({
             onClick={() => handleSort("statusChangedAt")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "statusChangedAt" ? "font-bold" : "font-medium"}>
+            <span
+              className={
+                sortField === "statusChangedAt" ? "font-bold" : "font-medium"
+              }
+            >
               Last status change
             </span>
             <ArrowUpDown
@@ -446,7 +450,11 @@ export const useTableColumns = ({
             onClick={() => handleSort("lastComment")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "lastComment" ? "font-bold" : "font-medium"}>
+            <span
+              className={
+                sortField === "lastComment" ? "font-bold" : "font-medium"
+              }
+            >
               Last Comment
             </span>
             <ArrowUpDown
@@ -495,7 +503,11 @@ export const useTableColumns = ({
             onClick={() => handleSort("lastCommentDate")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "lastCommentDate" ? "font-bold" : "font-medium"}>
+            <span
+              className={
+                sortField === "lastCommentDate" ? "font-bold" : "font-medium"
+              }
+            >
               Last Comment Date
             </span>
             <ArrowUpDown
@@ -535,8 +547,12 @@ export const useTableColumns = ({
             onClick={() => handleSort("commentCount")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "commentCount" ? "font-bold" : "font-medium"}>
-              Comments Numbers
+            <span
+              className={
+                sortField === "commentCount" ? "font-bold" : "font-medium"
+              }
+            >
+              Timeline
             </span>
             <ArrowUpDown
               className={`h-4 w-4 ${

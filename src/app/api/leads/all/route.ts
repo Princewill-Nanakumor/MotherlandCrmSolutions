@@ -451,12 +451,13 @@ export async function GET(request: NextRequest) {
         : new ObjectId(safeObjectIdToString(lead._id) || "")
     );
 
-    // Fetch last comment and comment count for each lead using aggregation
+    // Fetch last comment and timeline count (comments + activities) for each lead using aggregation
     const lastCommentsMap = new Map<
       string,
       { content: string; createdAt: Date }
     >();
     const commentCountsMap = new Map<string, number>();
+    const activityCountsMap = new Map<string, number>();
 
     if (adminIdForComments && leadIds.length > 0) {
       console.time(`${__timerPrefix}:commentsAgg`);
@@ -472,8 +473,13 @@ export async function GET(request: NextRequest) {
           count: number;
         }
 
-        // Get last comment and comment count in parallel
-        const [lastComments, commentCounts] = await Promise.all([
+        interface ActivityCountResult {
+          _id: ObjectId;
+          count: number;
+        }
+
+        // Get last comment, comment count and activity count in parallel
+        const [lastComments, commentCounts, activityCounts] = await Promise.all([
           db
             .collection("comments")
             .aggregate<LastCommentResult>([
@@ -516,6 +522,27 @@ export async function GET(request: NextRequest) {
               },
             ])
             .toArray(),
+          db
+            .collection("activities")
+            .aggregate<ActivityCountResult>([
+              {
+                $match: {
+                  leadId: { $in: leadIds },
+                  type: { $ne: "COMMENT" },
+                  $or: [
+                    { adminId: adminIdForComments },
+                    { adminId: { $exists: false } },
+                  ],
+                },
+              },
+              {
+                $group: {
+                  _id: "$leadId",
+                  count: { $sum: 1 },
+                },
+              },
+            ])
+            .toArray(),
         ]);
 
         lastComments.forEach((comment) => {
@@ -526,6 +553,9 @@ export async function GET(request: NextRequest) {
         });
         commentCounts.forEach((countResult) => {
           commentCountsMap.set(countResult._id.toString(), countResult.count);
+        });
+        activityCounts.forEach((countResult) => {
+          activityCountsMap.set(countResult._id.toString(), countResult.count);
         });
         console.timeEnd(`${__timerPrefix}:commentsAgg`);
       } catch (error) {
@@ -564,7 +594,7 @@ export async function GET(request: NextRequest) {
           }
         }
 
-        // Get last comment and comment count for this lead
+        // Get last comment and timeline count (comments + activities) for this lead
         const leadIdString = safeObjectIdToString(lead._id) || "";
         const lastComment = lastCommentsMap.get(leadIdString);
         const lastCommentContent = lastComment?.content || null;
@@ -574,6 +604,8 @@ export async function GET(request: NextRequest) {
             : (lastComment.createdAt as string)
           : null;
         const commentCount = commentCountsMap.get(leadIdString) || 0;
+        const activityCount = activityCountsMap.get(leadIdString) || 0;
+        const timelineCount = commentCount + activityCount;
 
         const transformedLead = {
           _id: leadIdString,
@@ -610,7 +642,8 @@ export async function GET(request: NextRequest) {
           comments: (lead.comments as string) || "",
           lastComment: lastCommentContent,
           lastCommentDate: lastCommentDate,
-          commentCount: commentCount,
+          // commentCount now represents full timeline length: comments + activities
+          commentCount: timelineCount,
         };
 
         return transformedLead;

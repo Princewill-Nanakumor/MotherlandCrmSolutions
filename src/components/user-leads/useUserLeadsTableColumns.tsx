@@ -526,8 +526,8 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("commentCount")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={`${sortField === "commentCount" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
-              Comments Numbers
+          <span className={`${sortField === "commentCount" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
+              Timeline
             </span>
             <ArrowUpDown
               className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${

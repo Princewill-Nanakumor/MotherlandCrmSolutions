@@ -35,7 +35,7 @@ const getColumnLabels = (tableId: "adminLeadsTable" | "userLeadsTable"): Record<
     createdAt: "Created At",
     lastComment: "Last Comment",
     lastCommentDate: "Last Comment Date",
-    commentCount: "Comments Numbers",
+    commentCount: "Timeline",
   };
 
   // Remove "select" for user leads table
