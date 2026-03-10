@@ -179,7 +179,11 @@ export function TableContent({
       <div className="min-w-0 w-full">
         <Badge
           variant="outline"
-          style={getStatusStyle(leadStatus)}
+          style={{
+            ...getStatusStyle(leadStatus),
+            // expose status color as CSS variable for dark mode text
+            "--status-color": statusColor,
+          } as React.CSSProperties}
           className="flex items-center gap-1.5 dark:border-gray-700 w-full max-w-[120px] justify-center"
           title={statusName} // Tooltip for full text
         >
@@ -187,7 +191,9 @@ export function TableContent({
             className="w-1.5 h-1.5 rounded-full shrink-0"
             style={{ backgroundColor: statusColor }}
           />
-          <span className="text-xs truncate">{statusName}</span>
+          <span className="text-xs truncate !text-black dark:!text-[var(--status-color)]">
+            {statusName}
+          </span>
         </Badge>
       </div>
     );

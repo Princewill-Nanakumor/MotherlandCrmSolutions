@@ -29,7 +29,7 @@ export const useUserLeadsTableColumns = ({
   const { statuses, isLoading: statusesLoading } = useStatuses();
   const { canViewPhoneNumbers, canViewEmails } = useCurrentUserPermission();
 
-  const currentParams = searchParams.toString();
+  const currentParams = searchParams?.toString() || "";
 
   // Helper to capitalize names
   const capitalizeName = (name: string) => {
@@ -296,9 +296,10 @@ export const useUserLeadsTableColumns = ({
 
           const statusStyle = {
             backgroundColor: `${currentStatus.color}15`,
-            color: currentStatus.color,
             borderColor: `${currentStatus.color}30`,
-          };
+            // expose status color for dark mode text
+            "--status-color": currentStatus.color,
+          } as React.CSSProperties;
 
           return (
             <div className="flex items-center justify-center">
@@ -307,7 +308,9 @@ export const useUserLeadsTableColumns = ({
                   className="w-1.5 h-1.5 rounded-full"
                   style={{ backgroundColor: currentStatus.color }}
                 />
-                {currentStatus.name}
+                <span className="text-xs font-medium !text-black dark:!text-[var(--status-color)]">
+                  {currentStatus.name}
+                </span>
               </Badge>
             </div>
           );
