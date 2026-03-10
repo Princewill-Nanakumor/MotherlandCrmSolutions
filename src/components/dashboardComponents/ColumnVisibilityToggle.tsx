@@ -1,6 +1,7 @@
 // src/components/dashboardComponents/ColumnVisibilityToggle.tsx
 "use client";
 
+import { useState } from "react";
 import { Table } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +54,7 @@ export function ColumnVisibilityToggle({
   tableId,
 }: ColumnVisibilityToggleProps) {
   const columnLabels = getColumnLabels(tableId);
+  const [showAllOptions, setShowAllOptions] = useState(false);
 
   // Get visible columns count
   const visibleColumnsCount = table.getAllColumns().filter((column) => {
@@ -100,6 +102,7 @@ export function ColumnVisibilityToggle({
             if (b.id === "leadId") return 1;
             return a.id.localeCompare(b.id);
           })
+          .slice(0, showAllOptions ? undefined : 5)
           .map((column) => {
             const label = columnLabels[column.id] || column.id;
             const isVisible = column.getIsVisible();
@@ -141,12 +144,17 @@ export function ColumnVisibilityToggle({
             size="sm"
             className="w-full justify-start h-8 text-xs !text-gray-900 dark:!text-white"
             onClick={() => {
-              // Clear all visibility state - empty object means all columns are visible
-              // (undefined/false means hidden, true/not present means visible)
-              table.setColumnVisibility({});
+              if (!showAllOptions) {
+                setShowAllOptions(true);
+                // When expanding, optionally ensure all columns are visible
+                table.setColumnVisibility({});
+              } else {
+                // When collapsing, just hide the extra options in the list
+                setShowAllOptions(false);
+              }
             }}
           >
-            Show all
+            {showAllOptions ? "Show fewer columns" : "Show all columns"}
           </Button>
         </div>
       </DropdownMenuContent>

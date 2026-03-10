@@ -1,6 +1,7 @@
 // src/components/user-leads/UserLeadsColumnVisibilityToggle.tsx
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -39,6 +40,7 @@ export function UserLeadsColumnVisibilityToggle({
   columnOrder,
 }: UserLeadsColumnVisibilityToggleProps) {
   const { isColumnVisible, toggleColumnVisibility, showAllColumns, columnVisibility } = useUserLeadsColumnVisibility();
+  const [showAllOptions, setShowAllOptions] = useState(false);
 
   // Count visible columns (excluding actions)
   const visibleColumnsCount = columnOrder.filter((col) => col !== "actions" && isColumnVisible(col)).length;
@@ -71,7 +73,10 @@ export function UserLeadsColumnVisibilityToggle({
       >
         <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {DEFAULT_USER_LEADS_COLUMN_ORDER.map((columnId) => {
+        {DEFAULT_USER_LEADS_COLUMN_ORDER.slice(
+          0,
+          showAllOptions ? undefined : 5
+        ).map((columnId) => {
           // Don't show actions in the toggle menu (always visible)
           if (columnId === "actions") return null;
 
@@ -105,9 +110,18 @@ export function UserLeadsColumnVisibilityToggle({
             variant="ghost"
             size="sm"
             className="w-full justify-start h-8 text-xs"
-            onClick={showAllColumns}
+            onClick={() => {
+              if (!showAllOptions) {
+                setShowAllOptions(true);
+                // When expanding, also make all columns visible
+                showAllColumns();
+              } else {
+                // When collapsing, just hide the extra options in the list
+                setShowAllOptions(false);
+              }
+            }}
           >
-            Show all
+            {showAllOptions ? "Show fewer columns" : "Show all columns"}
           </Button>
         </div>
       </DropdownMenuContent>
