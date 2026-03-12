@@ -20,7 +20,7 @@ export const useLeadsURLManagement = () => {
     if (typeof window !== "undefined") {
       return new URLSearchParams(window.location.search);
     }
-    return new URLSearchParams(searchParams);
+    return new URLSearchParams(searchParams ?? undefined);
   };
 
   /**

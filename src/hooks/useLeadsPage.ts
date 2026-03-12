@@ -34,8 +34,8 @@ export const useLeadsPage = (
   const router = useRouter();
   const isOnline = useNetworkStatus();
   const { toast } = useToast();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
+  const searchParams = useSearchParams()!;
+  const pathname = usePathname() || "";
   const queryClient = useQueryClient();
 
   // Initialize state
@@ -1005,7 +1005,9 @@ export const useLeadsPage = (
       pendingPageFromPaginationRef.current = null;
 
       // Sync search query to URL for persistence
-      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      const params = new URLSearchParams(
+        Array.from(searchParams.entries()),
+      );
       const currentSearch = params.get("search") || "";
       if (searchQuery !== currentSearch) {
         if (searchQuery) {
@@ -1361,7 +1363,9 @@ export const useLeadsPage = (
       );
     }
 
-    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    const params = new URLSearchParams(
+      searchParams ? Array.from(searchParams.entries()) : [],
+    );
     params.set("page", "1");
     if (countries.length === 0) params.delete("country");
     else params.set("country", JSON.stringify(countries));
@@ -1454,7 +1458,9 @@ export const useLeadsPage = (
         window.dispatchEvent(new CustomEvent("countryFilterModeChanged"));
       }
 
-      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      const params = new URLSearchParams(
+        searchParams ? Array.from(searchParams.entries()) : [],
+      );
       params.set("page", "1");
       params.set("countryMode", mode);
       const query = params.toString();
@@ -1479,7 +1485,9 @@ export const useLeadsPage = (
         window.dispatchEvent(new CustomEvent("statusFilterModeChanged"));
       }
 
-      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      const params = new URLSearchParams(
+        searchParams ? Array.from(searchParams.entries()) : [],
+      );
       params.set("page", "1");
       params.set("statusMode", mode);
       const query = params.toString();

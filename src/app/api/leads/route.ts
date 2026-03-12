@@ -26,6 +26,7 @@ interface LeadDocument extends MongoDocument {
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
+  statusChangedAt?: Date | string | null;
   __v: number;
 }
 

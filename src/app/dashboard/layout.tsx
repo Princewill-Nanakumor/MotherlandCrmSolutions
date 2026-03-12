@@ -87,7 +87,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     if (!showSearch) return;
     if (lastInitPathnameRef.current === pathname) return;
     lastInitPathnameRef.current = pathname;
-    const urlSearch = searchParams.get("search") ?? "";
+    const urlSearch = searchParams?.get("search") ?? "";
     setSearchQuery(urlSearch);
   }, [pathname, showSearch, searchParams, setSearchQuery]);
 
@@ -97,7 +97,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     if (!showSearch) return;
     if (prevSearchQueryRef.current === searchQuery) return;
     prevSearchQueryRef.current = searchQuery;
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams?.toString());
     if (searchQuery.trim()) {
       params.set("search", searchQuery.trim());
     } else {

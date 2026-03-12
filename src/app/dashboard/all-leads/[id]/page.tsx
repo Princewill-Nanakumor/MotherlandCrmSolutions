@@ -180,7 +180,7 @@ const LeadDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
   // Handle back navigation - preserve filters
   const handleBack = useCallback(() => {
-    const params = searchParams.toString();
+    const params = searchParams ? searchParams.toString() : "";
     const backUrl = params
       ? `/dashboard/all-leads?${params}`
       : "/dashboard/all-leads";

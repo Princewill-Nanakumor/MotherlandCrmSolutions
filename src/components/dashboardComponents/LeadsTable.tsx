@@ -89,7 +89,7 @@ export default function LeadsTable({
   filterBySource = "all",
 }: LeadsTableProps) {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
   const isServerPagination = typeof serverTotalRows === "number";
   // Normalize filters to arrays for consistent handling
   const normalizeFilter = (filter: string | string[] | undefined): string[] => {
@@ -116,7 +116,7 @@ export default function LeadsTable({
   const isInitializedRef = useRef(false);
 
   // URL and pagination state (LOCAL ONLY - no store). When server-side, use serverPage prop so filter change shows page 1 immediately.
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const [pageIndex, setPageIndex] = useState(0);
   const [localPageSize, setLocalPageSize] = useState(15);
   const pageSize = isServerPagination ? (serverPageSize ?? 15) : localPageSize;
@@ -165,7 +165,7 @@ export default function LeadsTable({
   useEffect(() => {
     if (isInitializedRef.current) return;
 
-    const pageParam = searchParams.get("page");
+    const pageParam = searchParams?.get("page");
     if (pageParam && !isNaN(Number(pageParam))) {
       const newPageIndex = Number(pageParam) - 1;
       setPageIndex(newPageIndex);
@@ -178,7 +178,7 @@ export default function LeadsTable({
   // Only sync from URL when searchParams change, NOT when leads.length changes
   // This prevents resetting pagination when filtered results change
   useEffect(() => {
-    const currentPage = searchParams.get("page");
+    const currentPage = searchParams?.get("page");
 
     if (currentPage && !isNaN(Number(currentPage))) {
       const targetPage = Number(currentPage) - 1;
@@ -216,7 +216,9 @@ export default function LeadsTable({
       if (isServerPagination && onServerPageChange) {
         onServerPageChange(pageOneBased);
       } else {
-        const params = new URLSearchParams(Array.from(searchParams.entries()));
+        const params = new URLSearchParams(
+          searchParams ? Array.from(searchParams.entries()) : [],
+        );
         params.set("page", String(pageOneBased));
         const query = params.toString();
         router.replace(query ? `${pathname}?${query}` : pathname, {

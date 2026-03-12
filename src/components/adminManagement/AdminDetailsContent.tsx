@@ -19,11 +19,11 @@ import { useAdminDetails } from "@/hooks/useAdminData";
 export default function AdminDetailsContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const params = useParams();
-  const searchParams = useSearchParams();
+  const params = useParams()!;
+  const searchParams = useSearchParams()!;
   const adminId = params.Id as string;
 
-  const activeTab = searchParams.get("tab") || "agents";
+  const activeTab = searchParams?.get("tab") || "agents";
 
   // Use React Query hook for admin details
   const { data, isLoading, isError, error, refetch, isFetching } =
@@ -81,7 +81,7 @@ export default function AdminDetailsContent() {
   }, [status, session, router]);
 
   const handleTabChange = (value: string) => {
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams(searchParams ?? undefined);
     params.set("tab", value);
     router.push(`?${params.toString()}`, { scroll: false });
   };

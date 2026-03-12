@@ -9,7 +9,7 @@ interface URLStateManagerProps {
 }
 
 export function URLStateManager({ children }: URLStateManagerProps) {
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
 
   const [filterByCountry, setFilterByCountry] = useState<string>(() => {
     return searchParams.get("country") || "all";

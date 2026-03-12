@@ -28,7 +28,7 @@ export const useUserLeadsPage = (
   const router = useRouter();
   const isOnline = useNetworkStatus();
   const { toast } = useToast();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const queryClient = useQueryClient();
 
   // Initialize state

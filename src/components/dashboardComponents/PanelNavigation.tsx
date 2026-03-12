@@ -24,7 +24,7 @@ export const usePanelNavigation = ({
   // Memoized URL update function
   const updateUrl = useCallback(
     (lead: Lead | null) => {
-      const params = new URLSearchParams(searchParams);
+      const params = new URLSearchParams(searchParams ?? undefined);
 
       if (lead) {
         // Use leadId if available, otherwise fall back to _id

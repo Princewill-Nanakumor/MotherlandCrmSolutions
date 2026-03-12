@@ -32,6 +32,7 @@ type SortField =
   | "source"
   | "assignedTo"
   | "createdAt"
+  | "statusChangedAt"
   | "lastComment"
   | "lastCommentDate"
   | "commentCount";
@@ -40,7 +41,7 @@ type SortOrder = "asc" | "desc";
 export default function UserLeadsContent() {
   const { status } = useSession();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const { searchQuery } = useSearchContext();
   const toggleContext = useToggleContext();
 
@@ -397,9 +398,9 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
   handleNavigation,
 }) => {
   // URL & router for pagination persistence (like all-leads)
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
 
   // Initialize from URL with fallback (pageSize default 15, page default 1)
   const initialPageFromUrl = Math.max(

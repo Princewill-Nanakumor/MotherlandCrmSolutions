@@ -31,7 +31,7 @@ interface SearchProviderProps {
  * while they type (URL updates async after setSearchQuery).
  */
 function SearchURLSync() {
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const { setSearchQuery } = useSearchContext();
 
   useEffect(() => {

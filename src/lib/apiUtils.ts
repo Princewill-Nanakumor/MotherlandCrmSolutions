@@ -74,7 +74,7 @@ export const apiCallWithSessionRefresh = async (
             throw retryError;
           }
         }
-      } catch (refreshError) {
+      } catch {
         clearTimeout(refreshTimeoutId);
       }
 

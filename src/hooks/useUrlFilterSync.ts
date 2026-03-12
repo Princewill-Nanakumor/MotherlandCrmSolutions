@@ -20,7 +20,7 @@ export const useUrlFilterSync = (
   setFilterByUser: (value: string) => void
 ) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Helper function to convert user name to ID
