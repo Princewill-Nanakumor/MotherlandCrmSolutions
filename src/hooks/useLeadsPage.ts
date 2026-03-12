@@ -274,6 +274,16 @@ export const useLeadsPage = (
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.refetchQueries({ queryKey: ["leads"] });
 
+      // ⚡ Also refresh dashboard stats (Total / Assigned / Unassigned Leads)
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
+      });
+      queryClient.refetchQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
+      });
+
       // Also refresh assigned-leads views (user leads page, badges, etc.)
       queryClient.invalidateQueries({
         queryKey: assignedLeadsKeys.all,
@@ -388,6 +398,16 @@ export const useLeadsPage = (
       // ⚡ Non-blocking refetch - don't await to keep UI responsive
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.refetchQueries({ queryKey: ["leads"] });
+
+      // ⚡ Also refresh dashboard stats (Total / Assigned / Unassigned Leads)
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
+      });
+      queryClient.refetchQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
+      });
 
       // Also refresh assigned-leads views (user leads page, badges, etc.)
       queryClient.invalidateQueries({

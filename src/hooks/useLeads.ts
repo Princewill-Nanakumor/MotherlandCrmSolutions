@@ -477,6 +477,15 @@ export const useLeads = () => {
           query.queryKey[0] === "leads" &&
           query.queryKey.length <= 3, // Refetch main leads queries (not deeply nested ones)
       });
+      // Also refresh dashboard stats (Total / Assigned / Unassigned Leads)
+      await queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
+      });
+      await queryClient.refetchQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
+      });
       // Also invalidate assigned leads queries for agents
       await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       await queryClient.refetchQueries({ queryKey: ["assignedLeads"] });
@@ -610,6 +619,15 @@ export const useLeads = () => {
           Array.isArray(query.queryKey) &&
           query.queryKey[0] === "leads" &&
           query.queryKey.length <= 3, // Refetch main leads queries (not deeply nested ones)
+      });
+      // Also refresh dashboard stats (Total / Assigned / Unassigned Leads)
+      await queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
+      });
+      await queryClient.refetchQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
       });
       // Also invalidate assigned leads queries for agents
       await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });

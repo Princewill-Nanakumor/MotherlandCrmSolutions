@@ -59,11 +59,9 @@ export async function GET() {
               ],
             });
 
-      // Unassigned = leads with no assignee
-      const unassigned = await db.collection("leads").countDocuments({
-        ...adminFilter,
-        $or: [{ assignedTo: null }, { assignedTo: { $exists: false } }],
-      });
+      // Unassigned (for admin): all other leads under this admin,
+      // including leads assigned to the admin account and truly unassigned leads.
+      const unassigned = total - assigned;
 
       return NextResponse.json({ total, assigned, unassigned, myLeads: 0 });
     }
