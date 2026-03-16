@@ -78,9 +78,13 @@ export const apiCallWithSessionRefresh = async (
         clearTimeout(refreshTimeoutId);
       }
 
-      // Session refresh failed - redirect to login
+      // Session refresh failed - redirect to login and remember current page if possible
       if (typeof window !== "undefined") {
-        window.location.href = "/login?expired=true";
+        const { pathname, search } = window.location;
+        const callbackPath = pathname === "/login" ? "/dashboard" : `${pathname}${search}`;
+        window.location.href = `/login?expired=true&callbackUrl=${encodeURIComponent(
+          callbackPath,
+        )}`;
       }
       throw new Error("Session expired. Please log in again.");
     }

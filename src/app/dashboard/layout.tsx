@@ -40,7 +40,17 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       if (now >= expiryDate) {
         redirectingDueToExpiryRef.current = true;
         localStorage.setItem("sessionExpired", "true");
-        signOut({ redirect: true, callbackUrl: "/login?expired=true" });
+        const search = searchParams?.toString();
+        const callbackPath =
+          pathname && pathname !== "/login"
+            ? `${pathname}${search ? `?${search}` : ""}`
+            : "/dashboard";
+        signOut({
+          redirect: true,
+          callbackUrl: `/login?expired=true&callbackUrl=${encodeURIComponent(
+            callbackPath,
+          )}`,
+        });
       }
     };
 
@@ -214,9 +224,19 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     if (status === "unauthenticated") {
       redirectingDueToExpiryRef.current = true;
       localStorage.setItem("sessionExpired", "true");
-      signOut({ redirect: true, callbackUrl: "/login?expired=true" });
+      const search = searchParams?.toString();
+      const callbackPath =
+        pathname && pathname !== "/login"
+          ? `${pathname}${search ? `?${search}` : ""}`
+          : "/dashboard";
+      signOut({
+        redirect: true,
+        callbackUrl: `/login?expired=true&callbackUrl=${encodeURIComponent(
+          callbackPath,
+        )}`,
+      });
     }
-  }, [status]);
+  }, [status, pathname, searchParams]);
 
   // Check session on pathname change to catch expired sessions immediately
   // Only redirect on status "unauthenticated" - avoid !session to prevent false redirects
@@ -227,9 +247,19 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     if (status === "unauthenticated") {
       redirectingDueToExpiryRef.current = true;
       localStorage.setItem("sessionExpired", "true");
-      signOut({ redirect: true, callbackUrl: "/login?expired=true" });
+      const search = searchParams?.toString();
+      const callbackPath =
+        pathname && pathname !== "/login"
+          ? `${pathname}${search ? `?${search}` : ""}`
+          : "/dashboard";
+      signOut({
+        redirect: true,
+        callbackUrl: `/login?expired=true&callbackUrl=${encodeURIComponent(
+          callbackPath,
+        )}`,
+      });
     }
-  }, [pathname, status]);
+  }, [pathname, status, searchParams]);
 
   if (status === "loading") {
     return (

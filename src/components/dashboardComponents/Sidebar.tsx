@@ -80,8 +80,16 @@ export default function Sidebar() {
   // Check session on pathname change and redirect if unauthenticated
   useEffect(() => {
     if (status === "unauthenticated" || (!session && status !== "loading")) {
-      // Redirect with expired parameter if we had a session before (it expired)
-      router.push("/login?expired=true");
+      // Redirect with expired parameter and remember where the user was
+      const search =
+        typeof window !== "undefined" ? window.location.search : "";
+      const callbackPath =
+        pathname && pathname !== "/login"
+          ? `${pathname}${search || ""}`
+          : "/dashboard";
+      router.push(
+        `/login?expired=true&callbackUrl=${encodeURIComponent(callbackPath)}`,
+      );
     }
   }, [pathname, status, session, router]);
 

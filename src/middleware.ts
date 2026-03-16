@@ -59,7 +59,13 @@ export default withAuth(
 
     // ✅ Protect dashboard routes
     if (isDashboardPage && !isAuth) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      // Preserve where the user was trying to go, so after login
+      // they can be returned there (Namecheap-style behavior).
+      const url = request.nextUrl;
+      const callbackUrl = url.pathname + (url.search || "");
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("callbackUrl", callbackUrl);
+      return NextResponse.redirect(loginUrl);
     }
 
     // ✅ Protect admin routes by role
@@ -80,7 +86,11 @@ export default withAuth(
 
     // ✅ Redirect unauthenticated users trying to access other pages
     if (!isAuth && !isPublicPage && !isHomePage && !isLoginPage) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      const url = request.nextUrl;
+      const callbackUrl = url.pathname + (url.search || "");
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("callbackUrl", callbackUrl);
+      return NextResponse.redirect(loginUrl);
     }
 
     return NextResponse.next();
