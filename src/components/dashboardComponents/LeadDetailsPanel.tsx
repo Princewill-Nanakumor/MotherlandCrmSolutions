@@ -1,6 +1,7 @@
 "use client";
 
 import React, { FC, useState, useCallback, useRef, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Lead } from "@/types/leads";
 import { LeadHeader } from "../leads/leadDetailsPanel/LeadHeader";
 import { ContactSection } from "../leads/leadDetailsPanel/ContactSection";
@@ -39,6 +40,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
   const queryClient = useQueryClient();
   const [currentLead, setCurrentLead] = useState<Lead | null>(lead);
+  const [isClosing, setIsClosing] = useState(false);
   const previousStatusRef = useRef<string | undefined>(undefined);
   const previousLeadRef = useRef<Lead | null>(null);
   const originalTitleRef = useRef<string>("");
@@ -183,13 +185,21 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lead?._id, isOpen, queryClient]);
 
+  const handleRequestClose = useCallback(() => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+    }, 250);
+  }, [isClosing, onClose]);
+
   // Handle ESC key to close panel
   useEffect(() => {
     if (!isOpen) return;
 
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onClose();
+        handleRequestClose();
       }
     };
 
@@ -198,7 +208,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     return () => {
       window.removeEventListener("keydown", handleEscKey);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, handleRequestClose]);
 
   // Update browser title when panel is open and lead changes
   useEffect(() => {
@@ -276,7 +286,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   }
 
   return (
-    <div
+    <motion.div
       className="fixed right-0 z-50 flex bg-white border-l-2 dark:bg-gray-800"
       style={{
         width: "80vw",
@@ -285,11 +295,14 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         bottom: "80px",
         height: "calc(100vh - 160px)",
       }}
+      initial={{ x: "100%" }}
+      animate={{ x: isClosing ? "100%" : 0 }}
+      transition={{ type: "tween", duration: 0.25, ease: "easeOut" }}
     >
       <div className="flex flex-col w-2/5 border-r border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
         <LeadHeader
           lead={currentLead}
-          onClose={onClose}
+          onClose={handleRequestClose}
           onNavigate={onNavigate}
           hasPrevious={hasPrevious}
           hasNext={hasNext}
@@ -321,7 +334,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           key={currentLead._id}
         />
       </div>
-    </div>
+    </motion.div>
   );
 };
 

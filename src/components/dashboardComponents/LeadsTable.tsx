@@ -546,7 +546,6 @@ export default function LeadsTable({
 
       {selectedLead && (
         <LeadDetailsPanel
-          key={selectedLead._id}
           lead={selectedLead}
           isOpen={true}
           onLeadUpdated={handleLeadUpdatedFromPanel}

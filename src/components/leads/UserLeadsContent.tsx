@@ -608,7 +608,6 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
       {/* Lead Details Panel */}
       {isPanelOpen && selectedLead && isDataReady && selectedLead && (
         <LeadDetailsPanel
-          key={selectedLead._id}
           lead={selectedLead}
           isOpen={isPanelOpen}
           onClose={handlePanelClose}
