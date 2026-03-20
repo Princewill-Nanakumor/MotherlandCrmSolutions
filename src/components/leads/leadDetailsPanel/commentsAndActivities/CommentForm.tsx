@@ -69,7 +69,7 @@ export const CommentForm: FC<CommentFormProps> = ({
         <div className="mb-6 space-y-3">
           <textarea
             placeholder="Write your thoughts about this lead... (Press Cmd/Ctrl + Enter to submit)"
-            className="w-full p-3 rounded-md focus:outline-none resize-none min-h-[120px] !text-gray-700 dark:!text-white bg-white dark:bg-gray-700/50 transition-all duration-200 border border-gray-300 dark:border-gray-600"
+            className="w-full p-3 rounded-md focus:outline-none resize-none min-h-[120px] !text-gray-700 dark:!text-white bg-white dark:bg-gray-700/50 transition-all duration-200 border border-gray-300 dark:border-gray-600 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-0"
             value={commentContent}
             onChange={(e) => setCommentContent(e.target.value)}
             onKeyDown={handleKeyDown}
