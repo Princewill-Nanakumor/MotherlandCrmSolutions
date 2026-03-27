@@ -5,6 +5,7 @@ import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
 import { Db, ObjectId } from "mongodb";
+import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 
 // Helper to get user details for assignedTo
 async function getAssignedToUser(
@@ -332,6 +333,19 @@ export async function PUT(
         : undefined,
       comments: updatedLead.comments || "",
     };
+
+    try {
+      const adminScope =
+        session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
+      if (adminScope) {
+        await publishLeadUpdatedEvent(String(adminScope), id, {
+          type: "lead_updated",
+          leadId: id,
+        });
+      }
+    } catch (publishError) {
+      console.error("Failed to publish realtime lead update event:", publishError);
+    }
 
     return NextResponse.json(transformedLead);
   } catch (error) {

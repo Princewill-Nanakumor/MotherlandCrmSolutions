@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
+import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 
 interface AssignLeadsRequest {
   leadIds: string[];
@@ -182,7 +183,15 @@ export async function POST(request: Request) {
     const results = await Promise.all(updatePromises);
     const actualUpdates = results.filter((lead) => lead !== null);
 
-    console.log("Assignment completed for leads:", actualUpdates.length);
+    await Promise.allSettled(
+      beforeLeads.map((lead) =>
+        publishLeadUpdatedEvent(adminObjectId.toString(), lead._id.toString(), {
+          type: "lead_assigned_bulk",
+          leadId: lead._id.toString(),
+          assignedTo: userId,
+        })
+      )
+    );
 
     return NextResponse.json({
       success: true,

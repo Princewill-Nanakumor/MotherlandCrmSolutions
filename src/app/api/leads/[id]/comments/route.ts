@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import Comment, { IComment } from "@/models/Comment";
+import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 
 function extractLeadIdFromUrl(urlString: string): string {
   const url = new URL(urlString);
@@ -149,6 +150,16 @@ export async function POST(request: Request) {
 
     // Don't create activity log for comments - they are displayed directly in the comments section
     // Activities should only log non-comment actions like status changes, assignments, etc.
+
+    try {
+      await publishLeadUpdatedEvent(adminId.toString(), id, {
+        type: "comment_created",
+        leadId: id,
+        commentId: savedComment._id.toString(),
+      });
+    } catch (publishError) {
+      console.error("Failed to publish realtime comment event:", publishError);
+    }
 
     return NextResponse.json(savedComment);
   } catch (error) {

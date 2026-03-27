@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import Activity from "@/models/Activity";
+import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 
 interface BulkStatusChangeRequest {
   leadIds: string[];
@@ -81,13 +82,16 @@ export async function POST(request: Request) {
     ];
 
     if (!commonStatuses.includes(newStatus)) {
+      const statusCollection = db.collection("status");
+      const statusesCollection = db.collection("statuses");
       if (mongoose.Types.ObjectId.isValid(newStatus)) {
-        const statusDoc = (await db
-          .collection("status")
-          .findOne({
-            _id: new mongoose.Types.ObjectId(newStatus),
-            adminId: adminObjectId, // Multi-tenancy check
-          })) as StatusDocument | null;
+        const statusQuery = {
+          _id: new mongoose.Types.ObjectId(newStatus),
+          adminId: adminObjectId, // Multi-tenancy check
+        };
+        const statusDoc =
+          ((await statusCollection.findOne(statusQuery)) as StatusDocument | null) ??
+          ((await statusesCollection.findOne(statusQuery)) as StatusDocument | null);
 
         if (!statusDoc) {
           return NextResponse.json(
@@ -106,12 +110,13 @@ export async function POST(request: Request) {
     // Get status names for activity logs
     let newStatusName = newStatus;
     try {
+      const statusCollection = db.collection("status");
+      const statusesCollection = db.collection("statuses");
       if (mongoose.Types.ObjectId.isValid(newStatus)) {
-        const statusDoc = (await db
-          .collection("status")
-          .findOne({
-            _id: new mongoose.Types.ObjectId(newStatus),
-          })) as StatusDocument | null;
+        const statusQuery = { _id: new mongoose.Types.ObjectId(newStatus) };
+        const statusDoc =
+          ((await statusCollection.findOne(statusQuery)) as StatusDocument | null) ??
+          ((await statusesCollection.findOne(statusQuery)) as StatusDocument | null);
         if (statusDoc?.name) {
           newStatusName = statusDoc.name;
         }
@@ -127,12 +132,15 @@ export async function POST(request: Request) {
       // Get previous status name
       let previousStatusName = previousStatus;
       try {
+        const statusCollection = db.collection("status");
+        const statusesCollection = db.collection("statuses");
         if (mongoose.Types.ObjectId.isValid(previousStatus)) {
-          const prevStatusDoc = (await db
-            .collection("status")
-            .findOne({
-              _id: new mongoose.Types.ObjectId(previousStatus),
-            })) as StatusDocument | null;
+          const previousStatusQuery = {
+            _id: new mongoose.Types.ObjectId(previousStatus),
+          };
+          const prevStatusDoc =
+            ((await statusCollection.findOne(previousStatusQuery)) as StatusDocument | null) ??
+            ((await statusesCollection.findOne(previousStatusQuery)) as StatusDocument | null);
           if (prevStatusDoc?.name) {
             previousStatusName = prevStatusDoc.name;
           }
@@ -192,6 +200,16 @@ export async function POST(request: Request) {
 
     const results = await Promise.all(updatePromises);
     const updatedLeads = results.filter((id) => id !== null);
+
+    await Promise.allSettled(
+      updatedLeads.map((leadId) =>
+        publishLeadUpdatedEvent(adminObjectId.toString(), leadId!.toString(), {
+          type: "bulk_status_changed",
+          leadId: leadId!.toString(),
+          status: newStatus,
+        })
+      )
+    );
 
     return NextResponse.json({
       success: true,

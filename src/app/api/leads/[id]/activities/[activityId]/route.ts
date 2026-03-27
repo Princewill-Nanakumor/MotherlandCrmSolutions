@@ -5,6 +5,7 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import Activity from "@/models/Activity";
 import mongoose from "mongoose";
+import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 
 function extractParamsFromUrl(urlString: string): {
   id: string;
@@ -73,6 +74,16 @@ export async function DELETE(request: Request) {
         { message: "Activity not found or not authorized" },
         { status: 404 }
       );
+    }
+
+    try {
+      await publishLeadUpdatedEvent(adminId.toString(), leadId, {
+        type: "activity_deleted",
+        leadId,
+        activityId,
+      });
+    } catch (publishError) {
+      console.error("Failed to publish realtime activity delete event:", publishError);
     }
 
     return NextResponse.json({ success: true });

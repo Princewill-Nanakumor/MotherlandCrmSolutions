@@ -748,9 +748,6 @@ export const useLeadsPage = (
   } = useQuery({
     queryKey: leadsQueryKey,
     queryFn: async (): Promise<LeadsResponse> => {
-      if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
-        console.log("[Leads Pagination] Fetching leads", { page, pageSize });
-      }
       const params = new URLSearchParams();
       params.set("page", String(page));
       params.set("pageSize", String(pageSize));
@@ -864,33 +861,12 @@ export const useLeadsPage = (
   // When we just changed page via pagination, don't overwrite with stale pageFromUrl (often still 1) until the URL has caught up.
   useEffect(() => {
     const pending = pendingPageFromPaginationRef.current;
-    const isDev =
-      typeof process !== "undefined" && process.env.NODE_ENV === "development";
     if (pending !== null) {
       if (pageFromUrl === pending) {
-        if (isDev) {
-          console.log("[Leads Pagination] Sync effect: URL caught up", {
-            pageFromUrl,
-            pending,
-            action: "setPageState(pageFromUrl), clear pendingRef",
-          });
-        }
         setPageState(pageFromUrl);
         pendingPageFromPaginationRef.current = null;
-      } else if (isDev) {
-        console.log("[Leads Pagination] Sync effect: waiting for URL", {
-          pageFromUrl,
-          pending,
-          action: "skip sync (avoid reset to page 1)",
-        });
       }
       return;
-    }
-    if (isDev && pageFromUrl !== pageState) {
-      console.log("[Leads Pagination] Sync effect: sync from URL", {
-        pageFromUrl,
-        previousPageState: pageState,
-      });
     }
     setPageState(pageFromUrl);
   }, [pageFromUrl]);
@@ -1322,11 +1298,6 @@ export const useLeadsPage = (
 
   // Debounced commit: apply pending filter refs to state + URL (single refetch + one router.replace)
   const commitFilters = useCallback(() => {
-    const t = typeof performance !== "undefined" ? performance.now() : Date.now();
-    if (typeof window !== "undefined") {
-      (window as unknown as { __allLeadsCommitTime?: number }).__allLeadsCommitTime = t;
-      console.log("[All-leads] Commit started (URL + refetch)", { tMs: Math.round(t) });
-    }
     const statuses = pendingFilterByStatusRef.current ?? uiState.filterByStatus;
     const countries =
       pendingFilterByCountryRef.current ?? uiState.filterByCountry;
@@ -1424,11 +1395,6 @@ export const useLeadsPage = (
 
   const handleCountryFilterChange = useCallback(
     (countries: string[]) => {
-      const t = typeof performance !== "undefined" ? performance.now() : Date.now();
-      if (typeof window !== "undefined") {
-        (window as unknown as { __allLeadsFilterClickTime?: number }).__allLeadsFilterClickTime = t;
-        console.log("[All-leads] Filter clicked: country", { tMs: Math.round(t) });
-      }
       setDisplayFilterByCountry(countries);
       pendingFilterByCountryRef.current = countries;
       if (typeof window !== "undefined") {
@@ -1523,11 +1489,6 @@ export const useLeadsPage = (
 
   const handleStatusFilterChange = useCallback(
     (statuses: string[]) => {
-      const t = typeof performance !== "undefined" ? performance.now() : Date.now();
-      if (typeof window !== "undefined") {
-        (window as unknown as { __allLeadsFilterClickTime?: number }).__allLeadsFilterClickTime = t;
-        console.log("[All-leads] Filter clicked: status", { tMs: Math.round(t) });
-      }
       setDisplayFilterByStatus(statuses);
       pendingFilterByStatusRef.current = statuses;
       if (typeof window !== "undefined") {
@@ -1543,11 +1504,6 @@ export const useLeadsPage = (
 
   const handleSourceFilterChange = useCallback(
     (sources: string[]) => {
-      const t = typeof performance !== "undefined" ? performance.now() : Date.now();
-      if (typeof window !== "undefined") {
-        (window as unknown as { __allLeadsFilterClickTime?: number }).__allLeadsFilterClickTime = t;
-        console.log("[All-leads] Filter clicked: source", { tMs: Math.round(t) });
-      }
       setDisplayFilterBySource(sources);
       pendingFilterBySourceRef.current = sources;
       if (typeof window !== "undefined") {
@@ -1563,11 +1519,6 @@ export const useLeadsPage = (
 
   const handleFilterChange = useCallback(
     (values: string[]) => {
-      const t = typeof performance !== "undefined" ? performance.now() : Date.now();
-      if (typeof window !== "undefined") {
-        (window as unknown as { __allLeadsFilterClickTime?: number }).__allLeadsFilterClickTime = t;
-        console.log("[All-leads] Filter clicked: user", { tMs: Math.round(t) });
-      }
       const value = values.length === 0 ? "all" : values.join(",");
       setDisplayFilterByUser(value);
       pendingFilterByUserRef.current = value;
@@ -1599,12 +1550,6 @@ export const useLeadsPage = (
   /** Called when user changes page in table (server-side pagination). Updates state immediately and URL so the next page fetches without relying on useSearchParams. */
   const handleServerPageChange = useCallback(
     (newPageOneBased: number) => {
-      if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
-        console.log("[Leads Pagination] handleServerPageChange", {
-          newPageOneBased,
-          setting: "filterJustChanged=false, pendingRef=newPage, pageState=newPage, router.replace",
-        });
-      }
       setFilterJustChanged(false);
       pendingPageFromPaginationRef.current = newPageOneBased;
       setPageState(newPageOneBased);

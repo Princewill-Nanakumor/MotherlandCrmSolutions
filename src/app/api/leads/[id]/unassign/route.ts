@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
+import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 
 export async function POST(request: Request) {
   try {
@@ -38,6 +39,14 @@ export async function POST(request: Request) {
       // Agent can only unassign leads from their admin
       query.adminId = session.user.adminId;
     }
+    const adminScope =
+      session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
+    if (!adminScope) {
+      return NextResponse.json(
+        { message: "Admin scope not found for unassignment" },
+        { status: 400 }
+      );
+    }
 
     // Get the current lead to check if it's assigned
     const currentLead = await Lead.findOne(query).populate(
@@ -62,8 +71,8 @@ export async function POST(request: Request) {
     const oldAssignedTo = currentLead.assignedTo;
 
     // Update the lead to unassign
-    const lead = await Lead.findByIdAndUpdate(
-      id,
+    const lead = await Lead.findOneAndUpdate(
+      query,
       {
         assignedTo: null,
         updatedAt: new Date(),
@@ -126,7 +135,7 @@ export async function POST(request: Request) {
         userId: new mongoose.Types.ObjectId(session.user.id),
         details: `Lead unassigned from ${assignedFromUser ? `${assignedFromUser.firstName} ${assignedFromUser.lastName}` : "Unknown"}`,
         leadId: new mongoose.Types.ObjectId(id),
-        adminId: new mongoose.Types.ObjectId(session.user.id), // Multi-tenancy
+        adminId: new mongoose.Types.ObjectId(adminScope), // Multi-tenancy
         timestamp: new Date(),
         metadata: {
           assignedTo: null,
@@ -144,6 +153,17 @@ export async function POST(request: Request) {
         assignedFrom: assignedFromUser,
         details: activity.details,
       });
+    }
+
+    try {
+      if (adminScope) {
+        await publishLeadUpdatedEvent(String(adminScope), id, {
+          type: "lead_unassigned",
+          leadId: id,
+        });
+      }
+    } catch (publishError) {
+      console.error("Failed to publish realtime unassignment event:", publishError);
     }
 
     return NextResponse.json({

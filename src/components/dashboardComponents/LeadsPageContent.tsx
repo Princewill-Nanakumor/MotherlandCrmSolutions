@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, Suspense, useEffect } from "react";
+import { useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import LeadsTable from "@/components/dashboardComponents/LeadsTable";
@@ -88,31 +88,6 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
     pageSize,
     page,
   } = useLeadsPage(searchQuery, setLayoutLoading);
-
-  // Debug: log when table data updates and time since filter click / commit
-  useEffect(() => {
-    if (typeof window === "undefined" || filteredLeads == null) return;
-    const t =
-      typeof performance !== "undefined" ? performance.now() : Date.now();
-    const win = window as unknown as {
-      __allLeadsFilterClickTime?: number;
-      __allLeadsCommitTime?: number;
-    };
-    const deltaFromClick =
-      win.__allLeadsFilterClickTime != null
-        ? Math.round(t - win.__allLeadsFilterClickTime)
-        : null;
-    const deltaFromCommit =
-      win.__allLeadsCommitTime != null
-        ? Math.round(t - win.__allLeadsCommitTime)
-        : null;
-    console.log("[All-leads] Table updated", {
-      tMs: Math.round(t),
-      leadsCount: filteredLeads.length,
-      deltaFromFilterClickMs: deltaFromClick,
-      deltaFromCommitMs: deltaFromCommit,
-    });
-  }, [filteredLeads]);
 
   // Check if any leads are selected
   const hasSelectedLeads = selectedLeads && selectedLeads.length > 0;

@@ -4,6 +4,7 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import Lead from "@/models/Lead";
 import Activity from "@/models/Activity";
 import { authOptions } from "@/libs/auth";
+import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 import mongoose from "mongoose";
 
 interface LeadDoc {
@@ -76,16 +77,24 @@ async function resolveStatusNames(
   try {
     const db = mongoose.connection.db;
     if (db) {
+      const statusCollection = db.collection("status");
+      const statusesCollection = db.collection("statuses");
       if (mongoose.Types.ObjectId.isValid(previousStatus)) {
-        const prev = await db.collection("status").findOne({
+        const prevQuery = {
           _id: new mongoose.Types.ObjectId(previousStatus),
-        });
+        };
+        const prev =
+          (await statusCollection.findOne(prevQuery)) ??
+          (await statusesCollection.findOne(prevQuery));
         if (prev?.name) previousStatusName = prev.name;
       }
       if (mongoose.Types.ObjectId.isValid(newStatus)) {
-        const next = await db.collection("status").findOne({
+        const nextQuery = {
           _id: new mongoose.Types.ObjectId(newStatus),
-        });
+        };
+        const next =
+          (await statusCollection.findOne(nextQuery)) ??
+          (await statusesCollection.findOne(nextQuery));
         if (next?.name) newStatusName = next.name;
       }
     }
@@ -399,15 +408,19 @@ export async function PATCH(req: NextRequest) {
       }
 
       let statusExists = false;
+      const statusCollection = db.collection("status");
+      const statusesCollection = db.collection("statuses");
       if (mongoose.Types.ObjectId.isValid(newStatus)) {
-        const statusDoc = await db
-          .collection("status")
-          .findOne({ _id: new mongoose.Types.ObjectId(newStatus) });
+        const statusQuery = { _id: new mongoose.Types.ObjectId(newStatus) };
+        const statusDoc =
+          (await statusCollection.findOne(statusQuery)) ??
+          (await statusesCollection.findOne(statusQuery));
         statusExists = !!statusDoc;
       } else {
-        const statusDoc = await db
-          .collection("status")
-          .findOne({ name: newStatus });
+        const statusQuery = { name: newStatus };
+        const statusDoc =
+          (await statusCollection.findOne(statusQuery)) ??
+          (await statusesCollection.findOne(statusQuery));
         statusExists = !!statusDoc;
       }
 
@@ -420,6 +433,17 @@ export async function PATCH(req: NextRequest) {
     }
 
     const responseData = await runStatusUpdate(query, newStatus, session);
+
+    try {
+      const adminScope = getCorrectAdminId(session).toString();
+      await publishLeadUpdatedEvent(adminScope, id, {
+        type: "status_changed",
+        leadId: id,
+        status: newStatus,
+      });
+    } catch (publishError) {
+      console.error("Failed to publish realtime status event:", publishError);
+    }
 
     return NextResponse.json(responseData, {
       status: 200,

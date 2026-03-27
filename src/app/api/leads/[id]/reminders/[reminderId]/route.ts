@@ -6,6 +6,7 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import Reminder from "@/models/Reminder";
 import Activity, { type ActivityType, type IActivity } from "@/models/Activity";
 import mongoose from "mongoose";
+import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 
 // PUT - Update reminder (complete, snooze, edit)
 export async function PUT(
@@ -157,6 +158,16 @@ export async function PUT(
       // Don't fail the request if activity logging fails
     }
 
+    try {
+      await publishLeadUpdatedEvent(String(adminId), id, {
+        type: "reminder_updated",
+        leadId: id,
+        reminderId: reminder._id.toString(),
+      });
+    } catch (publishError) {
+      console.error("Failed to publish realtime reminder update event:", publishError);
+    }
+
     return NextResponse.json(updatedReminder);
   } catch (error) {
     console.error("Error updating reminder:", error);
@@ -282,6 +293,16 @@ export async function DELETE(
     } catch (activityError) {
       console.error("Error logging reminder deletion activity:", activityError);
       // Don't fail the request if activity logging fails
+    }
+
+    try {
+      await publishLeadUpdatedEvent(String(adminId), id, {
+        type: "reminder_deleted",
+        leadId: id,
+        reminderId: reminder._id.toString(),
+      });
+    } catch (publishError) {
+      console.error("Failed to publish realtime reminder delete event:", publishError);
     }
 
     return NextResponse.json({ message: "Reminder deleted successfully" });

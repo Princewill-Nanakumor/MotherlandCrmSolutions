@@ -10,6 +10,9 @@ import LeadStatus from "../leads/leadDetailsPanel/LeadStatus";
 import CommentsAndActivities from "../leads/leadDetailsPanel/CommentsAndActivities";
 import AdsImageSlider from "../ads/AdsImageSlider";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { LEAD_UPDATED_EVENT, getLeadChannelName } from "@/libs/realtime";
+import { getAblyRealtimeClient } from "@/libs/ablyClient";
 
 interface LeadDetailsPanelProps {
   lead: Lead | null;
@@ -39,6 +42,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   });
 
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
   const [currentLead, setCurrentLead] = useState<Lead | null>(lead);
   const [isClosing, setIsClosing] = useState(false);
   const previousStatusRef = useRef<string | undefined>(undefined);
@@ -54,6 +58,89 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     }
   }, [lead]);
 
+  // Realtime sync at panel-level so status/activity updates work even when comments tab is not active.
+  useEffect(() => {
+    if (!isOpen || !lead?._id || !session?.user?.id) return;
+
+    let channel: {
+      unsubscribe: (
+        eventName: string,
+        listener: (message: { data?: unknown }) => void,
+      ) => void;
+    } | null = null;
+    let messageListener: ((message: { data?: unknown }) => void) | null = null;
+    let isDisposed = false;
+
+    const setupRealtime = async () => {
+      try {
+        const scopeResponse = await fetch("/api/ably/scope", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!scopeResponse.ok) {
+          throw new Error(
+            `Failed to resolve realtime scope: ${scopeResponse.status}`,
+          );
+        }
+
+        const scopeData = (await scopeResponse.json()) as {
+          adminScope?: string;
+        };
+        const adminScope = scopeData.adminScope;
+        if (!adminScope || isDisposed) return;
+
+        const realtime = getAblyRealtimeClient(session.user.id);
+        const channelName = getLeadChannelName(adminScope, lead._id);
+        const ablyChannel = realtime.channels.get(channelName);
+        channel = ablyChannel;
+        await ablyChannel.attach();
+
+        messageListener = async () => {
+          const refetchWork = Promise.all([
+            queryClient.refetchQueries({ queryKey: ["leads"] }),
+            queryClient.refetchQueries({ queryKey: ["assignedLeads"] }),
+            queryClient.refetchQueries({ queryKey: ["comments", lead._id] }),
+            queryClient.refetchQueries({ queryKey: ["activities", lead._id] }),
+          ]);
+
+          const leadSyncWork = fetch(`/api/leads/${lead._id}`, {
+            method: "GET",
+            credentials: "include",
+          })
+            .then(async (response) => {
+              if (!response.ok) return;
+              const freshLead = (await response.json()) as Lead;
+              if (!freshLead?._id || isDisposed) return;
+
+              previousStatusRef.current = freshLead.status;
+              previousLeadRef.current = freshLead;
+              setCurrentLead(freshLead);
+            })
+            .catch((error) => {
+              console.error("Failed to sync lead details from realtime event:", error);
+            });
+
+          await Promise.all([refetchWork, leadSyncWork]);
+        };
+
+        ablyChannel.subscribe(LEAD_UPDATED_EVENT, messageListener);
+      } catch (error) {
+        console.error("Failed to initialize panel realtime subscription:", error);
+      }
+    };
+
+    setupRealtime().catch((error) => {
+      console.error("Panel realtime setup failed:", error);
+    });
+
+    return () => {
+      isDisposed = true;
+      if (channel && messageListener) {
+        channel.unsubscribe(LEAD_UPDATED_EVENT, messageListener);
+      }
+    };
+  }, [isOpen, lead?._id, queryClient, session?.user?.id]);
+
   useEffect(() => {
     if (!lead?._id) return;
 
@@ -62,7 +149,6 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     const checkAndUpdateLead = () => {
       const leadsData = queryClient.getQueryData(["leads"]);
       if (!leadsData) {
-        console.log("🔍 LeadDetailsPanel: No leads data in cache");
         return;
       }
 
@@ -128,6 +214,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   const handleLeadUpdated = useCallback(async (updatedLead: Lead) => {
     try {
       previousStatusRef.current = updatedLead.status;
+      previousLeadRef.current = updatedLead;
       lastManualUpdateRef.current = Date.now();
       setCurrentLead(updatedLead);
 
@@ -135,12 +222,8 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       return result;
     } catch (error) {
       console.error("Error in handleLeadUpdated:", error);
-
-      if (previousLeadRef.current) {
-        setCurrentLead(previousLeadRef.current);
-        previousStatusRef.current = previousLeadRef.current.status;
-      }
-
+      // Keep local optimistic/server-confirmed panel state even if parent sync fails.
+      // Otherwise users must close/reopen panel to see the latest status.
       return false;
     }
   }, []);

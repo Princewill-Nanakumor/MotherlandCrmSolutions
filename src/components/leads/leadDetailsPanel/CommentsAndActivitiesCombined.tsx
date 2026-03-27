@@ -15,6 +15,8 @@ import {
 } from "./commentsAndActivities/utils";
 import { CommentForm } from "./commentsAndActivities/CommentForm";
 import { CombinedTimeline } from "./commentsAndActivities/CombinedTimeline";
+import { LEAD_UPDATED_EVENT, getLeadChannelName } from "@/libs/realtime";
+import { getAblyRealtimeClient } from "@/libs/ablyClient";
 
 interface CommentsAndActivitiesCombinedProps {
   leadId: string;
@@ -61,6 +63,76 @@ export const CommentsAndActivitiesCombined: FC<
       localStorage.removeItem(LOCAL_STORAGE_KEY(leadId));
     }
   }, [commentContent, leadId]);
+
+  // Subscribe to realtime lead updates from other users and refresh local queries.
+  useEffect(() => {
+    if (!leadId || !session?.user?.id) return;
+
+    let channel: {
+      unsubscribe: (
+        eventName: string,
+        listener: (message: { data?: unknown }) => void,
+      ) => void;
+    } | null = null;
+    let messageListener: ((message: { data?: unknown }) => void) | null = null;
+    let isDisposed = false;
+
+    const setupRealtime = async () => {
+      try {
+        const scopeResponse = await fetch("/api/ably/scope", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!scopeResponse.ok) {
+          throw new Error(
+            `Failed to resolve realtime scope: ${scopeResponse.status}`,
+          );
+        }
+        const scopeData = (await scopeResponse.json()) as {
+          adminScope?: string;
+        };
+        const adminScope = scopeData.adminScope;
+        if (!adminScope || isDisposed) return;
+
+        if (isDisposed) return;
+
+        const realtime = getAblyRealtimeClient(session.user.id);
+
+        const channelName = getLeadChannelName(adminScope, leadId);
+        const ablyChannel = realtime.channels.get(channelName);
+        channel = ablyChannel;
+        await ablyChannel.attach();
+
+        messageListener = async () => {
+          await Promise.all([
+            queryClient.refetchQueries({ queryKey: ["comments", leadId] }),
+            queryClient.refetchQueries({ queryKey: ["activities", leadId] }),
+            queryClient.refetchQueries({ queryKey: ["leads"] }),
+            queryClient.refetchQueries({ queryKey: ["assignedLeads"] }),
+          ]);
+        };
+
+        ablyChannel.subscribe(LEAD_UPDATED_EVENT, messageListener);
+      } catch (error) {
+        console.error("Failed to initialize realtime subscription:", error);
+      }
+    };
+
+    setupRealtime().catch((error) => {
+      console.error("Realtime setup failed:", error);
+    });
+
+    return () => {
+      isDisposed = true;
+      if (channel && messageListener) {
+        channel.unsubscribe(LEAD_UPDATED_EVENT, messageListener);
+      }
+    };
+  }, [
+    leadId,
+    queryClient,
+    session?.user?.id,
+  ]);
 
   // Fetch comments
   const {

@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
+import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 
 interface UnassignLeadsRequest {
   leadIds: string[];
@@ -164,7 +165,14 @@ export async function POST(request: Request) {
     const results = await Promise.all(updatePromises);
     const updatedLeads = results.filter(Boolean);
 
-    console.log("Unassignment completed for leads:", updatedLeads.length);
+    await Promise.allSettled(
+      beforeLeads.map((lead) =>
+        publishLeadUpdatedEvent(adminObjectId.toString(), lead._id.toString(), {
+          type: "lead_unassigned_bulk",
+          leadId: lead._id.toString(),
+        })
+      )
+    );
 
     return NextResponse.json({
       success: true,

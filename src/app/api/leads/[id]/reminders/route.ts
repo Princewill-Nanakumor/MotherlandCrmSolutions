@@ -5,6 +5,7 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import Reminder from "@/models/Reminder";
 import Activity from "@/models/Activity";
 import mongoose from "mongoose";
+import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 
 // GET - Fetch all reminders for a lead
 export async function GET(
@@ -141,6 +142,16 @@ export async function POST(
     } catch (activityError) {
       console.error("Error logging reminder creation activity:", activityError);
       // Don't fail the request if activity logging fails
+    }
+
+    try {
+      await publishLeadUpdatedEvent(String(adminId), id, {
+        type: "reminder_created",
+        leadId: id,
+        reminderId: reminder._id.toString(),
+      });
+    } catch (publishError) {
+      console.error("Failed to publish realtime reminder create event:", publishError);
     }
 
     return NextResponse.json(populatedReminder, { status: 201 });

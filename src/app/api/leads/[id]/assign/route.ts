@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
+import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -16,6 +17,9 @@ export async function POST(request: Request) {
 
   // Start database session for transaction
   const dbSession = await mongoose.startSession();
+  let responsePayload:
+    | { message: string; lead: unknown }
+    | null = null;
 
   try {
     await dbSession.withTransaction(async () => {
@@ -43,6 +47,11 @@ export async function POST(request: Request) {
       } else if (session.user.role === "AGENT" && session.user.adminId) {
         // Agent can only assign leads from their admin
         query.adminId = session.user.adminId;
+      }
+      const adminScope =
+        session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
+      if (!adminScope) {
+        throw new Error("Admin scope not found for assignment");
       }
 
       // Get the current lead with populated assignedTo
@@ -105,7 +114,7 @@ export async function POST(request: Request) {
             ? `Lead reassigned from ${oldAssignedTo ? `${oldAssignedTo.firstName} ${oldAssignedTo.lastName}` : "Unknown"} to ${assignedToUser.firstName} ${assignedToUser.lastName}`
             : `Lead assigned to ${assignedToUser.firstName} ${assignedToUser.lastName}`,
           leadId: new mongoose.Types.ObjectId(id),
-          adminId: new mongoose.Types.ObjectId(session.user.id), // Multi-tenancy
+          adminId: new mongoose.Types.ObjectId(adminScope), // Multi-tenancy
           timestamp: new Date(),
           metadata: {
             assignedTo: {
@@ -131,13 +140,34 @@ export async function POST(request: Request) {
         await activity.save({ session: dbSession });
       }
 
-      return NextResponse.json({
+      responsePayload = {
         message: isReassignment
           ? "Lead reassigned successfully"
           : "Lead assigned successfully",
         lead,
-      });
+      };
     });
+
+    // Publish after transaction succeeds so other clients refresh lead details/activity.
+    try {
+      const url = new URL(request.url);
+      const pathParts = url.pathname.split("/");
+      const id = pathParts[pathParts.length - 1];
+      const adminScope =
+        session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
+      if (adminScope) {
+        await publishLeadUpdatedEvent(String(adminScope), id, {
+          type: "lead_assigned",
+          leadId: id,
+        });
+      }
+    } catch (publishError) {
+      console.error("Failed to publish realtime assignment event:", publishError);
+    }
+
+    return NextResponse.json(
+      responsePayload ?? { message: "Lead assigned successfully" }
+    );
   } catch (error) {
     console.error("Error assigning lead:", error);
     return NextResponse.json(

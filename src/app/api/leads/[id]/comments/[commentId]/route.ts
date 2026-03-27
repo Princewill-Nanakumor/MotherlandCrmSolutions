@@ -5,6 +5,7 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import Comment from "@/models/Comment";
 import mongoose from "mongoose";
+import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 
 function extractParamsFromUrl(urlString: string): {
   id: string;
@@ -120,6 +121,16 @@ export async function PUT(request: Request) {
     // Don't create activity log for comment edits - they are displayed directly in the comments section
     // Activities should only log non-comment actions like status changes, assignments, etc.
 
+    try {
+      await publishLeadUpdatedEvent(adminId.toString(), id, {
+        type: "comment_updated",
+        leadId: id,
+        commentId: updated._id.toString(),
+      });
+    } catch (publishError) {
+      console.error("Failed to publish realtime comment update event:", publishError);
+    }
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Error updating comment:", error);
@@ -180,6 +191,16 @@ export async function DELETE(request: Request) {
 
     // Don't create activity log for comment deletions - they are displayed directly in the comments section
     // Activities should only log non-comment actions like status changes, assignments, etc.
+
+    try {
+      await publishLeadUpdatedEvent(adminId.toString(), id, {
+        type: "comment_deleted",
+        leadId: id,
+        commentId: deleted._id.toString(),
+      });
+    } catch (publishError) {
+      console.error("Failed to publish realtime comment delete event:", publishError);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
