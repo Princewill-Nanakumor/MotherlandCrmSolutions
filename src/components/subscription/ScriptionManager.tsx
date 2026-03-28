@@ -10,6 +10,7 @@ import TrialStatus from "./TrialStatus";
 import SubscriptionModal from "./SubscriptionModal";
 import DowngradeWarningModal from "./DowngradeWarningModal";
 import { useToast } from "@/components/ui/use-toast";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 interface SubscriptionPlan {
   id: string;
@@ -85,7 +86,7 @@ const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
 ];
 
 export default function SubscriptionManager() {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -112,7 +113,7 @@ export default function SubscriptionManager() {
       }
       return response.json();
     },
-    enabled: status === "authenticated",
+    enabled: hasAuthorizedSession(status, session),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     retry: 2,
@@ -131,7 +132,7 @@ export default function SubscriptionManager() {
       }
       return response.json();
     },
-    enabled: status === "authenticated",
+    enabled: hasAuthorizedSession(status, session),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     retry: 2,
@@ -152,7 +153,7 @@ export default function SubscriptionManager() {
 
   // Check if user should be redirected
   useEffect(() => {
-    if (status === "authenticated" && !loading && subscriptionData) {
+    if (hasAuthorizedSession(status, session) && !loading && subscriptionData) {
       const { subscriptionStatus } = subscriptionData;
 
       // If trial expired and no active subscription, redirect to subscription page
@@ -173,7 +174,7 @@ export default function SubscriptionManager() {
         }
       }
     }
-  }, [status, loading, subscriptionData, router]);
+  }, [status, session, loading, subscriptionData, router]);
 
   const handleSubscribe = useCallback(
     (plan: SubscriptionPlan) => {

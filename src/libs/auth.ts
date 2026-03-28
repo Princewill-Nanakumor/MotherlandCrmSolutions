@@ -201,9 +201,17 @@ export const authOptions: NextAuthOptions = {
           token.iat = nowTimestamp;
         }
       } else if (token) {
-        // Existing token - check if it's expired. Don't throw (causes 500 on Netlify/serverless); invalidate by returning token without user id so session is null.
+        // Existing token - check if it's expired. Don't throw (causes 500 on Netlify/serverless);
+        // strip id so session callback can return null (empty id still counts as "authenticated" on the client).
         const currentTime = Math.floor(Date.now() / 1000);
-        if (token.exp && token.exp < currentTime) {
+        const expiredByExp =
+          typeof token.exp === "number" &&
+          token.exp > 0 &&
+          token.exp < currentTime;
+        const expiredByIat =
+          typeof token.iat === "number" &&
+          currentTime - token.iat > maxAge;
+        if (expiredByExp || expiredByIat) {
           return { ...token, id: undefined, exp: 0 };
         }
       }
@@ -220,9 +228,27 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      // When token was invalidated (e.g. expired), keep session shape but with no id so client treats as unauthenticated. Don't return user: null (can cause 500 in NextAuth).
+      const nowSec = Math.floor(Date.now() / 1000);
+      const maxAge = 24 * 60 * 60;
+      const expiredByExp =
+        typeof token.exp === "number" &&
+        token.exp > 0 &&
+        token.exp < nowSec;
+      const expiredByIat =
+        typeof token.iat === "number" && nowSec - token.iat > maxAge;
+      const invalid =
+        !token?.id ||
+        token.exp === 0 ||
+        expiredByExp ||
+        expiredByIat;
+
+      // NextAuth client: any truthy session => "authenticated". Must return null when JWT is invalid/expired.
+      if (invalid) {
+        return null as unknown as typeof session;
+      }
+
       if (token && session.user) {
-        session.user.id = token.id ?? "";
+        session.user.id = token.id;
         session.user.role = token.role ?? "";
         session.user.permissions = token.permissions ?? [];
         session.user.status = token.status ?? "";
@@ -232,7 +258,6 @@ export const authOptions: NextAuthOptions = {
         session.user.country = token.country ?? "";
         session.user.adminId = token.adminId ?? undefined;
         session.user.canViewPhoneNumbers = token.canViewPhoneNumbers ?? false;
-        // Set expires from token.exp so client can check session expiry (AuthGuard, dashboard)
         if (token.exp) {
           session.expires = new Date(token.exp * 1000).toISOString();
         }

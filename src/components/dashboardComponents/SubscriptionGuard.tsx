@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, Shield } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { LoadingSpinner } from "./LeadsLoadingState";
 
 interface SubscriptionGuardProps {
@@ -15,12 +16,15 @@ interface SubscriptionGuardProps {
 export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
   children,
 }) => {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const { subscriptionData, hasActiveSubscription, isLoading } =
     useSubscriptionData();
 
   // Show loading while session is resolving or subscription is loading
-  if (status === "loading" || (status === "authenticated" && isLoading)) {
+  if (
+    status === "loading" ||
+    (hasAuthorizedSession(status, session) && isLoading)
+  ) {
     return <LoadingSpinner />;
   }
 

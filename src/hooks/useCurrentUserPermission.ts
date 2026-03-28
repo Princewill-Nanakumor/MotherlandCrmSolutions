@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 interface CurrentUserData {
   id: string;
@@ -57,7 +58,7 @@ export const useCurrentUserPermission = () => {
   } = useQuery<CurrentUserData, Error>({
     queryKey: ["current-user-permission"],
     queryFn: fetchCurrentUser,
-    enabled: status === "authenticated" && !!session?.user,
+    enabled: hasAuthorizedSession(status, session),
     staleTime: 30 * 1000, // 30 seconds - refresh more frequently
     gcTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,

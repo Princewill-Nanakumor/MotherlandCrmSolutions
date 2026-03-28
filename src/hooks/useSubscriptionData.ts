@@ -1,6 +1,7 @@
 // src/hooks/useSubscriptionData.ts
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 interface SubscriptionData {
   isOnTrial: boolean;
@@ -69,7 +70,7 @@ export const useSubscriptionData = () => {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    enabled: status === "authenticated",
+    enabled: hasAuthorizedSession(status, session),
   });
 
   // Calculate if user has active subscription

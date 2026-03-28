@@ -7,6 +7,7 @@ import { useSession, signOut } from "next-auth/react";
 import { Loader2, LogIn } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse bg-gray-200 rounded ${className}`} />;
@@ -55,13 +56,13 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (status === "authenticated") {
+    if (hasAuthorizedSession(status, session)) {
       try {
         sessionStorage.removeItem("auth:navigating");
       } catch {}
       setIsNavigating(false);
     }
-  }, [status]);
+  }, [status, session]);
 
   const logoVariants = {
     hidden: { opacity: 0, x: -50 },
@@ -133,7 +134,7 @@ export default function Navbar() {
               <Skeleton className="hidden w-20 h-10 md:block" />
               <Skeleton className="w-24 h-10" />
             </>
-          ) : session ? (
+          ) : hasAuthorizedSession(status, session) ? (
             <>
               {isNavigating ? (
                 <motion.div

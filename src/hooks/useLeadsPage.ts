@@ -11,6 +11,7 @@ import {
   getAssignedLeadsCount,
   getAvailableCountries,
 } from "../utils/LeadsUtils";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { Lead } from "@/types/leads";
 import { User } from "@/types/user.types";
 
@@ -100,7 +101,7 @@ export const useLeadsPage = (
   const filterModeChangeInProgressRef = useRef(false);
 
   // ===== REACT QUERY HOOKS =====
-  const isAuthenticated = status === "authenticated";
+  const isAuthenticated = hasAuthorizedSession(status, session);
 
   interface LeadsResponse {
     leads: Lead[];

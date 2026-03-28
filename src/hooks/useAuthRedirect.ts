@@ -2,19 +2,18 @@
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 export function useAuthRedirect() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "authenticated" && session?.user) {
-      // Redirect based on user role
-      if (session.user.role === "ADMIN") {
-        router.push("/dashboard");
-      } else {
-        router.push("/dashboard/leads");
-      }
+    if (!hasAuthorizedSession(status, session) || !session?.user) return;
+    if (session.user.role === "ADMIN") {
+      router.push("/dashboard");
+    } else {
+      router.push("/dashboard/leads");
     }
   }, [session, status, router]);
 

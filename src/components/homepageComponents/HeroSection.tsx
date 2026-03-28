@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 export default function HeroSection() {
   const { data: session, status } = useSession();
@@ -78,7 +79,7 @@ export default function HeroSection() {
         >
           {status === "loading" ? (
             <div className="w-32 h-12 rounded-lg bg-white/20 animate-pulse" />
-          ) : session ? (
+          ) : hasAuthorizedSession(status, session) ? (
             <motion.div
               variants={buttonVariants}
               whileHover="hover"

@@ -3,6 +3,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { Payment, PaymentsResponse, BillingData } from "@/types/payment.types";
 
 interface UserProfile {
@@ -29,7 +30,7 @@ export const billingKeys = {
  * Fetch payments with pagination
  */
 export const usePayments = (limit: number = 10) => {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
 
   return useQuery<PaymentsResponse, Error>({
     queryKey: billingKeys.payments(limit),
@@ -49,7 +50,7 @@ export const usePayments = (limit: number = 10) => {
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     retry: 2,
-    enabled: status === "authenticated",
+    enabled: hasAuthorizedSession(status, session),
   });
 };
 
@@ -57,7 +58,7 @@ export const usePayments = (limit: number = 10) => {
  * Fetch user balance
  */
 export const useUserBalance = () => {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
 
   return useQuery<number, Error>({
     queryKey: billingKeys.balance(),
@@ -78,7 +79,7 @@ export const useUserBalance = () => {
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     retry: 2,
-    enabled: status === "authenticated",
+    enabled: hasAuthorizedSession(status, session),
   });
 };
 
@@ -86,7 +87,7 @@ export const useUserBalance = () => {
  * Fetch specific payment by ID
  */
 export const usePayment = (paymentId: string | null) => {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
 
   return useQuery<Payment, Error>({
     queryKey: billingKeys.payment(paymentId || ""),
@@ -117,7 +118,7 @@ export const usePayment = (paymentId: string | null) => {
     gcTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: true,
     retry: 2,
-    enabled: status === "authenticated" && !!paymentId,
+    enabled: hasAuthorizedSession(status, session) && !!paymentId,
   });
 };
 

@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { useRouter } from "next/navigation";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 // Animation variants
 const containerVariants = {
@@ -70,12 +71,12 @@ function RedirectingScreen() {
 
 // Defined at module scope so LoginPage re-renders (e.g. when toast dismisses) don't remount these and retrigger motion animations
 function LoginFormContent() {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const isExpiredLanding =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get("expired") === "true";
-  // Show form when unauthenticated OR when landing with ?expired=true (user was just signed out, session may still be "loading")
-  if (status !== "unauthenticated" && !isExpiredLanding) return null;
+  // Show form when no valid user OR ?expired=true (sign-out in flight can leave status loading)
+  if (hasAuthorizedSession(status, session) && !isExpiredLanding) return null;
   return (
     <div
       className="relative min-h-screen"
@@ -145,7 +146,7 @@ function AuthStateHandler() {
   }, [status]);
 
   useEffect(() => {
-    if (status !== "authenticated" || !session) return;
+    if (!hasAuthorizedSession(status, session)) return;
     const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
     const callbackUrl = params?.get("callbackUrl");
     const target = callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard";
@@ -162,7 +163,7 @@ function AuthStateHandler() {
   // When landing with ?expired=true, show form; if session stuck loading, show form after timeout
   if (status === "loading" && !isExpiredLanding && !loadingTimedOut) return <LoadingScreen />;
 
-  if (status === "authenticated") {
+  if (hasAuthorizedSession(status, session)) {
     return <RedirectingScreen />;
   }
   return null;

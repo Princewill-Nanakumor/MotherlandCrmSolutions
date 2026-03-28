@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Shield } from "lucide-react";
 import SignInForm from "@/components/authComponents/SignInForm";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 export default function SignInPage() {
   const { status, data: session } = useSession();
@@ -14,8 +15,7 @@ export default function SignInPage() {
 
   // ✅ FIX: Move useEffect outside conditional - hooks must be called unconditionally
   useEffect(() => {
-    // Only redirect if authenticated
-    if (status === "authenticated" && session) {
+    if (hasAuthorizedSession(status, session)) {
       router.replace("/dashboard");
     }
   }, [status, session, router]);
@@ -37,8 +37,8 @@ export default function SignInPage() {
     );
   }
 
-  // Show redirecting screen if authenticated
-  if (status === "authenticated" && session) {
+  // Show redirecting screen if authenticated with a real user id
+  if (hasAuthorizedSession(status, session)) {
     return (
       <div className="min-h-screen font-mono bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950 flex items-center justify-center p-4">
         <div className="flex items-center gap-3">

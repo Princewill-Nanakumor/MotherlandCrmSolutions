@@ -6,6 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { Shield } from "lucide-react";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -25,7 +26,9 @@ export function AuthGuard({
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (status === "loading") return;
+
+    if (!hasAuthorizedSession(status, session)) {
       setIsRedirecting(true);
       router.push("/login");
       return;
@@ -39,7 +42,7 @@ export function AuthGuard({
       return;
     }
 
-    if (session?.user?.role !== requiredRole) {
+    if (session!.user!.role !== requiredRole) {
       setIsRedirecting(true);
       router.push(redirectTo);
       toast({
@@ -67,7 +70,7 @@ export function AuthGuard({
     );
   }
 
-  if (!session || session.user.role !== requiredRole) {
+  if (!hasAuthorizedSession(status, session) || session!.user.role !== requiredRole) {
     return null;
   }
 

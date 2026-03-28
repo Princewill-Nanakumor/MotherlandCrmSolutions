@@ -11,6 +11,7 @@ import { Reminder } from "@/types/leads";
 import { alarmSound, stopNotificationSound } from "@/lib/notificationSound";
 import { formatTime24Hour } from "@/lib/utils";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 export default function ReminderNotifications() {
   const { status, data: session } = useSession();
@@ -23,7 +24,7 @@ export default function ReminderNotifications() {
 
   // Request browser notification permission
   useEffect(() => {
-    if (status === "authenticated" && "Notification" in window) {
+    if (hasAuthorizedSession(status, session) && "Notification" in window) {
       if (Notification.permission === "granted") {
         setPermissionGranted(true);
       } else if (Notification.permission !== "denied") {
@@ -34,7 +35,7 @@ export default function ReminderNotifications() {
         setPermissionGranted(false);
       }
     }
-  }, [status]);
+  }, [status, session]);
 
   // Poll for due reminders - pass user's local date/time for correct timezone comparison
   const { data: dueReminders = [] } = useQuery<Reminder[]>({
@@ -55,7 +56,7 @@ export default function ReminderNotifications() {
         return [];
       }
     },
-    enabled: status === "authenticated",
+    enabled: hasAuthorizedSession(status, session),
     refetchInterval: 60 * 1000, // Check every 1 minute (reduced from 10s to lower Netlify function usage)
     staleTime: 30 * 1000,
   });

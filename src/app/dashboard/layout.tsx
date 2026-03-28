@@ -216,50 +216,25 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
   }, [pathname, status, isAdminLeadsPage, isUserLeadsPage]);
 
-  // Check session status on mount and when status changes
-  // Use signOut (not router.push) so the session cookie is cleared - otherwise the user could
-  // navigate back to dashboard and still appear logged in with a stale cookie.
-  useEffect(() => {
-    if (redirectingDueToExpiryRef.current) return;
-    if (status === "unauthenticated") {
-      redirectingDueToExpiryRef.current = true;
-      localStorage.setItem("sessionExpired", "true");
-      const search = searchParams?.toString();
-      const callbackPath =
-        pathname && pathname !== "/login"
-          ? `${pathname}${search ? `?${search}` : ""}`
-          : "/dashboard";
-      signOut({
-        redirect: true,
-        callbackUrl: `/login?expired=true&callbackUrl=${encodeURIComponent(
-          callbackPath,
-        )}`,
-      });
-    }
-  }, [status, pathname, searchParams]);
-
-  // Check session on pathname change to catch expired sessions immediately
-  // Only redirect on status "unauthenticated" - avoid !session to prevent false redirects
-  // during SessionProvider refetches when session can briefly be undefined.
+  // Client lost session (expired / cleared). signOut clears cookies and sends user to login.
   useEffect(() => {
     if (redirectingDueToExpiryRef.current) return;
     if (status === "loading") return;
-    if (status === "unauthenticated") {
-      redirectingDueToExpiryRef.current = true;
-      localStorage.setItem("sessionExpired", "true");
-      const search = searchParams?.toString();
-      const callbackPath =
-        pathname && pathname !== "/login"
-          ? `${pathname}${search ? `?${search}` : ""}`
-          : "/dashboard";
-      signOut({
-        redirect: true,
-        callbackUrl: `/login?expired=true&callbackUrl=${encodeURIComponent(
-          callbackPath,
-        )}`,
-      });
-    }
-  }, [pathname, status, searchParams]);
+    if (status !== "unauthenticated") return;
+    redirectingDueToExpiryRef.current = true;
+    localStorage.setItem("sessionExpired", "true");
+    const search = searchParams?.toString();
+    const callbackPath =
+      pathname && pathname !== "/login"
+        ? `${pathname}${search ? `?${search}` : ""}`
+        : "/dashboard";
+    signOut({
+      redirect: true,
+      callbackUrl: `/login?expired=true&callbackUrl=${encodeURIComponent(
+        callbackPath,
+      )}`,
+    });
+  }, [status, pathname, searchParams]);
 
   if (status === "loading") {
     return (

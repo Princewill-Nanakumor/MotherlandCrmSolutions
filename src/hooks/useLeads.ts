@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
 import { useEffect, useRef } from "react";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 interface ApiLead {
   _id?: string;
@@ -87,7 +88,8 @@ const useWindowFocusRefetch = (inactiveThreshold = 30 * 60 * 1000) => {
 export const useLeads = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { status } = useSession();
+  const { status, data: session } = useSession();
+  const sessionOk = hasAuthorizedSession(status, session);
 
   // Initialize window focus refetch
   useWindowFocusRefetch(30 * 60 * 1000); // 30 minutes
@@ -159,7 +161,7 @@ export const useLeads = () => {
     refetchOnMount: "always", // Always refetch on mount
     refetchOnWindowFocus: false, // Disable automatic refetch
     refetchOnReconnect: true, // Keep this for network reconnection
-    enabled: status === "authenticated",
+    enabled: sessionOk,
   });
 
   // Fetch users with improved persistence and error handling
@@ -226,7 +228,7 @@ export const useLeads = () => {
     refetchOnMount: "always", // Always refetch on mount
     refetchOnWindowFocus: false, // Disable automatic refetch
     refetchOnReconnect: true, // Keep this for network reconnection
-    enabled: status === "authenticated",
+    enabled: sessionOk,
   });
 
   // Fetch leads with improved persistence and error handling
@@ -322,7 +324,7 @@ export const useLeads = () => {
     refetchOnMount: false, // Don't always refetch - use stale data if available to prevent showing 0
     refetchOnWindowFocus: false, // Disable automatic refetch
     refetchOnReconnect: true, // Keep this for network reconnection
-    enabled: status === "authenticated",
+    enabled: sessionOk,
     // Preserve previous data during refetch to prevent showing 0 when cache is updating
     placeholderData: (previousData) => previousData ?? [],
   });
