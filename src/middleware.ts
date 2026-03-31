@@ -6,7 +6,16 @@ export default withAuth(
   async function middleware(request) {
     // If token is missing or invalid (e.g. expired), nextauth.token can be undefined; treat as unauthenticated instead of throwing
     const token = request.nextauth?.token;
-    const isAuth = !!token?.id;
+    
+    // Check if visually mathematically expired according to absolute login time
+    const currentTime = Math.floor(Date.now() / 1000);
+    const maxAge = 24 * 60 * 60; // 24 hours
+    const isExpired = token?.loginTimestamp 
+      ? (currentTime - (token.loginTimestamp as number)) > maxAge
+      : false;
+      
+    // A token is only valid if it has an id and it's not expired by our absolute timer
+    const isAuth = !!token?.id && !isExpired;
     const path = request.nextUrl.pathname;
 
     const isHomePage = path === "/";
@@ -125,7 +134,13 @@ export default withAuth(
           return true;
         }
 
-        return !!token;
+        const currentTime = Math.floor(Date.now() / 1000);
+        const maxAge = 24 * 60 * 60; // 24 hours
+        const isExpired = token?.loginTimestamp 
+          ? (currentTime - (token.loginTimestamp as number)) > maxAge
+          : false;
+
+        return !!token && !isExpired;
       },
     },
     pages: {

@@ -53,6 +53,7 @@ declare module "next-auth/jwt" {
     adminId?: string;
     canViewPhoneNumbers?: boolean;
     exp?: number; // Token expiration timestamp
+    loginTimestamp?: number; // Absolute timestamp of initial login
   }
 }
 
@@ -196,6 +197,9 @@ export const authOptions: NextAuthOptions = {
         // Set expiration time ONLY on initial login
         token.exp = nowTimestamp + maxAge;
         
+        // Store the original expiration time in loginTimestamp to prevent sliding sessions extending it
+        token.loginTimestamp = nowTimestamp;
+        
         // Store the original expiration time in iat (issued at) if not already set
         if (!token.iat) {
           token.iat = nowTimestamp;
@@ -208,10 +212,17 @@ export const authOptions: NextAuthOptions = {
           typeof token.exp === "number" &&
           token.exp > 0 &&
           token.exp < currentTime;
+        
+        // Check our absolute loginTimestamp to prevent infinite sliding sessions
+        const expiredByLogin =
+          typeof token.loginTimestamp === "number" &&
+          currentTime - token.loginTimestamp > maxAge;
+          
         const expiredByIat =
           typeof token.iat === "number" &&
           currentTime - token.iat > maxAge;
-        if (expiredByExp || expiredByIat) {
+          
+        if (expiredByExp || expiredByIat || expiredByLogin) {
           return { ...token, id: undefined, exp: 0 };
         }
       }
@@ -236,11 +247,14 @@ export const authOptions: NextAuthOptions = {
         token.exp < nowSec;
       const expiredByIat =
         typeof token.iat === "number" && nowSec - token.iat > maxAge;
+      const expiredByLogin =
+        typeof token.loginTimestamp === "number" && nowSec - token.loginTimestamp > maxAge;
       const invalid =
         !token?.id ||
         token.exp === 0 ||
         expiredByExp ||
-        expiredByIat;
+        expiredByIat ||
+        expiredByLogin;
 
       // NextAuth client: any truthy session => "authenticated". Must return null when JWT is invalid/expired.
       if (invalid) {
@@ -258,7 +272,12 @@ export const authOptions: NextAuthOptions = {
         session.user.country = token.country ?? "";
         session.user.adminId = token.adminId ?? undefined;
         session.user.canViewPhoneNumbers = token.canViewPhoneNumbers ?? false;
-        if (token.exp) {
+        
+        // Ensure session.expires reflects the absolute absolute expiration (24h from login)
+        // rather than the sliding token.exp which NextAuth might extend.
+        if (token.loginTimestamp) {
+          session.expires = new Date((token.loginTimestamp as number + maxAge) * 1000).toISOString();
+        } else if (token.exp) {
           session.expires = new Date(token.exp * 1000).toISOString();
         }
       }
