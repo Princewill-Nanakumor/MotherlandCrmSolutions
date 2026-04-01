@@ -67,8 +67,11 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         eventName: string,
         listener: (message: { data?: unknown }) => void,
       ) => void;
+      detach: () => Promise<void>;
     } | null = null;
     let messageListener: ((message: { data?: unknown }) => void) | null = null;
+    let channelName: string | null = null;
+    let realtimeClient: ReturnType<typeof getAblyRealtimeClient> | null = null;
     let isDisposed = false;
 
     const setupRealtime = async () => {
@@ -90,10 +93,16 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         if (!adminScope || isDisposed) return;
 
         const realtime = getAblyRealtimeClient(session.user.id);
-        const channelName = getLeadChannelName(adminScope, lead._id);
+        realtimeClient = realtime;
+        channelName = getLeadChannelName(adminScope, lead._id);
         const ablyChannel = realtime.channels.get(channelName);
         channel = ablyChannel;
         await ablyChannel.attach();
+        if (isDisposed) {
+          await ablyChannel.detach();
+          realtime.channels.release(channelName);
+          return;
+        }
 
         messageListener = async () => {
           const refetchWork = Promise.all([
@@ -137,6 +146,14 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       isDisposed = true;
       if (channel && messageListener) {
         channel.unsubscribe(LEAD_UPDATED_EVENT, messageListener);
+      }
+      if (channel) {
+        void channel.detach().catch((error) => {
+          console.error("Failed to detach panel realtime channel:", error);
+        });
+      }
+      if (realtimeClient && channelName) {
+        realtimeClient.channels.release(channelName);
       }
     };
   }, [isOpen, lead?._id, queryClient, session?.user?.id]);
