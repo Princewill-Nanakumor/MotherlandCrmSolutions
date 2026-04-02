@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 import { Loader2, LogIn } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
@@ -16,6 +17,7 @@ function Skeleton({ className = "" }: { className?: string }) {
 export default function Navbar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
   const isLoginPage = pathname === "/login";
   const [isScrolled, setIsScrolled] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -83,6 +85,10 @@ export default function Navbar() {
 
   const buttonBaseClasses =
     "px-4 py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-200 h-10 flex items-center justify-center";
+
+  const handleSignOut = async () => {
+    await signOutWithoutInterstitial("/", router);
+  };
 
   return (
     <motion.nav
@@ -174,7 +180,8 @@ export default function Navbar() {
               )}
 
               <motion.button
-                onClick={() => signOut({ callbackUrl: "/" })}
+                type="button"
+                onClick={handleSignOut}
                 className={`${buttonBaseClasses} bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700`}
                 variants={buttonVariants}
                 initial="visible"

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Suspense, useEffect, useRef, useState } from "react";
-import { useSession, SessionProvider, signOut } from "next-auth/react";
+import { useSession, SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createQueryClient } from "@/lib/queryClient";
@@ -19,6 +19,7 @@ import { ToggleProvider } from "@/context/ToggleContext";
 import ReminderNotifications from "@/components/notifications/ReminderNotifications";
 import { Toaster } from "@/components/ui/toaster";
 import { SelectedLeadsBanner } from "@/components/dashboardComponents/SelectedLeadsBanner";
+import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { searchQuery, setSearchQuery, isLoading } = useSearchContext();
@@ -45,12 +46,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           pathname && pathname !== "/login"
             ? `${pathname}${search ? `?${search}` : ""}`
             : "/dashboard";
-        signOut({
-          redirect: true,
-          callbackUrl: `/login?expired=true&callbackUrl=${encodeURIComponent(
-            callbackPath,
-          )}`,
-        });
+        const loginUrl = `/login?expired=true&callbackUrl=${encodeURIComponent(
+          callbackPath,
+        )}`;
+        void signOutWithoutInterstitial(loginUrl, router);
       }
     };
 
@@ -58,7 +57,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     checkExpiration(); // Check immediately
     const interval = setInterval(checkExpiration, checkIntervalMs);
     return () => clearInterval(interval);
-  }, [status, session?.expires]);
+  }, [status, session?.expires, pathname, searchParams, router]);
 
   // Use custom hook for localStorage persistence
   const [showHeader, setShowHeader] = useLocalStorage(
@@ -228,13 +227,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       pathname && pathname !== "/login"
         ? `${pathname}${search ? `?${search}` : ""}`
         : "/dashboard";
-    signOut({
-      redirect: true,
-      callbackUrl: `/login?expired=true&callbackUrl=${encodeURIComponent(
-        callbackPath,
-      )}`,
-    });
-  }, [status, pathname, searchParams]);
+    const loginUrl = `/login?expired=true&callbackUrl=${encodeURIComponent(
+      callbackPath,
+    )}`;
+    void signOutWithoutInterstitial(loginUrl, router);
+  }, [status, pathname, searchParams, router]);
 
   if (status === "loading") {
     return (

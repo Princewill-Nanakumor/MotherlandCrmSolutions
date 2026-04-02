@@ -3,7 +3,7 @@
 import React from "react";
 import { UserCircle, LogOut, User, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 import { BalanceDisplay } from "./BalanceDisplay";
 import { PlanDisplay } from "./PlanDisplay";
 
@@ -61,7 +61,7 @@ export function UserDropdownMenu({
 
   const handleLogout = async () => {
     setDropdownOpen(false);
-    await signOut({ callbackUrl: "/" });
+    await signOutWithoutInterstitial("/", router);
   };
 
   return (

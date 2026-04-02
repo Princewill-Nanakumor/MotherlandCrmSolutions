@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import { AlertTriangle, UserX } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { SettingsSidebar } from "./SettingsSidebar";
@@ -15,6 +16,7 @@ import { DialerSettingsSection } from "./DialerSettingsSection";
 
 export function SettingsContent() {
   const { data: session } = useSession();
+  const router = useRouter();
   const { toast } = useToast();
   const userRole = session?.user?.role;
 
@@ -98,7 +100,7 @@ export function SettingsContent() {
       setConfirmPassword("");
 
       setTimeout(() => {
-        signOut({ callbackUrl: "/" });
+        void signOutWithoutInterstitial("/", router);
       }, 1500);
     } catch {
       setPasswordError("An error occurred while updating your password");
@@ -124,7 +126,7 @@ export function SettingsContent() {
       });
 
       if (response.status === 401) {
-        signOut({ callbackUrl: "/" });
+        void signOutWithoutInterstitial("/", router);
         return;
       }
 
@@ -138,7 +140,7 @@ export function SettingsContent() {
         });
 
         setTimeout(() => {
-          signOut({ callbackUrl: "/" });
+          void signOutWithoutInterstitial("/", router);
         }, 2000);
       } else {
         setDeleteError(data.error || "Failed to delete account");

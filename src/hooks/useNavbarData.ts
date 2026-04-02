@@ -1,6 +1,6 @@
 // src/hooks/useNavbarData.ts
 import { useQuery } from "@tanstack/react-query";
-import { signOut } from "next-auth/react";
+import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 
 interface UserProfile {
   _id: string;
@@ -28,7 +28,7 @@ const fetchUserProfile = async (): Promise<UserProfile> => {
 
   if (response.status === 404) {
     console.log("User not found, signing out...");
-    await signOut({ callbackUrl: "/" }); // ✅ Uncomment this
+    await signOutWithoutInterstitial("/");
     throw new Error("User not found");
   }
 

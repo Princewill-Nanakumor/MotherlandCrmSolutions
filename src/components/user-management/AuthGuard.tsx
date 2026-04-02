@@ -2,7 +2,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 import { useRouter, usePathname } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { Shield } from "lucide-react";
@@ -38,7 +39,10 @@ export function AuthGuard({
     if (session?.expires && new Date() >= new Date(session.expires)) {
       setIsRedirecting(true);
       localStorage.setItem("sessionExpired", "true");
-      signOut({ redirect: true, callbackUrl: `/login?expired=true&callbackUrl=${encodeURIComponent(pathname ?? "/dashboard")}` });
+      void signOutWithoutInterstitial(
+        `/login?expired=true&callbackUrl=${encodeURIComponent(pathname ?? "/dashboard")}`,
+        router,
+      );
       return;
     }
 
