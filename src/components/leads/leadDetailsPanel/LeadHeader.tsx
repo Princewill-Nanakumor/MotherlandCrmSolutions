@@ -126,11 +126,11 @@ export const LeadHeader: FC<LeadHeaderProps> = ({
             )}
           </div>
           <div>
-            <p className="text-sm !text-gray-500 dark:!text-gray-400">
+            <p className="text-sm text-gray-500! dark:text-gray-400!">
               Lead ID
             </p>
             <div className="flex items-center">
-              <p className="text-md font-semibold !text-gray-900 dark:!text-white">
+              <p className="text-md font-semibold text-gray-900! dark:text-white!">
                 {lead.leadId}
               </p>
               <button

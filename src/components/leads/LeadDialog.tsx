@@ -84,7 +84,7 @@ export function LeadDialog({
             ...formData,
             value: formData.value ? parseFloat(formData.value) : undefined,
           }),
-        }
+        },
       );
 
       if (response.ok) {
@@ -100,7 +100,7 @@ export function LeadDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-106.25">
         <DialogHeader>
           <DialogTitle>{lead ? "Edit Lead" : "Create Lead"}</DialogTitle>
         </DialogHeader>

@@ -64,7 +64,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
       </div>
       <div className="space-y-3">
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700 dark:!text-white">
+          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-white!">
             Title *
           </label>
           <Input
@@ -78,7 +78,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
         </div>
 
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700 dark:!text-white">
+          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-white!">
             Description
           </label>
           <Textarea
@@ -94,7 +94,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:!text-white">
+            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-white!">
               Date *
             </label>
             <Input
@@ -108,7 +108,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:!text-white">
+            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-white!">
               Time *
             </label>
             <Input
@@ -124,7 +124,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
         </div>
 
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700 dark:!text-white">
+          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-white!">
             Type
           </label>
           <Select
@@ -191,7 +191,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
               !formData.reminderTime ||
               !formData.type
             }
-            className="flex-1 !text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200"
+            className="flex-1 text-white! bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200"
           >
             {isSaving ? (
               <Loader2 className="w-4 h-4 text-white animate-spin" />

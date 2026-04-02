@@ -1013,8 +1013,12 @@ input[readOnly] {
   border-color: #ef4444 !important;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
-  overscroll-behavior: none;
+  overflow-x: hidden;
 }
 
 button,
@@ -1140,7 +1144,7 @@ button,
   html {
     background-color: #ffffff; /* white for light mode */
   }
-  .dark html {
+  html.dark {
     background-color: #1f2937 !important; /* gray-800 for dark mode */
   }
   body {

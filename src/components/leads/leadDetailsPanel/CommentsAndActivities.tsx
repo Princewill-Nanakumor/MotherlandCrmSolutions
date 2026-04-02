@@ -16,7 +16,7 @@ interface CommentsAndActivitiesProps {
 
 const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
   const [activeTab, setActiveTab] = useState<"comments" | "reminders">(
-    "comments"
+    "comments",
   );
 
   // Fetch reminders count for badge
@@ -35,19 +35,19 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
   });
 
   const pendingRemindersCount = reminders.filter(
-    (r) => r.status === "PENDING" || r.status === "SNOOZED"
+    (r) => r.status === "PENDING" || r.status === "SNOOZED",
   ).length;
 
   return (
-    <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 h-full min-h-0">
+    <div className="flex flex-col flex-1 h-full min-h-0 bg-white dark:bg-gray-800">
       <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex gap-1">
           <button
             onClick={() => setActiveTab("comments")}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 !text-gray-900 dark:!text-white ${
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 text-gray-900! dark:text-white! ${
               activeTab === "comments"
-                ? "bg-blue-50 !text-blue-600 dark:bg-blue-500/10 dark:!text-blue-400"
-                : "!text-gray-500 hover:bg-gray-100 dark:!text-gray-400 dark:hover:bg-gray-700/50"
+                ? "bg-blue-50 text-blue-600! dark:bg-blue-500/10 dark:text-blue-400!"
+                : "text-gray-500! hover:bg-gray-100 dark:text-gray-400! dark:hover:bg-gray-700/50"
             }`}
           >
             <MessageSquare className="w-5 h-5" />
@@ -55,16 +55,16 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
           </button>
           <button
             onClick={() => setActiveTab("reminders")}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 !text-gray-900 dark:!text-white ${
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 text-gray-900! dark:text-white! ${
               activeTab === "reminders"
-                ? "bg-blue-50 !text-blue-600 dark:bg-blue-500/10 dark:!text-blue-400"
-                : "!text-gray-500 hover:bg-gray-100 dark:!text-gray-400 dark:hover:bg-gray-700/50"
+                ? "bg-blue-50 text-blue-600! dark:bg-blue-500/10 dark:text-blue-400!"
+                : "text-gray-500! hover:bg-gray-100 dark:text-gray-400! dark:hover:bg-gray-700/50"
             }`}
           >
             <Bell className="w-5 h-5" />
             Reminders
             {pendingRemindersCount > 0 && (
-              <span className="px-2 py-0.5 text-xs bg-red-500 !text-white rounded-full">
+              <span className="px-2 py-0.5 text-xs bg-red-500 text-white! rounded-full">
                 {pendingRemindersCount}
               </span>
             )}
@@ -73,7 +73,7 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
       </div>
 
       {/* This is the scrollable/fill area */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex flex-col flex-1 min-h-0">
         {activeTab === "comments" && (
           <CommentsAndActivitiesCombined leadId={lead._id} />
         )}

@@ -22,9 +22,9 @@ export const CountryField: FC<CountryFieldProps> = ({
   if (isEditing) {
     return (
       <div className="flex items-start gap-3">
-        <Globe className="w-5 h-5 mt-2 !text-gray-400 dark:!text-gray-500" />
+        <Globe className="w-5 h-5 mt-2 text-gray-400! dark:text-gray-500!" />
         <div className="flex-1">
-          <label className="block mb-1 text-sm !text-gray-500 dark:!text-gray-400">
+          <label className="block mb-1 text-sm text-gray-500! dark:text-gray-400!">
             Country
           </label>
           <Input
@@ -39,12 +39,14 @@ export const CountryField: FC<CountryFieldProps> = ({
   }
 
   return (
-    <div className="flex items-center gap-3 !text-gray-700 dark:!text-gray-300">
-      <Globe className="w-5 h-5 !text-gray-400 dark:!text-gray-500" />
+    <div className="flex items-center gap-3 text-gray-700! dark:text-gray-300!">
+      <Globe className="w-5 h-5 text-gray-400! dark:text-gray-500!" />
       <div className="flex-1">
-        <p className="text-sm !text-gray-500 dark:!text-gray-400">Country</p>
+        <p className="text-sm text-gray-500! dark:text-gray-400!">Country</p>
         <div className="flex items-center justify-between">
-          <p className="!text-gray-900 dark:!text-white">{country || "Not provided"}</p>
+          <p className="text-gray-900! dark:text-white!">
+            {country || "Not provided"}
+          </p>
           {country && onCopy && (
             <button
               onClick={(e) => {
@@ -66,4 +68,3 @@ export const CountryField: FC<CountryFieldProps> = ({
     </div>
   );
 };
-

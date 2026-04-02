@@ -263,7 +263,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     <ToggleProvider value={showLeadsToggles ? toggleContextValue : null}>
       <div className="flex h-screen bg-background text-foreground">
         <Sidebar />
-        <div className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex flex-col flex-1 overflow-hidden min-w-0">
           <DashboardNavbar
             onSearch={setSearchQuery}
             searchQuery={searchQuery}

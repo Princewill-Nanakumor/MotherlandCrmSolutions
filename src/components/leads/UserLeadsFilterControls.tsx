@@ -24,8 +24,8 @@ interface UserLeadsFilterControlsProps {
 
 const FilterSkeleton = () => (
   <div className="flex items-center gap-3">
-    <div className="w-[180px] h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
-    <div className="w-[180px] h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
+    <div className="h-10 bg-gray-200 rounded-md w-45 dark:bg-gray-700 animate-pulse" />
+    <div className="h-10 bg-gray-200 rounded-md w-45 dark:bg-gray-700 animate-pulse" />
   </div>
 );
 
@@ -54,17 +54,17 @@ export const UserLeadsFilterControls: React.FC<
 
   if (shouldShowLoading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+      <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <FilterSkeleton />
-          <div className="w-48 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+          <div className="w-48 h-4 bg-gray-200 rounded dark:bg-gray-700 animate-pulse"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 ">
+    <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 ">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Country Filter */}

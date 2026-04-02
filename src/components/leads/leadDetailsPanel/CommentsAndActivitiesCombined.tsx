@@ -30,8 +30,9 @@ export const CommentsAndActivitiesCombined: FC<
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState<string>("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [deletingActivityId, setDeletingActivityId] =
-    useState<string | null>(null);
+  const [deletingActivityId, setDeletingActivityId] = useState<string | null>(
+    null,
+  );
   const [showTextarea, setShowTextarea] = useState<boolean>(true);
 
   const isAdmin = session?.user?.role === "ADMIN";
@@ -384,18 +385,18 @@ export const CommentsAndActivitiesCombined: FC<
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center p-6 h-full">
-        <Loader2 className="w-8 h-8 animate-spin !text-purple-500 dark:!text-blue-400" />
+      <div className="flex items-center justify-center h-full p-6">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-500! dark:text-blue-400!" />
       </div>
     );
   }
 
   return (
     <div
-      className="flex flex-col flex-1 p-6 min-h-0 bg-gray-50 border border-gray-200 shadow-sm dark:bg-gray-800/50 dark:border-gray-700"
+      className="flex flex-col flex-1 min-h-0 p-6 border border-gray-200 shadow-sm bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700"
       style={{ height: "100%" }}
     >
-      <div className="flex flex-col flex-1 p-5 min-h-0 bg-white rounded-lg border border-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+      <div className="flex flex-col flex-1 min-h-0 p-5 bg-white border border-gray-100 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
         <CommentForm
           commentContent={commentContent}
           setCommentContent={setCommentContent}
@@ -407,7 +408,7 @@ export const CommentsAndActivitiesCombined: FC<
 
         {/* Combined Timeline */}
         <div className="flex flex-col flex-1 min-h-0">
-          <h3 className="text-lg font-semibold !text-gray-800 dark:!text-white mb-3">
+          <h3 className="text-lg font-semibold text-gray-800! dark:text-white! mb-3">
             Timeline ({combinedItems.length})
           </h3>
 

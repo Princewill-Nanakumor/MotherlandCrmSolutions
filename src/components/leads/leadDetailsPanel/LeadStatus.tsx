@@ -71,7 +71,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
       }
       return status;
     },
-    [statuses]
+    [statuses],
   );
 
   const currentStatusObj = findStatusByIdOrName(lead.status);
@@ -102,7 +102,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
       }
       return "Unknown";
     },
-    [findStatusByIdOrName]
+    [findStatusByIdOrName],
   );
 
   const handleStatusChange = useCallback(
@@ -127,7 +127,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
 
           if (Array.isArray(oldData)) {
             return oldData.map((l: Lead) =>
-              l._id === lead._id ? { ...l, status: newStatusId } : l
+              l._id === lead._id ? { ...l, status: newStatusId } : l,
             );
           } else if (oldData && typeof oldData === "object") {
             if ("data" in oldData && Array.isArray(oldData.data)) {
@@ -135,7 +135,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
                 ...oldData,
                 data: oldData.data.map(
                   (l: Lead) =>
-                    l._id === lead._id ? { ...l, status: newStatusId } : l // ✅ FIXED
+                    l._id === lead._id ? { ...l, status: newStatusId } : l, // ✅ FIXED
                 ),
               };
             } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
@@ -143,7 +143,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
                 ...oldData,
                 leads: oldData.leads.map(
                   (l: Lead) =>
-                    l._id === lead._id ? { ...l, status: newStatusId } : l // ✅ FIXED
+                    l._id === lead._id ? { ...l, status: newStatusId } : l, // ✅ FIXED
                 ),
               };
             }
@@ -172,7 +172,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
             error: errorText,
           });
           throw new Error(
-            `Failed to update status: ${response.status} - ${errorText}`
+            `Failed to update status: ${response.status} - ${errorText}`,
           );
         }
 
@@ -192,21 +192,21 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
 
             if (Array.isArray(oldData)) {
               return oldData.map((l: Lead) =>
-                l._id === lead._id ? updatedLead : l
+                l._id === lead._id ? updatedLead : l,
               );
             } else if (oldData && typeof oldData === "object") {
               if ("data" in oldData && Array.isArray(oldData.data)) {
                 return {
                   ...oldData,
                   data: oldData.data.map((l: Lead) =>
-                    l._id === lead._id ? updatedLead : l
+                    l._id === lead._id ? updatedLead : l,
                   ),
                 };
               } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
                 return {
                   ...oldData,
                   leads: oldData.leads.map((l: Lead) =>
-                    l._id === lead._id ? updatedLead : l
+                    l._id === lead._id ? updatedLead : l,
                   ),
                 };
               }
@@ -239,7 +239,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
         // Notify parent so the details panel and selectedLead store stay in sync
         if (onLeadUpdated) {
           onLeadUpdated(updatedLead).catch((err) =>
-            console.error("Error notifying parent of status update:", err)
+            console.error("Error notifying parent of status update:", err),
           );
         }
 
@@ -263,21 +263,21 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
 
             if (Array.isArray(oldData)) {
               return oldData.map((l: Lead) =>
-                l._id === lead._id ? { ...l, status: previousStatus } : l
+                l._id === lead._id ? { ...l, status: previousStatus } : l,
               );
             } else if (oldData && typeof oldData === "object") {
               if ("data" in oldData && Array.isArray(oldData.data)) {
                 return {
                   ...oldData,
                   data: oldData.data.map((l: Lead) =>
-                    l._id === lead._id ? { ...l, status: previousStatus } : l
+                    l._id === lead._id ? { ...l, status: previousStatus } : l,
                   ),
                 };
               } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
                 return {
                   ...oldData,
                   leads: oldData.leads.map((l: Lead) =>
-                    l._id === lead._id ? { ...l, status: previousStatus } : l
+                    l._id === lead._id ? { ...l, status: previousStatus } : l,
                   ),
                 };
               }
@@ -322,7 +322,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
       isUpdating,
       session?.user?.id,
       onLeadUpdated,
-    ]
+    ],
   );
 
   const currentStatusColor = currentStatusObj?.color || "#3b82f6";
@@ -371,12 +371,12 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
       `}</style>
 
       <div className="flex-1">
-        <p className="text-sm !text-gray-500 dark:!text-gray-400 mb-1">
+        <p className="text-sm text-gray-500! dark:text-gray-400! mb-1">
           Status
         </p>
         {isLoadingStatuses ? (
           <div className="flex items-center">
-            <Loader2 className="h-4 w-4 animate-spin text-gray-500 dark:text-gray-400" />
+            <Loader2 className="w-4 h-4 text-gray-500 animate-spin dark:text-gray-400" />
           </div>
         ) : (
           <Select
@@ -385,7 +385,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
             disabled={isUpdating}
           >
             <SelectTrigger
-              className="w-[200px] border rounded-md cursor-pointer dark:border-gray-600 transition-all duration-200 ease-in-out"
+              className="transition-all duration-200 ease-in-out border rounded-md cursor-pointer w-50 dark:border-gray-600"
               style={{
                 backgroundColor: triggerBg,
                 color: triggerTextColor,
@@ -394,7 +394,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
             >
               <div className="flex items-center gap-2">
                 <div
-                  className="w-2 h-2 rounded-full transition-all duration-200 ease-in-out"
+                  className="w-2 h-2 transition-all duration-200 ease-in-out rounded-full"
                   style={{
                     backgroundColor: "#fff",
                     border: `2px solid ${currentStatusColor}`,
@@ -410,7 +410,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
                 </span>
                 {isUpdating && (
                   <Loader2
-                    className="h-3 w-3 animate-spin ml-auto"
+                    className="w-3 h-3 ml-auto animate-spin"
                     style={{ color: triggerTextColor }}
                   />
                 )}
@@ -438,7 +438,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
                     <SelectItem
                       key={status._id || status.id || `status-${status.name}`}
                       value={status._id || status.id || ""}
-                      className="status-item my-1 rounded-md transition-all duration-200 ease-in-out font-medium cursor-pointer"
+                      className="my-1 font-medium transition-all duration-200 ease-in-out rounded-md cursor-pointer status-item"
                       style={{
                         backgroundColor: itemBg,
                         color: textColor,
@@ -446,7 +446,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
                     >
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-2 h-2 rounded-full transition-all duration-200 ease-in-out"
+                          className="w-2 h-2 transition-all duration-200 ease-in-out rounded-full"
                           style={{
                             backgroundColor: "#fff",
                             border: `2px solid ${statusColor}`,

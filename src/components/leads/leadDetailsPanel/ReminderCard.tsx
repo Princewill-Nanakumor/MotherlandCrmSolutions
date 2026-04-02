@@ -94,10 +94,10 @@ export const ReminderCard: FC<ReminderCardProps> = ({
   return (
     <div
       key={`reminder-${reminder._id}-${reminder.soundEnabled}-${reminder.status}`}
-      className="p-4 rounded-lg bg-white dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow"
+      className="p-4 transition-shadow bg-white border border-gray-200 rounded-lg dark:bg-gray-700/50 dark:border-gray-600 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3 flex-1">
+        <div className="flex items-start flex-1 gap-3">
           <div className={`p-2 rounded-lg ${getTypeColor(reminder.type)}`}>
             {getReminderIcon(reminder.type)}
           </div>
@@ -108,12 +108,12 @@ export const ReminderCard: FC<ReminderCardProps> = ({
               </h5>
             </div>
             {reminder.description && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
                 {reminder.description}
               </p>
             )}
             <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
+              <span className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full dark:bg-blue-900/30 dark:text-blue-300">
                 {reminder.type}
               </span>
               <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
@@ -121,7 +121,7 @@ export const ReminderCard: FC<ReminderCardProps> = ({
                 {formatDate(reminder.reminderDate)}
               </div>
               <div className="flex items-center gap-1 text-gray-500 dark:text-white">
-                <Clock className="w-3 h-3 text-gray-500 dark:!text-white" />
+                <Clock className="w-3 h-3 text-gray-500 dark:text-white!" />
                 {formatTime24Hour(reminder.reminderTime)}
               </div>
               <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
@@ -191,15 +191,15 @@ export const ReminderCard: FC<ReminderCardProps> = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onSnooze(reminder._id, 15)}>
-                <Clock className="w-4 h-4 mr-2 dark:!text-white" />
+                <Clock className="w-4 h-4 mr-2 dark:text-white!" />
                 Snooze 15 min
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onSnooze(reminder._id, 60)}>
-                <Clock className="w-4 h-4 mr-2 dark:!text-white" />
+                <Clock className="w-4 h-4 mr-2 dark:text-white!" />
                 Snooze 1 hour
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onSnooze(reminder._id, 1440)}>
-                <Clock className="w-4 h-4 mr-2 dark:!text-white" />
+                <Clock className="w-4 h-4 mr-2 dark:text-white!" />
                 Snooze 1 day
               </DropdownMenuItem>
               {canDelete && (

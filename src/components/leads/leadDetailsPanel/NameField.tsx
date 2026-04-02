@@ -36,10 +36,10 @@ export const NameField: FC<NameFieldProps> = ({
   if (isEditing) {
     return (
       <div className="flex items-start gap-3">
-        <User className="w-5 h-5 mt-2 !text-gray-400 dark:!text-gray-500" />
+        <User className="w-5 h-5 mt-2 text-gray-400! dark:text-gray-500!" />
         <div className="flex-1 space-y-2">
           <div>
-            <label className="block mb-1 text-sm !text-gray-500 dark:!text-gray-400">
+            <label className="block mb-1 text-sm text-gray-500! dark:text-gray-400!">
               First Name *
             </label>
             <Input
@@ -50,7 +50,7 @@ export const NameField: FC<NameFieldProps> = ({
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm !text-gray-500 dark:!text-gray-400">
+            <label className="block mb-1 text-sm text-gray-500! dark:text-gray-400!">
               Last Name
             </label>
             <Input
@@ -66,12 +66,12 @@ export const NameField: FC<NameFieldProps> = ({
   }
 
   return (
-    <div className="flex items-center gap-3 !text-gray-700 dark:!text-gray-300">
-      <User className="w-5 h-5 !text-gray-400 dark:!text-gray-500" />
+    <div className="flex items-center gap-3 text-gray-700! dark:text-gray-300!">
+      <User className="w-5 h-5 text-gray-400! dark:text-gray-500!" />
       <div className="flex-1">
-        <p className="text-sm !text-gray-500 dark:!text-gray-400">Name</p>
+        <p className="text-sm text-gray-500! dark:text-gray-400!">Name</p>
         <div className="flex items-center justify-between">
-          <p className="!text-gray-900 dark:!text-white">{fullName}</p>
+          <p className="text-gray-900! dark:text-white!">{fullName}</p>
           {onCopy && (
             <button
               onClick={(e) => {
@@ -93,4 +93,3 @@ export const NameField: FC<NameFieldProps> = ({
     </div>
   );
 };
-

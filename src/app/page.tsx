@@ -15,7 +15,7 @@ function HomePageContent() {
     >
       <Navbar />
       <HeroSection />
-      <div className="bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="bg-linear-to-br from-gray-50 to-gray-100">
         <ContactSection />
         <SubscriptionPlansSection />
       </div>
