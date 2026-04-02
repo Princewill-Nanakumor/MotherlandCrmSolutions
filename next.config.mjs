@@ -103,7 +103,7 @@ const nextConfig = {
               "img-src 'self' data: blob: https://*.cloudinary.com https://flagcdn.com",
               "media-src 'self' blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.cloudinary.com https://*.ably.io wss://*.ably.io https://*.ably.net wss://*.ably.net https://*.ably-realtime.com",
+              "connect-src 'self' https://*.cloudinary.com https://*.ably.io wss://*.ably.io https://*.ably.net wss://*.ably.net https://*.ably-realtime.com wss://*.ably-realtime.com",
               "frame-src 'self'",
             ].join("; "),
           },

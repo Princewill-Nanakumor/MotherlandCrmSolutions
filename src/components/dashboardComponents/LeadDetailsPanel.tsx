@@ -72,6 +72,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     let messageListener: ((message: { data?: unknown }) => void) | null = null;
     let channelName: string | null = null;
     let realtimeClient: ReturnType<typeof getAblyRealtimeClient> | null = null;
+    let didSubscribe = false;
     let isDisposed = false;
 
     const setupRealtime = async () => {
@@ -99,8 +100,6 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         channel = ablyChannel;
         await ablyChannel.attach();
         if (isDisposed) {
-          await ablyChannel.detach();
-          realtime.channels.release(channelName);
           return;
         }
 
@@ -133,6 +132,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         };
 
         ablyChannel.subscribe(LEAD_UPDATED_EVENT, messageListener);
+        didSubscribe = true;
       } catch (error) {
         console.error("Failed to initialize panel realtime subscription:", error);
       }
@@ -144,17 +144,27 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
     return () => {
       isDisposed = true;
-      if (channel && messageListener) {
-        channel.unsubscribe(LEAD_UPDATED_EVENT, messageListener);
-      }
-      if (channel) {
-        void channel.detach().catch((error) => {
-          console.error("Failed to detach panel realtime channel:", error);
-        });
-      }
-      if (realtimeClient && channelName) {
-        realtimeClient.channels.release(channelName);
-      }
+      void (async () => {
+        if (didSubscribe && channel && messageListener) {
+          channel.unsubscribe(LEAD_UPDATED_EVENT, messageListener);
+        }
+        if (channel) {
+          try {
+            // Wait for detach to complete before releasing the channel.
+            // Ably otherwise throws: "Can only release a channel ... was detaching".
+            await channel.detach();
+          } catch (error) {
+            console.error("Failed to detach panel realtime channel:", error);
+          }
+        }
+        if (realtimeClient && channelName) {
+          try {
+            realtimeClient.channels.release(channelName);
+          } catch (error) {
+            console.error("Failed to release panel realtime channel:", error);
+          }
+        }
+      })();
     };
   }, [isOpen, lead?._id, queryClient, session?.user?.id]);
 
