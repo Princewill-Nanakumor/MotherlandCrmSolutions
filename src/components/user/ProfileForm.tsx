@@ -44,7 +44,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   onInputChange,
   inputClass = (editing) =>
     [
-      "w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:!text-white bg-gray-50 border border-gray-300 !text-gray-900 rounded-lg text-base",
+      "w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg text-base",
       editing
         ? "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
         : "focus:outline-none",
@@ -181,7 +181,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             menuPlacement="top"
           />
         ) : (
-          <div className="w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:!text-white bg-gray-50 border border-gray-300 !text-gray-900 rounded-lg flex items-center gap-2">
+          <div className="w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg flex items-center gap-2">
             {selectedCountry ? (
               <>
                 <Image
@@ -189,12 +189,12 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                   alt={selectedCountry.label}
                   width={24}
                   height={18}
-                  className="w-6 h-4 object-cover"
+                  className="shrink-0 object-cover"
                 />
-                <span className="dark:!text-white !text-gray-900">{selectedCountry.label}</span>
+                <span className="dark:text-white! text-gray-900!">{selectedCountry.label}</span>
               </>
             ) : (
-              <span className="dark:!text-white !text-gray-900">{profile.country || "Not specified"}</span>
+              <span className="dark:text-white! text-gray-900!">{profile.country || "Not specified"}</span>
             )}
           </div>
         )}
@@ -209,13 +209,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         {isEditing ? (
           <div className="relative">
             <div
-              className={`
-                phone-input-wrapper w-full px-4 py-2 rounded-lg border text-base flex items-center
-                border-gray-300 dark:border-gray-600 focus:ring-indigo-500
-                bg-gray-50 dark:bg-white/5 
-                !text-gray-900 dark:!text-white
-                focus-within:outline-none focus-within:ring-2 focus-within:border-transparent
-              `}
+              className={`phone-input-wrapper w-full px-4 py-2 rounded-lg border text-base flex items-center border-gray-300 dark:border-gray-600 focus:ring-indigo-500 bg-gray-50 dark:bg-white/5 text-gray-900! dark:text-white! focus-within:outline-none focus-within:ring-2 focus-within:border-transparent`}
             >
               <PhoneInput
                 international
@@ -225,13 +219,13 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 onChange={handlePhoneChange}
                 disabled={false}
                 placeholder=""
-                className="!border-none !bg-transparent !p-0 !m-0 !w-full !text-base"
+                className="border-none! bg-transparent! p-0! m-0! w-full! text-base!"
               />
             </div>
           </div>
         ) : (
-          <div className="w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:!text-white bg-gray-50 border border-gray-300 !text-gray-900 rounded-lg">
-            <span className="dark:!text-white !text-gray-900">{profile.phoneNumber || "Not specified"}</span>
+          <div className="w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg">
+            <span className="dark:text-white! text-gray-900!">{profile.phoneNumber || "Not specified"}</span>
           </div>
         )}
       </div>

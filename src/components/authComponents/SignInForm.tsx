@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { Mail, Lock, Loader2, ArrowRight } from "lucide-react";
 import { LoginSchema } from "@/schemas";
 import { z } from "zod";
@@ -15,7 +14,6 @@ type LoginInput = z.infer<typeof LoginSchema>;
 
 export default function SignInForm() {
   const { update } = useSession();
-  const router = useRouter();
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -70,41 +68,22 @@ export default function SignInForm() {
           );
         } catch {}
 
-        // Wait for the server-side session (cookie) to be available before navigating.
-        // Fixes Vercel/cookie race: browser may not have written the cookie before
-        // the next navigation. Poll until session is live, then redirect.
-        const waitForServerSession = async (timeout = 5000) => {
-          const pollInterval = 150;
-          // Give the browser a moment to process Set-Cookie before first check
-          await new Promise((r) => setTimeout(r, 100));
+        try {
+          localStorage.removeItem("sessionExpired");
+        } catch {}
 
-          const start = Date.now();
-          while (Date.now() - start < timeout) {
-            try {
-              const res = await fetch("/api/auth/session", {
-                credentials: "include",
-                cache: "no-store", // Avoid cached empty session response
-              });
-              if (res.ok) {
-                const json = await res.json();
-                if (json?.user?.id) return true;
-              }
-            } catch {
-              // ignore and retry
-            }
-            await new Promise((r) => setTimeout(r, pollInterval));
-          }
-          return false;
-        };
+        const params = new URLSearchParams(window.location.search);
+        const rawCallback = params.get("callbackUrl");
+        const target =
+          rawCallback && rawCallback.startsWith("/") && !rawCallback.startsWith("//")
+            ? rawCallback
+            : "/dashboard";
 
-        const serverReady = await waitForServerSession(5000);
-        if (serverReady) {
-          router.refresh(); // Ensure server components see the new session
-          router.replace("/dashboard");
-        } else {
-          // Fallback: full reload so cookies are definitely included
-          window.location.href = "/dashboard";
-        }
+        // Brief delay so Set-Cookie is applied before full navigation (middleware needs the cookie).
+        await new Promise((r) => setTimeout(r, 200));
+        window.location.replace(
+          `${window.location.origin}${target}${window.location.hash ?? ""}`,
+        );
       }
     } catch (error: unknown) {
       setFormError(
@@ -154,10 +133,7 @@ export default function SignInForm() {
                 disabled={isFormDisabled}
                 className={`
                   pl-10 pr-3 py-3 w-full rounded-lg border text-sm
-                  ${errors.email ? "border-red-500" : "border-gray-300"}
-                  focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                  bg-white text-gray-900!
-                  ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
+                  ${errors.email ? "border-red-500" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900!${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
             </div>
@@ -183,10 +159,7 @@ export default function SignInForm() {
                 disabled={isFormDisabled}
                 className={`
                   pl-10 pr-10 py-3 w-full rounded-lg border text-sm
-                  ${errors.password ? "border-red-500" : "border-gray-300"}
-                  focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                  bg-white text-gray-900!
-                  ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
+                  ${errors.password ? "border-red-500" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900!${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
             </div>

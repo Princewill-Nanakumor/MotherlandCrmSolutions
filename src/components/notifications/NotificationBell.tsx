@@ -33,18 +33,18 @@ interface RawNotification {
 // Loading skeleton component for notification dropdown
 const NotificationSkeleton = () => (
   <li className="flex items-start justify-between px-4 py-3 animate-pulse">
-    <div className="flex items-start space-x-3 flex-1">
-      <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded-full flex-shrink-0"></div>
+    <div className="flex items-start flex-1 space-x-3">
+      <div className="w-4 h-4 bg-gray-200 rounded-full dark:bg-gray-700 shrink-0"></div>
       <div className="flex-1 min-w-0">
         <div className="space-y-1">
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+          <div className="w-full h-3 bg-gray-200 rounded dark:bg-gray-700"></div>
+          <div className="w-3/4 h-3 bg-gray-200 rounded dark:bg-gray-700"></div>
         </div>
-        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded w-20 mt-1"></div>
-        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded w-16 mt-1"></div>
+        <div className="w-20 h-2 mt-1 bg-gray-200 rounded dark:bg-gray-700"></div>
+        <div className="w-16 h-2 mt-1 bg-gray-200 rounded dark:bg-gray-700"></div>
       </div>
     </div>
-    <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded ml-2 flex-shrink-0"></div>
+    <div className="w-4 h-4 ml-2 bg-gray-200 rounded shrink-0 dark:bg-gray-700"></div>
   </li>
 );
 
@@ -79,7 +79,7 @@ export function NotificationBell() {
 
       return normalized;
     },
-    []
+    [],
   );
 
   // Fetch ALL notifications, not just unread ones
@@ -98,7 +98,7 @@ export function NotificationBell() {
 
       if (!response.ok) {
         throw new Error(
-          `HTTP ${response.status}: Failed to fetch notifications`
+          `HTTP ${response.status}: Failed to fetch notifications`,
         );
       }
 
@@ -156,7 +156,7 @@ export function NotificationBell() {
 
         if (!response.ok) {
           throw new Error(
-            `Failed to mark notification as read: ${response.status}`
+            `Failed to mark notification as read: ${response.status}`,
           );
         }
 
@@ -165,17 +165,17 @@ export function NotificationBell() {
           ["notifications"],
           (oldData: Notification[] = []) => {
             const updated = oldData.map((n) =>
-              n.id === notification.id ? { ...n, read: true } : n
+              n.id === notification.id ? { ...n, read: true } : n,
             );
             return updated;
-          }
+          },
         );
       }
 
       // Enhanced navigation logic
       if (notification.link) {
         const paymentIdMatch = notification.link.match(
-          /\/payment-details\/([^\/\?]+)/
+          /\/payment-details\/([^\/\?]+)/,
         );
 
         if (paymentIdMatch) {
@@ -214,36 +214,36 @@ export function NotificationBell() {
           ["notifications"],
           (oldData: Notification[] = []) => {
             const updated = oldData.map((n) =>
-              n.id === notificationId ? { ...n, read: true } : n
+              n.id === notificationId ? { ...n, read: true } : n,
             );
             return updated;
-          }
+          },
         );
       } catch (error) {
         console.error("Error clearing notification:", error);
         refetch();
       }
     },
-    [queryClient, refetch]
+    [queryClient, refetch],
   );
 
   const getNotificationIcon = useCallback((type: string) => {
     switch (type) {
       case "PAYMENT_APPROVED":
         return (
-          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+          <CheckCircle className="w-4 h-4 text-green-600 shrink-0 dark:text-green-400" />
         );
       case "PAYMENT_REJECTED":
         return (
-          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+          <XCircle className="w-4 h-4 text-red-600 shrink-0 dark:text-red-400" />
         );
       case "PAYMENT_PENDING_APPROVAL":
         return (
-          <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+          <Clock className="w-4 h-4 text-yellow-600 shrink-0 dark:text-yellow-400" />
         );
       default:
         return (
-          <Bell className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+          <Bell className="w-4 h-4 text-blue-600 shrink-0 dark:text-blue-400" />
         );
     }
   }, []);
@@ -258,12 +258,12 @@ export function NotificationBell() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        className="relative p-2 rounded-full hover:bg-purple-400 dark:hover:bg-gray-800 transition"
+        className="relative p-2 transition rounded-full hover:bg-purple-400 dark:hover:bg-gray-800"
         aria-label="Notifications"
         type="button"
         onClick={handleDropdownToggle}
       >
-        <Bell className="h-6 w-6 !text-white dark:!text-purple-300" />
+        <Bell className="h-6 w-6 text-white! dark:text-purple-300!" />
         {/* Only show badge if there are unread notifications */}
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full px-1.5 py-0.5">
@@ -273,8 +273,8 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-w-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-[9999]">
-          <div className="p-3 border-b border-gray-100 dark:border-gray-800 font-semibold !text-gray-800 dark:!text-gray-100 flex justify-between items-center">
+        <div className="absolute right-0 max-w-xs mt-2 bg-white border border-gray-200 rounded-lg shadow-lg w-80 dark:bg-gray-900 dark:border-gray-700 z-9999">
+          <div className="p-3 border-b border-gray-100 dark:border-gray-800 font-semibold text-gray-800! dark:text-gray-100! flex justify-between items-center">
             <span>Notifications</span>
             <div className="flex items-center space-x-2">
               <Button
@@ -284,15 +284,15 @@ export function NotificationBell() {
                   router.push("/dashboard/notifications");
                   setOpen(false);
                 }}
-                className="text-xs h-6 px-2"
+                className="h-6 px-2 text-xs"
               >
-                <ExternalLink className="h-3 w-3 mr-1" />
+                <ExternalLink className="w-3 h-3 mr-1" />
                 View All
               </Button>
             </div>
           </div>
 
-          <ul className="max-h-64 overflow-y-auto">
+          <ul className="overflow-y-auto max-h-64">
             {shouldShowLoading ? (
               // Show loading skeleton
               <>
@@ -301,7 +301,7 @@ export function NotificationBell() {
                 ))}
               </>
             ) : error ? (
-              <li className="p-4 text-center !text-red-500 dark:!text-red-400">
+              <li className="p-4 text-center text-red-500! dark:text-red-400!">
                 <p className="text-sm">Failed to load notifications</p>
                 <Button
                   variant="ghost"
@@ -313,12 +313,12 @@ export function NotificationBell() {
                 </Button>
               </li>
             ) : notifications.length === 0 ? (
-              <li className="p-4 text-center !text-gray-500 dark:!text-gray-400">
+              <li className="p-4 text-center text-gray-500! dark:text-gray-400!">
                 No notifications
               </li>
             ) : (
               <>
-                <div className="p-2 !text-gray-800 dark:!text-white text-xs text-center border-b">
+                <div className="p-2 text-gray-800! dark:text-white! text-xs text-center border-b">
                   Showing {notifications.length} notifications ({unreadCount}{" "}
                   unread)
                 </div>
@@ -326,31 +326,29 @@ export function NotificationBell() {
                   <li
                     key={notification.id}
                     className={`flex items-start border-b justify-between px-4 py-3 hover:bg-purple-50 dark:hover:bg-gray-800 transition cursor-pointer ${
-                      // Only highlight unread notifications
                       !notification.read ? "bg-blue-50 dark:bg-blue-900/20" : ""
                     }`}
                     onClick={() => handleNotificationClick(notification)}
                   >
-                    <div className="flex items-start space-x-3 flex-1">
+                    <div className="flex items-start flex-1 space-x-3">
                       {getNotificationIcon(notification.type)}
                       <div className="flex-1 min-w-0">
                         <p
                           className={`text-sm ${
-                            // Style unread notifications differently
                             !notification.read
-                              ? "font-medium !text-gray-900 dark:!text-white"
-                              : "!text-gray-600 dark:!text-gray-300"
+                              ? "font-medium text-gray-900! dark:text-white!"
+                              : "text-gray-600! dark:text-gray-300!"
                           }`}
                         >
                           {notification.message}
                         </p>
                         {notification.amount && (
-                          <p className="text-xs !text-gray-500 dark:!text-gray-400 mt-1">
+                          <p className="text-xs text-gray-500! dark:text-gray-400! mt-1">
                             Amount: {notification.amount}{" "}
                             {notification.currency}
                           </p>
                         )}
-                        <p className="text-xs !text-gray-400 dark:!text-gray-500 mt-1">
+                        <p className="text-xs text-gray-400! dark:text-gray-500! mt-1">
                           {new Date(notification.createdAt).toLocaleString()}
                         </p>
                       </div>
@@ -358,13 +356,13 @@ export function NotificationBell() {
                     {/* Only show X button for unread notifications */}
                     {!notification.read && (
                       <div
-                        className="ml-2 flex-shrink-0 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                        className="p-1 ml-2 transition-colors rounded cursor-pointer shrink-0 hover:bg-gray-200 dark:hover:bg-gray-700"
                         onClick={(e) =>
                           handleClearNotification(notification.id, e)
                         }
                         title="Mark as read"
                       >
-                        <X className="h-4 w-4 text-gray-400 hover:text-red-500 transition-colors" />
+                        <X className="w-4 h-4 text-gray-400 transition-colors hover:text-red-500" />
                       </div>
                     )}
                   </li>

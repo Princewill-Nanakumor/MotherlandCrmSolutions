@@ -39,13 +39,13 @@ export function PhoneNumberInput({
           country={country}
           value={value}
           onChange={onChange}
-          inputClass={`!pl-10 !h-10 !w-full !rounded-lg !text-sm !border ${
+          inputClass={`pl-10! h-10! w-full! rounded-lg! text-sm! border! ${
             error
-              ? "!border-red-500 focus:!border-red-500 focus:!ring-red-500 focus:!ring-2"
-              : "!border-gray-300 dark:!border-gray-600 focus:!ring-indigo-500 focus:!ring-2"
-          } placeholder-gray-500 dark:placeholder-gray-400 !text-gray-900 dark:!text-white bg-white dark:bg-gray-700 focus:outline-none focus:border-transparent transition-colors`}
+              ? "border-red-500! focus:border-red-500! focus:ring-red-500! focus:ring-2!"
+              : "border-gray-300! dark:border-gray-600! focus:ring-indigo-500! focus:ring-2!"
+          } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900! dark:text-white! bg-white dark:bg-gray-700 focus:outline-none focus:border-transparent transition-colors`}
           buttonClass="hidden"
-          containerClass="!w-full"
+          containerClass="w-full!"
           disabled={isLoading}
           placeholder="Phone Number"
           disableDropdown={true}

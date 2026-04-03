@@ -191,7 +191,7 @@ export function TableContent({
             className="w-1.5 h-1.5 rounded-full shrink-0"
             style={{ backgroundColor: statusColor }}
           />
-          <span className="text-xs truncate !text-black dark:!text-[var(--status-color)]">
+          <span className="text-xs truncate text-black! dark:text-[var(--status-color)]!">
             {statusName}
           </span>
         </Badge>
@@ -231,9 +231,7 @@ export function TableContent({
                 return (
                   <TableHead
                     key={generateUniqueKey("header", header.id)}
-                    className={`
-                      !text-gray-700 dark:!text-gray-300 font-semibold
-                      ${
+                    className={`text-gray-700! dark:text-gray-300! font-semibold${
                         isSelectColumn || isActionsColumn
                           ? "text-center"
                           : isCommentCountColumn

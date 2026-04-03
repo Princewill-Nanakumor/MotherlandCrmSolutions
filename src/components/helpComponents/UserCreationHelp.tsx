@@ -15,7 +15,7 @@ import {
 
 const UserCreationHelp: React.FC = () => {
   const [expandedSection, setExpandedSection] = useState<string | null>(
-    "overview"
+    "overview",
   );
 
   const toggleSection = (section: string) => {
@@ -29,32 +29,32 @@ const UserCreationHelp: React.FC = () => {
       icon: <Users className="w-5 h-5" />,
       content: (
         <div className="space-y-4">
-          <p className="!text-gray-700 dark:!text-gray-300">
+          <p className="text-gray-700! dark:text-gray-300!">
             User management allows you to create and manage team members.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="p-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
               <div className="flex items-start space-x-3">
                 <Crown className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-0.5" />
                 <div>
-                  <h4 className="font-medium !text-blue-900 dark:!text-blue-200">
+                  <h4 className="font-medium text-blue-900! dark:text-blue-200!">
                     ADMIN Role
                   </h4>
-                  <p className="text-sm !text-blue-800 dark:!text-blue-300 mt-1">
+                  <p className="text-sm text-blue-800! dark:text-blue-300! mt-1">
                     Full access to all features, can manage users, leads,
                     billing, and settings
                   </p>
                 </div>
               </div>
             </div>
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+            <div className="p-4 border border-green-200 rounded-lg bg-green-50 dark:bg-green-900/20 dark:border-green-800">
               <div className="flex items-start space-x-3">
                 <User className="w-6 h-6 text-green-600 dark:text-green-400 mt-0.5" />
                 <div>
-                  <h4 className="font-medium !text-green-900 dark:!text-green-200">
+                  <h4 className="font-medium text-green-900! dark:text-green-200!">
                     AGENT Role
                   </h4>
-                  <p className="text-sm !text-green-800 dark:!text-green-300 mt-1">
+                  <p className="text-sm text-green-800! dark:text-green-300! mt-1">
                     Can view and work on assigned leads, limited access to
                     settings
                   </p>
@@ -71,46 +71,46 @@ const UserCreationHelp: React.FC = () => {
       icon: <UserPlus className="w-5 h-5" />,
       content: (
         <div className="space-y-4">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <h4 className="font-medium !text-gray-900 dark:!text-white mb-3">
+          <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+            <h4 className="font-medium text-gray-900! dark:text-white! mb-3">
               Step-by-Step Process:
             </h4>
             <ol className="space-y-3 text-sm">
               <li className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
                   1
                 </span>
                 <div>
-                  <p className="font-medium !text-gray-900 dark:!text-white">
+                  <p className="font-medium text-gray-900! dark:text-white!">
                     Navigate to User Management
                   </p>
-                  <p className="!text-gray-600 dark:!text-gray-400">
+                  <p className="text-gray-600! dark:text-gray-400!">
                     Go to Dashboard → Users
                   </p>
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
                   2
                 </span>
                 <div>
-                  <p className="font-medium !text-gray-900 dark:!text-white">
+                  <p className="font-medium text-gray-900! dark:text-white!">
                     Click to Create User
                   </p>
-                  <p className="!text-gray-600 dark:!text-gray-400">
+                  <p className="text-gray-600! dark:text-gray-400!">
                     Look for the button with a user plus icon
                   </p>
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
                   3
                 </span>
                 <div>
-                  <p className="font-medium !text-gray-900 dark:!text-white">
+                  <p className="font-medium text-gray-900! dark:text-white!">
                     Fill in Personal Information
                   </p>
-                  <div className="mt-2 space-y-1 !text-gray-600 dark:!text-gray-400">
+                  <div className="mt-2 space-y-1 text-gray-600! dark:text-gray-400!">
                     <p>• First Name and Last Name</p>
                     <p>• Email Address (used for login)</p>
                     <p>• Phone Number</p>
@@ -120,14 +120,14 @@ const UserCreationHelp: React.FC = () => {
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-green-600 rounded-full shrink-0">
                   ✓
                 </span>
                 <div>
-                  <p className="font-medium !text-gray-900 dark:!text-white">
+                  <p className="font-medium text-gray-900! dark:text-white!">
                     Save User
                   </p>
-                  <p className="!text-gray-600 dark:!text-gray-400">
+                  <p className="text-gray-600! dark:text-gray-400!">
                     Click Create User to save the new user
                   </p>
                 </div>
@@ -143,27 +143,27 @@ const UserCreationHelp: React.FC = () => {
       icon: <Shield className="w-5 h-5" />,
       content: (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* ADMIN Role */}
-            <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-6">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="p-2 bg-purple-600 text-white rounded-lg">
+            <div className="p-6 border border-purple-200 rounded-lg bg-linear-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 dark:border-purple-800">
+              <div className="flex items-center mb-4 space-x-3">
+                <div className="p-2 text-white bg-purple-600 rounded-lg">
                   <Crown className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-semibold !text-purple-900 dark:!text-purple-200">
+                  <h4 className="text-lg font-semibold text-purple-900! dark:text-purple-200!">
                     ADMIN
                   </h4>
-                  <p className="text-sm !text-purple-700 dark:!text-purple-300">
+                  <p className="text-sm text-purple-700! dark:text-purple-300!">
                     Full system access
                   </p>
                 </div>
               </div>
               <div className="space-y-3">
-                <h5 className="font-medium !text-purple-900 dark:!text-purple-200">
+                <h5 className="font-medium text-purple-900! dark:text-purple-200!">
                   Permissions:
                 </h5>
-                <ul className="space-y-1 text-sm !text-purple-800 dark:!text-purple-300">
+                <ul className="space-y-1 text-sm text-purple-800! dark:text-purple-300!">
                   <li className="flex items-center space-x-2">
                     <CheckCircle className="w-4 h-4 text-green-600" />
                     <span>Create and manage users</span>
@@ -197,25 +197,25 @@ const UserCreationHelp: React.FC = () => {
             </div>
 
             {/* AGENT Role */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="p-2 bg-green-600 text-white rounded-lg">
+            <div className="p-6 border border-green-200 rounded-lg bg-linear-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 dark:border-green-800">
+              <div className="flex items-center mb-4 space-x-3">
+                <div className="p-2 text-white bg-green-600 rounded-lg">
                   <User className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-semibold !text-green-900 dark:!text-green-200">
+                  <h4 className="text-lg font-semibold text-green-900! dark:text-green-200!">
                     AGENT
                   </h4>
-                  <p className="text-sm !text-green-700 dark:!text-green-300">
+                  <p className="text-sm text-green-700! dark:text-green-300!">
                     Limited access for team members
                   </p>
                 </div>
               </div>
               <div className="space-y-3">
-                <h5 className="font-medium !text-green-900 dark:!text-green-200">
+                <h5 className="font-medium text-green-900! dark:text-green-200!">
                   Permissions:
                 </h5>
-                <ul className="space-y-1 text-sm !text-green-800 dark:!text-green-300">
+                <ul className="space-y-1 text-sm text-green-800! dark:text-green-300!">
                   <li className="flex items-center space-x-2">
                     <CheckCircle className="w-4 h-4 text-green-600" />
                     <span>View assigned leads only</span>
@@ -254,15 +254,17 @@ const UserCreationHelp: React.FC = () => {
   ];
 
   return (
-    <div className="w-full mx-auto p-6">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+    <div className="w-full p-6 mx-auto">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6 rounded-t-lg">
+        <div className="p-6 text-white rounded-t-lg bg-linear-to-r from-green-600 to-blue-600">
           <div className="flex items-center space-x-3">
             <Users className="w-8 h-8" />
             <div>
-              <h1 className="text-2xl font-bold !text-gray-900 dark:!text-white">User Creation & Management</h1>
-              <p className="text-green-100 mt-1">
+              <h1 className="text-2xl font-bold text-gray-900! dark:text-white!">
+                User Creation & Management
+              </h1>
+              <p className="mt-1 text-green-100">
                 Learn how to create and manage team members in your CRM
               </p>
             </div>
@@ -275,25 +277,25 @@ const UserCreationHelp: React.FC = () => {
             {sections.map((section) => (
               <div
                 key={section.id}
-                className="border border-gray-200 dark:border-gray-700 rounded-lg"
+                className="border border-gray-200 rounded-lg dark:border-gray-700"
               >
                 <button
                   onClick={() => toggleSection(section.id)}
-                  className="w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 rounded-lg"
+                  className="w-full p-4 text-left transition-colors duration-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="text-green-600 dark:text-green-400">
                         {section.icon}
                       </div>
-                      <h3 className="text-lg font-medium !text-gray-900 dark:!text-white">
+                      <h3 className="text-lg font-medium text-gray-900! dark:text-white!">
                         {section.title}
                       </h3>
                     </div>
                     {expandedSection === section.id ? (
-                      <ChevronDown className="w-5 h-5 !text-gray-500 dark:!text-gray-400" />
+                      <ChevronDown className="w-5 h-5 text-gray-500! dark:text-gray-400!" />
                     ) : (
-                      <ChevronRight className="w-5 h-5 !text-gray-500 dark:!text-gray-400" />
+                      <ChevronRight className="w-5 h-5 text-gray-500! dark:text-gray-400!" />
                     )}
                   </div>
                 </button>

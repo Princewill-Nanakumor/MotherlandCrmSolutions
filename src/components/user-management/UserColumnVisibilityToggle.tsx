@@ -49,21 +49,25 @@ export function UserColumnVisibilityToggle({
         <Button
           variant="outline"
           size="sm"
-          className="ml-auto h-8 gap-2 !bg-white dark:!bg-gray-800 !border-gray-300 dark:!border-gray-600 !text-gray-900 dark:!text-white hover:!bg-gray-50 dark:hover:!bg-gray-700"
+          className="ml-auto h-8 gap-2 bg-white! dark:bg-gray-800! border-gray-300! dark:border-gray-600! text-gray-900! dark:text-white! hover:bg-gray-50! dark:hover:bg-gray-700!"
           title="Toggle columns"
         >
-          <Settings2 className="h-4 w-4 !text-gray-900 dark:!text-white" />
-          <span className="hidden sm:inline !text-gray-900 dark:!text-white">Columns</span>
-          <span className="hidden sm:inline text-xs !text-gray-600 dark:!text-gray-400">
+          <Settings2 className="h-4 w-4 text-gray-900! dark:text-white!" />
+          <span className="hidden sm:inline text-gray-900! dark:text-white!">
+            Columns
+          </span>
+          <span className="hidden sm:inline text-xs text-gray-600! dark:text-gray-400!">
             ({visibleColumnsCount}/{totalOptionalColumns})
           </span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
-        className="w-[200px] !bg-white dark:!bg-[#1f2937] !border-gray-200 dark:!border-gray-700 !text-gray-900 dark:!text-gray-100"
+      <DropdownMenuContent
+        align="end"
+        className="w-50 bg-white! dark:bg-[#1f2937]! border-gray-200! dark:border-gray-700! text-gray-900! dark:text-gray-100!"
       >
-        <DropdownMenuLabel className="!text-gray-900 dark:!text-white">Toggle columns</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-gray-900! dark:text-white!">
+          Toggle columns
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {table
           .getAllColumns()
@@ -82,10 +86,12 @@ export function UserColumnVisibilityToggle({
             return (
               <DropdownMenuCheckboxItem
                 key={column.id}
-                className="capitalize cursor-pointer !text-gray-900 dark:!text-white"
+                className="capitalize cursor-pointer text-gray-900! dark:text-white!"
                 checked={isVisible}
                 onCheckedChange={(value) => {
-                  const newVisibility = { ...table.getState().columnVisibility };
+                  const newVisibility = {
+                    ...table.getState().columnVisibility,
+                  };
                   if (value) {
                     delete newVisibility[column.id];
                   } else {
@@ -95,13 +101,15 @@ export function UserColumnVisibilityToggle({
                 }}
                 disabled={column.id === "actions"}
               >
-                <div className="flex items-center gap-2 w-full">
+                <div className="flex items-center w-full gap-2">
                   {isVisible ? (
-                    <Eye className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    <Eye className="w-4 h-4 text-green-600 dark:text-green-400" />
                   ) : (
-                    <EyeOff className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    <EyeOff className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                   )}
-                  <span className="!text-gray-900 dark:!text-white">{label}</span>
+                  <span className="text-gray-900! dark:text-white!">
+                    {label}
+                  </span>
                 </div>
               </DropdownMenuCheckboxItem>
             );
@@ -111,7 +119,7 @@ export function UserColumnVisibilityToggle({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start h-8 text-xs !text-gray-900 dark:!text-white"
+            className="w-full justify-start h-8 text-xs text-gray-900! dark:text-white!"
             onClick={() => {
               table.setColumnVisibility({});
             }}

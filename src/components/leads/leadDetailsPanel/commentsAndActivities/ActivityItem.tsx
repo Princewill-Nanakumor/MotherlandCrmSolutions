@@ -42,10 +42,10 @@ export const ActivityItem: FC<ActivityItemProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-1">
             <div className="flex items-center gap-1 flex-wrap min-w-0 flex-1">
-              <span className="text-sm font-normal !text-gray-700 dark:!text-gray-200">
+              <span className="text-sm font-normal text-gray-700! dark:text-gray-200!">
                 {getUserDisplayName(activity.createdBy)}
               </span>
-              <span className="text-sm font-semibold !text-gray-900 dark:!text-white leading-relaxed">
+              <span className="text-sm font-semibold text-gray-900! dark:text-white! leading-relaxed">
                 {getActivityDescription(activity)}
 
                 {/* Status change display */}
@@ -68,7 +68,7 @@ export const ActivityItem: FC<ActivityItemProps> = ({
                           >
                             {activity.metadata.oldStatus}
                           </span>
-                          <ArrowRight className="inline w-3 h-3 mx-1 !text-gray-500 dark:!text-gray-400" />
+                          <ArrowRight className="inline w-3 h-3 mx-1 text-gray-500! dark:text-gray-400!" />
                           <span
                             className="inline-block font-normal px-2 py-1 rounded-md text-xs"
                             style={{
@@ -91,7 +91,7 @@ export const ActivityItem: FC<ActivityItemProps> = ({
                 {activity.type === "ASSIGNMENT" && (
                   <>
                     {activity.metadata?.assignedTo && (
-                      <span className="font-normal !text-gray-700 dark:!text-gray-200">
+                      <span className="font-normal text-gray-700! dark:text-gray-200!">
                         {typeof activity.metadata.assignedTo === "object" &&
                         activity.metadata.assignedTo.firstName
                           ? `${activity.metadata.assignedTo.firstName} ${activity.metadata.assignedTo.lastName}`
@@ -102,7 +102,7 @@ export const ActivityItem: FC<ActivityItemProps> = ({
                     )}
                     {activity.metadata?.assignedFrom &&
                       !activity.metadata?.assignedTo && (
-                        <span className="font-normal !text-gray-700 dark:!text-gray-200">
+                        <span className="font-normal text-gray-700! dark:text-gray-200!">
                           {typeof activity.metadata.assignedFrom === "object" &&
                           activity.metadata.assignedFrom.firstName
                             ? `${activity.metadata.assignedFrom.firstName} ${activity.metadata.assignedFrom.lastName}`
@@ -117,14 +117,14 @@ export const ActivityItem: FC<ActivityItemProps> = ({
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
-              <span className="text-xs !text-gray-600 dark:!text-gray-400 font-sans bg-gray-100 dark:bg-gray-700 px-2 py-2 rounded-md border border-gray-200 dark:border-gray-600 whitespace-nowrap">
+              <span className="text-xs text-gray-600! dark:text-gray-400! font-sans bg-gray-100 dark:bg-gray-700 px-2 py-2 rounded-md border border-gray-200 dark:border-gray-600 whitespace-nowrap">
                 {formatDate(activity.createdAt)}
               </span>
               {isAdmin && onDelete && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 !text-gray-500 hover:!text-red-500 dark:!text-gray-400 dark:hover:!text-red-400"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-gray-500! hover:text-red-500! dark:text-gray-400! dark:hover:text-red-400!"
                   onClick={() => onDelete(activity._id)}
                   disabled={isDeleting || isDeleteDisabled}
                 >
@@ -140,16 +140,16 @@ export const ActivityItem: FC<ActivityItemProps> = ({
 
           {/* Reminder metadata */}
           {activity.type.startsWith("REMINDER_") && activity.metadata && (
-            <div className="mt-2 text-sm !text-gray-600 dark:!text-gray-300">
+            <div className="mt-2 text-sm text-gray-600! dark:text-gray-300!">
               <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border-l-4 border-blue-300 dark:border-blue-500 shadow-sm">
-                <span className="font-semibold !text-blue-700 dark:!text-blue-300 uppercase tracking-wide text-xs mr-1">
+                <span className="font-semibold text-blue-700! dark:text-blue-300! uppercase tracking-wide text-xs mr-1">
                   Reminder Details:
                 </span>
                 <div className="mt-1 space-y-1">
                   {activity.metadata.reminderTitle && (
                     <div className="text-xs">
                       <span className="font-medium">Title:</span>{" "}
-                      <span className="!text-gray-700 dark:!text-gray-200">
+                      <span className="text-gray-700! dark:text-gray-200!">
                         {activity.metadata.reminderTitle}
                       </span>
                     </div>
@@ -157,7 +157,7 @@ export const ActivityItem: FC<ActivityItemProps> = ({
                   {activity.metadata.reminderType && (
                     <div className="text-xs">
                       <span className="font-medium">Type:</span>{" "}
-                      <span className="!text-gray-700 dark:!text-gray-200">
+                      <span className="text-gray-700! dark:text-gray-200!">
                         {activity.metadata.reminderType}
                       </span>
                     </div>
@@ -166,7 +166,7 @@ export const ActivityItem: FC<ActivityItemProps> = ({
                     activity.metadata.reminderTime && (
                       <div className="text-xs">
                         <span className="font-medium">Due:</span>{" "}
-                        <span className="!text-gray-700 dark:!text-gray-200">
+                        <span className="text-gray-700! dark:text-gray-200!">
                           {new Date(
                             activity.metadata.reminderDate
                           ).toLocaleDateString()}{" "}
@@ -182,9 +182,9 @@ export const ActivityItem: FC<ActivityItemProps> = ({
           {/* Changes metadata */}
           {activity.metadata?.changes &&
             activity.metadata.changes.length > 0 && (
-              <div className="mt-2 text-sm !text-gray-600 dark:!text-gray-300">
+              <div className="mt-2 text-sm text-gray-600! dark:text-gray-300!">
                 <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border-l-4 border-blue-300 dark:border-blue-500 shadow-sm">
-                  <span className="font-semibold !text-blue-700 dark:!text-blue-300 uppercase tracking-wide text-xs mr-1">
+                  <span className="font-semibold text-blue-700! dark:text-blue-300! uppercase tracking-wide text-xs mr-1">
                     Changes:
                   </span>
                   <div className="mt-1 space-y-1">
@@ -195,7 +195,7 @@ export const ActivityItem: FC<ActivityItemProps> = ({
                           {change.oldValue || "empty"}
                         </span>{" "}
                         <ArrowRight className="inline w-2 h-2 mx-1" />{" "}
-                        <span className="!text-gray-700 dark:!text-gray-200">
+                        <span className="text-gray-700! dark:text-gray-200!">
                           {change.newValue || "empty"}
                         </span>
                       </div>

@@ -34,7 +34,7 @@ export const LoadingSpinner = () => (
   <div className="flex justify-center items-center h-screen">
     <div className="relative w-16 h-16 flex items-center justify-center">
       <div className="absolute inset-0 border-4 border-transparent border-t-blue-400 border-r-purple-500 rounded-full animate-spin w-16 h-16"></div>
-      <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
+      <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
         <Shield size={28} className="text-white" />
       </div>
     </div>
@@ -46,11 +46,11 @@ export const SessionRefreshSpinner = () => (
     <div className="text-center">
       <div className="relative w-16 h-16 flex items-center justify-center mx-auto mb-4">
         <div className="absolute inset-0 border-4 border-transparent border-t-blue-400 border-r-purple-500 rounded-full animate-spin w-16 h-16"></div>
-        <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
+        <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
           <RefreshCw size={28} className="text-white" />
         </div>
       </div>
-      <p className="!text-gray-600 dark:!text-gray-400">Refreshing session...</p>
+      <p className="text-gray-600! dark:text-gray-400!">Refreshing session...</p>
     </div>
   </div>
 );
@@ -65,10 +65,10 @@ export const NetworkStatus = ({ isOnline }: { isOnline: boolean }) => (
           <WifiOff className="h-12 w-12 text-red-500 mx-auto" />
         )}
       </div>
-      <h3 className="text-lg font-medium !text-gray-900 dark:!text-white mb-2">
+      <h3 className="text-lg font-medium text-gray-900! dark:text-white! mb-2">
         {isOnline ? "Connected" : "No Internet Connection"}
       </h3>
-      <p className="!text-gray-500 dark:!text-gray-400 mb-4">
+      <p className="text-gray-500! dark:text-gray-400! mb-4">
         {isOnline
           ? "You're back online. Refreshing data..."
           : "Please check your internet connection and try again."}
@@ -130,15 +130,15 @@ export class ErrorBoundary extends Component<
             <div className="mb-4">
               <Shield className="h-12 w-12 text-red-500 mx-auto" />
             </div>
-            <h3 className="text-lg font-medium !text-gray-900 dark:!text-white mb-2">
+            <h3 className="text-lg font-medium text-gray-900! dark:text-white! mb-2">
               Something went wrong
             </h3>
-            <p className="!text-gray-500 dark:!text-gray-400 mb-4">
+            <p className="text-gray-500! dark:text-gray-400! mb-4">
               {this.state.error?.message || "An unexpected error occurred"}
             </p>
             <button
               onClick={this.handleRetry}
-              className="px-4 py-2 bg-blue-500 !text-white rounded hover:bg-blue-600 transition-colors"
+              className="px-4 py-2 bg-blue-500 text-white! rounded hover:bg-blue-600 transition-colors"
             >
               Try Again
             </button>

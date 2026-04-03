@@ -4,7 +4,17 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash, KeyRound, Eye, ArrowUpDown, ArrowUp, ArrowDown, PhoneCall, Shield, User as UserIcon } from "lucide-react";
+import {
+  Trash,
+  KeyRound,
+  Eye,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  PhoneCall,
+  Shield,
+  User as UserIcon,
+} from "lucide-react";
 
 export interface User {
   id: string;
@@ -62,33 +72,40 @@ export function useUserTableColumns({
   const columns: ColumnDef<User>[] = [
     {
       id: "name",
-      accessorFn: (row) => `${row.firstName || ""} ${row.lastName || ""}`.trim(),
+      accessorFn: (row) =>
+        `${row.firstName || ""} ${row.lastName || ""}`.trim(),
       header: ({ column }) => (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting()}
-          className="h-auto p-0 hover:bg-transparent !text-gray-700 dark:!text-white font-semibold cursor-pointer"
+          className="h-auto p-0 hover:bg-transparent text-gray-700! dark:text-white! font-semibold cursor-pointer"
         >
           <div className="flex items-center gap-2">
             Name
             {column.getIsSorted() === "asc" ? (
-              <ArrowUp className="h-4 w-4 !text-gray-600 dark:!text-gray-400" />
+              <ArrowUp className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
             ) : column.getIsSorted() === "desc" ? (
-              <ArrowDown className="h-4 w-4 !text-gray-600 dark:!text-gray-400" />
+              <ArrowDown className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
             ) : (
-              <ArrowUpDown className="h-4 w-4 !text-gray-600 dark:!text-gray-400" />
+              <ArrowUpDown className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
             )}
           </div>
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="!text-gray-900 dark:!text-white">
+        <div className="text-gray-900! dark:text-white!">
           {row.original.firstName} {row.original.lastName}
         </div>
       ),
       sortingFn: (rowA, rowB) => {
-        const aName = `${rowA.original.firstName || ""} ${rowA.original.lastName || ""}`.trim().toLowerCase();
-        const bName = `${rowB.original.firstName || ""} ${rowB.original.lastName || ""}`.trim().toLowerCase();
+        const aName =
+          `${rowA.original.firstName || ""} ${rowA.original.lastName || ""}`
+            .trim()
+            .toLowerCase();
+        const bName =
+          `${rowB.original.firstName || ""} ${rowB.original.lastName || ""}`
+            .trim()
+            .toLowerCase();
         return aName.localeCompare(bName, undefined, { sensitivity: "base" });
       },
       enableSorting: true,
@@ -98,7 +115,9 @@ export function useUserTableColumns({
       accessorKey: "email",
       header: "Email",
       cell: ({ row }) => (
-        <div className="!text-gray-900 dark:!text-white">{row.original.email}</div>
+        <div className="text-gray-900! dark:text-white!">
+          {row.original.email}
+        </div>
       ),
       enableSorting: true,
     },
@@ -110,23 +129,23 @@ export function useUserTableColumns({
         const isAdmin = row.original.role === "ADMIN";
         return (
           <div className="flex items-center gap-2">
-        <Badge
+            <Badge
               variant={isAdmin ? "default" : "outline"}
-              className={`dark:border-gray-600 dark:!text-white ${
-                isAdmin 
-                  ? "bg-indigo-600 text-white border-indigo-600" 
+              className={`dark:border-gray-600 dark:text-white!${
+                isAdmin
+                  ? "bg-indigo-600 text-white border-indigo-600"
                   : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
               }`}
             >
               <div className="flex items-center gap-1.5">
                 {isAdmin ? (
-                  <Shield className="h-3 w-3" />
+                  <Shield className="w-3 h-3" />
                 ) : (
-                  <UserIcon className="h-3 w-3" />
+                  <UserIcon className="w-3 h-3" />
                 )}
                 <span>{row.original.role}</span>
               </div>
-        </Badge>
+            </Badge>
           </div>
         );
       },
@@ -139,7 +158,7 @@ export function useUserTableColumns({
       cell: ({ row }) => (
         <Badge
           variant={row.original.status === "ACTIVE" ? "success" : "secondary"}
-          className="dark:border-gray-600 dark:!text-white"
+          className="dark:border-gray-600 dark:text-white!"
         >
           {row.original.status}
         </Badge>
@@ -153,22 +172,22 @@ export function useUserTableColumns({
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting()}
-          className="h-auto p-0 hover:bg-transparent !text-gray-700 dark:!text-white font-semibold cursor-pointer"
+          className="h-auto p-0 hover:bg-transparent text-gray-700! dark:text-white! font-semibold cursor-pointer"
         >
           <div className="flex items-center gap-2">
             Created
             {column.getIsSorted() === "asc" ? (
-              <ArrowUp className="h-4 w-4 !text-gray-600 dark:!text-gray-400" />
+              <ArrowUp className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
             ) : column.getIsSorted() === "desc" ? (
-              <ArrowDown className="h-4 w-4 !text-gray-600 dark:!text-gray-400" />
+              <ArrowDown className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
             ) : (
-              <ArrowUpDown className="h-4 w-4 !text-gray-600 dark:!text-gray-400" />
+              <ArrowUpDown className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
             )}
           </div>
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="!text-gray-900 dark:!text-white">
+        <div className="text-gray-900! dark:text-white!">
           {formatDate(row.original.createdAt)}
         </div>
       ),
@@ -186,28 +205,32 @@ export function useUserTableColumns({
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting()}
-          className="h-auto p-0 hover:bg-transparent !text-gray-700 dark:!text-white font-semibold cursor-pointer"
+          className="h-auto p-0 hover:bg-transparent text-gray-700! dark:text-white! font-semibold cursor-pointer"
         >
           <div className="flex items-center gap-2">
             Last Login
             {column.getIsSorted() === "asc" ? (
-              <ArrowUp className="h-4 w-4 !text-gray-600 dark:!text-gray-400" />
+              <ArrowUp className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
             ) : column.getIsSorted() === "desc" ? (
-              <ArrowDown className="h-4 w-4 !text-gray-600 dark:!text-gray-400" />
+              <ArrowDown className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
             ) : (
-              <ArrowUpDown className="h-4 w-4 !text-gray-600 dark:!text-gray-400" />
+              <ArrowUpDown className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
             )}
           </div>
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="!text-gray-900 dark:!text-white">
+        <div className="text-gray-900! dark:text-white!">
           {formatDate(row.original.lastLogin)}
         </div>
       ),
       sortingFn: (rowA, rowB) => {
-        const aDate = rowA.original.lastLogin ? new Date(rowA.original.lastLogin).getTime() : 0;
-        const bDate = rowB.original.lastLogin ? new Date(rowB.original.lastLogin).getTime() : 0;
+        const aDate = rowA.original.lastLogin
+          ? new Date(rowA.original.lastLogin).getTime()
+          : 0;
+        const bDate = rowB.original.lastLogin
+          ? new Date(rowB.original.lastLogin).getTime()
+          : 0;
         return aDate - bDate;
       },
       enableSorting: true,
@@ -221,7 +244,7 @@ export function useUserTableColumns({
       cell: ({ row }) => {
         const isAdmin = row.original.role === "ADMIN";
         return (
-        <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2">
             {/* View Details - Always show */}
             <Button
               variant="outline"
@@ -233,7 +256,7 @@ export function useUserTableColumns({
               className="hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white"
               title="View Details"
             >
-              <Eye className="h-4 w-4" />
+              <Eye className="w-4 h-4" />
             </Button>
             {/* View Call Logs - Always show */}
             <Button
@@ -243,42 +266,42 @@ export function useUserTableColumns({
                 e.stopPropagation();
                 onViewCallLogs?.(row.original);
               }}
-              className="hover:bg-blue-50 dark:hover:bg-blue-900/20 dark:border-gray-600 dark:text-white text-blue-600 dark:text-blue-400"
+              className="text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 dark:border-gray-600 dark:text-white "
               title="View Call Logs"
             >
-              <PhoneCall className="h-4 w-4" />
+              <PhoneCall className="w-4 h-4" />
             </Button>
             {/* Reset Password - Hide for admin users */}
             {!isAdmin && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onResetPassword(row.original.id);
-            }}
-            className="hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white"
-            title="Reset Password"
-          >
-            <KeyRound className="h-4 w-4" />
-          </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onResetPassword(row.original.id);
+                }}
+                className="hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white"
+                title="Reset Password"
+              >
+                <KeyRound className="w-4 h-4" />
+              </Button>
             )}
             {/* Delete User - Hide for admin users */}
             {!isAdmin && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteUser(row.original.id);
-            }}
-            className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-gray-600"
-            title="Delete User"
-          >
-            <Trash className="h-4 w-4" />
-          </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteUser(row.original.id);
+                }}
+                className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-gray-600"
+                title="Delete User"
+              >
+                <Trash className="w-4 h-4" />
+              </Button>
             )}
-        </div>
+          </div>
         );
       },
       enableSorting: false,

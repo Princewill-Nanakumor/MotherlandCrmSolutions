@@ -98,9 +98,7 @@ export function UserTableContent({
                 return (
                   <TableHead
                     key={generateUniqueKey("header", header.id)}
-                    className={`
-                      text-gray-700! dark:text-gray-300! font-semibold
-                      ${
+                    className={`text-gray-700! dark:text-gray-300! font-semibold${
                         isActionsColumn || isRoleColumn || isStatusColumn
                           ? "text-center"
                           : "text-left"

@@ -1,5 +1,7 @@
 // /Users/safeconnection/Downloads/drivecrm/src/libs/auth.ts
+import type { Session } from "next-auth";
 import { NextAuthOptions } from "next-auth";
+import { SESSION_MAX_AGE_SECONDS } from "@/lib/sessionMaxAge";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectMongoDB } from "./dbConfig";
@@ -151,11 +153,11 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60, // 24 hours
+    maxAge: SESSION_MAX_AGE_SECONDS,
     updateAge: 60 * 60, // Ignored for JWT
   },
   jwt: {
-    maxAge: 24 * 60 * 60, // 24 hours - explicit; NextAuth default is 30 days
+    maxAge: SESSION_MAX_AGE_SECONDS,
   },
   pages: {
     signIn: "/login",
@@ -179,7 +181,7 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, user, trigger, session }) {
       const nowTimestamp = Math.floor(Date.now() / 1000);
-      const maxAge = 24 * 60 * 60; // 24 hours
+      const maxAge = SESSION_MAX_AGE_SECONDS;
       
       if (user) {
         // New token - set user data (user just logged in)
@@ -240,7 +242,7 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       const nowSec = Math.floor(Date.now() / 1000);
-      const maxAge = 24 * 60 * 60;
+      const maxAge = SESSION_MAX_AGE_SECONDS;
       const expiredByExp =
         typeof token.exp === "number" &&
         token.exp > 0 &&
@@ -256,31 +258,33 @@ export const authOptions: NextAuthOptions = {
         expiredByIat ||
         expiredByLogin;
 
-      // NextAuth client: any truthy session => "authenticated". Must return null when JWT is invalid/expired.
+      // Invalid JWT: must not return null — the client runs Object.keys(data) on the JSON body and
+      // throws "Cannot convert undefined or null to object" when data is null. Empty {} is treated as no session.
       if (invalid) {
-        return null as unknown as typeof session;
+        return {} as typeof session;
       }
 
-      if (token && session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role ?? "";
-        session.user.permissions = token.permissions ?? [];
-        session.user.status = token.status ?? "";
-        session.user.firstName = token.firstName ?? "";
-        session.user.lastName = token.lastName ?? "";
-        session.user.phoneNumber = token.phoneNumber ?? "";
-        session.user.country = token.country ?? "";
-        session.user.adminId = token.adminId ?? undefined;
-        session.user.canViewPhoneNumbers = token.canViewPhoneNumbers ?? false;
-        
-        // Ensure session.expires reflects the absolute absolute expiration (24h from login)
-        // rather than the sliding token.exp which NextAuth might extend.
-        if (token.loginTimestamp) {
-          session.expires = new Date((token.loginTimestamp as number + maxAge) * 1000).toISOString();
-        } else if (token.exp) {
-          session.expires = new Date(token.exp * 1000).toISOString();
-        }
+      // Credentials/JWT: ensure user exists (NextAuth can omit session.user for some strategies).
+      if (!session.user) {
+        session.user = {} as Session["user"];
       }
+      session.user.id = token.id;
+      session.user.role = token.role ?? "";
+      session.user.permissions = token.permissions ?? [];
+      session.user.status = token.status ?? "";
+      session.user.firstName = token.firstName ?? "";
+      session.user.lastName = token.lastName ?? "";
+      session.user.phoneNumber = token.phoneNumber ?? "";
+      session.user.country = token.country ?? "";
+      session.user.adminId = token.adminId ?? undefined;
+      session.user.canViewPhoneNumbers = token.canViewPhoneNumbers ?? false;
+
+      if (token.loginTimestamp) {
+        session.expires = new Date((token.loginTimestamp as number + maxAge) * 1000).toISOString();
+      } else if (token.exp) {
+        session.expires = new Date(token.exp * 1000).toISOString();
+      }
+
       return session;
     },
   },

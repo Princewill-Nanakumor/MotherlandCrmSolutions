@@ -110,19 +110,19 @@ export function AssignLeadsDialog({
               background-color: rgb(55 65 81) !important; /* gray-700 */
             }
             /* Force gradient buttons to display correctly - override Button component default variant */
-            button[data-slot="button"][class*="bg-gradient-to-r"],
-            .assign-dialog button[data-slot="button"][class*="bg-gradient-to-r"] {
+            button[data-slot="button"][class*="bg-linear-to-r"],
+            .assign-dialog button[data-slot="button"][class*="bg-linear-to-r"] {
               background-image: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
               background-color: transparent !important;
               border-color: transparent !important;
             }
-            button[data-slot="button"][class*="bg-gradient-to-r"]:hover,
-            .assign-dialog button[data-slot="button"][class*="bg-gradient-to-r"]:hover {
+            button[data-slot="button"][class*="bg-linear-to-r"]:hover,
+            .assign-dialog button[data-slot="button"][class*="bg-linear-to-r"]:hover {
               background-image: linear-gradient(to right, rgb(67 56 202), rgb(126 34 206)) !important;
               background-color: transparent !important;
             }
-            button[data-slot="button"][class*="bg-gradient-to-r"]:not(:disabled),
-            .assign-dialog button[data-slot="button"][class*="bg-gradient-to-r"]:not(:disabled) {
+            button[data-slot="button"][class*="bg-linear-to-r"]:not(:disabled),
+            .assign-dialog button[data-slot="button"][class*="bg-linear-to-r"]:not(:disabled) {
               color: white !important;
             }
           `,

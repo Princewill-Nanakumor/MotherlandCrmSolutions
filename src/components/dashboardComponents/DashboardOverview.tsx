@@ -8,13 +8,13 @@ import { useUsersData, useLeadsStats } from "@/hooks/useDashboardData";
 
 // Loading skeleton for stat cards
 const StatCardSkeleton = () => (
-  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+  <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 animate-pulse">
     <div className="flex items-center justify-between">
-      <div className="min-h-[60px] flex flex-col justify-center">
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2"></div>
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+      <div className="flex flex-col justify-center min-h-15">
+        <div className="w-24 h-4 mb-2 bg-gray-200 rounded dark:bg-gray-700"></div>
+        <div className="w-16 h-6 bg-gray-200 rounded dark:bg-gray-700"></div>
       </div>
-      <div className="h-12 w-12 bg-gray-100 dark:bg-gray-700 rounded-lg"></div>
+      <div className="w-12 h-12 bg-gray-100 rounded-lg dark:bg-gray-700"></div>
     </div>
   </div>
 );
@@ -35,7 +35,7 @@ export default function DashboardOverview({
 
   if (status === "loading") {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex items-center justify-center h-screen">
         <p className="text-gray-700 dark:text-gray-300">Loading dashboard...</p>
       </div>
     );
@@ -61,10 +61,10 @@ export default function DashboardOverview({
       {/* Dashboard Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold !text-gray-900 dark:!text-white">
+          <h1 className="text-2xl font-bold text-gray-900! dark:text-white!">
             Dashboard Overview
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
             Welcome back, {session?.user?.firstName || "User"}
           </p>
         </div>
@@ -73,14 +73,14 @@ export default function DashboardOverview({
       {/* Statistics Cards Grid */}
       {isAdmin ? (
         // Admin Dashboard - All 4 cards in grid
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {/* Total Leads Card */}
           {shouldShowStatsSkeleton ? (
             <StatCardSkeleton />
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <div className="min-h-[60px] flex flex-col justify-center">
+                <div className="flex flex-col justify-center min-h-15">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     Total Leads
                   </p>
@@ -88,8 +88,8 @@ export default function DashboardOverview({
                     {stats.total.toLocaleString()}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                  <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg dark:bg-blue-900">
+                  <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
             </div>
@@ -99,9 +99,9 @@ export default function DashboardOverview({
           {isLoadingUsers ? (
             <StatCardSkeleton />
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <div className="min-h-[60px] flex flex-col justify-center">
+                <div className="flex flex-col justify-center min-h-15">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     Active Users
                   </p>
@@ -109,8 +109,8 @@ export default function DashboardOverview({
                     {activeUsers.length.toLocaleString()}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
-                  <Users className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-lg dark:bg-yellow-900">
+                  <Users className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                 </div>
               </div>
             </div>
@@ -120,9 +120,9 @@ export default function DashboardOverview({
           {shouldShowStatsSkeleton ? (
             <StatCardSkeleton />
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <div className="min-h-[60px] flex flex-col justify-center">
+                <div className="flex flex-col justify-center min-h-15">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     Assigned Leads
                   </p>
@@ -130,8 +130,8 @@ export default function DashboardOverview({
                     {stats.assigned.toLocaleString()}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg dark:bg-green-900">
+                  <BarChart3 className="w-6 h-6 text-green-600 dark:text-green-400" />
                 </div>
               </div>
             </div>
@@ -141,9 +141,9 @@ export default function DashboardOverview({
           {shouldShowStatsSkeleton ? (
             <StatCardSkeleton />
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <div className="min-h-[60px] flex flex-col justify-center">
+                <div className="flex flex-col justify-center min-h-15">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     Unassigned Leads
                   </p>
@@ -151,8 +151,8 @@ export default function DashboardOverview({
                     {stats.unassigned.toLocaleString()}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
-                  <Search className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                <div className="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg dark:bg-orange-900">
+                  <Search className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
             </div>
@@ -164,9 +164,9 @@ export default function DashboardOverview({
           {shouldShowStatsSkeleton ? (
             <StatCardSkeleton />
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <div className="min-h-[60px] flex flex-col justify-center">
+                <div className="flex flex-col justify-center min-h-15">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     My Assigned Leads
                   </p>
@@ -174,8 +174,8 @@ export default function DashboardOverview({
                     {stats.myLeads.toLocaleString()}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                  <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg dark:bg-blue-900">
+                  <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
             </div>

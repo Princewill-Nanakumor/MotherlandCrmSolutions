@@ -56,34 +56,34 @@ const activityTypeIcon = (type: string) => {
   switch (type) {
     case "CREATE":
       return (
-        <Activity className="h-4 w-4 text-green-600 dark:text-green-400" />
+        <Activity className="w-4 h-4 text-green-600 dark:text-green-400" />
       );
     case "UPDATE":
-      return <Settings className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
+      return <Settings className="w-4 h-4 text-blue-600 dark:text-blue-400" />;
     case "DELETE":
-      return <Activity className="h-4 w-4 text-red-600 dark:text-red-400" />;
+      return <Activity className="w-4 h-4 text-red-600 dark:text-red-400" />;
     case "STATUS_CHANGE":
       return (
-        <TrendingUp className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+        <TrendingUp className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
       );
     case "ASSIGNMENT":
       return (
-        <UserCheck className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+        <UserCheck className="w-4 h-4 text-purple-600 dark:text-purple-400" />
       );
     case "COMMENT":
       return (
-        <MessageSquare className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+        <MessageSquare className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
       );
     case "USER_LOGIN":
       return (
-        <User className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+        <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
       );
     case "USER_LOGOUT":
       return (
-        <LogOut className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+        <LogOut className="w-4 h-4 text-orange-600 dark:text-orange-400" />
       );
     default:
-      return <Activity className="h-4 w-4 text-gray-600 dark:text-gray-400" />;
+      return <Activity className="w-4 h-4 text-gray-600 dark:text-gray-400" />;
   }
 };
 
@@ -126,7 +126,7 @@ const getTimeColor = (timestamp: string) => {
   const date = new Date(timestamp);
   const now = new Date();
   const diffInHours = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    (now.getTime() - date.getTime()) / (1000 * 60 * 60),
   );
 
   if (diffInHours < 1) return "text-green-600 dark:text-green-400";
@@ -137,12 +137,12 @@ const getTimeColor = (timestamp: string) => {
 
 export default function ActivitiesList({ activities }: ActivitiesListProps) {
   return (
-    <Card className=" bg-white/70 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl">
+    <Card className="border-gray-200 shadow-xl  bg-white/70 dark:bg-gray-800 dark:border-gray-700">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-white">
-          <Activity className="h-5 w-5" />
+          <Activity className="w-5 h-5" />
           <span>Recent Activities</span>
-          <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+          <Badge className="text-blue-800 bg-blue-100 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
             {activities.length}
           </Badge>
         </CardTitle>
@@ -150,9 +150,9 @@ export default function ActivitiesList({ activities }: ActivitiesListProps) {
       <CardContent>
         <div className="space-y-4">
           {activities.length === 0 ? (
-            <div className="text-center py-8">
-              <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 dark:text-gray-400 mb-2">
+            <div className="py-8 text-center">
+              <Activity className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <p className="mb-2 text-gray-500 dark:text-gray-400">
                 No activities found
               </p>
               <p className="text-sm text-gray-400 dark:text-gray-500">
@@ -163,31 +163,31 @@ export default function ActivitiesList({ activities }: ActivitiesListProps) {
             activities.map((activity) => (
               <div
                 key={activity._id}
-                className="flex items-start space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg backdrop-blur-lg bg-white/50 dark:bg-gray-800/50 hover:bg-white/70 dark:hover:bg-gray-800/70 transition-all duration-200"
+                className="flex items-start p-4 space-x-4 transition-all duration-200 border border-gray-200 rounded-lg dark:border-gray-700 backdrop-blur-lg bg-white/50 dark:bg-gray-800/50 hover:bg-white/70 dark:hover:bg-gray-800/70"
               >
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <div className="shrink-0">
+                  <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full dark:bg-gray-700">
                     {activityTypeIcon(activity.type)}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
                       {activityTypeLabel(activity.type)}
                     </h4>
                     <Badge className={getActivityTypeColor(activity.type)}>
                       {activityTypeLabel(activity.type)}
                     </Badge>
                   </div>
-                  <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  <div className="flex items-center mb-2 space-x-4 text-xs text-gray-500 dark:text-gray-400">
                     <div className="flex items-center space-x-1">
-                      <User className="h-3 w-3" />
+                      <User className="w-3 h-3" />
                       <span>
                         {activity.userId.firstName} {activity.userId.lastName}
                       </span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <Clock className="h-3 w-3" />
+                      <Clock className="w-3 h-3" />
                       <span className={getTimeColor(activity.timestamp)}>
                         {formatDateTime(activity.timestamp)}
                       </span>

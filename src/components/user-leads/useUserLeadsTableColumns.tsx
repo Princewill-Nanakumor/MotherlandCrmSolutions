@@ -14,7 +14,18 @@ import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 
-type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "statusChangedAt" | "lastComment" | "lastCommentDate" | "commentCount";
+type SortField =
+  | "leadId"
+  | "name"
+  | "country"
+  | "status"
+  | "source"
+  | "assignedTo"
+  | "createdAt"
+  | "statusChangedAt"
+  | "lastComment"
+  | "lastCommentDate"
+  | "commentCount";
 
 interface UseUserLeadsTableColumnsProps {
   sortField: SortField;
@@ -80,7 +91,7 @@ export const useUserLeadsTableColumns = ({
       {
         id: "actions",
         header: () => (
-          <div className="h-8 flex items-center justify-center w-full font-medium !text-gray-900 dark:!text-white">
+          <div className="h-8 flex items-center justify-center w-full font-medium text-gray-900! dark:text-white!">
             Actions
           </div>
         ),
@@ -94,7 +105,8 @@ export const useUserLeadsTableColumns = ({
           if (leadIdentifier) {
             params.set("lead", String(leadIdentifier));
           }
-          const fullName = `${lead.firstName || ""}-${lead.lastName || ""}`.trim();
+          const fullName =
+            `${lead.firstName || ""}-${lead.lastName || ""}`.trim();
           if (fullName && fullName !== "-") {
             params.set("name", fullName);
           }
@@ -111,7 +123,7 @@ export const useUserLeadsTableColumns = ({
                 onClick={(e) => {
                   e.stopPropagation();
                 }}
-                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:border dark:border-gray-700 transition-colors duration-200"
+                className="inline-flex items-center justify-center w-8 h-8 transition-colors duration-200 bg-blue-100 rounded-full hover:bg-blue-200 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:border dark:border-gray-700"
                 title="View Details"
               >
                 <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -129,22 +141,20 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("leadId")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={`${sortField === "leadId" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
+            <span
+              className={`${sortField === "leadId" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
+            >
               ID
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
-                sortField === "leadId"
-                  ? "!text-gray-900 dark:!text-white"
-                  : "!text-gray-600 dark:!text-gray-400"
-              }`}
+              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "leadId" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
             />
           </Button>
         ),
         cell: ({ row }) => {
           const leadId = row.original.leadId;
           return (
-            <div className="font-medium text-center !text-gray-900 dark:!text-white">
+            <div className="font-medium text-center text-gray-900! dark:text-white!">
               {leadId ? leadId.toString() : "—"}
             </div>
           );
@@ -159,15 +169,13 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("name")}
             className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={`${sortField === "name" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
+            <span
+              className={`${sortField === "name" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
+            >
               Name
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
-                sortField === "name"
-                  ? "!text-gray-900 dark:!text-white"
-                  : "!text-gray-600 dark:!text-gray-400"
-              }`}
+              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "name" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
             />
           </Button>
         ),
@@ -177,7 +185,7 @@ export const useUserLeadsTableColumns = ({
           const lastName = capitalizeName(lead.lastName || "");
           const fullName = lead.name || `${firstName} ${lastName}`.trim();
           return (
-            <div className="font-medium !text-gray-900 dark:!text-white">
+            <div className="font-medium text-gray-900! dark:text-white!">
               {fullName || "—"}
             </div>
           );
@@ -187,7 +195,7 @@ export const useUserLeadsTableColumns = ({
       {
         id: "email",
         header: () => (
-          <div className="h-8 flex items-center justify-start w-full font-medium !text-gray-900 dark:!text-white">
+          <div className="h-8 flex items-center justify-start w-full font-medium text-gray-900! dark:text-white!">
             Email
           </div>
         ),
@@ -195,7 +203,9 @@ export const useUserLeadsTableColumns = ({
           const email = row.original.email || "";
           if (!email || email === "") {
             return (
-              <div className="text-center font-medium !text-gray-900 dark:!text-white">—</div>
+              <div className="text-center font-medium text-gray-900! dark:text-white!">
+                —
+              </div>
             );
           }
           // Apply masking based on email visibility permission
@@ -203,7 +213,7 @@ export const useUserLeadsTableColumns = ({
             ? capitalizeEmail(email)
             : maskEmail(email);
           return (
-            <div className="text-center font-medium !text-gray-900 dark:!text-white">
+            <div className="text-center font-medium text-gray-900! dark:text-white!">
               {displayEmail}
             </div>
           );
@@ -213,7 +223,7 @@ export const useUserLeadsTableColumns = ({
       {
         id: "phone",
         header: () => (
-          <div className="h-8 flex items-center justify-start w-full font-medium !text-gray-900 dark:!text-white">
+          <div className="h-8 flex items-center justify-start w-full font-medium text-gray-900! dark:text-white!">
             Phone
           </div>
         ),
@@ -223,7 +233,7 @@ export const useUserLeadsTableColumns = ({
             ? phone
             : maskPhoneNumber(phone);
           return (
-            <div className="text-center font-medium !text-gray-900 dark:!text-white">
+            <div className="text-center font-medium text-gray-900! dark:text-white!">
               {displayPhone || "—"}
             </div>
           );
@@ -238,21 +248,19 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("country")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={`${sortField === "country" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
+            <span
+              className={`${sortField === "country" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
+            >
               Country
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
-                sortField === "country"
-                  ? "!text-gray-900 dark:!text-white"
-                  : "!text-gray-600 dark:!text-gray-400"
-              }`}
+              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "country" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
             />
           </Button>
         ),
         cell: ({ row }) => {
           return (
-            <div className="text-center font-medium !text-gray-900 dark:!text-white">
+            <div className="text-center font-medium text-gray-900! dark:text-white!">
               {row.original.country || "—"}
             </div>
           );
@@ -267,15 +275,13 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("status")}
             className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={`${sortField === "status" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
+            <span
+              className={`${sortField === "status" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
+            >
               Status
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
-                sortField === "status"
-                  ? "!text-gray-900 dark:!text-white"
-                  : "!text-gray-600 dark:!text-gray-400"
-              }`}
+              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "status" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
             />
           </Button>
         ),
@@ -286,8 +292,11 @@ export const useUserLeadsTableColumns = ({
           if (statusesLoading) {
             return (
               <div className="flex items-center justify-center">
-                <Badge variant="outline" className="flex items-center gap-1.5 !text-gray-900 dark:!text-white">
-                  <Loader2 className="h-3 w-3 animate-spin !text-gray-900 dark:!text-white" />
+                <Badge
+                  variant="outline"
+                  className="flex items-center gap-1.5 text-gray-900! dark:text-white!"
+                >
+                  <Loader2 className="h-3 w-3 animate-spin text-gray-900! dark:text-white!" />
                   Loading...
                 </Badge>
               </div>
@@ -303,12 +312,16 @@ export const useUserLeadsTableColumns = ({
 
           return (
             <div className="flex items-center justify-center">
-              <Badge variant="outline" style={statusStyle} className="flex items-center gap-1.5">
+              <Badge
+                variant="outline"
+                style={statusStyle}
+                className="flex items-center gap-1.5"
+              >
                 <div
                   className="w-1.5 h-1.5 rounded-full"
                   style={{ backgroundColor: currentStatus.color }}
                 />
-                <span className="text-xs font-medium !text-black dark:!text-[var(--status-color)]">
+                <span className="text-xs font-medium text-black! dark:text-(--status-color)!">
                   {currentStatus.name}
                 </span>
               </Badge>
@@ -325,21 +338,19 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("source")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={`${sortField === "source" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
+            <span
+              className={`${sortField === "source" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
+            >
               Source
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
-                sortField === "source"
-                  ? "!text-gray-900 dark:!text-white"
-                  : "!text-gray-600 dark:!text-gray-400"
-              }`}
+              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "source" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
             />
           </Button>
         ),
         cell: ({ row }) => {
           return (
-            <div className="text-center font-medium !text-gray-900 dark:!text-white">
+            <div className="text-center font-medium text-gray-900! dark:text-white!">
               {row.original.source || "—"}
             </div>
           );
@@ -354,15 +365,13 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("assignedTo")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={`${sortField === "assignedTo" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
+            <span
+              className={`${sortField === "assignedTo" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
+            >
               Assigned To
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
-                sortField === "assignedTo"
-                  ? "!text-gray-900 dark:!text-white"
-                  : "!text-gray-600 dark:!text-gray-400"
-              }`}
+              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "assignedTo" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
             />
           </Button>
         ),
@@ -370,8 +379,12 @@ export const useUserLeadsTableColumns = ({
           const lead = row.original;
           const assignedName = getAssignedUserName(lead);
           return (
-            <div className="text-center font-medium !text-gray-900 dark:!text-white">
-              <span className={!lead.assignedTo ? "!text-gray-500 dark:!text-gray-400" : ""}>
+            <div className="text-center font-medium text-gray-900! dark:text-white!">
+              <span
+                className={
+                  !lead.assignedTo ? "text-gray-500! dark:text-gray-400!" : ""
+                }
+              >
                 {assignedName}
               </span>
             </div>
@@ -395,22 +408,20 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("createdAt")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={`${sortField === "createdAt" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
+            <span
+              className={`${sortField === "createdAt" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
+            >
               Created At
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
-                sortField === "createdAt"
-                  ? "!text-gray-900 dark:!text-white"
-                  : "!text-gray-600 dark:!text-gray-400"
-              }`}
+              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "createdAt" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
             />
           </Button>
         ),
         cell: ({ row }) => {
           const createdAt = row.original.createdAt;
           return (
-            <div className="text-center text-sm font-medium !text-gray-900 dark:!text-white">
+            <div className="text-center text-sm font-medium text-gray-900! dark:text-white!">
               {formatDateDMY(createdAt)}
             </div>
           );
@@ -425,22 +436,20 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("statusChangedAt")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={`${sortField === "statusChangedAt" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
+            <span
+              className={`${sortField === "statusChangedAt" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
+            >
               Last status change
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
-                sortField === "statusChangedAt"
-                  ? "!text-gray-900 dark:!text-white"
-                  : "!text-gray-600 dark:!text-gray-400"
-              }`}
+              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "statusChangedAt" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
             />
           </Button>
         ),
         cell: ({ row }) => {
           const statusChangedAt = row.original.statusChangedAt;
           return (
-            <div className="text-center text-sm font-medium !text-gray-900 dark:!text-white">
+            <div className="text-center text-sm font-medium text-gray-900! dark:text-white!">
               {formatDateDMY(statusChangedAt)}
             </div>
           );
@@ -455,25 +464,23 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("lastComment")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={`${sortField === "lastComment" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
+            <span
+              className={`${sortField === "lastComment" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
+            >
               Last Comment
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
-                sortField === "lastComment"
-                  ? "!text-gray-900 dark:!text-white"
-                  : "!text-gray-600 dark:!text-gray-400"
-              }`}
+              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "lastComment" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
             />
           </Button>
         ),
         cell: ({ row }) => {
           const lastComment = row.original.lastComment;
           return (
-            <div className="text-center !text-gray-900 dark:!text-white">
+            <div className="text-center text-gray-900! dark:text-white!">
               {lastComment ? (
                 <div
-                  className="text-sm max-w-[200px] truncate mx-auto font-medium !text-gray-900 dark:!text-white"
+                  className="text-sm max-w-50 truncate mx-auto font-medium text-gray-900! dark:text-white!"
                   title={lastComment}
                   style={{
                     overflow: "hidden",
@@ -484,7 +491,9 @@ export const useUserLeadsTableColumns = ({
                   {lastComment}
                 </div>
               ) : (
-                <span className="font-medium !text-gray-900 dark:!text-white">—</span>
+                <span className="font-medium text-gray-900! dark:text-white!">
+                  —
+                </span>
               )}
             </div>
           );
@@ -499,22 +508,20 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("lastCommentDate")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={`${sortField === "lastCommentDate" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
+            <span
+              className={`${sortField === "lastCommentDate" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
+            >
               Last Comment Date
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
-                sortField === "lastCommentDate"
-                  ? "!text-gray-900 dark:!text-white"
-                  : "!text-gray-600 dark:!text-gray-400"
-              }`}
+              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "lastCommentDate" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
             />
           </Button>
         ),
         cell: ({ row }) => {
           const lastCommentDate = row.original.lastCommentDate;
           return (
-            <div className="text-center text-sm font-medium !text-gray-900 dark:!text-white">
+            <div className="text-center text-sm font-medium text-gray-900! dark:text-white!">
               {formatDateDMY(lastCommentDate)}
             </div>
           );
@@ -529,22 +536,20 @@ export const useUserLeadsTableColumns = ({
             onClick={() => handleSort("commentCount")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-          <span className={`${sortField === "commentCount" ? "font-bold" : "font-medium"} !text-gray-900 dark:!text-white`}>
+            <span
+              className={`${sortField === "commentCount" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
+            >
               Timeline
             </span>
             <ArrowUpDown
-              className={`h-4 w-4 !text-gray-600 dark:!text-gray-400 ${
-                sortField === "commentCount"
-                  ? "!text-gray-900 dark:!text-white"
-                  : "!text-gray-600 dark:!text-gray-400"
-              }`}
+              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "commentCount" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
             />
           </Button>
         ),
         cell: ({ row }) => {
           const commentCount = row.original.commentCount;
           return (
-            <div className="text-center text-sm font-medium !text-gray-900 dark:!text-white">
+            <div className="text-center text-sm font-medium text-gray-900! dark:text-white!">
               {commentCount && commentCount > 0 ? commentCount : "—"}
             </div>
           );
@@ -553,9 +558,15 @@ export const useUserLeadsTableColumns = ({
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sortField, handleSort, statuses, statusesLoading, canViewPhoneNumbers, currentParams]
+    [
+      sortField,
+      handleSort,
+      statuses,
+      statusesLoading,
+      canViewPhoneNumbers,
+      currentParams,
+    ],
   );
 
   return { columns };
 };
-

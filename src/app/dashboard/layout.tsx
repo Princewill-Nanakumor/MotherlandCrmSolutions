@@ -215,11 +215,21 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
   }, [pathname, status, isAdminLeadsPage, isUserLeadsPage]);
 
-  // Client lost session (expired / cleared). signOut clears cookies and sends user to login.
+  // Client lost session unexpectedly (expired / cleared). Skip when user explicitly signed out.
   useEffect(() => {
     if (redirectingDueToExpiryRef.current) return;
     if (status === "loading") return;
     if (status !== "unauthenticated") return;
+
+    try {
+      if (sessionStorage.getItem("auth:intentionalSignOut") === "1") {
+        sessionStorage.removeItem("auth:intentionalSignOut");
+        return;
+      }
+    } catch {
+      /* ignore */
+    }
+
     redirectingDueToExpiryRef.current = true;
     localStorage.setItem("sessionExpired", "true");
     const search = searchParams?.toString();

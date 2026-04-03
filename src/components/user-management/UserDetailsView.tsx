@@ -76,7 +76,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
     <div className="mt-4 space-y-6">
       {/* Personal Information */}
       <div className="space-y-4">
-        <h3 className="pb-2 text-lg font-semibold !text-gray-900 border-b dark:!text-white">
+        <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b dark:text-white!">
           Personal Information
         </h3>
 
@@ -90,7 +90,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Full Name
               </p>
-              <p className="text-base font-medium !text-gray-900 dark:!text-white">
+              <p className="text-base font-medium text-gray-900! dark:text-white!">
                 {user.firstName} {user.lastName}
               </p>
             </div>
@@ -105,7 +105,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Email Address
               </p>
-              <p className="text-base font-medium !text-gray-900 break-all dark:!text-white">
+              <p className="text-base font-medium text-gray-900! break-all dark:text-white!">
                 {user.email}
               </p>
             </div>
@@ -120,7 +120,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Phone Number
               </p>
-              <p className="text-base font-medium !text-gray-900 dark:!text-white">
+              <p className="text-base font-medium text-gray-900! dark:text-white!">
                 {user.phoneNumber || "Not provided"}
               </p>
             </div>
@@ -135,7 +135,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Country
               </p>
-              <p className="text-base font-medium !text-gray-900 dark:!text-white">
+              <p className="text-base font-medium text-gray-900! dark:text-white!">
                 {user.country || "Not provided"}
               </p>
             </div>
@@ -145,7 +145,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
 
       {/* Account Information */}
       <div className="space-y-4">
-        <h3 className="pb-2 text-lg font-semibold !text-gray-900 border-b dark:!text-white">
+        <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b dark:text-white!">
           Account Information
         </h3>
 
@@ -159,7 +159,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
               <p className="text-sm text-gray-500 dark:text-gray-400">Role</p>
               <Badge
                 variant={user.role === "ADMIN" ? "default" : "outline"}
-                className="mt-1 dark:border-gray-600 dark:!text-white"
+                className="mt-1 dark:border-gray-600 dark:text-white!"
               >
                 {getRoleDisplayName(user.role)}
               </Badge>
@@ -177,7 +177,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
               </p>
               <Badge
                 variant={user.status === "ACTIVE" ? "success" : "secondary"}
-                className="mt-1 dark:border-gray-600 dark:!text-white"
+                className="mt-1 dark:border-gray-600 dark:text-white!"
               >
                 {getStatusDisplayName(user.status)}
               </Badge>
@@ -193,7 +193,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Member Since
               </p>
-              <p className="text-base font-medium !text-gray-900 dark:!text-white">
+              <p className="text-base font-medium text-gray-900! dark:text-white!">
                 {formatDate(user.createdAt)}
               </p>
             </div>
@@ -208,7 +208,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Last Login
               </p>
-              <p className="text-base font-medium !text-gray-900 dark:!text-white">
+              <p className="text-base font-medium text-gray-900! dark:text-white!">
                 {formatDate(user.lastLogin)}
               </p>
             </div>
@@ -225,7 +225,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
                 )}
               </div>
               <div className="flex-1">
-                <p className="text-sm !text-gray-500 dark:!text-gray-400 mb-2">
+                <p className="text-sm text-gray-500! dark:text-gray-400! mb-2">
                   Phone Number Visibility
                 </p>
                 <div className="flex items-center gap-3">
@@ -233,13 +233,13 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
                     checked={user.canViewPhoneNumbers === true}
                     onCheckedChange={onTogglePhoneVisibility}
                   />
-                  <span className="text-sm !text-gray-700 dark:!text-gray-300">
+                  <span className="text-sm text-gray-700! dark:text-gray-300!">
                     {user.canViewPhoneNumbers === true
                       ? "Phone numbers visible"
                       : "Phone numbers masked"}
                   </span>
                 </div>
-                <p className="text-xs !text-gray-500 dark:!text-gray-400 mt-1">
+                <p className="text-xs text-gray-500! dark:text-gray-400! mt-1">
                   {user.canViewPhoneNumbers === true
                     ? "This user can see full phone numbers in leads"
                     : "This user will see masked phone numbers (last 4 digits only)"}
@@ -259,7 +259,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
                 )}
               </div>
               <div className="flex-1">
-                <p className="text-sm !text-gray-500 dark:!text-gray-400 mb-2">
+                <p className="text-sm text-gray-500! dark:text-gray-400! mb-2">
                   Email Address Visibility
                 </p>
                 <div className="flex items-center gap-3">
@@ -267,13 +267,13 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
                     checked={user.canViewEmails === true}
                     onCheckedChange={onToggleEmailVisibility}
                   />
-                  <span className="text-sm !text-gray-700 dark:!text-gray-300">
+                  <span className="text-sm text-gray-700! dark:text-gray-300!">
                     {user.canViewEmails === true
                       ? "Email addresses visible"
                       : "Email addresses masked"}
                   </span>
                 </div>
-                <p className="text-xs !text-gray-500 dark:!text-gray-400 mt-1">
+                <p className="text-xs text-gray-500! dark:text-gray-400! mt-1">
                   {user.canViewEmails === true
                     ? "This user can see full email addresses in leads"
                     : "This user will see masked email addresses (first 2 characters + asterisks)"}
@@ -287,7 +287,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
       {/* Permissions */}
       {user.permissions && user.permissions.length > 0 && (
         <div className="space-y-4">
-          <h3 className="pb-2 text-lg font-semibold !text-gray-900 border-b dark:!text-white">
+          <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b dark:text-white!">
             Permissions
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -295,7 +295,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
               <Badge
                 key={index}
                 variant="outline"
-                className="dark:border-gray-600 dark:!text-white"
+                className="dark:border-gray-600 dark:text-white!"
               >
                 {permission}
               </Badge>

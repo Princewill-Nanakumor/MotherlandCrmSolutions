@@ -100,7 +100,7 @@ export function SettingsContent() {
       setConfirmPassword("");
 
       setTimeout(() => {
-        void signOutWithoutInterstitial("/", router);
+        void signOutWithoutInterstitial("/", router, { intentional: true });
       }, 1500);
     } catch {
       setPasswordError("An error occurred while updating your password");
@@ -126,7 +126,7 @@ export function SettingsContent() {
       });
 
       if (response.status === 401) {
-        void signOutWithoutInterstitial("/", router);
+        void signOutWithoutInterstitial("/", router, { intentional: true });
         return;
       }
 
@@ -140,7 +140,7 @@ export function SettingsContent() {
         });
 
         setTimeout(() => {
-          void signOutWithoutInterstitial("/", router);
+          void signOutWithoutInterstitial("/", router, { intentional: true });
         }, 2000);
       } else {
         setDeleteError(data.error || "Failed to delete account");

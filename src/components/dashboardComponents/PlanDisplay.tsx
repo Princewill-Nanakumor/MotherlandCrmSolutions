@@ -79,7 +79,7 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
   // Helper function to format plan name
   const formatPlanName = (
     plan: string | null | undefined,
-    status: string | undefined
+    status: string | undefined,
   ) => {
     // If no subscription data is available, assume trial for admin users
     if (isAdmin && !status && !plan) {
@@ -97,20 +97,20 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
   const getPlanStatusColor = (status: string | undefined) => {
     // If no status but user is admin, assume trial
     if (isAdmin && !status) {
-      return "!text-blue-600 dark:!text-blue-400 bg-blue-100 dark:bg-blue-900/30";
+      return "text-blue-600! dark:text-blue-400! bg-blue-100 dark:bg-blue-900/30";
     }
 
     switch (status) {
       case "active":
-        return "!text-green-600 dark:!text-green-400 bg-green-100 dark:bg-green-900/30";
+        return "text-green-600! dark:text-green-400! bg-green-100 dark:bg-green-900/30";
       case "trial":
-        return "!text-blue-600 dark:!text-blue-400 bg-blue-100 dark:bg-blue-900/30";
+        return "text-blue-600! dark:text-blue-400! bg-blue-100 dark:bg-blue-900/30";
       case "expired":
-        return "!text-red-600 dark:!text-red-400 bg-red-100 dark:bg-red-900/30";
+        return "text-red-600! dark:text-red-400! bg-red-100 dark:bg-red-900/30";
       case "inactive":
-        return "!text-gray-600 dark:!text-gray-400 bg-gray-100 dark:bg-gray-900/30";
+        return "text-gray-600! dark:text-gray-400! bg-gray-100 dark:bg-gray-900/30";
       default:
-        return "!text-gray-600 dark:!text-gray-400 bg-gray-100 dark:bg-gray-900/30";
+        return "text-gray-600! dark:text-gray-400! bg-gray-100 dark:bg-gray-900/30";
     }
   };
 
@@ -138,7 +138,7 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
   // Helper function to format remaining days text
   const getRemainingDaysText = (
     days: number | null,
-    status: string | undefined
+    status: string | undefined,
   ) => {
     if (days === null) return "";
 
@@ -168,11 +168,11 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
   }
 
   return (
-    <div className="overflow-hidden relative p-3 bg-gradient-to-r from-purple-50 via-blue-50 to-indigo-50 rounded-xl border shadow-sm transition-all duration-200 dark:from-purple-900/30 dark:via-blue-900/30 dark:to-indigo-900/30 border-purple-200/50 dark:border-purple-700/50 hover:shadow-md">
-      <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br rounded-full translate-x-8 -translate-y-8 from-purple-400/20 to-blue-400/20"></div>
+    <div className="relative p-3 overflow-hidden transition-all duration-200 border shadow-sm bg-linear-to-r from-purple-50 via-blue-50 to-indigo-50 rounded-xl dark:from-purple-900/30 dark:via-blue-900/30 dark:to-indigo-900/30 border-purple-200/50 dark:border-purple-700/50 hover:shadow-md">
+      <div className="absolute top-0 right-0 w-16 h-16 translate-x-8 -translate-y-8 rounded-full bg-linear-to-br from-purple-400/20 to-blue-400/20"></div>
 
-      <div className="flex relative items-center space-x-3">
-        <div className="flex justify-center items-center w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl shadow-sm">
+      <div className="relative flex items-center space-x-3">
+        <div className="flex items-center justify-center w-10 h-10 shadow-sm bg-linear-to-br from-purple-500 to-blue-600 rounded-xl">
           <Crown className="w-5 h-5 text-white" />
         </div>
 
@@ -185,10 +185,10 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
           ) : (
             <>
               <div className="flex flex-col space-y-1">
-                <span className="text-sm font-bold !text-gray-900 dark:!text-white">
+                <span className="text-sm font-bold text-gray-900! dark:text-white!">
                   {formatPlanName(
                     subscriptionData?.currentPlan,
-                    subscriptionData?.subscriptionStatus
+                    subscriptionData?.subscriptionStatus,
                   )}
                 </span>
                 <span
@@ -200,10 +200,10 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
 
               {remainingDays !== null && (
                 <div className="flex items-center space-x-1.5">
-                  <span className="text-xs font-medium !text-gray-600 dark:!text-gray-300">
+                  <span className="text-xs font-medium text-gray-600! dark:text-gray-300!">
                     {getRemainingDaysText(
                       remainingDays,
-                      subscriptionData?.subscriptionStatus
+                      subscriptionData?.subscriptionStatus,
                     )}
                   </span>
                 </div>

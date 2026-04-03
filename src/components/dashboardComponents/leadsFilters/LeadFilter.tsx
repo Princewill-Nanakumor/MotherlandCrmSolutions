@@ -156,7 +156,7 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
                 <Button
                   onClick={() => setIsAddLeadDialogOpen(true)}
                   disabled={isLoading}
-                  className="text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                  className="text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Lead

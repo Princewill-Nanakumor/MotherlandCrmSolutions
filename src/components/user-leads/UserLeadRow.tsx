@@ -151,8 +151,8 @@ export function UserLeadRow({
       <TableCell
         className={
           isSelected
-            ? "!text-gray-900 dark:!text-white"
-            : "!text-gray-800 dark:!text-gray-300"
+            ? "text-gray-900! dark:text-white!"
+            : "text-gray-800! dark:text-gray-300!"
         }
       >
         <div className="font-medium">
@@ -162,8 +162,8 @@ export function UserLeadRow({
       <TableCell
         className={
           isSelected
-            ? "!text-gray-900 dark:!text-white"
-            : "!text-gray-800 dark:!text-gray-300"
+            ? "text-gray-900! dark:text-white!"
+            : "text-gray-800! dark:text-gray-300!"
         }
       >
         <div className="flex items-center">
@@ -179,8 +179,8 @@ export function UserLeadRow({
       <TableCell
         className={
           isSelected
-            ? "!text-gray-900 dark:!text-white"
-            : "!text-gray-800 dark:!text-gray-300"
+            ? "text-gray-900! dark:text-white!"
+            : "text-gray-800! dark:text-gray-300!"
         }
       >
         <div className="flex items-center">
@@ -196,8 +196,8 @@ export function UserLeadRow({
       <TableCell
         className={
           isSelected
-            ? "!text-gray-900 dark:!text-white"
-            : "!text-gray-800 dark:!text-gray-300"
+            ? "text-gray-900! dark:text-white!"
+            : "text-gray-800! dark:text-gray-300!"
         }
       >
         <span>{lead.country || "—"}</span>
@@ -206,8 +206,8 @@ export function UserLeadRow({
       <TableCell
         className={
           isSelected
-            ? "!text-gray-900 dark:!text-white"
-            : "!text-gray-800 dark:!text-gray-300"
+            ? "text-gray-900! dark:text-white!"
+            : "text-gray-800! dark:text-gray-300!"
         }
       >
         <span>{lead.source || "—"}</span>
@@ -215,13 +215,13 @@ export function UserLeadRow({
       <TableCell
         className={
           isSelected
-            ? "!text-gray-900 dark:!text-white"
-            : "!text-gray-800 dark:!text-gray-300"
+            ? "text-gray-900! dark:text-white!"
+            : "text-gray-800! dark:text-gray-300!"
         }
       >
         <span
           className={
-            !lead.assignedTo ? "!text-gray-500 dark:!text-gray-400" : ""
+            !lead.assignedTo ? "text-gray-500! dark:text-gray-400!" : ""
           }
         >
           {getAssignedUserName()}

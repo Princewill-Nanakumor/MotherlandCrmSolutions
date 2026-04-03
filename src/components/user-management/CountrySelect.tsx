@@ -462,7 +462,7 @@ export const CustomOption = ({
     ) : (
       <Globe className="w-6 h-4 text-gray-400 shrink-0 dark:text-gray-500" />
     )}
-    <span className="flex-1 truncate text-gray-900! dark:!text-white!">
+    <span className="flex-1 truncate text-gray-900! dark:text-white!">
       {data.label}
     </span>
     <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -486,7 +486,7 @@ export const CustomSingleValue = ({ data }: { data: SelectOption }) => (
       <Globe className="w-6 h-4 text-gray-400 shrink-0 dark:text-gray-500" />
     )}
     <span
-      className={`truncate text-gray-900! dark:text-white! ${inter.className}`}
+      className={`truncate text-gray-900! dark:text-white!${inter.className}`}
     >
       {data.label}
     </span>

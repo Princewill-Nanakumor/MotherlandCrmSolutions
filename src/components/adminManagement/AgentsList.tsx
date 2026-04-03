@@ -25,25 +25,25 @@ export default function AgentsList({
   formatLastLogin,
 }: AgentsListProps) {
   return (
-    <Card className="backdrop-blur-lg bg-white/70 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl">
+    <Card className="border border-gray-200 backdrop-blur-lg bg-white/70 dark:bg-gray-800 dark:border-white/10 rounded-xl">
       <CardHeader>
         <CardTitle className="text-gray-900 dark:text-white">Agents</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {agents.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+            <p className="py-8 text-center text-gray-500 dark:text-gray-400">
               No agents found
             </p>
           ) : (
             agents.map((agent) => (
               <div
                 key={agent._id}
-                className="flex items-center justify-between p-4 border  rounded-lg  bg-white/50 dark:bg-gray-800/50 hover:bg-white/70  transition-all duration-200"
+                className="flex items-center justify-between p-4 transition-all duration-200 border rounded-lg bg-white/50 dark:bg-gray-800/50 hover:bg-white/70"
               >
                 <div className="flex items-center space-x-4">
                   <Avatar>
-                    <AvatarFallback className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+                    <AvatarFallback className="text-white bg-linear-to-r from-indigo-600 to-purple-600">
                       {agent.firstName[0]}
                       {agent.lastName[0]}
                     </AvatarFallback>
@@ -55,7 +55,7 @@ export default function AgentsList({
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {agent.email}
                     </p>
-                    <div className="flex items-center space-x-2 mt-1">
+                    <div className="flex items-center mt-1 space-x-2">
                       <Badge className={getStatusColor(agent.status)}>
                         {agent.status}
                       </Badge>

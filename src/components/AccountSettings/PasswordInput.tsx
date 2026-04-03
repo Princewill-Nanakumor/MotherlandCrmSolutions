@@ -41,11 +41,7 @@ export function PasswordInput({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
-          className={`pl-4 pr-10 h-12 w-full rounded-lg border text-base ${
-            error
-              ? "border-red-500 focus:ring-red-500"
-              : "border-input focus:ring-purple-500 focus:border-purple-500"
-          } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900! dark:text-white! bg-white dark:bg-input/30 focus:outline-none focus:ring-1 transition-all`}
+          className={`pl-4 pr-10 h-12 w-full rounded-lg border text-base ${error ? "border-red-500 focus:ring-red-500" : "border-input focus:ring-purple-500 focus:border-purple-500" } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900! dark:text-white! bg-white dark:bg-input/30 focus:outline-none focus:ring-1 transition-all`}
         />
         <Button
           type="button"

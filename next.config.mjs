@@ -42,17 +42,9 @@ const nextConfig = {
     },
   },
   webpack: (config, { isServer }) => {
-    config.module.rules.push({
-      test: /\.(mp4|webm|mov)$/,
-      use: {
-        loader: "file-loader",
-        options: {
-          publicPath: "/_next/static/videos/",
-          outputPath: "static/videos/",
-          name: "[name].[hash].[ext]",
-        },
-      },
-    });
+    // Video assets: put files in /public (e.g. /public/videos/...) and reference by URL.
+    // Avoid file-loader here — it is not a project dependency and can break Next 15 dev
+    // chunk layout (missing ./NNNN.js relative to webpack-runtime).
 
     if (!isServer) {
       config.resolve.fallback = {

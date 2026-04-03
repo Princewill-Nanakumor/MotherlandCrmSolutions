@@ -61,7 +61,7 @@ export function UserDropdownMenu({
 
   const handleLogout = async () => {
     setDropdownOpen(false);
-    await signOutWithoutInterstitial("/", router);
+    await signOutWithoutInterstitial("/", router, { intentional: true });
   };
 
   return (

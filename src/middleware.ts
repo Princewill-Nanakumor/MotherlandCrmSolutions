@@ -1,20 +1,40 @@
 // src/middleware.ts
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import { SESSION_MAX_AGE_SECONDS } from "@/lib/sessionMaxAge";
+
+/** Match libs/auth.ts jwt/session callbacks: exp, iat, and loginTimestamp vs SESSION_MAX_AGE_SECONDS. */
+function isSessionTokenExpired(
+  token:
+    | { loginTimestamp?: number; exp?: number; iat?: number }
+    | undefined
+    | null,
+  nowSec: number,
+  maxAgeSeconds: number,
+): boolean {
+  const exp = token?.exp;
+  if (typeof exp === "number" && exp > 0 && exp < nowSec) return true;
+  const iat = token?.iat;
+  if (typeof iat === "number" && nowSec - iat > maxAgeSeconds) return true;
+  if (
+    typeof token?.loginTimestamp === "number" &&
+    nowSec - token.loginTimestamp > maxAgeSeconds
+  ) {
+    return true;
+  }
+  return false;
+}
 
 export default withAuth(
   async function middleware(request) {
     // If token is missing or invalid (e.g. expired), nextauth.token can be undefined; treat as unauthenticated instead of throwing
     const token = request.nextauth?.token;
     
-    // Check if visually mathematically expired according to absolute login time
     const currentTime = Math.floor(Date.now() / 1000);
-    const maxAge = 24 * 60 * 60; // 24 hours
-    const isExpired = token?.loginTimestamp 
-      ? (currentTime - (token.loginTimestamp as number)) > maxAge
-      : false;
+    const maxAge = SESSION_MAX_AGE_SECONDS;
+    const isExpired = isSessionTokenExpired(token, currentTime, maxAge);
       
-    // A token is only valid if it has an id and it's not expired by our absolute timer
+    // A token is only valid if it has an id and it's not expired
     const isAuth = !!token?.id && !isExpired;
     const path = request.nextUrl.pathname;
 
@@ -135,12 +155,10 @@ export default withAuth(
         }
 
         const currentTime = Math.floor(Date.now() / 1000);
-        const maxAge = 24 * 60 * 60; // 24 hours
-        const isExpired = token?.loginTimestamp 
-          ? (currentTime - (token.loginTimestamp as number)) > maxAge
-          : false;
+        const maxAge = SESSION_MAX_AGE_SECONDS;
+        const isExpired = isSessionTokenExpired(token, currentTime, maxAge);
 
-        return !!token && !isExpired;
+        return !!token?.id && !isExpired;
       },
     },
     pages: {

@@ -244,12 +244,12 @@ export default function UserLeadsContent() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="!text-red-500 dark:!text-red-400 mb-4">
+          <p className="text-red-500! dark:text-red-400! mb-4">
             Failed to load leads: {error?.message}
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-500 !text-white rounded hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 bg-blue-500 text-white! rounded hover:bg-blue-600 transition-colors"
           >
             Retry
           </button>

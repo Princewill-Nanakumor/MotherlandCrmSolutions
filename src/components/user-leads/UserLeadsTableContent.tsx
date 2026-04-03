@@ -30,13 +30,13 @@ const TableHeaderSkeleton = ({ columnCount }: { columnCount: number }) => (
       {Array.from({ length: columnCount }).map((_, index) => (
         <TableHead
           key={`skeleton-header-${index}`}
-          className={`!text-gray-700 dark:!text-gray-300 font-semibold text-left ${
+          className={`text-gray-700! dark:text-gray-300! font-semibold text-left${
             index === 0
               ? "w-12 px-3 border-r border-gray-200 dark:border-gray-700"
               : "px-4"
           }`}
         >
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded dark:bg-gray-700 animate-pulse"></div>
         </TableHead>
       ))}
     </TableRow>
@@ -59,7 +59,7 @@ const TableRowSkeleton = ({ columnCount }: { columnCount: number }) => (
         `}
       >
         <div className="flex items-center space-x-2">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse flex-1"></div>
+          <div className="flex-1 h-4 bg-gray-200 rounded dark:bg-gray-700 animate-pulse"></div>
         </div>
       </TableCell>
     ))}
@@ -111,7 +111,7 @@ export function UserLeadsTableContent({
 
   return (
     <>
-      <TableHeader className="bg-gray-100 dark:bg-gray-700 border-t">
+      <TableHeader className="bg-gray-100 border-t dark:bg-gray-700">
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={generateUniqueKey("header-group", headerGroup.id)}>
             <SortableContext
@@ -122,28 +122,27 @@ export function UserLeadsTableContent({
                 const isActionsColumn = header.column.id === "actions";
                 const isStatusColumn = header.column.id === "status";
                 const isLastCommentColumn = header.column.id === "lastComment";
-                const isCommentCountColumn = header.column.id === "commentCount";
+                const isCommentCountColumn =
+                  header.column.id === "commentCount";
                 const isLeadIdColumn = header.column.id === "leadId";
-                
+
                 return (
                   <TableHead
                     key={generateUniqueKey("header", header.id)}
-                    className={`
-                      !text-gray-700 dark:!text-gray-300 font-semibold
-                      ${
-                        isActionsColumn || isLeadIdColumn || isCommentCountColumn
+                    className={`text-gray-700! dark:text-gray-300! font-semibold${
+                      isActionsColumn || isLeadIdColumn || isCommentCountColumn
+                        ? "text-center"
+                        : isStatusColumn
                           ? "text-center"
-                          : isStatusColumn
+                          : isLastCommentColumn
                             ? "text-center"
-                            : isLastCommentColumn
-                              ? "text-center"
-                              : "text-left"
-                      }
+                            : "text-left"
+                    }
                       ${
                         isStatusColumn
-                          ? "w-32 min-w-[120px] px-4"
+                          ? "w-32 min-w-30 px-4"
                           : isLastCommentColumn
-                            ? "max-w-[200px] px-4"
+                            ? "max-w-50 px-4"
                             : "px-4"
                       }
                     `}
@@ -152,7 +151,7 @@ export function UserLeadsTableContent({
                       <DraggableColumnHeader header={header}>
                         {flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                       </DraggableColumnHeader>
                     )}
@@ -203,35 +202,42 @@ export function UserLeadsTableContent({
                   const isCountryCell = cell.column.id === "country";
                   const isAssignedToCell = cell.column.id === "assignedTo";
                   const isCreatedAtCell = cell.column.id === "createdAt";
-                  const isLastCommentDateCell = cell.column.id === "lastCommentDate";
+                  const isLastCommentDateCell =
+                    cell.column.id === "lastCommentDate";
                   const isLeadIdCell = cell.column.id === "leadId";
                   const isEmailCell = cell.column.id === "email";
-                  
+
                   return (
                     <TableCell
                       key={cell.id}
                       className={`
                         py-3.5
-                        ${isSelected ? "!text-gray-900 dark:!text-white" : "!text-gray-800 dark:!text-gray-300"}
-                        ${
+                        ${isSelected ? "text-gray-900! dark:text-white"! : "text-gray-800! dark:text-gray-300"}!${
                           isActionsCell || isLeadIdCell || isCommentCountCell
                             ? "text-center"
-                            : isSourceCell || isPhoneCell || isCountryCell || isAssignedToCell || isCreatedAtCell || isLastCommentCell || isLastCommentDateCell || isEmailCell
+                            : isSourceCell ||
+                                isPhoneCell ||
+                                isCountryCell ||
+                                isAssignedToCell ||
+                                isCreatedAtCell ||
+                                isLastCommentCell ||
+                                isLastCommentDateCell ||
+                                isEmailCell
                               ? "text-center"
                               : "text-left"
                         }
                         ${
                           isStatusCell
-                            ? "w-32 min-w-[120px] px-4"
+                            ? "w-32 min-w-30 px-4"
                             : isLastCommentCell
-                              ? "max-w-[200px] px-4"
+                              ? "max-w-50 px-4"
                               : "px-4"
                         }
                       `}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   );
@@ -243,7 +249,7 @@ export function UserLeadsTableContent({
           <TableRow>
             <TableCell
               colSpan={table.getAllColumns().length}
-              className="h-24 text-center !text-gray-600 dark:!text-gray-400 dark:bg-gray-800"
+              className="h-24 text-center text-gray-600! dark:text-gray-400! dark:bg-gray-800"
             >
               No results found
             </TableCell>
@@ -253,4 +259,3 @@ export function UserLeadsTableContent({
     </>
   );
 }
-

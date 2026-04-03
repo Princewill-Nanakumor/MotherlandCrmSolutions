@@ -89,20 +89,20 @@ h6 {
 /* Ensure dark mode text colors override gray-900 classes */
 .dark h3[class*="dark:text-white"],
 .dark h4[class*="dark:text-white"],
-.dark h3[class*="!text-white"],
-.dark h4[class*="!text-white"],
+.dark h3[class*="text-white!"],
+.dark h4[class*="text-white!"],
 .dark p[class*="dark:text-white"],
-.dark p[class*="!text-white"],
+.dark p[class*="text-white!"],
 .dark span[class*="dark:text-white"],
-.dark span[class*="!text-white"],
+.dark span[class*="text-white!"],
 html.dark h3[class*="dark:text-white"],
 html.dark h4[class*="dark:text-white"],
-html.dark h3[class*="!text-white"],
-html.dark h4[class*="!text-white"],
+html.dark h3[class*="text-white!"],
+html.dark h4[class*="text-white!"],
 html.dark p[class*="dark:text-white"],
-html.dark p[class*="!text-white"],
+html.dark p[class*="text-white!"],
 html.dark span[class*="dark:text-white"],
-html.dark span[class*="!text-white"] {
+html.dark span[class*="text-white!"] {
   color: rgb(255 255 255) !important;
 }
 
@@ -110,8 +110,8 @@ html.dark span[class*="!text-white"] {
 .dark h4[class*="dark:text-gray-300"],
 .dark p[class*="dark:text-gray-300"],
 .dark span[class*="dark:text-gray-300"],
-.dark p[class*="!text-gray-300"],
-.dark span[class*="!text-gray-300"],
+.dark p[class*="text-gray-300!"],
+.dark span[class*="text-gray-300!"],
 html.dark h3[class*="dark:text-gray-300"],
 html.dark h4[class*="dark:text-gray-300"],
 html.dark p[class*="dark:text-gray-300"],
@@ -526,11 +526,11 @@ html:not(.dark) .text-gray-700 {
 .dark h4.text-white,
 .dark p.text-white,
 .dark a.text-white,
-.dark span[class*="!text-white"],
-.dark h3[class*="!text-white"],
-.dark h4[class*="!text-white"],
-.dark p[class*="!text-white"],
-.dark a[class*="!text-white"],
+.dark span[class*="text-white!"],
+.dark h3[class*="text-white!"],
+.dark h4[class*="text-white!"],
+.dark p[class*="text-white!"],
+.dark a[class*="text-white!"],
 html.dark span.text-white,
 html.dark span[class*="text-white"],
 html.dark .text-white,
@@ -545,12 +545,12 @@ html.dark a[class*="text-white"] {
 .dark span.text-gray-300,
 .dark span[class*="text-gray-300"],
 .dark .text-gray-300,
-.dark span[class*="!text-gray-300"],
-.dark p[class*="!text-gray-300"],
+.dark span[class*="text-gray-300!"],
+.dark p[class*="text-gray-300!"],
 .dark h3[class*="dark:text-gray-300"],
 .dark h4[class*="dark:text-gray-300"],
-.dark h3[class*="dark:!text-gray-300"],
-.dark h4[class*="dark:!text-gray-300"],
+.dark h3[class*="dark:text-gray-300!"],
+.dark h4[class*="dark:text-gray-300!"],
 html.dark span.text-gray-300,
 html.dark span[class*="text-gray-300"],
 html.dark .text-gray-300,
@@ -562,12 +562,12 @@ html.dark h4[class*="dark:text-gray-300"] {
 .dark span.text-gray-400,
 .dark span[class*="text-gray-400"],
 .dark .text-gray-400,
-.dark span[class*="!text-gray-400"],
-.dark p[class*="!text-gray-400"],
+.dark span[class*="text-gray-400!"],
+.dark p[class*="text-gray-400!"],
 .dark h3[class*="dark:text-gray-400"],
 .dark h4[class*="dark:text-gray-400"],
-.dark h3[class*="dark:!text-gray-400"],
-.dark h4[class*="dark:!text-gray-400"],
+.dark h3[class*="dark:text-gray-400!"],
+.dark h4[class*="dark:text-gray-400!"],
 html.dark span.text-gray-400,
 html.dark span[class*="text-gray-400"],
 html.dark .text-gray-400,
@@ -579,12 +579,12 @@ html.dark h4[class*="dark:text-gray-400"] {
 .dark span.text-gray-600,
 .dark span[class*="text-gray-600"],
 .dark .text-gray-600,
-.dark span[class*="!text-gray-600"],
-.dark p[class*="!text-gray-600"],
+.dark span[class*="text-gray-600!"],
+.dark p[class*="text-gray-600!"],
 .dark h3[class*="dark:text-gray-600"],
 .dark h4[class*="dark:text-gray-600"],
-.dark h3[class*="dark:!text-gray-600"],
-.dark h4[class*="dark:!text-gray-600"],
+.dark h3[class*="dark:text-gray-600!"],
+.dark h4[class*="dark:text-gray-600!"],
 html.dark span.text-gray-600,
 html.dark span[class*="text-gray-600"],
 html.dark .text-gray-600,
@@ -1201,7 +1201,7 @@ button,
 
 /* Sidebar link color overrides to ensure consistency */
 /* Override global span/p/a color rules for sidebar to allow Tailwind classes to work */
-aside nav a:not(.bg-gradient-to-r):not(.active-nav-link) {
+aside nav a:not(.bg-linear-to-r):not(.active-nav-link) {
   color: inherit !important;
 }
 
@@ -1229,12 +1229,12 @@ aside nav a[aria-current="page"]:hover,
 aside nav a[aria-current="page"]:active,
 aside nav a[aria-current="page"]:focus,
 aside nav a[aria-current="page"]:focus-visible,
-aside nav a.bg-gradient-to-r,
-aside nav a.bg-gradient-to-r:link,
-aside nav a.bg-gradient-to-r:visited,
-aside nav a.bg-gradient-to-r:hover,
-aside nav a[class*="bg-gradient-to-r"],
-aside nav a[class*="!bg-gradient-to-r"] {
+aside nav a.bg-linear-to-r,
+aside nav a.bg-linear-to-r:link,
+aside nav a.bg-linear-to-r:visited,
+aside nav a.bg-linear-to-r:hover,
+aside nav a[class*="bg-linear-to-r"],
+aside nav a[class*="bg-linear-to-r!"] {
   background: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important; /* from-indigo-600 to-purple-600 */
   background-image: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
   background-color: transparent !important;
@@ -1262,9 +1262,9 @@ aside nav a[class*="!bg-gradient-to-r"] {
 .dark aside nav a[aria-current="page"]:active,
 .dark aside nav a[aria-current="page"]:focus,
 .dark aside nav a[aria-current="page"]:focus-visible,
-.dark aside nav a.bg-gradient-to-r,
-.dark aside nav a[class*="bg-gradient-to-r"],
-.dark aside nav a[class*="!bg-gradient-to-r"] {
+.dark aside nav a.bg-linear-to-r,
+.dark aside nav a[class*="bg-linear-to-r"],
+.dark aside nav a[class*="bg-linear-to-r!"] {
   background: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important; /* from-indigo-600 to-purple-600 */
   background-image: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
   background-color: transparent !important;
@@ -1310,20 +1310,20 @@ aside nav a span.text-indigo-700 {
 }
 
 /* Dark mode sidebar links should be white - but exclude active links */
-.dark aside nav a:not(.bg-gradient-to-r):not(.active-nav-link) {
+.dark aside nav a:not(.bg-linear-to-r):not(.active-nav-link) {
   color: white !important;
 }
 
-.dark aside nav a:not(.bg-gradient-to-r):not(.active-nav-link) svg {
+.dark aside nav a:not(.bg-linear-to-r):not(.active-nav-link) svg {
   stroke: white !important;
   color: white !important;
 }
 
-.dark aside nav a:not(.bg-gradient-to-r):not(.active-nav-link) span {
+.dark aside nav a:not(.bg-linear-to-r):not(.active-nav-link) span {
   color: white !important;
 }
 
-/* Ensure dark:!text-white works in sidebar - removed invalid selector */
+/* Ensure dark:text-white! (Tailwind v4 important suffix) works in sidebar */
 
 /* Active indicator bar - ensure it shows when parent link is active */
 /* Don't force background color - let Tailwind classes work naturally */
@@ -1345,8 +1345,8 @@ aside nav a[aria-current="page"] span[aria-hidden="true"][class*="opacity-100"] 
 }
 
 /* Override any conflicting background colors for active links */
-aside nav a.bg-gradient-to-r:hover,
-aside nav a[class*="bg-gradient-to-r"]:hover {
+aside nav a.bg-linear-to-r:hover,
+aside nav a[class*="bg-linear-to-r"]:hover {
   background-image: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
   background-color: transparent !important;
 }
@@ -1416,23 +1416,23 @@ nav.fixed {
 
 /* Override global text color for login page elements */
 h2[class*="text-white"],
-h2[class*="!text-white"],
+h2[class*="text-white!"],
 p[class*="text-white"],
-p[class*="!text-white"],
+p[class*="text-white!"],
 span[class*="text-white"],
-span[class*="!text-white"],
+span[class*="text-white!"],
 a[class*="text-white"],
-a[class*="!text-white"] {
+a[class*="text-white!"] {
   color: white !important;
 }
 
 .dark h2[class*="text-white"],
-.dark h2[class*="!text-white"],
+.dark h2[class*="text-white!"],
 .dark p[class*="text-white"],
-.dark p[class*="!text-white"],
+.dark p[class*="text-white!"],
 .dark span[class*="text-white"],
-.dark span[class*="!text-white"],
+.dark span[class*="text-white!"],
 .dark a[class*="text-white"],
-.dark a[class*="!text-white"] {
+.dark a[class*="text-white!"] {
   color: white !important;
 }

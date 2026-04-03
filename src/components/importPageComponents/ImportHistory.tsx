@@ -24,7 +24,7 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
   };
 
   return (
-    <div className="overflow-x-auto mt-4">
+    <div className="mt-4 overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-800">
           <tr>
@@ -40,35 +40,35 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
             ].map((heading) => (
               <th
                 key={heading}
-                className="px-6 py-3 text-left text-xs font-medium !text-gray-500 dark:!text-gray-300 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500! dark:text-gray-300! uppercase tracking-wider"
               >
                 {heading}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="bg-white dark:bg-gray-800 rounded divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="bg-white divide-y divide-gray-200 rounded dark:bg-gray-800 dark:divide-gray-700">
           {imports.length > 0 ? (
             imports.map((importItem) => {
               const dateTime = formatDateTime(importItem.timestamp);
               return (
                 <tr key={getItemId(importItem)}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm !text-gray-900 dark:!text-gray-100">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900! dark:text-gray-100!">
                     Manual Import
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm !text-gray-900 dark:!text-gray-100">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900! dark:text-gray-100!">
                     {importItem.fileName || "Unnamed File"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm !text-gray-900 dark:!text-gray-100">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900! dark:text-gray-100!">
                     Admin
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm !text-gray-500 dark:!text-gray-300">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500! dark:text-gray-300!">
                     <div>{dateTime.relative}</div>
-                    <div className="text-xs !text-gray-400 dark:!text-gray-500">
+                    <div className="text-xs text-gray-400! dark:text-gray-500!">
                       {dateTime.exact}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm !text-gray-900 dark:!text-gray-100">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900! dark:text-gray-100!">
                     {importItem.recordCount}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -85,10 +85,10 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
                         importItem.status.slice(1)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm !text-gray-900 dark:!text-gray-100">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900! dark:text-gray-100!">
                     {importItem.successCount}/{importItem.failureCount}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                     <button
                       onClick={() => onDelete(getItemId(importItem))}
                       className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
@@ -103,7 +103,7 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
             <tr key="no-data">
               <td
                 colSpan={8}
-                className="px-6 py-4 whitespace-nowrap text-sm !text-gray-500 dark:!text-gray-400 text-center"
+                className="px-6 py-4 whitespace-nowrap text-sm text-gray-500! dark:text-gray-400! text-center"
               >
                 No import history available
               </td>

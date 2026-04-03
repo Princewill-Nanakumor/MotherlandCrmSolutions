@@ -1,3 +1,5 @@
+"use client";
+
 import type { Session } from "next-auth";
 
 /**
@@ -26,4 +28,27 @@ export function shouldForceLoginLanding(): boolean {
     return true;
   }
   return localStorage.getItem("sessionExpired") === "true";
+}
+
+/**
+ * Stale-session cleanup: user landed after expiry but client still shows a session.
+ * Re-evaluate on each render (do not freeze in useState) so clearing storage after login works.
+ */
+export function shouldClearStaleSessionOnLoginPage(
+  status: string,
+  session: Session | null | undefined,
+): boolean {
+  if (!shouldForceLoginLanding()) return false;
+  return hasAuthorizedSession(status, session);
+}
+
+/**
+ * Block auto-redirect to dashboard only while clearing stale session (above).
+ * After a real sign-in, storage is cleared and/or user is newly authenticated — redirect.
+ */
+export function shouldBlockLoginAutoRedirect(
+  status: string,
+  session: Session | null | undefined,
+): boolean {
+  return shouldClearStaleSessionOnLoginPage(status, session);
 }

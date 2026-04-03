@@ -341,12 +341,12 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
 
   if (activities.length === 0) {
     return (
-      <div className="text-center py-8 !text-gray-500 dark:!text-gray-400">
-        <ActivityIcon className="w-12 h-12 mx-auto mb-4 !text-gray-300 dark:!text-gray-600" />
-        <p className="text-lg font-medium !text-gray-700 dark:!text-gray-300">
+      <div className="text-center py-8 text-gray-500! dark:text-gray-400!">
+        <ActivityIcon className="w-12 h-12 mx-auto mb-4 text-gray-300! dark:text-gray-600!" />
+        <p className="text-lg font-medium text-gray-700! dark:text-gray-300!">
           No Activities Yet
         </p>
-        <p className="text-sm !text-gray-500 dark:!text-gray-400">
+        <p className="text-sm text-gray-500! dark:text-gray-400!">
           Activities will appear here when changes are made to this lead.
         </p>
       </div>
@@ -359,7 +359,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
       style={{ height: "100%" }}
     >
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 border border-gray-100 dark:border-gray-700 flex-1 min-h-0 flex flex-col">
-        <h3 className="text-lg font-semibold !text-gray-800 dark:!text-white mb-4">
+        <h3 className="text-lg font-semibold text-gray-800! dark:text-white! mb-4">
           Activity Log ({activities.length})
         </h3>
         <div
@@ -408,10 +408,10 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="flex items-center gap-1 flex-wrap min-w-0 flex-1">
-                      <span className="text-sm font-normal !text-gray-700 dark:!text-gray-200">
+                      <span className="text-sm font-normal text-gray-700! dark:text-gray-200!">
                         {getUserDisplayName(activity.createdBy)}
                       </span>
-                      <span className="text-sm font-semibold !text-gray-900 dark:!text-white leading-relaxed">
+                      <span className="text-sm font-semibold text-gray-900! dark:text-white! leading-relaxed">
                         {getActivityDescription(activity)}
 
                         {/* Specific rendering for STATUS_CHANGE with real colors */}
@@ -455,7 +455,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
                         {activity.type === "ASSIGNMENT" && (
                           <>
                             {activity.metadata?.assignedTo && (
-                              <span className="font-normal !text-gray-700 dark:!text-gray-200">
+                              <span className="font-normal text-gray-700! dark:text-gray-200!">
                                 {typeof activity.metadata.assignedTo ===
                                   "object" &&
                                 activity.metadata.assignedTo.firstName
@@ -468,7 +468,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
                             )}
                             {activity.metadata?.assignedFrom &&
                               !activity.metadata?.assignedTo && (
-                                <span className="font-normal !text-gray-700 dark:!text-gray-200">
+                                <span className="font-normal text-gray-700! dark:text-gray-200!">
                                   {typeof activity.metadata.assignedFrom ===
                                     "object" &&
                                   activity.metadata.assignedFrom.firstName
@@ -484,18 +484,18 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
                       </span>
                     </div>
 
-                    <span className="text-xs !text-gray-600 dark:!text-gray-400 font-sans bg-gray-100 dark:bg-gray-700 px-2 py-2 rounded-md border border-gray-200 dark:border-gray-600 whitespace-nowrap shrink-0">
+                    <span className="text-xs text-gray-600! dark:text-gray-400! font-sans bg-gray-100 dark:bg-gray-700 px-2 py-2 rounded-md border border-gray-200 dark:border-gray-600 whitespace-nowrap shrink-0">
                       {formatDateTime(activity.createdAt)}
                     </span>
                   </div>
 
                   {activity.metadata?.commentContent && (
-                    <div className="mt-2 text-sm !text-gray-600 dark:!text-gray-300">
+                    <div className="mt-2 text-sm text-gray-600! dark:text-gray-300!">
                       <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border-l-4 border-purple-300 dark:border-purple-500 shadow-sm">
                         <span className="font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wide text-xs mr-1">
                           Comment:
                         </span>{" "}
-                        <span className="italic !text-gray-800 dark:!text-white leading-relaxed">
+                        <span className="italic text-gray-800! dark:text-white! leading-relaxed">
                           &ldquo;{activity.metadata.commentContent}&rdquo;
                         </span>
                       </div>
@@ -505,7 +505,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
                   {/* Display reminder-specific metadata */}
                   {activity.type.startsWith("REMINDER_") &&
                     activity.metadata && (
-                      <div className="mt-2 text-sm !text-gray-600 dark:!text-gray-300">
+                      <div className="mt-2 text-sm text-gray-600! dark:text-gray-300!">
                         <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border-l-4 border-blue-300 dark:border-blue-500 shadow-sm">
                           <span className="font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide text-xs mr-1">
                             Reminder Details:
@@ -586,7 +586,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
                   {/* Display additional metadata for other activity types */}
                   {activity.metadata?.changes &&
                     activity.metadata.changes.length > 0 && (
-                      <div className="mt-2 text-sm !text-gray-600 dark:!text-gray-300">
+                      <div className="mt-2 text-sm text-gray-600! dark:text-gray-300!">
                         <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border-l-4 border-blue-300 dark:border-blue-500 shadow-sm">
                           <span className="font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide text-xs mr-1">
                             Changes:

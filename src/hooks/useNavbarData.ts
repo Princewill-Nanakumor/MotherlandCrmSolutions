@@ -28,7 +28,7 @@ const fetchUserProfile = async (): Promise<UserProfile> => {
 
   if (response.status === 404) {
     console.log("User not found, signing out...");
-    await signOutWithoutInterstitial("/");
+    await signOutWithoutInterstitial("/", undefined, { intentional: true });
     throw new Error("User not found");
   }
 

@@ -17,7 +17,7 @@ import {
 
 const ImportHelp: React.FC = () => {
   const [expandedSection, setExpandedSection] = useState<string | null>(
-    "overview"
+    "overview",
   );
 
   const toggleSection = (section: string) => {
@@ -61,35 +61,35 @@ const ImportHelp: React.FC = () => {
       icon: <Upload className="w-5 h-5" />,
       content: (
         <div className="space-y-4">
-          <p className="!text-gray-700 dark:!text-gray-300">
+          <p className="text-gray-700! dark:text-gray-300!">
             The import feature allows you to bulk upload data from CSV files,
             saving time when adding multiple data to your CRM system.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-center">
-              <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
-              <h4 className="font-medium !text-blue-900 dark:!text-blue-200">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="p-4 text-center border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+              <FileText className="w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+              <h4 className="font-medium text-blue-900! dark:text-blue-200!">
                 CSV Format
               </h4>
-              <p className="text-sm !text-blue-800 dark:!text-blue-300 mt-1">
+              <p className="text-sm text-blue-800! dark:text-blue-300! mt-1">
                 Support for comma-separated values
               </p>
             </div>
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center">
-              <Upload className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
-              <h4 className="font-medium !text-green-900 dark:!text-green-200">
+            <div className="p-4 text-center border border-green-200 rounded-lg bg-green-50 dark:bg-green-900/20 dark:border-green-800">
+              <Upload className="w-8 h-8 mx-auto mb-2 text-green-600 dark:text-green-400" />
+              <h4 className="font-medium text-green-900! dark:text-green-200!">
                 Bulk Upload
               </h4>
-              <p className="text-sm !text-green-800 dark:!text-green-300 mt-1">
+              <p className="text-sm text-green-800! dark:text-green-300! mt-1">
                 Import hundreds of leads at once
               </p>
             </div>
-            <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 text-center">
-              <CheckCircle className="w-8 h-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
-              <h4 className="font-medium !text-purple-900 dark:!text-purple-200">
+            <div className="p-4 text-center border border-purple-200 rounded-lg bg-purple-50 dark:bg-purple-900/20 dark:border-purple-800">
+              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-purple-600 dark:text-purple-400" />
+              <h4 className="font-medium text-purple-900! dark:text-purple-200!">
                 Validation
               </h4>
-              <p className="text-sm !text-purple-800 dark:!text-purple-300 mt-1">
+              <p className="text-sm text-purple-800! dark:text-purple-300! mt-1">
                 Automatic data validation
               </p>
             </div>
@@ -103,24 +103,24 @@ const ImportHelp: React.FC = () => {
       icon: <FileText className="w-5 h-5" />,
       content: (
         <div className="space-y-6">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <h4 className="font-medium !text-gray-900 dark:!text-white mb-3">
+          <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+            <h4 className="font-medium text-gray-900! dark:text-white! mb-3">
               Required Fields
             </h4>
             <div className="space-y-3">
               {requiredFields.map((field, index) => (
                 <div
                   key={index}
-                  className="flex items-start space-x-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800"
+                  className="flex items-start p-3 space-x-3 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-800"
                 >
                   <div className="text-red-600 dark:text-red-400 mt-0.5">
                     {field.icon}
                   </div>
                   <div>
-                    <p className="font-medium !text-red-900 dark:!text-red-200">
+                    <p className="font-medium text-red-900! dark:text-red-200!">
                       {field.name}
                     </p>
-                    <p className="text-sm !text-red-800 dark:!text-red-300">
+                    <p className="text-sm text-red-800! dark:text-red-300!">
                       {field.description}
                     </p>
                   </div>
@@ -129,22 +129,22 @@ const ImportHelp: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <h4 className="font-medium !text-gray-900 dark:!text-white mb-3">
+          <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+            <h4 className="font-medium text-gray-900! dark:text-white! mb-3">
               Optional Fields
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {optionalFields.map((field, index) => (
                 <div
                   key={index}
-                  className="flex items-start space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
+                  className="flex items-start p-3 space-x-3 border border-green-200 rounded-lg bg-green-50 dark:bg-green-900/20 dark:border-green-800"
                 >
                   <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5" />
                   <div>
-                    <p className="font-medium !text-green-900 dark:!text-green-200">
+                    <p className="font-medium text-green-900! dark:text-green-200!">
                       {field.name}
                     </p>
-                    <p className="text-sm !text-green-800 dark:!text-green-300">
+                    <p className="text-sm text-green-800! dark:text-green-300!">
                       {field.description}
                     </p>
                   </div>
@@ -153,12 +153,12 @@ const ImportHelp: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <h4 className="font-medium !text-blue-900 dark:!text-blue-200 mb-3">
+          <div className="p-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+            <h4 className="font-medium text-blue-900! dark:text-blue-200! mb-3">
               CSV Format Example
             </h4>
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded p-3 overflow-x-auto">
-              <pre className="text-sm !text-gray-700 dark:!text-gray-300">
+            <div className="p-3 overflow-x-auto bg-white border border-gray-200 rounded dark:bg-gray-800 dark:border-gray-700">
+              <pre className="text-sm text-gray-700! dark:text-gray-300!">
                 {`Name,Email,Phone,Country,Source,
 John Doe,john@email.com,+1234567890,Germany,Website
 Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
@@ -174,73 +174,73 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
       icon: <Upload className="w-5 h-5" />,
       content: (
         <div className="space-y-4">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <h4 className="font-medium !text-gray-900 dark:!text-white mb-3">
+          <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+            <h4 className="font-medium text-gray-900! dark:text-white! mb-3">
               Step-by-Step Import Process:
             </h4>
             <ol className="space-y-4 text-sm">
               <li className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
                   1
                 </span>
                 <div>
-                  <p className="font-medium !text-gray-900 dark:!text-white">
+                  <p className="font-medium text-gray-900! dark:text-white!">
                     Access Import Feature
                   </p>
-                  <p className="!text-gray-600 dark:!text-gray-400">
+                  <p className="text-gray-600! dark:text-gray-400!">
                     Go to Dashboard → Import
                   </p>
                 </div>
               </li>
 
               <li className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
                   2
                 </span>
                 <div>
-                  <p className="font-medium !text-gray-900 dark:!text-white">
+                  <p className="font-medium text-gray-900! dark:text-white!">
                     Select Your CSV File
                   </p>
-                  <p className="!text-gray-600 dark:!text-gray-400">
+                  <p className="text-gray-600! dark:text-gray-400!">
                     Click Choose File and select your prepared CSV
                   </p>
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
                   3
                 </span>
                 <div>
-                  <p className="font-medium !text-gray-900 dark:!text-white">
+                  <p className="font-medium text-gray-900! dark:text-white!">
                     Preview Import Data
                   </p>
-                  <p className="!text-gray-600 dark:!text-gray-400">
+                  <p className="text-gray-600! dark:text-gray-400!">
                     Review the data preview to ensure correct mapping
                   </p>
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
                   4
                 </span>
                 <div>
-                  <p className="font-medium !text-gray-900 dark:!text-white">
+                  <p className="font-medium text-gray-900! dark:text-white!">
                     Map Columns (if needed)
                   </p>
-                  <p className="!text-gray-600 dark:!text-gray-400">
+                  <p className="text-gray-600! dark:text-gray-400!">
                     Ensure CSV columns match the required fields
                   </p>
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-green-600 rounded-full shrink-0">
                   ✓
                 </span>
                 <div>
-                  <p className="font-medium !text-gray-900 dark:!text-white">
+                  <p className="font-medium text-gray-900! dark:text-white!">
                     Start Import
                   </p>
-                  <p className="!text-gray-600 dark:!text-gray-400">
+                  <p className="text-gray-600! dark:text-gray-400!">
                     Click Import Leads to begin the upload process
                   </p>
                 </div>
@@ -256,13 +256,13 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
       icon: <CheckCircle className="w-5 h-5" />,
       content: (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-              <h4 className="font-medium !text-green-900 dark:!text-green-200 mb-3 flex items-center">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="p-4 border border-green-200 rounded-lg bg-green-50 dark:bg-green-900/20 dark:border-green-800">
+              <h4 className="font-medium text-green-900! dark:text-green-200! mb-3 flex items-center">
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Validation Checks
               </h4>
-              <ul className="space-y-2 text-sm !text-green-800 dark:!text-green-300">
+              <ul className="space-y-2 text-sm text-green-800! dark:text-green-300!">
                 <li>• Required fields presence</li>
                 <li>• Email format validation</li>
                 <li>• Phone number format</li>
@@ -270,12 +270,12 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
                 <li>• Duplicate detection</li>
               </ul>
             </div>
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-              <h4 className="font-medium !text-red-900 dark:!text-red-200 mb-3 flex items-center">
+            <div className="p-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+              <h4 className="font-medium text-red-900! dark:text-red-200! mb-3 flex items-center">
                 <AlertTriangle className="w-4 h-4 mr-2" />
                 Common Errors
               </h4>
-              <ul className="space-y-2 text-sm !text-red-800 dark:!text-red-300">
+              <ul className="space-y-2 text-sm text-red-800! dark:text-red-300!">
                 <li>• Missing sheet headers</li>
                 <li>• Incorrect file format</li>
                 <li>• Duplicate entries</li>
@@ -283,14 +283,14 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
               </ul>
             </div>
           </div>
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+          <div className="p-4 border rounded-lg bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
             <div className="flex items-start space-x-3">
               <Info className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
               <div>
-                <h4 className="font-medium !text-amber-900 dark:!text-amber-200">
+                <h4 className="font-medium text-amber-900! dark:text-amber-200!">
                   Import Results
                 </h4>
-                <p className="text-sm !text-amber-800 dark:!text-amber-300 mt-1">
+                <p className="text-sm text-amber-800! dark:text-amber-300! mt-1">
                   After import, you will receive a detailed report showing
                   successful imports, skipped records, and any errors that
                   occurred.
@@ -308,13 +308,13 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
       icon: <Info className="w-5 h-5" />,
       content: (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-              <h4 className="font-medium !text-green-900 dark:!text-green-200 mb-3 flex items-center">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="p-4 border border-green-200 rounded-lg bg-green-50 dark:bg-green-900/20 dark:border-green-800">
+              <h4 className="font-medium text-green-900! dark:text-green-200! mb-3 flex items-center">
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Best Practices
               </h4>
-              <ul className="space-y-2 text-sm !text-green-800 dark:!text-green-300">
+              <ul className="space-y-2 text-sm text-green-800! dark:text-green-300!">
                 <li>• Use the provided CSV template</li>
                 <li>• Clean your data before import</li>
                 <li>• Test with a small batch first</li>
@@ -323,12 +323,12 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
                 <li>• Remove duplicate entries</li>
               </ul>
             </div>
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <h4 className="font-medium !text-blue-900 dark:!text-blue-200 mb-3 flex items-center">
+            <div className="p-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+              <h4 className="font-medium text-blue-900! dark:text-blue-200! mb-3 flex items-center">
                 <Info className="w-4 h-4 mr-2" />
                 Pro Tips
               </h4>
-              <ul className="space-y-2 text-sm !text-blue-800 dark:!text-blue-300">
+              <ul className="space-y-2 text-sm text-blue-800! dark:text-blue-300!">
                 <li>• Import during off-peak hours</li>
                 <li>• Keep file sizes under 5MB</li>
                 <li>• Use UTF-8 encoding for special characters</li>
@@ -338,14 +338,14 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
               </ul>
             </div>
           </div>
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+          <div className="p-4 border rounded-lg bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
             <div className="flex items-start space-x-3">
               <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
               <div>
-                <h4 className="font-medium !text-amber-900 dark:!text-amber-200">
+                <h4 className="font-medium text-amber-900! dark:text-amber-200!">
                   Important Limitations
                 </h4>
-                <ul className="text-sm !text-amber-800 dark:!text-amber-300 mt-2 space-y-1">
+                <ul className="text-sm text-amber-800! dark:text-amber-300! mt-2 space-y-1">
                   <li>• Only CSV format is supported</li>
                   <li>
                     • Import process may take several minutes for large files
@@ -361,15 +361,17 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
   ];
 
   return (
-    <div className="w-full mx-auto p-6">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+    <div className="w-full p-6 mx-auto">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-t-lg">
+        <div className="p-6 text-white rounded-t-lg bg-linear-to-r from-purple-600 to-blue-600">
           <div className="flex items-center space-x-3">
             <Upload className="w-8 h-8" />
             <div>
-              <h1 className="text-2xl font-bold !text-gray-900 dark:!text-white">Import Guide</h1>
-              <p className="text-purple-100 mt-1">
+              <h1 className="text-2xl font-bold text-gray-900! dark:text-white!">
+                Import Guide
+              </h1>
+              <p className="mt-1 text-purple-100">
                 Learn how to bulk import data using CSV files
               </p>
             </div>
@@ -382,25 +384,25 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
             {sections.map((section) => (
               <div
                 key={section.id}
-                className="border border-gray-200 dark:border-gray-700 rounded-lg"
+                className="border border-gray-200 rounded-lg dark:border-gray-700"
               >
                 <button
                   onClick={() => toggleSection(section.id)}
-                  className="w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 rounded-lg"
+                  className="w-full p-4 text-left transition-colors duration-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="text-purple-600 dark:text-purple-400">
                         {section.icon}
                       </div>
-                      <h3 className="text-lg font-medium !text-gray-900 dark:!text-white">
+                      <h3 className="text-lg font-medium text-gray-900! dark:text-white!">
                         {section.title}
                       </h3>
                     </div>
                     {expandedSection === section.id ? (
-                      <ChevronDown className="w-5 h-5 !text-gray-500 dark:!text-gray-400" />
+                      <ChevronDown className="w-5 h-5 text-gray-500! dark:text-gray-400!" />
                     ) : (
-                      <ChevronRight className="w-5 h-5 !text-gray-500 dark:!text-gray-400" />
+                      <ChevronRight className="w-5 h-5 text-gray-500! dark:text-gray-400!" />
                     )}
                   </div>
                 </button>

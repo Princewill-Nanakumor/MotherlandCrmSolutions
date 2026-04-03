@@ -34,7 +34,7 @@ const DEFAULT_STATUS_STYLE = {
 
 const getStatusStyle = (
   status: string,
-  statuses: Array<{ id: string; name: string; color?: string }> = []
+  statuses: Array<{ id: string; name: string; color?: string }> = [],
 ) => {
   const statusObj = statuses.find((s) => s.id === status);
 
@@ -89,7 +89,7 @@ export const useTableColumns = ({
               ref={selectAllRef}
               checked={allSelected}
               onChange={(e) => handleSelectAll(e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
           </div>
         ),
@@ -108,7 +108,7 @@ export const useTableColumns = ({
                   e.stopPropagation();
                   handleRowSelection(lead, e.target.checked);
                 }}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
             </div>
           );
@@ -117,7 +117,11 @@ export const useTableColumns = ({
       },
       {
         id: "actions",
-        header: () => <div className="h-8 flex items-center justify-center w-full font-medium cursor-pointer">Actions</div>,
+        header: () => (
+          <div className="flex items-center justify-center w-full h-8 font-medium cursor-pointer">
+            Actions
+          </div>
+        ),
         cell: ({ row }) => {
           const lead = row.original;
           // ✅ FIX: Use leadId (5-6 digit display ID) instead of database _id
@@ -132,7 +136,7 @@ export const useTableColumns = ({
               <Link
                 href={detailUrl}
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:border dark:border-gray-700 transition-colors duration-200"
+                className="inline-flex items-center justify-center w-8 h-8 transition-colors duration-200 bg-blue-100 rounded-full hover:bg-blue-200 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:border dark:border-gray-700"
                 title="View Details"
               >
                 <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -151,7 +155,9 @@ export const useTableColumns = ({
             onClick={() => handleSort("leadId")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "leadId" ? "font-bold" : "font-medium"}>
+            <span
+              className={sortField === "leadId" ? "font-bold" : "font-medium"}
+            >
               ID
             </span>
             <ArrowUpDown
@@ -166,7 +172,7 @@ export const useTableColumns = ({
         cell: ({ row }) => {
           const leadId = row.original.leadId;
           return (
-            <div className="text-center font-medium !text-gray-900 dark:!text-white">
+            <div className="text-center font-medium text-gray-900! dark:text-white!">
               {leadId ? leadId.toString() : "—"}
             </div>
           );
@@ -180,7 +186,9 @@ export const useTableColumns = ({
             onClick={() => handleSort("name")}
             className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "name" ? "font-bold" : "font-medium"}>
+            <span
+              className={sortField === "name" ? "font-bold" : "font-medium"}
+            >
               Name
             </span>
             <ArrowUpDown
@@ -202,7 +210,7 @@ export const useTableColumns = ({
           const lastName = capitalizeName(lead.lastName || "");
           const fullName = lead.name || `${firstName} ${lastName}`.trim();
           return (
-            <div className="font-medium !text-gray-900 dark:!text-white">
+            <div className="font-medium text-gray-900! dark:text-white!">
               {fullName || "—"}
             </div>
           );
@@ -211,18 +219,19 @@ export const useTableColumns = ({
       {
         id: "email",
         header: () => (
-          <div className="h-8 flex items-center justify-start w-full font-medium cursor-pointer">
+          <div className="flex items-center justify-start w-full h-8 font-medium cursor-pointer">
             Email
           </div>
         ),
         cell: ({ row }) => {
           const email = row.original.email || "";
           // Capitalize first letter of email
-          const displayEmail = email.length > 0
-            ? email.charAt(0).toUpperCase() + email.slice(1)
-            : email || "—";
+          const displayEmail =
+            email.length > 0
+              ? email.charAt(0).toUpperCase() + email.slice(1)
+              : email || "—";
           return (
-            <div className="font-medium !text-gray-900 dark:!text-white">
+            <div className="font-medium text-gray-900! dark:text-white!">
               {displayEmail}
             </div>
           );
@@ -231,12 +240,12 @@ export const useTableColumns = ({
       {
         id: "phone",
         header: () => (
-          <div className="h-8 flex items-center justify-start w-full font-medium cursor-pointer">
+          <div className="flex items-center justify-start w-full h-8 font-medium cursor-pointer">
             Phone
           </div>
         ),
         cell: ({ row }) => (
-          <div className="text-center font-medium !text-gray-900 dark:!text-white">
+          <div className="text-center font-medium text-gray-900! dark:text-white!">
             {row.original.phone || "—"}
           </div>
         ),
@@ -249,7 +258,9 @@ export const useTableColumns = ({
             onClick={() => handleSort("country")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "country" ? "font-bold" : "font-medium"}>
+            <span
+              className={sortField === "country" ? "font-bold" : "font-medium"}
+            >
               Country
             </span>
             <ArrowUpDown
@@ -262,7 +273,7 @@ export const useTableColumns = ({
           </Button>
         ),
         cell: ({ row }) => (
-          <div className="text-center font-medium !text-gray-900 dark:!text-white">
+          <div className="text-center font-medium text-gray-900! dark:text-white!">
             {row.original.country || "—"}
           </div>
         ),
@@ -275,7 +286,9 @@ export const useTableColumns = ({
             onClick={() => handleSort("status")}
             className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "status" ? "font-bold" : "font-medium"}>
+            <span
+              className={sortField === "status" ? "font-bold" : "font-medium"}
+            >
               Status
             </span>
             <ArrowUpDown
@@ -323,7 +336,9 @@ export const useTableColumns = ({
             onClick={() => handleSort("source")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "source" ? "font-bold" : "font-medium"}>
+            <span
+              className={sortField === "source" ? "font-bold" : "font-medium"}
+            >
               Source
             </span>
             <ArrowUpDown
@@ -336,7 +351,7 @@ export const useTableColumns = ({
           </Button>
         ),
         cell: ({ row }) => (
-          <div className="text-center font-medium !text-gray-900 dark:!text-white">
+          <div className="text-center font-medium text-gray-900! dark:text-white!">
             {row.original.source || "—"}
           </div>
         ),
@@ -349,7 +364,11 @@ export const useTableColumns = ({
             onClick={() => handleSort("assignedTo")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "assignedTo" ? "font-bold" : "font-medium"}>
+            <span
+              className={
+                sortField === "assignedTo" ? "font-bold" : "font-medium"
+              }
+            >
               Assigned To
             </span>
             <ArrowUpDown
@@ -365,7 +384,7 @@ export const useTableColumns = ({
           const lead = row.original;
           if (!lead.assignedTo) {
             return (
-              <div className="text-center font-medium !text-gray-900 dark:!text-white">
+              <div className="text-center font-medium text-gray-900! dark:text-white!">
                 Unassigned
               </div>
             );
@@ -377,7 +396,7 @@ export const useTableColumns = ({
               : lead.assignedTo?.id || "";
           const user = users.find((u) => u.id === userId);
           return (
-            <div className="text-center font-medium !text-gray-900 dark:!text-white">
+            <div className="text-center font-medium text-gray-900! dark:text-white!">
               {user ? `${user.firstName} ${user.lastName}` : "Unassigned"}
             </div>
           );
@@ -391,7 +410,11 @@ export const useTableColumns = ({
             onClick={() => handleSort("createdAt")}
             className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
           >
-            <span className={sortField === "createdAt" ? "font-bold" : "font-medium"}>
+            <span
+              className={
+                sortField === "createdAt" ? "font-bold" : "font-medium"
+              }
+            >
               Created
             </span>
             <ArrowUpDown
@@ -404,7 +427,7 @@ export const useTableColumns = ({
           </Button>
         ),
         cell: ({ row }) => (
-          <div className="text-center font-medium !text-gray-900 dark:!text-white">
+          <div className="text-center font-medium text-gray-900! dark:text-white!">
             {new Date(row.original.createdAt).toLocaleDateString()}
           </div>
         ),
@@ -437,14 +460,14 @@ export const useTableColumns = ({
           const lead = row.original;
           if (!lead.statusChangedAt) {
             return (
-              <div className="text-center font-medium !text-gray-900 dark:!text-white">
+              <div className="text-center font-medium text-gray-900! dark:text-white!">
                 —
               </div>
             );
           }
           const date = new Date(lead.statusChangedAt);
           return (
-            <div className="text-center font-medium !text-gray-900 dark:!text-white">
+            <div className="text-center font-medium text-gray-900! dark:text-white!">
               {date.toLocaleDateString()}
             </div>
           );
@@ -481,7 +504,7 @@ export const useTableColumns = ({
           const comment = lead.lastComment;
           if (!comment) {
             return (
-              <div className="text-center font-medium !text-gray-900 dark:!text-white">
+              <div className="text-center font-medium text-gray-900! dark:text-white!">
                 —
               </div>
             );
@@ -489,7 +512,7 @@ export const useTableColumns = ({
           return (
             <div className="text-center">
               <div
-                className="text-sm max-w-[200px] truncate mx-auto font-medium !text-gray-900 dark:!text-white"
+                className="text-sm max-w-50 truncate mx-auto font-medium text-gray-900! dark:text-white!"
                 title={comment}
                 style={{
                   overflow: "hidden",
@@ -531,7 +554,7 @@ export const useTableColumns = ({
           const lead = row.original;
           if (!lead.lastCommentDate) {
             return (
-              <div className="text-center font-medium !text-gray-900 dark:!text-white">
+              <div className="text-center font-medium text-gray-900! dark:text-white!">
                 —
               </div>
             );
@@ -541,7 +564,7 @@ export const useTableColumns = ({
           const month = String(date.getMonth() + 1).padStart(2, "0");
           const year = date.getFullYear();
           return (
-            <div className="text-sm text-center font-medium !text-gray-900 dark:!text-white">
+            <div className="text-sm text-center font-medium text-gray-900! dark:text-white!">
               {day}/{month}/{year}
             </div>
           );
@@ -575,7 +598,7 @@ export const useTableColumns = ({
           const lead = row.original;
           const count = lead.commentCount || 0;
           return (
-            <div className="text-sm text-center font-medium !text-gray-900 dark:!text-white">
+            <div className="text-sm text-center font-medium text-gray-900! dark:text-white!">
               {count > 0 ? count : "—"}
             </div>
           );
@@ -593,7 +616,7 @@ export const useTableColumns = ({
       selectAllRef,
       statuses,
       currentParams,
-    ]
+    ],
   );
 
   return { columns };

@@ -66,16 +66,17 @@ function isConnectionUsable(): boolean {
   );
 }
 
-// Function to ensure models are registered
-function ensureModelsRegistered() {
-  // Import and register all models here
-  // This ensures they're available before any queries
+/** Ensure Mongoose models are registered before queries (awaited so webpack loads chunks deterministically). */
+async function ensureModelsRegistered() {
   try {
-    import("@/models/User");
-    import("@/models/Activity");
-    import("@/models/Lead");
+    await Promise.all([
+      import("@/models/User"),
+      import("@/models/Activity"),
+      import("@/models/Lead"),
+    ]);
   } catch (error) {
     console.error("Error registering models:", error);
+    throw error;
   }
 }
 
@@ -85,8 +86,8 @@ export const connectMongoDB = async (): Promise<typeof mongoose> => {
     const MONGODB_URI_WITH_DB = getMongoDBUri();
     const options = getConnectionOptions();
 
-    // NEW: Ensure models are registered BEFORE connecting
-    ensureModelsRegistered();
+    // Ensure models are registered BEFORE connecting
+    await ensureModelsRegistered();
 
     if (isConnectionUsable()) {
       return mongoose;

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:clean": "rm -rf .next && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -11,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck",
     "check-text-colors": "ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/check-text-colors.ts",
+    "fix-tailwind-classes": "node scripts/fix-tailwind-v4-classes.mjs",
     "add-lead-indexes": "ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/add-lead-indexes.ts"
   },
   "dependencies": {

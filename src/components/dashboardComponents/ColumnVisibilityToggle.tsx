@@ -21,7 +21,9 @@ interface ColumnVisibilityToggleProps {
 }
 
 // Column labels mapping
-const getColumnLabels = (tableId: "adminLeadsTable" | "userLeadsTable"): Record<string, string> => {
+const getColumnLabels = (
+  tableId: "adminLeadsTable" | "userLeadsTable",
+): Record<string, string> => {
   const baseLabels: Record<string, string> = {
     select: "Select",
     actions: "Actions",
@@ -73,19 +75,21 @@ export function ColumnVisibilityToggle({
         <Button
           variant="outline"
           size="sm"
-          className="ml-auto h-8 gap-2 !bg-white dark:!bg-gray-800 !border-gray-300 dark:!border-gray-600 !text-gray-900 dark:!text-white hover:!bg-gray-50 dark:hover:!bg-gray-700"
+          className="ml-auto h-8 gap-2 bg-white! dark:bg-gray-800! border-gray-300! dark:border-gray-600! text-gray-900! dark:text-white! hover:bg-gray-50! dark:hover:bg-gray-700!"
           title="Toggle columns"
         >
-          <Settings2 className="h-4 w-4 !text-gray-900 dark:!text-white" />
-          <span className="hidden sm:inline !text-gray-900 dark:!text-white">Columns</span>
-          <span className="hidden sm:inline text-xs !text-gray-600 dark:!text-gray-400">
+          <Settings2 className="h-4 w-4 text-gray-900! dark:text-white!" />
+          <span className="hidden sm:inline text-gray-900! dark:text-white!">
+            Columns
+          </span>
+          <span className="hidden sm:inline text-xs text-gray-600! dark:text-gray-400!">
             ({visibleColumnsCount}/{totalOptionalColumns})
           </span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
-        className="w-[200px] !bg-white dark:!bg-[#1f2937] !border-gray-200 dark:!border-gray-700 !text-gray-900 dark:!text-gray-100"
+      <DropdownMenuContent
+        align="end"
+        className="w-50 bg-white! dark:bg-[#1f2937]! border-gray-200! dark:border-gray-700! text-gray-900! dark:text-gray-100!"
       >
         <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -114,7 +118,9 @@ export function ColumnVisibilityToggle({
                 checked={isVisible}
                 onCheckedChange={(value) => {
                   // Use table.setColumnVisibility to ensure immediate update
-                  const newVisibility = { ...table.getState().columnVisibility };
+                  const newVisibility = {
+                    ...table.getState().columnVisibility,
+                  };
                   if (value) {
                     // Show column - remove from visibility state (undefined means visible)
                     delete newVisibility[column.id];
@@ -126,13 +132,15 @@ export function ColumnVisibilityToggle({
                 }}
                 disabled={column.id === "select" || column.id === "actions"}
               >
-                <div className="flex items-center gap-2 w-full">
+                <div className="flex items-center w-full gap-2">
                   {isVisible ? (
-                    <Eye className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    <Eye className="w-4 h-4 text-green-600 dark:text-green-400" />
                   ) : (
-                    <EyeOff className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    <EyeOff className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                   )}
-                  <span className="!text-gray-900 dark:!text-white">{label}</span>
+                  <span className="text-gray-900! dark:text-white!">
+                    {label}
+                  </span>
                 </div>
               </DropdownMenuCheckboxItem>
             );
@@ -142,7 +150,7 @@ export function ColumnVisibilityToggle({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start h-8 text-xs !text-gray-900 dark:!text-white"
+            className="w-full justify-start h-8 text-xs text-gray-900! dark:text-white!"
             onClick={() => {
               if (!showAllOptions) {
                 setShowAllOptions(true);
@@ -161,4 +169,3 @@ export function ColumnVisibilityToggle({
     </DropdownMenu>
   );
 }
-

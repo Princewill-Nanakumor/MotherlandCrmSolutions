@@ -130,7 +130,7 @@ export function CallLogsModal({
       refetchInterval: isOpen ? 10 * 1000 : false, // Poll every 10 seconds while modal is open to catch new calls
       staleTime: 0, // Always consider data stale so it refetches when modal opens
       gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    }
+    },
   );
 
   // Filter logs based on view mode (24 hours or 3 days)
@@ -139,7 +139,7 @@ export function CallLogsModal({
       const twentyFourHoursAgo = new Date();
       twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
       return callLogs.filter(
-        (log) => new Date(log.createdAt) >= twentyFourHoursAgo
+        (log) => new Date(log.createdAt) >= twentyFourHoursAgo,
       );
     }
     return callLogs;
@@ -184,41 +184,41 @@ export function CallLogsModal({
     const twentyFourHoursAgo = new Date();
     twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
     return callLogs.filter(
-      (log) => new Date(log.createdAt) >= twentyFourHoursAgo
+      (log) => new Date(log.createdAt) >= twentyFourHoursAgo,
     ).length;
   }, [callLogs]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="!max-w-[95vw] sm:!max-w-[90vw] md:!max-w-[85vw] lg:!max-w-[80vw] xl:!max-w-[75vw] 2xl:!max-w-[70vw] max-h-[90vh] overflow-hidden flex flex-col w-full">
+      <DialogContent className="max-w-[95vw]! sm:max-w-[90vw]! md:max-w-[85vw]! lg:max-w-[80vw]! xl:max-w-[75vw]! 2xl:max-w-[70vw]! max-h-[90vh] overflow-hidden flex flex-col w-full">
         <DialogHeader>
           <div className="flex items-center justify-between pr-10">
-            <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
               <PhoneCall className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               Call Logs - {userName}
             </DialogTitle>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             Track daily call activity. Data refreshes daily and is retained for
             3 days.
           </p>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto mt-4">
+        <div className="flex-1 mt-4 overflow-y-auto">
           {isLoadingLogs ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-gray-400 mb-3" />
+              <Loader2 className="w-8 h-8 mb-3 text-gray-400 animate-spin" />
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 Loading call logs...
               </span>
             </div>
           ) : callLogs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <PhoneCall className="w-16 h-16 mx-auto mb-4 opacity-30 text-gray-400" />
-              <p className="text-gray-500 dark:text-gray-400 font-medium">
+              <PhoneCall className="w-16 h-16 mx-auto mb-4 text-gray-400 opacity-30" />
+              <p className="font-medium text-gray-500 dark:text-gray-400">
                 No call logs found
               </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-center max-w-md">
+              <p className="max-w-md mt-2 text-xs text-center text-gray-400 dark:text-gray-500">
                 This user hasn&apos;t made any calls in the last 3 days. Call
                 logs are automatically deleted after 3 days.
               </p>
@@ -226,11 +226,11 @@ export function CallLogsModal({
           ) : (
             <div className="space-y-4">
               {/* Daily Summary Section */}
-              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <h3 className="text-sm font-semibold !text-gray-900 dark:!text-white">
+                    <h3 className="text-sm font-semibold text-gray-900! dark:text-white!">
                       Daily Call Summary (Last 3 Days)
                     </h3>
                   </div>
@@ -239,28 +239,28 @@ export function CallLogsModal({
                   {dailySummary.map((day) => (
                     <div
                       key={day.date.toISOString()}
-                      className="bg-white dark:bg-gray-800 rounded-md p-3 border border-gray-200 dark:border-gray-700"
+                      className="p-3 bg-white border border-gray-200 rounded-md dark:bg-gray-800 dark:border-gray-700"
                     >
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      <div className="mb-1 text-xs text-gray-500 dark:text-gray-400">
                         {day.dateString}
                       </div>
-                      <div className="text-2xl font-bold !text-gray-900 dark:!text-white">
+                      <div className="text-2xl font-bold text-gray-900! dark:text-white!">
                         {day.count}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         {day.count === 1 ? "call" : "calls"}
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       Last 24 Hours:
                     </span>
                     <Badge
                       variant="outline"
-                      className="dark:border-gray-600 dark:!text-white font-semibold"
+                      className="dark:border-gray-600 dark:text-white! font-semibold"
                     >
                       {total24Hours} {total24Hours === 1 ? "call" : "calls"}
                     </Badge>
@@ -292,7 +292,7 @@ export function CallLogsModal({
                 </div>
                 <Badge
                   variant="outline"
-                  className="dark:border-gray-600 dark:!text-white"
+                  className="dark:border-gray-600 dark:text-white!"
                 >
                   {filteredLogs.length}{" "}
                   {filteredLogs.length === 1 ? "call" : "calls"} shown
@@ -300,22 +300,22 @@ export function CallLogsModal({
               </div>
 
               <div className="overflow-x-auto border rounded-lg dark:border-gray-700">
-                <table className="w-full border-collapse min-w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-800/50 sticky top-0">
+                <table className="w-full min-w-full border-collapse">
+                  <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800/50">
                     <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-3 px-6 text-sm font-semibold !text-gray-700 dark:!text-gray-300 sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-[200px]">
+                      <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700! dark:text-gray-300! sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-50">
                         Date & Time
                       </th>
-                      <th className="text-left py-3 px-6 text-sm font-semibold !text-gray-700 dark:!text-gray-300 sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-[180px]">
+                      <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700! dark:text-gray-300! sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-45">
                         Lead
                       </th>
-                      <th className="text-left py-3 px-6 text-sm font-semibold !text-gray-700 dark:!text-gray-300 sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-[120px]">
+                      <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700! dark:text-gray-300! sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-30">
                         Country
                       </th>
-                      <th className="text-left py-3 px-6 text-sm font-semibold !text-gray-700 dark:!text-gray-300 sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-[150px]">
+                      <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700! dark:text-gray-300! sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-37.5">
                         Phone Number
                       </th>
-                      <th className="text-left py-3 px-6 text-sm font-semibold !text-gray-700 dark:!text-gray-300 sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-[120px]">
+                      <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700! dark:text-gray-300! sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-30">
                         Dialer
                       </th>
                     </tr>
@@ -324,12 +324,12 @@ export function CallLogsModal({
                     {filteredLogs.map((log) => (
                       <tr
                         key={log.id}
-                        className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        className="transition-colors border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                       >
-                        <td className="py-3 px-6 text-sm !text-gray-900 dark:!text-white whitespace-nowrap">
+                        <td className="py-3 px-6 text-sm text-gray-900! dark:text-white! whitespace-nowrap">
                           {formatDateTime(log.createdAt)}
                         </td>
-                        <td className="py-3 px-6 text-sm !text-gray-900 dark:!text-white">
+                        <td className="py-3 px-6 text-sm text-gray-900! dark:text-white!">
                           {log.leadName ? (
                             <div>
                               <div className="font-medium">{log.leadName}</div>
@@ -345,20 +345,20 @@ export function CallLogsModal({
                             </span>
                           )}
                         </td>
-                        <td className="py-3 px-6 text-sm !text-gray-900 dark:!text-white whitespace-nowrap">
+                        <td className="py-3 px-6 text-sm text-gray-900! dark:text-white! whitespace-nowrap">
                           {log.leadCountry || (
                             <span className="text-gray-400 dark:text-gray-500">
                               —
                             </span>
                           )}
                         </td>
-                        <td className="py-3 px-6 text-sm !text-gray-900 dark:!text-white font-mono whitespace-nowrap">
+                        <td className="py-3 px-6 text-sm text-gray-900! dark:text-white! font-mono whitespace-nowrap">
                           {log.phoneNumber}
                         </td>
-                        <td className="py-3 px-6 whitespace-nowrap">
+                        <td className="px-6 py-3 whitespace-nowrap">
                           <Badge
                             variant="outline"
-                            className="dark:border-gray-600 dark:!text-white"
+                            className="dark:border-gray-600 dark:text-white!"
                           >
                             {getDialerName(log.dialer)}
                           </Badge>

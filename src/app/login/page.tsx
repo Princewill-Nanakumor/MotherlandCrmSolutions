@@ -9,8 +9,12 @@ import { MessageCircle, Shield } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-import { useRouter } from "next/navigation";
-import { hasAuthorizedSession, shouldForceLoginLanding } from "@/lib/sessionUtils";
+import {
+  hasAuthorizedSession,
+  shouldBlockLoginAutoRedirect,
+  shouldClearStaleSessionOnLoginPage,
+  shouldForceLoginLanding,
+} from "@/lib/sessionUtils";
 import { signOut } from "next-auth/react";
 
 // Animation variants
@@ -73,9 +77,13 @@ function RedirectingScreen() {
 // Defined at module scope so LoginPage re-renders (e.g. when toast dismisses) don't remount these and retrigger motion animations
 function LoginFormContent() {
   const { status, data: session } = useSession();
-  const [forceLogin] = useState(() => shouldForceLoginLanding());
-  // Show form when no valid user OR we must re-auth after expiry (stale session until signOut)
-  if (hasAuthorizedSession(status, session) && !forceLogin) return null;
+  // Hide form when authed and not stuck clearing stale session (expired landing + old client session)
+  if (
+    hasAuthorizedSession(status, session) &&
+    !shouldBlockLoginAutoRedirect(status, session)
+  ) {
+    return null;
+  }
   return (
     <div
       className="relative min-h-screen"
@@ -130,16 +138,22 @@ function LoginFormContent() {
 
 function AuthStateHandler() {
   const { status, data: session } = useSession();
-  const router = useRouter();
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
-  const [forceLogin] = useState(() => shouldForceLoginLanding());
+  const staleSignOutStartedRef = useRef(false);
+  const redirectStartedRef = useRef(false);
 
-  // Clear stale client session when we landed for expiry so the form can sign in cleanly
+  const sessionUserId = session?.user?.id;
+
+  // Clear stale client session when we landed for expiry but client still shows logged in
   useEffect(() => {
-    if (!forceLogin) return;
-    if (!hasAuthorizedSession(status, session)) return;
+    if (!shouldClearStaleSessionOnLoginPage(status, session)) {
+      staleSignOutStartedRef.current = false;
+      return;
+    }
+    if (staleSignOutStartedRef.current) return;
+    staleSignOutStartedRef.current = true;
     void signOut({ redirect: false });
-  }, [forceLogin, status, session]);
+  }, [status, sessionUserId]);
 
   // If session stays "loading" (e.g. /api/auth/session slow or fails in production), show form after 2.5s so user can sign in
   useEffect(() => {
@@ -149,25 +163,32 @@ function AuthStateHandler() {
   }, [status]);
 
   useEffect(() => {
-    if (!hasAuthorizedSession(status, session)) return;
-    if (forceLogin) return;
+    if (!hasAuthorizedSession(status, session)) {
+      redirectStartedRef.current = false;
+      return;
+    }
+    if (shouldBlockLoginAutoRedirect(status, session)) return;
+    if (redirectStartedRef.current) return;
+    redirectStartedRef.current = true;
+
     const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
     const callbackUrl = params?.get("callbackUrl");
-    const target = callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard";
-    router.replace(target);
-    // Fallback: if client nav doesn't complete (e.g. production), full navigate after 2s
-    const fallback = setTimeout(() => {
-      if (typeof window !== "undefined" && window.location.pathname === "/login") {
-        window.location.href = target;
-      }
-    }, 2000);
-    return () => clearTimeout(fallback);
-  }, [status, session, router, forceLogin]);
+    const path = callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard";
+    const url = `${window.location.origin}${path}`;
 
+    // Full page navigation so the session cookie is always sent (router.replace can race middleware).
+    window.location.replace(url);
+  }, [status, sessionUserId, session]);
+
+  const forceLoginSpinner =
+    shouldForceLoginLanding() && !shouldBlockLoginAutoRedirect(status, session);
   // After expiry landing, show form (not spinner) even while session is loading
-  if (status === "loading" && !forceLogin && !loadingTimedOut) return <LoadingScreen />;
+  if (status === "loading" && !forceLoginSpinner && !loadingTimedOut) return <LoadingScreen />;
 
-  if (hasAuthorizedSession(status, session) && !forceLogin) {
+  if (
+    hasAuthorizedSession(status, session) &&
+    !shouldBlockLoginAutoRedirect(status, session)
+  ) {
     return <RedirectingScreen />;
   }
   return null;

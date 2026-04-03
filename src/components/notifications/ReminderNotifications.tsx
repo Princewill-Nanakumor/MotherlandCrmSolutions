@@ -13,8 +13,12 @@ import { formatTime24Hour } from "@/lib/utils";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
+/** Stable fallback so “no data” is not a fresh [] every render (that retriggered useEffect → setState loop). */
+const EMPTY_DUE_REMINDERS: Reminder[] = [];
+
 export default function ReminderNotifications() {
   const { status, data: session } = useSession();
+  const sessionUserId = session?.user?.id;
   const router = useRouter();
   const queryClient = useQueryClient();
   const [notifications, setNotifications] = useState<Reminder[]>([]);
@@ -35,10 +39,10 @@ export default function ReminderNotifications() {
         setPermissionGranted(false);
       }
     }
-  }, [status, session]);
+  }, [status, sessionUserId]);
 
   // Poll for due reminders - pass user's local date/time for correct timezone comparison
-  const { data: dueReminders = [] } = useQuery<Reminder[]>({
+  const { data } = useQuery<Reminder[]>({
     queryKey: ["dueReminders"],
     queryFn: async () => {
       try {
@@ -61,6 +65,8 @@ export default function ReminderNotifications() {
     staleTime: 30 * 1000,
   });
 
+  const dueReminders = data ?? EMPTY_DUE_REMINDERS;
+
   // Create a stable reminder IDs string for comparison
   const reminderIdsString = useMemo(() => {
     if (!dueReminders || dueReminders.length === 0) return "";
@@ -73,7 +79,7 @@ export default function ReminderNotifications() {
   // Handle notification updates - only when dueReminders actually changes
   useEffect(() => {
     if (!dueReminders || dueReminders.length === 0) {
-      setNotifications([]);
+      setNotifications((prev) => (prev.length === 0 ? prev : []));
       if (soundPlayingRef.current) {
         stopNotificationSound();
         soundPlayingRef.current = false;
@@ -134,15 +140,9 @@ export default function ReminderNotifications() {
         }
       });
     }
-    // reminderIdsString vs lastReminderIdsRef skips duplicate sound/browser work when
-    // React Query returns a new array reference with the same reminder IDs.
-  }, [
-    dueReminders,
-    reminderIdsString,
-    permissionGranted,
-    router,
-    session?.user?.role,
-  ]);
+    // reminderIdsString vs lastReminderIdsRef skips duplicate work when only the array ref changes.
+    // Do not list `dueReminders` in deps when empty default was a new [] each render (infinite loop).
+  }, [reminderIdsString, permissionGranted, router, session?.user?.role]);
 
   const dismissNotification = useCallback(
     async (reminder: Reminder, options?: { persistToDb?: boolean }) => {

@@ -87,7 +87,7 @@ export default function Navbar() {
     "px-4 py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-200 h-10 flex items-center justify-center";
 
   const handleSignOut = async () => {
-    await signOutWithoutInterstitial("/", router);
+    await signOutWithoutInterstitial("/", router, { intentional: true });
   };
 
   return (
@@ -150,11 +150,7 @@ export default function Navbar() {
                   transition={{ duration: 0.4, ease: "easeOut" }}
                 >
                   <div
-                    className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg h-10 ${
-                      isScrolled
-                        ? "text-gray-900 bg-indigo-50"
-                        : "text-white! bg-white/20"
-                    }`}
+                    className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg h-10 ${isScrolled ? "text-gray-900 bg-indigo-50" : "text-white! bg-white/20" }`}
                   >
                     <Loader2 className="w-5 h-5 animate-spin" />
                   </div>
@@ -204,11 +200,7 @@ export default function Navbar() {
                 >
                   <Link
                     href="/login"
-                    className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-300 backdrop-blur-md shadow-lg ${
-                      isScrolled
-                        ? "text-gray-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200"
-                        : "text-white! bg-white/20 hover:bg-white/30 border border-white/30"
-                    }`}
+                    className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-300 backdrop-blur-md shadow-lg ${isScrolled ? "text-gray-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200" : "text-white! bg-white/20 hover:bg-white/30 border border-white/30" }`}
                   >
                     <LogIn className="w-4 h-4" />
                     <span
