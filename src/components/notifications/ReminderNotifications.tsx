@@ -39,7 +39,7 @@ export default function ReminderNotifications() {
         setPermissionGranted(false);
       }
     }
-  }, [status, sessionUserId]);
+  }, [status, session, sessionUserId]);
 
   // Poll for due reminders - pass user's local date/time for correct timezone comparison
   const { data } = useQuery<Reminder[]>({
@@ -79,6 +79,7 @@ export default function ReminderNotifications() {
   // Handle notification updates - only when dueReminders actually changes
   useEffect(() => {
     if (!dueReminders || dueReminders.length === 0) {
+      lastReminderIdsRef.current = "";
       setNotifications((prev) => (prev.length === 0 ? prev : []));
       if (soundPlayingRef.current) {
         stopNotificationSound();
@@ -140,9 +141,15 @@ export default function ReminderNotifications() {
         }
       });
     }
-    // reminderIdsString vs lastReminderIdsRef skips duplicate work when only the array ref changes.
-    // Do not list `dueReminders` in deps when empty default was a new [] each render (infinite loop).
-  }, [reminderIdsString, permissionGranted, router, session?.user?.role]);
+    // reminderIdsString + lastReminderIdsRef skip duplicate work when only the array ref changes
+    // but IDs are unchanged. dueReminders is listed for exhaustive-deps; empty uses EMPTY_DUE_REMINDERS.
+  }, [
+    dueReminders,
+    reminderIdsString,
+    permissionGranted,
+    router,
+    session?.user?.role,
+  ]);
 
   const dismissNotification = useCallback(
     async (reminder: Reminder, options?: { persistToDb?: boolean }) => {

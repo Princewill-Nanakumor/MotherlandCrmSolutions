@@ -39,7 +39,7 @@ const TableHeaderSkeleton = ({ columnCount }: { columnCount: number }) => (
               : "px-4"
           }`}
         >
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded dark:bg-gray-700 animate-pulse"></div>
         </TableHead>
       ))}
     </TableRow>
@@ -63,9 +63,9 @@ const TableRowSkeleton = ({ columnCount }: { columnCount: number }) => (
       >
         <div className="flex items-center space-x-2">
           {index === 0 && (
-            <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            <div className="w-4 h-4 bg-gray-200 rounded dark:bg-gray-700 animate-pulse"></div>
           )}
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse flex-1"></div>
+          <div className="flex-1 h-4 bg-gray-200 rounded dark:bg-gray-700 animate-pulse"></div>
         </div>
       </TableCell>
     ))}
@@ -103,7 +103,10 @@ export function TableContent({
     .filter((col) => col.id !== "select")
     .map((col) => col.id);
   // Use React Query for consistent status caching
-  const { data: statuses = [], isLoading: isStatusLoading } = useQuery<Status[], Error>({
+  const { data: statuses = [], isLoading: isStatusLoading } = useQuery<
+    Status[],
+    Error
+  >({
     queryKey: ["statuses"],
     queryFn: async (): Promise<Status[]> => {
       const response = await fetch("/api/statuses");
@@ -157,13 +160,13 @@ export function TableContent({
   const renderStatus = (leadStatus: string) => {
     if (isStatusLoading) {
       return (
-        <div className="min-w-0 w-full">
+        <div className="w-full min-w-0">
           <Badge
             variant="outline"
-            className="flex items-center gap-1.5 dark:border-gray-700 w-full max-w-[120px] justify-center"
+            className="flex items-center gap-1.5 dark:border-gray-700 w-full max-w-30 justify-center"
           >
-            <Loader2 className="h-3 w-3 animate-spin dark:text-gray-400 shrink-0" />
-            <span className="dark:text-gray-400 text-xs truncate">
+            <Loader2 className="w-3 h-3 animate-spin dark:text-gray-400 shrink-0" />
+            <span className="text-xs truncate dark:text-gray-400">
               Loading...
             </span>
           </Badge>
@@ -176,22 +179,24 @@ export function TableContent({
     const statusName = status?.name || "New";
 
     return (
-      <div className="min-w-0 w-full">
+      <div className="w-full min-w-0">
         <Badge
           variant="outline"
-          style={{
-            ...getStatusStyle(leadStatus),
-            // expose status color as CSS variable for dark mode text
-            "--status-color": statusColor,
-          } as React.CSSProperties}
-          className="flex items-center gap-1.5 dark:border-gray-700 w-full max-w-[120px] justify-center"
+          style={
+            {
+              ...getStatusStyle(leadStatus),
+              // expose status color as CSS variable for dark mode text
+              "--status-color": statusColor,
+            } as React.CSSProperties
+          }
+          className="flex items-center gap-1.5 dark:border-gray-700 w-full max-w-30 justify-center"
           title={statusName} // Tooltip for full text
         >
           <div
             className="w-1.5 h-1.5 rounded-full shrink-0"
             style={{ backgroundColor: statusColor }}
           />
-          <span className="text-xs truncate text-black! dark:text-[var(--status-color)]!">
+          <span className="text-xs truncate text-black! dark:text-(--status-color)!">
             {statusName}
           </span>
         </Badge>
@@ -213,7 +218,7 @@ export function TableContent({
 
   return (
     <>
-      <TableHeader className="bg-gray-100 dark:bg-gray-700 border-t">
+      <TableHeader className="bg-gray-100 border-t dark:bg-gray-700">
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={generateUniqueKey("header-group", headerGroup.id)}>
             <SortableContext
@@ -232,19 +237,19 @@ export function TableContent({
                   <TableHead
                     key={generateUniqueKey("header", header.id)}
                     className={`text-gray-700! dark:text-gray-300! font-semibold${
-                        isSelectColumn || isActionsColumn
+                      isSelectColumn || isActionsColumn
+                        ? "text-center"
+                        : isCommentCountColumn
                           ? "text-center"
-                          : isCommentCountColumn
-                            ? "text-center"
-                            : "text-left"
-                      }
+                          : "text-left"
+                    }
                       ${
                         isSelectColumn
                           ? "w-12 px-3 border-r border-gray-200 dark:border-gray-700"
                           : isStatusColumn
-                            ? "w-32 min-w-[120px] px-4"
+                            ? "w-32 min-w-30 px-4"
                             : isLastCommentColumn
-                              ? "max-w-[200px] px-4"
+                              ? "max-w-50 px-4"
                               : "px-4"
                       }
                     `}
@@ -253,7 +258,7 @@ export function TableContent({
                       <DraggableColumnHeader header={header}>
                         {flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                       </DraggableColumnHeader>
                     )}
@@ -336,9 +341,9 @@ export function TableContent({
                           isSelectCell
                             ? "px-3 border-r border-gray-200 dark:border-gray-700"
                             : isStatusCell
-                              ? "w-32 min-w-[120px] px-4"
+                              ? "w-32 min-w-30 px-4"
                               : isLastCommentCell
-                                ? "max-w-[200px] px-4"
+                                ? "max-w-50 px-4"
                                 : "px-4"
                         }
                       `}
@@ -347,7 +352,7 @@ export function TableContent({
                         ? renderStatus(lead.status)
                         : flexRender(
                             cell.column.columnDef.cell,
-                            cell.getContext()
+                            cell.getContext(),
                           )}
                     </TableCell>
                   );

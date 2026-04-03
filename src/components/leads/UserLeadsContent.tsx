@@ -93,7 +93,10 @@ export default function UserLeadsContent() {
 
     // Legacy formats: "Austria,Germany" or "Austria"
     if (param.includes(",")) {
-      return param.split(",").map((v) => v.trim()).filter(Boolean);
+      return param
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean);
     }
 
     return [param];
@@ -135,7 +138,7 @@ export default function UserLeadsContent() {
         return false;
       }
     },
-    [updateLead, selectedLead?._id]
+    [updateLead, selectedLead?._id],
   );
 
   // Sort handler - Fixed to provide all required arguments
@@ -145,7 +148,7 @@ export default function UserLeadsContent() {
       setSortField(newField);
       setSortOrder(newOrder);
     },
-    [handleURLSort, sortField, sortOrder]
+    [handleURLSort, sortField, sortOrder],
   );
 
   // Country filter handler
@@ -159,7 +162,7 @@ export default function UserLeadsContent() {
         countries.length === 0 ? "all" : JSON.stringify(countries);
       handleURLCountryChange(urlValue);
     },
-    [handleURLCountryChange]
+    [handleURLCountryChange],
   );
 
   const handleStatusFilterChange = useCallback(
@@ -167,11 +170,10 @@ export default function UserLeadsContent() {
       setFilterByStatus(statuses);
 
       // Persist the full selection in the URL using JSON arrays
-      const urlValue =
-        statuses.length === 0 ? "all" : JSON.stringify(statuses);
+      const urlValue = statuses.length === 0 ? "all" : JSON.stringify(statuses);
       handleURLStatusChange(urlValue);
     },
-    [handleURLStatusChange]
+    [handleURLStatusChange],
   );
 
   const handleSourceFilterChange = useCallback(
@@ -179,21 +181,17 @@ export default function UserLeadsContent() {
       setFilterBySource(sources);
 
       // Persist the full selection in the URL using JSON arrays
-      const urlValue =
-        sources.length === 0 ? "all" : JSON.stringify(sources);
+      const urlValue = sources.length === 0 ? "all" : JSON.stringify(sources);
       handleURLSourceChange(urlValue);
     },
-    [handleURLSourceChange]
+    [handleURLSourceChange],
   );
 
   // Row click handler: open side panel using local state only (no route change)
-  const handleRowClick = useCallback(
-    (lead: Lead) => {
-      setSelectedLead(lead);
-      setIsPanelOpen(true);
-    },
-    []
-  );
+  const handleRowClick = useCallback((lead: Lead) => {
+    setSelectedLead(lead);
+    setIsPanelOpen(true);
+  }, []);
 
   // Panel close handler: update local state only
   const handlePanelCloseLocal = useCallback(() => {
@@ -206,12 +204,12 @@ export default function UserLeadsContent() {
     (
       direction: "prev" | "next",
       currentSelectedLead: Lead,
-      sortedLeads: Lead[]
+      sortedLeads: Lead[],
     ) => {
       if (!currentSelectedLead || !sortedLeads.length) return;
 
       const index = sortedLeads.findIndex(
-        (lead) => lead._id === currentSelectedLead._id
+        (lead) => lead._id === currentSelectedLead._id,
       );
       if (index === -1) return;
 
@@ -222,7 +220,7 @@ export default function UserLeadsContent() {
       setSelectedLead(newLead);
       setIsPanelOpen(true);
     },
-    []
+    [],
   );
 
   // Auth check
@@ -264,7 +262,7 @@ export default function UserLeadsContent() {
       hasActiveSubscription={hasActiveSubscription}
       subscriptionData={subscriptionData || null}
     >
-      <div className="flex flex-col h-full bg-background dark:bg-gray-800 border-1 rounded-lg">
+      <div className="flex flex-col h-full border rounded-lg bg-background dark:bg-gray-800">
         {/* RefetchIndicator positioned like all-leads */}
         <RefetchIndicator />
 
@@ -308,7 +306,7 @@ export default function UserLeadsContent() {
                   currentIndex={
                     selectedLead && isDataReady
                       ? sortedLeads.findIndex(
-                          (lead) => lead._id === selectedLead._id
+                          (lead) => lead._id === selectedLead._id,
                         )
                       : -1
                   }
@@ -363,7 +361,7 @@ interface UserLeadsMainContentProps {
   handleNavigation: (
     direction: "prev" | "next",
     selectedLead: Lead,
-    sortedLeads: Lead[]
+    sortedLeads: Lead[],
   ) => void;
 }
 
@@ -405,11 +403,11 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
   // Initialize from URL with fallback (pageSize default 15, page default 1)
   const initialPageFromUrl = Math.max(
     1,
-    parseInt(searchParams.get("page") || "1", 10)
+    parseInt(searchParams.get("page") || "1", 10),
   );
   const initialPageSizeFromUrl = Math.min(
     500,
-    Math.max(1, parseInt(searchParams.get("pageSize") || "15", 10))
+    Math.max(1, parseInt(searchParams.get("pageSize") || "15", 10)),
   );
 
   // Local pagination state (TanStack will paginate full sortedLeads)
@@ -432,7 +430,7 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
       const query = params.toString();
       router.replace(query ? `${pathname}?${query}` : pathname);
     },
-    [pathname, router, searchParams]
+    [pathname, router, searchParams],
   );
 
   // Update URL when page index changes (preserve pageSize)
@@ -446,12 +444,12 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
       const query = params.toString();
       router.replace(query ? `${pathname}?${query}` : pathname);
     },
-    [pathname, router, searchParams, pageSize]
+    [pathname, router, searchParams, pageSize],
   );
 
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredLeads.length / pageSize) || 1
+    Math.ceil(filteredLeads.length / pageSize) || 1,
   );
 
   // Calculate counts with proper typing
@@ -461,7 +459,7 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
         filtered: filteredLeads.length,
         currentPage: Math.min(
           pageSize,
-          Math.max(filteredLeads.length - pageIndex * pageSize, 0)
+          Math.max(filteredLeads.length - pageIndex * pageSize, 0),
         ),
         totalPages,
         countries: availableCountries.length,
@@ -477,7 +475,7 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
       };
 
   return (
-    <div className="flex flex-col h-full bg-background dark:bg-gray-800 border-1 rounded-lg">
+    <div className="flex flex-col h-full border rounded-lg bg-background dark:bg-gray-800">
       {/* Conditionally render header with smooth fade transition */}
       <div
         className={`transition-opacity duration-300 ease-in-out px-8 mt-4 ${
@@ -522,17 +520,17 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
       </div>
 
       {/* Main content area: loading skeleton, search/filter empty state, or table (match all-leads behavior) */}
-      <div className="flex-1 overflow-auto px-8 pb-4">
+      <div className="flex-1 px-8 pb-4 overflow-auto">
         {shouldShowLoading ? (
           <TableSkeleton />
         ) : filteredLeads.length === 0 ? (
-          <div className="flex items-center justify-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-2 min-h-[280px]">
-            <div className="text-center space-y-4 max-w-md mx-auto px-6 py-12">
+          <div className="flex items-center justify-center mb-2 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 min-h-70">
+            <div className="max-w-md px-6 py-12 mx-auto space-y-4 text-center">
               {searchQuery.trim() ? (
                 <>
                   <div className="flex justify-center text-gray-400">
                     <svg
-                      className="h-12 w-12"
+                      className="w-12 h-12"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -548,9 +546,10 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                     No leads found
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                    No leads match your search for &quot;{searchQuery.trim()}&quot;. Try
-                    adjusting your search terms or clearing the search.
+                  <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+                    No leads match your search for &quot;{searchQuery.trim()}
+                    &quot;. Try adjusting your search terms or clearing the
+                    search.
                   </p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">
                     Clear search or try different keywords
@@ -560,7 +559,7 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
                 <>
                   <div className="flex justify-center text-gray-400">
                     <svg
-                      className="h-12 w-12"
+                      className="w-12 h-12"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -576,16 +575,16 @@ const UserLeadsMainContent: React.FC<UserLeadsMainContentProps> = ({
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                     No leads available
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                    You don&apos;t have any assigned leads yet, or no leads match
-                    your current filters.
+                  <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+                    You don&apos;t have any assigned leads yet, or no leads
+                    match your current filters.
                   </p>
                 </>
               )}
             </div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-2">
+          <div className="mb-2 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
             <UserLeadsTableContainer
               loading={loading}
               leads={sortedLeads}

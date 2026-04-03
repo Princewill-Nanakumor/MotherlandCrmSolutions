@@ -94,7 +94,7 @@ export function RoleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="m:max-w-106.25">
         <DialogHeader>
           <DialogTitle>{role ? "Edit Role" : "Create Role"}</DialogTitle>
         </DialogHeader>
@@ -138,7 +138,7 @@ export function RoleDialog({
                           permissions: checked
                             ? [...formData.permissions, permission.id]
                             : formData.permissions.filter(
-                                (id) => id !== permission.id
+                                (id) => id !== permission.id,
                               ),
                         });
                       }}

@@ -46,7 +46,7 @@ export function TableHeader({
         <select
           value={pageSize.toString()}
           onChange={handlePageSizeChange}
-          className="w-[80px] h-8 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900! dark:text-white! focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+          className="w-20 h-8 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900! dark:text-white! focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
         >
           {pageSizeOptions.map((size) => (
             <option
@@ -58,7 +58,7 @@ export function TableHeader({
             </option>
           ))}
         </select>
-        <span className="text-sm font-medium text-gray-700! dark:text-white! dark:text-white!">
+        <span className="text-sm font-medium text-gray-700!  dark:text-white!">
           entries
         </span>
         <ColumnVisibilityToggle table={table} tableId={tableId} />
