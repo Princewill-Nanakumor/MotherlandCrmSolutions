@@ -106,14 +106,14 @@ export default function SubscriptionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full border border-gray-200 dark:border-gray-700">
+      <div className="w-full max-w-md bg-white border border-gray-200 shadow-2xl dark:bg-gray-800 rounded-2xl dark:border-gray-700">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               Confirm Subscription
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Subscribe to {plan.name} plan
             </p>
           </div>
@@ -121,9 +121,9 @@ export default function SubscriptionModal({
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="h-8 w-8 p-0"
+            className="w-8 h-8 p-0"
           >
-            <X className="h-4 w-4" />
+            <X className="w-4 h-4" />
           </Button>
         </div>
 
@@ -138,14 +138,14 @@ export default function SubscriptionModal({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Price:</span>
                 <span className="font-semibold text-gray-900 dark:text-white">
                   {formatCurrency(plan.price)}
                 </span>
               </div>
 
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <span className="text-gray-600 dark:text-gray-400">
                   Your Balance:
                 </span>
@@ -155,7 +155,7 @@ export default function SubscriptionModal({
               </div>
 
               {hasEnoughBalance && (
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="text-gray-600 dark:text-gray-400">
                     Remaining Balance:
                   </span>
@@ -169,13 +169,13 @@ export default function SubscriptionModal({
 
           {/* Features */}
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+            <h3 className="mb-3 font-semibold text-gray-900 dark:text-white">
               Plan Features:
             </h3>
             <div className="space-y-2">
               {plan.features.slice(0, 5).map((feature, index) => (
                 <div key={index} className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
                     {feature}
                   </span>
@@ -191,9 +191,9 @@ export default function SubscriptionModal({
 
           {/* Warning if insufficient balance */}
           {!hasEnoughBalance && (
-            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
+            <div className="p-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-800">
               <div className="flex items-center space-x-2">
-                <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
                 <span className="text-sm text-red-700 dark:text-red-300">
                   Insufficient balance. You need{" "}
                   {formatCurrency(plan.price - balance)}
@@ -215,11 +215,11 @@ export default function SubscriptionModal({
             <Button
               onClick={handleSubscribe}
               disabled={!hasEnoughBalance || isSubmitting}
-              className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+              className="flex-1 text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
             >
               {isSubmitting ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  <div className="w-4 h-4 mr-2 border-b-2 border-white rounded-full animate-spin" />
                   Processing...
                 </>
               ) : (

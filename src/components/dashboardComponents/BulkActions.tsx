@@ -113,7 +113,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
   if (selectedLeads.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 w-full">
+    <div className="flex flex-wrap items-center w-full gap-2">
       <Button
         variant="default"
         className="shrink-0"
@@ -165,7 +165,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
           isUpdating || isChangingStatus || isDeleting || isLoadingStatuses
         }
       >
-        <SelectTrigger className="w-full min-w-[140px] max-w-[180px] shrink-0">
+        <SelectTrigger className="w-full min-w-35 max-w-45 shrink-0">
           <SelectValue placeholder="Change Status" />
         </SelectTrigger>
         <SelectContent>

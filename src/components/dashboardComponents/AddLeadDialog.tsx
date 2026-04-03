@@ -96,7 +96,7 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
         `/api/leads/check-email?email=${encodeURIComponent(email)}`,
         {
           credentials: "include",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -107,7 +107,7 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
 
       if (data.exists) {
         setEmailError(
-          `This email already exists for ${data.lead.name}. Please use a different email.`
+          `This email already exists for ${data.lead.name}. Please use a different email.`,
         );
         return true;
       }
@@ -205,7 +205,7 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-125 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5" />
@@ -408,7 +408,7 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
               disabled={
                 createLeadMutation.isPending || isCheckingEmail || !!emailError
               }
-              className="text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+              className="text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
             >
               {createLeadMutation.isPending ? (
                 <>

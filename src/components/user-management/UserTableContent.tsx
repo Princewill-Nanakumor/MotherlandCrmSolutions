@@ -29,9 +29,9 @@ const TableHeaderSkeleton = ({ columnCount }: { columnCount: number }) => (
       {Array.from({ length: columnCount }).map((_, index) => (
         <TableHead
           key={`skeleton-header-${index}`}
-          className={`!text-gray-700 dark:!text-gray-300 font-semibold text-left px-4`}
+          className={`text-gray-700! dark:text-gray-300! font-semibold text-left px-4`}
         >
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded dark:bg-gray-700 animate-pulse"></div>
         </TableHead>
       ))}
     </TableRow>
@@ -62,13 +62,16 @@ export function UserTableContent({
         <TableHeaderSkeleton columnCount={columnCount} />
         <TableBody className="dark:bg-gray-800">
           {Array.from({ length: 6 }).map((_, rowIndex) => (
-            <TableRow key={`skeleton-row-${rowIndex}`} className="animate-pulse">
+            <TableRow
+              key={`skeleton-row-${rowIndex}`}
+              className="animate-pulse"
+            >
               {Array.from({ length: columnCount }).map((_, colIndex) => (
                 <TableCell
                   key={`skeleton-cell-${rowIndex}-${colIndex}`}
                   className="px-4 py-3.5"
                 >
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                  <div className="w-3/4 h-4 bg-gray-200 rounded dark:bg-gray-700"></div>
                 </TableCell>
               ))}
             </TableRow>
@@ -80,7 +83,7 @@ export function UserTableContent({
 
   return (
     <>
-      <TableHeader className="bg-gray-100 dark:bg-gray-700 border-t">
+      <TableHeader className="bg-gray-100 border-t dark:bg-gray-700">
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={generateUniqueKey("header-group", headerGroup.id)}>
             <SortableContext
@@ -91,29 +94,25 @@ export function UserTableContent({
                 const isActionsColumn = header.column.id === "actions";
                 const isStatusColumn = header.column.id === "status";
                 const isRoleColumn = header.column.id === "role";
-                
+
                 return (
                   <TableHead
                     key={generateUniqueKey("header", header.id)}
                     className={`
-                      !text-gray-700 dark:!text-gray-300 font-semibold
+                      text-gray-700! dark:text-gray-300! font-semibold
                       ${
                         isActionsColumn || isRoleColumn || isStatusColumn
                           ? "text-center"
                           : "text-left"
                       }
-                      ${
-                        isStatusColumn
-                          ? "w-32 min-w-[120px] px-4"
-                          : "px-4"
-                      }
+                      ${isStatusColumn ? "w-32 min-w-30 px-4" : "px-4"}
                     `}
                   >
                     {header.isPlaceholder ? null : (
                       <DraggableUserColumnHeader header={header}>
                         {flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                       </DraggableUserColumnHeader>
                     )}
@@ -144,20 +143,21 @@ export function UserTableContent({
                       key={cell.id}
                       className={`
                         py-3.5
-                        ${isActionsCell || isRoleCell || isStatusCell || isCreatedAtCell || isLastLoginCell
-                          ? "text-center"
-                          : "text-left"
-                        }
                         ${
-                          isStatusCell
-                            ? "w-32 min-w-[120px] px-4"
-                            : "px-4"
+                          isActionsCell ||
+                          isRoleCell ||
+                          isStatusCell ||
+                          isCreatedAtCell ||
+                          isLastLoginCell
+                            ? "text-center"
+                            : "text-left"
                         }
+                        ${isStatusCell ? "w-32 min-w-30 px-4" : "px-4"}
                       `}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   );
@@ -169,7 +169,7 @@ export function UserTableContent({
           <TableRow>
             <TableCell
               colSpan={table.getAllColumns().length}
-              className="h-24 text-center !text-gray-600 dark:!text-gray-400 dark:bg-gray-800"
+              className="h-24 text-center text-gray-600! dark:text-gray-400! dark:bg-gray-800"
             >
               {emptyMessage}
             </TableCell>

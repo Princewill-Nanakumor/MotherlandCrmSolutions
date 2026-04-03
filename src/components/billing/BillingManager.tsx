@@ -16,10 +16,10 @@ import { useCreatePayment } from "@/hooks/usePaymentMutations";
 import { Payment } from "@/types/payment.types";
 
 const MIN_DEPOSIT = parseFloat(
-  process.env.NEXT_PUBLIC_MIN_PAYMENT_AMOUNT || "10"
+  process.env.NEXT_PUBLIC_MIN_PAYMENT_AMOUNT || "10",
 );
 const MAX_DEPOSIT = parseFloat(
-  process.env.NEXT_PUBLIC_MAX_PAYMENT_AMOUNT || "1000000"
+  process.env.NEXT_PUBLIC_MAX_PAYMENT_AMOUNT || "1000000",
 );
 
 export default function BillingManager() {
@@ -34,7 +34,11 @@ export default function BillingManager() {
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   // React Query hooks
-  const { billingData, isLoading: isBillingLoading, refetch: refetchBillingData } = useBillingSummary();
+  const {
+    billingData,
+    isLoading: isBillingLoading,
+    refetch: refetchBillingData,
+  } = useBillingSummary();
   const createPaymentMutation = useCreatePayment();
 
   // Payment storage manager - memoized to prevent recreating on every render
@@ -47,7 +51,7 @@ export default function BillingManager() {
         setNetwork,
         setPaymentConfirmed,
       }),
-    [currentPayment, network]
+    [currentPayment, network],
   );
 
   // Load persisted payment on component mount
@@ -99,11 +103,11 @@ export default function BillingManager() {
         }
       } catch (error) {
         setError(
-          error instanceof Error ? error.message : "Failed to create payment"
+          error instanceof Error ? error.message : "Failed to create payment",
         );
       }
     },
-    [amount, network, createPaymentMutation, refetchBillingData]
+    [amount, network, createPaymentMutation, refetchBillingData],
   );
 
   const toggleNetwork = useCallback(() => {
@@ -162,7 +166,7 @@ export default function BillingManager() {
       setCurrentPaymentId(transactionId);
       setShowPaymentModal(true);
     },
-    [currentPayment, paymentConfirmed]
+    [currentPayment, paymentConfirmed],
   );
 
   const handleClearPayment = useCallback(() => {
@@ -184,17 +188,17 @@ export default function BillingManager() {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8 rounded-lg border">
+      <div className="container px-4 py-8 mx-auto border rounded-lg">
         {/* Header */}
         <BillingHeader activeTab={activeTab} onTabChange={handleTabChange} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2">
-            <div className="dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl p-6 shadow-lg dark:border dark:border-white/10 bg-white border border-gray-200">
+            <div className="p-6 bg-white border border-gray-200 shadow-lg dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl dark:border dark:border-white/10">
               {/* Tab Navigation */}
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold !text-gray-900 dark:!text-white">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900! dark:text-white!">
                   Deposit Funds
                 </h2>
                 <div className="flex space-x-1">
@@ -202,22 +206,22 @@ export default function BillingManager() {
                     onClick={() => handleTabChange("usdt")}
                     className={`px-4 py-2 mr-4 rounded-lg text-sm font-medium ${
                       activeTab === "usdt"
-                        ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
+                        ? "bg-linear-to-r from-indigo-600 to-purple-600 text-white"
                         : "dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300"
                     }`}
                   >
-                    <Wallet className="h-4 w-4 mr-2" />
+                    <Wallet className="w-4 h-4 mr-2" />
                     Crypto
                   </Button>
                   <Button
                     onClick={() => handleTabChange("card")}
                     className={`px-4 py-2 rounded-lg text-sm font-medium ${
                       activeTab === "card"
-                        ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
+                        ? "bg-linear-to-rfrom-indigo-600 to-purple-600 text-white"
                         : "dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300"
                     }`}
                   >
-                    <CreditCard className="h-4 w-4 mr-2" />
+                    <CreditCard className="w-4 h-4 mr-2" />
                     Card Deposit
                   </Button>
                 </div>

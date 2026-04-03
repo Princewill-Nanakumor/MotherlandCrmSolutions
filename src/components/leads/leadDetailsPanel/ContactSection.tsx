@@ -150,15 +150,6 @@ export const ContactSection: FC<ContactSectionProps> = ({
           console.error(`Error with ${dialer}:// protocol:`, err);
         }
 
-        // Copy to clipboard as fallback (works for all dialers, especially free versions)
-        // Note: We don't copy the number to clipboard if user can't view it
-        // The dialer will receive the number via protocol, but we avoid exposing it in clipboard
-        if (canViewPhoneNumbers) {
-          navigator.clipboard.writeText(cleanedNumber).catch(() => {
-            // Silently fail if clipboard fails
-          });
-        }
-
         // Log the call attempt to the database
         try {
           const response = await fetch("/api/calls/log", {
@@ -192,7 +183,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
         console.error("Error initiating call:", error);
       }
     },
-    [dialer, canViewPhoneNumbers, lead, session?.user?.id, queryClient]
+    [dialer, lead, session?.user?.id, queryClient]
   );
 
   const handleEdit = useCallback(() => {

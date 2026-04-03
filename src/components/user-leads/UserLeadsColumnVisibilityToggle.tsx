@@ -13,7 +13,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Settings2, Eye, EyeOff } from "lucide-react";
 import { useUserLeadsColumnVisibility } from "@/hooks/useUserLeadsColumnVisibility";
-import { DEFAULT_USER_LEADS_COLUMN_ORDER, UserLeadsColumnId } from "@/hooks/useUserLeadsColumnOrder";
+import {
+  DEFAULT_USER_LEADS_COLUMN_ORDER,
+  UserLeadsColumnId,
+} from "@/hooks/useUserLeadsColumnOrder";
 
 const COLUMN_LABELS: Record<UserLeadsColumnId, string> = {
   actions: "Actions",
@@ -39,13 +42,22 @@ interface UserLeadsColumnVisibilityToggleProps {
 export function UserLeadsColumnVisibilityToggle({
   columnOrder,
 }: UserLeadsColumnVisibilityToggleProps) {
-  const { isColumnVisible, toggleColumnVisibility, showAllColumns, columnVisibility } = useUserLeadsColumnVisibility();
+  const {
+    isColumnVisible,
+    toggleColumnVisibility,
+    showAllColumns,
+    columnVisibility,
+  } = useUserLeadsColumnVisibility();
   const [showAllOptions, setShowAllOptions] = useState(false);
 
   // Count visible columns (excluding actions)
-  const visibleColumnsCount = columnOrder.filter((col) => col !== "actions" && isColumnVisible(col)).length;
-  const totalOptionalColumns = DEFAULT_USER_LEADS_COLUMN_ORDER.filter((col) => col !== "actions").length;
-  
+  const visibleColumnsCount = columnOrder.filter(
+    (col) => col !== "actions" && isColumnVisible(col),
+  ).length;
+  const totalOptionalColumns = DEFAULT_USER_LEADS_COLUMN_ORDER.filter(
+    (col) => col !== "actions",
+  ).length;
+
   // Use columnVisibility to ensure component re-renders when visibility changes
   // This ensures the UI updates immediately when toggling columns
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -57,25 +69,25 @@ export function UserLeadsColumnVisibilityToggle({
         <Button
           variant="outline"
           size="sm"
-          className="ml-auto h-8 gap-2 !bg-white dark:!bg-gray-800 !border-gray-300 dark:!border-gray-600 !text-gray-900 dark:!text-white hover:!bg-gray-50 dark:hover:!bg-gray-700"
+          className="ml-auto h-8 gap-2 bg-white! dark:bg-gray-800! border-gray-300! dark:border-gray-600! text-gray-900! dark:text-white! hover:bg-gray-50! dark:hover:bg-gray-700!"
           title="Toggle columns"
         >
-          <Settings2 className="h-4 w-4" />
+          <Settings2 className="w-4 h-4" />
           <span className="hidden sm:inline">Columns</span>
-          <span className="hidden sm:inline text-xs text-muted-foreground">
+          <span className="hidden text-xs sm:inline text-muted-foreground">
             ({visibleColumnsCount}/{totalOptionalColumns})
           </span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
-        className="w-[200px] !bg-white dark:!bg-[#1f2937] !border-gray-200 dark:!border-gray-700 !text-gray-900 dark:!text-gray-100"
+      <DropdownMenuContent
+        align="end"
+        className="w-50 bg-white dark:bg-[#1f2937]! border-gray-200! dark:border-gray-700! text-gray-900! dark:text-gray-100!"
       >
         <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {DEFAULT_USER_LEADS_COLUMN_ORDER.slice(
           0,
-          showAllOptions ? undefined : 5
+          showAllOptions ? undefined : 5,
         ).map((columnId) => {
           // Don't show actions in the toggle menu (always visible)
           if (columnId === "actions") return null;
@@ -93,11 +105,11 @@ export function UserLeadsColumnVisibilityToggle({
                 toggleColumnVisibility(columnId);
               }}
             >
-              <div className="flex items-center gap-2 w-full">
+              <div className="flex items-center w-full gap-2">
                 {isVisible ? (
-                  <Eye className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <Eye className="w-4 h-4 text-green-600 dark:text-green-400" />
                 ) : (
-                  <EyeOff className="h-4 w-4 text-gray-400" />
+                  <EyeOff className="w-4 h-4 text-gray-400" />
                 )}
                 <span>{label}</span>
               </div>
@@ -109,7 +121,7 @@ export function UserLeadsColumnVisibilityToggle({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start h-8 text-xs"
+            className="justify-start w-full h-8 text-xs"
             onClick={() => {
               if (!showAllOptions) {
                 setShowAllOptions(true);
@@ -128,4 +140,3 @@ export function UserLeadsColumnVisibilityToggle({
     </DropdownMenu>
   );
 }
-

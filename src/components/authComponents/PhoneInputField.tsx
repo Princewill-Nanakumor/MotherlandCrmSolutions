@@ -48,11 +48,11 @@ export function PhoneInputField({
     <div>
       <div className="relative flex items-center">
         {/* Always show the phone icon */}
-        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400 pointer-events-none" />
+        <Phone className="absolute w-4 h-4 text-gray-400 -translate-y-1/2 pointer-events-none left-3 top-1/2 sm:h-5 sm:w-5" />
 
         {/* Show country code when country is selected */}
         {selectedCountry && (
-          <div className="absolute left-10 sm:left-12 top-1/2 -translate-y-1/2 flex items-center text-sm sm:text-base text-gray-600 dark:text-gray-300 font-medium">
+          <div className="absolute flex items-center text-sm font-medium text-gray-600 -translate-y-1/2 left-10 sm:left-12 top-1/2 sm:text-base dark:text-gray-300">
             <span>{selectedCountry.phoneCode}</span>
           </div>
         )}
@@ -70,13 +70,13 @@ export function PhoneInputField({
             error
               ? "border-red-500 focus:ring-red-500"
               : "border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
-          } placeholder-gray-500 dark:placeholder-gray-400 !text-gray-900 dark:!text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
+          } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900! dark:text-white! bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
         />
       </div>
 
       {error && (
-        <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-          <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+        <p className="flex items-center gap-1 mt-1 text-xs text-red-500">
+          <AlertCircle className="w-3 h-3 sm:h-4 sm:w-4" />
           {error}
         </p>
       )}

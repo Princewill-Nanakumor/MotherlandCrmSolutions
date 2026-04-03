@@ -153,7 +153,7 @@ export default function Navbar() {
                     className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg h-10 ${
                       isScrolled
                         ? "text-gray-900 bg-indigo-50"
-                        : "!text-white bg-white/20"
+                        : "text-white! bg-white/20"
                     }`}
                   >
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -182,7 +182,7 @@ export default function Navbar() {
               <motion.button
                 type="button"
                 onClick={handleSignOut}
-                className={`${buttonBaseClasses} bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700`}
+                className={`${buttonBaseClasses} bg-linear-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700`}
                 variants={buttonVariants}
                 initial="visible"
                 animate="visible"
@@ -207,12 +207,12 @@ export default function Navbar() {
                     className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-300 backdrop-blur-md shadow-lg ${
                       isScrolled
                         ? "text-gray-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200"
-                        : "!text-white bg-white/20 hover:bg-white/30 border border-white/30"
+                        : "text-white! bg-white/20 hover:bg-white/30 border border-white/30"
                     }`}
                   >
                     <LogIn className="w-4 h-4" />
                     <span
-                      className={isScrolled ? "text-gray-900" : "!text-white"}
+                      className={isScrolled ? "text-gray-900" : "text-white!"}
                     >
                       Sign In
                     </span>

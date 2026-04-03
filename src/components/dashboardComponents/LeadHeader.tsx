@@ -89,7 +89,7 @@ export const LeadsHeader: React.FC<LeadsHeaderProps> = ({
           {isLoading ? (
             <FilteredSkeleton />
           ) : (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-gray-300 !text-gray-700 dark:border-gray-600 dark:!text-white">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-gray-300 text-gray-700! dark:border-gray-600 dark:text-white!">
               {displayCounts.filtered.toLocaleString()} Filtered
             </span>
           )}

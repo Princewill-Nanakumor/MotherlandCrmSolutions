@@ -24,9 +24,9 @@ export function UserTableHeader({
   const currentPageEnd = Math.min((pageIndex + 1) * pageSize, totalRows);
 
   return (
-    <div className="flex justify-between items-center mb-4 my-3">
+    <div className="flex items-center justify-between my-3 mb-4">
       <div className="flex items-center space-x-2">
-        <label className="text-sm font-medium !text-gray-700 dark:!text-white">
+        <label className="text-sm font-medium text-gray-700! dark:text-white!">
           Show
         </label>
         <select
@@ -34,7 +34,7 @@ export function UserTableHeader({
           onChange={(e) => {
             table.setPageSize(Number(e.target.value));
           }}
-          className="w-[80px] h-8 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 !text-gray-900 dark:!text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+          className="w-20 h-8 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900! dark:text-white! focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
         >
           {pageSizeOptions.map((size) => (
             <option key={size} value={size.toString()}>
@@ -42,12 +42,12 @@ export function UserTableHeader({
             </option>
           ))}
         </select>
-        <span className="text-sm font-medium !text-gray-700 dark:!text-white">
+        <span className="text-sm font-medium text-gray-700! dark:text-white!">
           entries
         </span>
         <UserColumnVisibilityToggle table={table} />
       </div>
-      <div className="text-sm !text-gray-700 dark:!text-white">
+      <div className="text-sm text-gray-700! dark:text-white!">
         Showing {currentPageStart} to {currentPageEnd} of {totalRows} entries
       </div>
     </div>

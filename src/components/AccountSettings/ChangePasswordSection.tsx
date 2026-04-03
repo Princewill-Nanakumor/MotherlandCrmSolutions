@@ -46,22 +46,22 @@ export function ChangePasswordSection({
   handlePasswordReset: () => void;
 }) {
   return (
-    <section className="dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl p-6 shadow-lg border border-border bg-white dark:bg-transparent">
+    <section className="p-6 bg-white border shadow-lg dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl border-border ">
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-          <Key className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+        <div className="p-2 bg-indigo-100 rounded-lg dark:bg-indigo-900/30">
+          <Key className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold !text-gray-900 dark:!text-white">
+          <h2 className="text-xl font-semibold text-gray-900! dark:text-white!">
             Change Password
           </h2>
-          <p className="text-sm text-gray-500 dark:!text-white">
+          <p className="text-sm text-gray-500 dark:text-white!">
             Update your account password
           </p>
         </div>
       </div>
       {passwordError && (
-        <div className="p-3 mb-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <div className="p-3 mb-2 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-800">
           <p className="text-sm text-red-600 dark:text-red-400">
             {passwordError}
           </p>
@@ -104,17 +104,17 @@ export function ChangePasswordSection({
 
         <Button
           onClick={handlePasswordReset}
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
+          className="w-full text-white bg-linear-to-r from-indigo-600 to-purple-600"
           disabled={isResettingPassword}
         >
           {isResettingPassword ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              <div className="w-4 h-4 mr-2 border-b-2 border-white rounded-full animate-spin"></div>
               Updating Password...
             </>
           ) : (
             <>
-              <Lock className="h-4 w-4 mr-2" />
+              <Lock className="w-4 h-4 mr-2" />
               Update Password
             </>
           )}

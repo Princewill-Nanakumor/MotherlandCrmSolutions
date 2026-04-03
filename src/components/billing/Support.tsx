@@ -51,23 +51,23 @@ export default function Support({
   };
 
   return (
-    <div className="dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl p-6 shadow-lg dark:border dark:border-white/10 bg-white border border-gray-200">
-      <h3 className="text-lg font-semibold dark:!text-white !text-gray-900 mb-4">
+    <div className="p-6 bg-white border border-gray-200 shadow-lg dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl dark:border dark:border-white/10">
+      <h3 className="text-lg font-semibold dark:text-white! text-gray-900! mb-4">
         {title}
       </h3>
 
-      <p className="dark:!text-gray-300 !text-gray-600 text-sm mb-4">
+      <p className="dark:text-gray-300! text-gray-600! text-sm mb-4">
         {description}
       </p>
 
-      <div className="flex items-center gap-2 mb-4 p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
-        <Mail className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-        <span className="text-sm !text-gray-700 dark:!text-gray-300">
+      <div className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-gray-50 dark:bg-white/5">
+        <Mail className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+        <span className="text-sm text-gray-700! dark:text-gray-300!">
           {supportEmail}
         </span>
         <button
           onClick={handleCopyEmail}
-          className="ml-auto p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+          className="p-1 ml-auto text-gray-500 transition-colors duration-200 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
           title="Copy email address"
         >
           {copied ? (
@@ -80,7 +80,7 @@ export default function Support({
 
       <Button
         onClick={handleContactSupport}
-        className="w-full dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300"
+        className="w-full text-gray-800 bg-gray-100 border border-gray-300 dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white hover:bg-gray-200"
       >
         {buttonText}
       </Button>

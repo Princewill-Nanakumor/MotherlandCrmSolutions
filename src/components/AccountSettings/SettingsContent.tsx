@@ -169,7 +169,7 @@ export function SettingsContent() {
         {/* Header Section */}
         <div className="flex flex-col items-start mb-8 md:flex-row md:items-center">
           <div>
-            <h1 className="mb-2 text-3xl font-bold !text-gray-900 dark:!text-white">
+            <h1 className="mb-2 text-3xl font-bold text-gray-900! dark:text-white!">
               Account Settings
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
@@ -211,7 +211,7 @@ export function SettingsContent() {
                   <h2 className="text-xl font-semibold text-red-600 dark:text-red-400">
                     Danger Zone
                   </h2>
-                  <p className="text-sm text-gray-500 dark:!text-white">
+                  <p className="text-sm text-gray-500 dark:text-white!">
                     Irreversible account actions
                   </p>
                 </div>

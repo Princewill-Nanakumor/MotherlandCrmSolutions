@@ -32,7 +32,7 @@ export default function ContactSection() {
         >
           {/* Header */}
           <motion.div className="mb-12 text-center" variants={itemVariants}>
-            <h2 className="mb-4 text-3xl font-bold text-gray-900 sm:text-4xl bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text">
+            <h2 className="mb-4 text-3xl font-bold text-gray-900 sm:text-4xl bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text">
               Contact Us
             </h2>
           </motion.div>
@@ -44,14 +44,14 @@ export default function ContactSection() {
               variants={itemVariants}
             >
               <div className="flex justify-center">
-                <div className="p-4 rounded-full bg-gradient-to-r from-indigo-100 to-purple-100">
+                <div className="p-4 rounded-full bg-linear-to-r from-indigo-100 to-purple-100">
                   <Building2 className="w-10 h-10 text-indigo-600" />
                 </div>
               </div>
               <h3 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
                 Professional CRM Solutions for Your Business
               </h3>
-              <p className="max-w-3xl mx-auto text-lg leading-relaxed !text-gray-600">
+              <p className="max-w-3xl mx-auto text-lg leading-relaxed text-gray-600!">
                 At{" "}
                 <span className="font-semibold text-indigo-600">
                   Motherland CRM Solutions
@@ -66,7 +66,7 @@ export default function ContactSection() {
 
             {/* Contact Information */}
             <motion.div
-              className="p-8 border border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl"
+              className="p-8 border border-indigo-100 bg-linear-to-r from-indigo-50 to-purple-50 rounded-xl"
               variants={itemVariants}
             >
               <h3 className="mb-6 text-xl font-semibold text-center text-gray-900">
@@ -78,7 +78,7 @@ export default function ContactSection() {
                     <MessageCircle className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm !text-gray-500">Telegram</p>
+                    <p className="text-sm text-gray-500!">Telegram</p>
                     <a
                       href="https://t.me/Motherlandsolutions"
                       target="_blank"

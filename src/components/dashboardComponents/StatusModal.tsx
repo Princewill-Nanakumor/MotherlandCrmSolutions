@@ -88,7 +88,7 @@ const StatusModal = ({
         const errorData = await response.json();
         throw new Error(
           errorData.message ||
-            `Failed to ${isEditing ? "update" : "create"} status`
+            `Failed to ${isEditing ? "update" : "create"} status`,
         );
       }
 
@@ -99,8 +99,8 @@ const StatusModal = ({
       if (isEditing && editingId) {
         setStatuses((prev) =>
           prev.map((status) =>
-            status._id === editingId ? { ...status, ...formData } : status
-          )
+            status._id === editingId ? { ...status, ...formData } : status,
+          ),
         );
       } else {
         // Add the new status to local state immediately
@@ -144,7 +144,7 @@ const StatusModal = ({
       });
       console.error(
         `Error ${isEditing ? "updating" : "creating"} status:`,
-        error
+        error,
       );
     } finally {
       setIsCreating(false);
@@ -221,7 +221,7 @@ const StatusModal = ({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="!text-gray-900 dark:!text-white">
+          <DialogTitle className="text-gray-900! dark:text-white!">
             {isEditing ? "Edit Status" : "Create New Status"}
           </DialogTitle>
         </DialogHeader>
@@ -229,7 +229,7 @@ const StatusModal = ({
           {/* Create/Edit Status Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium !text-gray-700 dark:!text-white">
+              <label className="text-sm font-medium text-gray-700! dark:text-white!">
                 Status Name
               </label>
               <Input
@@ -243,7 +243,7 @@ const StatusModal = ({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium !text-gray-700 dark:!text-white">
+              <label className="text-sm font-medium text-gray-700! dark:text-white!">
                 Select Color
               </label>
               <div className="flex gap-2">
@@ -254,9 +254,9 @@ const StatusModal = ({
                     setFormData({ ...formData, color: e.target.value })
                   }
                   required
-                  className="w-20 mt-1 p-1"
+                  className="w-20 p-1 mt-1"
                 />
-                <div className="flex-1 p-2 rounded border border-gray-200 dark:border-gray-700">
+                <div className="flex-1 p-2 border border-gray-200 rounded dark:border-gray-700">
                   <div
                     className="w-full h-full rounded"
                     style={{ backgroundColor: formData.color }}
@@ -281,11 +281,11 @@ const StatusModal = ({
               <Button
                 type="submit"
                 disabled={isCreating}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white border-0"
+                className="text-white border-0 bg-linear-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
               >
                 {isCreating ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     {isEditing ? "Updating..." : "Creating..."}
                   </>
                 ) : isEditing ? (
@@ -299,17 +299,17 @@ const StatusModal = ({
           {/* Existing Statuses */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm !text-gray-900 dark:!text-white">
+              <h3 className="font-medium text-sm text-gray-900! dark:text-white!">
                 Existing Statuses
               </h3>
-              <span className="text-xs !text-gray-900 dark:!text-white font-medium bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+              <span className="text-xs text-gray-900! dark:text-white! font-medium bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
                 {statuses.length}{" "}
                 {statuses.length === 1 ? "status" : "statuses"}
               </span>
             </div>
             {loading ? (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-6 w-6 animate-spin !text-gray-500 dark:!text-gray-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-gray-500! dark:text-gray-400!" />
               </div>
             ) : (
               <div
@@ -322,24 +322,24 @@ const StatusModal = ({
                 }}
               >
                 {statuses.length === 0 ? (
-                  <div className="text-center py-4 !text-gray-500 dark:!text-gray-400 text-sm">
+                  <div className="text-center py-4 text-gray-500! dark:text-gray-400! text-sm">
                     No statuses found. Create your first status above.
                   </div>
                 ) : (
                   statuses.map((status) => (
                     <div
                       key={status._id}
-                      className="flex items-center justify-between p-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"
+                      className="flex items-center justify-between p-2 border border-gray-200 rounded-md dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"
                     >
                       <div className="flex items-center gap-2">
                         <div
                           className="w-4 h-4 rounded"
                           style={{ backgroundColor: status.color }}
                         />
-                        <span className="!text-gray-800 dark:!text-white">
+                        <span className="text-gray-800! dark:text-white!">
                           {status.name}
                         </span>
-                        <code className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm !text-gray-600 dark:!text-white">
+                        <code className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm text-gray-600! dark:text-white!">
                           {status.color}
                         </code>
                       </div>
@@ -349,7 +349,7 @@ const StatusModal = ({
                           size="sm"
                           onClick={() => handleEdit(status)}
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="w-4 h-4" />
                         </Button>
 
                         <Button
@@ -359,7 +359,7 @@ const StatusModal = ({
                             handleDelete(status.id || status._id || "")
                           }
                         >
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>
                       </div>
                     </div>

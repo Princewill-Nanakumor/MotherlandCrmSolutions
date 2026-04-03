@@ -75,23 +75,23 @@ export function UserDropdownMenu({
         type="button"
       >
         <div className="relative">
-          <UserCircle className="h-9 w-9 text-white drop-shadow hover:text-white/80 transition-colors" />
+          <UserCircle className="text-white transition-colors h-9 w-9 drop-shadow hover:text-white/80" />
           <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-400 ring-2 ring-white" />
         </div>
       </button>
       {dropdownOpen && (
-        <div className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 dark:divide-gray-700 rounded-md bg-white dark:bg-gray-800 shadow-xl ring-1 ring-black/10 dark:ring-white/10 z-[60] overflow-hidden transition-all duration-200 ease-out transform opacity-100 scale-100">
+        <div className="absolute right-0 w-56 mt-2 overflow-hidden transition-all duration-200 ease-out origin-top-right transform scale-100 bg-white divide-y divide-gray-100 rounded-md shadow-xl opacity-100 dark:divide-gray-700 dark:bg-gray-800 ring-1 ring-black/10 dark:ring-white/10 z-60">
           {/* User Info Section */}
           <div className="px-4 py-3">
-            <div className="ml-3 max-w-[180px]">
-              <p className="text-sm font-medium !text-gray-900 dark:!text-white break-all">
+            <div className="ml-3 max-w-45">
+              <p className="text-sm font-medium text-gray-900! dark:text-white! break-all">
                 {session?.user?.firstName && session?.user?.lastName
                   ? `${session.user.firstName} ${session.user.lastName}`
                   : userProfile?.firstName && userProfile?.lastName
                     ? `${userProfile.firstName} ${userProfile.lastName}`
                     : "User"}
               </p>
-              <p className="text-xs !text-gray-500 dark:!text-gray-400 break-all">
+              <p className="text-xs text-gray-500! dark:text-gray-400! break-all">
                 {session?.user?.email
                   ? session.user.email
                   : userProfile?.email
@@ -116,25 +116,25 @@ export function UserDropdownMenu({
           <div className="py-1 ml-4">
             <button
               onClick={handleProfile}
-              className="flex w-full items-center px-4 py-2.5 text-sm !text-gray-700 dark:!text-gray-200 hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out"
+              className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out"
             >
-              <User className="h-4 w-4 mr-3 text-purple-500 dark:text-purple-400" />
+              <User className="w-4 h-4 mr-3 text-purple-500 dark:text-purple-400" />
               Profile
             </button>
             <button
               onClick={handleSettings}
-              className="flex w-full items-center px-4 py-2.5 text-sm !text-gray-700 dark:!text-gray-200 hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out"
+              className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out"
             >
-              <Settings className="h-4 w-4 mr-3 text-blue-500 dark:text-blue-400" />
+              <Settings className="w-4 h-4 mr-3 text-blue-500 dark:text-blue-400" />
               Settings
             </button>
           </div>
           <div className="py-1 ml-4">
             <button
               onClick={handleLogout}
-              className="flex w-full items-center px-4 py-2.5 text-sm !text-red-600 dark:!text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150 ease-in-out"
+              className="flex w-full items-center px-4 py-2.5 text-sm text-red-600! dark:text-red-400! hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150 ease-in-out"
             >
-              <LogOut className="h-4 w-4 mr-3" />
+              <LogOut className="w-4 h-4 mr-3" />
               Logout
             </button>
           </div>

@@ -29,30 +29,30 @@ export default function PaymentDetailsContent({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       {/* Main Content */}
       <div className="lg:col-span-2">
         {/* Payment Status Card */}
-        <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-xl">
+        <Card className="bg-white border border-gray-200 shadow-xl dark:bg-gray-900 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 !text-gray-900 dark:!text-white">
-              <DollarSign className="h-5 w-5" />
+            <CardTitle className="flex items-center space-x-2 text-gray-900! dark:text-white!">
+              <DollarSign className="w-5 h-5" />
               <span>Payment Information</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm !text-gray-600 dark:!text-white">
+                <span className="text-sm text-gray-600! dark:text-white!">
                   Amount
                 </span>
-                <span className="text-lg font-semibold !text-gray-900 dark:!text-white">
+                <span className="text-lg font-semibold text-gray-900! dark:text-white!">
                   {formatCurrency(payment.amount, payment.currency)}
                 </span>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm !text-gray-600 dark:!text-white">
+                <span className="text-sm text-gray-600! dark:text-white!">
                   Status
                 </span>
                 <Badge className={getStatusColor(payment.status)}>
@@ -61,7 +61,7 @@ export default function PaymentDetailsContent({
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm !text-gray-600 dark:!text-white">
+                <span className="text-sm text-gray-600! dark:text-white!">
                   Method
                 </span>
                 <Badge className={getMethodColor(payment.method)}>
@@ -71,30 +71,30 @@ export default function PaymentDetailsContent({
 
               {payment.network && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm !text-gray-600 dark:!text-white">
+                  <span className="text-sm text-gray-600! dark:text-white!">
                     Network
                   </span>
-                  <span className="text-sm font-medium !text-gray-900 dark:!text-white">
+                  <span className="text-sm font-medium text-gray-900! dark:text-white!">
                     {payment.network}
                   </span>
                 </div>
               )}
 
               <div className="flex items-center justify-between">
-                <span className="text-sm !text-gray-600 dark:!text-white">
+                <span className="text-sm text-gray-600! dark:text-white!">
                   Created
                 </span>
-                <span className="text-sm !text-gray-900 dark:!text-white">
+                <span className="text-sm text-gray-900! dark:text-white!">
                   {formatDate(payment.createdAt)}
                 </span>
               </div>
 
               {payment.approvedAt && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm !text-gray-600 dark:!text-white">
+                  <span className="text-sm text-gray-600! dark:text-white!">
                     Approved
                   </span>
-                  <span className="text-sm !text-gray-900 dark:!text-white">
+                  <span className="text-sm text-gray-900! dark:text-white!">
                     {formatDate(payment.approvedAt)}
                   </span>
                 </div>
@@ -102,10 +102,10 @@ export default function PaymentDetailsContent({
 
               {payment.description && (
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <span className="text-sm !text-gray-600 dark:!text-white">
+                  <span className="text-sm text-gray-600! dark:text-white!">
                     Description
                   </span>
-                  <p className="text-sm !text-gray-900 dark:!text-white mt-1">
+                  <p className="text-sm text-gray-900! dark:text-white! mt-1">
                     {payment.description}
                   </p>
                 </div>

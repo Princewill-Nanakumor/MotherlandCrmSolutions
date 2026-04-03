@@ -287,14 +287,14 @@ export default function SubscriptionManager() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 rounded-xl border dark:bg-gray-800">
+    <div className="min-h-screen border bg-gray-50 rounded-xl dark:bg-gray-800">
       <div className="container px-4 py-8 mx-auto">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold !text-gray-900 dark:!text-white mb-2">
+          <h1 className="text-3xl font-bold text-gray-900! dark:text-white! mb-2">
             Subscription Plans
           </h1>
-          <p className="!text-gray-600 dark:!text-gray-400">
+          <p className="text-gray-600! dark:text-gray-400!">
             Choose the perfect plan for your CRM needs
           </p>
         </div>

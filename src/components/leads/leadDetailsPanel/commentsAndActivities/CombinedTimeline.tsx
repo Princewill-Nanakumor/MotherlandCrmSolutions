@@ -45,13 +45,13 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
 }) => {
   if (combinedItems.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+      <div className="flex items-center justify-center flex-1 bg-gray-100 border border-gray-300 border-dashed rounded-lg dark:bg-gray-800 dark:border-gray-700">
         <div className="text-center">
-          <ActivityIcon className="w-12 h-12 mx-auto mb-4 !text-gray-300 dark:!text-gray-600" />
-          <p className="text-lg font-medium !text-gray-700 dark:!text-gray-300 mb-2">
+          <ActivityIcon className="w-12 h-12 mx-auto mb-4 text-gray-300! dark:text-gray-600!" />
+          <p className="text-lg font-medium text-gray-700 dark:text-gray-300! mb-2">
             No Comments or Activities Yet
           </p>
-          <p className="text-sm !text-gray-500 dark:!text-gray-400">
+          <p className="text-sm text-gray-500! dark:text-gray-400!">
             Add a comment or make changes to this lead to see activity here.
           </p>
         </div>
@@ -61,7 +61,7 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
 
   return (
     <div
-      className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 space-y-4 border border-gray-200 dark:border-gray-700 shadow-inner"
+      className="flex-1 min-h-0 p-4 space-y-4 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-inner dark:bg-gray-800 dark:border-gray-700"
       style={{
         scrollbarWidth: "thin",
         scrollbarColor: "#9333ea #f3f4f6",

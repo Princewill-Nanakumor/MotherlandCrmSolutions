@@ -5,18 +5,18 @@ import { Megaphone } from "lucide-react";
 
 export default function AdsManager() {
   return (
-    <div className="max-w-xl mx-auto p-8 bg-white dark:bg-gray-800 rounded-lg  border border-gray-200 dark:border-gray-700 mt-16 flex flex-col items-center justify-center">
+    <div className="flex flex-col items-center justify-center max-w-xl p-8 mx-auto mt-16 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
       <div className="flex flex-col items-center mb-6">
-        <div className="bg-purple-100 dark:bg-purple-900/30 p-4 rounded-full mb-4">
-          <Megaphone className="h-10 w-10 text-purple-600 dark:text-purple-300" />
+        <div className="p-4 mb-4 bg-purple-100 rounded-full dark:bg-purple-900/30">
+          <Megaphone className="w-10 h-10 text-purple-600 dark:text-purple-300" />
         </div>
-        <h2 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white text-center">
+        <h2 className="mb-2 text-3xl font-bold text-center text-gray-900 dark:text-white">
           Ads Manager
         </h2>
-        <p className="text-lg !text-gray-700 dark:!text-white mb-2 text-center">
+        <p className="text-lg text-gray-700! dark:text-white! mb-2 text-center">
           This feature is coming soon!
         </p>
-        <span className="inline-block px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-semibold text-sm">
+        <span className="inline-block px-4 py-2 text-sm font-semibold text-purple-700 bg-purple-100 rounded-full dark:bg-purple-900/30 dark:text-purple-300">
           Stay tuned 🚀
         </span>
       </div>

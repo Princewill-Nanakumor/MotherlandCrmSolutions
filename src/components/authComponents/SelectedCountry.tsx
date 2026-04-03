@@ -218,39 +218,39 @@ export const CustomOption = ({
         alt={data.label}
         width={24}
         height={18}
-        className="w-6 h-4 object-cover flex-shrink-0"
+        className="object-cover w-6 h-4 shrink-0"
         loading="lazy"
       />
     ) : (
-      <Globe className="w-6 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+      <Globe className="w-6 h-4 text-gray-400 shrink-0 dark:text-gray-500" />
     )}
     <span className="flex-1 truncate">{data.label}</span>
-    <span className="text-gray-500 dark:text-gray-400 text-sm">
+    <span className="text-sm text-gray-500 dark:text-gray-400">
       {data.phoneCode}
     </span>
   </div>
 );
 
 export const CustomSingleValue = ({ data }: { data: SelectOption }) => (
-  <div className="flex items-center gap-2 h-full">
+  <div className="flex items-center h-full gap-2">
     {data.flag ? (
       <Image
         src={`https://flagcdn.com/24x18/${data.flag}.png`}
         alt={data.label}
         width={24}
         height={18}
-        className="w-6 h-4 object-cover flex-shrink-0"
+        className="object-cover w-6 h-4 shrink-0"
         loading="lazy"
       />
     ) : (
-      <Globe className="w-6 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+      <Globe className="w-6 h-4 text-gray-400 shrink-0 dark:text-gray-500" />
     )}
     <span className={`truncate ${inter.className}`}>{data.label}</span>
   </div>
 );
 
 export const DropdownIndicator = (
-  props: DropdownIndicatorProps<SelectOption, false>
+  props: DropdownIndicatorProps<SelectOption, false>,
 ) => (
   <components.DropdownIndicator {...props}>
     <svg

@@ -24,29 +24,29 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 }) => (
   <div className="space-y-6">
     {/* Account Info */}
-    <div className="dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl p-6 shadow-lg dark:border dark:border-white/10 bg-white border border-gray-200">
-      <h3 className="text-xl font-semibold dark:!text-white !text-gray-900 mb-6">
+    <div className="p-6 bg-white border border-gray-200 shadow-lg dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl dark:border dark:border-white/10">
+      <h3 className="text-xl font-semibold dark:text-white! text-gray-900! mb-6">
         Account Information
       </h3>
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-purple-500/10 rounded-lg">
-            <User className="h-5 w-5 text-purple-400" />
+          <div className="p-3 rounded-lg bg-purple-500/10">
+            <User className="w-5 h-5 text-purple-400" />
           </div>
           <div>
-            <p className="text-sm dark:text-gray-300 text-gray-600">Role</p>
-            <p className="dark:text-white text-gray-900 font-medium">
+            <p className="text-sm text-gray-600 dark:text-gray-300">Role</p>
+            <p className="font-medium text-gray-900 dark:text-white">
               {getRoleDisplayName(profile.role)}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-green-500/10 rounded-lg">
-            <Lock className="h-5 w-5 text-green-400" />
+          <div className="p-3 rounded-lg bg-green-500/10">
+            <Lock className="w-5 h-5 text-green-400" />
           </div>
           <div>
-            <p className="text-sm dark:text-gray-300 text-gray-600">Status</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">Status</p>
             <p
               className={`font-medium ${
                 profile.status === "ACTIVE" ? "text-green-400" : "text-red-400"
@@ -58,14 +58,14 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-blue-500/10 rounded-lg">
-            <Calendar className="h-5 w-5 text-blue-400" />
+          <div className="p-3 rounded-lg bg-blue-500/10">
+            <Calendar className="w-5 h-5 text-blue-400" />
           </div>
           <div>
-            <p className="text-sm dark:text-gray-300 text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Member Since
             </p>
-            <p className="dark:text-white text-gray-900 font-medium">
+            <p className="font-medium text-gray-900 dark:text-white">
               {formatDate(profile.createdAt)}
             </p>
           </div>
@@ -73,14 +73,14 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
         {profile.lastLogin && (
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-yellow-500/10 rounded-lg">
-              <Calendar className="h-5 w-5 text-yellow-400" />
+            <div className="p-3 rounded-lg bg-yellow-500/10">
+              <Calendar className="w-5 h-5 text-yellow-400" />
             </div>
             <div>
-              <p className="text-sm dark:text-gray-300 text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
                 Last Login
               </p>
-              <p className="dark:text-white text-gray-900 font-medium">
+              <p className="font-medium text-gray-900 dark:text-white">
                 {formatDate(profile.lastLogin)}
               </p>
             </div>
@@ -90,22 +90,22 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     </div>
 
     {/* Permissions */}
-    <div className="dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl p-6 shadow-lg dark:border dark:border-white/10 bg-white border border-gray-200">
-      <h3 className="text-xl font-semibold dark:!text-white !text-gray-900 mb-6">
+    <div className="p-6 bg-white border border-gray-200 shadow-lg dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl dark:border dark:border-white/10">
+      <h3 className="text-xl font-semibold dark:text-white! text-gray-900! mb-6">
         Permissions
       </h3>
       <div className="space-y-6">
         {profile.permissions && profile.permissions.length > 0 ? (
           profile.permissions.map((permission, index) => (
             <div key={index} className="flex items-center gap-4">
-              <div className="p-3 bg-green-500/10 rounded-lg">
-                <Shield className="h-5 w-5 text-green-400" />
+              <div className="p-3 rounded-lg bg-green-500/10">
+                <Shield className="w-5 h-5 text-green-400" />
               </div>
               <div>
-                <p className="text-sm dark:text-gray-300 text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   Permission
                 </p>
-                <p className="dark:text-white text-gray-900 font-medium">
+                <p className="font-medium text-gray-900 dark:text-white">
                   {permission}
                 </p>
               </div>
@@ -113,14 +113,14 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
           ))
         ) : (
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-gray-500/10 rounded-lg">
-              <Shield className="h-5 w-5 text-gray-400" />
+            <div className="p-3 rounded-lg bg-gray-500/10">
+              <Shield className="w-5 h-5 text-gray-400" />
             </div>
             <div>
-              <p className="text-sm dark:text-gray-300 text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
                 Permission
               </p>
-              <p className="dark:text-gray-400 text-gray-500 font-medium">
+              <p className="font-medium text-gray-500 dark:text-gray-400">
                 No specific permissions assigned
               </p>
             </div>

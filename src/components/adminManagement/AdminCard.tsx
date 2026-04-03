@@ -53,7 +53,7 @@ export function AdminCard({
     const date = new Date(lastLogin);
     const now = new Date();
     const diffInHours = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60),
     );
 
     if (diffInHours < 1) return "Just now";
@@ -69,7 +69,7 @@ export function AdminCard({
     const date = new Date(lastLogin);
     const now = new Date();
     const diffInHours = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60),
     );
 
     if (diffInHours < 24) return "text-green-600 dark:text-green-400";
@@ -86,17 +86,17 @@ export function AdminCard({
   };
 
   return (
-    <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg backdrop-blur-lg bg-white/50 dark:bg-gray-800/50 hover:bg-white/70 dark:hover:bg-gray-800/70 transition-all duration-200">
+    <div className="flex items-center justify-between p-4 transition-all duration-200 border border-gray-200 rounded-lg dark:border-gray-700 backdrop-blur-lg bg-white/50 dark:bg-gray-800/50 hover:bg-white/70 dark:hover:bg-gray-800/70">
       <div className="flex items-center space-x-4">
         <Avatar>
-          <AvatarFallback className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+          <AvatarFallback className="text-white bg-linear-to-r from-indigo-600 to-purple-600">
             {admin.firstName[0]}
             {admin.lastName[0]}
           </AvatarFallback>
         </Avatar>
 
         <div className="flex-1">
-          <div className="flex items-center space-x-2 mb-2">
+          <div className="flex items-center mb-2 space-x-2">
             <h3 className="font-semibold text-gray-900 dark:text-white">
               {admin.firstName} {admin.lastName}
             </h3>
@@ -109,16 +109,16 @@ export function AdminCard({
               </Badge>
             )}
             {allowedEmails.includes(admin.email) && (
-              <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300 border-purple-200 dark:border-purple-800">
-                <Shield className="h-3 w-3 mr-1" />
+              <Badge className="text-purple-800 bg-purple-100 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800">
+                <Shield className="w-3 h-3 mr-1" />
                 Super Admin
               </Badge>
             )}
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
             {admin.email}
           </p>
-          <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400 mb-2">
+          <div className="flex items-center mb-2 space-x-4 text-xs text-gray-500 dark:text-gray-400">
             <span>{admin.agentCount} agents</span>
             <span>{admin.leadCount} leads</span>
             {admin.balance && (
@@ -130,7 +130,7 @@ export function AdminCard({
 
           <div className="flex items-center space-x-6 text-xs">
             <div className="flex items-center space-x-1">
-              <Clock className="h-3 w-3 text-gray-400" />
+              <Clock className="w-3 h-3 text-gray-400" />
               <span className="text-gray-500 dark:text-gray-400">Admin:</span>
               <span className={getLastLoginColor(admin.lastLogin)}>
                 {formatLastLogin(admin.lastLogin)}
@@ -139,13 +139,13 @@ export function AdminCard({
 
             {admin.lastAgentLogin && (
               <div className="flex items-center space-x-1">
-                <UserCheck className="h-3 w-3 text-gray-400" />
+                <UserCheck className="w-3 h-3 text-gray-400" />
                 <span className="text-gray-500 dark:text-gray-400">Agent:</span>
                 <span
                   className={getLastLoginColor(admin.lastAgentLogin.lastLogin)}
                 >
                   {formatLastLogin(admin.lastAgentLogin.lastLogin)}
-                  <span className="text-gray-400 dark:text-gray-500 ml-1">
+                  <span className="ml-1 text-gray-400 dark:text-gray-500">
                     ({admin.lastAgentLogin.firstName}{" "}
                     {admin.lastAgentLogin.lastName})
                   </span>
@@ -163,21 +163,21 @@ export function AdminCard({
           onClick={() =>
             router.push(`/dashboard/admin-management/${admin._id}`)
           }
-          className="backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700 hover:bg-white/90 dark:hover:bg-gray-900/90"
+          className="border-gray-200 backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 dark:border-gray-700 hover:bg-white/90 dark:hover:bg-gray-900/90"
         >
-          <Eye className="h-4 w-4" />
+          <Eye className="w-4 h-4" />
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={() => onDeleteClick(admin)}
           disabled={deletingAdminId === admin._id}
-          className="backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 border-red-200 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-600"
+          className="border-red-200 backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-600"
         >
           {deletingAdminId === admin._id ? (
-            <div className="h-4 w-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-red-600 rounded-full border-t-transparent animate-spin" />
           ) : (
-            <Trash2 className="h-4 w-4 text-red-600" />
+            <Trash2 className="w-4 h-4 text-red-600" />
           )}
         </Button>
       </div>

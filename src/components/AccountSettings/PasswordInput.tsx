@@ -29,7 +29,7 @@ export function PasswordInput({
     <div>
       <Label
         htmlFor={id}
-        className="text-sm font-medium !text-gray-700 dark:!text-white"
+        className="text-sm font-medium text-gray-700! dark:text-white!"
       >
         {label}
       </Label>
@@ -45,25 +45,25 @@ export function PasswordInput({
             error
               ? "border-red-500 focus:ring-red-500"
               : "border-input focus:ring-purple-500 focus:border-purple-500"
-          } placeholder-gray-500 dark:placeholder-gray-400 !text-gray-900 dark:!text-white bg-white dark:bg-input/30 focus:outline-none focus:ring-1 transition-all`}
+          } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900! dark:text-white! bg-white dark:bg-input/30 focus:outline-none focus:ring-1 transition-all`}
         />
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          className="absolute right-2 top-1/2 -translate-y-1/2"
+          className="absolute -translate-y-1/2 right-2 top-1/2"
           onClick={onTogglePassword}
           tabIndex={-1}
         >
           {showPassword ? (
-            <EyeOff className="h-5 w-5" />
+            <EyeOff className="w-5 h-5" />
           ) : (
-            <Eye className="h-5 w-5" />
+            <Eye className="w-5 h-5" />
           )}
         </Button>
       </div>
       {error && (
-        <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+        <p className="flex items-center gap-1 mt-1 text-xs text-red-500">
           {error}
         </p>
       )}

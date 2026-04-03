@@ -47,7 +47,7 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
     return (
       <>
         {showExpiredBanner && (
-          <div className="mx-4 mt-2 mb-0 rounded-lg border border-amber-500/50 bg-amber-50 dark:bg-amber-950/30 px-4 py-2 text-sm text-amber-800 dark:text-amber-200">
+          <div className="px-4 py-2 mx-4 mt-2 mb-0 text-sm border rounded-lg border-amber-500/50 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200">
             <span className="font-medium">Admin subscription has expired.</span>{" "}
             You can still view and manage your own leads. Contact your admin to
             renew.
@@ -61,17 +61,17 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
   // Show subscription required message if no active subscription (blocking)
   if (!hasActiveSubscription && subscriptionData) {
     return (
-      <div className="flex flex-col h-full items-center justify-center bg-background dark:bg-gray-800 border-1 rounded-lg p-8">
+      <div className="flex flex-col items-center justify-center h-full p-8 border rounded-lg bg-background dark:bg-gray-800">
         <Card className="max-w-md mx-auto">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-red-800 dark:text-red-200">
-              <AlertTriangle className="h-5 w-5" />
+              <AlertTriangle className="w-5 h-5" />
               <span>Subscription Required</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2 text-red-700 dark:text-red-300">
-              <Shield className="h-4 w-4" />
+              <Shield className="w-4 h-4" />
               <p>
                 Admin needs an active subscription for Users to view and manage
                 leads.

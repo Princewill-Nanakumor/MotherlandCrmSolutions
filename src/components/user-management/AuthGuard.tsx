@@ -55,26 +55,38 @@ export function AuthGuard({
         variant: "destructive",
       });
     }
-  }, [status, session, session?.expires, router, pathname, toast, requiredRole, redirectTo]);
+  }, [
+    status,
+    session,
+    session?.expires,
+    router,
+    pathname,
+    toast,
+    requiredRole,
+    redirectTo,
+  ]);
 
   // Show loading screen while checking authentication or redirecting
   if (status === "loading" || isRedirecting) {
     return (
-      <div className="min-h-screen font-mono bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950 flex items-center justify-center p-4">
+      <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-linear-to-r from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950">
         <div className="flex items-center gap-3">
-          <div className="relative w-16 h-16 flex items-center justify-center">
-            <div className="absolute inset-0 border-4 border-transparent border-t-blue-400 border-r-purple-500 rounded-full animate-spin w-16 h-16"></div>
-            <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
+          <div className="relative flex items-center justify-center w-16 h-16">
+            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
+            <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
               <Shield size={28} className="text-white" />
             </div>
           </div>
-          <span className="text-white text-lg">Loading...</span>
+          <span className="text-lg text-white">Loading...</span>
         </div>
       </div>
     );
   }
 
-  if (!hasAuthorizedSession(status, session) || session!.user.role !== requiredRole) {
+  if (
+    !hasAuthorizedSession(status, session) ||
+    session!.user.role !== requiredRole
+  ) {
     return null;
   }
 

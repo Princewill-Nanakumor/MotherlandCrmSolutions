@@ -48,11 +48,11 @@ export default function PaymentDetailsModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-t-2xl">
           <div>
-            <h2 className="text-2xl font-bold !text-gray-900 dark:!text-white">
+            <h2 className="text-2xl font-bold text-gray-900! dark:text-white!">
               Payment Details
             </h2>
             {payment && (
-              <p className="!text-gray-600 dark:!text-white text-sm">
+              <p className="text-gray-600! dark:text-white! text-sm">
                 Transaction ID:{" "}
                 {
                   (
@@ -66,9 +66,9 @@ export default function PaymentDetailsModal({
             variant="ghost"
             size="sm"
             onClick={handleClose}
-            className="h-8 w-8 p-0"
+            className="w-8 h-8 p-0"
           >
-            <CloseIcon className="h-4 w-4" />
+            <CloseIcon className="w-4 h-4" />
           </Button>
         </div>
 
@@ -76,11 +76,11 @@ export default function PaymentDetailsModal({
         <div className="p-6 bg-white dark:bg-gray-900 rounded-b-2xl">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="h-8 w-8 rounded-full border-b-2 border-gray-900 dark:border-white animate-spin"></div>
+              <div className="w-8 h-8 border-b-2 border-gray-900 rounded-full dark:border-white animate-spin"></div>
             </div>
           ) : error ? (
-            <div className="text-center py-8">
-              <p className="text-red-600 dark:text-red-400 mb-4">
+            <div className="py-8 text-center">
+              <p className="mb-4 text-red-600 dark:text-red-400">
                 {error instanceof Error
                   ? error.message
                   : "Failed to fetch payment details"}
@@ -98,8 +98,8 @@ export default function PaymentDetailsModal({
               onClose={handleClose}
             />
           ) : (
-            <div className="text-center py-8">
-              <p className="!text-gray-600 dark:!text-white">
+            <div className="py-8 text-center">
+              <p className="text-gray-600! dark:text-white!">
                 No payment details available
               </p>
             </div>

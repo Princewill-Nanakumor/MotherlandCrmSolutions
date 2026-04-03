@@ -71,7 +71,7 @@ export function PasswordResetModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-106.25">
         <DialogHeader className="pb-4">
           <DialogTitle>Reset Password</DialogTitle>
         </DialogHeader>
@@ -82,14 +82,14 @@ export function PasswordResetModal({
               User Email
             </label>
             <div className="relative mt-1">
-              <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <Mail className="w-4 h-4 text-gray-400" />
               </div>
               <input
                 id="email"
                 value={userEmail}
                 disabled
-                className="pl-9 w-full h-9 text-sm bg-gray-100 rounded-md border border-input dark:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full text-sm bg-gray-100 border rounded-md pl-9 h-9 border-input dark:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500"
               />
             </div>
           </div>
@@ -100,7 +100,7 @@ export function PasswordResetModal({
               New Password
             </label>
             <div className="relative mt-1">
-              <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <Lock className="w-4 h-4 text-gray-400" />
               </div>
               <input
@@ -114,7 +114,7 @@ export function PasswordResetModal({
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="flex absolute inset-y-0 right-0 items-center pr-3 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading}
                 tabIndex={-1}
               >
@@ -138,7 +138,7 @@ export function PasswordResetModal({
               Confirm Password
             </label>
             <div className="relative mt-1">
-              <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <Lock className="w-4 h-4 text-gray-400" />
               </div>
               <input
@@ -152,7 +152,7 @@ export function PasswordResetModal({
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword((v) => !v)}
-                className="flex absolute inset-y-0 right-0 items-center pr-3 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading}
                 tabIndex={-1}
               >
@@ -172,12 +172,12 @@ export function PasswordResetModal({
 
           {/* Error Message */}
           {serverError && (
-            <div className="p-2 text-sm text-red-600 bg-red-50 rounded-md dark:text-red-400 dark:bg-red-900/20">
+            <div className="p-2 text-sm text-red-600 rounded-md bg-red-50 dark:text-red-400 dark:bg-red-900/20">
               {serverError}
             </div>
           )}
 
-          <div className="flex gap-2 justify-end pt-2">
+          <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
@@ -191,7 +191,7 @@ export function PasswordResetModal({
               type="submit"
               disabled={isLoading}
               size="sm"
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 !text-white"
+              className="bg-linear-to-r from-indigo-600 to-purple-600 text-white!"
             >
               {isLoading ? "Resetting..." : "Reset Password"}
             </Button>

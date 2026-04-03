@@ -131,7 +131,7 @@ export function AssignLeadsDialog({
       {/* Main Dialog */}
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         <div className="fixed inset-0 bg-black/50" onClick={handleClose} />
-        <div className="assign-dialog relative bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md mx-4 p-6">
+        <div className="relative w-full max-w-md p-6 mx-4 bg-white rounded-lg shadow-lg assign-dialog dark:bg-gray-800">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               {selectedLeads.length > 1
@@ -144,7 +144,7 @@ export function AssignLeadsDialog({
               onClick={handleClose}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
-              <X className="h-5 w-5" />
+              <X className="w-5 h-5" />
             </button>
           </div>
 
@@ -154,7 +154,7 @@ export function AssignLeadsDialog({
                 <label className="text-sm font-medium">
                   Currently assigned to
                 </label>
-                <div className="assigned-user-name px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-md text-sm">
+                <div className="px-3 py-2 text-sm rounded-md assigned-user-name bg-gray-50 dark:bg-gray-700">
                   {typeof firstSelectedLead.assignedTo === "string"
                     ? firstSelectedLead.assignedTo
                     : `${firstSelectedLead.assignedTo.firstName} ${firstSelectedLead.assignedTo.lastName}`}
@@ -170,19 +170,19 @@ export function AssignLeadsDialog({
               </label>
               {isLoadingUsers ? (
                 <div className="flex items-center justify-center p-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-gray-500 dark:text-white" />
+                  <Loader2 className="w-4 h-4 text-gray-500 animate-spin dark:text-white" />
                 </div>
               ) : (
                 <select
                   value={selectedUser}
                   onChange={(e) => setSelectedUser(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select a user</option>
                   {users && users.length > 0 ? (
                     users.map((user) => {
                       const isCurrentAssignee = selectedLeads.some(
-                        (l) => l.assignedTo?.id === user.id
+                        (l) => l.assignedTo?.id === user.id,
                       );
                       return (
                         <option
@@ -204,18 +204,18 @@ export function AssignLeadsDialog({
               )}
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
+            <div className="flex justify-end pt-4 space-x-2">
               <Button variant="outline" onClick={handleClose}>
                 Cancel
               </Button>
               <Button
                 onClick={handleAssignClick}
                 disabled={isAssigning || isUnassigning || !selectedUser}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                className="text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
               >
                 {isAssigning ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Assigning...
                   </>
                 ) : selectedLeads.some((l) => l.assignedTo) ? (
@@ -231,16 +231,16 @@ export function AssignLeadsDialog({
 
       {/* Reassign Confirmation Dialog */}
       {isConfirmOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+        <div className="fixed inset-0 flex items-center justify-center z-60">
           <div
             className="fixed inset-0 bg-black/50"
             onClick={() => !isAssigning && setIsConfirmOpen(false)}
           />
-          <div className="assign-dialog relative bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="relative w-full max-w-md p-6 mx-4 bg-white rounded-lg shadow-lg assign-dialog dark:bg-gray-800">
+            <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
               Are you sure you want to reassign?
             </h3>
-            <p className="text-gray-600 dark:text-white mb-4">
+            <p className="mb-4 text-gray-600 dark:text-white">
               One or more of these leads are already assigned. Reassigning will
               change the owner.
             </p>
@@ -255,11 +255,11 @@ export function AssignLeadsDialog({
               <Button
                 onClick={handleConfirmAssign}
                 disabled={isAssigning}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                className="text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
               >
                 {isAssigning ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Reassigning...
                   </>
                 ) : (
@@ -273,16 +273,16 @@ export function AssignLeadsDialog({
 
       {/* Unassign Confirmation Dialog */}
       {isUnassignDialogOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+        <div className="fixed inset-0 flex items-center justify-center z-60">
           <div
             className="fixed inset-0 bg-black/50"
             onClick={() => !isUnassigning && setIsUnassignDialogOpen(false)}
           />
-          <div className="assign-dialog relative bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="relative w-full max-w-md p-6 mx-4 bg-white rounded-lg shadow-lg assign-dialog dark:bg-gray-800">
+            <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
               Are you sure you want to unassign?
             </h3>
-            <p className="text-gray-600 dark:text-white mb-4">
+            <p className="mb-4 text-gray-600 dark:text-white">
               Unassigning will remove the owner from these leads.
             </p>
             <div className="flex justify-end space-x-2">
@@ -296,11 +296,11 @@ export function AssignLeadsDialog({
               <Button
                 onClick={handleUnassignConfirm}
                 disabled={isUnassigning}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                className="text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
               >
                 {isUnassigning ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Unassigning...
                   </>
                 ) : (

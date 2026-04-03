@@ -56,7 +56,7 @@ export default function NotificationsPage() {
         return { ...n, id: String(safeId) } as Notification;
       });
     },
-    []
+    [],
   );
 
   // ... (keep all your existing code, just change the fetch URL)
@@ -75,7 +75,9 @@ export default function NotificationsPage() {
       setNotifications(normalizedData);
     } catch (error) {
       setError(
-        error instanceof Error ? error.message : "Failed to fetch notifications"
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch notifications",
       );
     } finally {
       setLoading(false);
@@ -94,7 +96,7 @@ export default function NotificationsPage() {
         console.error("Error deleting notification:", error);
       }
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -118,14 +120,14 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen dark:bg-gray-800 rounded-xl border">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen border dark:bg-gray-800 rounded-xl">
+      <div className="container px-4 py-8 mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold !text-gray-900 dark:!text-white mb-2">
+          <h1 className="text-3xl font-bold text-gray-900! dark:text-white! mb-2">
             Notifications
           </h1>
-          <p className="!text-gray-600 dark:!text-white">
+          <p className="text-gray-600! dark:text-white!">
             View all your payment and subscription notifications
           </p>
         </div>

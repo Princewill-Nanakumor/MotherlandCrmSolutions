@@ -35,12 +35,12 @@ export const PhoneInputField: React.FC<PhoneInputFieldProps> = ({
                 : "border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
             }
             bg-white dark:bg-gray-700 
-            !text-gray-900 dark:!text-white
+            text-gray-900! dark:text-white!
             focus-within:outline-none focus-within:ring-2 focus-within:border-transparent
           `}
         >
           {/* Phone Icon */}
-          <Phone className="h-4 w-4 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
+          <Phone className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500 shrink-0" />
 
           <PhoneInput
             international
@@ -50,12 +50,12 @@ export const PhoneInputField: React.FC<PhoneInputFieldProps> = ({
             onChange={onChange}
             disabled={isLoading}
             placeholder={placeholder}
-            className="!border-none !bg-transparent !p-0 !m-0 !w-full"
+            className="w-full p-0 m-0 bg-transparent border-none"
           />
         </div>
         {error && (
-          <p className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1 mt-1">
-            <AlertCircle className="h-3 w-3" />
+          <p className="flex items-center gap-1 mt-1 text-xs text-red-500 dark:text-red-400">
+            <AlertCircle className="w-3 h-3" />
             {error}
           </p>
         )}

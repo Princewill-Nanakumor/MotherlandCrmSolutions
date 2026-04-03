@@ -41,7 +41,7 @@ export default function HeroSection() {
 
   return (
     <section
-      className="relative flex items-center justify-center min-h-screen bg-fixed bg-center bg-no-repeat bg-cover hero-section pt-20"
+      className="relative flex items-center justify-center min-h-screen pt-20 bg-fixed bg-center bg-no-repeat bg-cover hero-section"
       style={{
         backgroundImage: "url('/homepageHeroimage.jpg')",
       }}
@@ -88,7 +88,7 @@ export default function HeroSection() {
             >
               <Link
                 href="/dashboard"
-                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-xl"
+                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-all duration-200 rounded-lg shadow-lg bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-xl"
               >
                 Go to Dashboard
               </Link>
@@ -103,7 +103,7 @@ export default function HeroSection() {
               <a
                 href="#contact-us"
                 onClick={scrollToContact}
-                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-all duration-200 rounded-lg shadow-lg cursor-pointer bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-xl"
+                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-all duration-200 rounded-lg shadow-lg cursor-pointer bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-xl"
               >
                 Get Started
               </a>

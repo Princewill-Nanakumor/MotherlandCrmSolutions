@@ -79,7 +79,7 @@ export default function SignUpForm() {
       setFormError(
         error instanceof Error
           ? error.message
-          : "An unexpected error occurred during sign up"
+          : "An unexpected error occurred during sign up",
       );
     } finally {
       setLoading(false);
@@ -90,11 +90,11 @@ export default function SignUpForm() {
     <div
       className={`bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 ${inter.className}`}
     >
-      <div className="text-center mb-6 sm:mb-8">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+      <div className="mb-6 text-center sm:mb-8">
+        <h2 className="text-xl font-bold text-transparent sm:text-2xl md:text-3xl bg-linear-to-br from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text">
           Create your account
         </h2>
-        <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-400 mt-2">
+        <p className="mt-2 text-xs text-gray-600 sm:text-sm md:text-base dark:text-gray-400">
           Start your journey with us today! Youll become an administrator.
         </p>
       </div>

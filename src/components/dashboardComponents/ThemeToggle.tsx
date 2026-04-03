@@ -62,19 +62,19 @@ export default function ThemeToggle({ isLoading = false }: ThemeToggleProps) {
       <DropdownMenuContent align="end">
         <DropdownMenuItem
           onClick={() => setTheme("light")}
-          className="cursor-pointer !text-gray-900 dark:!text-white"
+          className="cursor-pointer text-gray-900! dark:text-white!"
         >
           Light
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme("dark")}
-          className="cursor-pointer !text-gray-900 dark:!text-white"
+          className="cursor-pointer text-gray-900! dark:text-white!"
         >
           Dark
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme("system")}
-          className="cursor-pointer !text-gray-900 dark:!text-white"
+          className="cursor-pointer text-gray-900! dark:text-white!"
         >
           System
         </DropdownMenuItem>

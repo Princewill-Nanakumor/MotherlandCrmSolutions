@@ -83,20 +83,20 @@ export function NewPasswordForm({ token }: NewPasswordFormProps) {
 
   if (success) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 md:p-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
+      <div className="p-4 bg-white border border-gray-200 shadow-xl dark:bg-gray-800 rounded-xl sm:rounded-2xl dark:border-gray-700 sm:p-6 md:p-8">
+        <div className="space-y-4 text-center">
+          <div className="flex items-center justify-center w-16 h-16 mx-auto bg-green-100 rounded-full dark:bg-green-900/30">
             <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400 mb-2">
+            <h2 className="mb-2 text-xl font-bold text-green-600 sm:text-2xl dark:text-green-400">
               Password Reset Successfully!
             </h2>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
+            <p className="mb-4 text-sm text-gray-600 sm:text-base dark:text-gray-400">
               Your password has been updated. You will be redirected to the
               sign-in page shortly.
             </p>
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 mb-4">
+            <div className="p-3 mb-4 border border-green-200 rounded-lg bg-green-50 dark:bg-green-900/20 dark:border-green-800">
               <p className="text-xs text-green-700 dark:text-green-300">
                 Redirecting to sign in page in 3 seconds...
               </p>
@@ -104,7 +104,7 @@ export function NewPasswordForm({ token }: NewPasswordFormProps) {
           </div>
           <button
             onClick={() => router.push("/")}
-            className="w-full inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg transition-colors shadow-lg"
+            className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white transition-colors rounded-lg shadow-lg bg-linear-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
           >
             Go to Sign In
           </button>
@@ -114,19 +114,19 @@ export function NewPasswordForm({ token }: NewPasswordFormProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 md:p-8">
-      <div className="text-center mb-6 sm:mb-8">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+    <div className="p-4 bg-white border border-gray-200 shadow-xl dark:bg-gray-800 rounded-xl sm:rounded-2xl dark:border-gray-700 sm:p-6 md:p-8">
+      <div className="mb-6 text-center sm:mb-8">
+        <h2 className="text-xl font-bold text-transparent sm:text-2xl md:text-3xl bg-linear-to-br from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text">
           Reset Your Password
         </h2>
-        <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-400 mt-2">
+        <p className="mt-2 text-xs text-gray-600 sm:text-sm md:text-base dark:text-gray-400">
           Enter your new password below to complete the reset process.
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 rounded-lg p-3 flex items-start mb-6">
-          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mr-2 mt-0.5 flex-shrink-0" />
+        <div className="flex items-start p-3 mb-6 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/50 dark:border-red-800">
+          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mr-2 mt-0.5 shrink-0" />
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </div>
       )}
@@ -159,13 +159,13 @@ export function NewPasswordForm({ token }: NewPasswordFormProps) {
             <button
               type="button"
               onClick={() => !isFormDisabled && setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              className="absolute inset-y-0 right-0 flex items-center pr-3"
               disabled={isFormDisabled}
             >
               {showPassword ? (
-                <EyeOff className="h-5 w-5 text-gray-400" />
+                <EyeOff className="w-5 h-5 text-gray-400" />
               ) : (
-                <Eye className="h-5 w-5 text-gray-400" />
+                <Eye className="w-5 h-5 text-gray-400" />
               )}
             </button>
           </div>
@@ -205,13 +205,13 @@ export function NewPasswordForm({ token }: NewPasswordFormProps) {
               onClick={() =>
                 !isFormDisabled && setShowConfirmPassword(!showConfirmPassword)
               }
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              className="absolute inset-y-0 right-0 flex items-center pr-3"
               disabled={isFormDisabled}
             >
               {showConfirmPassword ? (
-                <EyeOff className="h-5 w-5 text-gray-400" />
+                <EyeOff className="w-5 h-5 text-gray-400" />
               ) : (
-                <Eye className="h-5 w-5 text-gray-400" />
+                <Eye className="w-5 h-5 text-gray-400" />
               )}
             </button>
           </div>
@@ -223,11 +223,11 @@ export function NewPasswordForm({ token }: NewPasswordFormProps) {
         </div>
 
         {/* Password Requirements */}
-        <div className="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 font-medium">
+        <div className="p-3 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700/50 dark:border-gray-600">
+          <p className="mb-2 text-xs font-medium text-gray-600 dark:text-gray-400">
             Password requirements:
           </p>
-          <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+          <ul className="space-y-1 text-xs text-gray-500 dark:text-gray-400">
             <li>• At least 6 characters long</li>
             <li>• At least one uppercase letter</li>
             <li>• At least one number</li>
@@ -238,11 +238,11 @@ export function NewPasswordForm({ token }: NewPasswordFormProps) {
         <button
           type="submit"
           disabled={isFormDisabled}
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center justify-center w-full px-4 py-3 space-x-2 font-medium text-white transition-colors duration-200 rounded-lg bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <>
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin" />
               <span>Resetting Password...</span>
             </>
           ) : (

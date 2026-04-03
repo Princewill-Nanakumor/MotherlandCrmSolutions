@@ -39,7 +39,10 @@ interface UserDetailsEditFormProps {
   isLoading: boolean;
   generalError: string | null;
   getFieldError: (field: string) => string;
-  onInputChange: (field: keyof UserFormEditData, value: string | string[]) => void;
+  onInputChange: (
+    field: keyof UserFormEditData,
+    value: string | string[],
+  ) => void;
   onCountryChange: (option: SelectOption | null) => void;
   onPhoneChange: (value?: string) => void;
   onCancel: () => void;
@@ -92,7 +95,7 @@ export function UserDetailsEditForm({
       <form onSubmit={onSave} className="mt-4 space-y-6">
         {/* Personal Information */}
         <div className="space-y-4">
-          <h3 className="pb-2 text-lg font-semibold !text-gray-900 border-b dark:!text-white">
+          <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b dark:text-white!">
             Personal Information
           </h3>
 
@@ -123,7 +126,9 @@ export function UserDetailsEditForm({
                 placeholder={
                   <div className="flex items-center gap-2">
                     <Globe className="w-4 h-5 text-gray-400 dark:text-gray-500" />
-                    <span className="text-gray-500 dark:text-gray-400">Select a country</span>
+                    <span className="text-gray-500 dark:text-gray-400">
+                      Select a country
+                    </span>
                   </div>
                 }
                 isDisabled={isLoading}
@@ -163,7 +168,7 @@ export function UserDetailsEditForm({
 
         {/* Account Information */}
         <div className="space-y-4">
-          <h3 className="pb-2 text-lg font-semibold !text-gray-900 border-b dark:!text-white">
+          <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b dark:text-white!">
             Account Information
           </h3>
           {/* Account information fields can be added here if needed */}
@@ -179,7 +184,7 @@ export function UserDetailsEditForm({
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Member Since
               </p>
-              <p className="text-base font-medium !text-gray-900 dark:!text-white">
+              <p className="text-base font-medium text-gray-900! dark:text-white!">
                 {formatDate(user.createdAt)}
               </p>
             </div>
@@ -193,7 +198,7 @@ export function UserDetailsEditForm({
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Last Login
               </p>
-              <p className="text-base font-medium !text-gray-900 dark:!text-white">
+              <p className="text-base font-medium text-gray-900! dark:text-white!">
                 {formatDate(user.lastLogin)}
               </p>
             </div>
@@ -215,7 +220,7 @@ export function UserDetailsEditForm({
           <Button
             type="submit"
             disabled={isLoading}
-            className="text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+            className="text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
           >
             <Save className="w-4 h-4 mr-2" />
             {isLoading ? "Saving..." : "Save Changes"}
@@ -225,4 +230,3 @@ export function UserDetailsEditForm({
     </>
   );
 }
-

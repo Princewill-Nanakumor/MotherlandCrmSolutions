@@ -34,8 +34,8 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
   onCancel,
 }) => {
   return (
-    <div className="flex justify-between items-center mb-6">
-      <h2 className="text-xl font-semibold dark:text-white text-gray-900">
+    <div className="flex items-center justify-between mb-6">
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
         Personal Information
       </h2>
       {!isEditing ? (
@@ -43,9 +43,9 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
         profile.role === "ADMIN" && (
           <Button
             onClick={onEdit}
-            className="dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300"
+            className="text-gray-800 bg-gray-100 border border-gray-300 dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white hover:bg-gray-200"
           >
-            <Edit className="h-4 w-4 mr-2" />
+            <Edit className="w-4 h-4 mr-2" />
             Edit Profile
           </Button>
         )
@@ -53,16 +53,16 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
         <div className="flex gap-2">
           <Button
             onClick={onSave}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+            className="text-white bg-linear-to-r from-blue-500 to-purple-600"
           >
-            <Save className="h-4 w-4 mr-2" />
+            <Save className="w-4 h-4 mr-2" />
             Save
           </Button>
           <Button
             onClick={onCancel}
-            className="dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300"
+            className="text-gray-800 bg-gray-100 border border-gray-300 dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white hover:bg-gray-200"
           >
-            <X className="h-4 w-4 mr-2" />
+            <X className="w-4 h-4 mr-2" />
             Cancel
           </Button>
         </div>

@@ -130,64 +130,64 @@ export default function PaymentRequestDetails({
   if (paymentConfirmed) {
     return (
       <div className="space-y-6">
-        <div className="p-6 bg-blue-50 rounded-lg border border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
+        <div className="p-6 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700">
           <div className="flex items-center mb-4">
-            <Clock className="mr-3 w-6 h-6 text-blue-600" />
-            <h3 className="font-semibold !text-blue-800 dark:!text-white text-lg">
+            <Clock className="w-6 h-6 mr-3 text-blue-600" />
+            <h3 className="font-semibold text-blue-800! dark:text-white! text-lg">
               Payment Confirmation Submitted
             </h3>
           </div>
 
           <div className="mb-6 space-y-3">
-            <p className="!text-blue-700 dark:!text-white">
+            <p className="text-blue-700! dark:text-white!">
               Thank you for confirming your payment. We are now verifying your
               transaction on the blockchain.
             </p>
 
-            <div className="p-4 bg-white rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+            <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="!text-gray-500 dark:!text-white">
+                  <span className="text-gray-500! dark:text-white!">
                     Payment ID:
                   </span>
-                  <p className="font-mono !text-gray-900 dark:!text-white">
+                  <p className="font-mono text-gray-900! dark:text-white!">
                     {currentPayment.transactionId}
                   </p>
                 </div>
                 <div>
-                  <span className="!text-gray-500 dark:!text-white">
+                  <span className="text-gray-500! dark:text-white!">
                     Amount:
                   </span>
-                  <p className="font-semibold !text-gray-900 dark:!text-white">
+                  <p className="font-semibold text-gray-900! dark:text-white!">
                     {currentPayment.amount} USDT
                   </p>
                 </div>
                 <div>
-                  <span className="!text-gray-500 dark:!text-white">
+                  <span className="text-gray-500! dark:text-white!">
                     Network:
                   </span>
-                  <p className="!text-gray-900 dark:!text-white">{network}</p>
+                  <p className="text-gray-900! dark:text-white!">{network}</p>
                 </div>
                 <div>
-                  <span className="!text-gray-500 dark:!text-white">
+                  <span className="text-gray-500! dark:text-white!">
                     Status:
                   </span>
-                  <p className="!text-yellow-600 dark:!text-yellow-400 font-medium flex gap-1">
-                    <Clock className="h-5 w-5 !text-yellow-600 dark:!text-yellow-400 animate-spin" />
+                  <p className="text-yellow-600! dark:text-yellow-400! font-medium flex gap-1">
+                    <Clock className="h-5 w-5 text-yellow-600! dark:text-yellow-400! animate-spin" />
                     PENDING
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
+            <div className="p-3 border border-yellow-200 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800">
               <div className="flex items-start">
-                <Info className="h-4 w-4 mt-0.5 mr-2 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+                <Info className="h-4 w-4 mt-0.5 mr-2 text-yellow-600 dark:text-yellow-400 shrink-0" />
                 <div>
-                  <h4 className="font-medium !text-yellow-800 dark:!text-white text-sm">
+                  <h4 className="font-medium text-yellow-800! dark:text-white! text-sm">
                     What happens next?
                   </h4>
-                  <ul className="text-yellow-700 dark:!text-white text-xs mt-1 space-y-1">
+                  <ul className="text-yellow-700 dark:text-white! text-xs mt-1 space-y-1">
                     <li>
                       • We&apos;ll verify your transaction on the blockchain
                     </li>
@@ -208,7 +208,7 @@ export default function PaymentRequestDetails({
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button onClick={onShowPaymentDetails} className="flex-1">
-              <ExternalLink className="mr-2 w-4 h-4" />
+              <ExternalLink className="w-4 h-4 mr-2" />
               View Payment Details
             </Button>
 
@@ -217,7 +217,7 @@ export default function PaymentRequestDetails({
               variant="outline"
               className="flex-1"
             >
-              <ArrowLeft className="mr-2 w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Deposit
             </Button>
           </div>
@@ -229,16 +229,16 @@ export default function PaymentRequestDetails({
   // Original payment request view
   return (
     <div className="space-y-6">
-      <div className="p-4 bg-green-50 rounded-lg border border-green-200 dark:bg-green-900/20 dark:border-green-700">
+      <div className="p-4 border border-green-200 rounded-lg bg-green-50 dark:bg-green-900/20 dark:border-green-700">
         <div className="flex items-center mb-3">
-          <CheckCircle className="mr-2 w-5 h-5 text-green-600" />
-          <h3 className="font-semibold !text-green-800 dark:!text-white">
+          <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
+          <h3 className="font-semibold text-green-800! dark:text-white!">
             Payment Request Created
           </h3>
         </div>
-        <p className="!text-gray-900 dark:!text-white text-sm mb-4">
+        <p className="text-gray-900! dark:text-white! text-sm mb-4">
           Please send exactly{" "}
-          <span className="font-bold !text-gray-900 dark:!text-white">
+          <span className="font-bold text-gray-900! dark:text-white!">
             {currentPayment.amount} USDT
           </span>{" "}
           to the wallet address below. After making payment, click on&quot; I
@@ -247,9 +247,9 @@ export default function PaymentRequestDetails({
 
         {currentPayment.walletAddress ? (
           <>
-            <div className="p-4 mb-4 bg-white rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-medium !text-gray-700 dark:!text-white">
+            <div className="p-4 mb-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-gray-700! dark:text-white!">
                   {network} Deposit Address
                 </span>
                 <Button
@@ -258,18 +258,18 @@ export default function PaymentRequestDetails({
                 >
                   {copied ? (
                     <>
-                      <Check className="mr-1 w-4 h-4" /> Copied
+                      <Check className="w-4 h-4 mr-1" /> Copied
                     </>
                   ) : (
                     <>
-                      <Copy className="mr-1 w-4 h-4" /> Copy
+                      <Copy className="w-4 h-4 mr-1" /> Copy
                     </>
                   )}
                 </Button>
               </div>
 
-              <div className="flex flex-col gap-6 items-center md:flex-row">
-                <div className="p-3 bg-white rounded-lg border border-gray-200">
+              <div className="flex flex-col items-center gap-6 md:flex-row">
+                <div className="p-3 bg-white border border-gray-200 rounded-lg">
                   <QRCode
                     value={currentPayment.walletAddress}
                     size={128}
@@ -280,12 +280,12 @@ export default function PaymentRequestDetails({
                 </div>
 
                 <div className="flex-1 w-full">
-                  <div className="font-mono text-sm dark:bg-white/5 bg-gray-100 px-4 py-3 rounded-lg break-all !text-gray-900 dark:!text-white">
+                  <div className="font-mono text-sm dark:bg-white/5 bg-gray-100 px-4 py-3 rounded-lg break-all text-gray-900! dark:text-white!">
                     {currentPayment.walletAddress}
                   </div>
 
-                  <div className="mt-3 flex items-center text-xs !text-gray-500 dark:!text-white">
-                    <Info className="mr-1 w-4 h-4" />
+                  <div className="mt-3 flex items-center text-xs text-gray-500! dark:text-white!">
+                    <Info className="w-4 h-4 mr-1" />
                     <span>
                       {network === "TRC20"
                         ? "Only send TRC20 USDT to this address (Tron network)"
@@ -296,14 +296,14 @@ export default function PaymentRequestDetails({
               </div>
             </div>
 
-            <div className="p-3 mb-4 bg-yellow-50 rounded-lg border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
+            <div className="p-3 mb-4 border border-yellow-200 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800">
               <div className="flex items-start">
-                <Info className="h-4 w-4 mt-0.5 mr-2 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+                <Info className="h-4 w-4 mt-0.5 mr-2 text-yellow-600 dark:text-yellow-400 shrink-0" />
                 <div>
-                  <h4 className="font-medium !text-yellow-800 dark:!text-white text-sm">
+                  <h4 className="font-medium text-yellow-800! text-sm">
                     Important Notice
                   </h4>
-                  <p className="!text-gray-900 dark:!text-white text-xs">
+                  <p className="text-gray-900! dark:text-white! text-xs">
                     {network === "TRC20"
                       ? "TRC20 deposits are faster and have lower fees (~1 USDT) compared to ERC20"
                       : "ERC20 deposits may take longer and have higher gas fees (varies)"}
@@ -313,26 +313,26 @@ export default function PaymentRequestDetails({
             </div>
           </>
         ) : (
-          <div className="p-4 mb-4 bg-blue-50 rounded-lg border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
+          <div className="p-4 mb-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
             <div className="flex items-start">
-              <Info className="h-4 w-4 mt-0.5 mr-2 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+              <Info className="h-4 w-4 mt-0.5 mr-2 text-blue-600 dark:text-blue-400 hrink-0" />
               <div>
-                <h4 className="font-medium !text-blue-800 dark:!text-white text-sm">
+                <h4 className="font-medium text-blue-800! dark:text-white! text-sm">
                   Payment Created Successfully
                 </h4>
-                <p className="!text-blue-700 dark:!text-white text-xs">
+                <p className="text-blue-700! dark:text-white! text-xs">
                   Payment ID: {currentPayment.transactionId}
                 </p>
-                <p className="!text-blue-700 dark:!text-white text-xs">
+                <p className="text-blue-700! dark:text-white! text-xs">
                   Amount: {currentPayment.amount} {currentPayment.currency}
                 </p>
-                <p className="!text-blue-700 dark:!text-white text-xs">
+                <p className="text-blue-700! dark:text-white! text-xs">
                   Status: {currentPayment.status}
                 </p>
-                <p className="!text-blue-700 dark:!text-white text-xs">
+                <p className="text-blue-700! dark:text-white! text-xs">
                   Network: {currentPayment.network}
                 </p>
-                <p className="!text-blue-700 dark:!text-white text-xs mt-2">
+                <p className="text-blue-700! dark:text-white! text-xs mt-2">
                   ⚠️ No wallet address provided
                 </p>
               </div>
@@ -348,17 +348,17 @@ export default function PaymentRequestDetails({
           >
             {isSubmitting ? (
               <>
-                <Clock className="mr-2 w-4 h-4 animate-spin" />
+                <Clock className="w-4 h-4 mr-2 animate-spin" />
                 Submitting...
               </>
             ) : notificationSent ? (
               <>
-                <CheckCircle className="mr-2 w-4 h-4" />
+                <CheckCircle className="w-4 h-4 mr-2" />
                 Payment Confirmed
               </>
             ) : (
               <>
-                <CheckCircle className="mr-2 w-4 h-4" />I Have Made the Payment
+                <CheckCircle className="w-4 h-4 mr-2" />I Have Made the Payment
               </>
             )}
           </Button>

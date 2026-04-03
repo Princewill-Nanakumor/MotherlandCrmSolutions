@@ -39,10 +39,10 @@ export function ImportModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-900/60 dark:bg-black/70 backdrop-blur-xs flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-900 shadow-2xl rounded-2xl w-full max-w-2xl p-6 animate-fade-in border border-gray-200 dark:border-gray-700">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 dark:bg-black/70 backdrop-blur-xs">
+      <div className="w-full max-w-2xl p-6 bg-white border border-gray-200 shadow-2xl dark:bg-gray-900 rounded-2xl animate-fade-in dark:border-gray-700">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400">
+          <div className="p-2 text-red-600 bg-red-100 rounded-lg dark:bg-red-900 dark:text-red-400">
             <AlertTriangle className="w-5 h-5" />
           </div>
           <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
@@ -56,7 +56,7 @@ export function ImportModal({
             <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2 text-red-800 dark:text-red-200">
-                  <AlertTriangle className="h-5 w-5" />
+                  <AlertTriangle className="w-5 h-5" />
                   <span>Import Limit Exceeded</span>
                 </CardTitle>
               </CardHeader>
@@ -95,9 +95,9 @@ export function ImportModal({
                     </div>
                   </div>
 
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                    <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300 text-sm">
-                      <Info className="h-4 w-4" />
+                  <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                    <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
+                      <Info className="w-4 h-4" />
                       <span>
                         You can either upgrade your plan to import all{" "}
                         {importLimitExceeded.attempted} leads, or reduce your
@@ -111,13 +111,13 @@ export function ImportModal({
                       onClick={() =>
                         (window.location.href = "/dashboard/subscription")
                       }
-                      className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                      className="flex-1 px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
                     >
                       Upgrade Plan
                     </button>
                     <button
                       onClick={onClose}
-                      className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors"
+                      className="flex-1 px-4 py-2 text-sm font-medium text-white transition-colors bg-gray-600 rounded-lg hover:bg-gray-700"
                     >
                       Close
                     </button>
@@ -129,7 +129,7 @@ export function ImportModal({
 
           {/* Show error message if present */}
           {errorMessage && !importLimitExceeded && (
-            <div className="flex items-start gap-3 bg-red-100 dark:bg-red-900/30 p-4 rounded-lg">
+            <div className="flex items-start gap-3 p-4 bg-red-100 rounded-lg dark:bg-red-900/30">
               <p className="text-sm text-red-800 dark:text-red-300">
                 {errorMessage}
               </p>
@@ -141,21 +141,21 @@ export function ImportModal({
             !errorMessage &&
             !importLimitExceeded && (
               <>
-                <div className="flex items-start gap-3 bg-amber-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-50 dark:bg-yellow-900/20">
                   <p className="text-sm text-amber-800 dark:text-yellow-200">
                     Your sheet is missing required fields. Please update your
                     sheet with the following requirements:
                   </p>
                 </div>
 
-                <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-                  <h4 className="font-medium !text-gray-800 dark:!text-white mb-2">
+                <div className="p-4 bg-gray-100 rounded-lg dark:bg-gray-800">
+                  <h4 className="font-medium text-gray-800! dark:text-white! mb-2">
                     Required Column Headers:
                   </h4>
-                  <ul className="list-disc list-inside text-sm text-gray-700 dark:text-gray-200 space-y-2">
+                  <ul className="space-y-2 text-sm text-gray-700 list-disc list-inside dark:text-gray-200">
                     <li>
                       <strong>Name</strong> – Use one of:
-                      <ul className="list-none pl-6 text-gray-600 dark:text-gray-400">
+                      <ul className="pl-6 text-gray-600 list-none dark:text-gray-400">
                         <li>• Name</li>
                         <li>• Full name</li>
                         <p>• First&nbsp;Name&nbsp;and&nbsp;Last&nbsp;Name</p>
@@ -163,32 +163,32 @@ export function ImportModal({
                     </li>
                     <li>
                       <strong>Email</strong> &ndash; Use one of:
-                      <ul className="list-none pl-6 text-gray-600 dark:text-gray-400">
+                      <ul className="pl-6 text-gray-600 list-none dark:text-gray-400">
                         <li>• Email</li>
                         <li>• Email Address</li>
                       </ul>
                     </li>
                     <li>
                       <strong>Phone</strong> – Use one of:
-                      <ul className="list-none pl-6 text-gray-600 dark:text-gray-400">
+                      <ul className="pl-6 text-gray-600 list-none dark:text-gray-400">
                         <li>• Phone</li>
                         <li>• Phone Number</li>
                       </ul>
                     </li>
                     <li>
                       <strong>Country</strong> – Use:
-                      <ul className="list-none pl-6 text-gray-600 dark:text-gray-400">
+                      <ul className="pl-6 text-gray-600 list-none dark:text-gray-400">
                         <li>• Country</li>
                       </ul>
                     </li>
                   </ul>
                 </div>
 
-                <div className="bg-red-100 dark:bg-red-900/30 p-4 rounded-lg">
-                  <h4 className="font-medium text-red-700 dark:text-red-300 mb-2">
+                <div className="p-4 bg-red-100 rounded-lg dark:bg-red-900/30">
+                  <h4 className="mb-2 font-medium text-red-700 dark:text-red-300">
                     Missing Fields:
                   </h4>
-                  <ul className="list-disc list-inside text-sm text-red-600 dark:text-red-300">
+                  <ul className="text-sm text-red-600 list-disc list-inside dark:text-red-300">
                     {missingFields.map((field) => (
                       <li key={field}>{field}</li>
                     ))}
@@ -200,7 +200,7 @@ export function ImportModal({
 
         {/* Only show the default close button if no import limit exceeded */}
         {!importLimitExceeded && (
-          <div className="flex items-center justify-between mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div className="flex items-center justify-between pt-4 mt-6 border-t border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {errorMessage
                 ? "Please check your file format and try again."
@@ -211,7 +211,7 @@ export function ImportModal({
                 console.log("Close button clicked");
                 onClose();
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600 rounded-lg shadow-sm transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-red-600 rounded-lg shadow-sm cursor-pointer dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600"
             >
               <XCircle className="w-4 h-4" />
               Close

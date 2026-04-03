@@ -41,14 +41,14 @@ export const CommentForm: FC<CommentFormProps> = ({
   return (
     <>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold !text-gray-800 dark:!text-white">
+        <h3 className="text-lg font-semibold text-gray-800! dark:text-white!">
           Comment
         </h3>
         <Button
           onClick={handleToggleTextarea}
           variant="ghost"
           size="sm"
-          className="!text-gray-500 hover:!text-gray-700 dark:!text-gray-400 dark:hover:!text-gray-200"
+          className="text-gray-500! hover:text-gray-700! dark:text-gray-400! dark:hover:text-gray-200!"
           title={`${showTextarea ? "Hide" : "Show"} comment textarea`}
         >
           <Type className="w-4 h-4" />
@@ -69,7 +69,7 @@ export const CommentForm: FC<CommentFormProps> = ({
         <div className="mb-6 space-y-3">
           <textarea
             placeholder="Write your thoughts about this lead... (Press Cmd/Ctrl + Enter to submit)"
-            className="w-full p-3 rounded-md focus:outline-none resize-none min-h-[120px] !text-gray-700 dark:!text-white bg-white dark:bg-gray-700/50 transition-all duration-200 border border-gray-300 dark:border-gray-600 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-0"
+            className="w-full p-3 rounded-md focus:outline-none resize-none min-h-30 text-gray-700! dark:text-white! bg-white dark:bg-gray-700/50 transition-all duration-200 border border-gray-300 dark:border-gray-600 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-0"
             value={commentContent}
             onChange={(e) => setCommentContent(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -80,7 +80,7 @@ export const CommentForm: FC<CommentFormProps> = ({
             <button
               onClick={onAddComment}
               disabled={isSaving || !commentContent.trim()}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 !text-white rounded-md text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 disabled:opacity-50 disabled:pointer-events-none"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white! rounded-md text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 disabled:opacity-50 disabled:pointer-events-none"
             >
               {isSaving ? (
                 <>

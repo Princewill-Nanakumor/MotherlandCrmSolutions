@@ -68,7 +68,7 @@ export default function UsersManagement({
       refreshUserUsageData(); // Refetch usage immediately
       setShowModal(false);
     },
-    [onUserCreated, refetchUsers, refreshUserUsageData]
+    [onUserCreated, refetchUsers, refreshUserUsageData],
   );
 
   const handleUserUpdated = useCallback(
@@ -77,7 +77,7 @@ export default function UsersManagement({
       refetchUsers(); // Refetch users after update
       refreshUserUsageData(); // Keep usage in sync if role/status changes matter
     },
-    [onUserUpdated, refetchUsers, refreshUserUsageData]
+    [onUserUpdated, refetchUsers, refreshUserUsageData],
   );
 
   const handleUserDeleted = useCallback(
@@ -86,7 +86,7 @@ export default function UsersManagement({
       refetchUsers(); // Refetch users after deletion
       refreshUserUsageData(); // Refetch usage immediately
     },
-    [onUserDeleted, refetchUsers, refreshUserUsageData]
+    [onUserDeleted, refetchUsers, refreshUserUsageData],
   );
 
   const handleCreateUserClick = useCallback(() => {
@@ -99,10 +99,10 @@ export default function UsersManagement({
 
   if (status === "loading") {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="relative w-16 h-16 flex items-center justify-center">
-          <div className="absolute inset-0 border-4 border-transparent border-t-blue-400 border-r-purple-500 rounded-full animate-spin w-16 h-16"></div>
-          <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
+      <div className="flex items-center justify-center h-screen">
+        <div className="relative flex items-center justify-center w-16 h-16">
+          <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
+          <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
             <Shield size={28} className="text-white" />
           </div>
         </div>
@@ -124,10 +124,10 @@ export default function UsersManagement({
           handleDeleteUser,
           handleResetPassword,
         }) => (
-          <div className="space-y-6 p-6 bg-background dark:bg-gray-800 rounded border">
+          <div className="p-6 space-y-6 border rounded bg-background dark:bg-gray-800">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold !text-gray-900 dark:!text-white">
+                <h1 className="text-2xl font-bold text-gray-900! dark:text-white!">
                   User Management
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -138,19 +138,19 @@ export default function UsersManagement({
                 <div className="flex items-center gap-2">
                   {usageDataLoading ? (
                     // Loading skeleton for the button
-                    <div className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse">
-                      <div className="w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded"></div>
-                      <div className="w-20 h-4 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-md dark:bg-gray-700 animate-pulse">
+                      <div className="w-4 h-4 bg-gray-300 rounded dark:bg-gray-600"></div>
+                      <div className="w-20 h-4 bg-gray-300 rounded dark:bg-gray-600"></div>
                     </div>
                   ) : (
                     <Button
-                      className="bg-gradient-to-r from-indigo-600 to-purple-600 !text-white"
+                      className="bg-linear-to-r from-indigo-600 to-purple-600 text-white!"
                       onClick={handleCreateUserClick}
                       disabled={
                         !!(userUsageData && !userUsageData.canAddTeamMember)
                       }
                     >
-                      <PlusIcon className="h-4 w-4" />
+                      <PlusIcon className="w-4 h-4" />
                       Create User
                     </Button>
                   )}
@@ -215,7 +215,7 @@ export default function UsersManagement({
                 if (selectedUserForPassword) {
                   await handleResetPassword(
                     selectedUserForPassword.id,
-                    password
+                    password,
                   );
                   setShowPasswordModal(false);
                   setSelectedUserForPassword(null);

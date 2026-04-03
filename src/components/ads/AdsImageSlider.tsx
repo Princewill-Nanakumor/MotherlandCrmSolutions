@@ -39,7 +39,7 @@ export const AdsImageSlider: FC<AdsImageSliderProps> = ({
 
   const prevSlide = () => {
     setCurrentSlide(
-      (prev) => (prev - 1 + motivationalAds.length) % motivationalAds.length
+      (prev) => (prev - 1 + motivationalAds.length) % motivationalAds.length,
     );
   };
 
@@ -92,13 +92,13 @@ export const AdsImageSlider: FC<AdsImageSliderProps> = ({
                     index === currentSlide ? "opacity-100" : "opacity-0"
                   }`}
                 >
-                  <div className="relative h-full bg-gradient-to-r from-purple-500 to-blue-600">
+                  <div className="relative h-full bg-linear-to-r from-purple-500 to-blue-600">
                     {/* Placeholder for ad image - replace with actual image */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-blue-600/20" />
+                    <div className="absolute inset-0 bg-linear-to-br from-purple-600/20 to-blue-600/20" />
 
                     {/* Ad Content */}
                     <div className="absolute inset-0 flex flex-col justify-center p-6 text-white">
-                      <h4 className="mb-2 text-lg font-semibold !text-white">
+                      <h4 className="mb-2 text-lg font-semibold text-white!">
                         {ad.title}
                       </h4>
                       <p className="mb-4 text-sm text-white opacity-90">

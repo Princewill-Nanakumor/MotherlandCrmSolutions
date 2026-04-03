@@ -58,11 +58,11 @@ export default function DowngradeWarningModal({
 
   const leadsOverLimit = Math.max(
     0,
-    usageData.currentLeads - selectedPlan.maxLeads
+    usageData.currentLeads - selectedPlan.maxLeads,
   );
   const usersOverLimit = Math.max(
     0,
-    usageData.currentUsers - selectedPlan.maxUsers
+    usageData.currentUsers - selectedPlan.maxUsers,
   );
 
   return (
@@ -70,7 +70,7 @@ export default function DowngradeWarningModal({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2 text-red-800 dark:text-red-200">
-            <AlertTriangle className="h-6 w-6" />
+            <AlertTriangle className="w-6 h-6" />
             <span>Downgrade Not Allowed</span>
           </DialogTitle>
           <DialogDescription className="text-gray-600 dark:text-gray-400">
@@ -80,16 +80,16 @@ export default function DowngradeWarningModal({
 
         <div className="space-y-6">
           {/* Current Usage vs Selected Plan */}
-          <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
-            <h3 className="font-semibold text-red-800 dark:text-red-200 mb-3">
+          <div className="p-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+            <h3 className="mb-3 font-semibold text-red-800 dark:text-red-200">
               Current Usage vs {selectedPlan.name} Plan Limits
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* Leads Comparison */}
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <FileText className="h-4 w-4 text-red-600" />
+                  <FileText className="w-4 h-4 text-red-600" />
                   <span className="font-medium text-red-800 dark:text-red-200">
                     Leads
                   </span>
@@ -122,7 +122,7 @@ export default function DowngradeWarningModal({
                       <span className="text-sm font-medium text-red-800 dark:text-red-200">
                         Over Limit:
                       </span>
-                      <Badge className="bg-red-600 text-white">
+                      <Badge className="text-white bg-red-600">
                         +{leadsOverLimit.toLocaleString()}
                       </Badge>
                     </div>
@@ -133,7 +133,7 @@ export default function DowngradeWarningModal({
               {/* Users Comparison */}
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <Users className="h-4 w-4 text-red-600" />
+                  <Users className="w-4 h-4 text-red-600" />
                   <span className="font-medium text-red-800 dark:text-red-200">
                     Team Members
                   </span>
@@ -166,7 +166,7 @@ export default function DowngradeWarningModal({
                       <span className="text-sm font-medium text-red-800 dark:text-red-200">
                         Over Limit:
                       </span>
-                      <Badge className="bg-red-600 text-white">
+                      <Badge className="text-white bg-red-600">
                         +{usersOverLimit}
                       </Badge>
                     </div>
@@ -177,16 +177,16 @@ export default function DowngradeWarningModal({
           </div>
 
           {/* Current Plan vs Selected Plan */}
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-3">
+          <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+            <h3 className="mb-3 font-semibold text-gray-800 dark:text-gray-200">
               Plan Comparison
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* Current Plan */}
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <TrendingUp className="h-4 w-4 text-green-600" />
+                  <TrendingUp className="w-4 h-4 text-green-600" />
                   <span className="font-medium text-gray-800 dark:text-gray-200">
                     Current: {currentPlan.name}
                   </span>
@@ -204,7 +204,7 @@ export default function DowngradeWarningModal({
               {/* Selected Plan */}
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <TrendingUp className="h-4 w-4 text-red-600" />
+                  <TrendingUp className="w-4 h-4 text-red-600" />
                   <span className="font-medium text-gray-800 dark:text-gray-200">
                     Selected: {selectedPlan.name}
                   </span>
@@ -222,8 +222,8 @@ export default function DowngradeWarningModal({
           </div>
 
           {/* Options */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-            <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
+          <div className="p-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+            <h3 className="mb-2 font-semibold text-blue-800 dark:text-blue-200">
               What can you do?
             </h3>
             <div className="space-y-2 text-sm text-blue-700 dark:text-blue-300">
@@ -246,7 +246,7 @@ export default function DowngradeWarningModal({
           <div className="flex space-x-3">
             <Button
               onClick={onUpgrade}
-              className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+              className="flex-1 text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
             >
               View Higher Plans
             </Button>

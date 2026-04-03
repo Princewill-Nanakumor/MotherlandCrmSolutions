@@ -23,97 +23,97 @@ export function getActivityIcon(type: Activity["type"]): React.ReactElement {
     case "STATUS_CHANGE":
       return (
         <ArrowRight
-          className={`${iconSizeClass} !text-blue-600 dark:!text-blue-400`}
+          className={`${iconSizeClass} text-blue-600! dark:text-blue-400!`}
         />
       );
     case "ASSIGNMENT":
       return (
         <User
-          className={`${iconSizeClass} !text-green-600 dark:!text-green-400`}
+          className={`${iconSizeClass} text-green-600! dark:text-green-400!`}
         />
       );
     case "LEAD_CREATED":
       return (
         <Calendar
-          className={`${iconSizeClass} !text-orange-600 dark:!text-orange-400`}
+          className={`${iconSizeClass} text-orange-600! dark:text-orange-400!`}
         />
       );
     case "CREATE":
       return (
         <Calendar
-          className={`${iconSizeClass} !text-green-600 dark:!text-green-400`}
+          className={`${iconSizeClass} text-green-600! dark:text-green-400!`}
         />
       );
     case "UPDATE":
       return (
         <ArrowRight
-          className={`${iconSizeClass} !text-blue-600 dark:!text-blue-400`}
+          className={`${iconSizeClass} text-blue-600! dark:text-blue-400!`}
         />
       );
     case "DELETE":
       return (
         <ActivityIcon
-          className={`${iconSizeClass} !text-red-600 dark:!text-red-400`}
+          className={`${iconSizeClass} text-red-600! dark:text-red-400!`}
         />
       );
     case "IMPORT":
       return (
         <ActivityIcon
-          className={`${iconSizeClass} !text-purple-600 dark:!text-purple-400`}
+          className={`${iconSizeClass} text-purple-600! dark:text-purple-400!`}
         />
       );
     case "REMINDER_CREATED":
       return (
         <Clock
-          className={`${iconSizeClass} !text-blue-500 dark:!text-blue-400`}
+          className={`${iconSizeClass} text-blue-500! dark:text-blue-400!`}
         />
       );
     case "REMINDER_UPDATED":
       return (
         <Edit
-          className={`${iconSizeClass} !text-blue-500 dark:!text-blue-400`}
+          className={`${iconSizeClass} text-blue-500! dark:text-blue-400!`}
         />
       );
     case "REMINDER_DELETED":
       return (
         <Trash2
-          className={`${iconSizeClass} !text-red-500 dark:!text-red-400`}
+          className={`${iconSizeClass} text-red-500! dark:text-red-400!`}
         />
       );
     case "REMINDER_COMPLETED":
       return (
         <CheckCircle
-          className={`${iconSizeClass} !text-green-500 dark:!text-green-400`}
+          className={`${iconSizeClass} text-green-500! dark:text-green-400!`}
         />
       );
     case "REMINDER_SNOOZED":
       return (
         <Clock
-          className={`${iconSizeClass} !text-yellow-500 dark:!text-yellow-400`}
+          className={`${iconSizeClass} text-yellow-500! dark:text-yellow-400!`}
         />
       );
     case "REMINDER_DISMISSED":
       return (
         <XCircle
-          className={`${iconSizeClass} !text-gray-500 dark:!text-gray-400`}
+          className={`${iconSizeClass} text-gray-500! dark:text-gray-400!`}
         />
       );
     case "REMINDER_MUTED":
       return (
         <VolumeX
-          className={`${iconSizeClass} !text-gray-500 dark:!text-gray-400`}
+          className={`${iconSizeClass} text-gray-500! dark:text-gray-400!`}
         />
       );
     case "REMINDER_UNMUTED":
       return (
         <Volume2
-          className={`${iconSizeClass} !text-blue-500 dark:!text-blue-400`}
+          className={`${iconSizeClass} text-blue-500! dark:text-blue-400!`}
         />
       );
     default:
       return (
         <ActivityIcon
-          className={`${iconSizeClass} !text-gray-600 dark:!text-gray-400`}
+          className={`${iconSizeClass} text-gray-600! dark:text-gray-400!`}
         />
       );
   }
@@ -155,11 +155,11 @@ export function getActivityBackground(type: Activity["type"]): string {
 
 export function getStatusByName(
   statuses: Status[],
-  statusName: string
+  statusName: string,
 ): Status | null {
   return (
     statuses.find(
-      (status) => status.name === statusName || status._id === statusName
+      (status) => status.name === statusName || status._id === statusName,
     ) || null
   );
 }

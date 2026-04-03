@@ -66,7 +66,7 @@ export default function SignInForm() {
         try {
           sessionStorage.setItem("auth:navigating", "1");
           window.dispatchEvent(
-            new CustomEvent("auth:navigating", { detail: true })
+            new CustomEvent("auth:navigating", { detail: true }),
           );
         } catch {}
 
@@ -110,7 +110,7 @@ export default function SignInForm() {
       setFormError(
         error instanceof Error
           ? `An error occurred during sign in: ${error.message}`
-          : "An unexpected error occurred during sign in"
+          : "An unexpected error occurred during sign in",
       );
       setLoading(false);
     }
@@ -122,10 +122,10 @@ export default function SignInForm() {
       style={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
     >
       <div className="mb-6 text-center sm:mb-8">
-        <h2 className="text-2xl font-bold !text-white sm:text-3xl">
+        <h2 className="text-2xl font-bold text-white! sm:text-3xl">
           Welcome Back
         </h2>
-        <p className="mt-2 text-sm !text-white sm:text-base">
+        <p className="mt-2 text-sm text-white! sm:text-base">
           Sign in to your account to continue
         </p>
       </div>
@@ -156,14 +156,14 @@ export default function SignInForm() {
                   pl-10 pr-3 py-3 w-full rounded-lg border text-sm
                   ${errors.email ? "border-red-500" : "border-gray-300"}
                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                  bg-white !text-gray-900
+                  bg-white text-gray-900!
                   ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
             </div>
             {errors.email && (
-              <p className="flex items-start mt-1 text-xs !text-red-500">
-                <span className="ml-1 !text-red-500">
+              <p className="flex items-start mt-1 text-xs text-red-500!">
+                <span className="ml-1 text-red-500!">
                   {errors.email.message}
                 </span>
               </p>
@@ -185,14 +185,14 @@ export default function SignInForm() {
                   pl-10 pr-10 py-3 w-full rounded-lg border text-sm
                   ${errors.password ? "border-red-500" : "border-gray-300"}
                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                  bg-white !text-gray-900
+                  bg-white text-gray-900!
                   ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
             </div>
             {errors.password && (
-              <p className="flex items-start mt-1 text-xs !text-red-500">
-                <span className="ml-1 !text-red-500">
+              <p className="flex items-start mt-1 text-xs text-red-500!">
+                <span className="ml-1 text-red-500!">
                   {errors.password.message}
                 </span>
               </p>
@@ -221,7 +221,7 @@ export default function SignInForm() {
                 ${isFormDisabled ? "opacity-75 cursor-not-allowed" : "cursor-pointer"}
               `}
             />
-            <span className="text-sm !text-white">Remember me</span>
+            <span className="text-sm text-white!">Remember me</span>
           </label>
           {/* Forgot password hidden */}
         </div>
@@ -230,7 +230,7 @@ export default function SignInForm() {
           type="submit"
           disabled={isFormDisabled}
           className={`
-            w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium
+            w-full bg-linear-to-br from-indigo-600 to-purple-600 text-white font-medium
             py-3 px-4 rounded-lg flex items-center justify-center space-x-2
             transition-all duration-200
             ${isFormDisabled ? "opacity-50 cursor-not-allowed" : "hover:from-indigo-700 hover:to-purple-700"}
@@ -239,11 +239,11 @@ export default function SignInForm() {
           {loading ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span className="!text-white">Signing in...</span>
+              <span className="text-white!">Signing in...</span>
             </>
           ) : (
             <>
-              <span className="!text-white">Sign in</span>
+              <span className="text-white!">Sign in</span>
               <ArrowRight className="w-5 h-5" />
             </>
           )}

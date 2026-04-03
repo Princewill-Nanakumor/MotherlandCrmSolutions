@@ -44,18 +44,18 @@ export default function AdminInfoCard({
   formatLastLogin,
 }: AdminInfoCardProps) {
   return (
-    <Card className="backdrop-blur-lg bg-white/70 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl">
+    <Card className="border-gray-200 shadow-xl backdrop-blur-lg bg-white/70 dark:bg-gray-800 dark:border-gray-700">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-white">
-          <Shield className="h-5 w-5" />
+          <Shield className="w-5 h-5" />
           <span>Admin Information</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="flex items-center space-x-4">
-            <Avatar className="h-16 w-16">
-              <AvatarFallback className="text-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+            <Avatar className="w-16 h-16">
+              <AvatarFallback className="text-lg text-white bg-linear-to-r from-indigo-600 to-purple-600">
                 {admin.firstName[0]}
                 {admin.lastName[0]}
               </AvatarFallback>
@@ -64,12 +64,12 @@ export default function AdminInfoCard({
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {admin.firstName} {admin.lastName}
               </h3>
-              <div className="flex items-center space-x-2 mt-1">
+              <div className="flex items-center mt-1 space-x-2">
                 <Badge className={getStatusColor(admin.status)}>
                   {admin.status}
                 </Badge>
                 {subscription && ( // Only show if subscription exists
-                  <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300 border-purple-200 dark:border-purple-800">
+                  <Badge className="text-purple-800 bg-purple-100 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800">
                     {subscription.plan}
                   </Badge>
                 )}
@@ -79,14 +79,14 @@ export default function AdminInfoCard({
 
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <Mail className="h-4 w-4 text-gray-400" />
+              <Mail className="w-4 h-4 text-gray-400" />
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 {admin.email}
               </span>
             </div>
             {admin.phoneNumber && (
               <div className="flex items-center space-x-2">
-                <Phone className="h-4 w-4 text-gray-400" />
+                <Phone className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-gray-700 dark:text-gray-300">
                   {admin.phoneNumber}
                 </span>
@@ -94,14 +94,14 @@ export default function AdminInfoCard({
             )}
             {admin.country && (
               <div className="flex items-center space-x-2">
-                <Globe className="h-4 w-4 text-gray-400" />
+                <Globe className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-gray-700 dark:text-gray-300">
                   {admin.country}
                 </span>
               </div>
             )}
             <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-gray-400" />
+              <Clock className="w-4 h-4 text-gray-400" />
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 Last login: {formatLastLogin(admin.lastLogin)}
               </span>
