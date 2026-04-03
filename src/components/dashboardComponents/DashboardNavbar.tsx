@@ -80,14 +80,14 @@ export default function DashboardNavbar({
     (query: string) => {
       onSearch(query);
     },
-    [onSearch]
+    [onSearch],
   );
 
   if (!mounted) {
     // SSR fallback
     return (
-      <nav className="flex items-center justify-between px-8 py-4 shadow-lg bg-gradient-to-r from-purple-300 to-purple-500 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border-1">
-        <div className="flex-shrink-0 w-32" />
+      <nav className="flex items-center justify-between px-8 py-4 shadow-lg bg-linear-to-r from-purple-300 to-purple-500 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border">
+        <div className="w-32 hrink-0" />
         {showSearch && (
           <div className="flex justify-center flex-1">
             <div className="relative w-full max-w-md">
@@ -103,7 +103,7 @@ export default function DashboardNavbar({
           </div>
         )}
         {!showSearch && <div className="flex-1" />}
-        <div className="flex items-center flex-shrink-0 w-32 space-x-4">
+        <div className="flex items-center w-32 space-x-4 shrink-0">
           <UserDropdownMenu
             session={session}
             userProfile={userProfile as UserDropdownMenuProps["userProfile"]}
@@ -118,16 +118,16 @@ export default function DashboardNavbar({
   }
 
   return (
-    <nav className="flex items-center justify-between px-8 py-4 shadow-lg bg-gradient-to-r from-purple-300 to-purple-500 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border-1">
+    <nav className="flex items-center justify-between px-8 py-4 shadow-lg bg-linear-to-r from-purple-300 to-purple-500 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border">
       {/* Left side - Toggle buttons for leads pages */}
-      <div className="flex items-center flex-shrink-0 space-x-2">
+      <div className="flex items-center space-x-2 shrink-0">
         {showLeadsToggles && (
           <>
             <button
               onClick={onToggleHeader}
               className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium 
-                         !text-purple-700 hover:!text-purple-800 bg-white/20 hover:bg-white/30 
-                         dark:!text-gray-200 dark:hover:!text-white dark:bg-white/10 dark:hover:bg-white/20 
+                         text-purple-700! hover:text-purple-800! bg-white/20 hover:bg-white/30 
+                         dark:text-gray-200! dark:hover:text-white! dark:bg-white/10 dark:hover:bg-white/20 
                          rounded-md transition-colors border border-white/20 dark:border-gray-600/50"
               title={`${showHeader ? "Hide" : "Show"} Header`}
             >
@@ -141,8 +141,8 @@ export default function DashboardNavbar({
             <button
               onClick={onToggleControls}
               className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium 
-                         !text-purple-700 hover:!text-purple-800 bg-white/20 hover:bg-white/30 
-                         dark:!text-gray-200 dark:hover:!text-white dark:bg-white/10 dark:hover:bg-white/20 
+                         text-purple-700! hover:text-purple-800! bg-white/20 hover:bg-white/30 
+                         dark:text-gray-200!  dark:hover:text-white! dark:bg-white/10 dark:hover:bg-white/20 
                          rounded-md transition-colors border border-white/20 dark:border-gray-600/50"
               title={`${showControls ? "Hide" : "Show"} Controls`}
             >
@@ -173,7 +173,7 @@ export default function DashboardNavbar({
       {!showSearch && <div className="flex-1" />}
 
       {/* Right side - Other controls */}
-      <div className="flex items-center flex-shrink-0 space-x-4">
+      <div className="flex items-center space-x-4 shrink-0">
         <DateTimeDisplay />
         <NotificationBell />
         <ThemeToggle isLoading={isLoading} />

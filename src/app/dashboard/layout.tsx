@@ -238,7 +238,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       <div className="flex items-center justify-center h-screen">
         <div className="relative flex items-center justify-center w-16 h-16">
           <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
-          <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
+          <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
             <Shield size={28} className="text-white" />
           </div>
         </div>
@@ -260,7 +260,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     <ToggleProvider value={showLeadsToggles ? toggleContextValue : null}>
       <div className="flex h-screen bg-background text-foreground">
         <Sidebar />
-        <div className="flex flex-col flex-1 overflow-hidden min-w-0">
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
           <DashboardNavbar
             onSearch={setSearchQuery}
             searchQuery={searchQuery}
@@ -303,10 +303,10 @@ export default function DashboardLayout({
             <SearchProvider>
               <Suspense
                 fallback={
-                  <div className="flex h-screen items-center justify-center">
+                  <div className="flex items-center justify-center h-screen">
                     <div className="relative flex items-center justify-center w-16 h-16">
                       <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin" />
-                      <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
+                      <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
                         <Shield size={28} className="text-white" />
                       </div>
                     </div>

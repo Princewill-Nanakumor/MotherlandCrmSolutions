@@ -10,7 +10,8 @@ import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { useRouter } from "next/navigation";
-import { hasAuthorizedSession } from "@/lib/sessionUtils";
+import { hasAuthorizedSession, shouldForceLoginLanding } from "@/lib/sessionUtils";
+import { signOut } from "next-auth/react";
 
 // Animation variants
 const containerVariants = {
@@ -72,11 +73,9 @@ function RedirectingScreen() {
 // Defined at module scope so LoginPage re-renders (e.g. when toast dismisses) don't remount these and retrigger motion animations
 function LoginFormContent() {
   const { status, data: session } = useSession();
-  const isExpiredLanding =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("expired") === "true";
-  // Show form when no valid user OR ?expired=true (sign-out in flight can leave status loading)
-  if (hasAuthorizedSession(status, session) && !isExpiredLanding) return null;
+  const [forceLogin] = useState(() => shouldForceLoginLanding());
+  // Show form when no valid user OR we must re-auth after expiry (stale session until signOut)
+  if (hasAuthorizedSession(status, session) && !forceLogin) return null;
   return (
     <div
       className="relative min-h-screen"
@@ -133,10 +132,14 @@ function AuthStateHandler() {
   const { status, data: session } = useSession();
   const router = useRouter();
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  const [forceLogin] = useState(() => shouldForceLoginLanding());
 
-  const isExpiredLanding =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("expired") === "true";
+  // Clear stale client session when we landed for expiry so the form can sign in cleanly
+  useEffect(() => {
+    if (!forceLogin) return;
+    if (!hasAuthorizedSession(status, session)) return;
+    void signOut({ redirect: false });
+  }, [forceLogin, status, session]);
 
   // If session stays "loading" (e.g. /api/auth/session slow or fails in production), show form after 2.5s so user can sign in
   useEffect(() => {
@@ -147,6 +150,7 @@ function AuthStateHandler() {
 
   useEffect(() => {
     if (!hasAuthorizedSession(status, session)) return;
+    if (forceLogin) return;
     const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
     const callbackUrl = params?.get("callbackUrl");
     const target = callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard";
@@ -158,12 +162,12 @@ function AuthStateHandler() {
       }
     }, 2000);
     return () => clearTimeout(fallback);
-  }, [status, session, router]);
+  }, [status, session, router, forceLogin]);
 
-  // When landing with ?expired=true, show form; if session stuck loading, show form after timeout
-  if (status === "loading" && !isExpiredLanding && !loadingTimedOut) return <LoadingScreen />;
+  // After expiry landing, show form (not spinner) even while session is loading
+  if (status === "loading" && !forceLogin && !loadingTimedOut) return <LoadingScreen />;
 
-  if (hasAuthorizedSession(status, session)) {
+  if (hasAuthorizedSession(status, session) && !forceLogin) {
     return <RedirectingScreen />;
   }
   return null;

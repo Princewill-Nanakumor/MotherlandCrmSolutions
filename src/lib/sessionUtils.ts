@@ -14,3 +14,16 @@ export function hasAuthorizedSession(
     String(session.user.id).length > 0
   );
 }
+
+/**
+ * Login page: user arrived after session expiry (?expired=true or sessionExpired in localStorage).
+ * NextAuth can still report "authenticated" briefly until signOut/refetch completes — callers
+ * should not auto-redirect to the dashboard in that case.
+ */
+export function shouldForceLoginLanding(): boolean {
+  if (typeof window === "undefined") return false;
+  if (new URLSearchParams(window.location.search).get("expired") === "true") {
+    return true;
+  }
+  return localStorage.getItem("sessionExpired") === "true";
+}
