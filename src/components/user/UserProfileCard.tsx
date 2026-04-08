@@ -4,10 +4,10 @@
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/use-toast";
-import { useRouter } from "next/navigation";
 import { ProfileSkeleton } from "./ProfileSkeleton";
 import { ProfileContent } from "./ProfileContent";
 import { useProfileData } from "@/hooks/useProfileData";
+import { z } from "zod";
 
 interface UserProfile {
   id: string;
@@ -28,10 +28,74 @@ interface UserProfileCardProps {
   className?: string;
 }
 
+const profileValidationSchema = z
+  .object({
+    firstName: z
+      .string()
+      .trim()
+      .min(1, "First name is required.")
+      .max(50, "First name is too long.")
+      .regex(
+        /^[A-Za-z][A-Za-z\s'-]*$/,
+        "First name can only contain letters, spaces, apostrophes, and hyphens."
+      ),
+    lastName: z
+      .string()
+      .trim()
+      .min(1, "Last name is required.")
+      .max(50, "Last name is too long.")
+      .regex(
+        /^[A-Za-z][A-Za-z\s'-]*$/,
+        "Last name can only contain letters, spaces, apostrophes, and hyphens."
+      ),
+    country: z.string().trim(),
+    phoneNumber: z.string().transform((value) => value.replace(/\s+/g, "").trim()),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.country) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["country"],
+        message: "Country is required.",
+      });
+    } else if (data.country.length < 2 || data.country.length > 56) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["country"],
+        message: "Country is invalid.",
+      });
+    }
+
+    if (!data.phoneNumber) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["phoneNumber"],
+        message: "Phone number is required.",
+      });
+      return;
+    }
+
+    if (/^\+[1-9]\d{0,3}$/.test(data.phoneNumber)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["phoneNumber"],
+        message: "Please enter the rest of the phone number after country code.",
+      });
+      return;
+    }
+
+    if (!/^\+[1-9]\d{7,14}$/.test(data.phoneNumber)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["phoneNumber"],
+        message: "Phone number must be in international format (e.g. +14155552671).",
+      });
+    }
+  });
+
 export default function GlassmorphismProfileCard({}: UserProfileCardProps) {
   const { data: session, status } = useSession();
   const { toast } = useToast();
-  const router = useRouter();
 
   // Use React Query for profile data
   const { profile, isLoading, error, updateProfile, isUpdating } =
@@ -39,6 +103,9 @@ export default function GlassmorphismProfileCard({}: UserProfileCardProps) {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState<Partial<UserProfile>>({});
+  const [formErrors, setFormErrors] = useState<Partial<
+    Record<"firstName" | "lastName" | "country" | "phoneNumber", string>
+  >>({});
 
   // Initialize edited profile when profile data is available
   React.useEffect(() => {
@@ -50,11 +117,13 @@ export default function GlassmorphismProfileCard({}: UserProfileCardProps) {
   const handleEdit = () => {
     setIsEditing(true);
     setEditedProfile(profile || {});
+    setFormErrors({});
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setEditedProfile(profile || {});
+    setFormErrors({});
   };
 
   // Function to check if any changes were made
@@ -126,6 +195,38 @@ export default function GlassmorphismProfileCard({}: UserProfileCardProps) {
         }
       });
 
+      const valuesToValidate = {
+        firstName: (editedProfile.firstName ?? profile.firstName ?? "").toString(),
+        lastName: (editedProfile.lastName ?? profile.lastName ?? "").toString(),
+        country: (editedProfile.country ?? profile.country ?? "").toString(),
+        phoneNumber: (editedProfile.phoneNumber ?? profile.phoneNumber ?? "").toString(),
+      };
+
+      const parsed = profileValidationSchema.safeParse(valuesToValidate);
+      if (!parsed.success) {
+        const nextErrors: Partial<
+          Record<"firstName" | "lastName" | "country" | "phoneNumber", string>
+        > = {};
+        for (const issue of parsed.error.issues) {
+          const field = issue.path[0];
+          if (
+            field === "firstName" ||
+            field === "lastName" ||
+            field === "country" ||
+            field === "phoneNumber"
+          ) {
+            nextErrors[field] = issue.message;
+          }
+        }
+        setFormErrors(nextErrors);
+        return;
+      }
+
+      setFormErrors({});
+      if (changedFields.phoneNumber !== undefined) {
+        changedFields.phoneNumber = parsed.data.phoneNumber;
+      }
+
       await updateProfile({ id: profile.id, changes: changedFields });
 
       setIsEditing(false);
@@ -136,10 +237,7 @@ export default function GlassmorphismProfileCard({}: UserProfileCardProps) {
         variant: "success",
       });
 
-      // Use router.refresh() like your previous code
-      setTimeout(() => {
-        router.refresh();
-      }, 500);
+      // Keep updates in-place (React Query + session update already sync UI).
     } catch (error) {
       console.error("Error updating profile:", error);
 
@@ -159,13 +257,25 @@ export default function GlassmorphismProfileCard({}: UserProfileCardProps) {
       ...prev,
       [field]: value,
     }));
+    if (
+      field === "firstName" ||
+      field === "lastName" ||
+      field === "country" ||
+      field === "phoneNumber"
+    ) {
+      setFormErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
   };
 
-  if (status === "loading" || isLoading) {
+  const hasProfileData = !!profile;
+
+  // Avoid UI flash after save: session/update can briefly go through "loading"
+  // while we still have usable cached profile data.
+  if ((status === "loading" || isLoading) && !hasProfileData) {
     return <ProfileSkeleton />;
   }
 
-  if (!session) {
+  if (!session && !hasProfileData) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="text-center dark:backdrop-blur-lg dark:bg-white/10 p-8 rounded-xl shadow-lg dark:border dark:border-white/10 bg-white border border-gray-200">
@@ -177,7 +287,7 @@ export default function GlassmorphismProfileCard({}: UserProfileCardProps) {
     );
   }
 
-  if (error) {
+  if (error && !hasProfileData) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="text-center dark:backdrop-blur-lg dark:bg-white/10 p-8 rounded-xl shadow-lg dark:border dark:border-white/10 bg-white border border-gray-200">
@@ -223,6 +333,7 @@ export default function GlassmorphismProfileCard({}: UserProfileCardProps) {
       onCancel={handleCancel}
       onInputChange={handleInputChange}
       isUpdating={isUpdating}
+      formErrors={formErrors}
     />
   );
 }

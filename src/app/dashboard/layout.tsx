@@ -31,6 +31,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   // Prevent double redirect when we signOut due to expiry
   const redirectingDueToExpiryRef = useRef(false);
   const unauthRedirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasSeenAuthenticatedRef = useRef(false);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      hasSeenAuthenticatedRef.current = true;
+    }
+  }, [status]);
 
   // Check if session has expired using session.expires (set from token.exp in auth callback)
   useEffect(() => {
@@ -300,7 +307,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     redirectToExpiredLogin();
   }, [status, pathname, searchParams, router]);
 
-  if (status === "loading") {
+  // Avoid full-page "reload" flash after profile save/session updates:
+  // once user has already been authenticated in this layout, keep rendering
+  // the current dashboard shell during short loading transitions.
+  if (status === "loading" && !hasSeenAuthenticatedRef.current) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="relative flex items-center justify-center w-16 h-16">

@@ -42,6 +42,7 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
         // Only show Edit button for ADMIN
         profile.role === "ADMIN" && (
           <Button
+            type="button"
             onClick={onEdit}
             className="text-gray-800 bg-gray-100 border border-gray-300 dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white hover:bg-gray-200"
           >
@@ -52,6 +53,7 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
       ) : (
         <div className="flex gap-2">
           <Button
+            type="button"
             onClick={onSave}
             className="text-white bg-linear-to-r from-blue-500 to-purple-600"
           >
@@ -59,6 +61,7 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
             Save
           </Button>
           <Button
+            type="button"
             onClick={onCancel}
             className="text-gray-800 bg-gray-100 border border-gray-300 dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white hover:bg-gray-200"
           >

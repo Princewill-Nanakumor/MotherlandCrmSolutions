@@ -35,6 +35,9 @@ interface ProfileFormProps {
   editedProfile: Partial<UserProfile>;
   onInputChange: (field: keyof UserProfile, value: string) => void;
   inputClass?: (editing: boolean) => string;
+  formErrors?: Partial<
+    Record<"firstName" | "lastName" | "country" | "phoneNumber", string>
+  >;
 }
 
 export const ProfileForm: React.FC<ProfileFormProps> = ({
@@ -49,6 +52,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         ? "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
         : "focus:outline-none",
     ].join(" "),
+  formErrors = {},
 }) => {
   // Get initial country from profile or editedProfile
   const initialCountry =
@@ -76,6 +80,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   const handleCountryChange = (option: SelectOption | null) => {
     setSelectedCountry(option);
     onInputChange("country", option?.label || "");
+    onInputChange("phoneNumber", option?.phoneCode || "");
   };
 
   const handlePhoneChange = (value?: string) => {
@@ -93,9 +98,20 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       return phoneNumber;
     }
 
-    // If it's just digits, assume it's a local number and add +1 (US)
+    // If it's just digits, prefer selected country's dialing code.
     if (/^\d+$/.test(phoneNumber)) {
-      return `+1${phoneNumber}`;
+      const selectedPhoneCode = (selectedCountry?.phoneCode || "").replace(
+        /\D/g,
+        "",
+      );
+      if (selectedPhoneCode) {
+        // Avoid duplicating the country code if the stored number already has it.
+        if (phoneNumber.startsWith(selectedPhoneCode)) {
+          return `+${phoneNumber}`;
+        }
+        return `+${selectedPhoneCode}${phoneNumber}`;
+      }
+      return `+${phoneNumber}`;
     }
 
     // If it doesn't match any pattern, return empty
@@ -117,10 +133,17 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               isEditing ? editedProfile.firstName || "" : profile.firstName
             }
             onChange={(e) => onInputChange("firstName", e.target.value)}
-            className={inputClass(isEditing)}
+            className={`${inputClass(isEditing)} ${
+              isEditing && formErrors.firstName
+                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                : ""
+            }`}
             placeholder="Enter first name"
             readOnly={!isEditing}
           />
+          {isEditing && formErrors.firstName && (
+            <p className="mt-1 text-sm text-red-500">{formErrors.firstName}</p>
+          )}
         </div>
         <div>
           <label className="text-sm dark:text-gray-300 text-gray-600 mb-2 flex items-center gap-2">
@@ -131,10 +154,17 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             type="text"
             value={isEditing ? editedProfile.lastName || "" : profile.lastName}
             onChange={(e) => onInputChange("lastName", e.target.value)}
-            className={inputClass(isEditing)}
+            className={`${inputClass(isEditing)} ${
+              isEditing && formErrors.lastName
+                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                : ""
+            }`}
             placeholder="Enter last name"
             readOnly={!isEditing}
           />
+          {isEditing && formErrors.lastName && (
+            <p className="mt-1 text-sm text-red-500">{formErrors.lastName}</p>
+          )}
         </div>
       </div>
 
@@ -159,27 +189,32 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           Country
         </label>
         {isEditing ? (
-          <Select
-            value={selectedCountry}
-            onChange={handleCountryChange}
-            options={countryOptions}
-            placeholder={
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                <span>Select a country</span>
-              </div>
-            }
-            isDisabled={false}
-            isClearable
-            styles={getCountrySelectStyles()}
-            className="react-select-container"
-            classNamePrefix="react-select"
-            components={{
-              Option: CustomOption,
-              SingleValue: CustomSingleValue,
-            }}
-            menuPlacement="top"
-          />
+          <>
+            <Select
+              value={selectedCountry}
+              onChange={handleCountryChange}
+              options={countryOptions}
+              placeholder={
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                  <span>Select a country</span>
+                </div>
+              }
+              isDisabled={false}
+              isClearable
+              styles={getCountrySelectStyles()}
+              className="react-select-container"
+              classNamePrefix="react-select"
+              components={{
+                Option: CustomOption,
+                SingleValue: CustomSingleValue,
+              }}
+              menuPlacement="top"
+            />
+            {formErrors.country && (
+              <p className="mt-1 text-sm text-red-500">{formErrors.country}</p>
+            )}
+          </>
         ) : (
           <div className="w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg flex items-center gap-2">
             {selectedCountry ? (
@@ -209,7 +244,11 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         {isEditing ? (
           <div className="relative">
             <div
-              className={`phone-input-wrapper w-full px-4 py-2 rounded-lg border text-base flex items-center border-gray-300 dark:border-gray-600 focus:ring-indigo-500 bg-gray-50 dark:bg-white/5 text-gray-900! dark:text-white! focus-within:outline-none focus-within:ring-2 focus-within:border-transparent`}
+              className={`phone-input-wrapper w-full px-4 py-2 rounded-lg border text-base flex items-center bg-gray-50 dark:bg-white/5 text-gray-900! dark:text-white! focus-within:outline-none focus-within:ring-2 focus-within:border-transparent ${
+                formErrors.phoneNumber
+                  ? "border-red-500 focus-within:ring-red-500"
+                  : "border-gray-300 dark:border-gray-600 focus-within:ring-indigo-500"
+              }`}
             >
               <PhoneInput
                 international
@@ -222,6 +261,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 className="border-none! bg-transparent! p-0! m-0! w-full! text-base!"
               />
             </div>
+            {formErrors.phoneNumber && (
+              <p className="mt-1 text-sm text-red-500">{formErrors.phoneNumber}</p>
+            )}
           </div>
         ) : (
           <div className="w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg">

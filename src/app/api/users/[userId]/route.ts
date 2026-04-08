@@ -23,6 +23,14 @@ interface UserQuery {
   createdBy?: ObjectId;
 }
 
+const NAME_REGEX = /^[A-Za-z][A-Za-z\s'-]{0,49}$/;
+const PHONE_REGEX = /^\+[1-9]\d{7,14}$/;
+
+function asTrimmedString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  return value.trim();
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ userId: string }> }
@@ -123,6 +131,80 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
+    const firstName = body.firstName !== undefined ? asTrimmedString(body.firstName) : undefined;
+    const lastName = body.lastName !== undefined ? asTrimmedString(body.lastName) : undefined;
+    const country = body.country !== undefined ? asTrimmedString(body.country) : undefined;
+    const phoneNumber =
+      body.phoneNumber !== undefined
+        ? asTrimmedString(body.phoneNumber)?.replace(/\s+/g, "")
+        : undefined;
+
+    if (firstName !== undefined) {
+      if (!firstName) {
+        return NextResponse.json(
+          { error: "First name is required" },
+          { status: 400 }
+        );
+      }
+      if (!NAME_REGEX.test(firstName)) {
+        return NextResponse.json(
+          {
+            error:
+              "First name can only contain letters, spaces, apostrophes, and hyphens",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (lastName !== undefined) {
+      if (!lastName) {
+        return NextResponse.json(
+          { error: "Last name is required" },
+          { status: 400 }
+        );
+      }
+      if (!NAME_REGEX.test(lastName)) {
+        return NextResponse.json(
+          {
+            error:
+              "Last name can only contain letters, spaces, apostrophes, and hyphens",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (country !== undefined) {
+      if (!country) {
+        return NextResponse.json({ error: "Country is required" }, { status: 400 });
+      }
+      if (country.length < 2 || country.length > 56) {
+        return NextResponse.json({ error: "Invalid country" }, { status: 400 });
+      }
+    }
+
+    if (phoneNumber !== undefined) {
+      if (!phoneNumber) {
+        return NextResponse.json(
+          { error: "Phone number is required" },
+          { status: 400 }
+        );
+      }
+      if (!PHONE_REGEX.test(phoneNumber)) {
+        return NextResponse.json(
+          { error: "Invalid phone number format" },
+          { status: 400 }
+        );
+      }
+      if (phoneNumber.length <= 4) {
+        return NextResponse.json(
+          { error: "Please provide a full phone number" },
+          { status: 400 }
+        );
+      }
+    }
+
     const result = await executeDbOperation(async () => {
       const db = mongoose.connection.db;
       if (!db) throw new Error("Database connection not available");
@@ -180,16 +262,16 @@ export async function PUT(
       };
 
       if (body.firstName !== undefined) {
-        updateData.firstName = body.firstName;
+        updateData.firstName = firstName as string;
       }
       if (body.lastName !== undefined) {
-        updateData.lastName = body.lastName;
+        updateData.lastName = lastName as string;
       }
       if (body.phoneNumber !== undefined) {
-        updateData.phoneNumber = body.phoneNumber;
+        updateData.phoneNumber = phoneNumber as string;
       }
       if (body.country !== undefined) {
-        updateData.country = body.country;
+        updateData.country = country as string;
       }
 
       // Only admins can update role and status (and only for users they created or agents)

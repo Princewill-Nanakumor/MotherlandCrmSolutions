@@ -1,7 +1,7 @@
 // src/components/Sidebar.tsx
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -75,7 +75,19 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const router = useRouter();
-  const isAdmin = session?.user?.role === "ADMIN";
+  const hasSeenAuthenticatedRef = useRef(false);
+  const lastKnownIsAdminRef = useRef(false);
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.id) {
+      hasSeenAuthenticatedRef.current = true;
+      lastKnownIsAdminRef.current = session.user.role === "ADMIN";
+    }
+  }, [status, session?.user?.id, session?.user?.role]);
+
+  const isAdmin =
+    session?.user?.role === "ADMIN" ||
+    (status === "loading" && lastKnownIsAdminRef.current);
 
   // Check session on pathname change and redirect if unauthenticated
   useEffect(() => {
@@ -100,7 +112,9 @@ export default function Sidebar() {
     return true;
   });
 
-  if (status === "loading") {
+  // Only show loading placeholder on first paint. After auth has been resolved once,
+  // keep sidebar stable during brief session "loading" transitions (e.g. profile save).
+  if (status === "loading" && !hasSeenAuthenticatedRef.current) {
     return (
       <aside className="flex h-screen shadow-lg bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50">
         <nav className="flex flex-col items-center w-24 h-full py-6 space-y-2">

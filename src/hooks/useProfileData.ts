@@ -118,7 +118,7 @@ export const useProfileData = () => {
     isLoading,
     error,
     refreshProfile: refetch,
-    updateProfile: updateProfileMutation.mutate,
+    updateProfile: updateProfileMutation.mutateAsync,
     isUpdating: updateProfileMutation.isPending,
   };
 };

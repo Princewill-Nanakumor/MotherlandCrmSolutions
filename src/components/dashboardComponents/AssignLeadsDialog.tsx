@@ -36,6 +36,7 @@ export function AssignLeadsDialog({
 }: AssignLeadsDialogProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isUnassignDialogOpen, setIsUnassignDialogOpen] = useState(false);
+  const assignableUsers = users.filter((user) => user.role !== "ADMIN");
 
   const handleClose = () => {
     if (isAssigning || isUnassigning) return; // Don't close while operation in progress
@@ -178,9 +179,9 @@ export function AssignLeadsDialog({
                   onChange={(e) => setSelectedUser(e.target.value)}
                   className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="">Select a user</option>
-                  {users && users.length > 0 ? (
-                    users.map((user) => {
+                  <option value="">Select an agent</option>
+                  {assignableUsers.length > 0 ? (
+                    assignableUsers.map((user) => {
                       const isCurrentAssignee = selectedLeads.some(
                         (l) => l.assignedTo?.id === user.id,
                       );
@@ -197,7 +198,7 @@ export function AssignLeadsDialog({
                     })
                   ) : (
                     <option value="no-users" disabled>
-                      No users available
+                      No agents available
                     </option>
                   )}
                 </select>

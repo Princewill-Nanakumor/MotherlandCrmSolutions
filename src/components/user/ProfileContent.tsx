@@ -31,6 +31,9 @@ interface ProfileContentProps {
   onInputChange: (field: keyof UserProfile, value: string) => void;
   inputClass?: (editing: boolean) => string;
   isUpdating?: boolean;
+  formErrors?: Partial<
+    Record<"firstName" | "lastName" | "country" | "phoneNumber", string>
+  >;
 }
 
 export const ProfileContent: React.FC<ProfileContentProps> = ({
@@ -49,6 +52,7 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
         ? "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
         : "focus:outline-none",
     ].join(" "),
+  formErrors = {},
 }) => {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -110,6 +114,7 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
                 editedProfile={editedProfile}
                 onInputChange={onInputChange}
                 inputClass={inputClass}
+                formErrors={formErrors}
               />
             </div>
           </div>
