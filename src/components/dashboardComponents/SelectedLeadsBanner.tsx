@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,13 +14,15 @@ import { useSelectedLeads, useClearSelection } from "@/stores/leadsStore";
  */
 export function SelectedLeadsBanner() {
   const { data: session } = useSession();
+  const pathname = usePathname();
   const selectedLeads = useSelectedLeads();
   const clearSelection = useClearSelection();
 
   const isAdmin = session?.user?.role === "ADMIN";
   const count = selectedLeads.length;
+  const isAllLeadsPage = pathname === "/dashboard/all-leads";
 
-  if (!isAdmin || count === 0) return null;
+  if (!isAdmin || count === 0 || !isAllLeadsPage) return null;
 
   return (
     <div className="sticky top-0 z-20 flex items-center justify-between gap-4 px-4 py-2 text-sm text-indigo-900 border-b border-indigo-200 bg-indigo-50 dark:bg-indigo-950/50 dark:border-indigo-800 dark:text-indigo-100">
