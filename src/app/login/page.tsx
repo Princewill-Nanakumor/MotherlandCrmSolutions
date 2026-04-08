@@ -197,6 +197,11 @@ function AuthStateHandler() {
 export default function LoginPage() {
   const { toast } = useToast();
   const hasShownExpiredToastRef = useRef(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Check if session expired and show toast (from ?expired=true or localStorage.sessionExpired)
   useEffect(() => {
@@ -245,6 +250,15 @@ export default function LoginPage() {
       if (preloadLink) preloadLink.remove();
     };
   }, []);
+
+  if (!mounted) {
+    return (
+      <>
+        <Toaster />
+        <LoadingScreen />
+      </>
+    );
+  }
 
   return (
     <>

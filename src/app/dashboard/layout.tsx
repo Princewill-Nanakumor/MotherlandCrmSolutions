@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Suspense, useEffect, useRef, useState } from "react";
-import { useSession, SessionProvider } from "next-auth/react";
+import { useSession, SessionProvider, getSession } from "next-auth/react";
 import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createQueryClient } from "@/lib/queryClient";
@@ -30,6 +30,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   // Prevent double redirect when we signOut due to expiry
   const redirectingDueToExpiryRef = useRef(false);
+  const unauthRedirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Check if session has expired using session.expires (set from token.exp in auth callback)
   useEffect(() => {
@@ -217,6 +218,18 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   // Client lost session unexpectedly (expired / cleared). Skip when user explicitly signed out.
   useEffect(() => {
+    if (status === "authenticated") {
+      try {
+        sessionStorage.removeItem("auth:navigating");
+      } catch {
+        /* ignore */
+      }
+      if (unauthRedirectTimerRef.current) {
+        clearTimeout(unauthRedirectTimerRef.current);
+        unauthRedirectTimerRef.current = null;
+      }
+      return;
+    }
     if (redirectingDueToExpiryRef.current) return;
     if (status === "loading") return;
     if (status !== "unauthenticated") return;
@@ -230,17 +243,61 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
 
-    redirectingDueToExpiryRef.current = true;
-    localStorage.setItem("sessionExpired", "true");
-    const search = searchParams?.toString();
-    const callbackPath =
-      pathname && pathname !== "/login"
-        ? `${pathname}${search ? `?${search}` : ""}`
-        : "/dashboard";
-    const loginUrl = `/login?expired=true&callbackUrl=${encodeURIComponent(
-      callbackPath,
-    )}`;
-    void signOutWithoutInterstitial(loginUrl, router);
+    const redirectToExpiredLogin = () => {
+      if (redirectingDueToExpiryRef.current) return;
+      redirectingDueToExpiryRef.current = true;
+      localStorage.setItem("sessionExpired", "true");
+      const search = searchParams?.toString();
+      const callbackPath =
+        pathname && pathname !== "/login"
+          ? `${pathname}${search ? `?${search}` : ""}`
+          : "/dashboard";
+      const loginUrl = `/login?expired=true&callbackUrl=${encodeURIComponent(
+        callbackPath,
+      )}`;
+      void signOutWithoutInterstitial(loginUrl, router);
+    };
+
+    // Right after successful login we may briefly see "unauthenticated" while
+    // NextAuth finishes hydrating the new cookie in the dashboard tree.
+    let navigatingAfterSignIn = false;
+    try {
+      navigatingAfterSignIn = sessionStorage.getItem("auth:navigating") === "1";
+    } catch {
+      navigatingAfterSignIn = false;
+    }
+
+    if (navigatingAfterSignIn) {
+      if (unauthRedirectTimerRef.current) {
+        clearTimeout(unauthRedirectTimerRef.current);
+      }
+      unauthRedirectTimerRef.current = setTimeout(() => {
+        void (async () => {
+          let confirmedSession = await getSession();
+          if (!confirmedSession?.user?.id) {
+            await new Promise((r) => setTimeout(r, 900));
+            confirmedSession = await getSession();
+          }
+          if (confirmedSession?.user?.id) {
+            try {
+              sessionStorage.removeItem("auth:navigating");
+            } catch {
+              /* ignore */
+            }
+            return;
+          }
+          redirectToExpiredLogin();
+        })();
+      }, 2400);
+      return () => {
+        if (unauthRedirectTimerRef.current) {
+          clearTimeout(unauthRedirectTimerRef.current);
+          unauthRedirectTimerRef.current = null;
+        }
+      };
+    }
+
+    redirectToExpiredLogin();
   }, [status, pathname, searchParams, router]);
 
   if (status === "loading") {

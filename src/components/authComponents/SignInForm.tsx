@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, useSession, getSession } from "next-auth/react";
 import { Mail, Lock, Loader2, ArrowRight } from "lucide-react";
 import { LoginSchema } from "@/schemas";
 import { z } from "zod";
@@ -47,10 +47,13 @@ export default function SignInForm() {
       });
 
       if (result?.error) {
+        try {
+          sessionStorage.removeItem("auth:navigating");
+        } catch {}
         setFormError(result.error);
         setLoading(false);
       } else if (result?.ok) {
-        setFormSuccess("Signed in successfully! Redirecting...");
+        setFormSuccess("Signed in successfully.");
 
         // Update session to ensure it's available before redirecting
         // This is important for Vercel where cookies need to be properly set
@@ -78,14 +81,35 @@ export default function SignInForm() {
           rawCallback && rawCallback.startsWith("/") && !rawCallback.startsWith("//")
             ? rawCallback
             : "/dashboard";
+        if (params.get("expired") === "true") {
+          params.delete("expired");
+          const qs = params.toString();
+          const nextUrl = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash ?? ""}`;
+          window.history.replaceState({}, "", nextUrl);
+        }
 
-        // Brief delay so Set-Cookie is applied before full navigation (middleware needs the cookie).
-        await new Promise((r) => setTimeout(r, 200));
+        // Wait for the session endpoint to reflect the new login before navigation.
+        // This avoids a first-login race where dashboard briefly sees unauthenticated.
+        let confirmed = false;
+        for (let i = 0; i < 8; i += 1) {
+          const s = await getSession();
+          if (s?.user?.id) {
+            confirmed = true;
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 250));
+        }
+        if (!confirmed) {
+          await new Promise((r) => setTimeout(r, 300));
+        }
         window.location.replace(
           `${window.location.origin}${target}${window.location.hash ?? ""}`,
         );
       }
     } catch (error: unknown) {
+      try {
+        sessionStorage.removeItem("auth:navigating");
+      } catch {}
       setFormError(
         error instanceof Error
           ? `An error occurred during sign in: ${error.message}`

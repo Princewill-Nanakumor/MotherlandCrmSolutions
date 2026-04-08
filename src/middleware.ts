@@ -48,6 +48,17 @@ export default withAuth(
       "/dashboard/admin-management"
     );
     const isApiRoute = path.startsWith("/api");
+    const buildLoginUrl = (callbackUrl: string) => {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("callbackUrl", callbackUrl);
+      // Protected-route auth redirects should surface the expiry toast.
+      // In some edge cases token is already missing by the time middleware runs,
+      // so isExpired can be false even though session just expired.
+      if (isExpired || isDashboardPage || isAdminPage) {
+        loginUrl.searchParams.set("expired", "true");
+      }
+      return loginUrl;
+    };
 
     // Allow all API routes to pass through (they handle auth internally)
     if (isApiRoute) {
@@ -92,9 +103,7 @@ export default withAuth(
       // they can be returned there (Namecheap-style behavior).
       const url = request.nextUrl;
       const callbackUrl = url.pathname + (url.search || "");
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", callbackUrl);
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(buildLoginUrl(callbackUrl));
     }
 
     // ✅ Protect admin routes by role
@@ -117,9 +126,7 @@ export default withAuth(
     if (!isAuth && !isPublicPage && !isHomePage && !isLoginPage) {
       const url = request.nextUrl;
       const callbackUrl = url.pathname + (url.search || "");
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", callbackUrl);
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(buildLoginUrl(callbackUrl));
     }
 
     return NextResponse.next();
@@ -128,6 +135,14 @@ export default withAuth(
     callbacks: {
       authorized: ({ req, token }) => {
         const path = req.nextUrl.pathname;
+        const isDashboardRoute = path.startsWith("/dashboard");
+        const isAdminRoute = path.startsWith("/admin");
+
+        // Let middleware() handle dashboard/admin auth redirects so we can
+        // include app-specific params like `expired=true` consistently.
+        if (isDashboardRoute || isAdminRoute) {
+          return true;
+        }
 
         const publicPages = [
           "/",

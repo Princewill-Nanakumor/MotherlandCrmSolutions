@@ -24,6 +24,15 @@ export function hasAuthorizedSession(
  */
 export function shouldForceLoginLanding(): boolean {
   if (typeof window === "undefined") return false;
+  try {
+    // User just completed sign-in and is navigating to callback route.
+    // Ignore stale `?expired=true` while this handoff is in progress.
+    if (sessionStorage.getItem("auth:navigating") === "1") {
+      return false;
+    }
+  } catch {
+    /* ignore */
+  }
   if (new URLSearchParams(window.location.search).get("expired") === "true") {
     return true;
   }

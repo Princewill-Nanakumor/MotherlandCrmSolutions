@@ -82,6 +82,9 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           credentials: "include",
         });
         if (!scopeResponse.ok) {
+          // Session expiry can happen while this panel is open.
+          // Avoid noisy errors; auth flow will handle redirect to login.
+          if (scopeResponse.status === 401) return;
           throw new Error(
             `Failed to resolve realtime scope: ${scopeResponse.status}`,
           );
