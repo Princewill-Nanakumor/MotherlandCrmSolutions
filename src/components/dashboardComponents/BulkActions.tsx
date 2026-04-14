@@ -9,6 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Lead } from "@/types/leads";
 import { Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -26,6 +36,8 @@ interface BulkActionsProps {
   statuses?: Array<{ id: string; name: string; color?: string; _id?: string }>;
   isLoadingStatuses?: boolean;
 }
+
+type StatusOption = { id: string; name: string; color?: string; _id?: string };
 
 // Update your BulkActions component to show immediate feedback
 export const BulkActions: React.FC<BulkActionsProps> = ({
@@ -45,10 +57,11 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
   const [isChangingStatus, setIsChangingStatus] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
 
   // Fetch statuses if not provided via props
   const { data: fetchedStatuses = [], isLoading: isFetchingStatuses } =
-    useQuery({
+    useQuery<StatusOption[]>({
       queryKey: ["statuses"],
       queryFn: async () => {
         const response = await fetch("/api/statuses", {
@@ -62,7 +75,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
       refetchOnWindowFocus: false,
     });
 
-  const statuses = propStatuses || fetchedStatuses;
+  const statuses: StatusOption[] = propStatuses || fetchedStatuses;
   const isLoadingStatuses = propIsLoadingStatuses ?? isFetchingStatuses;
 
   const handleAssign = async () => {
@@ -83,16 +96,27 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
     }
   };
 
-  const handleStatusChange = async (statusId: string) => {
+  const handleStatusChange = (statusId: string) => {
     if (!statusId) return;
+    setSelectedStatus(statusId);
+    setPendingStatus(statusId);
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!pendingStatus) return;
     setIsChangingStatus(true);
     try {
-      await onStatusChange(statusId);
+      await onStatusChange(pendingStatus);
       setSelectedStatus(""); // Reset after successful change
+      setPendingStatus(null);
     } finally {
       setIsChangingStatus(false);
     }
   };
+
+  const pendingStatusName =
+    statuses.find((status) => (status._id || status.id) === pendingStatus)?.name ||
+    pendingStatus;
 
   const handleDelete = async () => {
     if (
@@ -236,6 +260,38 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
           </>
         )}
       </Button>
+      <AlertDialog
+        open={!!pendingStatus}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingStatus(null);
+            setSelectedStatus("");
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apply bulk status change?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Change status for {selectedLeads.length} selected lead
+              {selectedLeads.length > 1 ? "s" : ""} to{" "}
+              <span className="font-semibold">{pendingStatusName || "selected status"}</span>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isChangingStatus}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmStatusChange}
+              disabled={isChangingStatus}
+              className="bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+            >
+              {isChangingStatus ? "Applying..." : "OK"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
