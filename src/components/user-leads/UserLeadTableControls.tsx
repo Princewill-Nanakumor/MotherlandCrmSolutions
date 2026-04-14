@@ -33,12 +33,16 @@ export default function UserLeadTableControls({
       <div className="flex items-center space-x-2">
         <span className="text-sm text-gray-600! dark:text-white!">Show</span>
         <Select value={pageSize.toString()} onValueChange={onPageSizeChange}>
-          <SelectTrigger className="w-25">
+          <SelectTrigger className="w-25 bg-white dark:bg-gray-800! border-gray-300 dark:border-gray-600">
             <SelectValue placeholder={pageSize} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white dark:bg-gray-800! border-gray-200 dark:border-gray-700">
             {PAGE_SIZE_OPTIONS.map((size) => (
-              <SelectItem key={size} value={size.toString()}>
+              <SelectItem
+                key={size}
+                value={size.toString()}
+                className="dark:focus:bg-gray-700 dark:hover:bg-gray-700"
+              >
                 {size}
               </SelectItem>
             ))}

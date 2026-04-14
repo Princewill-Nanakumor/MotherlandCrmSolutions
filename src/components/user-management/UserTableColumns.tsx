@@ -130,10 +130,10 @@ export function useUserTableColumns({
         return (
           <div className="flex items-center gap-2">
             <Badge
-              variant={isAdmin ? "default" : "outline"}
-              className={`dark:border-gray-600 dark:text-white!${
+              variant="outline"
+              className={`dark:border-gray-600 dark:text-white! ${
                 isAdmin
-                  ? "bg-indigo-600 text-white border-indigo-600"
+                  ? "bg-indigo-600 text-white border-indigo-600 dark:bg-indigo-500 dark:border-indigo-500"
                   : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
               }`}
             >

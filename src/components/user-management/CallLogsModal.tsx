@@ -1,7 +1,7 @@
 // src/components/user-management/CallLogsModal.tsx
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PhoneCall, Loader2, Calendar, Clock } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { getAblyRealtimeClient } from "@/libs/ablyClient";
+import {
+  CALL_LOG_CREATED_EVENT,
+  getUserCallLogsChannelName,
+} from "@/libs/realtime";
 
 interface CallLog {
   id: string;
@@ -118,6 +124,9 @@ export function CallLogsModal({
   userName,
 }: CallLogsModalProps) {
   const [viewMode, setViewMode] = useState<"24h" | "3d">("24h");
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+  const [adminScope, setAdminScope] = useState<string | null>(null);
 
   // Use React Query to fetch call logs
   const { data: callLogs = [], isLoading: isLoadingLogs } = useQuery<CallLog[]>(
@@ -127,11 +136,72 @@ export function CallLogsModal({
       enabled: isOpen && !!userId, // Only fetch when modal is open and userId exists
       refetchOnMount: "always", // Always refetch when modal opens
       refetchOnWindowFocus: false, // Don't refetch on window focus
-      refetchInterval: isOpen ? 10 * 1000 : false, // Poll every 10 seconds while modal is open to catch new calls
       staleTime: 0, // Always consider data stale so it refetches when modal opens
       gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
     },
   );
+
+  useEffect(() => {
+    if (!isOpen || !session?.user?.id) return;
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const scopeResponse = await fetch("/api/ably/scope", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!scopeResponse.ok) return;
+        const scopeData = (await scopeResponse.json()) as { adminScope?: string };
+        if (!cancelled) {
+          setAdminScope(scopeData.adminScope ?? null);
+        }
+      } catch {
+        // Keep modal functional without realtime.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, session?.user?.id]);
+
+  useEffect(() => {
+    if (!isOpen || !adminScope || !session?.user?.id || !userId) return;
+
+    const realtime = getAblyRealtimeClient(session.user.id);
+    const channelName = getUserCallLogsChannelName(adminScope, userId);
+    const channel = realtime.channels.get(channelName);
+    const onCallLogged = () => {
+      queryClient.invalidateQueries({
+        queryKey: callLogsKeys.user(userId),
+        refetchType: "active",
+      });
+    };
+
+    let subscribed = false;
+    void (async () => {
+      try {
+        await channel.attach();
+        channel.subscribe(CALL_LOG_CREATED_EVENT, onCallLogged);
+        subscribed = true;
+      } catch {
+        // Query still refreshes on open.
+      }
+    })();
+
+    return () => {
+      if (subscribed) {
+        channel.unsubscribe(CALL_LOG_CREATED_EVENT, onCallLogged);
+      }
+      void channel.detach().catch(() => undefined);
+      try {
+        realtime.channels.release(channelName);
+      } catch {
+        // ignore
+      }
+    };
+  }, [isOpen, adminScope, session?.user?.id, userId, queryClient]);
 
   // Filter logs based on view mode (24 hours or 3 days)
   const filteredLogs = useMemo(() => {

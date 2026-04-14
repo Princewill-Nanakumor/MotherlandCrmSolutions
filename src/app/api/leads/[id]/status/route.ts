@@ -4,7 +4,10 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import Lead from "@/models/Lead";
 import Activity from "@/models/Activity";
 import { authOptions } from "@/libs/auth";
-import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import {
+  publishAdminLeadsUpdatedEvent,
+  publishLeadUpdatedEvent,
+} from "@/libs/ablyServer";
 import mongoose from "mongoose";
 
 interface LeadDoc {
@@ -437,6 +440,11 @@ export async function PATCH(req: NextRequest) {
     try {
       const adminScope = getCorrectAdminId(session).toString();
       await publishLeadUpdatedEvent(adminScope, id, {
+        type: "status_changed",
+        leadId: id,
+        status: newStatus,
+      });
+      await publishAdminLeadsUpdatedEvent(adminScope, {
         type: "status_changed",
         leadId: id,
         status: newStatus,

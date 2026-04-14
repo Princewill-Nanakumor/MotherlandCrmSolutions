@@ -39,14 +39,14 @@ export function TableHeader({
   return (
     <div className="flex items-center justify-between my-3 mb-4">
       <div className="flex items-center space-x-2">
-        <label className="text-sm font-medium text-gray-700! dark:text-white!">
+        <label className="text-sm font-medium text-gray-700! dark:text-white! ">
           Show
         </label>
         {/* Replaced Radix UI Select with simple HTML select */}
         <select
           value={pageSize.toString()}
           onChange={handlePageSizeChange}
-          className="w-20 h-8 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900! dark:text-white! focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+          className="w-20 h-8 px-2 py-1 border border-gray-300 dark:border-gray-600 cursor-pointer rounded-md bg-white dark:bg-gray-800 text-gray-900! dark:text-white! focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
         >
           {pageSizeOptions.map((size) => (
             <option

@@ -5,7 +5,10 @@ import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import Activity from "@/models/Activity";
-import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import {
+  publishAdminLeadsUpdatedEvent,
+  publishLeadUpdatedEvent,
+} from "@/libs/ablyServer";
 
 interface BulkStatusChangeRequest {
   leadIds: string[];
@@ -210,6 +213,13 @@ export async function POST(request: Request) {
         })
       )
     );
+    if (updatedLeads.length > 0) {
+      await publishAdminLeadsUpdatedEvent(adminObjectId.toString(), {
+        type: "bulk_status_changed",
+        status: newStatus,
+        leadIds: updatedLeads.map((leadId) => leadId!.toString()),
+      });
+    }
 
     return NextResponse.json({
       success: true,

@@ -12,6 +12,11 @@ import { alarmSound, stopNotificationSound } from "@/lib/notificationSound";
 import { formatTime24Hour } from "@/lib/utils";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
+import { getAblyRealtimeClient } from "@/libs/ablyClient";
+import {
+  REMINDER_DUE_EVENT,
+  getUserRemindersChannelName,
+} from "@/libs/realtime";
 
 /** Stable fallback so “no data” is not a fresh [] every render (that retriggered useEffect → setState loop). */
 const EMPTY_DUE_REMINDERS: Reminder[] = [];
@@ -23,6 +28,7 @@ export default function ReminderNotifications() {
   const queryClient = useQueryClient();
   const [notifications, setNotifications] = useState<Reminder[]>([]);
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const [adminScope, setAdminScope] = useState<string | null>(null);
   const soundPlayingRef = useRef<boolean>(false);
   const lastReminderIdsRef = useRef<string>("");
 
@@ -42,7 +48,7 @@ export default function ReminderNotifications() {
   }, [status, session, sessionUserId]);
 
   // Poll for due reminders - pass user's local date/time for correct timezone comparison
-  const { data } = useQuery<Reminder[]>({
+  const { data, refetch } = useQuery<Reminder[]>({
     queryKey: ["dueReminders"],
     queryFn: async () => {
       try {
@@ -61,11 +67,74 @@ export default function ReminderNotifications() {
       }
     },
     enabled: hasAuthorizedSession(status, session),
-    refetchInterval: 60 * 1000, // Check every 1 minute (reduced from 10s to lower Netlify function usage)
+    // Push notifications are primary; keep a low-frequency poll as fallback.
+    refetchInterval: 15 * 60 * 1000,
     staleTime: 30 * 1000,
   });
 
   const dueReminders = data ?? EMPTY_DUE_REMINDERS;
+
+  // Resolve admin scope for Ably reminders channel
+  useEffect(() => {
+    if (!hasAuthorizedSession(status, session)) return;
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const scopeResponse = await fetch("/api/ably/scope", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!scopeResponse.ok) return;
+        const scopeData = (await scopeResponse.json()) as { adminScope?: string };
+        if (!cancelled && scopeData.adminScope) {
+          setAdminScope(scopeData.adminScope);
+        }
+      } catch {
+        // Ignore and keep fallback polling
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [status, session]);
+
+  // Subscribe to server-pushed due reminder events (primary delivery path)
+  useEffect(() => {
+    if (!session?.user?.id || !adminScope) return;
+
+    const realtime = getAblyRealtimeClient(session.user.id);
+    const channelName = getUserRemindersChannelName(adminScope, session.user.id);
+    const channel = realtime.channels.get(channelName);
+
+    const onReminderDue = () => {
+      void refetch();
+    };
+
+    let subscribed = false;
+    void (async () => {
+      try {
+        await channel.attach();
+        channel.subscribe(REMINDER_DUE_EVENT, onReminderDue);
+        subscribed = true;
+      } catch {
+        // Fallback polling continues if realtime attach fails.
+      }
+    })();
+
+    return () => {
+      if (subscribed) {
+        channel.unsubscribe(REMINDER_DUE_EVENT, onReminderDue);
+      }
+      void channel.detach().catch(() => undefined);
+      try {
+        realtime.channels.release(channelName);
+      } catch {
+        // ignore
+      }
+    };
+  }, [session?.user?.id, adminScope, refetch]);
 
   // Create a stable reminder IDs string for comparison
   const reminderIdsString = useMemo(() => {

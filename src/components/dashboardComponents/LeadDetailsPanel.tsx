@@ -101,7 +101,45 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         channelName = getLeadChannelName(adminScope, lead._id);
         const ablyChannel = realtime.channels.get(channelName);
         channel = ablyChannel;
-        await ablyChannel.attach();
+        const attachWithRetry = async () => {
+          try {
+            await ablyChannel.attach();
+            return true;
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : String(error);
+            const isTransientConnectionState =
+              message.toLowerCase().includes("connection closed") ||
+              message.toLowerCase().includes("connection failed") ||
+              message.toLowerCase().includes("disconnected");
+
+            if (!isTransientConnectionState) {
+              throw error;
+            }
+
+            // Connection can be briefly closed during auth/network transitions.
+            // Retry once after a short delay instead of surfacing noisy errors.
+            await new Promise((resolve) => setTimeout(resolve, 800));
+            try {
+              // Best-effort reconnect for transient states.
+              realtime.connect?.();
+            } catch {
+              // ignore
+            }
+
+            try {
+              await ablyChannel.attach();
+              return true;
+            } catch {
+              return false;
+            }
+          }
+        };
+
+        const attached = await attachWithRetry();
+        if (!attached || isDisposed) {
+          return;
+        }
         if (isDisposed) {
           return;
         }

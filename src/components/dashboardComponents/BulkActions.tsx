@@ -116,7 +116,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
     <div className="flex flex-wrap items-center w-full gap-2">
       <Button
         variant="default"
-        className="shrink-0"
+        className="shrink-0 bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
         onClick={handleAssign}
         disabled={isUpdating || isAssigning || isChangingStatus || isDeleting}
       >
@@ -127,8 +127,8 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
           </>
         ) : (
           <>
-            Assign{" "}
-            <span className="hidden sm:inline">
+            Assign
+            <span className="hidden sm:inline-flex items-center rounded-full bg-indigo-800/30 dark:bg-indigo-950 px-2 py-0.5 text-xs text-white">
               {selectedLeads.length} Lead{selectedLeads.length > 1 ? "s" : ""}
             </span>
           </>
@@ -150,8 +150,8 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
             </>
           ) : (
             <>
-              Unassign{" "}
-              <span className="hidden sm:inline">
+              Unassign
+              <span className="hidden sm:inline-flex items-center rounded-full bg-red-900/30 dark:bg-red-950 px-2 py-0.5 text-xs text-white">
                 {assignedLeadsCount} Lead{assignedLeadsCount > 1 ? "s" : ""}
               </span>
             </>
@@ -165,10 +165,10 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
           isUpdating || isChangingStatus || isDeleting || isLoadingStatuses
         }
       >
-        <SelectTrigger className="w-full min-w-35 max-w-45 shrink-0">
+        <SelectTrigger className="w-full min-w-35 max-w-45 shrink-0 bg-white dark:bg-gray-800! border-gray-300 dark:border-gray-600">
           <SelectValue placeholder="Change Status" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="max-h-64 overflow-y-auto bg-white dark:bg-gray-800! border-gray-200 dark:border-gray-700">
           {isLoadingStatuses ? (
             <SelectItem value="loading" disabled>
               Loading statuses...
@@ -184,6 +184,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                 <SelectItem
                   key={status._id || status.id}
                   value={status._id || status.id || ""}
+                  className="dark:focus:bg-gray-700 dark:hover:bg-gray-700"
                 >
                   <div className="flex items-center gap-2">
                     {status.color && (
@@ -228,8 +229,8 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
         ) : (
           <>
             <Trash2 className="w-4 h-4 mr-1.5 sm:mr-2" />
-            Delete{" "}
-            <span className="hidden sm:inline">
+            Delete
+            <span className="hidden sm:inline-flex items-center rounded-full bg-red-900/30 dark:bg-red-950 px-2 py-0.5 text-xs text-white">
               {selectedLeads.length} Lead{selectedLeads.length > 1 ? "s" : ""}
             </span>
           </>

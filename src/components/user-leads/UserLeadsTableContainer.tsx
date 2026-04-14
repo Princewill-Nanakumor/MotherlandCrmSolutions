@@ -10,7 +10,18 @@ import { useColumnOrder } from "@/hooks/useColumnOrder";
 import { useColumnVisibility } from "@/hooks/useColumnVisibility";
 import { useMemo, useCallback } from "react";
 
-type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "statusChangedAt" | "lastComment" | "lastCommentDate" | "commentCount";
+type SortField =
+  | "leadId"
+  | "name"
+  | "country"
+  | "status"
+  | "source"
+  | "assignedTo"
+  | "createdAt"
+  | "statusChangedAt"
+  | "lastComment"
+  | "lastCommentDate"
+  | "commentCount";
 type SortOrder = "asc" | "desc";
 
 interface UserLeadsTableContainerProps {
@@ -48,9 +59,10 @@ export const UserLeadsTableContainer: React.FC<
 }) => {
   // Column ordering with localStorage persistence
   const { columnOrder, setColumnOrder } = useColumnOrder();
-  
+
   // Column visibility with localStorage persistence
-  const { columnVisibility, setColumnVisibility } = useColumnVisibility("userLeadsTable");
+  const { columnVisibility, setColumnVisibility } =
+    useColumnVisibility("userLeadsTable");
 
   // Convert sortField and sortOrder to TanStack Table format
   const sorting = useMemo(() => {
@@ -58,19 +70,28 @@ export const UserLeadsTableContainer: React.FC<
   }, [sortField, sortOrder]);
 
   // Handle sort change
-  const handleSort = useCallback((field: SortField) => {
-    onSort(field);
-  }, [onSort]);
+  const handleSort = useCallback(
+    (field: SortField) => {
+      onSort(field);
+    },
+    [onSort],
+  );
 
   // Handle page change
-  const handlePageChange = useCallback((newPageIndex: number) => {
-    onPageChange(newPageIndex);
-  }, [onPageChange]);
+  const handlePageChange = useCallback(
+    (newPageIndex: number) => {
+      onPageChange(newPageIndex);
+    },
+    [onPageChange],
+  );
 
   // Handle page size change
-  const handlePageSizeChange = useCallback((newSize: number) => {
-    onPageSizeChange(newSize.toString());
-  }, [onPageSizeChange]);
+  const handlePageSizeChange = useCallback(
+    (newSize: number) => {
+      onPageSizeChange(newSize.toString());
+    },
+    [onPageSizeChange],
+  );
 
   // Get column definitions
   const { columns } = useUserLeadsTableColumns({
@@ -85,7 +106,7 @@ export const UserLeadsTableContainer: React.FC<
     pageSize,
     pageIndex,
     sorting,
-    rowSelection: {}, // User leads table doesn't have row selection
+    rowSelection: {},
     columnOrder,
     columnVisibility,
     setSorting: (newSorting) => {
@@ -102,7 +123,7 @@ export const UserLeadsTableContainer: React.FC<
   });
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+    <div className="bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
       <UserLeadTableControls
         pageSize={pageSize}
         pageIndex={pageIndex}
@@ -121,7 +142,7 @@ export const UserLeadsTableContainer: React.FC<
       />
 
       {totalEntries > 0 && (
-        <div className="border-t border-gray-200 dark:border-gray-700 mb-4 px-2">
+        <div className="px-2 mb-4 border-t border-gray-200 dark:border-gray-700">
           <TablePagination
             pageIndex={pageIndex}
             pageCount={totalPages}

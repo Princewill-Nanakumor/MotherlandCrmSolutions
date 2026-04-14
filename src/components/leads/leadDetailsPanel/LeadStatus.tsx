@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Lead } from "@/types/leads";
+import { Activity, Lead } from "@/types/leads";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, User } from "lucide-react";
 import {
@@ -215,26 +215,56 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
           });
         });
 
-        // Invalidate activities query
-        queryClient
-          .invalidateQueries({
-            queryKey: ["activities", lead._id],
-            exact: false,
-          })
-          .catch((error) => {
-            console.error("Error invalidating activities query:", error);
-          });
+        const optimisticStatusActivity: Activity = {
+          _id: `optimistic-status-${lead._id}-${Date.now()}`,
+          leadId: lead._id,
+          type: "STATUS_CHANGE",
+          description: `Status changed from ${getStatusDisplayName(previousStatus)} to ${getStatusDisplayName(newStatusId)}`,
+          createdBy: {
+            _id: session?.user?.id || "unknown",
+            firstName: session?.user?.firstName || "You",
+            lastName: session?.user?.lastName || "",
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          metadata: {
+            oldStatusId: previousStatus,
+            newStatusId: newStatusId,
+            oldStatus: getStatusDisplayName(previousStatus),
+            newStatus: getStatusDisplayName(newStatusId),
+          },
+        };
+
+        queryClient.setQueryData(
+          ["activities", lead._id],
+          (oldActivities: Activity[] = []) => {
+            const hasEquivalentRecentStatusChange = oldActivities.some(
+              (activity) =>
+                activity.type === "STATUS_CHANGE" &&
+                activity.metadata?.oldStatusId === previousStatus &&
+                activity.metadata?.newStatusId === newStatusId,
+            );
+
+            if (hasEquivalentRecentStatusChange) {
+              return oldActivities;
+            }
+            return [optimisticStatusActivity, ...oldActivities];
+          },
+        );
+
+        // Pull canonical activity row from server (with resolved user/status metadata).
+        await queryClient.refetchQueries({
+          queryKey: ["activities", lead._id],
+          exact: false,
+        });
 
         // ✅ FIX: Invalidate leads query to ensure table re-renders with updated status
         // This ensures the table syncs properly after status updates
-        queryClient
-          .invalidateQueries({
-            queryKey: ["leads"],
-            exact: false,
-          })
-          .catch((error) => {
-            console.error("Error invalidating leads query:", error);
-          });
+        queryClient.invalidateQueries({
+          queryKey: ["leads"],
+          exact: false,
+          refetchType: "none",
+        });
 
         // Notify parent so the details panel and selectedLead store stay in sync
         if (onLeadUpdated) {

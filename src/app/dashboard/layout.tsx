@@ -3,7 +3,7 @@
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { useSession, SessionProvider, getSession } from "next-auth/react";
 import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { createQueryClient } from "@/lib/queryClient";
 import { StatusProvider } from "@/context/StatusContext";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
@@ -20,10 +20,16 @@ import ReminderNotifications from "@/components/notifications/ReminderNotificati
 import { Toaster } from "@/components/ui/toaster";
 import { SelectedLeadsBanner } from "@/components/dashboardComponents/SelectedLeadsBanner";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
+import { getAblyRealtimeClient } from "@/libs/ablyClient";
+import {
+  ADMIN_LEADS_UPDATED_EVENT,
+  getAdminLeadsChannelName,
+} from "@/libs/realtime";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { searchQuery, setSearchQuery, isLoading } = useSearchContext();
   const { status, data: session } = useSession();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -38,6 +44,91 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       hasSeenAuthenticatedRef.current = true;
     }
   }, [status]);
+
+  // Keep leads views in sync across tabs/users when status changes happen elsewhere.
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    let cancelled = false;
+    let realtimeClient: ReturnType<typeof getAblyRealtimeClient> | null = null;
+    let channelName: string | null = null;
+    let channel: {
+      subscribe: (
+        eventName: string,
+        listener: (message: { data?: unknown }) => void,
+      ) => void;
+      unsubscribe: (
+        eventName: string,
+        listener: (message: { data?: unknown }) => void,
+      ) => void;
+      attach: () => Promise<unknown>;
+      detach: () => Promise<unknown>;
+    } | null = null;
+    let subscribed = false;
+
+    const onAdminLeadsUpdated = (message: { data?: unknown }) => {
+      const eventData = (message.data ?? {}) as { leadId?: string };
+
+      void queryClient.invalidateQueries({
+        predicate: (query) => {
+          const root = Array.isArray(query.queryKey) ? query.queryKey[0] : null;
+          return (
+            root === "leads" ||
+            root === "assignedLeads" ||
+            root === "admin-overview"
+          );
+        },
+      });
+
+      if (eventData.leadId) {
+        void queryClient.invalidateQueries({
+          queryKey: ["activities", eventData.leadId],
+          exact: false,
+        });
+      }
+    };
+
+    void (async () => {
+      try {
+        const scopeResponse = await fetch("/api/ably/scope", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!scopeResponse.ok || cancelled) return;
+
+        const scopeData = (await scopeResponse.json()) as { adminScope?: string };
+        if (!scopeData.adminScope || cancelled) return;
+
+        realtimeClient = getAblyRealtimeClient(session.user.id);
+        channelName = getAdminLeadsChannelName(scopeData.adminScope);
+        const activeChannel = realtimeClient.channels.get(channelName);
+        channel = activeChannel;
+        await activeChannel.attach();
+        if (cancelled) return;
+        activeChannel.subscribe(ADMIN_LEADS_UPDATED_EVENT, onAdminLeadsUpdated);
+        subscribed = true;
+      } catch {
+        // Leads pages remain functional with normal query invalidation.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (channel && subscribed) {
+        channel.unsubscribe(ADMIN_LEADS_UPDATED_EVENT, onAdminLeadsUpdated);
+      }
+      if (channel) {
+        void channel.detach().catch(() => undefined);
+      }
+      if (realtimeClient && channelName) {
+        try {
+          realtimeClient.channels.release(channelName);
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, [queryClient, session?.user?.id]);
 
   // Check if session has expired using session.expires (set from token.exp in auth callback)
   useEffect(() => {

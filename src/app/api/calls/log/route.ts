@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import CallLog from "@/models/CallLog";
+import { publishCallLogCreatedEvent } from "@/libs/ablyServer";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -38,6 +39,15 @@ export async function POST(req: Request) {
       phoneNumber: phoneNumber.trim(),
       dialer: dialer || "unknown",
     });
+
+    const adminScope =
+      session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
+    if (adminScope) {
+      await publishCallLogCreatedEvent(adminScope, session.user.id, {
+        callLogId: callLog._id.toString(),
+        userId: session.user.id,
+      });
+    }
 
     return NextResponse.json(
       {
