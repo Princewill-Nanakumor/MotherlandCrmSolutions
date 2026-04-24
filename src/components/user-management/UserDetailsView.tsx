@@ -1,3 +1,4 @@
+// src/components/user-management/UserDetailsView.tsx
 "use client";
 
 import React from "react";

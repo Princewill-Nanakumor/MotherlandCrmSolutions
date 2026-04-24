@@ -1,4 +1,4 @@
-// src/components/roles/RoleDialog.tsx
+// src/components/ui/roles/RoleDialog.tsx
 "use client";
 
 import { useState, useEffect } from "react";

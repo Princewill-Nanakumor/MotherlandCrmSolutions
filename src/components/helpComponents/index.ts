@@ -1,3 +1,4 @@
+// src/components/helpComponents/index.ts
 // Help Components Export Index
 export { default as HelpPage } from "./HelpPage";
 export { default as StatusCreationHelp } from "./StatusCreationHelp";

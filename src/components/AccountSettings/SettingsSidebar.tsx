@@ -1,3 +1,4 @@
+// src/components/AccountSettings/SettingsSidebar.tsx
 "use client";
 import React from "react";
 import { Lock } from "lucide-react";

@@ -1,3 +1,4 @@
+// src/components/homepageComponents/HeroSection.tsx
 "use client";
 
 import { motion } from "framer-motion";

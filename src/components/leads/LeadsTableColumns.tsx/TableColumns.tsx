@@ -1,4 +1,4 @@
-// src/components/dashboardComponents/LeadsTable/TableColumns.tsx
+// src/components/leads/LeadsTableColumns.tsx/TableColumns.tsx
 import {
   Row,
   Table as TanstackTable,

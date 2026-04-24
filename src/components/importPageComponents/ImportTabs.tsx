@@ -1,3 +1,4 @@
+// src/components/importPageComponents/ImportTabs.tsx
 import { FC } from "react";
 
 interface ImportTabsProps {

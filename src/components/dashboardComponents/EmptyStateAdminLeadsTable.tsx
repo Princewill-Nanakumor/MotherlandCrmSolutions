@@ -1,3 +1,4 @@
+// src/components/dashboardComponents/EmptyStateAdminLeadsTable.tsx
 import React from "react";
 
 interface User {

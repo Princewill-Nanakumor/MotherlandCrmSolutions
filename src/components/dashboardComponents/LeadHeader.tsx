@@ -1,3 +1,4 @@
+// src/components/dashboardComponents/LeadHeader.tsx
 "use client";
 
 import { Globe } from "lucide-react";

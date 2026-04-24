@@ -1,3 +1,4 @@
+// src/components/ui/FloatingElements.tsx
 "use client";
 
 import { motion } from "framer-motion";

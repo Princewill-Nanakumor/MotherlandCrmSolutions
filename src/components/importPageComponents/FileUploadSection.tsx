@@ -1,4 +1,4 @@
-// src/components/dashboardComponents/FileUploadSection.tsx
+// src/components/importPageComponents/FileUploadSection.tsx
 "use client";
 
 import { useState, useEffect } from "react";

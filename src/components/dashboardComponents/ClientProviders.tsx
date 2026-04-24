@@ -1,4 +1,4 @@
-// src/components/ClientProviders.tsx
+// src/components/dashboardComponents/ClientProviders.tsx
 "use client";
 
 import { QueryClientProvider } from "@tanstack/react-query";

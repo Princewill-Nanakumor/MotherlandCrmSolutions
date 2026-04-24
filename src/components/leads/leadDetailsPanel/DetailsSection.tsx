@@ -1,3 +1,4 @@
+// src/components/leads/leadDetailsPanel/DetailsSection.tsx
 import { FC } from "react";
 import { Lead } from "@/types/leads";
 import { User, Clock, ChevronUp, ChevronDown } from "lucide-react";

@@ -1,3 +1,4 @@
+// src/components/subscription/SubscriptionPageSkeleton.tsx
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";

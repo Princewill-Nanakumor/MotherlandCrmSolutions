@@ -1,3 +1,4 @@
+// src/components/leads/leadDetailsPanel/NameField.tsx
 import { FC } from "react";
 import { User, Copy, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";

@@ -1,3 +1,4 @@
+// src/components/homepageComponents/ContactSection.tsx
 "use client";
 
 import { MessageCircle, Coins, Building2 } from "lucide-react";

@@ -1,4 +1,4 @@
-// src/components/auth/FormSuccess.tsx
+// src/components/authComponents/FormSucess.tsx
 import { CheckCircle2 } from "lucide-react";
 
 export function FormSuccess({ message }: { message?: string }) {

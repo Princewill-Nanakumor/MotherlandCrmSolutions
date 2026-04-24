@@ -1,3 +1,4 @@
+// src/components/homepageComponents/SubscriptionPlansSection.tsx
 "use client";
 
 import { Check, MessageCircle } from "lucide-react";

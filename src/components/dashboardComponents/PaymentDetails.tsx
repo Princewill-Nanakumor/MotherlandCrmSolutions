@@ -1,4 +1,4 @@
-// src/components/PaymentDetails.tsx
+// src/components/dashboardComponents/PaymentDetails.tsx
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";

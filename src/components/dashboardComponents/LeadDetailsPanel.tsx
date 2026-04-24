@@ -1,3 +1,4 @@
+// src/components/dashboardComponents/LeadDetailsPanel.tsx
 "use client";
 
 import React, { FC, useState, useCallback, useRef, useEffect } from "react";

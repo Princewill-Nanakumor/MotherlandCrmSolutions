@@ -1,3 +1,4 @@
+// src/components/dashboardComponents/TableConfiguration.tsx
 "use client";
 
 import {

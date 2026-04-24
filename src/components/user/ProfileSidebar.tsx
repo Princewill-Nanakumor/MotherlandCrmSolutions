@@ -1,3 +1,4 @@
+// src/components/user/ProfileSidebar.tsx
 "use client";
 
 import { User, Lock, Calendar, Shield } from "lucide-react";

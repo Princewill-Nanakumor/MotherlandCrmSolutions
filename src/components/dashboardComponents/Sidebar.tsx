@@ -1,4 +1,4 @@
-// src/components/Sidebar.tsx
+// src/components/dashboardComponents/Sidebar.tsx
 "use client";
 
 import { useEffect, useRef } from "react";

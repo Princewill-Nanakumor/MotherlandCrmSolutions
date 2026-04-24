@@ -1,4 +1,4 @@
-// src/components/auth/VerifyEmailContent.tsx
+// src/components/authComponents/VerifyEmailContent.tsx
 "use client";
 
 import { useEffect, useState } from "react";

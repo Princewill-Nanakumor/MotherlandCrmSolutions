@@ -1,3 +1,4 @@
+// src/components/dashboardComponents/LeadDialog.tsx
 "use client";
 
 import { Loader2 } from "lucide-react";

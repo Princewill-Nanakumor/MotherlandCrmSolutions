@@ -1,4 +1,6 @@
-// src/components/ui/table.tsx
+// src/components/ui/Table.tsx
+"use client";
+
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -6,15 +8,82 @@ import { cn } from "@/lib/utils";
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
-    <table
-      ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
-      {...props}
-    />
-  </div>
-));
+>(({ className, ...props }, ref) => {
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  const dragStateRef = React.useRef<{
+    isDragging: boolean;
+    startX: number;
+    startScrollLeft: number;
+  }>({
+    isDragging: false,
+    startX: 0,
+    startScrollLeft: 0,
+  });
+
+  const isInteractiveTarget = (target: EventTarget | null): boolean => {
+    if (!(target instanceof HTMLElement)) return false;
+    return !!target.closest(
+      "button, a, input, textarea, select, [role='button'], [contenteditable='true']",
+    );
+  };
+
+  const onWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Windows users commonly use Shift + wheel for horizontal movement.
+    // Also support trackpads that emit horizontal deltas.
+    if (event.shiftKey || Math.abs(event.deltaX) > 0) {
+      const horizontalDelta = Math.abs(event.deltaX) > 0 ? event.deltaX : event.deltaY;
+      container.scrollLeft += horizontalDelta;
+      event.preventDefault();
+    }
+  };
+
+  const onMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || isInteractiveTarget(event.target)) return;
+    const container = containerRef.current;
+    if (!container || container.scrollWidth <= container.clientWidth) return;
+
+    dragStateRef.current = {
+      isDragging: true,
+      startX: event.clientX,
+      startScrollLeft: container.scrollLeft,
+    };
+  };
+
+  const onMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const container = containerRef.current;
+    const dragState = dragStateRef.current;
+    if (!container || !dragState.isDragging) return;
+
+    const deltaX = event.clientX - dragState.startX;
+    container.scrollLeft = dragState.startScrollLeft - deltaX;
+  };
+
+  const stopDragging = () => {
+    if (!dragStateRef.current.isDragging) return;
+    dragStateRef.current.isDragging = false;
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full overflow-auto cursor-grab active:cursor-grabbing"
+      onWheel={onWheel}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={stopDragging}
+      onMouseLeave={stopDragging}
+    >
+      <table
+        ref={ref}
+        className={cn("w-full caption-bottom text-sm", className)}
+        {...props}
+      />
+    </div>
+  );
+});
 Table.displayName = "Table";
 
 const TableHeader = React.forwardRef<

@@ -1,4 +1,4 @@
-// src/components/importComponents/ImportContent.tsx
+// src/components/importPageComponents/ImportContent.tsx
 
 export const ImportContent = () => (
   <div className="px-6 pt-6">

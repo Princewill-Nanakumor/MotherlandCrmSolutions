@@ -1,3 +1,4 @@
+// src/components/leads/leadDetailsPanel/EmailField.tsx
 import { FC } from "react";
 import { Mail, Copy, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";

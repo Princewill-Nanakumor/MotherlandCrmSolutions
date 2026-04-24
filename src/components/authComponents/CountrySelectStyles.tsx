@@ -1,3 +1,4 @@
+// src/components/authComponents/CountrySelectStyles.tsx
 import { StylesConfig } from "react-select";
 
 export interface SelectOption {

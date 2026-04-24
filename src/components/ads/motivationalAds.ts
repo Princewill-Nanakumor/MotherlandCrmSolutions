@@ -1,3 +1,4 @@
+// src/components/ads/motivationalAds.ts
 export interface MotivationalAd {
   id: number;
   image: string;

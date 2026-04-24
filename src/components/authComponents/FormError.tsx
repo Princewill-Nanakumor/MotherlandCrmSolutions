@@ -1,4 +1,4 @@
-// src/components/auth/FormError.tsx
+// src/components/authComponents/FormError.tsx
 import { AlertCircle } from "lucide-react";
 
 export function FormError({ message }: { message?: string }) {

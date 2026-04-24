@@ -1,4 +1,4 @@
-// src/components/dashboardComponents/filters/FilterSelect.tsx
+// src/components/dashboardComponents/leadsFilters/FilterSelect.tsx
 "use client";
 
 import { useState } from "react";

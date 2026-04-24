@@ -1,3 +1,4 @@
+// src/components/billing/PaymentDetailsModal.tsx
 "use client";
 
 import React from "react";

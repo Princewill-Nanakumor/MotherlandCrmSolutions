@@ -1,4 +1,4 @@
-// src/components/dashboardComponents/UserFormConstants.tsx
+// src/components/user-management/UserFormConstants.tsx
 export const ROLES = [
   { value: "ADMIN", label: "Administrator" },
   { value: "SUBADMIN", label: "Sub Administrator" },

@@ -1,4 +1,4 @@
-// src/components/dashboardComponents/ImportModal.tsx
+// src/components/importPageComponents/ImportModal.tsx
 "use client";
 
 import { useEffect } from "react";

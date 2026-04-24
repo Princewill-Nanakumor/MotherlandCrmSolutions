@@ -1,3 +1,4 @@
+// src/components/dashboardComponents/LeadsLoadingState.tsx
 "use client";
 
 import { Component, ReactNode } from "react";

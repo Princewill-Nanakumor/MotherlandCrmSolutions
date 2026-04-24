@@ -1,3 +1,4 @@
+// src/components/user-management/UserDetailsModal.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";

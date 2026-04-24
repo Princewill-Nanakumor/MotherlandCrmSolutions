@@ -1,4 +1,4 @@
-// src/components/CreateUserTableSkeleton.tsx
+// src/components/dashboardComponents/CreateUserTableSkeleton.tsx
 import React from "react";
 
 export function UserTableSkeleton({ rows = 6 }) {

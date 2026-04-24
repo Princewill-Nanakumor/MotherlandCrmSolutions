@@ -1,4 +1,4 @@
-// src/components/skeletons/LeadDetailsSkeleton.tsx
+// src/components/dashboardComponents/LeadDetailsSkeleton.tsx
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const LeadDetailsSkeleton = () => {

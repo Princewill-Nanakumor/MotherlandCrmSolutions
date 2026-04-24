@@ -1,3 +1,4 @@
+// src/components/dashboardComponents/PurchaseButton.tsx
 // components/PurchaseButton.tsx
 import React from "react";
 

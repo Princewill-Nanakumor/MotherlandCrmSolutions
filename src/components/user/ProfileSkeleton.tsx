@@ -1,3 +1,4 @@
+// src/components/user/ProfileSkeleton.tsx
 import React from "react";
 
 export function ProfileSkeleton({ className = "" }: { className?: string }) {

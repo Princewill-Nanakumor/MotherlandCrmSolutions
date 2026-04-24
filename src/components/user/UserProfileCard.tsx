@@ -1,4 +1,4 @@
-// src/components/dashboardComponents/UserProfileCard.tsx
+// src/components/user/UserProfileCard.tsx
 "use client";
 
 import React, { useState } from "react";

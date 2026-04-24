@@ -1,4 +1,4 @@
-// src/components/CountrySelectStyles.tsx
+// src/components/user-management/CountrySelectStyles.tsx
 import { StylesConfig } from "react-select";
 
 export interface SelectOption {

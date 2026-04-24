@@ -1,4 +1,4 @@
-//src/components/dashboardComponents/AdminLeadsTableColumns.tsx
+// src/components/dashboardComponents/AdminLeadsTableColumns.tsx
 import { Row, Table as TanstackTable, ColumnDef } from "@tanstack/react-table";
 import { Lead } from "@/types/leads";
 import { Checkbox } from "@/components/ui/checkbox";

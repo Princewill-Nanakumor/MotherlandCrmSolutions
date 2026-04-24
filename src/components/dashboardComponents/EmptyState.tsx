@@ -1,3 +1,4 @@
+// src/components/dashboardComponents/EmptyState.tsx
 // src/app/components/dashboardComponents/EmptyState.tsx
 import React from "react";
 import { RefreshCw, Users, Globe } from "lucide-react";

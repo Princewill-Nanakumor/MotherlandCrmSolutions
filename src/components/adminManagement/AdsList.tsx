@@ -1,3 +1,4 @@
+// src/components/adminManagement/AdsList.tsx
 import React from "react";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

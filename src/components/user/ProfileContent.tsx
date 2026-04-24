@@ -1,3 +1,4 @@
+// src/components/user/ProfileContent.tsx
 "use client";
 
 import ProfileSidebar from "./ProfileSidebar";

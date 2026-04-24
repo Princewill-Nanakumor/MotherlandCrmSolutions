@@ -1,3 +1,4 @@
+// src/components/ads/AdsImageSlider.tsx
 import { FC, useState, useEffect } from "react";
 import {
   ChevronLeft,
