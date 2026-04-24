@@ -1,5 +1,4 @@
 // src/components/dashboardComponents/PanelNavigation.tsx
-///Users/safeconnection/Downloads/drivecrm-main/src/components/dashboardComponents/PanelNavigation.tsx
 "use client";
 
 import { useCallback } from "react";

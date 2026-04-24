@@ -1,6 +1,6 @@
+// src/components/user-management/NameFields.tsx
 "use client";
 
-// src/components/user-management/NameFields.tsx
 import { User, AlertCircle } from "lucide-react";
 
 interface NameFieldsProps {

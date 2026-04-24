@@ -1,5 +1,4 @@
 // src/components/authComponents/SelectedCountry.tsx
-// /Users/safeconnection/Downloads/drivecrm/src/components/authComponents/SelectedCountry.tsx
 
 import Select, {
   StylesConfig,

@@ -1,5 +1,4 @@
 // src/components/authComponents/GlobeplaceHolder.tsx
-// /Users/safeconnection/Downloads/drivecrm/src/components/authComponents/GlobeplaceHolder.tsx
 
 import { components, PlaceholderProps } from "react-select";
 import { Globe } from "lucide-react";
