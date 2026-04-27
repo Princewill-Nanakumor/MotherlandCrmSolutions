@@ -11,6 +11,7 @@ import TrialStatus from "./TrialStatus";
 import SubscriptionModal from "./SubscriptionModal";
 import DowngradeWarningModal from "./DowngradeWarningModal";
 import { useToast } from "@/components/ui/use-toast";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 interface SubscriptionPlan {
@@ -106,13 +107,18 @@ export default function SubscriptionManager() {
   } = useQuery<SubscriptionData>({
     queryKey: ["subscription", "status"],
     queryFn: async (): Promise<SubscriptionData> => {
-      const response = await fetch("/api/subscription/status", {
-        credentials: "include",
-      });
+      const response = await apiCallWithSessionRefresh(
+        "/api/subscription/status",
+        { cache: "no-store" },
+      );
       if (!response.ok) {
-        throw new Error("Failed to fetch subscription data");
+        const err = await response.json().catch(() => ({}));
+        throw new Error(
+          (err as { message?: string }).message ||
+            "Failed to fetch subscription data",
+        );
       }
-      return response.json();
+      return response.json() as Promise<SubscriptionData>;
     },
     enabled: hasAuthorizedSession(status, session),
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -125,13 +131,17 @@ export default function SubscriptionManager() {
   const { data: usageData, isLoading: usageLoading } = useQuery<UsageData>({
     queryKey: ["subscription-usage-data"],
     queryFn: async (): Promise<UsageData> => {
-      const response = await fetch("/api/usage", {
-        credentials: "include",
+      const response = await apiCallWithSessionRefresh("/api/usage", {
+        cache: "no-store",
       });
       if (!response.ok) {
-        throw new Error("Failed to fetch usage data");
+        const err = await response.json().catch(() => ({}));
+        throw new Error(
+          (err as { message?: string }).message ||
+            "Failed to fetch usage data",
+        );
       }
-      return response.json();
+      return response.json() as Promise<UsageData>;
     },
     enabled: hasAuthorizedSession(status, session),
     staleTime: 5 * 60 * 1000, // 5 minutes

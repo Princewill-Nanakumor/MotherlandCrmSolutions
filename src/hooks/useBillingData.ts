@@ -3,6 +3,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { Payment, PaymentsResponse, BillingData } from "@/types/payment.types";
 
@@ -35,15 +36,19 @@ export const usePayments = (limit: number = 10) => {
   return useQuery<PaymentsResponse, Error>({
     queryKey: billingKeys.payments(limit),
     queryFn: async (): Promise<PaymentsResponse> => {
-      const response = await fetch(`/api/payments?limit=${limit}`, {
-        credentials: "include",
-      });
+      const response = await apiCallWithSessionRefresh(
+        `/api/payments?limit=${limit}`,
+        { cache: "no-store" },
+      );
 
       if (!response.ok) {
-        throw new Error("Failed to fetch payments");
+        const err = await response.json().catch(() => ({}));
+        throw new Error(
+          (err as { message?: string }).message || "Failed to fetch payments",
+        );
       }
 
-      return response.json();
+      return response.json() as Promise<PaymentsResponse>;
     },
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes
@@ -63,12 +68,15 @@ export const useUserBalance = () => {
   return useQuery<number, Error>({
     queryKey: billingKeys.balance(),
     queryFn: async (): Promise<number> => {
-      const response = await fetch("/api/user/profile", {
-        credentials: "include",
+      const response = await apiCallWithSessionRefresh("/api/user/profile", {
+        cache: "no-store",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch user balance");
+        const err = await response.json().catch(() => ({}));
+        throw new Error(
+          (err as { message?: string }).message || "Failed to fetch user balance",
+        );
       }
 
       const data: UserProfile = await response.json();
@@ -96,12 +104,16 @@ export const usePayment = (paymentId: string | null) => {
         throw new Error("Payment ID is required");
       }
 
-      const response = await fetch(`/api/payments/${paymentId}`, {
-        credentials: "include",
-      });
+      const response = await apiCallWithSessionRefresh(
+        `/api/payments/${paymentId}`,
+        { cache: "no-store" },
+      );
 
       if (!response.ok) {
-        throw new Error("Failed to fetch payment");
+        const err = await response.json().catch(() => ({}));
+        throw new Error(
+          (err as { message?: string }).message || "Failed to fetch payment",
+        );
       }
 
       const data = await response.json();

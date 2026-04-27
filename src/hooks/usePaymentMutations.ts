@@ -3,6 +3,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { billingKeys } from "./useBillingData";
 import {
   Payment,
@@ -21,21 +22,23 @@ export const useCreatePayment = () => {
     mutationFn: async (
       paymentData: CreatePaymentData
     ): Promise<CreatePaymentResponse> => {
-      const response = await fetch("/api/payments", {
+      const response = await apiCallWithSessionRefresh("/api/payments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(paymentData),
-        credentials: "include",
+        cache: "no-store",
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create payment");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          (errorData as { error?: string }).error || "Failed to create payment",
+        );
       }
 
-      return response.json();
+      return response.json() as Promise<CreatePaymentResponse>;
     },
     onMutate: async () => {
       // Cancel any outgoing refetches
@@ -106,20 +109,26 @@ export const useApprovePayment = () => {
 
   return useMutation({
     mutationFn: async (paymentId: string): Promise<CreatePaymentResponse> => {
-      const response = await fetch(`/api/payments/${paymentId}/approve`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await apiCallWithSessionRefresh(
+        `/api/payments/${paymentId}/approve`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
         },
-        credentials: "include",
-      });
+      );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to approve payment");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          (errorData as { error?: string }).error ||
+            "Failed to approve payment",
+        );
       }
 
-      return response.json();
+      return response.json() as Promise<CreatePaymentResponse>;
     },
     onMutate: async (paymentId) => {
       // Cancel any outgoing refetches
@@ -206,20 +215,26 @@ export const useRejectPayment = () => {
 
   return useMutation({
     mutationFn: async (paymentId: string): Promise<CreatePaymentResponse> => {
-      const response = await fetch(`/api/payments/${paymentId}/reject`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await apiCallWithSessionRefresh(
+        `/api/payments/${paymentId}/reject`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
         },
-        credentials: "include",
-      });
+      );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to reject payment");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          (errorData as { error?: string }).error ||
+            "Failed to reject payment",
+        );
       }
 
-      return response.json();
+      return response.json() as Promise<CreatePaymentResponse>;
     },
     onSuccess: () => {
       // Invalidate all related queries

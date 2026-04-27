@@ -1,6 +1,7 @@
 // src/hooks/useNavbarData.ts
 import { useQuery } from "@tanstack/react-query";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 interface UserProfile {
   _id: string;
@@ -22,9 +23,10 @@ interface SubscriptionData {
   subscriptionStartDate?: string | null;
 }
 
-// src/hooks/useNavbarData.ts
 const fetchUserProfile = async (): Promise<UserProfile> => {
-  const response = await fetch("/api/user/profile");
+  const response = await apiCallWithSessionRefresh("/api/user/profile", {
+    cache: "no-store",
+  });
 
   if (response.status === 404) {
     console.log("User not found, signing out...");
@@ -40,7 +42,9 @@ const fetchUserProfile = async (): Promise<UserProfile> => {
   return data.user;
 };
 const fetchSubscriptionData = async (): Promise<SubscriptionData> => {
-  const response = await fetch("/api/subscription/status");
+  const response = await apiCallWithSessionRefresh("/api/subscription/status", {
+    cache: "no-store",
+  });
 
   if (response.status === 404) {
     // // User not found - likely deleted from database

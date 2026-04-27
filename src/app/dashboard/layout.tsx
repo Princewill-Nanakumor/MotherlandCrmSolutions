@@ -25,6 +25,7 @@ import {
   ADMIN_LEADS_UPDATED_EVENT,
   getAdminLeadsChannelName,
 } from "@/libs/realtime";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { searchQuery, setSearchQuery, isLoading } = useSearchContext();
@@ -90,9 +91,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
     void (async () => {
       try {
-        const scopeResponse = await fetch("/api/ably/scope", {
+        const scopeResponse = await apiCallWithSessionRefresh("/api/ably/scope", {
           method: "GET",
-          credentials: "include",
+          cache: "no-store",
         });
         if (!scopeResponse.ok || cancelled) return;
 

@@ -11,6 +11,7 @@ import {
 } from "react";
 import { Status } from "@/types/leads";
 import { useSession } from "next-auth/react";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 interface StatusContextType {
   statuses: Status[];
@@ -72,13 +73,22 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        const response = await fetch("/api/statuses", {
-          credentials: "include",
+        const response = await apiCallWithSessionRefresh("/api/statuses", {
+          cache: "no-store",
           headers: {
             "Cache-Control": "no-cache",
             Pragma: "no-cache",
           },
         });
+
+        if (response.status === 304) {
+          if (cacheRef.current?.userId === userId) {
+            setStatuses(cacheRef.current.statuses);
+            setError(null);
+          }
+          setIsLoading(false);
+          return;
+        }
 
         if (!response.ok) {
           if (response.status === 401) {

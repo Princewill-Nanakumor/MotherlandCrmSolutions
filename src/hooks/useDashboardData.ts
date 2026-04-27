@@ -2,6 +2,7 @@
 import { useMemo, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 interface User {
   id: string;
@@ -29,11 +30,11 @@ interface DashboardStats {
 
 // Fetch functions outside hooks to prevent recreation
 const fetchUsers = async (): Promise<User[]> => {
-  const response = await fetch("/api/users", {
+  const response = await apiCallWithSessionRefresh("/api/users", {
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
+    cache: "no-store",
   });
 
   if (!response.ok) {
@@ -100,7 +101,9 @@ export const useLeadsStats = (isAdmin: boolean) => {
     queryFn: async () => {
       const start =
         typeof performance !== "undefined" ? performance.now() : Date.now();
-      const res = await fetch("/api/leads/stats", { credentials: "include" });
+      const res = await apiCallWithSessionRefresh("/api/leads/stats", {
+        cache: "no-store",
+      });
       const end =
         typeof performance !== "undefined" ? performance.now() : Date.now();
       try {

@@ -1,6 +1,7 @@
 // src/hooks/useProfileData.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 interface UserProfile {
   id: string;
@@ -19,21 +20,22 @@ interface UserProfile {
 
 // Fetch function outside the hook to prevent recreation
 const fetchProfile = async (): Promise<UserProfile> => {
-  const response = await fetch("/api/users/me", {
+  const response = await apiCallWithSessionRefresh("/api/users/me", {
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
+    cache: "no-store",
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
+    const errorData = await response.json().catch(() => ({}));
     throw new Error(
-      errorData.message || `HTTP error! status: ${response.status}`
+      (errorData as { message?: string }).message ||
+        `HTTP error! status: ${response.status}`,
     );
   }
 
-  return response.json();
+  return (await response.json()) as UserProfile;
 };
 
 // Update function
@@ -44,25 +46,25 @@ const updateProfile = async ({
   id: string;
   changes: Partial<UserProfile>;
 }): Promise<UserProfile> => {
-  const response = await fetch(`/api/users/${id}`, {
+  const response = await apiCallWithSessionRefresh(`/api/users/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
     body: JSON.stringify(changes),
+    cache: "no-store",
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
+    const errorData = await response.json().catch(() => ({}));
     throw new Error(
-      errorData.error ||
-        errorData.message ||
-        `HTTP error! status: ${response.status}`
+      (errorData as { error?: string; message?: string }).error ||
+        (errorData as { message?: string }).message ||
+        `HTTP error! status: ${response.status}`,
     );
   }
 
-  return response.json();
+  return (await response.json()) as UserProfile;
 };
 
 export const useProfileData = () => {
