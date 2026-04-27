@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -12,36 +13,53 @@ import { Button } from "@/components/ui/button";
 import { Edit2 } from "lucide-react";
 import { UserDetailsView } from "./UserDetailsView";
 import { UserDetailsEditForm } from "./UserDetailsEditForm";
-import {
-  SelectOption,
-  countryOptions,
-} from "./CountrySelect";
+import { SelectOption, countryOptions } from "./CountrySelect";
 import { UserFormEditSchema, UserFormEditData } from "@/schemas/UserFormSchema";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { useSession } from "next-auth/react";
-
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  country: string;
-  role: string;
-  status: string;
-  permissions: string[];
-  createdBy: string;
-  createdAt: string;
-  lastLogin?: string;
-  canViewPhoneNumbers?: boolean;
-  canViewEmails?: boolean;
-}
+import type { User } from "./UserTableColumns";
+import {
+  updateUserRequest,
+  invalidateUserCachesAfterWrite,
+  type UserUpdateBody,
+  type UpdateUserVariables,
+} from "@/hooks/useUserMutations";
 
 interface UserDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   user: User | null;
-  onUpdate?: (userData: UserFormEditData & { canViewPhoneNumbers?: boolean; canViewEmails?: boolean }, userId: string) => Promise<void>;
+  onUpdate?: (
+    userData: UserFormEditData & {
+      canViewPhoneNumbers?: boolean;
+      canViewEmails?: boolean;
+    },
+    userId: string,
+  ) => Promise<void>;
+  /** Called after visibility toggles persist so parent can sync selection and usage. */
+  onUserPersisted?: (user: User) => void;
+  /** True while the shared CRUD update mutation (form save) is in flight. */
+  crudUpdatePending?: boolean;
+}
+
+function buildVisibilityUpdateBody(
+  u: User,
+  patch: Partial<Pick<User, "canViewPhoneNumbers" | "canViewEmails">>,
+): UserUpdateBody {
+  return {
+    firstName: u.firstName,
+    lastName: u.lastName,
+    email: u.email,
+    password: "",
+    phoneNumber: u.phoneNumber || "",
+    country: u.country || "",
+    role: u.role,
+    status: u.status,
+    permissions: u.permissions || [],
+    canViewPhoneNumbers:
+      patch.canViewPhoneNumbers ?? u.canViewPhoneNumbers ?? false,
+    canViewEmails: patch.canViewEmails ?? u.canViewEmails ?? false,
+  };
 }
 
 export function UserDetailsModal({
@@ -49,7 +67,10 @@ export function UserDetailsModal({
   onClose,
   user,
   onUpdate,
+  onUserPersisted,
+  crudUpdatePending = false,
 }: UserDetailsModalProps) {
+  const queryClient = useQueryClient();
   const { data: session, update: updateSession } = useSession();
   const isAdmin = session?.user?.role === "ADMIN";
   const isUpdatingOwnProfile = session?.user?.id === user?.id;
@@ -68,7 +89,7 @@ export function UserDetailsModal({
     permissions: [],
   });
   const [selectedCountry, setSelectedCountry] = useState<SelectOption | null>(
-    null
+    null,
   );
 
   const {
@@ -83,19 +104,61 @@ export function UserDetailsModal({
     mode: "edit",
   });
 
+  const visibilityMutation = useMutation({
+    mutationFn: ({ userId, body }: UpdateUserVariables) =>
+      updateUserRequest(userId, body),
+    onMutate: async ({ body }) => {
+      if (!localUser) return { previousLocalUser: null as User | null };
+      const previousLocalUser = localUser;
+      setLocalUser({
+        ...localUser,
+        canViewPhoneNumbers:
+          body.canViewPhoneNumbers ?? localUser.canViewPhoneNumbers,
+        canViewEmails: body.canViewEmails ?? localUser.canViewEmails,
+      });
+      return { previousLocalUser };
+    },
+    onError: (error, _vars, context) => {
+      const previous = context?.previousLocalUser;
+      if (previous) setLocalUser(previous);
+      else if (user) setLocalUser(user);
+      handleError(error);
+    },
+    onSuccess: async (updatedUser, variables) => {
+      setLocalUser(updatedUser);
+      await invalidateUserCachesAfterWrite(queryClient, {
+        includeCurrentUserPermission: true,
+      });
+      onUserPersisted?.(updatedUser);
+
+      if (isUpdatingOwnProfile && updateSession) {
+        await updateSession({
+          user: {
+            ...session?.user,
+            canViewPhoneNumbers:
+              variables.body.canViewPhoneNumbers ??
+              updatedUser.canViewPhoneNumbers ??
+              false,
+            canViewEmails:
+              variables.body.canViewEmails ??
+              updatedUser.canViewEmails ??
+              false,
+          },
+        });
+      }
+    },
+  });
+
   // Initialize form data when user changes
   useEffect(() => {
     if (user && isOpen) {
       setLocalUser(user);
-      let phoneNumber = user.phoneNumber || "";
-      if (phoneNumber && !phoneNumber.startsWith("+")) {
-        phoneNumber = "+" + phoneNumber;
-      }
+      const phoneNumber = user.phoneNumber || "";
       setFormData({
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        password: "", // Don't populate password
+        password: "",
         phoneNumber,
         country: user.country || "",
         role: user.role,
@@ -103,7 +166,7 @@ export function UserDetailsModal({
         permissions: user.permissions || [],
       } as UserFormEditData);
       const countryOption = countryOptions.find(
-        (opt) => opt.label === user.country
+        (opt) => opt.label === user.country,
       );
       setSelectedCountry(countryOption || null);
       setIsEditing(false);
@@ -118,7 +181,7 @@ export function UserDetailsModal({
         [field]: value,
       }));
     },
-    []
+    [],
   );
 
   const handleCountryChange = useCallback((option: SelectOption | null) => {
@@ -130,12 +193,10 @@ export function UserDetailsModal({
   }, []);
 
   const handlePhoneChange = useCallback((value?: string) => {
-    if (!value || value.startsWith("+")) {
-      setFormData((prev) => ({
-        ...prev,
-        phoneNumber: value || "",
-      }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      phoneNumber: value || "",
+    }));
   }, []);
 
   const handleEdit = () => {
@@ -145,10 +206,7 @@ export function UserDetailsModal({
 
   const handleCancel = () => {
     if (user) {
-      let phoneNumber = user.phoneNumber || "";
-      if (phoneNumber && !phoneNumber.startsWith("+")) {
-        phoneNumber = "+" + phoneNumber;
-      }
+      const phoneNumber = user.phoneNumber || "";
       setFormData({
         firstName: user.firstName,
         lastName: user.lastName,
@@ -161,7 +219,7 @@ export function UserDetailsModal({
         permissions: user.permissions || [],
       } as UserFormEditData);
       const countryOption = countryOptions.find(
-        (opt) => opt.label === user.country
+        (opt) => opt.label === user.country,
       );
       setSelectedCountry(countryOption || null);
     }
@@ -174,7 +232,7 @@ export function UserDetailsModal({
     if (!displayUser || !onUpdate) return;
 
     if (!validateForm(formData)) return;
-    if (isLoading) return;
+    if (isLoading || crudUpdatePending) return;
 
     setIsLoading(true);
     clearErrors();
@@ -183,111 +241,40 @@ export function UserDetailsModal({
       await onUpdate(formData, displayUser.id);
       setIsEditing(false);
     } catch (error: unknown) {
-      setIsLoading(false);
       handleError(error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleTogglePhoneVisibility = useCallback(async () => {
-    if (!localUser || !onUpdate || isLoading || !isAdmin) return;
+  const handleTogglePhoneVisibility = useCallback(() => {
+    if (!localUser || visibilityMutation.isPending || !isAdmin) return;
 
     const newValue = !(localUser.canViewPhoneNumbers === true);
-    
-    // Optimistically update local state for immediate UI feedback
-    setLocalUser({ ...localUser, canViewPhoneNumbers: newValue });
-    setIsLoading(true);
-
-    try {
-      const updateData = {
-        firstName: localUser.firstName,
-        lastName: localUser.lastName,
-        email: localUser.email,
-        password: "",
-        phoneNumber: localUser.phoneNumber || "",
-        country: localUser.country || "",
-        role: localUser.role,
-        status: localUser.status,
-        permissions: localUser.permissions || [],
+    visibilityMutation.mutate({
+      userId: localUser.id,
+      body: buildVisibilityUpdateBody(localUser, {
         canViewPhoneNumbers: newValue,
-        canViewEmails: localUser.canViewEmails ?? false,
-      };
-      await onUpdate(updateData as UserFormEditData & { canViewPhoneNumbers: boolean; canViewEmails?: boolean }, localUser.id);
-      
-      // If updating own profile, refresh the session so the change takes effect immediately
-      if (isUpdatingOwnProfile && updateSession) {
-        await updateSession({
-          user: {
-            ...session?.user,
-            canViewPhoneNumbers: newValue,
-            canViewEmails: localUser.canViewEmails ?? false,
-          },
-        });
-      }
-      
-      // Note: The parent component (UserManagement) will update selectedUserForDetails
-      // which will cause this modal to re-render with the updated user prop via useEffect
-    } catch (error: unknown) {
-      // Revert optimistic update on error
-      setLocalUser(user);
-      handleError(error);
-      setIsLoading(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [localUser, user, onUpdate, isLoading, handleError, isAdmin, isUpdatingOwnProfile, updateSession, session?.user]);
+      }),
+    });
+  }, [localUser, visibilityMutation, isAdmin]);
 
-  const handleToggleEmailVisibility = useCallback(async () => {
-    if (!localUser || !onUpdate || isLoading || !isAdmin) return;
+  const handleToggleEmailVisibility = useCallback(() => {
+    if (!localUser || visibilityMutation.isPending || !isAdmin) return;
 
     const newValue = !(localUser.canViewEmails === true);
-    
-    // Optimistically update local state for immediate UI feedback
-    setLocalUser({ ...localUser, canViewEmails: newValue });
-    setIsLoading(true);
-
-    try {
-      const updateData = {
-        firstName: localUser.firstName,
-        lastName: localUser.lastName,
-        email: localUser.email,
-        password: "",
-        phoneNumber: localUser.phoneNumber || "",
-        country: localUser.country || "",
-        role: localUser.role,
-        status: localUser.status,
-        permissions: localUser.permissions || [],
-        canViewPhoneNumbers: localUser.canViewPhoneNumbers ?? false,
+    visibilityMutation.mutate({
+      userId: localUser.id,
+      body: buildVisibilityUpdateBody(localUser, {
         canViewEmails: newValue,
-      };
-      await onUpdate(updateData as UserFormEditData & { canViewPhoneNumbers?: boolean; canViewEmails: boolean }, localUser.id);
-      
-      // If updating own profile, refresh the session so the change takes effect immediately
-      if (isUpdatingOwnProfile && updateSession) {
-        await updateSession({
-          user: {
-            ...session?.user,
-            canViewPhoneNumbers: localUser.canViewPhoneNumbers ?? false,
-            canViewEmails: newValue,
-          },
-        });
-      }
-      
-      // Note: The parent component (UserManagement) will update selectedUserForDetails
-      // which will cause this modal to re-render with the updated user prop via useEffect
-    } catch (error: unknown) {
-      // Revert optimistic update on error
-      setLocalUser(user);
-      handleError(error);
-      setIsLoading(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [localUser, user, onUpdate, isLoading, handleError, isAdmin, isUpdatingOwnProfile, updateSession, session?.user]);
+      }),
+    });
+  }, [localUser, visibilityMutation, isAdmin]);
 
   const displayUser = localUser || user;
   if (!displayUser) return null;
+
+  const editFormBusy = isLoading || crudUpdatePending;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -316,7 +303,7 @@ export function UserDetailsModal({
             user={displayUser}
             formData={formData}
             selectedCountry={selectedCountry}
-            isLoading={isLoading}
+            isLoading={editFormBusy}
             generalError={generalError}
             getFieldError={getFieldError}
             onInputChange={handleInputChange}
@@ -328,9 +315,14 @@ export function UserDetailsModal({
         ) : (
           <UserDetailsView
             user={displayUser}
-            onTogglePhoneVisibility={isAdmin ? handleTogglePhoneVisibility : undefined}
-            onToggleEmailVisibility={isAdmin ? handleToggleEmailVisibility : undefined}
+            onTogglePhoneVisibility={
+              isAdmin ? handleTogglePhoneVisibility : undefined
+            }
+            onToggleEmailVisibility={
+              isAdmin ? handleToggleEmailVisibility : undefined
+            }
             isAdmin={isAdmin}
+            isVisibilitySaving={visibilityMutation.isPending}
           />
         )}
       </DialogContent>

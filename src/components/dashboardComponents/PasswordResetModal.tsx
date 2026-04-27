@@ -1,4 +1,4 @@
-// src/components/dashboardComponents/PasswordRestModal.tsx
+// src/components/dashboardComponents/PasswordResetModal.tsx
 "use client";
 
 import { useState } from "react";

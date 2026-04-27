@@ -1,7 +1,7 @@
 // src/components/importPageComponents/ImportModal.tsx
 "use client";
 
-import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, XCircle, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -24,17 +24,7 @@ export function ImportModal({
   errorMessage,
   importLimitExceeded,
 }: ImportModalProps) {
-  useEffect(() => {
-    if (isOpen || missingFields.length > 0 || errorMessage) {
-      console.log("Modal state updated:", {
-        isOpen,
-        missingFields,
-        hasMissingFields: missingFields.length > 0,
-        errorMessage,
-        importLimitExceeded,
-      });
-    }
-  }, [isOpen, missingFields, errorMessage, importLimitExceeded]);
+  const router = useRouter();
 
   if (!isOpen) return null;
 
@@ -108,14 +98,14 @@ export function ImportModal({
 
                   <div className="flex space-x-3">
                     <button
-                      onClick={() =>
-                        (window.location.href = "/dashboard/subscription")
-                      }
+                      type="button"
+                      onClick={() => router.push("/dashboard/subscription")}
                       className="flex-1 px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
                     >
                       Upgrade Plan
                     </button>
                     <button
+                      type="button"
                       onClick={onClose}
                       className="flex-1 px-4 py-2 text-sm font-medium text-white transition-colors bg-gray-600 rounded-lg hover:bg-gray-700"
                     >
@@ -207,8 +197,8 @@ export function ImportModal({
                 : "Please update your sheet and try again."}
             </p>
             <button
+              type="button"
               onClick={() => {
-                console.log("Close button clicked");
                 onClose();
               }}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-red-600 rounded-lg shadow-sm cursor-pointer dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600"

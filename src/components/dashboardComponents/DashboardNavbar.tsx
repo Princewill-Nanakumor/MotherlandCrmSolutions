@@ -88,7 +88,7 @@ export default function DashboardNavbar({
     // SSR fallback
     return (
       <nav className="flex items-center justify-between px-8 py-4 shadow-lg bg-linear-to-r from-purple-300 to-purple-500 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border">
-        <div className="w-32 hrink-0" />
+        <div className="w-32 shrink-0" />
         {showSearch && (
           <div className="flex justify-center flex-1">
             <div className="relative w-full max-w-md">

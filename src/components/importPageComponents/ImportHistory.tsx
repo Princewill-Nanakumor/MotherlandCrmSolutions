@@ -82,8 +82,10 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
                             : "bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200"
                       }`}
                     >
-                      {importItem.status.charAt(0).toUpperCase() +
-                        importItem.status.slice(1)}
+                      {importItem.status
+                        ? importItem.status.charAt(0).toUpperCase() +
+                          importItem.status.slice(1)
+                        : "—"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900! dark:text-gray-100!">

@@ -13,13 +13,21 @@ interface UsageData {
 }
 
 export function UsageLimitsDisplay({ usageData }: { usageData: UsageData }) {
+  const maxLeads = usageData.maxLeads;
+  const cappedProgress =
+    maxLeads === -1 || maxLeads <= 0
+      ? 0
+      : Math.min(100, (usageData.currentLeads / maxLeads) * 100);
+  const nearLimit =
+    maxLeads > 0 && usageData.currentLeads >= maxLeads * 0.8;
+
   return (
     <Card className="mx-6 bg-gray-50 border-gray-200 dark:border-gray-700 dark:bg-gray-900 mb-5">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center space-x-2 text-sm">
           <FileText className="h-4 w-4" />
           <span>Import Usage</span>
-          {usageData.currentLeads >= usageData.maxLeads * 0.8 && (
+          {nearLimit && (
             <AlertTriangle className="h-4 w-4 text-yellow-500" />
           )}
           {!usageData.canImport && (
@@ -34,21 +42,15 @@ export function UsageLimitsDisplay({ usageData }: { usageData: UsageData }) {
           <div className="flex justify-between text-sm">
             <span>{usageData.currentLeads} used</span>
             <span>
-              {usageData.maxLeads === -1
-                ? "Unlimited"
-                : `${usageData.maxLeads} total`}
+              {maxLeads === -1 ? "Unlimited" : `${maxLeads} total`}
             </span>
           </div>
           <Progress
-            value={
-              usageData.maxLeads === -1
-                ? 0
-                : (usageData.currentLeads / usageData.maxLeads) * 100
-            }
+            value={cappedProgress}
             className={`${
-              usageData.currentLeads >= usageData.maxLeads
+              maxLeads > 0 && usageData.currentLeads >= maxLeads
                 ? "bg-red-200"
-                : usageData.currentLeads >= usageData.maxLeads * 0.8
+                : nearLimit
                   ? "bg-yellow-200"
                   : "bg-green-200"
             }`}

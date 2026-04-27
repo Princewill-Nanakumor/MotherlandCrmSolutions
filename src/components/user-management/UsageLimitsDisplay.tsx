@@ -1,6 +1,7 @@
 // src/components/user-management/UsageLimitsDisplay.tsx
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,7 @@ export default function UsageLimitsDisplay({
   showUsageLimit,
   onShowUsageLimit,
 }: UsageLimitsDisplayProps) {
+  const router = useRouter();
   const { userUsageData, isLoading: usageDataLoading } = useUserUsageData();
 
   return (
@@ -170,8 +172,8 @@ export default function UsageLimitsDisplay({
               <div className="flex space-x-2">
                 <Button
                   onClick={() => {
-                    onShowUsageLimit(false); // Close the warning
-                    window.location.href = "/dashboard/subscription";
+                    onShowUsageLimit(false);
+                    router.push("/dashboard/subscription");
                   }}
                   className="bg-red-600 hover:bg-red-700 text-white"
                 >
@@ -180,8 +182,8 @@ export default function UsageLimitsDisplay({
                 {userUsageData.isOverLimit && (
                 <Button
                   onClick={() => {
-                    onShowUsageLimit(false); // Close the warning
-                    window.location.href = "/dashboard/users";
+                    onShowUsageLimit(false);
+                    router.push("/dashboard/users");
                   }}
                   variant="outline"
                   className="border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"

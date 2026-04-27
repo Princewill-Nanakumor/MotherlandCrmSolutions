@@ -3,9 +3,13 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { ImportHistoryItem, ProcessedLead } from "@/types/import";
+import { ProcessedLead } from "@/types/import";
 import { processFile } from "@/utils/FileProcessing";
 import { useImportHistory } from "./useImportHistory";
+import {
+  useImportMutations,
+  isImportUpgradeRequiredError,
+} from "./useImportMutations";
 
 interface ImportLimitExceeded {
   attempted: number;
@@ -29,7 +33,6 @@ export const useImportManager = () => {
   const [importLimitExceeded, setImportLimitExceeded] =
     useState<ImportLimitExceeded | null>(null);
 
-  // Use React Query hook for import history
   const {
     importHistory,
     isLoading: historyLoading,
@@ -37,52 +40,27 @@ export const useImportManager = () => {
     refreshImportHistory,
   } = useImportHistory();
 
-  const waitForImportUpdate = useCallback(
-    async (importId: string, maxTries = 10) => {
-      for (let i = 0; i < maxTries; i++) {
-        const res = await fetch("/api/imports");
-        const data = await res.json();
-        const record = data.imports.find(
-          (imp: ImportHistoryItem) => imp._id === importId
-        );
-        if (record && record.status !== "new") break;
-        await new Promise((resolve) => setTimeout(resolve, 300));
-      }
-    },
-    []
-  );
+  const { importLeads } = useImportMutations({
+    refreshImportHistory,
+    onImportSuccess: setSuccessMessage,
+  });
+  const runImportLeads = importLeads.mutateAsync;
 
   const handleDeleteImport = useCallback(
     async (id: string) => {
       if (
         window.confirm(
-          "Are you sure you want to delete this import history records with all leads that were imported? This action cannot be undone."
+          "Are you sure you want to delete this import history records with all leads that were imported? This action cannot be undone.",
         )
       ) {
         try {
           await deleteImport(id);
-          // ✅ COMPREHENSIVE CACHE INVALIDATION when deleting imports
-          await Promise.all([
-            queryClient.invalidateQueries({ queryKey: ["import-usage-data"] }),
-            queryClient.invalidateQueries({ queryKey: ["import-history"] }),
-            queryClient.invalidateQueries({ queryKey: ["leads"] }),
-            queryClient.invalidateQueries({ queryKey: ["users"] }),
-            queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
-            // Invalidate any other leads-related queries
-            queryClient.invalidateQueries({
-              predicate: (query) => query.queryKey[0] === "leads",
-            }),
-            // Invalidate any other users-related queries
-            queryClient.invalidateQueries({
-              predicate: (query) => query.queryKey[0] === "users",
-            }),
-          ]);
         } catch (error) {
           console.error("Error deleting import:", error);
         }
       }
     },
-    [deleteImport, queryClient]
+    [deleteImport],
   );
 
   const handleFileUpload = useCallback(
@@ -96,7 +74,6 @@ export const useImportManager = () => {
       setIsLoading(true);
 
       const handleSuccess = async (processedLeads: ProcessedLead[]) => {
-        // Get current usage data from React Query cache
         const usageData = queryClient.getQueryData<{
           currentLeads: number;
           maxLeads: number;
@@ -104,17 +81,15 @@ export const useImportManager = () => {
           canImport: boolean;
         }>(["import-usage-data"]);
 
-        // Check usage limits before importing
         if (usageData && !usageData.canImport) {
           setError(
-            "Import limit reached. Please upgrade your subscription to import more leads."
+            "Import limit reached. Please upgrade your subscription to import more leads.",
           );
           setIsLoading(false);
           if (fileInputRef.current) fileInputRef.current.value = "";
           return;
         }
 
-        // Check if import would exceed limits
         if (
           usageData &&
           usageData.maxLeads !== -1 &&
@@ -131,7 +106,7 @@ export const useImportManager = () => {
           });
 
           setError(
-            `Import would exceed your lead limit. You can only import ${remaining} more leads, but your file contains ${attempted} leads.`
+            `Import would exceed your lead limit. You can only import ${remaining} more leads, but your file contains ${attempted} leads.`,
           );
           setIsLoading(false);
           if (fileInputRef.current) fileInputRef.current.value = "";
@@ -140,112 +115,17 @@ export const useImportManager = () => {
         }
 
         try {
-          const importResponse = await fetch("/api/imports", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              fileName: file.name,
-              recordCount: processedLeads.length,
-              status: "New",
-              successCount: 0,
-              failureCount: 0,
-              timestamp: Date.now(),
-            }),
-          });
-
-          if (!importResponse.ok) {
-            const errorData = await importResponse.json();
-            if (importResponse.status === 403 && errorData.upgradeRequired) {
-              setError(
-                errorData.message ||
-                  "Import limit reached. Please upgrade your subscription."
-              );
-              setIsLoading(false);
-              if (fileInputRef.current) fileInputRef.current.value = "";
-              return;
-            }
-            throw new Error(
-              errorData.message || "Failed to create import record"
+          await runImportLeads({ file, processedLeads });
+        } catch (err) {
+          if (isImportUpgradeRequiredError(err)) {
+            setError(err.message);
+          } else {
+            setError(
+              err instanceof Error
+                ? err.message
+                : "An error occurred during import",
             );
           }
-
-          const importData = await importResponse.json();
-
-          const leadsWithImportId = processedLeads.map(
-            (lead: ProcessedLead) => ({
-              ...lead,
-              importId: importData.data._id,
-              source:
-                lead.source ||
-                (file.type === "text/plain" || file.type === "text/csv"
-                  ? "paste"
-                  : "excel"),
-            })
-          );
-
-          const leadsResponse = await fetch("/api/leads", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(leadsWithImportId),
-          });
-
-          if (!leadsResponse.ok) {
-            const errorData = await leadsResponse.json();
-            if (leadsResponse.status === 403 && errorData.upgradeRequired) {
-              setError(
-                errorData.message ||
-                  "Import limit reached. Please upgrade your subscription."
-              );
-              setIsLoading(false);
-              if (fileInputRef.current) fileInputRef.current.value = "";
-              return;
-            }
-            throw new Error(errorData.message || "Failed to import leads");
-          }
-
-          const result = await leadsResponse.json();
-          const successMsg = `Successfully imported ${result.inserted} leads (${result.duplicates} duplicates skipped)`;
-
-          setSuccessMessage(successMsg);
-
-          toast({
-            title: "Import Success",
-            description: successMsg,
-            variant: "default",
-          });
-
-          // ✅ COMPREHENSIVE CACHE INVALIDATION + FORCE REFETCH
-          await Promise.all([
-            queryClient.invalidateQueries({ queryKey: ["import-usage-data"] }),
-            queryClient.invalidateQueries({ queryKey: ["import-history"] }),
-            queryClient.invalidateQueries({ queryKey: ["leads"] }),
-            queryClient.invalidateQueries({ queryKey: ["users"] }),
-            queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
-            // Invalidate any other leads-related queries
-            queryClient.invalidateQueries({
-              predicate: (query) => query.queryKey[0] === "leads",
-            }),
-            // Invalidate any other users-related queries
-            queryClient.invalidateQueries({
-              predicate: (query) => query.queryKey[0] === "users",
-            }),
-          ]);
-
-          // ✅ FORCE REFETCH to update all stores and components
-          await Promise.all([
-            queryClient.refetchQueries({ queryKey: ["leads"] }),
-            queryClient.refetchQueries({ queryKey: ["users"] }),
-            queryClient.refetchQueries({ queryKey: ["dashboard-stats"] }),
-          ]);
-
-          await waitForImportUpdate(importData.data._id);
-          await refreshImportHistory();
-        } catch (err) {
-          const message =
-            err instanceof Error
-              ? err.message
-              : "An error occurred during import";
-          setError(message);
         } finally {
           setIsLoading(false);
           if (fileInputRef.current) fileInputRef.current.value = "";
@@ -278,13 +158,12 @@ export const useImportManager = () => {
         () => {
           setIsLoading(false);
           if (fileInputRef.current) fileInputRef.current.value = "";
-        }
+        },
       );
     },
-    [queryClient, waitForImportUpdate, refreshImportHistory, toast]
+    [queryClient, runImportLeads],
   );
 
-  // Effects
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role !== "ADMIN") {
       toast({
@@ -299,7 +178,6 @@ export const useImportManager = () => {
   }, [status, session, router, toast]);
 
   return {
-    // State
     session,
     status,
     fileInputRef,
@@ -313,7 +191,6 @@ export const useImportManager = () => {
     missingFields,
     importLimitExceeded,
 
-    // Setters
     setError,
     setSuccessMessage,
     setShowModal,
@@ -321,7 +198,6 @@ export const useImportManager = () => {
     setMissingFields,
     setImportLimitExceeded,
 
-    // Handlers
     handleFileUpload,
     handleDeleteImport,
   };

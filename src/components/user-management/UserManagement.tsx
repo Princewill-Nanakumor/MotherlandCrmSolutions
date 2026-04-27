@@ -5,7 +5,7 @@ import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, Shield } from "lucide-react";
 import { UserFormModal } from "./UserFormModal";
-import { PasswordResetModal } from "../dashboardComponents/PasswordRestModal";
+import { PasswordResetModal } from "../dashboardComponents/PasswordResetModal";
 import { UserCRUDOperations } from "@/components/user-management/UserCRUDOperations";
 import { UserTableDisplay } from "@/components/user-management/UserTableDisplay";
 import { AuthGuard } from "@/components/user-management/AuthGuard";
@@ -15,6 +15,7 @@ import { useUsersData } from "@/hooks/useUsersData";
 import { UserDetailsModal } from "./UserDetailsModal";
 import { CallLogsModal } from "./CallLogsModal";
 import { User } from "./UserTableColumns";
+import type { UserFormCreateData } from "@/schemas/UserFormSchema";
 
 interface UsersManagementProps {
   onUserDeleted?: (userId: string) => void;
@@ -123,6 +124,7 @@ export default function UsersManagement({
           handleUpdateUser,
           handleDeleteUser,
           handleResetPassword,
+          isUpdating,
         }) => (
           <div className="p-6 space-y-6 border rounded bg-background dark:bg-gray-800">
             <div className="flex items-center justify-between">
@@ -194,7 +196,7 @@ export default function UsersManagement({
               }}
               onSubmit={async (userData) => {
                 try {
-                  await handleCreateUser(userData);
+                  await handleCreateUser(userData as UserFormCreateData);
                 } catch (error) {
                   console.error("Error in form submission:", error);
                   throw error;
@@ -231,10 +233,14 @@ export default function UsersManagement({
                 setSelectedUserForDetails(null);
               }}
               user={selectedUserForDetails}
+              crudUpdatePending={isUpdating}
+              onUserPersisted={(u) => {
+                setSelectedUserForDetails(u);
+                handleUserUpdated(u);
+              }}
               onUpdate={async (userData, userId) => {
                 try {
                   const updatedUser = await handleUpdateUser(userData, userId);
-                  // Update the selected user in the modal to reflect changes immediately
                   if (updatedUser) {
                     setSelectedUserForDetails(updatedUser as User);
                   }

@@ -28,6 +28,7 @@ interface UserDetailsViewProps {
   onTogglePhoneVisibility?: () => void;
   onToggleEmailVisibility?: () => void;
   isAdmin?: boolean;
+  isVisibilitySaving?: boolean;
 }
 
 const formatDate = (dateString?: string) => {
@@ -72,7 +73,13 @@ const getStatusDisplayName = (status: string) => {
   }
 };
 
-export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVisibility, isAdmin = false }: UserDetailsViewProps) {
+export function UserDetailsView({
+  user,
+  onTogglePhoneVisibility,
+  onToggleEmailVisibility,
+  isAdmin = false,
+  isVisibilitySaving = false,
+}: UserDetailsViewProps) {
   return (
     <div className="mt-4 space-y-6">
       {/* Personal Information */}
@@ -233,6 +240,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
                   <Switch
                     checked={user.canViewPhoneNumbers === true}
                     onCheckedChange={onTogglePhoneVisibility}
+                    disabled={isVisibilitySaving}
                   />
                   <span className="text-sm text-gray-700! dark:text-gray-300!">
                     {user.canViewPhoneNumbers === true
@@ -267,6 +275,7 @@ export function UserDetailsView({ user, onTogglePhoneVisibility, onToggleEmailVi
                   <Switch
                     checked={user.canViewEmails === true}
                     onCheckedChange={onToggleEmailVisibility}
+                    disabled={isVisibilitySaving}
                   />
                   <span className="text-sm text-gray-700! dark:text-gray-300!">
                     {user.canViewEmails === true

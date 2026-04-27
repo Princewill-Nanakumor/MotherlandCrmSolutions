@@ -1,11 +1,10 @@
 // src/components/importPageComponents/FileUploadSection.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ImportHistoryItem } from "@/types/import";
-import { RequiredFieldsModal } from "../importPageComponents/RequireFieldModal";
+import { RequiredFieldsModal } from "./RequireFieldModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Upload, XCircle } from "lucide-react";
@@ -39,50 +38,24 @@ export const FileUploadSection = ({
   activeTab,
   fileInputRef,
   isLoading,
-  successMessage,
+  successMessage: _successMessage,
   handleFileUpload,
   usageData,
   usageDataLoading = false,
 }: FileUploadSectionProps) => {
   const [showRequiredFields, setShowRequiredFields] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const router = useRouter();
 
-  // Show success toast and invalidate cache
-  useEffect(() => {
-    if (successMessage) {
-      toast({
-        title: "Import Success",
-        description: successMessage,
-        variant: "success",
-      });
-
-      // ✅ COMPREHENSIVE CACHE INVALIDATION when success message appears
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["import-usage-data"] }),
-        queryClient.invalidateQueries({ queryKey: ["import-history"] }),
-        queryClient.invalidateQueries({ queryKey: ["leads"] }),
-        // Invalidate any other leads-related queries
-        queryClient.invalidateQueries({
-          predicate: (query) => query.queryKey[0] === "leads",
-        }),
-      ]);
-    }
-  }, [successMessage, toast, queryClient]);
-
-  // Improved loading and disabled logic
   const isDisabled = Boolean(isLoading || (usageData && !usageData.canImport));
   const shouldShowSkeleton =
     usageDataLoading || (usageData === null && !usageDataLoading);
 
-  // Only render the file upload section when activeTab is "new"
   if (activeTab !== "new") {
     return null;
   }
 
   return (
     <div className="px-6 pb-6 mt-4">
-      {/* Usage Limit Warning */}
       {usageData && !usageData.canImport && (
         <Card className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
           <CardHeader>
@@ -107,9 +80,7 @@ export const FileUploadSection = ({
                 </Badge>
               </div>
               <Button
-                onClick={() =>
-                  (window.location.href = "/dashboard/subscription")
-                }
+                onClick={() => router.push("/dashboard/subscription")}
                 className="bg-red-600 hover:bg-red-700 text-white"
               >
                 Upgrade Plan
@@ -132,6 +103,7 @@ export const FileUploadSection = ({
           <li>Headers must be case-sensitive and match exactly</li>
           <li>
             <button
+              type="button"
               onClick={() => setShowRequiredFields(true)}
               className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
             >
@@ -143,13 +115,10 @@ export const FileUploadSection = ({
 
       <div className="flex items-center justify-center w-full">
         {shouldShowSkeleton ? (
-          // Loading skeleton for file upload area
           <div className="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg bg-gray-50 dark:bg-gray-800">
             <div className="flex flex-col items-center justify-center px-6 py-8">
-              {/* Skeleton icon */}
               <div className="w-8 h-8 mb-4 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
 
-              {/* Skeleton text lines */}
               <div className="space-y-2 w-full max-w-xs">
                 <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
                 <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded animate-pulse w-3/4"></div>
@@ -213,7 +182,6 @@ ${
         />
       </div>
 
-      {/* Show loading bar instead of text */}
       {isLoading && (
         <div className="mt-4 w-full">
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">

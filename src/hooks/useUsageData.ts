@@ -1,5 +1,6 @@
 // src/hooks/useUsageData.ts
 import { useQuery } from "@tanstack/react-query";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 interface ImportUsageData {
   currentLeads: number;
@@ -28,13 +29,13 @@ export const useImportUsageData = () => {
   } = useQuery<ApiUsageData, Error>({
     queryKey: ["import-usage-data"],
     queryFn: async (): Promise<ApiUsageData> => {
-      const response = await fetch("/api/usage", {
-        credentials: "include",
+      const response = await apiCallWithSessionRefresh("/api/usage", {
+        cache: "no-store",
       });
       if (!response.ok) {
         throw new Error("Failed to fetch usage data");
       }
-      return response.json();
+      return (await response.json()) as ApiUsageData;
     },
     staleTime: 1 * 60 * 1000, // Reduced to 1 minute for more frequent updates
     gcTime: 5 * 60 * 1000, // Reduced garbage collection time

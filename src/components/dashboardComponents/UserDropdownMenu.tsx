@@ -83,7 +83,7 @@ export function UserDropdownMenu({
         <div className="absolute right-0 w-56 mt-2 overflow-hidden transition-all duration-200 ease-out origin-top-right transform scale-100 bg-white divide-y divide-gray-100 rounded-md shadow-xl opacity-100 dark:divide-gray-700 dark:bg-gray-800 ring-1 ring-black/10 dark:ring-white/10 z-60">
           {/* User Info Section */}
           <div className="px-4 py-3">
-            <div className="ml-3 max-w-45">
+            <div className="ml-3 max-w-[180px]">
               <p className="text-sm font-medium text-gray-900! dark:text-white! break-all">
                 {session?.user?.firstName && session?.user?.lastName
                   ? `${session.user.firstName} ${session.user.lastName}`

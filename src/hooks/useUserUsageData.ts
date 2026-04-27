@@ -1,5 +1,6 @@
 // src/hooks/useUserUsageData.ts
 import { useQuery } from "@tanstack/react-query";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 interface UserUsageData {
   currentUsers: number;
@@ -25,11 +26,13 @@ interface ApiUsageData {
 
 // Fetch function outside the hook to prevent recreation
 const fetchUsageData = async (): Promise<ApiUsageData> => {
-  const response = await fetch("/api/usage");
+  const response = await apiCallWithSessionRefresh("/api/usage", {
+    cache: "no-store",
+  });
   if (!response.ok) {
     throw new Error("Failed to fetch usage data");
   }
-  return response.json();
+  return (await response.json()) as ApiUsageData;
 };
 
 export const useUserUsageData = () => {

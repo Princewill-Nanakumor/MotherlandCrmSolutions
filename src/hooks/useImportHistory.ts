@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { ImportHistoryItem } from "@/types/import";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 export const useImportHistory = () => {
   const queryClient = useQueryClient();
@@ -15,7 +16,9 @@ export const useImportHistory = () => {
   } = useQuery<ImportHistoryItem[], Error>({
     queryKey: ["import-history"],
     queryFn: async (): Promise<ImportHistoryItem[]> => {
-      const response = await fetch("/api/imports");
+      const response = await apiCallWithSessionRefresh("/api/imports", {
+        cache: "no-store",
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch import history");
       }
@@ -30,9 +33,10 @@ export const useImportHistory = () => {
 
   const deleteImportMutation = useMutation({
     mutationFn: async (importId: string) => {
-      const response = await fetch(`/api/imports?id=${importId}`, {
-        method: "DELETE",
-      });
+      const response = await apiCallWithSessionRefresh(
+        `/api/imports?id=${importId}`,
+        { method: "DELETE" },
+      );
 
       const result = await response.json();
 
@@ -43,18 +47,27 @@ export const useImportHistory = () => {
       return result;
     },
     onSuccess: (data, deletedImportId) => {
-      // Update import history cache
       queryClient.setQueryData<ImportHistoryItem[]>(
         ["import-history"],
         (oldData) => {
           if (!oldData) return oldData;
           return oldData.filter((item) => item._id !== deletedImportId);
-        }
+        },
       );
 
-      // Invalidate and refetch related data
-      queryClient.invalidateQueries({ queryKey: ["import-usage-data"] });
-      queryClient.invalidateQueries({ queryKey: ["import-history"] });
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["import-usage-data"] }),
+        queryClient.invalidateQueries({ queryKey: ["import-history"] }),
+        queryClient.invalidateQueries({ queryKey: ["leads"] }),
+        queryClient.invalidateQueries({ queryKey: ["users"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
+        queryClient.invalidateQueries({
+          predicate: (query) => query.queryKey[0] === "leads",
+        }),
+        queryClient.invalidateQueries({
+          predicate: (query) => query.queryKey[0] === "users",
+        }),
+      ]);
 
       toast({
         title: "Success",

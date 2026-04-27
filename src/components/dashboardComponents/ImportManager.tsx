@@ -2,10 +2,9 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import FileUploadSection from "../importPageComponents/FileUploadSection";
-// import { HelpSection } from "../importPageComponents/HelpSection";
-import { ImportTabs } from "../importPageComponents/ImportTabs";
-import { ImportContent } from "../importPageComponents/ImportContent";
+import FileUploadSection from "@/components/importPageComponents/FileUploadSection";
+import { ImportTabs } from "@/components/importPageComponents/ImportTabs";
+import { ImportContent } from "@/components/importPageComponents/ImportContent";
 import { UsageLimitsDisplay } from "@/components/importPageComponents/UsageLimitsDisplay";
 import { UsageLimitsSkeleton } from "@/components/importPageComponents/UsageLimitsSkeleton";
 import { ImportHistorySection } from "@/components/importPageComponents/ImportHistorySection";
@@ -102,8 +101,6 @@ export const ImportManager = () => {
             errorMessage={error ?? undefined}
             importLimitExceeded={importLimitExceeded}
           />
-          {/* 
-          <HelpSection /> */}
         </div>
       </div>
     </div>

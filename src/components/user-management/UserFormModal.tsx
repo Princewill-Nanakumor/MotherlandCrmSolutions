@@ -94,10 +94,7 @@ export function UserFormModal({
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        let phoneNumber = initialData.phoneNumber || "";
-        if (phoneNumber && !phoneNumber.startsWith("+")) {
-          phoneNumber = "+" + phoneNumber;
-        }
+        const phoneNumber = initialData.phoneNumber || "";
         setFormData({ ...initialData, phoneNumber });
         const countryOption = countryOptions.find(
           (opt) => opt.label === initialData.country,
@@ -144,12 +141,8 @@ export function UserFormModal({
   };
 
   const handlePhoneChange = (value?: string) => {
-    // Don't allow changes if inputs are disabled
     if (shouldDisableInputs) return;
-
-    if (!value || value.startsWith("+")) {
-      handleInputChange("phoneNumber", value || "");
-    }
+    handleInputChange("phoneNumber", value || "");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
