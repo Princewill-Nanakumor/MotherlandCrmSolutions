@@ -11,10 +11,9 @@ type ToastFn = (opts: {
 
 export function useLeadsAssignments(params: {
   users: User[];
-  setLeads: (leads: Lead[]) => void;
   toast: ToastFn;
 }) {
-  const { users, setLeads, toast } = params;
+  const { users, toast } = params;
   const queryClient = useQueryClient();
 
   const assignLeadsMutation = useMutation({
@@ -50,13 +49,11 @@ export function useLeadsAssignments(params: {
             : lead,
         ) || [];
       queryClient.setQueryData(["leads"], optimisticLeads);
-      setLeads(optimisticLeads);
       return { previousLeads };
     },
     onError: (err, _, context) => {
       if (context?.previousLeads) {
         queryClient.setQueryData(["leads"], context.previousLeads);
-        setLeads(context.previousLeads);
       }
       toast({
         title: "Assignment Failed",
@@ -65,15 +62,12 @@ export function useLeadsAssignments(params: {
       });
     },
     onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "leads",
-      });
-      await queryClient.invalidateQueries({
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
-      });
-      await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
+      // Targeted refreshes only for impacted views.
+      await queryClient.invalidateQueries({ queryKey: ["leads"], exact: true });
+      await queryClient.invalidateQueries({ queryKey: ["leads-stats"], exact: false });
+      await queryClient.invalidateQueries({ queryKey: ["assignedLeads"], exact: false });
       variables.leadIds.forEach((leadId: string) => {
-        queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+        queryClient.invalidateQueries({ queryKey: ["activities", leadId], exact: false });
       });
       const assignedUser = users.find((u) => u.id === variables.userId);
       const leadText = variables.leadIds.length === 1 ? "lead" : "leads";
@@ -108,13 +102,11 @@ export function useLeadsAssignments(params: {
             : lead,
         ) || [];
       queryClient.setQueryData(["leads"], optimisticLeads);
-      setLeads(optimisticLeads);
       return { previousLeads };
     },
     onError: (err, _, context) => {
       if (context?.previousLeads) {
         queryClient.setQueryData(["leads"], context.previousLeads);
-        setLeads(context.previousLeads);
       }
       toast({
         title: "Unassignment Failed",
@@ -123,15 +115,11 @@ export function useLeadsAssignments(params: {
       });
     },
     onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "leads",
-      });
-      await queryClient.invalidateQueries({
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
-      });
-      await queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
+      await queryClient.invalidateQueries({ queryKey: ["leads"], exact: true });
+      await queryClient.invalidateQueries({ queryKey: ["leads-stats"], exact: false });
+      await queryClient.invalidateQueries({ queryKey: ["assignedLeads"], exact: false });
       variables.leadIds.forEach((leadId: string) => {
-        queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+        queryClient.invalidateQueries({ queryKey: ["activities", leadId], exact: false });
       });
       const leadText = variables.leadIds.length === 1 ? "lead" : "leads";
       toast({

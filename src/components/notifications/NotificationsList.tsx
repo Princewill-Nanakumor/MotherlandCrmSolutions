@@ -13,6 +13,7 @@ interface Notification {
   type: string;
   message: string;
   role: string;
+  targetPath?: string;
   link?: string;
   paymentId?: string;
   amount?: number;
@@ -99,16 +100,17 @@ export default function NotificationsList({
 
   const handleViewNotification = useCallback(
     (notification: Notification) => {
+      // Prefer backend-provided explicit target path; fallback to known id fields.
+      if (notification.targetPath) {
+        router.push(notification.targetPath);
+        return;
+      }
+      if (notification.paymentId) {
+        router.push(`/dashboard/payment-details/${notification.paymentId}`);
+        return;
+      }
       if (notification.link) {
-        // Extract payment ID and redirect to new dynamic route
-        const paymentIdMatch = notification.link.match(/\/payments\/([^\/]+)$/);
-        if (paymentIdMatch) {
-          const paymentId = paymentIdMatch[1];
-          router.push(`/dashboard/payment-details/${paymentId}`);
-        } else {
-          // Fallback to original link if pattern doesn't match
-          router.push(notification.link);
-        }
+        router.push(notification.link);
       }
     },
     [router],

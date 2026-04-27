@@ -11,9 +11,10 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Notification } from "@/types/notifications";
 import { Button } from "@/components/ui/button";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 // Raw notification type from API (may have inconsistent id/_id)
 interface RawNotification {
@@ -108,11 +109,47 @@ export function NotificationBell() {
     select: (data) => normalizeNotifications(data),
     enabled: !!session?.user,
     staleTime: 60000, // 1 minute
-    refetchInterval: 300000, // 5 minutes (increased from 1m to lower Netlify usage)
+    refetchInterval: 300000, // 5 minutes
     refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     retry: 2,
+  });
+
+  const markAsReadMutation = useMutation({
+    mutationFn: async (notificationId: string) => {
+      const response = await apiCallWithSessionRefresh(
+        `/api/notifications/${notificationId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ read: true }),
+        },
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to mark notification as read: ${response.status}`);
+      }
+      return notificationId;
+    },
+    onMutate: async (notificationId: string) => {
+      await queryClient.cancelQueries({ queryKey: ["notifications"] });
+      const previousNotifications =
+        queryClient.getQueryData<Notification[]>(["notifications"]);
+
+      queryClient.setQueryData<Notification[]>(["notifications"], (old = []) =>
+        old.map((n) => (n.id === notificationId ? { ...n, read: true } : n)),
+      );
+
+      return { previousNotifications };
+    },
+    onError: (_error, _notificationId, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["notifications"], context.previousNotifications);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
   });
 
   // Simplified dropdown toggle
@@ -147,29 +184,7 @@ export function NotificationBell() {
     try {
       // Mark notification as read if not already read
       if (!notification.read) {
-        const response = await fetch(`/api/notifications/${notification.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ read: true }),
-        });
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to mark notification as read: ${response.status}`,
-          );
-        }
-
-        // Update the notification to read: true instead of removing it
-        queryClient.setQueryData(
-          ["notifications"],
-          (oldData: Notification[] = []) => {
-            const updated = oldData.map((n) =>
-              n.id === notification.id ? { ...n, read: true } : n,
-            );
-            return updated;
-          },
-        );
+        await markAsReadMutation.mutateAsync(notification.id);
       }
 
       // Enhanced navigation logic
@@ -198,33 +213,13 @@ export function NotificationBell() {
       event.stopPropagation();
 
       try {
-        const response = await fetch(`/api/notifications/${notificationId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ read: true }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to clear notification: ${response.status}`);
-        }
-
-        // Update the notification to read: true instead of removing it
-        queryClient.setQueryData(
-          ["notifications"],
-          (oldData: Notification[] = []) => {
-            const updated = oldData.map((n) =>
-              n.id === notificationId ? { ...n, read: true } : n,
-            );
-            return updated;
-          },
-        );
+        await markAsReadMutation.mutateAsync(notificationId);
       } catch (error) {
         console.error("Error clearing notification:", error);
         refetch();
       }
     },
-    [queryClient, refetch],
+    [markAsReadMutation, refetch],
   );
 
   const getNotificationIcon = useCallback((type: string) => {

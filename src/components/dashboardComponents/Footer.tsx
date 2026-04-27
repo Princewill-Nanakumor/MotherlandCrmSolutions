@@ -16,7 +16,6 @@ export default function Navbar() {
               fill
               sizes="40px"
               className="object-contain"
-              priority
             />
           </div>
           <div className="text-lg font-bold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">

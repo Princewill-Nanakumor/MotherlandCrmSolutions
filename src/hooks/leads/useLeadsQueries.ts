@@ -41,7 +41,7 @@ const isUnauthorizedError = (error: unknown): boolean => {
 
 export function useLeadsQueries(enabled: boolean) {
   const { toast } = useToast();
-  const { setLeads, setLoadingLeads, setLoadingUsers, setUsers, setStatuses, setLoadingStatuses } =
+  const { setLoadingLeads, setLoadingUsers, setUsers, setStatuses, setLoadingStatuses } =
     useLeadsStore();
 
   const statusesQuery = useQuery({
@@ -147,7 +147,6 @@ export function useLeadsQueries(enabled: boolean) {
             assignedTo: assignedToObject,
           } as Lead;
         });
-        setLeads(formattedLeads);
         return formattedLeads;
       } finally {
         setLoadingLeads(false);

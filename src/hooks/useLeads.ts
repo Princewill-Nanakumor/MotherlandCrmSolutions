@@ -3,7 +3,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLeadsStore } from "@/stores/leadsStore";
 import { useToast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
-import { useEffect, useRef } from "react";
+import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useCallback } from "react";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { useLeadsQueries } from "@/hooks/leads/useLeadsQueries";
 import { useLeadsAssignments } from "@/hooks/leads/useLeadsAssignments";
@@ -57,13 +59,14 @@ const useWindowFocusRefetch = (inactiveThreshold = 30 * 60 * 1000) => {
 
 export const useLeads = () => {
   const { toast } = useToast();
+  const router = useRouter();
   const { status, data: session } = useSession();
   const sessionOk = hasAuthorizedSession(status, session);
+  const isSigningOutRef = useRef(false);
 
   // Initialize window focus refetch
   useWindowFocusRefetch(30 * 60 * 1000); // 30 minutes
 
-  const { setLeads } = useLeadsStore();
   const { statusesQuery, usersQuery, leadsQuery } = useLeadsQueries(sessionOk);
   const statuses = statusesQuery.data ?? [];
   const users = usersQuery.data ?? [];
@@ -75,11 +78,21 @@ export const useLeads = () => {
   const statusesError = statusesQuery.error;
   const refetchLeads = leadsQuery.refetch;
 
+  const handleUnauthorized = useCallback(async () => {
+    if (isSigningOutRef.current) return;
+    isSigningOutRef.current = true;
+    try {
+      await signOut({ redirect: false });
+    } finally {
+      router.push("/login");
+    }
+  }, [router]);
+
   // Add error handling for all queries with better timeout handling
   useEffect(() => {
     if (leadsError) {
       if (isUnauthorizedError(leadsError)) {
-        window.location.href = "/";
+        void handleUnauthorized();
       } else if (
         leadsError instanceof Error &&
         leadsError.message.includes("timed out")
@@ -92,12 +105,12 @@ export const useLeads = () => {
         });
       }
     }
-  }, [leadsError, toast]);
+  }, [leadsError, toast, handleUnauthorized]);
 
   useEffect(() => {
     if (usersError) {
       if (isUnauthorizedError(usersError)) {
-        window.location.href = "/";
+        void handleUnauthorized();
       } else if (
         usersError instanceof Error &&
         usersError.message.includes("timed out")
@@ -110,12 +123,12 @@ export const useLeads = () => {
         });
       }
     }
-  }, [usersError, toast]);
+  }, [usersError, toast, handleUnauthorized]);
 
   useEffect(() => {
     if (statusesError) {
       if (isUnauthorizedError(statusesError)) {
-        window.location.href = "/";
+        void handleUnauthorized();
       } else if (
         statusesError instanceof Error &&
         statusesError.message.includes("timed out")
@@ -128,11 +141,10 @@ export const useLeads = () => {
         });
       }
     }
-  }, [statusesError, toast]);
+  }, [statusesError, toast, handleUnauthorized]);
 
   const { assignLeadsMutation, unassignLeadsMutation } = useLeadsAssignments({
     users,
-    setLeads,
     toast,
   });
 

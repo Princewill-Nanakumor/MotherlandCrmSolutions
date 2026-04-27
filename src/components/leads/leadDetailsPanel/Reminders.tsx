@@ -40,7 +40,6 @@ const Reminders: FC<RemindersProps> = ({
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [, forceUpdate] = useState({});
   // Helper function to get current date and time in the correct format
   const getCurrentDateTime = () => {
     const now = new Date();
@@ -183,14 +182,6 @@ const Reminders: FC<RemindersProps> = ({
   ) => {
     const reminder = reminders.find((r) => r._id === reminderId);
 
-    console.log("Toggle sound:", {
-      reminderId,
-      currentSoundEnabled,
-      newValue: !currentSoundEnabled,
-      isDue: reminder ? isReminderDue(reminder) : false,
-      alarmPlaying: alarmSound.isCurrentlyPlaying(),
-    });
-
     // Update the reminder in database first
     onUpdateReminder(reminderId, { soundEnabled: !currentSoundEnabled });
 
@@ -204,11 +195,6 @@ const Reminders: FC<RemindersProps> = ({
           isReminderDue(r) // Is currently due
       );
 
-      console.log(
-        "Other due reminders with sound:",
-        otherDueRemindersWithSound.length
-      );
-
       // Only stop alarm if NO other reminders need sound
       if (otherDueRemindersWithSound.length === 0) {
         stopNotificationSound();
@@ -220,8 +206,6 @@ const Reminders: FC<RemindersProps> = ({
       }
     }
 
-    // Force component re-render
-    setTimeout(() => forceUpdate({}), 100);
   };
 
   const pendingReminders = reminders.filter(

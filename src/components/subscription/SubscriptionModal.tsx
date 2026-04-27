@@ -1,12 +1,14 @@
 // src/components/subscription/SubscriptionModal.tsx
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { X, AlertTriangle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 interface SubscriptionPlan {
   id: string;
@@ -35,7 +37,6 @@ export default function SubscriptionModal({
   balance,
 }: SubscriptionModalProps) {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -44,20 +45,9 @@ export default function SubscriptionModal({
     }).format(amount);
   };
 
-  const handleSubscribe = async () => {
-    if (balance < plan.price) {
-      toast({
-        title: "Insufficient Balance",
-        description: `You need ${formatCurrency(plan.price - balance)} more to subscribe to this plan.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-
-      const response = await fetch("/api/subscription/subscribe", {
+  const subscribeMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiCallWithSessionRefresh("/api/subscription/subscribe", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -76,17 +66,17 @@ export default function SubscriptionModal({
         );
       }
 
-      // Remove the unused result variable
       await response.json();
-
+    },
+    onSuccess: () => {
       toast({
         title: "Subscription Successful",
         description: `You have successfully subscribed to the ${plan.name} plan!`,
         variant: "success",
       });
-
       onSuccess();
-    } catch (err) {
+    },
+    onError: (err) => {
       console.error("Subscription error:", err);
       const message =
         err instanceof Error ? err.message : "Failed to subscribe to plan";
@@ -95,9 +85,21 @@ export default function SubscriptionModal({
         description: message,
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
+    },
+  });
+
+  const isSubmitting = subscribeMutation.isPending;
+
+  const handleSubscribe = async () => {
+    if (balance < plan.price) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You need ${formatCurrency(plan.price - balance)} more to subscribe to this plan.`,
+        variant: "destructive",
+      });
+      return;
     }
+    await subscribeMutation.mutateAsync();
   };
 
   if (!isOpen) return null;

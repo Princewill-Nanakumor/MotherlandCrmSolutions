@@ -81,42 +81,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   const handleCountryChange = (option: SelectOption | null) => {
     setSelectedCountry(option);
     onInputChange("country", option?.label || "");
-    onInputChange("phoneNumber", option?.phoneCode || "");
   };
 
   const handlePhoneChange = (value?: string) => {
-    if (!value || value.startsWith("+")) {
-      onInputChange("phoneNumber", value || "");
-    }
-  };
-
-  // Format phone number to E.164 format
-  const formatPhoneNumber = (phoneNumber: string): string => {
-    if (!phoneNumber) return "";
-
-    // If it already starts with +, return as is
-    if (phoneNumber.startsWith("+")) {
-      return phoneNumber;
-    }
-
-    // If it's just digits, prefer selected country's dialing code.
-    if (/^\d+$/.test(phoneNumber)) {
-      const selectedPhoneCode = (selectedCountry?.phoneCode || "").replace(
-        /\D/g,
-        "",
-      );
-      if (selectedPhoneCode) {
-        // Avoid duplicating the country code if the stored number already has it.
-        if (phoneNumber.startsWith(selectedPhoneCode)) {
-          return `+${phoneNumber}`;
-        }
-        return `+${selectedPhoneCode}${phoneNumber}`;
-      }
-      return `+${phoneNumber}`;
-    }
-
-    // If it doesn't match any pattern, return empty
-    return "";
+    onInputChange("phoneNumber", value || "");
   };
 
   return (
@@ -255,7 +223,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 international
                 countryCallingCodeEditable={false}
                 defaultCountry={selectedCountry?.value as Country | undefined}
-                value={formatPhoneNumber(editedProfile.phoneNumber || "")}
+                value={editedProfile.phoneNumber || ""}
                 onChange={handlePhoneChange}
                 disabled={false}
                 placeholder=""

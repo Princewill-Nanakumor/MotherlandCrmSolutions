@@ -5,7 +5,7 @@ import { SESSION_MAX_AGE_SECONDS } from "@/lib/sessionMaxAge";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectMongoDB } from "./dbConfig";
-import mongoose from "mongoose";
+import User from "@/models/User";
 
 // Extend the built-in session types
 declare module "next-auth" {
@@ -74,31 +74,23 @@ export const authOptions: NextAuthOptions = {
 
         try {
           await connectMongoDB();
+          const normalizedEmail = credentials.email.trim().toLowerCase();
 
-          // Use direct MongoDB collection access like the debug endpoints
-          const db = mongoose.connection.db;
-          if (!db) {
-            throw new Error("Database connection not available");
-          }
-
-          // Try to find user with exact email first
-          let user = await db.collection("users").findOne({
-            email: credentials.email,
-          });
-
-          // If not found, try with lowercase
-          if (!user) {
-            user = await db.collection("users").findOne({
-              email: credentials.email.toLowerCase(),
-            });
-          }
-
-          // If still not found, try with uppercase
-          if (!user) {
-            user = await db.collection("users").findOne({
-              email: credentials.email.toUpperCase(),
-            });
-          }
+          // Single normalized lookup (schema stores lowercase).
+          const user = await User.findOne({ email: normalizedEmail }).lean<{
+            _id: { toString: () => string };
+            email: string;
+            firstName: string;
+            lastName: string;
+            role: string;
+            permissions?: string[];
+            status: string;
+            phoneNumber?: string;
+            country?: string;
+            adminId?: { toString: () => string };
+            canViewPhoneNumbers?: boolean;
+            password?: string;
+          } | null>();
 
           if (!user) {
             throw new Error("Invalid email or password");
@@ -127,9 +119,10 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Update last login time
-          await db
-            .collection("users")
-            .updateOne({ _id: user._id }, { $set: { lastLogin: new Date() } });
+          await User.updateOne(
+            { _id: user._id },
+            { $set: { lastLogin: new Date() } },
+          );
 
           return {
             id: user._id.toString(),

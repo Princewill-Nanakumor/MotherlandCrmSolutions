@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Activity, Lead } from "@/types/leads";
+import { Lead } from "@/types/leads";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, User } from "lucide-react";
 import {
@@ -11,30 +11,15 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { useStatuses } from "@/context/StatusContext";
 import { useSession } from "next-auth/react";
+import { useLeadStatusMutation } from "@/hooks/leads/useLeadStatusMutation";
 
 interface LeadStatusProps {
   lead: Lead;
   /** When provided, called after a successful status update so the panel/store can sync the updated lead */
   onLeadUpdated?: (updatedLead: Lead) => Promise<boolean>;
 }
-
-type LeadsData =
-  | Lead[]
-  | {
-      data: Lead[];
-      total?: number;
-      page?: number;
-      [key: string]: unknown;
-    }
-  | {
-      leads: Lead[];
-      [key: string]: unknown;
-    }
-  | null
-  | undefined;
 
 function hexWithAlpha(hex: string, alpha: string) {
   if (!hex) return "#3b82f6" + alpha;
@@ -44,45 +29,8 @@ function hexWithAlpha(hex: string, alpha: string) {
   return hex + alpha;
 }
 
-/** Predicate that matches every leads-shaped query in the cache regardless
- *  of the trailing filter object. */
-function isLeadsListQueryKey(key: QueryKey): boolean {
-  if (!Array.isArray(key) || key.length === 0) return false;
-  const head = key[0];
-  return head === "leads" || head === "assignedLeads";
-}
-
-/** Apply a per-lead transform to whatever shape is stored under a leads key. */
-function patchLeadInData(
-  data: LeadsData,
-  leadId: string,
-  patch: (lead: Lead) => Lead,
-): LeadsData {
-  if (!data) return data;
-  if (Array.isArray(data)) {
-    return data.map((l) => (l._id === leadId ? patch(l) : l));
-  }
-  if (typeof data === "object") {
-    if ("data" in data && Array.isArray(data.data)) {
-      return {
-        ...data,
-        data: data.data.map((l) => (l._id === leadId ? patch(l) : l)),
-      };
-    }
-    if ("leads" in data && Array.isArray(data.leads)) {
-      return {
-        ...data,
-        leads: data.leads.map((l) => (l._id === leadId ? patch(l) : l)),
-      };
-    }
-  }
-  return data;
-}
-
 const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
   const { toast } = useToast();
-  const [isUpdating, setIsUpdating] = useState(false);
-  const queryClient = useQueryClient();
   const { statuses, isLoading: isLoadingStatuses } = useStatuses();
   const { data: session } = useSession();
   const darkAlpha = "B3";
@@ -143,174 +91,12 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
     [findStatusByIdOrName],
   );
 
-  const handleStatusChange = useCallback(
-    async (newStatusId: string) => {
-      if (!lead._id || lead.status === newStatusId || isUpdating) {
-        return;
-      }
-
-      const previousStatus = lead.status;
-      setIsUpdating(true);
-
-      const applyStatusOptimistic = (status: string) => {
-        queryClient.setQueriesData<LeadsData>(
-          { predicate: (q) => isLeadsListQueryKey(q.queryKey) },
-          (oldData) =>
-            patchLeadInData(oldData, lead._id, (l) => ({ ...l, status })),
-        );
-      };
-
-      const replaceLeadInLists = (replacement: Lead) => {
-        queryClient.setQueriesData<LeadsData>(
-          { predicate: (q) => isLeadsListQueryKey(q.queryKey) },
-          (oldData) =>
-            patchLeadInData(oldData, lead._id, () => replacement),
-        );
-      };
-
-      applyStatusOptimistic(newStatusId);
-
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased to 10 seconds
-
-        const response = await fetch(`/api/leads/${lead._id}/status`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatusId }),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("API call failed", {
-            status: response.status,
-            error: errorText,
-          });
-          throw new Error(
-            `Failed to update status: ${response.status} - ${errorText}`,
-          );
-        }
-
-        const updatedLead = await response.json();
-
-        if (updatedLead.status !== newStatusId) {
-          console.warn("Status mismatch", {
-            expected: newStatusId,
-            received: updatedLead.status,
-          });
-        }
-
-        replaceLeadInLists(updatedLead);
-
-        const optimisticStatusActivity: Activity = {
-          _id: `optimistic-status-${lead._id}-${Date.now()}`,
-          leadId: lead._id,
-          type: "STATUS_CHANGE",
-          description: `Status changed from ${getStatusDisplayName(previousStatus)} to ${getStatusDisplayName(newStatusId)}`,
-          createdBy: {
-            _id: session?.user?.id || "unknown",
-            firstName: session?.user?.firstName || "You",
-            lastName: session?.user?.lastName || "",
-          },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          metadata: {
-            oldStatusId: previousStatus,
-            newStatusId: newStatusId,
-            oldStatus: getStatusDisplayName(previousStatus),
-            newStatus: getStatusDisplayName(newStatusId),
-          },
-        };
-
-        queryClient.setQueryData(
-          ["activities", lead._id],
-          (oldActivities: Activity[] = []) => {
-            const hasEquivalentRecentStatusChange = oldActivities.some(
-              (activity) =>
-                activity.type === "STATUS_CHANGE" &&
-                activity.metadata?.oldStatusId === previousStatus &&
-                activity.metadata?.newStatusId === newStatusId,
-            );
-
-            if (hasEquivalentRecentStatusChange) {
-              return oldActivities;
-            }
-            return [optimisticStatusActivity, ...oldActivities];
-          },
-        );
-
-        // Pull canonical activity row from server (with resolved user/status metadata).
-        await queryClient.refetchQueries({
-          queryKey: ["activities", lead._id],
-          exact: false,
-        });
-
-        // Notify parent so the details panel and selectedLead store stay in sync
-        if (onLeadUpdated) {
-          onLeadUpdated(updatedLead).catch((err) =>
-            console.error("Error notifying parent of status update:", err),
-          );
-        }
-
-        toast({
-          title: "Status updated",
-          description: `Lead status changed successfully.`,
-          variant: "success",
-        });
-      } catch (error) {
-        console.error("Status update failed, rolling back", {
-          leadId: lead._id,
-          fromStatus: previousStatus,
-          attemptedStatus: newStatusId,
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
-
-        applyStatusOptimistic(previousStatus);
-
-        const errorMessage =
-          error instanceof Error ? error.message : "Failed to update status";
-
-        // Check if this was an abort error (timeout)
-        const isAbortError =
-          error instanceof Error &&
-          (error.name === "AbortError" ||
-            error.message.includes("aborted") ||
-            error.message.includes("SIGNAL ABORTED"));
-
-        if (isAbortError) {
-          toast({
-            title: "Request timed out",
-            description:
-              "The status update is taking longer than expected. Please check if the change was applied and try again if needed.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: errorMessage,
-            variant: "destructive",
-          });
-        }
-      } finally {
-        setIsUpdating(false);
-      }
-    },
-    [
-      lead._id,
-      lead.status,
-      queryClient,
-      toast,
-      isUpdating,
-      session?.user?.id,
-      session?.user?.firstName,
-      session?.user?.lastName,
-      getStatusDisplayName,
-      onLeadUpdated,
-    ],
-  );
+  const { isUpdating, handleStatusChange } = useLeadStatusMutation({
+    lead,
+    getStatusDisplayName,
+    onLeadUpdated,
+    toast,
+  });
 
   const currentStatusColor = currentStatusObj?.color || "#3b82f6";
   const triggerBg = isDark

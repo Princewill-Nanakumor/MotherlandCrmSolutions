@@ -5,6 +5,7 @@ import ProfileSidebar from "./ProfileSidebar";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileForm } from "./ProfileForm";
 import { ProfileActions } from "./ProfileActions";
+import { getRoleLabel, getStatusLabel } from "@/constants/profileLabels";
 
 interface UserProfile {
   id: string;
@@ -63,32 +64,6 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
     });
   };
 
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case "ADMIN":
-        return "Administrator";
-      case "USER":
-        return "User";
-      case "AGENT":
-        return "Agent";
-      default:
-        return role;
-    }
-  };
-
-  const getStatusDisplayName = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "Active";
-      case "INACTIVE":
-        return "Inactive";
-      case "SUSPENDED":
-        return "Suspended";
-      default:
-        return status;
-    }
-  };
-
   return (
     <div className={`min-h-screen ${className}`}>
       <div className="container mx-auto px-4 py-8 rounded-lg border">
@@ -123,8 +98,8 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
           {/* Right Column */}
           <ProfileSidebar
             profile={profile}
-            getRoleDisplayName={getRoleDisplayName}
-            getStatusDisplayName={getStatusDisplayName}
+            getRoleDisplayName={getRoleLabel}
+            getStatusDisplayName={getStatusLabel}
             formatDate={formatDate}
           />
         </div>

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { Lead, LeadSource } from "@/types/leads";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 // Define proper type for assignedTo field that matches the Lead interface
 interface AssignedToUser {
@@ -33,8 +34,8 @@ interface LeadFromAPI {
 }
 
 interface AssignedLeadsResponse {
-  assignedLeads: LeadFromAPI[];
-  count: number;
+  assignedLeads?: LeadFromAPI[];
+  count?: number;
 }
 
 // Interface for API update payload - using the /api/leads endpoint format
@@ -127,19 +128,28 @@ const normalizeSource = (source: string): LeadSource | string => {
 };
 
 const fetchAssignedLeads = async (): Promise<Lead[]> => {
-  const res = await fetch("/api/leads/assigned", {
+  const res = await apiCallWithSessionRefresh("/api/leads/assigned", {
     headers: { "Content-Type": "application/json" },
     cache: "no-store",
   });
 
   if (!res.ok) {
-    throw new Error("Failed to fetch assigned leads");
+    throw new Error(
+      res.status === 401
+        ? "Unauthorized"
+        : `Failed to fetch assigned leads (${res.status})`,
+    );
   }
 
-  const data: AssignedLeadsResponse = await res.json();
+  const data = (await res.json()) as AssignedLeadsResponse | LeadFromAPI[];
+  const leadRows: LeadFromAPI[] = Array.isArray(data)
+    ? data
+    : Array.isArray(data.assignedLeads)
+      ? data.assignedLeads
+      : [];
 
   // Transform the data to match your Lead interface exactly
-  return (data.assignedLeads || []).map(
+  return leadRows.map(
     (lead: LeadFromAPI): Lead => ({
       _id: lead._id,
       id: lead._id,
