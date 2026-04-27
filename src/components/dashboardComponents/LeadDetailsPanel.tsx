@@ -14,7 +14,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { useSession } from "next-auth/react";
 import { LEAD_UPDATED_EVENT, getLeadChannelName } from "@/libs/realtime";
-import { getAblyRealtimeClient } from "@/libs/ablyClient";
+import {
+  getAblyLeadRealtimeClient,
+  releaseAblyLeadRealtimeClient,
+} from "@/libs/ablyLeadClient";
 
 interface LeadDetailsPanelProps {
   lead: Lead | null;
@@ -90,7 +93,6 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     } | null = null;
     let messageListener: ((message: { data?: unknown }) => void) | null = null;
     let channelName: string | null = null;
-    let realtimeClient: ReturnType<typeof getAblyRealtimeClient> | null = null;
     let didSubscribe = false;
     let isDisposed = false;
 
@@ -116,8 +118,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         const adminScope = scopeData.adminScope;
         if (!adminScope || isDisposed) return;
 
-        const realtime = getAblyRealtimeClient(session.user.id);
-        realtimeClient = realtime;
+        const realtime = getAblyLeadRealtimeClient(session.user.id, lead._id);
         channelName = getLeadChannelName(adminScope, lead._id);
         const ablyChannel = realtime.channels.get(channelName);
         channel = ablyChannel;
@@ -220,12 +221,8 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
             console.error("Failed to detach panel realtime channel:", error);
           }
         }
-        if (realtimeClient && channelName) {
-          try {
-            realtimeClient.channels.release(channelName);
-          } catch (error) {
-            console.error("Failed to release panel realtime channel:", error);
-          }
+        if (lead?._id) {
+          releaseAblyLeadRealtimeClient(lead._id);
         }
       })();
     };

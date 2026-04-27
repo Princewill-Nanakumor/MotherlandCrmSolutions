@@ -4,6 +4,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
+import {
+  isSuperAdminSession,
+  notificationIdSelectors,
+  notificationOwnerSelectors,
+} from "@/lib/notificationQuery";
+import type { Session } from "next-auth";
 
 export async function PATCH(
   request: NextRequest,
@@ -26,18 +32,20 @@ export async function PATCH(
       throw new Error("Database connection not established");
     }
 
-    // Update notification as read
-    const result = await db.collection("notifications").updateOne(
-      {
-        $or: [{ id: id }, { _id: new mongoose.Types.ObjectId(id) }],
+    const sessionTyped = session as Session;
+    const idSelectors = notificationIdSelectors(id);
+    const filter = isSuperAdminSession(sessionTyped)
+      ? { $or: idSelectors }
+      : {
+          $and: [{ $or: idSelectors }, { $or: notificationOwnerSelectors(sessionTyped) }],
+        };
+
+    const result = await db.collection("notifications").updateOne(filter, {
+      $set: {
+        read: read,
+        updatedAt: new Date(),
       },
-      {
-        $set: {
-          read: read,
-          updatedAt: new Date(),
-        },
-      }
-    );
+    });
 
     if (result.matchedCount === 0) {
       return NextResponse.json(
@@ -78,10 +86,15 @@ export async function DELETE(
       throw new Error("Database connection not established");
     }
 
-    // Delete notification
-    const result = await db.collection("notifications").deleteOne({
-      $or: [{ id: id }, { _id: new mongoose.Types.ObjectId(id) }],
-    });
+    const sessionTyped = session as Session;
+    const idSelectors = notificationIdSelectors(id);
+    const filter = isSuperAdminSession(sessionTyped)
+      ? { $or: idSelectors }
+      : {
+          $and: [{ $or: idSelectors }, { $or: notificationOwnerSelectors(sessionTyped) }],
+        };
+
+    const result = await db.collection("notifications").deleteOne(filter);
 
     if (result.deletedCount === 0) {
       return NextResponse.json(

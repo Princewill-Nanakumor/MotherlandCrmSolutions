@@ -5,6 +5,9 @@ import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import Lead from "@/models/Lead";
 import mongoose from "mongoose";
+import { ObjectId } from "mongodb";
+import { agentLeadsInTenantFilter } from "@/lib/leadAssignmentQuery";
+import { maskEmail, maskPhone } from "@/lib/contactMasking";
 
 interface LeadDocument {
   _id: mongoose.Types.ObjectId;
@@ -49,16 +52,38 @@ export async function GET() {
 
     await connectMongoDB();
 
-    const query: { adminId?: mongoose.Types.ObjectId } = {};
+    const db = mongoose.connection.db;
+    if (!db) {
+      return NextResponse.json(
+        { message: "Database unavailable" },
+        { status: 500 },
+      );
+    }
+
+    let query: Record<string, unknown> = {};
+
+    let canViewEmails = true;
+    let canViewPhoneNumbers = true;
 
     if (session.user.role === "ADMIN") {
-      // Admin sees all leads that belong to them
-      query.adminId = new mongoose.Types.ObjectId(session.user.id);
+      query = { adminId: new mongoose.Types.ObjectId(session.user.id) };
     } else if (session.user.role === "AGENT") {
-      // Agent sees only leads assigned to them from their admin
-      if (session.user.adminId) {
-        query.adminId = new mongoose.Types.ObjectId(session.user.adminId);
+      if (!session.user.adminId) {
+        return NextResponse.json({ message: "Forbidden" }, { status: 403 });
       }
+      query = agentLeadsInTenantFilter(
+        new mongoose.Types.ObjectId(session.user.adminId),
+        session.user.id,
+      );
+
+      const me = await db.collection("users").findOne(
+        { _id: new ObjectId(session.user.id) },
+        { projection: { canViewEmails: 1, canViewPhoneNumbers: 1 } },
+      );
+      canViewEmails = Boolean(me?.canViewEmails);
+      canViewPhoneNumbers = Boolean(me?.canViewPhoneNumbers);
+    } else {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
     const leads = await Lead.find(query)
@@ -75,8 +100,8 @@ export async function GET() {
         firstName: lead.firstName,
         lastName: lead.lastName,
         fullName: `${lead.firstName} ${lead.lastName}`,
-        email: lead.email,
-        phone: lead.phone || "",
+        email: maskEmail(lead.email, canViewEmails),
+        phone: maskPhone(lead.phone || "", canViewPhoneNumbers),
         source: lead.source && lead.source !== "-" ? lead.source : "—",
         country: lead.country || "",
         status: lead.status || "NEW",

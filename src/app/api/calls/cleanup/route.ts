@@ -8,19 +8,19 @@ import CallLog from "@/models/CallLog";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+function cleanupUnauthorized(req: Request): Response | null {
+  const expectedToken = process.env.CLEANUP_API_TOKEN;
+  const authHeader = req.headers.get("authorization");
+  if (!expectedToken || authHeader !== `Bearer ${expectedToken}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  return null;
+}
+
 export async function POST(req: Request) {
   try {
-    // Optional: Add authentication for this endpoint to prevent unauthorized access
-    // For now, we'll allow it but you can add auth if needed
-    const authHeader = req.headers.get("authorization");
-    const expectedToken = process.env.CLEANUP_API_TOKEN; // Set this in your .env
-
-    if (expectedToken && authHeader !== `Bearer ${expectedToken}`) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    const denied = cleanupUnauthorized(req);
+    if (denied) return denied;
 
     await connectMongoDB();
 
@@ -50,9 +50,12 @@ export async function POST(req: Request) {
   }
 }
 
-// Also allow GET for testing
-export async function GET() {
+// Also allow GET for testing (requires same bearer token as POST)
+export async function GET(req: Request) {
   try {
+    const denied = cleanupUnauthorized(req);
+    if (denied) return denied;
+
     await connectMongoDB();
 
     const threeDaysAgo = new Date();

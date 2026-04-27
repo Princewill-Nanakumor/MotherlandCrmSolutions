@@ -5,9 +5,11 @@ import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import Reminder from "@/models/Reminder";
 import Activity, { type ActivityType, type IActivity } from "@/models/Activity";
+import Lead from "@/models/Lead";
 import mongoose from "mongoose";
+import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
-import { unauthorizedResponse } from "@/lib/apiResponses";
+import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 
 // PUT - Update reminder (complete, snooze, edit)
@@ -46,6 +48,51 @@ export async function PUT(
         { status: 404 }
       );
     }
+
+    const reminderLeadId = String(reminder.leadId);
+    if (reminderLeadId !== id) {
+      return NextResponse.json(
+        { error: "Reminder not found" },
+        { status: 404 },
+      );
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid lead id" }, { status: 400 });
+    }
+
+    const leadAccess = await Lead.findOne(
+      singleLeadAccessFilter(
+        new mongoose.Types.ObjectId(id),
+        new mongoose.Types.ObjectId(adminId),
+        session.user.role,
+        session.user.id,
+      ),
+    )
+      .select({ _id: 1 })
+      .lean();
+    if (!leadAccess) {
+      return NextResponse.json(
+        { error: "Lead not found or not authorized" },
+        { status: 404 },
+      );
+    }
+
+    if (session.user.role !== "ADMIN") {
+      const uid = session.user.id;
+      const createdByStr = reminder.createdBy
+        ? String(reminder.createdBy)
+        : "";
+      const assignedToStr = reminder.assignedTo
+        ? String(reminder.assignedTo)
+        : "";
+      if (createdByStr !== uid && assignedToStr !== uid) {
+        return forbiddenResponse(
+          "You can only update reminders you created or that are assigned to you",
+        );
+      }
+    }
+
     const oldStatus = reminder.status;
     const oldTitle = reminder.title;
 
@@ -211,6 +258,40 @@ export async function DELETE(
       adminId: adminId, // Ensure reminder belongs to the same organization
     });
 
+    if (!reminder) {
+      return NextResponse.json(
+        {
+          error: "Reminder not found or you don't have permission to delete it",
+        },
+        { status: 404 },
+      );
+    }
+
+    const delReminderLeadId = String(reminder.leadId);
+    if (delReminderLeadId !== id || !mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: "Reminder not found" },
+        { status: 404 },
+      );
+    }
+
+    const delLeadAccess = await Lead.findOne(
+      singleLeadAccessFilter(
+        new mongoose.Types.ObjectId(id),
+        new mongoose.Types.ObjectId(adminId),
+        session.user.role,
+        session.user.id,
+      ),
+    )
+      .select({ _id: 1 })
+      .lean();
+    if (!delLeadAccess) {
+      return NextResponse.json(
+        { error: "Lead not found or not authorized" },
+        { status: 404 },
+      );
+    }
+
     if (
       reminder &&
       reminder.status === "COMPLETED" &&
@@ -244,15 +325,6 @@ export async function DELETE(
           { status: 403 }
         );
       }
-    }
-
-    if (!reminder) {
-      return NextResponse.json(
-        {
-          error: "Reminder not found or you don't have permission to delete it",
-        },
-        { status: 404 }
-      );
     }
 
     // Delete the reminder based on the permission logic above

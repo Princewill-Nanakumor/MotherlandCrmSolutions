@@ -1,5 +1,6 @@
 // /Users/safeconnection/Downloads/drivecrm-main/src/app/api/leads/[id]/route.ts
 import { NextResponse } from "next/server";
+import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
@@ -8,6 +9,41 @@ import { Db, ObjectId } from "mongodb";
 import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
+import { agentAssignedToUserClause } from "@/lib/leadAssignmentQuery";
+
+function buildLeadAccessFilter(
+  session: Session,
+  adminScopeId: string,
+  baseIdFilter: { _id?: ObjectId; leadId?: string | number },
+): Record<string, unknown> {
+  const adminOid = new ObjectId(adminScopeId);
+  const core: Record<string, unknown> = { ...baseIdFilter, adminId: adminOid };
+
+  if (session.user.role !== "AGENT") {
+    return core;
+  }
+
+  return {
+    $and: [core, agentAssignedToUserClause(session.user.id)],
+  };
+}
+
+function maskEmail(email: string, visible: boolean): string {
+  if (visible || !email) return email;
+  const at = email.indexOf("@");
+  if (at <= 0) return "••••••••";
+  const local = email.slice(0, at);
+  const domain = email.slice(at + 1);
+  const keep = Math.min(2, local.length);
+  return `${local.slice(0, keep)}•••@${domain}`;
+}
+
+function maskPhone(phone: string, visible: boolean): string {
+  if (visible || !phone) return phone;
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length <= 4) return "••••";
+  return `••••••${digits.slice(-4)}`;
+}
 
 // Helper to get user details for assignedTo
 async function getAssignedToUser(
@@ -74,11 +110,19 @@ export async function GET(
       return NextResponse.json({ error: "Invalid lead ID" }, { status: 400 });
     }
 
-    const query: { _id?: ObjectId; leadId?: string | number; adminId?: ObjectId } = {
-      ...baseQuery,
-    };
     const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
-    query.adminId = new ObjectId(adminScopeId);
+    const query = buildLeadAccessFilter(session, adminScopeId, baseQuery);
+
+    let canViewEmails = session.user.role !== "AGENT";
+    let canViewPhoneNumbers = session.user.role !== "AGENT";
+    if (session.user.role === "AGENT") {
+      const me = await db.collection("users").findOne(
+        { _id: new ObjectId(session.user.id) },
+        { projection: { canViewEmails: 1, canViewPhoneNumbers: 1 } },
+      );
+      canViewEmails = Boolean(me?.canViewEmails);
+      canViewPhoneNumbers = Boolean(me?.canViewPhoneNumbers);
+    }
 
     const lead = await db.collection("leads").findOne(query);
 
@@ -118,8 +162,8 @@ export async function GET(
       firstName: lead.firstName,
       lastName: lead.lastName,
       name: `${lead.firstName} ${lead.lastName}`,
-      email: lead.email,
-      phone: lead.phone || "",
+      email: maskEmail(lead.email, canViewEmails),
+      phone: maskPhone(lead.phone || "", canViewPhoneNumbers),
       source: lead.source && lead.source !== "-" ? lead.source : "—",
       status: lead.status,
       country: lead.country || "",
@@ -185,11 +229,8 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid lead ID" }, { status: 400 });
     }
 
-    const query: { _id?: ObjectId; leadId?: string | number; adminId?: ObjectId } = {
-      ...baseQuery,
-    };
     const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
-    query.adminId = new ObjectId(adminScopeId);
+    const query = buildLeadAccessFilter(session, adminScopeId, baseQuery);
 
     const currentLead = await db.collection("leads").findOne(query);
 
@@ -205,30 +246,51 @@ export async function PUT(
       updatedAt: new Date(),
     };
 
-    if (updateData.firstName !== undefined)
-      updatePayload.firstName = String(updateData.firstName || "").trim();
-    if (updateData.lastName !== undefined)
-      updatePayload.lastName = String(updateData.lastName || "").trim();
-    if (updateData.email !== undefined) {
-      updatePayload.email = String(updateData.email || "")
-        .toLowerCase()
-        .trim();
-    }
-    if (updateData.phone !== undefined)
-      updatePayload.phone = String(updateData.phone || "").trim();
-    if (updateData.source !== undefined)
-      updatePayload.source = String(updateData.source || "").trim();
-    if (updateData.status !== undefined) {
-      updatePayload.status = updateData.status;
-      updatePayload.statusChangedAt = new Date();
-    }
-    if (updateData.country !== undefined)
-      updatePayload.country = String(updateData.country || "").trim();
-    if (updateData.comments !== undefined)
-      updatePayload.comments = updateData.comments;
+    const isAgent = session.user.role === "AGENT";
 
-    // Handle assignedTo field
-    if (updateData.assignedTo !== undefined) {
+    if (isAgent) {
+      let agentHasUpdate = false;
+      if (updateData.status !== undefined) {
+        updatePayload.status = updateData.status;
+        updatePayload.statusChangedAt = new Date();
+        agentHasUpdate = true;
+      }
+      if (updateData.comments !== undefined) {
+        updatePayload.comments = updateData.comments;
+        agentHasUpdate = true;
+      }
+      if (!agentHasUpdate) {
+        return NextResponse.json(
+          { error: "Agents may only update status and comments" },
+          { status: 400 },
+        );
+      }
+    } else {
+      if (updateData.firstName !== undefined)
+        updatePayload.firstName = String(updateData.firstName || "").trim();
+      if (updateData.lastName !== undefined)
+        updatePayload.lastName = String(updateData.lastName || "").trim();
+      if (updateData.email !== undefined) {
+        updatePayload.email = String(updateData.email || "")
+          .toLowerCase()
+          .trim();
+      }
+      if (updateData.phone !== undefined)
+        updatePayload.phone = String(updateData.phone || "").trim();
+      if (updateData.source !== undefined)
+        updatePayload.source = String(updateData.source || "").trim();
+      if (updateData.status !== undefined) {
+        updatePayload.status = updateData.status;
+        updatePayload.statusChangedAt = new Date();
+      }
+      if (updateData.country !== undefined)
+        updatePayload.country = String(updateData.country || "").trim();
+      if (updateData.comments !== undefined)
+        updatePayload.comments = updateData.comments;
+    }
+
+    // Handle assignedTo field (admins only — agents cannot reassign leads via this API)
+    if (updateData.assignedTo !== undefined && session.user.role !== "AGENT") {
       if (updateData.assignedTo) {
         if (!mongoose.Types.ObjectId.isValid(updateData.assignedTo)) {
           return NextResponse.json(
@@ -296,6 +358,17 @@ export async function PUT(
       updatedLead.assignedTo,
     );
 
+    let putCanViewEmails = session.user.role !== "AGENT";
+    let putCanViewPhoneNumbers = session.user.role !== "AGENT";
+    if (session.user.role === "AGENT") {
+      const me = await db.collection("users").findOne(
+        { _id: new ObjectId(session.user.id) },
+        { projection: { canViewEmails: 1, canViewPhoneNumbers: 1 } },
+      );
+      putCanViewEmails = Boolean(me?.canViewEmails);
+      putCanViewPhoneNumbers = Boolean(me?.canViewPhoneNumbers);
+    }
+
     const transformedLead = {
       _id: updatedLead._id.toString(),
       id: updatedLead._id.toString(),
@@ -303,8 +376,8 @@ export async function PUT(
       firstName: updatedLead.firstName,
       lastName: updatedLead.lastName,
       name: `${updatedLead.firstName} ${updatedLead.lastName}`,
-      email: updatedLead.email,
-      phone: updatedLead.phone || "",
+      email: maskEmail(updatedLead.email, putCanViewEmails),
+      phone: maskPhone(updatedLead.phone || "", putCanViewPhoneNumbers),
       source: updatedLead.source,
       status: updatedLead.status,
       country: updatedLead.country || "",

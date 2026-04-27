@@ -8,6 +8,7 @@ import Lead from "@/models/Lead";
 import mongoose from "mongoose";
 import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
+import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 
 function extractParamsFromUrl(urlString: string): {
   id: string;
@@ -67,7 +68,7 @@ async function authorizeAndResolveComment(
   commentId: string,
   leadId: string,
   scopedAdminId: mongoose.Types.ObjectId,
-  isAdmin: boolean,
+  sessionRole: string,
   userId: string,
 ): Promise<
   | { ok: true; comment: CommentDocument }
@@ -80,15 +81,21 @@ async function authorizeAndResolveComment(
     return { ok: false, status: 400, message: "Invalid id" };
   }
 
-  const lead = await Lead.findOne({
-    _id: new mongoose.Types.ObjectId(leadId),
-    adminId: scopedAdminId,
-  })
+  const lead = await Lead.findOne(
+    singleLeadAccessFilter(
+      new mongoose.Types.ObjectId(leadId),
+      scopedAdminId,
+      sessionRole,
+      userId,
+    ),
+  )
     .select({ _id: 1 })
     .lean();
   if (!lead) {
     return { ok: false, status: 404, message: "Lead not found or not authorized" };
   }
+
+  const isAdmin = sessionRole === "ADMIN";
 
   const comment = (await Comment.findOne({
     _id: new mongoose.Types.ObjectId(commentId),
@@ -145,12 +152,11 @@ export async function PUT(request: Request) {
     const adminId = getCorrectAdminId(session);
     if (!adminId) return forbiddenResponse("Admin scope unresolved");
 
-    const isAdmin = session.user.role === "ADMIN";
     const auth = await authorizeAndResolveComment(
       commentId,
       id,
       adminId,
-      isAdmin,
+      session.user.role,
       session.user.id,
     );
     if (!auth.ok) {
@@ -200,12 +206,11 @@ export async function DELETE(request: Request) {
     const adminId = getCorrectAdminId(session);
     if (!adminId) return forbiddenResponse("Admin scope unresolved");
 
-    const isAdmin = session.user.role === "ADMIN";
     const auth = await authorizeAndResolveComment(
       commentId,
       id,
       adminId,
-      isAdmin,
+      session.user.role,
       session.user.id,
     );
     if (!auth.ok) {

@@ -338,11 +338,17 @@ export async function updateUserForAdmin(
     }
   }
 
+  // Never match "no adminId" globally — that would allow updating other tenant admins.
+  const updateFilter =
+    userId.equals(adminId)
+      ? { _id: userId }
+      : {
+          _id: userId,
+          $or: [{ adminId: adminId }, { createdBy: adminId }],
+        };
+
   const updateResult = await db.collection("users").findOneAndUpdate(
-    {
-      _id: userId,
-      $or: [{ adminId: adminId }, { adminId: { $exists: false } }, { _id: adminId }],
-    },
+    updateFilter,
     { $set: updateFields },
     { returnDocument: "after", projection: { password: 0 }, upsert: false },
   );

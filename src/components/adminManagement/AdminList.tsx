@@ -11,7 +11,7 @@ import { AdminStats } from "@/hooks/useAdminData"; // Import from the hook inste
 interface AdminListProps {
   admins: AdminStats[];
   allowedEmails: string[];
-  onAdminDeleted?: (adminId: string) => void;
+  onAdminDeleted?: (admin: AdminStats) => void | Promise<void>;
   isDeleting?: boolean;
 }
 
@@ -34,7 +34,7 @@ export default function AdminList({
     if (!adminToDelete) return;
 
     try {
-      await onAdminDeleted?.(adminToDelete._id);
+      await onAdminDeleted?.(adminToDelete);
 
       toast({
         title: "Admin Deleted",

@@ -5,6 +5,8 @@ import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
+import { agentAssignedToUserClause } from "@/lib/leadAssignmentQuery";
+import { maskEmail, maskPhone } from "@/lib/contactMasking";
 
 export async function GET() {
   try {
@@ -30,19 +32,30 @@ export async function GET() {
       return forbiddenResponse("Admin scope unresolved");
     }
 
-    const query: {
-      $or: Array<{
-        "assignedTo._id"?: mongoose.Types.ObjectId;
-        assignedTo?: mongoose.Types.ObjectId;
-      }>;
-      adminId: mongoose.Types.ObjectId;
-    } = {
-      $or: [
-        { "assignedTo._id": userObjectId },
-        { assignedTo: userObjectId },
-      ],
-      adminId: scopedAdminId,
-    };
+    let canViewEmails = session.user.role !== "AGENT";
+    let canViewPhoneNumbers = session.user.role !== "AGENT";
+    if (session.user.role === "AGENT" && mongoose.connection.db) {
+      const me = await mongoose.connection.db.collection("users").findOne(
+        { _id: userObjectId },
+        { projection: { canViewEmails: 1, canViewPhoneNumbers: 1 } },
+      );
+      canViewEmails = Boolean(me?.canViewEmails);
+      canViewPhoneNumbers = Boolean(me?.canViewPhoneNumbers);
+    }
+
+    const query: Record<string, unknown> =
+      session.user.role === "ADMIN"
+        ? {
+            adminId: scopedAdminId,
+            $and: [
+              { assignedTo: { $exists: true } },
+              { assignedTo: { $ne: null } },
+            ],
+          }
+        : {
+            adminId: scopedAdminId,
+            ...agentAssignedToUserClause(session.user.id),
+          };
 
     const assignedLeads = await mongoose.connection.db
       .collection("leads")
@@ -212,8 +225,8 @@ export async function GET() {
         leadId: (lead.leadId as string | number | undefined) ?? undefined,
         firstName: lead.firstName,
         lastName: lead.lastName,
-        email: lead.email,
-        phone: lead.phone || "",
+        email: maskEmail(lead.email, canViewEmails),
+        phone: maskPhone(lead.phone || "", canViewPhoneNumbers),
         country: lead.country || "",
         value: lead.value,
         source: lead.source && lead.source !== "-" ? lead.source : "—",

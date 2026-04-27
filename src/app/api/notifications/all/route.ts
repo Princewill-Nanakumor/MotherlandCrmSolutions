@@ -4,6 +4,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
+import type { Session } from "next-auth";
+import {
+  isSuperAdminSession,
+  notificationOwnerSelectors,
+} from "@/lib/notificationQuery";
 
 export async function GET() {
   try {
@@ -18,12 +23,9 @@ export async function GET() {
     }
 
     const userRole = session.user.role;
-    const userEmail = session.user.email;
     const userId = session.user.id;
 
-    const superAdminEmails =
-      process.env.SUPER_ADMIN_EMAILS?.split(",").map((e) => e.trim()) || [];
-    const isSuperAdmin = userEmail && superAdminEmails.includes(userEmail);
+    const isSuperAdmin = isSuperAdminSession(session as Session);
 
     let query: Record<string, unknown> = {};
 
@@ -41,7 +43,7 @@ export async function GET() {
     } else {
       query = {
         role: { $in: ["AGENT", "USER"] },
-        // NO read filter - show all notifications
+        $or: notificationOwnerSelectors(session as Session),
       };
     }
 

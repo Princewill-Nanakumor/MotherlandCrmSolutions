@@ -24,6 +24,7 @@ async function processPurchase(product: Product): Promise<void> {
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify({
       productId: product.id,
       productName: product.name,

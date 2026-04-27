@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import QRCode from "react-qr-code";
 import { Button } from "@/components/ui/button";
-import { useSession } from "next-auth/react";
 import { Payment } from "@/types/payment.types";
 
 interface PaymentRequestDetailsProps {
@@ -33,7 +32,6 @@ export default function PaymentRequestDetails({
   onShowPaymentDetails,
   onBackToDeposit,
 }: PaymentRequestDetailsProps) {
-  const { data: session } = useSession();
   const [copied, setCopied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notificationSent, setNotificationSent] = useState(false);
@@ -73,34 +71,14 @@ export default function PaymentRequestDetails({
       // Lock immediately to avoid rapid double-clicks
       localStorage.setItem(notificationKey, "true");
 
-      const deduplicationKey = `payment_confirmation_${currentPayment._id}`;
-
-      console.log("🔄 Creating notification for payment:", {
-        paymentId: currentPayment._id,
-        userId: session?.user?.id,
-        userName: `${session?.user?.firstName} ${session?.user?.lastName}`,
-        amount: currentPayment.amount,
-        currency: currentPayment.currency,
-        network: network,
-      });
-
       const notificationResponse = await fetch("/api/notifications", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Source": "USER_CONFIRMATION",
-          "X-Request-ID": `pc_${currentPayment._id}_${Date.now()}`,
         },
+        credentials: "include",
         body: JSON.stringify({
-          type: "PAYMENT_PENDING_APPROVAL",
-          message: `New payment confirmation submitted: ${currentPayment.amount} ${currentPayment.currency} (${network}) by ${session?.user?.firstName} ${session?.user?.lastName}`,
-          role: "SUPER_ADMIN",
-          link: `/dashboard/payment-details/${currentPayment._id}`, // ← FIXED: Changed from /payments/ to /payment-details/
           paymentId: currentPayment._id,
-          amount: currentPayment.amount,
-          currency: currentPayment.currency,
-          userId: session?.user?.id,
-          deduplicationKey,
         }),
       });
 

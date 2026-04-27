@@ -4,7 +4,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
+import type { Session } from "next-auth";
 import { sendPaymentConfirmationEmail } from "@/lib/emailService";
+import {
+  isSuperAdminSession,
+  notificationOwnerSelectors,
+} from "@/lib/notificationQuery";
 
 export async function GET() {
   try {
@@ -19,12 +24,9 @@ export async function GET() {
     }
 
     const userRole = session.user.role;
-    const userEmail = session.user.email;
     const userId = session.user.id;
 
-    const superAdminEmails =
-      process.env.SUPER_ADMIN_EMAILS?.split(",").map((e) => e.trim()) || [];
-    const isSuperAdmin = userEmail && superAdminEmails.includes(userEmail);
+    const isSuperAdmin = isSuperAdminSession(session as Session);
 
     let query: Record<string, unknown> = {};
 
@@ -42,7 +44,8 @@ export async function GET() {
     } else {
       query = {
         role: { $in: ["AGENT", "USER"] },
-        read: false, // Only return unread notifications
+        read: false,
+        $or: notificationOwnerSelectors(session as Session),
       };
     }
 
@@ -62,39 +65,42 @@ export async function GET() {
     );
   }
 }
+function paymentActorMatchesSession(
+  createdBy: unknown,
+  sessionUserId: string,
+): boolean {
+  if (!createdBy) return false;
+  if (typeof createdBy === "object" && createdBy !== null && "equals" in createdBy) {
+    try {
+      return (createdBy as { equals: (id: unknown) => boolean }).equals(
+        new mongoose.Types.ObjectId(sessionUserId),
+      );
+    } catch {
+      return String(createdBy) === sessionUserId;
+    }
+  }
+  return String(createdBy) === sessionUserId;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Hard gate: only accept notifications that come from the explicit confirm click
-    const source = request.headers.get("x-source");
-    if (source !== "USER_CONFIRMATION") {
-      return NextResponse.json(
-        { error: "Invalid notification source" },
-        { status: 400 }
-      );
+    let body: { paymentId?: string };
+    try {
+      body = (await request.json()) as { paymentId?: string };
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
-    const body = await request.json();
-    const {
-      type,
-      message,
-      role,
-      link,
-      paymentId,
-      amount,
-      currency,
-      userId,
-      deduplicationKey,
-    } = body;
-
-    if (!paymentId || !type || !role) {
+    const paymentIdRaw = typeof body.paymentId === "string" ? body.paymentId.trim() : "";
+    if (!paymentIdRaw || !mongoose.Types.ObjectId.isValid(paymentIdRaw)) {
       return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
+        { error: "Missing or invalid paymentId" },
+        { status: 400 },
       );
     }
 
@@ -103,62 +109,70 @@ export async function POST(request: NextRequest) {
       throw new Error("Database connection not established");
     }
 
-    // Atomic dedup using a stable key per payment confirmation
-    const dedupKey = deduplicationKey || `payment_confirmation_${paymentId}`;
+    const paymentsCol = mongoose.connection.db.collection("payments");
+    const payment = await paymentsCol.findOne({
+      _id: new mongoose.Types.ObjectId(paymentIdRaw),
+    });
 
+    if (!payment) {
+      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+    }
+
+    if (payment.status !== "PENDING") {
+      return NextResponse.json(
+        { error: "Only pending payments can submit this notification" },
+        { status: 400 },
+      );
+    }
+
+    if (!paymentActorMatchesSession(payment.createdBy, session.user.id)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const dedupKey = `payment_confirmation_${paymentIdRaw}`;
     const notificationsCol = mongoose.connection.db.collection("notifications");
     const now = new Date();
 
+    const amount = Number(payment.amount);
+    const currency = String(payment.currency ?? "USD");
+    const network = (payment.network as string | undefined) || "—";
+    const firstName = session.user.firstName?.trim() || "Unknown";
+    const lastName = session.user.lastName?.trim() || "User";
+
     const doc = {
-      type,
-      message,
-      role,
-      link,
-      paymentId,
+      type: "PAYMENT_PENDING_APPROVAL" as const,
+      message: `New payment confirmation submitted: ${amount} ${currency} (${network}) by ${firstName} ${lastName}`,
+      role: "SUPER_ADMIN" as const,
+      link: `/dashboard/payment-details/${paymentIdRaw}`,
+      paymentId: paymentIdRaw,
       amount,
       currency,
-      userId,
+      userId: session.user.id,
       createdAt: now.toISOString(),
       read: false,
       timestamp: now.getTime(),
       deduplicationKey: dedupKey,
     };
 
-    // Upsert to avoid race-condition duplicates
     const upsertResult = await notificationsCol.updateOne(
       { deduplicationKey: dedupKey },
       { $setOnInsert: doc },
-      { upsert: true }
+      { upsert: true },
     );
 
-    // Only send email if this is a new notification (not a duplicate)
     if (upsertResult.upsertedCount > 0) {
-      // Get payment details for email
-      const paymentsCol = mongoose.connection.db.collection("payments");
-      const payment = await paymentsCol.findOne({
-        _id: new mongoose.Types.ObjectId(paymentId),
+      await sendPaymentConfirmationEmail({
+        paymentId: paymentIdRaw,
+        amount,
+        currency,
+        network: network === "—" ? "Unknown" : network,
+        userFirstName: firstName,
+        userLastName: lastName,
+        userEmail: session.user.email || "unknown@email.com",
+        transactionId: String(payment.transactionId ?? ""),
       });
-
-      if (payment) {
-        // Send email notification
-        const emailResult = await sendPaymentConfirmationEmail({
-          paymentId: paymentId,
-          amount: amount,
-          currency: currency,
-          network: payment.network || "Unknown",
-          userFirstName: session.user.firstName || "Unknown",
-          userLastName: session.user.lastName || "User",
-          userEmail: session.user.email || "unknown@email.com",
-          transactionId: payment.transactionId,
-        });
-
-        console.log("Email send result:", emailResult);
-      }
-    } else {
-      console.log("Notification already exists, skipping email send");
     }
 
-    // Return the single canonical document
     const notification = await notificationsCol.findOne({
       deduplicationKey: dedupKey,
     });
@@ -168,7 +182,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating notification:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

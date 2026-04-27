@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import Ably from "ably";
 import { authOptions } from "@/libs/auth";
+import {
+  getUserCallLogsChannelName,
+  getUserRemindersChannelName,
+} from "@/libs/realtime";
 
 interface SessionUser {
   id: string;
@@ -44,9 +48,20 @@ async function handleTokenRequest() {
 
     const adminScope = getAdminScope(session.user);
     const client = new Ably.Rest(apiKey);
-    const capability = JSON.stringify({
-      [`crm:admin:${adminScope}:*`]: ["subscribe"],
-    });
+
+    const capabilityMap: Record<string, string[]> =
+      session.user.role === "ADMIN"
+        ? { [`crm:admin:${adminScope}:*`]: ["subscribe"] }
+        : {
+            [getUserRemindersChannelName(adminScope, session.user.id)]: [
+              "subscribe",
+            ],
+            [getUserCallLogsChannelName(adminScope, session.user.id)]: [
+              "subscribe",
+            ],
+          };
+
+    const capability = JSON.stringify(capabilityMap);
 
     // Return TokenDetails directly to the browser SDK to avoid
     // client-side tokenRequest exchange edge-cases.

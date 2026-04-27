@@ -9,6 +9,7 @@ import {
   publishLeadUpdatedEvent,
 } from "@/libs/ablyServer";
 import mongoose from "mongoose";
+import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 
 interface LeadDoc {
   _id: mongoose.Types.ObjectId | string;
@@ -109,7 +110,7 @@ async function resolveStatusNames(
 
 /** Run status update inside a transaction, or fall back to non-transactional. Returns response data or throws NOT_FOUND / ALREADY_SAME. */
 async function runStatusUpdate(
-  query: { _id: mongoose.Types.ObjectId; adminId?: mongoose.Types.ObjectId },
+  query: Record<string, unknown>,
   newStatus: string,
   session: SessionLike
 ): Promise<Record<string, unknown>> {
@@ -233,7 +234,7 @@ async function runStatusUpdate(
 
 /** Update lead status and create activity without a transaction (fallback when transactions unsupported). */
 async function updateStatusWithoutTransaction(
-  query: { _id: mongoose.Types.ObjectId; adminId?: mongoose.Types.ObjectId },
+  query: Record<string, unknown>,
   newStatus: string,
   session: SessionLike
 ): Promise<{ responseData: Record<string, unknown>; error?: string }> {
@@ -387,13 +388,12 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const query: {
-      _id: mongoose.Types.ObjectId;
-      adminId: mongoose.Types.ObjectId;
-    } = {
-      _id: new mongoose.Types.ObjectId(id),
-      adminId: resolvedAdminId,
-    };
+    const query = singleLeadAccessFilter(
+      new mongoose.Types.ObjectId(id),
+      resolvedAdminId,
+      sessionUser.role,
+      sessionUser.id,
+    );
 
     // Validate new status exists before any write
     const commonStatuses = [
@@ -419,14 +419,21 @@ export async function PATCH(req: NextRequest) {
       let statusExists = false;
       const statusCollection = db.collection("status");
       const statusesCollection = db.collection("statuses");
+      const tenantStatusFilter = { adminId: resolvedAdminId };
       if (mongoose.Types.ObjectId.isValid(newStatus)) {
-        const statusQuery = { _id: new mongoose.Types.ObjectId(newStatus) };
+        const statusQuery = {
+          _id: new mongoose.Types.ObjectId(newStatus),
+          ...tenantStatusFilter,
+        };
         const statusDoc =
           (await statusCollection.findOne(statusQuery)) ??
           (await statusesCollection.findOne(statusQuery));
         statusExists = !!statusDoc;
       } else {
-        const statusQuery = { name: newStatus };
+        const statusQuery = {
+          name: newStatus,
+          ...tenantStatusFilter,
+        };
         const statusDoc =
           (await statusCollection.findOne(statusQuery)) ??
           (await statusesCollection.findOne(statusQuery));

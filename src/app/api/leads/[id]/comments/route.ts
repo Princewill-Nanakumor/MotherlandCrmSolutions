@@ -8,6 +8,7 @@ import Comment, { IComment } from "@/models/Comment";
 import Lead from "@/models/Lead";
 import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
+import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 
 function extractLeadIdFromUrl(urlString: string): string {
   const url = new URL(urlString);
@@ -55,7 +56,14 @@ export async function GET(request: Request) {
 
     // Verify the lead is in the caller's tenant before returning any comments,
     // so legacy comments (without adminId) cannot leak across tenants.
-    const lead = await Lead.findOne({ _id: leadObjectId, adminId })
+    const lead = await Lead.findOne(
+      singleLeadAccessFilter(
+        leadObjectId,
+        adminId,
+        session.user.role,
+        session.user.id,
+      ),
+    )
       .select({ _id: 1 })
       .lean();
     if (!lead) {
@@ -111,7 +119,14 @@ export async function POST(request: Request) {
     if (!adminId) return forbiddenResponse("Admin scope unresolved");
 
     const leadObjectId = new mongoose.Types.ObjectId(id);
-    const lead = await Lead.findOne({ _id: leadObjectId, adminId })
+    const lead = await Lead.findOne(
+      singleLeadAccessFilter(
+        leadObjectId,
+        adminId,
+        session.user.role,
+        session.user.id,
+      ),
+    )
       .select({ _id: 1 })
       .lean();
     if (!lead) {

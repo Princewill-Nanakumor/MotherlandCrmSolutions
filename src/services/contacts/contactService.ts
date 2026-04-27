@@ -311,7 +311,11 @@ export async function importContacts(request: Request, user: SessionUser) {
       }
       if (err instanceof MongoServerError && err.code === 11000) {
         return NextResponse.json(
-          { error: "Some contacts already exist", details: "Duplicate email addresses found" },
+          {
+            error: "Some contacts already exist",
+            details:
+              "Duplicate email in this workspace (email is unique per tenant).",
+          },
           { status: 409 },
         );
       }

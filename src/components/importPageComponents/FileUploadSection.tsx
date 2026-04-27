@@ -38,7 +38,6 @@ export const FileUploadSection = ({
   activeTab,
   fileInputRef,
   isLoading,
-  successMessage: _successMessage,
   handleFileUpload,
   usageData,
   usageDataLoading = false,

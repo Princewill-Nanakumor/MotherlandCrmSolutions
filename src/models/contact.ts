@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const contactSchema = new mongoose.Schema(
   {
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
     name: {
       type: String,
       required: [true, "Name is required"],
@@ -10,7 +16,6 @@ const contactSchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, "Email is required"],
-      unique: true,
       trim: true,
       lowercase: true,
     },
@@ -54,9 +59,12 @@ const contactSchema = new mongoose.Schema(
   }
 );
 
+// Tenant-scoped uniqueness: same email allowed across tenants
+contactSchema.index({ email: 1, adminId: 1 }, { unique: true });
+
 // Add indexes for better query performance
 contactSchema.index({ status: 1 });
-contactSchema.index({ createdAt: -1 });
+contactSchema.index({ adminId: 1, createdAt: -1 });
 
 contactSchema.methods.toJSON = function () {
   const obj = this.toObject();

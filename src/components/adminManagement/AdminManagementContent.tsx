@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import AdminStats from "./AdminStats";
 import AdminList from "./AdminList";
 import { useAdminOverview, useDeleteAdmin } from "@/hooks/useAdminData";
+import type { AdminStats as TenantAdminStats } from "@/types/adminTypes";
 
 export default function AdminManagementContent() {
   const { data: session, status } = useSession();
@@ -51,15 +52,14 @@ export default function AdminManagementContent() {
   }, [status, session, router, allowedEmails]);
 
   // Handle admin deletion with React Query mutation
-  const handleAdminDeleted = async (adminId: string) => {
+  const handleAdminDeleted = async (admin: TenantAdminStats) => {
     try {
-      // Find the admin being deleted for toast message
-      const adminToDelete = admins.find((admin) => admin._id === adminId);
-      const adminName = adminToDelete
-        ? `${adminToDelete.firstName} ${adminToDelete.lastName}`
-        : "Admin";
+      const adminName = `${admin.firstName} ${admin.lastName}`;
 
-      await deleteAdminMutation.mutateAsync(adminId);
+      await deleteAdminMutation.mutateAsync({
+        adminId: admin._id,
+        adminEmail: admin.email,
+      });
 
       // Success toast
       toast({

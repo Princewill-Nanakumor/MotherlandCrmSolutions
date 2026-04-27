@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { rateLimitEnhanced } from "@/lib/rateLimit";
+import { checkTenantLeadImportAllowed } from "@/lib/tenantLeadImportLimits";
 
 // Define interface for imported lead data
 interface ImportedLead {
@@ -66,6 +67,14 @@ export async function POST(request: Request) {
     const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
     const adminObjectId = new mongoose.Types.ObjectId(adminScopeId);
     const userObjectId = new mongoose.Types.ObjectId(session.user.id);
+
+    const limitCheck = await checkTenantLeadImportAllowed(db, {
+      adminObjectId,
+      newLeadCount: leads.length,
+    });
+    if (!limitCheck.ok) {
+      return NextResponse.json(limitCheck.body, { status: limitCheck.status });
+    }
 
     // Transform leads to match your schema with multi-tenancy
     const transformedLeads: TransformedLead[] = leads.map(

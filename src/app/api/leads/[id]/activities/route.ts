@@ -7,6 +7,7 @@ import User from "@/models/User";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
+import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 
 // Bounded LRU-ish cache for status name resolution. Module-level caches in
 // serverless environments otherwise grow unbounded across invocations.
@@ -154,7 +155,14 @@ export async function GET(request: NextRequest) {
 
     // Verify the lead is in the caller's tenant before returning any
     // activities, otherwise legacy activities (no adminId) could leak.
-    const lead = await Lead.findOne({ _id: leadObjectId, adminId })
+    const lead = await Lead.findOne(
+      singleLeadAccessFilter(
+        leadObjectId,
+        adminId,
+        session.user.role,
+        session.user.id,
+      ),
+    )
       .select({ _id: 1 })
       .lean();
     if (!lead) {

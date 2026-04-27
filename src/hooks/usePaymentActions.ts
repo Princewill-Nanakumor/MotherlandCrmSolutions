@@ -70,6 +70,7 @@ export function usePaymentActions({
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
         }
       );
 

@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import CallLog from "@/models/CallLog";
+import User from "@/models/User";
 import mongoose from "mongoose";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +47,31 @@ export async function GET(
     }
 
     await connectMongoDB();
+
+    if (isAdmin) {
+      const targetUser = await User.findById(requestedUserId)
+        .select("role adminId")
+        .lean<{
+          role?: string;
+          adminId?: mongoose.Types.ObjectId;
+        } | null>();
+
+      if (!targetUser) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+
+      const inSameTenant =
+        requestedUserId === session.user.id ||
+        (targetUser.role === "AGENT" &&
+          targetUser.adminId?.toString() === session.user.id);
+
+      if (!inSameTenant) {
+        return NextResponse.json(
+          { error: "Forbidden - User is not in your organization" },
+          { status: 403 }
+        );
+      }
+    }
 
     // Get call logs for the user, sorted by most recent first
     // Only return logs from the last 3 days

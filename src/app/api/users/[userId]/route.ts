@@ -18,11 +18,12 @@ interface UserUpdateData {
   updatedAt: Date;
 }
 
-interface UserQuery {
+type UserUpdateDbQuery = {
   _id: ObjectId;
   adminId?: ObjectId;
   createdBy?: ObjectId;
-}
+  $or?: Array<{ createdBy: ObjectId } | { adminId: ObjectId }>;
+};
 
 const NAME_REGEX = /^[A-Za-z][A-Za-z\s'-]{0,49}$/;
 const PHONE_REGEX = /^\+[1-9]\d{7,14}$/;
@@ -121,13 +122,6 @@ export async function PUT(
     const { userId } = await params;
     const body = await request.json();
 
-    console.log("Profile update request:", {
-      userId,
-      sessionUserId: session.user.id,
-      sessionRole: session.user.role,
-      body,
-    });
-
     if (!ObjectId.isValid(userId)) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
@@ -212,48 +206,27 @@ export async function PUT(
 
       // Check if user is updating their own profile
       const isUpdatingOwnProfile = session.user.id === userId;
+      const sessionOid = new ObjectId(session.user.id);
 
-      // Build query - allow users to update their own profile
-      const query: UserQuery = {
+      // Build query — admins may only update users in their tenant (created by them or agents under them).
+      const query: UserUpdateDbQuery = {
         _id: new ObjectId(userId),
       };
 
       if (isUpdatingOwnProfile) {
-        // User is updating their own profile - no additional filters needed
-        console.log("User updating own profile");
+        // Self-update: _id match is sufficient
       } else if (session.user.role === "ADMIN") {
-        // Admin can update any user profile (for now, we'll be more permissive)
-        console.log("Admin updating user - authorized");
+        Object.assign(query, {
+          $or: [{ createdBy: sessionOid }, { adminId: sessionOid }],
+        });
       } else {
-        // Agents can only update their own profile
         throw new Error("You can only edit your own profile");
       }
 
-      console.log("Database query:", query);
-
       // First, check if the user exists
       const existingUser = await db.collection("users").findOne(query);
-      console.log("Existing user found:", existingUser ? "Yes" : "No");
 
       if (!existingUser) {
-        console.log("User not found with query:", query);
-        // Let's also check if the user exists without any filters
-        const userWithoutFilters = await db
-          .collection("users")
-          .findOne({ _id: new ObjectId(userId) });
-        console.log(
-          "User exists without filters:",
-          userWithoutFilters ? "Yes" : "No"
-        );
-        if (userWithoutFilters) {
-          console.log("User data:", {
-            _id: userWithoutFilters._id,
-            email: userWithoutFilters.email,
-            role: userWithoutFilters.role,
-            createdBy: userWithoutFilters.createdBy,
-            adminId: userWithoutFilters.adminId,
-          });
-        }
         throw new Error("User not found or not authorized");
       }
 
@@ -285,8 +258,6 @@ export async function PUT(
         }
       }
 
-      console.log("Update data:", updateData);
-
       const result = await db
         .collection("users")
         .findOneAndUpdate(
@@ -294,8 +265,6 @@ export async function PUT(
           { $set: updateData },
           { returnDocument: "after" }
         );
-
-      console.log("Update result:", result);
 
       // Handle different return formats from MongoDB driver
       let updatedUser;
@@ -310,11 +279,8 @@ export async function PUT(
       }
 
       if (!updatedUser) {
-        console.log("Update failed - no result or no value");
         throw new Error("User not found or not authorized");
       }
-
-      console.log("Update successful:", updatedUser);
 
       // Transform the response to match your frontend interface
       return {

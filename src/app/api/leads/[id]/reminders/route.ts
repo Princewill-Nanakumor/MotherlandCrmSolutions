@@ -4,7 +4,9 @@ import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import Reminder from "@/models/Reminder";
 import Activity from "@/models/Activity";
+import Lead from "@/models/Lead";
 import mongoose from "mongoose";
+import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
@@ -23,8 +25,29 @@ export async function GET(
     await connectMongoDB();
     const { id } = await params;
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid lead id" }, { status: 400 });
+    }
+
     // Get adminId to ensure we're working within the same organization
     const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
+
+    const leadOk = await Lead.findOne(
+      singleLeadAccessFilter(
+        new mongoose.Types.ObjectId(id),
+        new mongoose.Types.ObjectId(adminId),
+        session.user.role,
+        session.user.id,
+      ),
+    )
+      .select({ _id: 1 })
+      .lean();
+    if (!leadOk) {
+      return NextResponse.json(
+        { error: "Lead not found or not authorized" },
+        { status: 404 },
+      );
+    }
 
     const reminders = await Reminder.find({
       leadId: new mongoose.Types.ObjectId(id),
@@ -77,6 +100,10 @@ export async function POST(
       return NextResponse.json({ error: "Invalid lead id" }, { status: 400 });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid lead id" }, { status: 400 });
+    }
+
     const body = await request.json();
 
     const {
@@ -98,6 +125,23 @@ export async function POST(
 
     // Get adminId based on user role
     const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
+
+    const leadOk = await Lead.findOne(
+      singleLeadAccessFilter(
+        new mongoose.Types.ObjectId(id),
+        new mongoose.Types.ObjectId(adminId),
+        session.user.role,
+        session.user.id,
+      ),
+    )
+      .select({ _id: 1 })
+      .lean();
+    if (!leadOk) {
+      return NextResponse.json(
+        { error: "Lead not found or not authorized" },
+        { status: 404 },
+      );
+    }
 
     const reminderData = {
       title,

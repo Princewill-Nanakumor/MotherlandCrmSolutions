@@ -4,8 +4,10 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import Activity from "@/models/Activity";
+import Lead from "@/models/Lead";
 import mongoose from "mongoose";
 import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import { forbiddenResponse } from "@/lib/apiResponses";
 
 function extractParamsFromUrl(urlString: string): {
   id: string;
@@ -50,7 +52,30 @@ export async function DELETE(request: Request) {
     }
 
     await connectMongoDB();
+
+    if (session.user.role !== "ADMIN") {
+      return forbiddenResponse("Only administrators can delete activities");
+    }
+
     const adminId = getCorrectAdminId(session);
+
+    if (!mongoose.Types.ObjectId.isValid(leadId)) {
+      return NextResponse.json({ message: "Invalid lead id" }, { status: 400 });
+    }
+
+    const leadObjectId = new mongoose.Types.ObjectId(leadId);
+    const leadExists = await Lead.findOne({
+      _id: leadObjectId,
+      adminId,
+    })
+      .select({ _id: 1 })
+      .lean();
+    if (!leadExists) {
+      return NextResponse.json(
+        { message: "Lead not found or not authorized" },
+        { status: 404 },
+      );
+    }
 
     const query: {
       _id: string;

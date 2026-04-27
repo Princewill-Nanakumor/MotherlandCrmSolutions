@@ -5,7 +5,7 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
-import { unauthorizedResponse } from "@/lib/apiResponses";
+import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 
 export async function POST(request: Request) {
@@ -13,6 +13,10 @@ export async function POST(request: Request) {
 
   if (!session) {
     return unauthorizedResponse();
+  }
+
+  if (session.user.role !== "ADMIN") {
+    return forbiddenResponse("Only administrators can assign leads");
   }
 
   const { userId } = await request.json();

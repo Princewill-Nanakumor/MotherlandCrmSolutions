@@ -49,6 +49,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   // Keep leads views in sync across tabs/users when status changes happen elsewhere.
   useEffect(() => {
     if (!session?.user?.id) return;
+    // Tenant-wide lead sync is admin-only; agents use per-lead channels in panels.
+    if (session.user.role !== "ADMIN") return;
 
     let cancelled = false;
     let realtimeClient: ReturnType<typeof getAblyRealtimeClient> | null = null;
@@ -129,7 +131,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         }
       }
     };
-  }, [queryClient, session?.user?.id]);
+  }, [queryClient, session?.user?.id, session?.user?.role]);
 
   // Check if session has expired using session.expires (set from token.exp in auth callback)
   useEffect(() => {

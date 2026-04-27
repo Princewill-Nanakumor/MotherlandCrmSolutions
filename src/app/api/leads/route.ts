@@ -6,8 +6,11 @@ import { executeDbOperation } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import Lead, { generateLeadId } from "@/models/Lead";
-import { unauthorizedResponse } from "@/lib/apiResponses";
+import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
+import { agentLeadsInTenantFilter, singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
+import { maskEmail, maskPhone } from "@/lib/contactMasking";
+import { checkTenantLeadImportAllowed } from "@/lib/tenantLeadImportLimits";
 
 interface MongoDocument {
   _id: mongoose.Types.ObjectId;
@@ -79,6 +82,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    if (session.user.role === "AGENT" && !session.user.adminId) {
+      return forbiddenResponse("Admin scope unresolved");
+    }
+
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limit = Math.min(
@@ -88,7 +95,22 @@ export async function GET(request: Request) {
     const skip = (page - 1) * limit;
 
     return executeDbOperation(async () => {
-      const query = { adminId: new mongoose.Types.ObjectId(adminScopeId) };
+      const tenantOid = new mongoose.Types.ObjectId(adminScopeId);
+      const query =
+        session.user.role === "AGENT"
+          ? agentLeadsInTenantFilter(tenantOid, session.user.id)
+          : { adminId: tenantOid };
+
+      let canViewEmails = session.user.role !== "AGENT";
+      let canViewPhoneNumbers = session.user.role !== "AGENT";
+      if (session.user.role === "AGENT" && mongoose.connection.db) {
+        const me = await mongoose.connection.db.collection("users").findOne(
+          { _id: new mongoose.Types.ObjectId(session.user.id) },
+          { projection: { canViewEmails: 1, canViewPhoneNumbers: 1 } },
+        );
+        canViewEmails = Boolean(me?.canViewEmails);
+        canViewPhoneNumbers = Boolean(me?.canViewPhoneNumbers);
+      }
 
       const [leads, total] = await Promise.all([
         Lead.find(query)
@@ -109,8 +131,8 @@ export async function GET(request: Request) {
           firstName: lead.firstName,
           lastName: lead.lastName,
           fullName: `${lead.firstName} ${lead.lastName}`,
-          email: lead.email,
-          phone: lead.phone || "",
+          email: maskEmail(lead.email, canViewEmails),
+          phone: maskPhone(lead.phone || "", canViewPhoneNumbers),
           source: lead.source && lead.source !== "-" ? lead.source : "—",
           country: lead.country || "",
           status: lead.status || "NEW",
@@ -159,6 +181,10 @@ export async function POST(request: Request) {
       return unauthorizedResponse();
     }
 
+    if (session.user.role !== "ADMIN") {
+      return forbiddenResponse("Only administrators can create or import leads");
+    }
+
     const scopedAdminId = await withAdminScope(
       session,
       async (adminId) => adminId,
@@ -180,6 +206,21 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
+
+      if (!mongoose.connection.db) {
+        throw new Error("Database connection not available");
+      }
+      const singleLimit = await checkTenantLeadImportAllowed(
+        mongoose.connection.db,
+        {
+          adminObjectId: scopedAdminObjectId,
+          newLeadCount: 1,
+        },
+      );
+      if (!singleLimit.ok) {
+        return NextResponse.json(singleLimit.body, { status: singleLimit.status });
+      }
+
       try {
         const newLead = await Lead.create({
           firstName: leadData.firstName,
@@ -224,21 +265,80 @@ export async function POST(request: Request) {
       }
     }
 
+    if (!mongoose.connection.db) {
+      throw new Error("Database connection not available");
+    }
+
+    const normalizedBulkRows: Array<(typeof leads)[0] & { _normalizedEmail: string }> =
+      [];
+    for (let i = 0; i < leads.length; i++) {
+      const lead = leads[i];
+      if (!lead?.email || typeof lead.email !== "string") {
+        return NextResponse.json(
+          {
+            error: `Import row ${i + 1}: a non-empty string email is required`,
+            code: "INVALID_IMPORT_ROW",
+            row: i + 1,
+          },
+          { status: 400 },
+        );
+      }
+      const normalized = lead.email.trim().toLowerCase();
+      if (!normalized) {
+        return NextResponse.json(
+          {
+            error: `Import row ${i + 1}: email cannot be blank`,
+            code: "INVALID_IMPORT_ROW",
+            row: i + 1,
+          },
+          { status: 400 },
+        );
+      }
+      normalizedBulkRows.push({ ...lead, _normalizedEmail: normalized });
+    }
+
+    const uniqueEmails = [
+      ...new Set(normalizedBulkRows.map((r) => r._normalizedEmail)),
+    ];
+    const alreadyHave = await Lead.find({
+      adminId: scopedAdminObjectId,
+      email: { $in: uniqueEmails },
+    })
+      .select({ email: 1 })
+      .lean<{ email: string }[]>();
+    const existingEmailSet = new Set(
+      alreadyHave.map((d) => String(d.email).trim().toLowerCase()),
+    );
+    const wouldInsertCount = uniqueEmails.filter(
+      (e) => !existingEmailSet.has(e),
+    ).length;
+
+    const bulkLimit = await checkTenantLeadImportAllowed(
+      mongoose.connection.db,
+      {
+        adminObjectId: scopedAdminObjectId,
+        newLeadCount: wouldInsertCount,
+      },
+    );
+    if (!bulkLimit.ok) {
+      return NextResponse.json(bulkLimit.body, { status: bulkLimit.status });
+    }
+
     // Bulk path (imports): generate collision-resistant leadIds.
     const operations = [];
-    for (const lead of leads) {
+    for (const lead of normalizedBulkRows) {
       const leadId = await generateLeadId();
       operations.push({
         updateOne: {
           filter: {
-            email: lead.email.toLowerCase(),
+            email: lead._normalizedEmail,
             adminId: scopedAdminObjectId,
           },
           update: {
             $setOnInsert: {
               firstName: lead.firstName,
               lastName: lead.lastName,
-              email: lead.email.toLowerCase(),
+              email: lead._normalizedEmail,
               phone: lead.phone || "",
               country: lead.country || "",
               source: lead.source || "—",
@@ -323,6 +423,15 @@ export async function PUT(request: Request) {
     const safeUpdate = pickUpdatableFields(
       updateData as Record<string, unknown>,
     );
+    if (session.user.role === "AGENT") {
+      delete safeUpdate.assignedTo;
+      const agentAllowed = new Set(["status", "comments"]);
+      for (const key of Object.keys(safeUpdate)) {
+        if (!agentAllowed.has(key)) {
+          delete safeUpdate[key];
+        }
+      }
+    }
     if (Object.keys(safeUpdate).length === 0) {
       return NextResponse.json(
         { error: "No updatable fields provided" },
@@ -342,11 +451,17 @@ export async function PUT(request: Request) {
     }
 
     return executeDbOperation(async () => {
+      const leadOid = new mongoose.Types.ObjectId(id);
+      const tenantOid = new mongoose.Types.ObjectId(adminScopeId);
+      const accessFilter = singleLeadAccessFilter(
+        leadOid,
+        tenantOid,
+        session.user.role,
+        session.user.id,
+      );
+
       const updatedLead = await Lead.findOneAndUpdate(
-        {
-          _id: new mongoose.Types.ObjectId(id),
-          adminId: new mongoose.Types.ObjectId(adminScopeId),
-        },
+        accessFilter,
         { ...safeUpdate, updatedAt: new Date() },
         { new: true },
       ).lean<LeadDocument>();
@@ -374,6 +489,10 @@ export async function DELETE(request: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return unauthorizedResponse();
 
+    if (session.user.role !== "ADMIN") {
+      return forbiddenResponse("Only administrators can delete leads");
+    }
+
     const adminScopeId = await withAdminScope(session, async (id) => id);
     if (!adminScopeId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -389,9 +508,12 @@ export async function DELETE(request: Request) {
     }
 
     return executeDbOperation(async () => {
+      const leadOid = new mongoose.Types.ObjectId(id);
+      const tenantOid = new mongoose.Types.ObjectId(adminScopeId);
+
       const deletedLead = await Lead.findOneAndDelete({
-        _id: new mongoose.Types.ObjectId(id),
-        adminId: new mongoose.Types.ObjectId(adminScopeId),
+        _id: leadOid,
+        adminId: tenantOid,
       }).lean<LeadDocument>();
 
       if (!deletedLead) {

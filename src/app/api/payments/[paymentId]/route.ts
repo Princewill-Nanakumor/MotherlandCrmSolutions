@@ -8,6 +8,8 @@ import User from "@/models/User";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { Types } from "mongoose";
 import mongoose from "mongoose";
+import type { Session } from "next-auth";
+import { canReadPayment } from "@/lib/paymentAccess";
 
 interface PaymentDocument {
   _id: Types.ObjectId;
@@ -49,6 +51,10 @@ export async function GET(
     // Await the params to get the paymentId
     const { paymentId } = await params;
 
+    if (!mongoose.Types.ObjectId.isValid(paymentId)) {
+      return NextResponse.json({ error: "Invalid payment ID" }, { status: 400 });
+    }
+
     // Find the payment
     const payment = (await Payment.findById(
       paymentId
@@ -58,21 +64,7 @@ export async function GET(
       return NextResponse.json({ error: "Payment not found" }, { status: 404 });
     }
 
-    // Get user info to check if they're a super admin
-    const user = (await User.findOne({
-      email: session.user.email,
-    }).lean()) as UserDocument | null;
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Check if user is admin or if they own this payment
-    const isAdmin = user.role === "ADMIN";
-    const isOwner =
-      payment.createdBy && payment.createdBy.toString() === user._id.toString();
-
-    if (!isAdmin && !isOwner) {
+    if (!canReadPayment(session as Session, payment)) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -113,6 +105,11 @@ export async function PUT(
 
     // Await the params to get the paymentId
     const { paymentId } = await params;
+
+    if (!mongoose.Types.ObjectId.isValid(paymentId)) {
+      return NextResponse.json({ error: "Invalid payment ID" }, { status: 400 });
+    }
+
     const body = await request.json();
 
     // Get user info to check if they're a super admin
@@ -210,6 +207,10 @@ export async function DELETE(
 
     // Await the params to get the paymentId
     const { paymentId } = await params;
+
+    if (!mongoose.Types.ObjectId.isValid(paymentId)) {
+      return NextResponse.json({ error: "Invalid payment ID" }, { status: 400 });
+    }
 
     // Get user info to check if they're a super admin
     const user = (await User.findOne({

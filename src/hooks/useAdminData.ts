@@ -140,20 +140,30 @@ export function useDeleteAdmin() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (adminId: string) => {
-      const response = await fetch(`/api/admin/${adminId}`, {
+    mutationFn: async ({
+      adminId,
+      adminEmail,
+    }: {
+      adminId: string;
+      adminEmail: string;
+    }) => {
+      const response = await fetch(`/api/admin/delete-admin`, {
         method: "DELETE",
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminId, adminEmail }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete admin");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          (errorData as { error?: string }).error || "Failed to delete admin",
+        );
       }
 
       return response.json();
     },
-    onSuccess: (data, deletedAdminId) => {
+    onSuccess: (data, { adminId: deletedAdminId }) => {
       // Update the admin overview cache
       queryClient.setQueryData<AdminOverviewResponse>(
         ["admin-overview"],

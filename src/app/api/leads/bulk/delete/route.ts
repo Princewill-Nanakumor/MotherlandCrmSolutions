@@ -41,6 +41,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    for (const id of leadIds) {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return NextResponse.json(
+          { message: `Invalid lead id: ${id}`, code: "INVALID_LEAD_ID" },
+          { status: 400 },
+        );
+      }
+    }
+
     await connectMongoDB();
 
     if (!mongoose.connection.db) {

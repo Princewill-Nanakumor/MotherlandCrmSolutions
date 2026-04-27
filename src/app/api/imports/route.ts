@@ -6,6 +6,7 @@ import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
+import { checkTenantLeadImportAllowed } from "@/lib/tenantLeadImportLimits";
 
 // Define query types for MongoDB filters
 interface ImportQuery {
@@ -17,12 +18,6 @@ interface LeadsQuery {
   $or: Array<{ importId: string | mongoose.Types.ObjectId }>;
   adminId?: mongoose.Types.ObjectId;
 }
-
-// Usage limits for trial users
-const TRIAL_LIMITS = {
-  maxLeads: 50,
-  maxUsers: 1,
-};
 
 export async function GET() {
   return executeDbOperation(async () => {
@@ -97,53 +92,17 @@ export async function POST(request: Request) {
     }
     const adminObjectId = new mongoose.Types.ObjectId(adminScopeId);
 
-    // Get current lead count
-    const currentLeads = await mongoose.connection.db
-      .collection("leads")
-      .countDocuments({ adminId: adminObjectId });
-
-    // Get user subscription status
-    const user = await mongoose.connection.db
-      .collection("users")
-      .findOne({ _id: new mongoose.Types.ObjectId(session.user.id) });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const limitCheck = await checkTenantLeadImportAllowed(
+      mongoose.connection.db,
+      {
+        adminObjectId,
+        newLeadCount: requestData.recordCount,
+      },
+    );
+    if (!limitCheck.ok) {
+      return NextResponse.json(limitCheck.body, { status: limitCheck.status });
     }
-
-    // Check if user can import based on subscription/trial status
-    const isOnTrial =
-      user.isOnTrial &&
-      user.trialEndsAt &&
-      new Date() < new Date(user.trialEndsAt);
-    const hasActiveSubscription = user.subscriptionStatus === "active";
-    const maxLeads = user.maxLeads || TRIAL_LIMITS.maxLeads;
-
-    if (!isOnTrial && !hasActiveSubscription) {
-      return NextResponse.json(
-        {
-          error: "Trial expired. Please subscribe to continue importing leads.",
-          upgradeRequired: true,
-        },
-        { status: 403 }
-      );
-    }
-
-    if (currentLeads + requestData.recordCount > maxLeads) {
-      return NextResponse.json(
-        {
-          error: "Import would exceed lead limit",
-          details: {
-            currentLeads,
-            maxLeads,
-            attemptingToImport: requestData.recordCount,
-            remainingSlots: Math.max(0, maxLeads - currentLeads),
-          },
-          upgradeRequired: true,
-        },
-        { status: 403 }
-      );
-    }
+    const { currentLeads, maxLeads } = limitCheck;
 
     const importData = {
       fileName: requestData.fileName,
@@ -176,10 +135,13 @@ export async function POST(request: Request) {
         usage: {
           currentLeads: currentLeads + requestData.recordCount,
           maxLeads,
-          remainingLeads: Math.max(
-            0,
-            maxLeads - (currentLeads + requestData.recordCount)
-          ),
+          remainingLeads:
+            maxLeads === -1
+              ? -1
+              : Math.max(
+                  0,
+                  maxLeads - (currentLeads + requestData.recordCount),
+                ),
         },
       };
 

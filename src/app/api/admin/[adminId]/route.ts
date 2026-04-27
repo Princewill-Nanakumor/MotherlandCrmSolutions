@@ -54,6 +54,9 @@ export async function GET(
 
     // Await the params to get the adminId
     const { adminId } = await params;
+    if (!mongoose.Types.ObjectId.isValid(adminId)) {
+      return NextResponse.json({ error: "Invalid admin ID" }, { status: 400 });
+    }
     const adminObjectId = new mongoose.Types.ObjectId(adminId);
 
     // Get admin details
