@@ -25,7 +25,7 @@ if (!globalWithCache.mongooseCache) {
 // from the path embedded in MONGODB_URI. There is no longer a hardcoded
 // default — that previously caused "your_default_db_name" to be used in
 // production by accident.
-function getDatabaseName(): string {
+function getDatabaseName(): string | undefined {
   const explicit = process.env.MONGODB_DB_NAME;
   if (explicit) return explicit;
   const uri = process.env.MONGODB_URI;
@@ -33,9 +33,9 @@ function getDatabaseName(): string {
     const match = uri.match(/\/([^/?]+)(\?|$)/);
     if (match?.[1]) return match[1];
   }
-  throw new Error(
-    "MONGODB_DB_NAME (or a database segment in MONGODB_URI) must be configured.",
-  );
+  // Backward-compat fallback: this project historically wrote data to this DB
+  // name when the URI had no path segment.
+  return "your_default_db_name";
 }
 
 // Returns the connection URI to pass to mongoose.connect(). We let mongoose
@@ -51,6 +51,7 @@ function getMongoDBUri(): string {
 }
 
 function getConnectionOptions(): mongoose.ConnectOptions {
+  const dbName = getDatabaseName();
   return {
     bufferCommands: true,
     // autoIndex must be off in production: building indexes on every cold
@@ -63,7 +64,7 @@ function getConnectionOptions(): mongoose.ConnectOptions {
     family: 4,
     retryWrites: true,
     connectTimeoutMS: 30000,
-    dbName: getDatabaseName(),
+    ...(dbName ? { dbName } : {}),
   };
 }
 

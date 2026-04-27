@@ -36,7 +36,10 @@ const Table = React.forwardRef<
     if (event.shiftKey || Math.abs(event.deltaX) > 0) {
       const horizontalDelta = Math.abs(event.deltaX) > 0 ? event.deltaX : event.deltaY;
       container.scrollLeft += horizontalDelta;
-      event.preventDefault();
+      // React/browser may dispatch wheel as passive; only prevent default when allowed.
+      if (event.nativeEvent.cancelable) {
+        event.preventDefault();
+      }
     }
   };
 
