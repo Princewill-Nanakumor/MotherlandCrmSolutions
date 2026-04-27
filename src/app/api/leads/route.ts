@@ -1,4 +1,4 @@
-// /Users/safeconnection/Downloads/drivecrm/src/app/api/leads/route.ts
+// src/app/api/leads/route.ts
 
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
@@ -6,7 +6,8 @@ import { executeDbOperation } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import Lead, { generateLeadId } from "@/models/Lead";
-import User from "@/models/User";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
 
 interface MongoDocument {
   _id: mongoose.Types.ObjectId;
@@ -14,7 +15,7 @@ interface MongoDocument {
 }
 
 interface LeadDocument extends MongoDocument {
-  leadId?: number;
+  leadId?: string | number;
   firstName: string;
   lastName: string;
   email: string;
@@ -44,36 +45,55 @@ interface TransformedLead {
   updatedAt: string;
 }
 
+// Allow-list of fields callers may set via PUT. Anything else (adminId,
+// createdBy, leadId, _id, __v…) is silently dropped to block mass-assignment.
+const LEAD_UPDATABLE_FIELDS = new Set([
+  "firstName",
+  "lastName",
+  "email",
+  "phone",
+  "country",
+  "source",
+  "status",
+  "comments",
+  "assignedTo",
+] as const);
+
+function pickUpdatableFields(input: Record<string, unknown>) {
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(input)) {
+    if (LEAD_UPDATABLE_FIELDS.has(key as never)) {
+      out[key] = input[key];
+    }
+  }
+  return out;
+}
+
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!session?.user?.id) return unauthorizedResponse();
 
-    const user = await User.findOne({ email: session.user.email });
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
+    const adminScopeId = await withAdminScope(session, async (id) => id);
+    if (!adminScopeId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "15");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(searchParams.get("limit") || "15")),
+    );
     const skip = (page - 1) * limit;
 
     return executeDbOperation(async () => {
-      const query: { adminId?: mongoose.Types.ObjectId } = {};
-
-      if (session.user.role === "ADMIN") {
-        query.adminId = new mongoose.Types.ObjectId(session.user.id);
-      } else if (session.user.role === "AGENT" && session.user.adminId) {
-        query.adminId = new mongoose.Types.ObjectId(session.user.adminId);
-      }
+      const query = { adminId: new mongoose.Types.ObjectId(adminScopeId) };
 
       const [leads, total] = await Promise.all([
         Lead.find(query)
           .select(
-            "leadId firstName lastName email phone country source status createdAt updatedAt statusChangedAt"
+            "leadId firstName lastName email phone country source status createdAt updatedAt statusChangedAt",
           )
           .sort({ createdAt: -1 })
           .skip(skip)
@@ -99,7 +119,7 @@ export async function GET(request: Request) {
           statusChangedAt: lead.statusChangedAt
             ? new Date(lead.statusChangedAt).toISOString()
             : undefined,
-        })
+        }),
       );
 
       return NextResponse.json({
@@ -116,7 +136,7 @@ export async function GET(request: Request) {
     console.error("Error fetching leads:", error);
     return NextResponse.json(
       { error: "Failed to fetch leads" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -129,37 +149,38 @@ export async function POST(request: Request) {
     console.error("Error parsing request body:", error);
     return NextResponse.json(
       { error: "Invalid request data" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   return executeDbOperation(async () => {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
-    const leads = Array.isArray(requestData) ? requestData : [requestData];
-    console.log("Received leads to import:", leads.length);
+    const scopedAdminId = await withAdminScope(
+      session,
+      async (adminId) => adminId,
+    );
+    if (!scopedAdminId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const scopedAdminObjectId = new mongoose.Types.ObjectId(scopedAdminId);
 
-    // For single lead creation, use Mongoose create to trigger pre-save hook
+    const leads = Array.isArray(requestData) ? requestData : [requestData];
+
+    // Single-lead creation path: rely on the unique (email, adminId) index to
+    // catch duplicates atomically. The pre-`findOne` we used to do is a TOCTOU.
     if (leads.length === 1 && !leads[0]?.importId) {
       const leadData = leads[0];
+      if (!leadData?.email || typeof leadData.email !== "string") {
+        return NextResponse.json(
+          { error: "Email is required" },
+          { status: 400 },
+        );
+      }
       try {
-        // Check if lead already exists
-        const existingLead = await Lead.findOne({
-          email: leadData.email.toLowerCase(),
-          adminId: new mongoose.Types.ObjectId(session.user.id),
-        });
-
-        if (existingLead) {
-          return NextResponse.json(
-            { error: "A lead with this email already exists" },
-            { status: 400 }
-          );
-        }
-
-        // Create new lead - this will trigger the pre-save hook to generate leadId
         const newLead = await Lead.create({
           firstName: leadData.firstName,
           lastName: leadData.lastName,
@@ -169,7 +190,7 @@ export async function POST(request: Request) {
           source: leadData.source || "Manual Entry",
           comments: leadData.comments || "No comments yet",
           status: leadData.status || "NEW",
-          adminId: new mongoose.Types.ObjectId(session.user.id),
+          adminId: scopedAdminObjectId,
           createdBy: new mongoose.Types.ObjectId(session.user.id),
         });
 
@@ -187,30 +208,31 @@ export async function POST(request: Request) {
           },
         });
       } catch (error) {
-        console.error("Error creating lead:", error);
-        if (error && typeof error === "object" && "code" in error && error.code === 11000) {
+        if (
+          error &&
+          typeof error === "object" &&
+          "code" in error &&
+          error.code === 11000
+        ) {
           return NextResponse.json(
             { error: "A lead with this email already exists" },
-            { status: 400 }
+            { status: 400 },
           );
         }
+        console.error("Error creating lead:", error);
         throw error;
       }
     }
 
-    // For bulk operations (imports), generate leadIds sequentially to avoid duplicates
-    // Prepare bulk operations with generated leadIds
+    // Bulk path (imports): generate collision-resistant leadIds.
     const operations = [];
     for (const lead of leads) {
-      // Generate leadId for new documents (will be set on insert)
-      // Generate sequentially to avoid race conditions
       const leadId = await generateLeadId();
-      
       operations.push({
         updateOne: {
           filter: {
             email: lead.email.toLowerCase(),
-            adminId: new mongoose.Types.ObjectId(session.user.id),
+            adminId: scopedAdminObjectId,
           },
           update: {
             $setOnInsert: {
@@ -223,8 +245,8 @@ export async function POST(request: Request) {
               comments: lead.comments || "No comments yet",
               status: lead.status || "NEW",
               importId: lead.importId,
-              leadId: leadId, // Add generated leadId
-              adminId: new mongoose.Types.ObjectId(session.user.id),
+              leadId,
+              adminId: scopedAdminObjectId,
               createdBy: new mongoose.Types.ObjectId(session.user.id),
               createdAt: new Date(),
             },
@@ -242,24 +264,15 @@ export async function POST(request: Request) {
     let errors = 0;
 
     try {
-      // The unique index on leadId will prevent duplicates at the database level
-      // If a duplicate leadId is generated, MongoDB will reject it with E11000 error
       const result = await Lead.bulkWrite(operations, { ordered: false });
       inserted = result.upsertedCount;
       duplicates = leads.length - inserted;
     } catch (error) {
       console.error("Bulk import error:", error);
-      // Check if it's a duplicate key error (E11000) - this could be duplicate leadId
-      if (error && typeof error === "object" && "code" in error && error.code === 11000) {
-        console.error("Duplicate key error detected - this may indicate a duplicate leadId");
-        // The unique index on leadId will prevent this, but if it happens,
-        // the generateLeadId function should have prevented it
-      }
-      errors = leads.length - inserted; // fallback, or parse error for more detail
+      errors = leads.length - inserted;
     }
 
     const importId = leads[0]?.importId;
-
     if (importId && mongoose.connection && mongoose.connection.db) {
       try {
         await mongoose.connection.db.collection("imports").updateOne(
@@ -271,7 +284,7 @@ export async function POST(request: Request) {
               failureCount: duplicates + errors,
               updatedAt: new Date(),
             },
-          }
+          },
         );
       } catch (error) {
         console.error("Error updating import status:", error);
@@ -290,39 +303,58 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user?.id) return unauthorizedResponse();
+
+    const adminScopeId = await withAdminScope(session, async (id) => id);
+    if (!adminScopeId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { id, ...updateData } = await request.json();
+    const body = await request.json();
+    const { id, ...updateData } = body ?? {};
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: "Valid lead id is required" },
+        { status: 400 },
+      );
+    }
+
+    const safeUpdate = pickUpdatableFields(
+      updateData as Record<string, unknown>,
+    );
+    if (Object.keys(safeUpdate).length === 0) {
+      return NextResponse.json(
+        { error: "No updatable fields provided" },
+        { status: 400 },
+      );
+    }
+
+    if (
+      "assignedTo" in safeUpdate &&
+      safeUpdate.assignedTo &&
+      !mongoose.Types.ObjectId.isValid(safeUpdate.assignedTo as string)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid assignedTo id" },
+        { status: 400 },
+      );
+    }
 
     return executeDbOperation(async () => {
-      const query: {
-        _id: mongoose.Types.ObjectId;
-        adminId?: mongoose.Types.ObjectId;
-      } = {
-        _id: new mongoose.Types.ObjectId(id),
-      };
-
-      if (session.user.role === "ADMIN") {
-        query.adminId = new mongoose.Types.ObjectId(session.user.id);
-      } else if (session.user.role === "AGENT" && session.user.adminId) {
-        query.adminId = new mongoose.Types.ObjectId(session.user.adminId);
-      }
-
       const updatedLead = await Lead.findOneAndUpdate(
-        query,
         {
-          ...updateData,
-          updatedAt: new Date(),
+          _id: new mongoose.Types.ObjectId(id),
+          adminId: new mongoose.Types.ObjectId(adminScopeId),
         },
-        { new: true }
+        { ...safeUpdate, updatedAt: new Date() },
+        { new: true },
       ).lean<LeadDocument>();
 
       if (!updatedLead) {
         return NextResponse.json(
           { error: "Lead not found or not authorized" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -332,7 +364,7 @@ export async function PUT(request: Request) {
     console.error("Error updating lead:", error);
     return NextResponse.json(
       { error: "Failed to update lead" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -340,41 +372,32 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user?.id) return unauthorizedResponse();
+
+    const adminScopeId = await withAdminScope(session, async (id) => id);
+    if (!adminScopeId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
-
-    if (!id) {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
-        { error: "Lead ID is required" },
-        { status: 400 }
+        { error: "Valid lead id is required" },
+        { status: 400 },
       );
     }
 
     return executeDbOperation(async () => {
-      const query: {
-        _id: mongoose.Types.ObjectId;
-        adminId?: mongoose.Types.ObjectId;
-      } = {
+      const deletedLead = await Lead.findOneAndDelete({
         _id: new mongoose.Types.ObjectId(id),
-      };
-
-      if (session.user.role === "ADMIN") {
-        query.adminId = new mongoose.Types.ObjectId(session.user.id);
-      } else if (session.user.role === "AGENT" && session.user.adminId) {
-        query.adminId = new mongoose.Types.ObjectId(session.user.adminId);
-      }
-
-      const deletedLead =
-        await Lead.findOneAndDelete(query).lean<LeadDocument>();
+        adminId: new mongoose.Types.ObjectId(adminScopeId),
+      }).lean<LeadDocument>();
 
       if (!deletedLead) {
         return NextResponse.json(
           { error: "Lead not found or not authorized" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -384,7 +407,7 @@ export async function DELETE(request: Request) {
     console.error("Error deleting lead:", error);
     return NextResponse.json(
       { error: "Failed to delete lead" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

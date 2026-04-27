@@ -11,7 +11,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { useStatuses } from "@/context/StatusContext";
 import { useSession } from "next-auth/react";
 
@@ -44,6 +44,41 @@ function hexWithAlpha(hex: string, alpha: string) {
   return hex + alpha;
 }
 
+/** Predicate that matches every leads-shaped query in the cache regardless
+ *  of the trailing filter object. */
+function isLeadsListQueryKey(key: QueryKey): boolean {
+  if (!Array.isArray(key) || key.length === 0) return false;
+  const head = key[0];
+  return head === "leads" || head === "assignedLeads";
+}
+
+/** Apply a per-lead transform to whatever shape is stored under a leads key. */
+function patchLeadInData(
+  data: LeadsData,
+  leadId: string,
+  patch: (lead: Lead) => Lead,
+): LeadsData {
+  if (!data) return data;
+  if (Array.isArray(data)) {
+    return data.map((l) => (l._id === leadId ? patch(l) : l));
+  }
+  if (typeof data === "object") {
+    if ("data" in data && Array.isArray(data.data)) {
+      return {
+        ...data,
+        data: data.data.map((l) => (l._id === leadId ? patch(l) : l)),
+      };
+    }
+    if ("leads" in data && Array.isArray(data.leads)) {
+      return {
+        ...data,
+        leads: data.leads.map((l) => (l._id === leadId ? patch(l) : l)),
+      };
+    }
+  }
+  return data;
+}
+
 const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -54,11 +89,13 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    const match = window.matchMedia("(prefers-color-scheme: dark)");
-    setIsDark(match.matches);
-    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
-    match.addEventListener("change", handler);
-    return () => match.removeEventListener("change", handler);
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    const compute = () => setIsDark(root.classList.contains("dark"));
+    compute();
+    const observer = new MutationObserver(compute);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
   }, []);
 
   const findStatusByIdOrName = useCallback(
@@ -115,43 +152,23 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
       const previousStatus = lead.status;
       setIsUpdating(true);
 
-      // Update multiple cache keys to ensure consistency
-      const cacheKeysToUpdate = [
-        ["leads"], // Generic leads cache
-        ["assignedLeads", "list", session?.user?.id || ""], // Assigned leads cache
-      ];
+      const applyStatusOptimistic = (status: string) => {
+        queryClient.setQueriesData<LeadsData>(
+          { predicate: (q) => isLeadsListQueryKey(q.queryKey) },
+          (oldData) =>
+            patchLeadInData(oldData, lead._id, (l) => ({ ...l, status })),
+        );
+      };
 
-      // Optimistic update for all relevant cache keys
-      cacheKeysToUpdate.forEach((queryKey) => {
-        queryClient.setQueryData(queryKey, (oldData: LeadsData) => {
-          if (!oldData) return oldData;
+      const replaceLeadInLists = (replacement: Lead) => {
+        queryClient.setQueriesData<LeadsData>(
+          { predicate: (q) => isLeadsListQueryKey(q.queryKey) },
+          (oldData) =>
+            patchLeadInData(oldData, lead._id, () => replacement),
+        );
+      };
 
-          if (Array.isArray(oldData)) {
-            return oldData.map((l: Lead) =>
-              l._id === lead._id ? { ...l, status: newStatusId } : l,
-            );
-          } else if (oldData && typeof oldData === "object") {
-            if ("data" in oldData && Array.isArray(oldData.data)) {
-              return {
-                ...oldData,
-                data: oldData.data.map(
-                  (l: Lead) =>
-                    l._id === lead._id ? { ...l, status: newStatusId } : l, // ✅ FIXED
-                ),
-              };
-            } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
-              return {
-                ...oldData,
-                leads: oldData.leads.map(
-                  (l: Lead) =>
-                    l._id === lead._id ? { ...l, status: newStatusId } : l, // ✅ FIXED
-                ),
-              };
-            }
-          }
-          return oldData;
-        });
-      });
+      applyStatusOptimistic(newStatusId);
 
       try {
         const controller = new AbortController();
@@ -186,35 +203,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
           });
         }
 
-        // ✅ FIXED: Update all cache keys with the full updated lead data
-        cacheKeysToUpdate.forEach((queryKey) => {
-          queryClient.setQueryData(queryKey, (oldData: LeadsData) => {
-            if (!oldData) return oldData;
-
-            if (Array.isArray(oldData)) {
-              return oldData.map((l: Lead) =>
-                l._id === lead._id ? updatedLead : l,
-              );
-            } else if (oldData && typeof oldData === "object") {
-              if ("data" in oldData && Array.isArray(oldData.data)) {
-                return {
-                  ...oldData,
-                  data: oldData.data.map((l: Lead) =>
-                    l._id === lead._id ? updatedLead : l,
-                  ),
-                };
-              } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
-                return {
-                  ...oldData,
-                  leads: oldData.leads.map((l: Lead) =>
-                    l._id === lead._id ? updatedLead : l,
-                  ),
-                };
-              }
-            }
-            return oldData;
-          });
-        });
+        replaceLeadInLists(updatedLead);
 
         const optimisticStatusActivity: Activity = {
           _id: `optimistic-status-${lead._id}-${Date.now()}`,
@@ -259,14 +248,6 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
           exact: false,
         });
 
-        // ✅ FIX: Invalidate leads query to ensure table re-renders with updated status
-        // This ensures the table syncs properly after status updates
-        queryClient.invalidateQueries({
-          queryKey: ["leads"],
-          exact: false,
-          refetchType: "none",
-        });
-
         // Notify parent so the details panel and selectedLead store stay in sync
         if (onLeadUpdated) {
           onLeadUpdated(updatedLead).catch((err) =>
@@ -287,35 +268,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
           error: error instanceof Error ? error.message : "Unknown error",
         });
 
-        // ✅ FIXED: Rollback all cache keys on error
-        cacheKeysToUpdate.forEach((queryKey) => {
-          queryClient.setQueryData(queryKey, (oldData: LeadsData) => {
-            if (!oldData) return oldData;
-
-            if (Array.isArray(oldData)) {
-              return oldData.map((l: Lead) =>
-                l._id === lead._id ? { ...l, status: previousStatus } : l,
-              );
-            } else if (oldData && typeof oldData === "object") {
-              if ("data" in oldData && Array.isArray(oldData.data)) {
-                return {
-                  ...oldData,
-                  data: oldData.data.map((l: Lead) =>
-                    l._id === lead._id ? { ...l, status: previousStatus } : l,
-                  ),
-                };
-              } else if ("leads" in oldData && Array.isArray(oldData.leads)) {
-                return {
-                  ...oldData,
-                  leads: oldData.leads.map((l: Lead) =>
-                    l._id === lead._id ? { ...l, status: previousStatus } : l,
-                  ),
-                };
-              }
-            }
-            return oldData;
-          });
-        });
+        applyStatusOptimistic(previousStatus);
 
         const errorMessage =
           error instanceof Error ? error.message : "Failed to update status";
@@ -352,6 +305,9 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
       toast,
       isUpdating,
       session?.user?.id,
+      session?.user?.firstName,
+      session?.user?.lastName,
+      getStatusDisplayName,
       onLeadUpdated,
     ],
   );

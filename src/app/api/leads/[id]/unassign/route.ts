@@ -5,13 +5,15 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
 
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     await connectMongoDB();
@@ -32,15 +34,8 @@ export async function POST(request: Request) {
       _id: id,
     };
 
-    if (session.user.role === "ADMIN") {
-      // Admin can only unassign leads they created
-      query.adminId = session.user.id;
-    } else if (session.user.role === "AGENT" && session.user.adminId) {
-      // Agent can only unassign leads from their admin
-      query.adminId = session.user.adminId;
-    }
-    const adminScope =
-      session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
+    const adminScope = await withAdminScope(session, async (adminId) => adminId);
+    query.adminId = adminScope;
     if (!adminScope) {
       return NextResponse.json(
         { message: "Admin scope not found for unassignment" },
@@ -145,14 +140,6 @@ export async function POST(request: Request) {
       });
 
       await activity.save();
-
-      console.log("Unassignment activity created:", {
-        leadId: id,
-        activityId: activity._id,
-        type: "UNASSIGNMENT",
-        assignedFrom: assignedFromUser,
-        details: activity.details,
-      });
     }
 
     try {

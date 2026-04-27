@@ -4,12 +4,14 @@ import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import Reminder from "@/models/Reminder";
 import mongoose from "mongoose";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     await connectMongoDB();
@@ -38,8 +40,7 @@ export async function GET(request: NextRequest) {
       currentSeconds = now.getSeconds();
     }
 
-    const adminId =
-      session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
+    const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
 
     if (!adminId) {
       return NextResponse.json(

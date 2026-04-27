@@ -1,8 +1,9 @@
 import mongoose, { Schema } from "mongoose";
+import { randomUUID } from "crypto";
 
 export interface ILead {
   _id: mongoose.Types.ObjectId;
-  leadId?: number;
+  leadId?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -24,7 +25,7 @@ export interface ILead {
 const leadSchema = new Schema(
   {
     leadId: {
-      type: Number,
+      type: String,
       // sparse and unique are defined in the index below, not here
     },
     firstName: {
@@ -111,55 +112,9 @@ leadSchema.index({ leadId: 1 }, { unique: true, sparse: true });
 leadSchema.index({ adminId: 1, country: 1, createdAt: -1 });
 leadSchema.index({ adminId: 1, source: 1, createdAt: -1 });
 
-// Function to generate a unique 5-6 digit leadId
-export async function generateLeadId(): Promise<number> {
-  const Lead =
-    mongoose.models.Lead || mongoose.model<ILead>("Lead", leadSchema);
-
-  let attempts = 0;
-  const maxAttempts = 200; // Increased attempts
-
-  while (attempts < maxAttempts) {
-    // Generate a random number between 10000 and 999999 (5-6 digits)
-    const candidateId =
-      Math.floor(Math.random() * (999999 - 10000 + 1)) + 10000;
-
-    // Check if this ID already exists using the database index for better performance
-    const existingLead = await Lead.findOne({ leadId: candidateId }).lean();
-    if (!existingLead) {
-      // Double-check with a count query to ensure uniqueness
-      const count = await Lead.countDocuments({ leadId: candidateId });
-      if (count === 0) {
-        return candidateId;
-      }
-    }
-
-    attempts++;
-  }
-
-  // Fallback: use timestamp-based ID with random component to ensure uniqueness
-  const baseTimestamp = Date.now();
-  let fallbackId = (baseTimestamp % 900000) + 10000; // Ensure 5-6 digits
-
-  // Check if fallback ID exists, if so add random component
-  let fallbackAttempts = 0;
-  while (fallbackAttempts < 50) {
-    const existing = await Lead.findOne({ leadId: fallbackId }).lean();
-    if (!existing) {
-      const count = await Lead.countDocuments({ leadId: fallbackId });
-      if (count === 0) {
-        return fallbackId;
-      }
-    }
-    // Add random component to make it unique
-    fallbackId =
-      ((baseTimestamp + Math.floor(Math.random() * 1000)) % 900000) + 10000;
-    fallbackAttempts++;
-  }
-
-  // Last resort: use a combination that's very unlikely to collide
-  const lastResortId = Math.floor(Math.random() * (999999 - 10000 + 1)) + 10000;
-  return lastResortId;
+// Generate collision-resistant public lead ID.
+export function generateLeadId(): string {
+  return `LD-${randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase()}`;
 }
 
 // Pre-save hook: set statusChangedAt when status changes

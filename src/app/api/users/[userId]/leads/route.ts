@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
 
 function extractUserIdFromUrl(urlString: string): string {
   const url = new URL(urlString);
@@ -20,7 +22,7 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { leadIds } = await request.json();
@@ -33,7 +35,8 @@ export async function POST(request: Request) {
     }
 
     const db = mongoose.connection.db;
-    const adminObjectId = new mongoose.Types.ObjectId(session.user.id);
+    const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
+    const adminObjectId = new mongoose.Types.ObjectId(adminScopeId);
 
     // Get user with multi-tenancy filter
     const user = await db.collection("users").findOne({
@@ -92,7 +95,7 @@ export async function GET(request: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     await connectMongoDB();
@@ -112,13 +115,8 @@ export async function GET(request: Request) {
       assignedTo: new mongoose.Types.ObjectId(userId),
     };
 
-    if (session.user.role === "ADMIN") {
-      // Admin sees only leads they created
-      query.adminId = new mongoose.Types.ObjectId(session.user.id);
-    } else if (session.user.role === "AGENT" && session.user.adminId) {
-      // Agent sees only leads from their admin
-      query.adminId = new mongoose.Types.ObjectId(session.user.adminId);
-    }
+    const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
+    query.adminId = new mongoose.Types.ObjectId(adminScopeId);
 
     const leads = await db
       .collection("leads")

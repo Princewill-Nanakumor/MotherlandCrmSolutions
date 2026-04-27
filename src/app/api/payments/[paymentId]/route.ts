@@ -7,6 +7,7 @@ import Payment from "@/models/Payment";
 import User from "@/models/User";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { Types } from "mongoose";
+import mongoose from "mongoose";
 
 interface PaymentDocument {
   _id: Types.ObjectId;
@@ -101,6 +102,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ paymentId: string }> }
 ) {
+  let txnSession: mongoose.ClientSession | null = null;
   try {
     await connectMongoDB();
 
@@ -136,13 +138,27 @@ export async function PUT(
       );
     }
 
-    // Find and update the payment
-    const updatedPayment = (await Payment.findByIdAndUpdate(
-      paymentId,
-      { ...body },
-      { new: true, runValidators: true }
-    ).lean()) as PaymentDocument | null;
+    txnSession = await mongoose.startSession();
+    let updatedPaymentId: string | null = null;
 
+    await txnSession.withTransaction(async () => {
+      const updatedPayment = (await Payment.findByIdAndUpdate(
+        paymentId,
+        { ...body },
+        { new: true, runValidators: true, session: txnSession! }
+      ).lean()) as PaymentDocument | null;
+      if (updatedPayment) {
+        updatedPaymentId = String(updatedPayment._id);
+      }
+    });
+
+    if (!updatedPaymentId) {
+      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+    }
+
+    const updatedPayment = (await Payment.findById(updatedPaymentId).lean()) as
+      | PaymentDocument
+      | null;
     if (!updatedPayment) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 });
     }
@@ -172,6 +188,10 @@ export async function PUT(
       { error: "Internal server error" },
       { status: 500 }
     );
+  } finally {
+    if (txnSession) {
+      await txnSession.endSession();
+    }
   }
 }
 
@@ -179,6 +199,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ paymentId: string }> }
 ) {
+  let txnSession: mongoose.ClientSession | null = null;
   try {
     await connectMongoDB();
 
@@ -213,10 +234,13 @@ export async function DELETE(
       );
     }
 
-    // Find and delete the payment
-    const deletedPayment = (await Payment.findByIdAndDelete(
-      paymentId
-    ).lean()) as PaymentDocument | null;
+    txnSession = await mongoose.startSession();
+    let deletedPayment: PaymentDocument | null = null;
+    await txnSession.withTransaction(async () => {
+      deletedPayment = (await Payment.findByIdAndDelete(paymentId, {
+        session: txnSession!,
+      }).lean()) as PaymentDocument | null;
+    });
 
     if (!deletedPayment) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 });
@@ -232,5 +256,9 @@ export async function DELETE(
       { error: "Internal server error" },
       { status: 500 }
     );
+  } finally {
+    if (txnSession) {
+      await txnSession.endSession();
+    }
   }
 }

@@ -5,12 +5,14 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return unauthorizedResponse();
   }
 
   const { userId } = await request.json();
@@ -41,15 +43,8 @@ export async function POST(request: Request) {
         _id: id,
       };
 
-      if (session.user.role === "ADMIN") {
-        // Admin can only assign leads they created
-        query.adminId = session.user.id;
-      } else if (session.user.role === "AGENT" && session.user.adminId) {
-        // Agent can only assign leads from their admin
-        query.adminId = session.user.adminId;
-      }
-      const adminScope =
-        session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
+      const adminScope = await withAdminScope(session, async (adminId) => adminId);
+      query.adminId = adminScope;
       if (!adminScope) {
         throw new Error("Admin scope not found for assignment");
       }
@@ -73,11 +68,7 @@ export async function POST(request: Request) {
       };
 
       // Only allow assigning to users created by the same admin
-      if (session.user.role === "ADMIN") {
-        userQuery.adminId = session.user.id;
-      } else if (session.user.role === "AGENT" && session.user.adminId) {
-        userQuery.adminId = session.user.adminId;
-      }
+      userQuery.adminId = adminScope;
 
       const [assignedToUser, assignedByUser] = await Promise.all([
         User.findOne(userQuery).select("firstName lastName").session(dbSession),
@@ -153,8 +144,7 @@ export async function POST(request: Request) {
       const url = new URL(request.url);
       const pathParts = url.pathname.split("/");
       const id = pathParts[pathParts.length - 1];
-      const adminScope =
-        session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
+      const adminScope = await withAdminScope(session, async (adminId) => adminId);
       if (adminScope) {
         await publishLeadUpdatedEvent(String(adminScope), id, {
           type: "lead_assigned",

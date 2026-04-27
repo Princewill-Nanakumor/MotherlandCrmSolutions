@@ -4,8 +4,10 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import Comment from "@/models/Comment";
+import Lead from "@/models/Lead";
 import mongoose from "mongoose";
 import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 
 function extractParamsFromUrl(urlString: string): {
   id: string;
@@ -18,7 +20,6 @@ function extractParamsFromUrl(urlString: string): {
   return { id, commentId };
 }
 
-// Define session user interface
 interface SessionUser {
   id: string;
   role: "ADMIN" | "AGENT";
@@ -27,17 +28,15 @@ interface SessionUser {
   lastName?: string;
 }
 
-// Define session interface
 interface Session {
   user: SessionUser;
 }
 
-// Define comment document interface for lean queries
 interface CommentDocument {
   _id: mongoose.Types.ObjectId;
   leadId: mongoose.Types.ObjectId;
   content: string;
-  adminId?: mongoose.Types.ObjectId; // Make adminId optional
+  adminId?: mongoose.Types.ObjectId;
   createdBy: {
     _id: string;
     firstName: string;
@@ -48,78 +47,128 @@ interface CommentDocument {
   updatedAt: Date;
 }
 
-// Utility function to determine correct adminId based on user role
-function getCorrectAdminId(session: Session): mongoose.Types.ObjectId {
+function getCorrectAdminId(session: Session): mongoose.Types.ObjectId | null {
   if (session.user.role === "ADMIN") {
     return new mongoose.Types.ObjectId(session.user.id);
-  } else if (session.user.role === "AGENT" && session.user.adminId) {
+  }
+  if (session.user.role === "AGENT" && session.user.adminId) {
     return new mongoose.Types.ObjectId(session.user.adminId);
   }
-  throw new Error("Invalid user role or missing adminId for agent");
+  return null;
+}
+
+/**
+ * Fail-closed authorization: only allow editing/deleting comments where
+ *  - the comment carries an explicit adminId matching the user's tenant, AND
+ *  - the lead the comment belongs to also belongs to that tenant.
+ * Legacy comments without adminId are backfilled to the lead's adminId before mutation.
+ */
+async function authorizeAndResolveComment(
+  commentId: string,
+  leadId: string,
+  scopedAdminId: mongoose.Types.ObjectId,
+  isAdmin: boolean,
+  userId: string,
+): Promise<
+  | { ok: true; comment: CommentDocument }
+  | { ok: false; status: number; message: string }
+> {
+  if (
+    !mongoose.Types.ObjectId.isValid(commentId) ||
+    !mongoose.Types.ObjectId.isValid(leadId)
+  ) {
+    return { ok: false, status: 400, message: "Invalid id" };
+  }
+
+  const lead = await Lead.findOne({
+    _id: new mongoose.Types.ObjectId(leadId),
+    adminId: scopedAdminId,
+  })
+    .select({ _id: 1 })
+    .lean();
+  if (!lead) {
+    return { ok: false, status: 404, message: "Lead not found or not authorized" };
+  }
+
+  const comment = (await Comment.findOne({
+    _id: new mongoose.Types.ObjectId(commentId),
+    leadId: new mongoose.Types.ObjectId(leadId),
+  }).lean()) as CommentDocument | null;
+  if (!comment) {
+    return { ok: false, status: 404, message: "Comment not found" };
+  }
+
+  if (comment.adminId && !comment.adminId.equals(scopedAdminId)) {
+    return { ok: false, status: 404, message: "Comment not found" };
+  }
+
+  if (!isAdmin) {
+    const creatorId = comment.createdBy?._id?.toString?.();
+    if (!creatorId || creatorId !== userId) {
+      return { ok: false, status: 403, message: "Only the author or an admin can modify this comment" };
+    }
+  }
+
+  if (!comment.adminId) {
+    await Comment.updateOne(
+      { _id: comment._id, $or: [{ adminId: { $exists: false } }, { adminId: null }] },
+      { $set: { adminId: scopedAdminId } },
+    );
+    comment.adminId = scopedAdminId;
+  }
+
+  return { ok: true, comment };
 }
 
 export async function PUT(request: Request) {
   try {
     const { id, commentId } = extractParamsFromUrl(request.url);
     const session = (await getServerSession(authOptions)) as Session | null;
-
-    if (!session) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    if (!session) return unauthorizedResponse();
 
     const { content } = await request.json();
     if (!content?.trim()) {
       return NextResponse.json(
         { message: "Comment content is required" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    if (typeof content !== "string" || content.length > 10_000) {
+      return NextResponse.json(
+        { message: "Comment content invalid" },
+        { status: 400 },
       );
     }
 
     await connectMongoDB();
     const adminId = getCorrectAdminId(session);
+    if (!adminId) return forbiddenResponse("Admin scope unresolved");
 
-    console.log("=== COMMENT PUT REQUEST ===");
-    console.log("Lead ID:", id);
-    console.log("Comment ID:", commentId);
-    console.log("Admin ID:", adminId.toString());
-    console.log("Content:", content);
-
-    // Build query that handles both old comments (without adminId) and new comments (with adminId)
-    const query: {
-      _id: string;
-      leadId: string;
-      $or: Array<
-        { adminId?: mongoose.Types.ObjectId } | { adminId: { $exists: false } }
-      >;
-    } = {
-      _id: commentId,
-      leadId: id,
-      $or: [
-        { adminId: adminId }, // New comments with adminId
-        { adminId: { $exists: false } }, // Old comments without adminId
-      ],
-    };
-
-    console.log("Update query:", JSON.stringify(query, null, 2));
+    const isAdmin = session.user.role === "ADMIN";
+    const auth = await authorizeAndResolveComment(
+      commentId,
+      id,
+      adminId,
+      isAdmin,
+      session.user.id,
+    );
+    if (!auth.ok) {
+      return NextResponse.json({ message: auth.message }, { status: auth.status });
+    }
 
     const updated = await Comment.findOneAndUpdate(
-      query,
+      { _id: auth.comment._id, adminId },
       { content: content.trim() },
-      { new: true }
+      { new: true },
     ).lean<CommentDocument>();
 
     if (!updated) {
-      console.log("Comment not found with query:", query);
       return NextResponse.json(
         { message: "Comment not found or not authorized" },
-        { status: 404 }
+        { status: 404 },
       );
     }
-
-    console.log("Comment updated successfully:", updated._id.toString());
-
-    // Don't create activity log for comment edits - they are displayed directly in the comments section
-    // Activities should only log non-comment actions like status changes, assignments, etc.
 
     try {
       await publishLeadUpdatedEvent(adminId.toString(), id, {
@@ -136,7 +185,7 @@ export async function PUT(request: Request) {
     console.error("Error updating comment:", error);
     return NextResponse.json(
       { message: "Error updating comment" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -145,52 +194,35 @@ export async function DELETE(request: Request) {
   try {
     const { id, commentId } = extractParamsFromUrl(request.url);
     const session = (await getServerSession(authOptions)) as Session | null;
-
-    if (!session) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    if (!session) return unauthorizedResponse();
 
     await connectMongoDB();
     const adminId = getCorrectAdminId(session);
+    if (!adminId) return forbiddenResponse("Admin scope unresolved");
 
-    console.log("=== COMMENT DELETE REQUEST ===");
-    console.log("Lead ID:", id);
-    console.log("Comment ID:", commentId);
-    console.log("Admin ID:", adminId.toString());
-
-    // Build query that handles both old comments (without adminId) and new comments (with adminId)
-    const query: {
-      _id: string;
-      leadId: string;
-      $or: Array<
-        { adminId?: mongoose.Types.ObjectId } | { adminId: { $exists: false } }
-      >;
-    } = {
-      _id: commentId,
-      leadId: id,
-      $or: [
-        { adminId: adminId }, // New comments with adminId
-        { adminId: { $exists: false } }, // Old comments without adminId
-      ],
-    };
-
-    console.log("Delete query:", JSON.stringify(query, null, 2));
-
-    const deleted =
-      await Comment.findOneAndDelete(query).lean<CommentDocument>();
-
-    if (!deleted) {
-      console.log("Comment not found with query:", query);
-      return NextResponse.json(
-        { message: "Comment not found or not authorized" },
-        { status: 404 }
-      );
+    const isAdmin = session.user.role === "ADMIN";
+    const auth = await authorizeAndResolveComment(
+      commentId,
+      id,
+      adminId,
+      isAdmin,
+      session.user.id,
+    );
+    if (!auth.ok) {
+      return NextResponse.json({ message: auth.message }, { status: auth.status });
     }
 
-    console.log("Comment deleted successfully:", deleted._id.toString());
+    const deleted = await Comment.findOneAndDelete({
+      _id: auth.comment._id,
+      adminId,
+    }).lean<CommentDocument>();
 
-    // Don't create activity log for comment deletions - they are displayed directly in the comments section
-    // Activities should only log non-comment actions like status changes, assignments, etc.
+    if (!deleted) {
+      return NextResponse.json(
+        { message: "Comment not found or not authorized" },
+        { status: 404 },
+      );
+    }
 
     try {
       await publishLeadUpdatedEvent(adminId.toString(), id, {
@@ -207,7 +239,7 @@ export async function DELETE(request: Request) {
     console.error("Error deleting comment:", error);
     return NextResponse.json(
       { message: "Error deleting comment" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

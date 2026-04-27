@@ -4,6 +4,11 @@
 import { useMemo, useCallback } from "react";
 import { Lead } from "@/types/leads";
 import { User } from "@/types/user.types";
+import {
+  isLegacyNumericLeadId,
+  isPrefixedLeadId,
+  normalizeLeadId,
+} from "@/lib/leadId";
 
 type SortField =
   | "leadId"
@@ -44,11 +49,22 @@ export const useTableSorting = ({
     const searchTerm = trimmedQuery.toLowerCase();
     const searchDigitsOnly = trimmedQuery.replace(/\D/g, "");
 
-    const isAllDigits = /^\d+$/.test(trimmedQuery);
-    const numericId = isAllDigits ? parseInt(trimmedQuery, 10) : null;
+    const isLegacyNumericId = isLegacyNumericLeadId(trimmedQuery);
+    const numericId = isLegacyNumericId ? parseInt(trimmedQuery, 10) : null;
 
     return leads.filter((lead) => {
-      if (numericId !== null && !Number.isNaN(numericId) && lead.leadId === numericId) {
+      const normalizedLeadId = normalizeLeadId(lead.leadId);
+      if (
+        numericId !== null &&
+        !Number.isNaN(numericId) &&
+        normalizedLeadId === normalizeLeadId(numericId)
+      ) {
+        return true;
+      }
+      if (
+        isPrefixedLeadId(trimmedQuery) &&
+        normalizedLeadId.toUpperCase() === trimmedQuery.toUpperCase()
+      ) {
         return true;
       }
 
@@ -82,9 +98,9 @@ export const useTableSorting = ({
 
       switch (sortField) {
         case "leadId": {
-          const idA = a.leadId || 0;
-          const idB = b.leadId || 0;
-          return (idA - idB) * multiplier;
+          const idA = normalizeLeadId(a.leadId);
+          const idB = normalizeLeadId(b.leadId);
+          return idA.localeCompare(idB, undefined, { numeric: true }) * multiplier;
         }
         case "name": {
           const getDisplayName = (lead: Lead) =>

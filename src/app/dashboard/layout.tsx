@@ -212,7 +212,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       params.delete("search");
     }
     params.set("page", "1");
-    router.replace(`${pathname}?${params.toString()}`);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchQuery, showSearch, pathname, searchParams, router]);
 
   // Page title mapping

@@ -153,7 +153,7 @@ function AuthStateHandler() {
     if (staleSignOutStartedRef.current) return;
     staleSignOutStartedRef.current = true;
     void signOut({ redirect: false });
-  }, [status, sessionUserId]);
+  }, [status, session]);
 
   // If session stays "loading" (e.g. /api/auth/session slow or fails in production), show form after 2.5s so user can sign in
   useEffect(() => {

@@ -1,14 +1,16 @@
 // app/api/leads/bulk/status/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
-import Activity from "@/models/Activity";
 import {
   publishAdminLeadsUpdatedEvent,
   publishLeadUpdatedEvent,
 } from "@/libs/ablyServer";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
+import { rateLimitEnhanced } from "@/lib/rateLimit";
 
 interface BulkStatusChangeRequest {
   leadIds: string[];
@@ -28,12 +30,19 @@ interface StatusDocument {
   name: string;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    if (!rateLimitEnhanced(request, 20, 60000)) {
+      return NextResponse.json(
+        { message: "Too many bulk status requests" },
+        { status: 429 },
+      );
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.role || session.user.role !== "ADMIN") {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { leadIds, status: newStatus }: BulkStatusChangeRequest =
@@ -54,23 +63,14 @@ export async function POST(request: Request) {
 
     const db = mongoose.connection.db;
     const leadObjectIds = leadIds.map((id) => new mongoose.Types.ObjectId(id));
-    const adminObjectId = new mongoose.Types.ObjectId(session.user.id);
-
-    // Get leads before update with multi-tenancy filter
-    const beforeLeads = (await db
-      .collection("leads")
-      .find({
-        _id: { $in: leadObjectIds },
-        adminId: adminObjectId, // Multi-tenancy: only leads belonging to this admin
-      })
-      .toArray()) as LeadDocument[];
-
-    if (beforeLeads.length === 0) {
+    const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
+    if (!adminScopeId) {
       return NextResponse.json(
-        { message: "No valid leads found to update" },
-        { status: 400 }
+        { message: "Admin scope not found for session user" },
+        { status: 400 },
       );
     }
+    const adminObjectId = new mongoose.Types.ObjectId(adminScopeId);
 
     // Validate status
     const commonStatuses = [
@@ -128,81 +128,106 @@ export async function POST(request: Request) {
       console.error("Status lookup error:", statusLookupError);
     }
 
-    // Update leads and create activities
-    const updatePromises = beforeLeads.map(async (lead) => {
-      const previousStatus = lead.status;
-
-      // Get previous status name
-      let previousStatusName = previousStatus;
-      try {
-        const statusCollection = db.collection("status");
-        const statusesCollection = db.collection("statuses");
-        if (mongoose.Types.ObjectId.isValid(previousStatus)) {
-          const previousStatusQuery = {
-            _id: new mongoose.Types.ObjectId(previousStatus),
-          };
-          const prevStatusDoc =
-            ((await statusCollection.findOne(previousStatusQuery)) as StatusDocument | null) ??
-            ((await statusesCollection.findOne(previousStatusQuery)) as StatusDocument | null);
-          if (prevStatusDoc?.name) {
-            previousStatusName = prevStatusDoc.name;
-          }
-        }
-      } catch (error) {
-        console.error("Error looking up previous status:", error);
-      }
-
-      // Skip if status is the same
-      if (previousStatus === newStatus) {
-        return null;
-      }
-
-      // Update lead
-      const now = new Date();
-      await db.collection("leads").findOneAndUpdate(
-        { _id: lead._id },
-        {
-          $set: {
-            status: newStatus,
-            updatedAt: now,
-            statusChangedAt: now,
-          },
-        }
-      );
-
-      // Create activity log
-      try {
-        await Activity.create({
-          type: "STATUS_CHANGE",
-          userId: new mongoose.Types.ObjectId(session.user.id),
-          details: `Status changed from ${previousStatusName} to ${newStatusName}`,
-          leadId: lead._id,
-          adminId: adminObjectId,
-          timestamp: new Date(),
-          metadata: {
-            previousStatus: previousStatus,
-            previousStatusName: previousStatusName,
-            newStatusId: newStatus,
-            newStatusName: newStatusName,
-            oldStatusId: previousStatus,
-            oldStatus: previousStatusName,
-            newStatus: newStatusName,
-            performedBy: {
-              id: session.user.id,
-              firstName: (session.user as { firstName?: string }).firstName ?? "",
-              lastName: (session.user as { lastName?: string }).lastName ?? "",
+    const mongoSession = await mongoose.startSession();
+    let updatedLeads: mongoose.Types.ObjectId[] = [];
+    try {
+      await mongoSession.withTransaction(async () => {
+        const beforeLeads = (await db
+          .collection("leads")
+          .find(
+            {
+              _id: { $in: leadObjectIds },
+              adminId: adminObjectId,
             },
-          },
-        });
-      } catch (activityError) {
-        console.error("Error creating activity log:", activityError);
+            { session: mongoSession },
+          )
+          .toArray()) as LeadDocument[];
+
+        if (beforeLeads.length === 0) {
+          throw new Error("NO_VALID_LEADS");
+        }
+
+        const changedLeads = beforeLeads.filter((lead) => lead.status !== newStatus);
+        const now = new Date();
+
+        for (const lead of changedLeads) {
+          const previousStatus = lead.status;
+          let previousStatusName = previousStatus;
+
+          try {
+            const statusCollection = db.collection("status");
+            const statusesCollection = db.collection("statuses");
+            if (mongoose.Types.ObjectId.isValid(previousStatus)) {
+              const previousStatusQuery = {
+                _id: new mongoose.Types.ObjectId(previousStatus),
+              };
+              const prevStatusDoc =
+                ((await statusCollection.findOne(previousStatusQuery, {
+                  session: mongoSession,
+                })) as StatusDocument | null) ??
+                ((await statusesCollection.findOne(previousStatusQuery, {
+                  session: mongoSession,
+                })) as StatusDocument | null);
+              if (prevStatusDoc?.name) {
+                previousStatusName = prevStatusDoc.name;
+              }
+            }
+          } catch (error) {
+            console.error("Error looking up previous status:", error);
+          }
+
+          await db.collection("leads").updateOne(
+            { _id: lead._id, adminId: adminObjectId },
+            {
+              $set: {
+                status: newStatus,
+                updatedAt: now,
+                statusChangedAt: now,
+              },
+            },
+            { session: mongoSession },
+          );
+
+          await db.collection("activities").insertOne(
+            {
+              type: "STATUS_CHANGE",
+              userId: new mongoose.Types.ObjectId(session.user.id),
+              details: `Status changed from ${previousStatusName} to ${newStatusName}`,
+              leadId: lead._id,
+              adminId: adminObjectId,
+              timestamp: now,
+              metadata: {
+                previousStatus,
+                previousStatusName,
+                newStatusId: newStatus,
+                newStatusName,
+                oldStatusId: previousStatus,
+                oldStatus: previousStatusName,
+                newStatus: newStatusName,
+                performedBy: {
+                  id: session.user.id,
+                  firstName: (session.user as { firstName?: string }).firstName ?? "",
+                  lastName: (session.user as { lastName?: string }).lastName ?? "",
+                },
+              },
+            },
+            { session: mongoSession },
+          );
+        }
+
+        updatedLeads = changedLeads.map((lead) => lead._id);
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === "NO_VALID_LEADS") {
+        return NextResponse.json(
+          { message: "No valid leads found to update" },
+          { status: 400 },
+        );
       }
-
-      return lead._id;
-    });
-
-    const results = await Promise.all(updatePromises);
-    const updatedLeads = results.filter((id) => id !== null);
+      throw error;
+    } finally {
+      await mongoSession.endSession();
+    }
 
     await Promise.allSettled(
       updatedLeads.map((leadId) =>

@@ -4,61 +4,45 @@ import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
+import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    if (!session?.user?.id) return unauthorizedResponse();
 
     await connectMongoDB();
-
-    // Check if database connection is available
     if (!mongoose.connection.db) {
       throw new Error("Database connection not available");
     }
 
     const userObjectId = new mongoose.Types.ObjectId(session.user.id);
 
-    console.log("=== ASSIGNED LEADS GET REQUEST ===");
-    console.log("User adminId:", session.user.adminId);
+    // Resolve the tenant scope id. We MUST always include adminId in the
+    // query — agents that are missing adminId are not allowed through.
+    let scopedAdminId: mongoose.Types.ObjectId | null = null;
+    if (session.user.role === "ADMIN") {
+      scopedAdminId = userObjectId;
+    } else if (session.user.role === "AGENT" && session.user.adminId) {
+      scopedAdminId = new mongoose.Types.ObjectId(session.user.adminId);
+    }
+    if (!scopedAdminId) {
+      return forbiddenResponse("Admin scope unresolved");
+    }
 
-    // Build query based on user role and multi-tenancy
-    let query: {
-      $or?: Array<{
+    const query: {
+      $or: Array<{
         "assignedTo._id"?: mongoose.Types.ObjectId;
         assignedTo?: mongoose.Types.ObjectId;
       }>;
-      adminId?: mongoose.Types.ObjectId;
-    } = {};
-
-    if (session.user.role === "ADMIN") {
-      // Admin sees all assigned leads that belong to them
-      query = {
-        $or: [
-          { "assignedTo._id": userObjectId }, // Object format
-          { assignedTo: userObjectId }, // String/ObjectId format
-        ],
-        adminId: userObjectId, // Multi-tenancy: only leads created by this admin
-      };
-    } else if (session.user.role === "AGENT") {
-      // Agent sees only leads assigned to them from their admin
-      const adminId = session.user.adminId
-        ? new mongoose.Types.ObjectId(session.user.adminId)
-        : undefined;
-
-      query = {
-        $or: [
-          { "assignedTo._id": userObjectId }, // Object format
-          { assignedTo: userObjectId }, // String/ObjectId format
-        ],
-        ...(adminId && { adminId }), // Multi-tenancy: only leads from their admin
-      };
-    }
-
-    console.log("Assigned leads query:", JSON.stringify(query, null, 2));
+      adminId: mongoose.Types.ObjectId;
+    } = {
+      $or: [
+        { "assignedTo._id": userObjectId },
+        { assignedTo: userObjectId },
+      ],
+      adminId: scopedAdminId,
+    };
 
     const assignedLeads = await mongoose.connection.db
       .collection("leads")
@@ -66,15 +50,7 @@ export async function GET() {
       .sort({ updatedAt: -1 })
       .toArray();
 
-    console.log("Found assigned leads count:", assignedLeads.length);
-
-    // Get adminId for comment queries
-    const adminIdForComments =
-      session.user.role === "ADMIN"
-        ? userObjectId
-        : session.user.adminId
-          ? new mongoose.Types.ObjectId(session.user.adminId)
-          : null;
+    const adminIdForComments = scopedAdminId;
 
     // Collect lead IDs for batch comment lookup
     const leadIds = assignedLeads.map(
@@ -233,7 +209,7 @@ export async function GET() {
 
       return {
         _id: leadIdString,
-        leadId: (lead.leadId as number) || undefined,
+        leadId: (lead.leadId as string | number | undefined) ?? undefined,
         firstName: lead.firstName,
         lastName: lead.lastName,
         email: lead.email,
@@ -259,12 +235,6 @@ export async function GET() {
       };
     });
 
-    console.log("Transformed leads count:", transformedLeads.length);
-    console.log(
-      "First lead sample:",
-      JSON.stringify(transformedLeads[0], null, 2)
-    );
-
     return NextResponse.json({
       assignedLeads: transformedLeads,
       count: transformedLeads.length,
@@ -272,11 +242,8 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching assigned leads:", error);
     return NextResponse.json(
-      {
-        message: "Error fetching assigned leads",
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
+      { message: "Error fetching assigned leads" },
+      { status: 500 },
     );
   }
 }

@@ -248,11 +248,8 @@ export const useLeadsStore = create<LeadsState>()(
             );
 
             if (!hasChanges) {
-              console.log("No changes detected, skipping update");
               return state;
             }
-
-            console.log("Optimistic update:", { leadId, updates });
 
             const updatedLeads = state.leads.map((lead) =>
               lead._id === leadId ? { ...lead, ...updates } : lead

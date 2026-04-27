@@ -6,6 +6,7 @@ import User from "@/models/User";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { Types } from "mongoose";
 import mongoose from "mongoose";
+import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 
 interface PaymentDocument {
   _id: Types.ObjectId;
@@ -36,12 +37,13 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ paymentId: string }> }
 ) {
+  let txnSession: mongoose.ClientSession | null = null;
   try {
     await connectMongoDB();
 
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     // Await the params to get the paymentId
@@ -69,91 +71,81 @@ export async function POST(
       process.env.SUPER_ADMIN_EMAILS?.split(",").map((email) => email.trim()) ||
       [];
 
-    console.log("Debug info:", {
-      userEmail: user.email,
-      userRole: user.role,
-      superAdminEmails,
-      isSuperAdmin:
-        user.role === "ADMIN" && superAdminEmails.includes(user.email),
-      sessionUserEmail: session.user.email,
-    });
-
     const isSuperAdmin =
       user.role === "ADMIN" && superAdminEmails.includes(user.email);
 
     if (!isSuperAdmin) {
-      return NextResponse.json(
-        {
-          error: "Super admin access required to approve payments",
-          debug: {
-            userEmail: user.email,
-            userRole: user.role,
-            superAdminEmails,
-            isSuperAdmin,
-          },
-        },
-        { status: 403 }
+      return forbiddenResponse(
+        "Super admin access required to approve payments",
+        "INSUFFICIENT_PERMISSIONS",
       );
     }
 
-    // Find the payment
-    const payment = (await Payment.findById(
-      paymentId
-    ).lean()) as PaymentDocument | null;
+    txnSession = await mongoose.startSession();
+    let updatedPayment: PaymentDocument | null = null;
+    let updatedAdmin: UserDocument | null = null;
+    let previousStatus: PaymentDocument["status"] | null = null;
 
-    if (!payment) {
+    await txnSession.withTransaction(async () => {
+      const payment = (await Payment.findById(paymentId)
+        .session(txnSession)
+        .lean()) as PaymentDocument | null;
+
+      if (!payment) {
+        throw new Error("PAYMENT_NOT_FOUND");
+      }
+
+      previousStatus = payment.status;
+      if (payment.status !== "PENDING") {
+        return;
+      }
+
+      const admin = (await User.findById(payment.adminId)
+        .session(txnSession)
+        .lean()) as UserDocument | null;
+
+      if (!admin) {
+        throw new Error("ADMIN_NOT_FOUND");
+      }
+
+      updatedPayment = (await Payment.findOneAndUpdate(
+        { _id: paymentId, status: "PENDING" },
+        {
+          status: "COMPLETED",
+          approvedAt: new Date(),
+          approvedBy: user._id,
+        },
+        { new: true, runValidators: true, session: txnSession },
+      ).lean()) as PaymentDocument | null;
+
+      if (!updatedPayment) {
+        return;
+      }
+
+      updatedAdmin = (await User.findByIdAndUpdate(
+        payment.adminId,
+        { $inc: { balance: payment.amount } },
+        { new: true, runValidators: true, session: txnSession },
+      ).lean()) as UserDocument | null;
+
+      if (!updatedAdmin) {
+        throw new Error("ADMIN_BALANCE_UPDATE_FAILED");
+      }
+    });
+
+    if (previousStatus === null) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 });
     }
 
-    if (payment.status !== "PENDING") {
+    // Idempotency guard: repeated approval does not double-credit.
+    if (!updatedPayment || !updatedAdmin) {
       return NextResponse.json(
-        { error: "Only pending payments can be approved" },
-        { status: 400 }
+        { error: "Payment already processed", code: "ALREADY_PROCESSED" },
+        { status: 409 },
       );
     }
-
-    // Get the admin who created the payment
-    const admin = (await User.findById(
-      payment.adminId
-    ).lean()) as UserDocument | null;
-
-    if (!admin) {
-      return NextResponse.json({ error: "Admin not found" }, { status: 404 });
-    }
-
-    // Update payment status and approval info
-    const updatedPayment = (await Payment.findByIdAndUpdate(
-      paymentId,
-      {
-        status: "COMPLETED",
-        approvedAt: new Date(),
-        approvedBy: user._id,
-      },
-      { new: true, runValidators: true }
-    ).lean()) as PaymentDocument | null;
-
-    if (!updatedPayment) {
-      return NextResponse.json(
-        { error: "Failed to update payment" },
-        { status: 500 }
-      );
-    }
-
-    // Update admin's balance
-    const updatedAdmin = (await User.findByIdAndUpdate(
-      payment.adminId,
-      {
-        $inc: { balance: payment.amount },
-      },
-      { new: true, runValidators: true }
-    ).lean()) as UserDocument | null;
-
-    if (!updatedAdmin) {
-      return NextResponse.json(
-        { error: "Failed to update admin balance" },
-        { status: 500 }
-      );
-    }
+    const approvedPayment = updatedPayment as PaymentDocument;
+    const creditedAdmin = updatedAdmin as UserDocument;
 
     // Create notification for the admin who made the payment (with deduplication)
     if (!mongoose.connection.db) {
@@ -166,13 +158,13 @@ export async function POST(
 
     const notificationDoc = {
       type: "PAYMENT_APPROVED",
-      message: `Your payment of ${payment.amount} ${payment.currency} has been approved successfully`,
+      message: `Your payment of ${approvedPayment.amount} ${approvedPayment.currency} has been approved successfully`,
       role: "ADMIN",
       link: `/dashboard/payment-details/${paymentId}`, // Fixed link to match your routes
       paymentId: paymentId,
-      amount: payment.amount,
-      currency: payment.currency,
-      userId: payment.adminId?.toString(),
+      amount: approvedPayment.amount,
+      currency: approvedPayment.currency,
+      userId: approvedPayment.adminId?.toString(),
       createdAt: now.toISOString(),
       read: false,
       timestamp: now.getTime(),
@@ -188,29 +180,41 @@ export async function POST(
 
     // Convert MongoDB ObjectId to string for JSON response
     const paymentResponse = {
-      ...updatedPayment,
-      _id: String(updatedPayment._id),
-      createdBy: updatedPayment.createdBy
-        ? String(updatedPayment.createdBy)
+      ...approvedPayment,
+      _id: String(approvedPayment._id),
+      createdBy: approvedPayment.createdBy
+        ? String(approvedPayment.createdBy)
         : undefined,
-      approvedBy: updatedPayment.approvedBy
-        ? String(updatedPayment.approvedBy)
+      approvedBy: approvedPayment.approvedBy
+        ? String(approvedPayment.approvedBy)
         : undefined,
-      adminId: updatedPayment.adminId
-        ? String(updatedPayment.adminId)
+      adminId: approvedPayment.adminId
+        ? String(approvedPayment.adminId)
         : undefined,
     };
 
     return NextResponse.json({
       success: true,
       payment: paymentResponse,
-      message: `Payment approved successfully. Admin balance updated to ${updatedAdmin.balance}`,
+      message: `Payment approved successfully. Admin balance updated to ${creditedAdmin.balance}`,
     });
   } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "PAYMENT_NOT_FOUND") {
+        return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+      }
+      if (error.message === "ADMIN_NOT_FOUND") {
+        return NextResponse.json({ error: "Admin not found" }, { status: 404 });
+      }
+    }
     console.error("Error approving payment:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
+  } finally {
+    if (txnSession) {
+      await txnSession.endSession();
+    }
   }
 }

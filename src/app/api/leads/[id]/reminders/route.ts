@@ -6,6 +6,8 @@ import Reminder from "@/models/Reminder";
 import Activity from "@/models/Activity";
 import mongoose from "mongoose";
 import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
 
 // GET - Fetch all reminders for a lead
 export async function GET(
@@ -15,15 +17,14 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     await connectMongoDB();
     const { id } = await params;
 
     // Get adminId to ensure we're working within the same organization
-    const adminId =
-      session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
+    const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
 
     const reminders = await Reminder.find({
       leadId: new mongoose.Types.ObjectId(id),
@@ -51,7 +52,7 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     await connectMongoDB();
@@ -96,8 +97,7 @@ export async function POST(
     }
 
     // Get adminId based on user role
-    const adminId =
-      session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
+    const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
 
     const reminderData = {
       title,

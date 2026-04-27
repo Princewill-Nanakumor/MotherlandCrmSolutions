@@ -6,6 +6,7 @@ import User from "@/models/User";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { Types } from "mongoose";
 import mongoose from "mongoose";
+import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 
 interface PaymentDocument {
   _id: Types.ObjectId;
@@ -41,7 +42,7 @@ export async function POST(
 
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     // Await the params to get the paymentId
@@ -72,9 +73,9 @@ export async function POST(
       user.role === "ADMIN" && superAdminEmails.includes(user.email);
 
     if (!isSuperAdmin) {
-      return NextResponse.json(
-        { error: "Super admin access required to reject payments" },
-        { status: 403 }
+      return forbiddenResponse(
+        "Super admin access required to reject payments",
+        "INSUFFICIENT_PERMISSIONS",
       );
     }
 
@@ -94,21 +95,21 @@ export async function POST(
       );
     }
 
-    // Update payment status and rejection info
-    const updatedPayment = (await Payment.findByIdAndUpdate(
-      paymentId,
+    // Idempotency guard: only transition pending payments.
+    const updatedPayment = (await Payment.findOneAndUpdate(
+      { _id: paymentId, status: "PENDING" },
       {
         status: "FAILED",
-        approvedAt: new Date(), // Consider renaming this to 'processedAt' since it's used for both approve/reject
-        approvedBy: user._id, // Consider renaming this to 'processedBy'
+        approvedAt: new Date(),
+        approvedBy: user._id,
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     ).lean()) as PaymentDocument | null;
 
     if (!updatedPayment) {
       return NextResponse.json(
-        { error: "Failed to update payment" },
-        { status: 500 }
+        { error: "Payment already processed", code: "ALREADY_PROCESSED" },
+        { status: 409 },
       );
     }
 

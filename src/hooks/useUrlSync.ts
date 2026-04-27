@@ -5,6 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useLeadsStore } from "@/stores/leadsStore";
 import { useLeads } from "@/hooks/useLeads";
 import { Lead } from "@/types/leads";
+import {
+  isLegacyNumericLeadId,
+  isPrefixedLeadId,
+  normalizeLeadId,
+} from "@/lib/leadId";
 
 export const useUrlSync = () => {
   const router = useRouter();
@@ -20,13 +25,20 @@ export const useUrlSync = () => {
 
     const leadIdParam = searchParams?.get("lead");
     if (leadIdParam && leads.length > 0) {
-      // Check if it's a numeric leadId (5-6 digits) or MongoDB _id
-      const isNumericId = /^\d{5,6}$/.test(leadIdParam);
+      // Support legacy numeric leadId and new prefixed leadId.
+      const isLegacyNumericId = isLegacyNumericLeadId(leadIdParam);
       let lead: Lead | undefined;
 
-      if (isNumericId) {
+      if (isLegacyNumericId) {
         const numericId = parseInt(leadIdParam, 10);
-        lead = leads.find((l) => l.leadId === numericId);
+        lead = leads.find(
+          (l) => normalizeLeadId(l.leadId) === normalizeLeadId(numericId)
+        );
+      } else if (isPrefixedLeadId(leadIdParam)) {
+        lead = leads.find(
+          (l) =>
+            normalizeLeadId(l.leadId).toUpperCase() === leadIdParam.toUpperCase()
+        );
       } else {
         lead = leads.find((l) => l._id === leadIdParam);
       }
@@ -51,7 +63,7 @@ export const useUrlSync = () => {
 
     if (lead) {
       // Use leadId if available, otherwise fall back to _id
-      const idToUse = lead.leadId ? lead.leadId.toString() : lead._id;
+      const idToUse = normalizeLeadId(lead.leadId) || lead._id;
       params.set("lead", idToUse);
       params.set("name", `${lead.firstName ?? ""}-${lead.lastName ?? ""}`);
     } else {

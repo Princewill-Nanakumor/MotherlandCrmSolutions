@@ -1,5 +1,10 @@
 // src/utils/LeadUtils.ts
 import { Lead } from "@/types/leads";
+import {
+  isLegacyNumericLeadId,
+  isPrefixedLeadId,
+  normalizeLeadId,
+} from "@/lib/leadId";
 
 // Constants for filter values
 export const FILTER_VALUES = {
@@ -342,13 +347,19 @@ export const searchLeads = (leads: Lead[], searchQuery: string): Lead[] => {
     "leads"
   );
 
-  // Check if query is a numeric ID (5-6 digits) - check original trimmed query, not lowercase
-  const isNumericId = /^\d{5,6}$/.test(trimmedQuery);
-  const numericId = isNumericId ? parseInt(trimmedQuery, 10) : null;
+  const isLegacyNumericId = isLegacyNumericLeadId(trimmedQuery);
+  const isPrefixedId = isPrefixedLeadId(trimmedQuery);
+  const numericId = isLegacyNumericId ? parseInt(trimmedQuery, 10) : null;
+  const prefixedId = isPrefixedId ? trimmedQuery.toUpperCase() : null;
 
   const results = leads.filter((lead) => {
-    // Search by leadId if query is all digits (exact match)
-    if (numericId !== null && lead.leadId === numericId) {
+    // Search by leadId: support legacy numeric and new prefixed ID.
+    const normalizedLeadId = normalizeLeadId(lead.leadId);
+    if (
+      (numericId !== null &&
+        normalizedLeadId === normalizeLeadId(numericId)) ||
+      (prefixedId !== null && normalizedLeadId.toUpperCase() === prefixedId)
+    ) {
       console.log("searchLeads: Match found by leadId:", {
         id: lead._id,
         leadId: lead.leadId,

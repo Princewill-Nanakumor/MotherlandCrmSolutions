@@ -37,8 +37,29 @@ export const apiCallWithSessionRefresh = async (
       localStorage.setItem(`etag-${url}`, newETag);
     }
 
-    // If unauthorized, try to refresh session
+    // If unauthorized, try to refresh session unless API explicitly requests forced logout.
     if (response.status === 401) {
+      let forceLogout = false;
+      try {
+        const cloned = response.clone();
+        const body = await cloned.json();
+        forceLogout = body?.forceLogout === true;
+      } catch {
+        // Ignore JSON parse failures; keep default refresh flow.
+      }
+
+      if (forceLogout) {
+        if (typeof window !== "undefined") {
+          const { pathname, search } = window.location;
+          const callbackPath =
+            pathname === "/login" ? "/dashboard" : `${pathname}${search}`;
+          window.location.href = `/login?expired=true&callbackUrl=${encodeURIComponent(
+            callbackPath,
+          )}`;
+        }
+        throw new Error("Session expired. Please log in again.");
+      }
+
       const refreshController = new AbortController();
       const refreshTimeoutId = setTimeout(
         () => refreshController.abort(),

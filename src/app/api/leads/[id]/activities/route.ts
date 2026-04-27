@@ -2,12 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import Activity from "@/models/Activity";
+import Lead from "@/models/Lead";
 import User from "@/models/User";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
+import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 
-// Cache for status names to reduce database queries
+// Bounded LRU-ish cache for status name resolution. Module-level caches in
+// serverless environments otherwise grow unbounded across invocations.
+const STATUS_CACHE_MAX = 500;
 const statusCache = new Map<string, string>();
+function setStatusCache(key: string, value: string) {
+  if (statusCache.size >= STATUS_CACHE_MAX) {
+    const firstKey = statusCache.keys().next().value;
+    if (firstKey) statusCache.delete(firstKey);
+  }
+  statusCache.set(key, value);
+}
 
 // Helper function to resolve status names
 async function resolveStatusNames(
@@ -50,7 +61,7 @@ async function resolveStatusNames(
           const statusId = status._id.toString();
           const statusName = status.name;
           statusNames[statusId] = statusName;
-          statusCache.set(statusId, statusName);
+          setStatusCache(statusId, statusName);
         });
       }
     } catch (error) {
@@ -75,14 +86,14 @@ interface Session {
   user: SessionUser;
 }
 
-// Utility function to determine correct adminId based on user role
-function getCorrectAdminId(session: Session): mongoose.Types.ObjectId {
+function getCorrectAdminId(session: Session): mongoose.Types.ObjectId | null {
   if (session.user.role === "ADMIN") {
     return new mongoose.Types.ObjectId(session.user.id);
-  } else if (session.user.role === "AGENT" && session.user.adminId) {
+  }
+  if (session.user.role === "AGENT" && session.user.adminId) {
     return new mongoose.Types.ObjectId(session.user.adminId);
   }
-  throw new Error("Invalid user role or missing adminId for agent");
+  return null;
 }
 
 // Type for activity document from lean query
@@ -112,41 +123,56 @@ interface ActivityDocument {
 
 export async function GET(request: NextRequest) {
   try {
-    // --- Debugging omitted for brevity, keep if needed ---
-
     const session = (await getServerSession(authOptions)) as Session | null;
-    if (!session) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    if (!session) return unauthorizedResponse();
 
     const url = new URL(request.url);
     const pathParts = url.pathname.split("/");
     const leadId = pathParts[pathParts.length - 2];
 
-    const page = parseInt(url.searchParams.get("page") || "1");
-    const limit = parseInt(url.searchParams.get("limit") || "20");
+    if (!mongoose.Types.ObjectId.isValid(leadId)) {
+      return NextResponse.json({ message: "Invalid lead id" }, { status: 400 });
+    }
+
+    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"));
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(url.searchParams.get("limit") || "20")),
+    );
     const skip = (page - 1) * limit;
 
     await connectMongoDB();
     const adminId = getCorrectAdminId(session);
+    if (!adminId) return forbiddenResponse("Admin scope unresolved");
 
-    // Ensure User model is registered by checking if it exists
-    // This forces the User model to be loaded and registered with Mongoose
+    // Force User model registration so populate() resolves correctly.
     if (!mongoose.models.User) {
-      console.log("User model not found, ensuring it's registered");
-      // This will trigger the User model registration by accessing the model
-      const userModel = User;
-      console.log("User model registered:", !!userModel);
+      void User;
     }
 
-    // Build query that handles both old activities (without adminId) and new activities (with adminId)
-    // Exclude COMMENT type activities since comments are displayed directly in the comments section
+    const leadObjectId = new mongoose.Types.ObjectId(leadId);
+
+    // Verify the lead is in the caller's tenant before returning any
+    // activities, otherwise legacy activities (no adminId) could leak.
+    const lead = await Lead.findOne({ _id: leadObjectId, adminId })
+      .select({ _id: 1 })
+      .lean();
+    if (!lead) {
+      return NextResponse.json(
+        { message: "Lead not found or not authorized" },
+        { status: 404 },
+      );
+    }
+
+    // Exclude COMMENT activities — comments are shown directly in the comments
+    // pane. We also exclude null types to avoid false negatives from $ne.
     const query: Record<string, unknown> = {
-      leadId: new mongoose.Types.ObjectId(leadId),
-      type: { $ne: "COMMENT" }, // Exclude comment activities - comments are shown directly
+      leadId: leadObjectId,
+      type: { $nin: ["COMMENT", null] },
       $or: [
-        { adminId: adminId }, // New activities with adminId
-        { adminId: { $exists: false } }, // Old activities without adminId
+        { adminId },
+        { adminId: { $exists: false } },
+        { adminId: null },
       ],
     };
 

@@ -5,12 +5,13 @@ import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import User from "@/models/User";
 import { PasswordUpdateSchema } from "@/schemas";
+import { unauthorizedResponse } from "@/lib/apiResponses";
 
 export async function PUT(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const body = await req.json();

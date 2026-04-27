@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { executeDbOperation } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
 
 // Define query types for MongoDB filters
 interface ImportQuery {
@@ -26,7 +28,7 @@ export async function GET() {
   return executeDbOperation(async () => {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     // Check if database connection is available
@@ -66,11 +68,9 @@ export async function POST(request: Request) {
   };
 
   try {
-    console.log("🔄 POST /api/imports - Starting request processing");
     requestData = await request.json();
-    console.log("📄 Request data received:", requestData);
   } catch (error) {
-    console.error("❌ Failed to parse request body:", error);
+    console.error("Failed to parse request body:", error);
     return NextResponse.json(
       { error: "Invalid request body" },
       { status: 400 }
@@ -78,26 +78,24 @@ export async function POST(request: Request) {
   }
 
   return executeDbOperation(async () => {
-    console.log("🔄 Starting database operation");
-
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      console.error("❌ Unauthorized - No session or user ID");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
-    // Check if database connection is available
     if (!mongoose.connection.db) {
-      console.error("❌ Database connection not available");
       throw new Error("Database connection not available");
     }
 
-    console.log("✅ Database connection available");
-
     // Check usage limits before allowing import
-    const adminId =
-      session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
-    const adminObjectId = new mongoose.Types.ObjectId(adminId!);
+    const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
+    if (!adminScopeId) {
+      return NextResponse.json(
+        { error: "Admin scope not found for session user" },
+        { status: 400 },
+      );
+    }
+    const adminObjectId = new mongoose.Types.ObjectId(adminScopeId);
 
     // Get current lead count
     const currentLeads = await mongoose.connection.db
@@ -160,34 +158,14 @@ export async function POST(request: Request) {
       updatedAt: new Date(),
     };
 
-    console.log("📝 Creating import record with data:", {
-      ...importData,
-      uploadedBy: importData.uploadedBy.toString(),
-      adminId: importData.adminId.toString(),
-    });
-
     try {
       const importRecord = await mongoose.connection.db
         .collection("imports")
         .insertOne(importData);
 
-      console.log(
-        "✅ Import record created with ID:",
-        importRecord.insertedId.toString()
-      );
-
       const createdImport = await mongoose.connection.db
         .collection("imports")
         .findOne({ _id: importRecord.insertedId });
-
-      console.log("📄 Created import record:", {
-        _id: createdImport!._id.toString(),
-        fileName: createdImport!.fileName,
-        recordCount: createdImport!.recordCount,
-        status: createdImport!.status,
-        uploadedBy: createdImport!.uploadedBy.toString(),
-        adminId: createdImport!.adminId.toString(),
-      });
 
       const response = {
         data: {
@@ -205,10 +183,9 @@ export async function POST(request: Request) {
         },
       };
 
-      console.log("✅ Returning success response:", response);
       return NextResponse.json(response);
     } catch (dbError) {
-      console.error("❌ Database error during import creation:", dbError);
+      console.error("Database error during import creation:", dbError);
       throw dbError;
     }
   }, "Failed to create import");
@@ -218,7 +195,7 @@ export async function DELETE(request: Request) {
   return executeDbOperation(async () => {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     if (!mongoose.connection.db) {
@@ -275,17 +252,14 @@ export async function DELETE(request: Request) {
       });
     } else {
       // Delete all imports and leads for the current admin only
-      const adminId =
-        session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
-
-      if (!adminId) {
+      const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
+      if (!adminScopeId) {
         return NextResponse.json(
-          { error: "Admin ID not found" },
-          { status: 400 }
+          { error: "Admin scope not found for session user" },
+          { status: 400 },
         );
       }
-
-      const adminObjectId = new mongoose.Types.ObjectId(adminId);
+      const adminObjectId = new mongoose.Types.ObjectId(adminScopeId);
 
       // Delete leads for this admin only
       const deleteLeadsResult = await mongoose.connection.db

@@ -4,6 +4,7 @@ import { Lead } from "@/types/leads";
 import { LeadColumn } from "@/components/leads/LeadsTableColumns.tsx/TableColumns";
 import { useCurrentUserPermission } from "./useCurrentUserPermission";
 import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
+import { normalizeLeadId } from "@/lib/leadId";
 
 export function useAdminLeadsTableColumns(): LeadColumn[] {
   const { canViewPhoneNumbers, canViewEmails } = useCurrentUserPermission();
@@ -13,17 +14,18 @@ export function useAdminLeadsTableColumns(): LeadColumn[] {
       accessorKey: "leadId",
       header: "ID",
       cell: (info) => {
-        const leadId = info.getValue() as number | undefined;
+        const leadId = info.getValue() as string | number | undefined;
+        const normalizedLeadId = normalizeLeadId(leadId);
         return (
           <div className="text-center font-medium">
-            {leadId ? leadId.toString() : "—"}
+            {normalizedLeadId || "—"}
           </div>
         );
       },
       sortingFn: (a, b) => {
-        const idA = a.original.leadId || 0;
-        const idB = b.original.leadId || 0;
-        return idA - idB;
+        const idA = normalizeLeadId(a.original.leadId);
+        const idB = normalizeLeadId(b.original.leadId);
+        return idA.localeCompare(idB, undefined, { numeric: true });
       },
     },
     {

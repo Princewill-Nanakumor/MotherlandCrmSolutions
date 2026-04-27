@@ -5,6 +5,7 @@ import { withDatabase, executeDbOperation } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { ObjectId } from "mongodb";
+import { unauthorizedResponse } from "@/lib/apiResponses";
 
 // Define proper types
 interface UserUpdateData {
@@ -38,7 +39,7 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { userId } = await params;
@@ -114,7 +115,7 @@ export async function PUT(
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { userId } = await params;
@@ -349,7 +350,7 @@ export async function PATCH(
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { userId } = await params;

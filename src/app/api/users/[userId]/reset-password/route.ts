@@ -4,6 +4,7 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import User from "@/models/User";
 import { authOptions } from "@/libs/auth";
 import bcrypt from "bcryptjs";
+import { unauthorizedResponse } from "@/lib/apiResponses";
 
 function extractUserIdFromUrl(urlString: string): string {
   const url = new URL(urlString);
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { password } = await request.json();

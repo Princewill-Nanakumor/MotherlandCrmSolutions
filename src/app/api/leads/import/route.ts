@@ -4,6 +4,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
+import { rateLimitEnhanced } from "@/lib/rateLimit";
 
 // Define interface for imported lead data
 interface ImportedLead {
@@ -28,10 +31,18 @@ interface TransformedLead {
 }
 
 export async function POST(request: Request) {
+  const req = request as unknown as import("next/server").NextRequest;
   try {
+    if (!rateLimitEnhanced(req, 15, 60000)) {
+      return NextResponse.json(
+        { error: "Too many import requests. Please try again shortly." },
+        { status: 429 },
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     await connectMongoDB();
@@ -44,10 +55,6 @@ export async function POST(request: Request) {
     const db = mongoose.connection.db;
 
     const leads = (await request.json()) as ImportedLead[];
-    console.log(
-      "Received leads to import:",
-      Array.isArray(leads) ? leads.length : 0
-    );
 
     if (!Array.isArray(leads) || leads.length === 0) {
       return NextResponse.json(
@@ -56,6 +63,10 @@ export async function POST(request: Request) {
       );
     }
 
+    const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
+    const adminObjectId = new mongoose.Types.ObjectId(adminScopeId);
+    const userObjectId = new mongoose.Types.ObjectId(session.user.id);
+
     // Transform leads to match your schema with multi-tenancy
     const transformedLeads: TransformedLead[] = leads.map(
       (lead: ImportedLead) => {
@@ -63,49 +74,46 @@ export async function POST(request: Request) {
         return {
           firstName: firstName || "",
           lastName: rest.join(" ") || "",
-          email: lead.email,
+          email: lead.email.trim().toLowerCase(),
           phone: lead.phone || "",
           source: lead.source && lead.source !== "-" && lead.source.trim() !== "" ? lead.source : "—",
           status: "NEW",
-          createdBy: new mongoose.Types.ObjectId(session.user.id),
-          adminId: new mongoose.Types.ObjectId(session.user.id), // Multi-tenancy: admin owns the leads
+          createdBy: userObjectId,
+          adminId: adminObjectId,
           createdAt: new Date(),
           updatedAt: new Date(),
         };
       }
     );
 
-    console.log("First lead to be saved:", transformedLeads[0]);
-
-    // Save leads in batches
-    let results;
+    // All-or-nothing import transaction with deterministic dedupe behavior
+    const mongoSession = await mongoose.startSession();
+    let insertedCount = 0;
     try {
-      results = await db
-        .collection("leads")
-        .insertMany(transformedLeads, { ordered: false });
-    } catch (err: unknown) {
-      if (err && typeof err === "object" && "writeErrors" in err) {
-        // @ts-expect-error: Mongo error type is not known
-        const successCount = err.result?.nInserted || 0;
-        return NextResponse.json({
-          message: `Imported ${successCount} leads, some duplicates were skipped.`,
-          totalProcessed: leads.length,
-          successCount,
-          error: "Some leads were not imported due to duplicates.",
-        });
-      }
-      throw err;
-    }
+      await mongoSession.withTransaction(async () => {
+        const operations = transformedLeads.map((lead) => ({
+          updateOne: {
+            filter: { email: lead.email, adminId: lead.adminId },
+            update: { $setOnInsert: lead },
+            upsert: true,
+          },
+        }));
 
-    const insertedCount = results.insertedIds
-      ? Object.keys(results.insertedIds).length
-      : 0;
-    console.log("Saved leads count:", insertedCount);
+        const result = await db.collection("leads").bulkWrite(operations, {
+          ordered: true,
+          session: mongoSession,
+        });
+        insertedCount = result.upsertedCount ?? 0;
+      });
+    } finally {
+      await mongoSession.endSession();
+    }
 
     return NextResponse.json({
       message: `Successfully imported ${insertedCount} leads`,
       totalProcessed: leads.length,
       successCount: insertedCount,
+      skippedDuplicates: Math.max(0, leads.length - insertedCount),
     });
   } catch (error) {
     console.error("Error in lead import:", error);

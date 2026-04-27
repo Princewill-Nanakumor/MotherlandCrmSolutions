@@ -126,7 +126,7 @@ export type LeadSource = "WEBSITE" | "REFERRAL" | "SOCIAL" | "EMAIL" | "OTHER";
 
 export interface ILead {
   _id: mongoose.Types.ObjectId;
-  leadId?: number; // 5-6 digit unique display ID
+  leadId?: string | number; // Backward compatible: legacy numeric + new prefixed string IDs
   firstName: string;
   lastName: string;
   email: string;
@@ -158,7 +158,7 @@ export interface Status {
 export interface Lead {
   id?: string;
   _id: string;
-  leadId?: number; // 5-6 digit unique display ID
+  leadId?: string | number; // Backward compatible: legacy numeric + new prefixed string IDs
   name?: string;
   firstName: string;
   lastName: string;

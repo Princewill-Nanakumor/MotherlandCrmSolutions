@@ -2,6 +2,7 @@
 import { useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lead } from "@/types/leads";
+import { normalizeLeadId } from "@/lib/leadId";
 
 type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "statusChangedAt" | "lastComment" | "lastCommentDate" | "commentCount";
 type SortOrder = "asc" | "desc";
@@ -16,12 +17,12 @@ export const useLeadsURLManagement = () => {
    *   with the latest query string, just like the all-leads table does), and
    * - Falls back to Next's `useSearchParams` snapshot when `window` is not available.
    */
-  const createParams = () => {
+  const createParams = useCallback(() => {
     if (typeof window !== "undefined") {
       return new URLSearchParams(window.location.search);
     }
     return new URLSearchParams(searchParams ?? undefined);
-  };
+  }, [searchParams]);
 
   /**
    * Helper to push an updated URL, mirroring the behavior used on
@@ -29,17 +30,20 @@ export const useLeadsURLManagement = () => {
    * - Keep the current pathname (no route change),
    * - Only adjust the query string.
    */
-  const pushWithParams = (params: URLSearchParams) => {
-    if (typeof window !== "undefined") {
-      const basePath = window.location.pathname;
-      const query = params.toString();
-      const url = query ? `${basePath}?${query}` : basePath;
-      router.push(url, { scroll: false });
-    } else {
-      const query = params.toString();
-      router.push(query ? `?${query}` : "?", { scroll: false });
-    }
-  };
+  const pushWithParams = useCallback(
+    (params: URLSearchParams) => {
+      if (typeof window !== "undefined") {
+        const basePath = window.location.pathname;
+        const query = params.toString();
+        const url = query ? `${basePath}?${query}` : basePath;
+        router.push(url, { scroll: false });
+      } else {
+        const query = params.toString();
+        router.push(query ? `?${query}` : "?", { scroll: false });
+      }
+    },
+    [router],
+  );
 
   const handleSort = useCallback(
     (field: SortField, currentField: SortField, currentOrder: SortOrder) => {
@@ -58,7 +62,7 @@ export const useLeadsURLManagement = () => {
     (lead: Lead) => {
       const params = createParams();
       // Use leadId if available, otherwise fall back to _id
-      const idToUse = lead.leadId ? lead.leadId.toString() : lead._id;
+      const idToUse = normalizeLeadId(lead.leadId) || lead._id;
       params.set("lead", idToUse);
       params.set("name", `${lead.firstName}-${lead.lastName}`);
       pushWithParams(params);
@@ -127,7 +131,7 @@ export const useLeadsURLManagement = () => {
         const newLead = sortedLeads[newIndex];
         const params = createParams();
         // Use leadId if available, otherwise fall back to _id
-        const idToUse = newLead.leadId ? newLead.leadId.toString() : newLead._id;
+        const idToUse = normalizeLeadId(newLead.leadId) || newLead._id;
         params.set("lead", idToUse);
         params.set("name", `${newLead.firstName}-${newLead.lastName}`);
         pushWithParams(params);

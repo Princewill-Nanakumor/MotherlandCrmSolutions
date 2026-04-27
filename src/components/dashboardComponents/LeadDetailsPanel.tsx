@@ -25,6 +25,19 @@ interface LeadDetailsPanelProps {
   hasNext: boolean;
 }
 
+/** Look up a single lead inside whatever shape leads-cache happens to be in. */
+function findLeadInQueryData(data: unknown, leadId: string): Lead | undefined {
+  if (Array.isArray(data)) {
+    return (data as Lead[]).find((l) => l?._id === leadId);
+  }
+  if (data && typeof data === "object") {
+    const d = data as { data?: Lead[]; leads?: Lead[] };
+    if (Array.isArray(d.data)) return d.data.find((l) => l?._id === leadId);
+    if (Array.isArray(d.leads)) return d.leads.find((l) => l?._id === leadId);
+  }
+  return undefined;
+}
+
 export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   lead,
   isOpen,
@@ -59,7 +72,11 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     }
   }, [lead]);
 
-  // Realtime sync at panel-level so status/activity updates work even when comments tab is not active.
+  // Realtime sync. Instead of refetching every leads-list query, we
+  //   - re-fetch ONLY the single lead detail (server is source of truth), and
+  //   - invalidate the comments/activities for this lead.
+  // The other open list views are kept fresh via their own ADMIN_LEADS_UPDATED
+  // subscription rather than us forcing a global refetch from this panel.
   useEffect(() => {
     if (!isOpen || !lead?._id || !session?.user?.id) return;
 
@@ -83,8 +100,6 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           credentials: "include",
         });
         if (!scopeResponse.ok) {
-          // Session expiry can happen while this panel is open.
-          // Avoid noisy errors; auth flow will handle redirect to login.
           if (scopeResponse.status === 401) return;
           throw new Error(
             `Failed to resolve realtime scope: ${scopeResponse.status}`,
@@ -102,6 +117,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         channelName = getLeadChannelName(adminScope, lead._id);
         const ablyChannel = realtime.channels.get(channelName);
         channel = ablyChannel;
+
         const attachWithRetry = async () => {
           try {
             await ablyChannel.attach();
@@ -117,17 +133,12 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
             if (!isTransientConnectionState) {
               throw error;
             }
-
-            // Connection can be briefly closed during auth/network transitions.
-            // Retry once after a short delay instead of surfacing noisy errors.
             await new Promise((resolve) => setTimeout(resolve, 800));
             try {
-              // Best-effort reconnect for transient states.
               realtime.connect?.();
             } catch {
-              // ignore
+              /* ignore */
             }
-
             try {
               await ablyChannel.attach();
               return true;
@@ -141,42 +152,47 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         if (!attached || isDisposed) {
           return;
         }
-        if (isDisposed) {
-          return;
-        }
 
         messageListener = async () => {
-          const refetchWork = Promise.all([
-            queryClient.refetchQueries({ queryKey: ["leads"] }),
-            queryClient.refetchQueries({ queryKey: ["assignedLeads"] }),
-            queryClient.refetchQueries({ queryKey: ["comments", lead._id] }),
-            queryClient.refetchQueries({ queryKey: ["activities", lead._id] }),
-          ]);
-
-          const leadSyncWork = fetch(`/api/leads/${lead._id}`, {
-            method: "GET",
-            credentials: "include",
-          })
-            .then(async (response) => {
-              if (!response.ok) return;
-              const freshLead = (await response.json()) as Lead;
-              if (!freshLead?._id || isDisposed) return;
-
-              previousStatusRef.current = freshLead.status;
-              previousLeadRef.current = freshLead;
-              setCurrentLead(freshLead);
-            })
-            .catch((error) => {
-              console.error("Failed to sync lead details from realtime event:", error);
+          try {
+            const response = await fetch(`/api/leads/${lead._id}`, {
+              method: "GET",
+              credentials: "include",
             });
+            if (!response.ok) return;
+            const freshLead = (await response.json()) as Lead;
+            if (!freshLead?._id || isDisposed) return;
 
-          await Promise.all([refetchWork, leadSyncWork]);
+            previousStatusRef.current = freshLead.status;
+            previousLeadRef.current = freshLead;
+            setCurrentLead(freshLead);
+
+            // Targeted invalidation of THIS lead's timeline, not all leads.
+            await Promise.all([
+              queryClient.invalidateQueries({
+                queryKey: ["comments", lead._id],
+                exact: true,
+              }),
+              queryClient.invalidateQueries({
+                queryKey: ["activities", lead._id],
+                exact: true,
+              }),
+            ]);
+          } catch (error) {
+            console.error(
+              "Failed to sync lead details from realtime event:",
+              error,
+            );
+          }
         };
 
         ablyChannel.subscribe(LEAD_UPDATED_EVENT, messageListener);
         didSubscribe = true;
       } catch (error) {
-        console.error("Failed to initialize panel realtime subscription:", error);
+        console.error(
+          "Failed to initialize panel realtime subscription:",
+          error,
+        );
       }
     };
 
@@ -192,8 +208,6 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         }
         if (channel) {
           try {
-            // Wait for detach to complete before releasing the channel.
-            // Ably otherwise throws: "Can only release a channel ... was detaching".
             await channel.detach();
           } catch (error) {
             console.error("Failed to detach panel realtime channel:", error);
@@ -210,65 +224,62 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     };
   }, [isOpen, lead?._id, queryClient, session?.user?.id]);
 
+  // Single subscription to the leads cache. Earlier we had two effects doing
+  // the same job — one debounced subscriber and one mount-only check — which
+  // raced with optimistic updates.
   useEffect(() => {
-    if (!lead?._id) return;
+    if (!isOpen || !lead?._id) return;
 
-    let debounceTimeout: NodeJS.Timeout;
+    let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    const checkAndUpdateLead = () => {
-      const leadsData = queryClient.getQueryData(["leads"]);
-      if (!leadsData) {
+    const reconcile = () => {
+      const allLeadKeys = queryClient
+        .getQueryCache()
+        .findAll({ queryKey: ["leads"] });
+      let candidate: Lead | undefined;
+      let candidateUpdatedAt = 0;
+      for (const q of allLeadKeys) {
+        const found = findLeadInQueryData(q.state.data, lead._id);
+        if (!found) continue;
+        const ts = found.updatedAt
+          ? new Date(found.updatedAt).getTime()
+          : 0;
+        if (ts >= candidateUpdatedAt) {
+          candidate = found;
+          candidateUpdatedAt = ts;
+        }
+      }
+      if (!candidate) return;
+
+      const timeSinceLastManualUpdate =
+        Date.now() - lastManualUpdateRef.current;
+      if (timeSinceLastManualUpdate <= 500) return;
+
+      const currentTs = currentLead?.updatedAt
+        ? new Date(currentLead.updatedAt).getTime()
+        : 0;
+      if (candidate.status === currentLead?.status && candidateUpdatedAt <= currentTs) {
         return;
       }
 
-      let updatedLead: Lead | undefined;
-
-      if (Array.isArray(leadsData)) {
-        updatedLead = leadsData.find((l) => l._id === lead._id);
-      } else if (leadsData && typeof leadsData === "object") {
-        if ("data" in leadsData && Array.isArray(leadsData.data)) {
-          updatedLead = leadsData.data.find((l) => l._id === lead._id);
-        } else if ("leads" in leadsData && Array.isArray(leadsData.leads)) {
-          updatedLead = leadsData.leads.find((l) => l._id === lead._id);
-        }
-      }
-
-      // Only update if we have fresh data AND it's different from current state
-      // AND the updatedAt timestamp is newer (indicating a server update)
-      // AND we haven't had a manual update in the last 500ms (to prevent overriding optimistic updates)
-      const timeSinceLastManualUpdate =
-        Date.now() - lastManualUpdateRef.current;
-      if (
-        updatedLead &&
-        updatedLead.status !== currentLead?.status &&
-        updatedLead.updatedAt !== currentLead?.updatedAt &&
-        (!currentLead?.updatedAt ||
-          new Date(updatedLead.updatedAt) > new Date(currentLead.updatedAt)) &&
-        timeSinceLastManualUpdate > 500
-      ) {
-        previousStatusRef.current = updatedLead.status;
-        setCurrentLead(updatedLead);
-      }
+      previousStatusRef.current = candidate.status;
+      setCurrentLead(candidate);
     };
 
-    const debouncedCheckAndUpdateLead = () => {
-      clearTimeout(debounceTimeout);
-      debounceTimeout = setTimeout(checkAndUpdateLead, 100); // 100ms debounce
-    };
+    reconcile();
 
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
       if (event.type === "updated" && event.query.queryKey[0] === "leads") {
-        debouncedCheckAndUpdateLead();
+        if (debounceTimeout) clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(reconcile, 100);
       }
     });
 
-    checkAndUpdateLead();
-
     return () => {
-      clearTimeout(debounceTimeout);
+      if (debounceTimeout) clearTimeout(debounceTimeout);
       unsubscribe();
     };
-  }, [lead?._id, queryClient, currentLead?.status, currentLead?.updatedAt]);
+  }, [isOpen, lead?._id, queryClient, currentLead?.status, currentLead?.updatedAt]);
 
   const onLeadUpdatedRef = useRef(onLeadUpdated);
   onLeadUpdatedRef.current = onLeadUpdated;
@@ -291,51 +302,9 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       return result;
     } catch (error) {
       console.error("Error in handleLeadUpdated:", error);
-      // Keep local optimistic/server-confirmed panel state even if parent sync fails.
-      // Otherwise users must close/reopen panel to see the latest status.
       return false;
     }
   }, []);
-
-  useEffect(() => {
-    if (lead?._id && isOpen) {
-      const checkCache = () => {
-        const leadsData = queryClient.getQueryData(["leads"]);
-        if (leadsData) {
-          let freshLead: Lead | undefined;
-
-          if (Array.isArray(leadsData)) {
-            freshLead = leadsData.find((l) => l._id === lead._id);
-          } else if (leadsData && typeof leadsData === "object") {
-            if ("data" in leadsData && Array.isArray(leadsData.data)) {
-              freshLead = leadsData.data.find((l) => l._id === lead._id);
-            } else if ("leads" in leadsData && Array.isArray(leadsData.leads)) {
-              freshLead = leadsData.leads.find((l) => l._id === lead._id);
-            }
-          }
-
-          // Only update if we have a fresh lead and it's different from current, but avoid rapid updates
-          const timeSinceLastManualUpdate =
-            Date.now() - lastManualUpdateRef.current;
-          if (
-            freshLead &&
-            freshLead.status !== currentLead?.status &&
-            freshLead.updatedAt !== currentLead?.updatedAt &&
-            (!currentLead?.updatedAt ||
-              new Date(freshLead.updatedAt) >
-                new Date(currentLead.updatedAt)) &&
-            timeSinceLastManualUpdate > 500
-          ) {
-            setCurrentLead(freshLead);
-          }
-        }
-      };
-
-      // Only check once on mount, don't set up continuous checking
-      checkCache();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lead?._id, isOpen, queryClient]);
 
   const handleRequestClose = useCallback(() => {
     if (isClosing) return;
@@ -345,7 +314,6 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     }, 250);
   }, [isClosing, onClose]);
 
-  // Handle ESC key to close panel
   useEffect(() => {
     if (!isOpen) return;
 
@@ -356,74 +324,32 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     };
 
     window.addEventListener("keydown", handleEscKey);
-
     return () => {
       window.removeEventListener("keydown", handleEscKey);
     };
   }, [isOpen, handleRequestClose]);
 
-  // Update browser title when panel is open and lead changes
+  // Title management: a single effect, with no setInterval spam. The previous
+  // implementation set the title every 200ms forever which thrashes the
+  // browser tab and prevents legitimate code (e.g. dashboard layout) from
+  // managing its own title. We just set it on open/close/lead change.
   useEffect(() => {
     if (isOpen && currentLead) {
-      // Store original title on first open (only once)
       if (!originalTitleRef.current) {
         originalTitleRef.current = document.title;
       }
-
-      // Update title with lead name in format "[Name] - Motherland CRM"
       const fullName =
         `${currentLead.firstName || ""} ${currentLead.lastName || ""}`.trim();
       const leadTitle = fullName || "Lead Details";
-      const newTitle = `${leadTitle} - Motherland CRM`;
-
-      // Set title immediately
-      document.title = newTitle;
-
-      // Re-apply multiple times to ensure it persists over layout updates
-      const timeout1 = setTimeout(() => {
-        document.title = newTitle;
-      }, 10);
-
-      const timeout2 = setTimeout(() => {
-        document.title = newTitle;
-      }, 50);
-
-      const timeout3 = setTimeout(() => {
-        document.title = newTitle;
-      }, 100);
-
-      return () => {
-        clearTimeout(timeout1);
-        clearTimeout(timeout2);
-        clearTimeout(timeout3);
-      };
-    } else if (!isOpen && originalTitleRef.current) {
-      // Restore original title when panel closes
+      document.title = `${leadTitle} - Motherland CRM`;
+      return;
+    }
+    if (!isOpen && originalTitleRef.current) {
       document.title = originalTitleRef.current;
       originalTitleRef.current = "";
     }
   }, [isOpen, currentLead]);
 
-  // Continuous title update while panel is open (prevents layout from overwriting)
-  useEffect(() => {
-    if (!isOpen || !currentLead) return;
-
-    const fullName =
-      `${currentLead.firstName || ""} ${currentLead.lastName || ""}`.trim();
-    const leadTitle = fullName || "Lead Details";
-    const newTitle = `${leadTitle} - Motherland CRM`;
-
-    // Set up an interval to continuously ensure the title stays correct
-    const intervalId = setInterval(() => {
-      if (document.title !== newTitle) {
-        document.title = newTitle;
-      }
-    }, 200); // Check every 200ms
-
-    return () => clearInterval(intervalId);
-  }, [isOpen, currentLead]);
-
-  // Ensure original title is restored when the panel component unmounts
   useEffect(() => {
     return () => {
       if (originalTitleRef.current) {

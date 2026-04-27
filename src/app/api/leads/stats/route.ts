@@ -4,12 +4,14 @@ import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
 import { ObjectId } from "mongodb";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     await connectMongoDB();
@@ -19,8 +21,7 @@ export async function GET() {
     }
 
     // Prepare filters respecting multi-tenancy
-    const adminId =
-      session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
+    const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
 
     const adminFilter: Record<string, unknown> = {};
     if (adminId) {

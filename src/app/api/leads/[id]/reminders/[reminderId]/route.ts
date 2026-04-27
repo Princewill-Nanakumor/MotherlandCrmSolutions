@@ -7,6 +7,8 @@ import Reminder from "@/models/Reminder";
 import Activity, { type ActivityType, type IActivity } from "@/models/Activity";
 import mongoose from "mongoose";
 import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
 
 // PUT - Update reminder (complete, snooze, edit)
 export async function PUT(
@@ -16,7 +18,7 @@ export async function PUT(
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     await connectMongoDB();
@@ -24,8 +26,7 @@ export async function PUT(
     const body = await request.json();
 
     // Get adminId to ensure we're working within the same organization
-    const adminId =
-      session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
+    const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
 
     if (!adminId) {
       return NextResponse.json(
@@ -186,15 +187,14 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     await connectMongoDB();
     const { reminderId, id } = await params;
 
     // Get adminId to ensure we're working within the same organization
-    const adminId =
-      session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
+    const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
 
     if (!adminId) {
       return NextResponse.json(

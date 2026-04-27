@@ -21,32 +21,41 @@ if (!globalWithCache.mongooseCache) {
   };
 }
 
-// Helper function to get MongoDB URI - checked at runtime, not build time
+// Database name comes from MONGODB_DB_NAME (preferred) or, as a fallback,
+// from the path embedded in MONGODB_URI. There is no longer a hardcoded
+// default — that previously caused "your_default_db_name" to be used in
+// production by accident.
+function getDatabaseName(): string {
+  const explicit = process.env.MONGODB_DB_NAME;
+  if (explicit) return explicit;
+  const uri = process.env.MONGODB_URI;
+  if (uri) {
+    const match = uri.match(/\/([^/?]+)(\?|$)/);
+    if (match?.[1]) return match[1];
+  }
+  throw new Error(
+    "MONGODB_DB_NAME (or a database segment in MONGODB_URI) must be configured.",
+  );
+}
+
+// Returns the connection URI to pass to mongoose.connect(). We let mongoose
+// pick the database name via `dbName` in options instead of mutating the URI.
 function getMongoDBUri(): string {
   const MONGODB_URI = process.env.MONGODB_URI;
   if (!MONGODB_URI) {
-    // During build time, Netlify might analyze routes without env vars
-    // Throw a more descriptive error that won't fail the build
-    if (process.env.NODE_ENV === "production" && !process.env.VERCEL && !process.env.NETLIFY) {
-      // Only throw in production if we're actually trying to connect
-      throw new Error(
-        "Please define the MONGODB_URI environment variable inside .env"
-      );
-    }
-    // For build time, use a placeholder that will fail gracefully at runtime
     throw new Error(
-      "MONGODB_URI environment variable is not defined. Please configure it in your deployment environment."
+      "MONGODB_URI environment variable is not defined. Please configure it in your deployment environment.",
     );
   }
-  // Ensure we're connecting to the correct database
-  return MONGODB_URI.replace(/\/$/, "") + "/your_default_db_name";
+  return MONGODB_URI;
 }
 
-// Helper function to get connection options
 function getConnectionOptions(): mongoose.ConnectOptions {
   return {
     bufferCommands: true,
-    autoIndex: true,
+    // autoIndex must be off in production: building indexes on every cold
+    // start is expensive and can stall the first request.
+    autoIndex: process.env.NODE_ENV !== "production",
     maxPoolSize: 50,
     minPoolSize: 10,
     serverSelectionTimeoutMS: 30000,
@@ -54,7 +63,7 @@ function getConnectionOptions(): mongoose.ConnectOptions {
     family: 4,
     retryWrites: true,
     connectTimeoutMS: 30000,
-    dbName: "your_default_db_name", // Explicitly set the database name
+    dbName: getDatabaseName(),
   };
 }
 
@@ -123,7 +132,9 @@ export const connectMongoDB = async (): Promise<typeof mongoose> => {
     globalWithCache.mongooseCache.promise = mongoose
       .connect(MONGODB_URI_WITH_DB, options)
       .then((mongooseInstance) => {
-        console.log("MongoDB connected successfully to your_default_db_name");
+        if (process.env.NODE_ENV !== "production") {
+          console.log(`MongoDB connected (db=${options.dbName})`);
+        }
         globalWithCache.mongooseCache.conn = mongooseInstance;
         return mongooseInstance;
       })

@@ -22,6 +22,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Activity, Status } from "@/types/leads";
 import { formatTime24Hour } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { useStatuses } from "@/context/StatusContext";
 
 interface ActivitiesProps {
   leadId: string;
@@ -30,21 +31,11 @@ interface ActivitiesProps {
 const Activities: FC<ActivitiesProps> = ({ leadId }) => {
   const { toast } = useToast();
 
-  // Fetch statuses
-  const { data: statuses = [] } = useQuery<Status[], Error>({
-    queryKey: ["statuses"],
-    queryFn: async (): Promise<Status[]> => {
-      const response = await fetch("/api/statuses");
-      if (!response.ok) {
-        throw new Error("Failed to fetch statuses");
-      }
-      return response.json();
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
-  });
+  // Read statuses from the shared StatusContext instead of duplicating the
+  // network request — both this component and LeadStatus would otherwise
+  // trigger their own fetches with diverging staleTime configurations.
+  const { statuses } = useStatuses();
 
-  // Fetch activities
   const {
     data: activities = [],
     isLoading,
@@ -52,28 +43,17 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
   } = useQuery<Activity[], Error>({
     queryKey: ["activities", leadId],
     queryFn: async (): Promise<Activity[]> => {
-      console.log("=== FETCHING ACTIVITIES WITH REACT QUERY ===");
-      console.log("Lead ID:", leadId);
-
       const response = await fetch(`/api/leads/${leadId}/activities`);
-
       if (!response.ok) {
         throw new Error(`Failed to fetch activities: ${response.status}`);
       }
-
       const responseData = await response.json();
-      console.log("Raw activities response:", responseData);
-
-      const activitiesData = Array.isArray(responseData) ? responseData : [];
-      return activitiesData;
+      return Array.isArray(responseData) ? responseData : [];
     },
     enabled: !!leadId,
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    retry: (failureCount, error) => {
-      console.error("Activities fetch error:", error);
-      return failureCount < 2;
-    },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: (failureCount) => failureCount < 2,
     refetchOnWindowFocus: false,
   });
 

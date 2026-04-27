@@ -8,12 +8,13 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import User from "@/models/User";
 import Lead from "@/models/Lead";
 import Status from "@/models/Status";
+import { unauthorizedResponse } from "@/lib/apiResponses";
 
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { password } = await req.json();

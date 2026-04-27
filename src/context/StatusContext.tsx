@@ -7,6 +7,7 @@ import {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
 } from "react";
 import { Status } from "@/types/leads";
 import { useSession } from "next-auth/react";
@@ -27,15 +28,20 @@ const StatusContext = createContext<StatusContextType>({
 
 export const useStatuses = () => useContext(StatusContext);
 
-const cachedStatusesMap = new Map<string, Status>();
-let cacheTimestamp: number | null = null;
+// In-component cache only — module-level caches were leaking across tenants
+// when a user logged out/in within the same tab.
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 export function StatusProvider({ children }: { children: React.ReactNode }) {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const cacheRef = useRef<{
+    userId: string | null;
+    statuses: Status[];
+    timestamp: number;
+  } | null>(null);
 
   const fetchStatuses = useCallback(
     async (force = false) => {
@@ -43,8 +49,7 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
         setStatuses([]);
         setIsLoading(false);
         setError(null);
-        cachedStatusesMap.clear();
-        cacheTimestamp = null;
+        cacheRef.current = null;
         return;
       }
 
@@ -52,14 +57,17 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      const userId = session?.user?.id ?? null;
+
       try {
+        const cached = cacheRef.current;
         if (
           !force &&
-          cachedStatusesMap.size > 0 &&
-          cacheTimestamp &&
-          Date.now() - cacheTimestamp < CACHE_DURATION
+          cached &&
+          cached.userId === userId &&
+          Date.now() - cached.timestamp < CACHE_DURATION
         ) {
-          setStatuses(Array.from(cachedStatusesMap.values()));
+          setStatuses(cached.statuses);
           setIsLoading(false);
           return;
         }
@@ -77,8 +85,7 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
             setStatuses([]);
             setError(null);
             setIsLoading(false);
-            cachedStatusesMap.clear();
-            cacheTimestamp = null;
+            cacheRef.current = null;
             return;
           }
           throw new Error(`Failed to fetch statuses (HTTP ${response.status})`);
@@ -86,53 +93,51 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
 
         const data: Status[] = await response.json();
 
+        // Don't mutate the response array — produce a new one if "New" is missing.
         const hasNewStatus = data.some(
-          (status: Status) => status.name === "New" || status.name === "NEW" || status._id === "NEW"
+          (s) => s.name === "New" || s.name === "NEW" || s._id === "NEW",
         );
-        if (!hasNewStatus) {
-          data.unshift({
-            id: "NEW",
-            _id: "NEW",
-            name: "New",
-            color: "#3B82F6",
-            adminId: "system",
-            createdBy: "system",
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          });
-        }
+        const finalData = hasNewStatus
+          ? data
+          : [
+              {
+                id: "NEW",
+                _id: "NEW",
+                name: "New",
+                color: "#3B82F6",
+                adminId: "system",
+                createdBy: "system",
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              } as Status,
+              ...data,
+            ];
 
-        cachedStatusesMap.clear();
-        data.forEach((status) => {
-          cachedStatusesMap.set(status._id || status.id, status);
-        });
-        cacheTimestamp = Date.now();
+        cacheRef.current = {
+          userId,
+          statuses: finalData,
+          timestamp: Date.now(),
+        };
 
-        setStatuses(data);
+        setStatuses(finalData);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err : new Error("Unknown error"));
-        cachedStatusesMap.clear();
-        cacheTimestamp = null;
+        cacheRef.current = null;
       } finally {
         setIsLoading(false);
       }
     },
-    [status]
+    [status, session?.user?.id],
   );
 
   useEffect(() => {
     fetchStatuses();
-    return () => {
-      cachedStatusesMap.clear();
-      cacheTimestamp = null;
-    };
   }, [fetchStatuses]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      cachedStatusesMap.clear();
-      cacheTimestamp = null;
+      cacheRef.current = null;
     }
   }, [status]);
 

@@ -12,7 +12,7 @@ import mongoose from "mongoose";
 
 interface LeadDoc {
   _id: mongoose.Types.ObjectId | string;
-  leadId?: number;
+  leadId?: string | number;
   firstName: string;
   lastName: string;
   email: string;
@@ -376,18 +376,24 @@ export async function PATCH(req: NextRequest) {
 
     const sessionUser =
       (session as StrictSession).user ?? (session as NextAuthSession).user;
+
+    let resolvedAdminId: mongoose.Types.ObjectId | null = null;
+    if (sessionUser.role === "ADMIN") {
+      resolvedAdminId = new mongoose.Types.ObjectId(sessionUser.id);
+    } else if (sessionUser.role === "AGENT" && sessionUser.adminId) {
+      resolvedAdminId = new mongoose.Types.ObjectId(sessionUser.adminId);
+    }
+    if (!resolvedAdminId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const query: {
       _id: mongoose.Types.ObjectId;
-      adminId?: mongoose.Types.ObjectId;
+      adminId: mongoose.Types.ObjectId;
     } = {
       _id: new mongoose.Types.ObjectId(id),
+      adminId: resolvedAdminId,
     };
-
-    if (sessionUser.role === "ADMIN") {
-      query.adminId = new mongoose.Types.ObjectId(sessionUser.id);
-    } else if (sessionUser.role === "AGENT" && sessionUser.adminId) {
-      query.adminId = new mongoose.Types.ObjectId(sessionUser.adminId);
-    }
 
     // Validate new status exists before any write
     const commonStatuses = [

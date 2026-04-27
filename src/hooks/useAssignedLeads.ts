@@ -12,7 +12,7 @@ interface AssignedToUser {
 
 interface LeadFromAPI {
   _id: string;
-  leadId?: number;
+  leadId?: string | number;
   firstName: string;
   lastName: string;
   email: string;
@@ -126,21 +126,11 @@ const normalizeSource = (source: string): LeadSource | string => {
   return cleanSource;
 };
 
-// Fetch function
 const fetchAssignedLeads = async (): Promise<Lead[]> => {
-  const start =
-    typeof performance !== "undefined" ? performance.now() : Date.now();
   const res = await fetch("/api/leads/assigned", {
     headers: { "Content-Type": "application/json" },
     cache: "no-store",
   });
-  const end =
-    typeof performance !== "undefined" ? performance.now() : Date.now();
-  try {
-    console.log(
-      `client:fetchAssignedLeads /api/leads/assigned took ${Math.round(end - start)}ms`
-    );
-  } catch {}
 
   if (!res.ok) {
     throw new Error("Failed to fetch assigned leads");

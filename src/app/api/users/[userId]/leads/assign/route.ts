@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
 
 function extractLeadIdFromUrl(urlString: string): string {
   const url = new URL(urlString);
@@ -20,7 +22,7 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { userId } = await request.json();
@@ -48,7 +50,8 @@ export async function POST(request: Request) {
     };
 
     // Admin can only assign leads they created
-    query.adminId = new mongoose.Types.ObjectId(session.user.id);
+    const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
+    query.adminId = new mongoose.Types.ObjectId(adminScopeId);
 
     const lead = await db.collection("leads").findOneAndUpdate(
       query,

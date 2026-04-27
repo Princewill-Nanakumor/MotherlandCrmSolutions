@@ -1,9 +1,12 @@
 // app/api/leads/bulk/delete/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
+import { rateLimitEnhanced } from "@/lib/rateLimit";
 
 interface BulkDeleteRequest {
   leadIds: string[];
@@ -14,12 +17,19 @@ interface LeadDocument {
   adminId: mongoose.Types.ObjectId;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    if (!rateLimitEnhanced(request, 20, 60000)) {
+      return NextResponse.json(
+        { message: "Too many bulk delete requests" },
+        { status: 429 },
+      );
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.role || session.user.role !== "ADMIN") {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { leadIds }: BulkDeleteRequest = await request.json();
@@ -39,42 +49,69 @@ export async function POST(request: Request) {
 
     const db = mongoose.connection.db;
     const leadObjectIds = leadIds.map((id) => new mongoose.Types.ObjectId(id));
-    const adminObjectId = new mongoose.Types.ObjectId(session.user.id);
-
-    // Get leads before deletion with multi-tenancy filter
-    const leadsToDelete = (await db
-      .collection("leads")
-      .find({
-        _id: { $in: leadObjectIds },
-        adminId: adminObjectId, // Multi-tenancy: only leads belonging to this admin
-      })
-      .toArray()) as LeadDocument[];
-
-    if (leadsToDelete.length === 0) {
+    const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
+    if (!adminScopeId) {
       return NextResponse.json(
-        { message: "No valid leads found to delete" },
-        { status: 400 }
+        { message: "Admin scope not found for session user" },
+        { status: 400 },
       );
     }
+    const adminObjectId = new mongoose.Types.ObjectId(adminScopeId);
 
-    const leadIdsToDelete = leadsToDelete.map((lead) => lead._id);
+    const mongoSession = await mongoose.startSession();
+    let deletedCount = 0;
+    try {
+      await mongoSession.withTransaction(async () => {
+        const leadsToDelete = (await db
+          .collection("leads")
+          .find(
+            {
+              _id: { $in: leadObjectIds },
+              adminId: adminObjectId,
+            },
+            { session: mongoSession },
+          )
+          .toArray()) as LeadDocument[];
 
-    // Delete leads
-    const deleteResult = await db.collection("leads").deleteMany({
-      _id: { $in: leadIdsToDelete },
-      adminId: adminObjectId, // Additional safety check
-    });
+        if (leadsToDelete.length === 0) {
+          throw new Error("NO_VALID_LEADS");
+        }
 
-    // Also delete associated activities (optional, but recommended for data integrity)
-    await db.collection("activities").deleteMany({
-      leadId: { $in: leadIdsToDelete },
-      adminId: adminObjectId,
-    });
+        const leadIdsToDelete = leadsToDelete.map((lead) => lead._id);
+
+        const deleteResult = await db.collection("leads").deleteMany(
+          {
+            _id: { $in: leadIdsToDelete },
+            adminId: adminObjectId,
+          },
+          { session: mongoSession },
+        );
+        deletedCount = deleteResult.deletedCount ?? 0;
+
+        await db.collection("activities").deleteMany(
+          {
+            leadId: { $in: leadIdsToDelete },
+            adminId: adminObjectId,
+          },
+          { session: mongoSession },
+        );
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === "NO_VALID_LEADS") {
+        return NextResponse.json(
+          { message: "No valid leads found to delete" },
+          { status: 400 },
+        );
+      }
+      throw error;
+    } finally {
+      await mongoSession.endSession();
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Successfully deleted ${deleteResult.deletedCount} leads`,
-      deletedCount: deleteResult.deletedCount,
+      message: `Successfully deleted ${deletedCount} leads`,
+      deletedCount,
     });
   } catch (error) {
     console.error("Error in bulk delete endpoint:", error);

@@ -64,41 +64,22 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
   } = useQuery<Comment[], Error>({
     queryKey: ["comments", leadId],
     queryFn: async (): Promise<Comment[]> => {
-      console.log("=== FETCHING COMMENTS WITH REACT QUERY ===");
-      console.log("Lead ID:", leadId);
-
       const response = await fetch(`/api/leads/${leadId}/comments`);
-      console.log("Response status:", response.status);
-
       if (!response.ok) {
         throw new Error(`Failed to fetch comments: ${response.status}`);
       }
-
       const data = await response.json();
-      console.log("Raw comments data:", data);
-
-      const transformedComments = data.map(transformComment);
-      console.log("Transformed comments:", transformedComments);
-
-      return transformedComments;
+      return data.map(transformComment);
     },
     enabled: !!leadId,
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    retry: (failureCount, error) => {
-      console.error("Comments fetch error:", error);
-      return failureCount < 2;
-    },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: (failureCount) => failureCount < 2,
     refetchOnWindowFocus: false,
   });
 
-  // Add comment mutation
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
-      console.log("=== ADDING COMMENT WITH REACT QUERY ===");
-      console.log("Lead ID:", leadId);
-      console.log("Content:", content);
-
       const response = await fetch(`/api/leads/${leadId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

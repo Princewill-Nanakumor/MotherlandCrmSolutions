@@ -40,6 +40,11 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import {
+  isLegacyNumericLeadId,
+  isPrefixedLeadId,
+  normalizeLeadId,
+} from "@/lib/leadId";
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -310,12 +315,19 @@ export default function LeadsTable({
     if (leadIdParam && leads.length > 0) {
       // Always search in full leads array (not filtered sortedLeads)
       // This ensures we find the lead even if it's been filtered out
-      const isNumericId = /^\d{5,6}$/.test(leadIdParam);
+      const isNumericId = isLegacyNumericLeadId(leadIdParam);
       let lead: Lead | undefined;
 
       if (isNumericId) {
         const numericId = parseInt(leadIdParam, 10);
-        lead = leads.find((l) => l.leadId === numericId);
+        lead = leads.find(
+          (l) => normalizeLeadId(l.leadId) === normalizeLeadId(numericId)
+        );
+      } else if (isPrefixedLeadId(leadIdParam)) {
+        lead = leads.find(
+          (l) =>
+            normalizeLeadId(l.leadId).toUpperCase() === leadIdParam.toUpperCase()
+        );
       } else {
         lead = leads.find((l) => l._id === leadIdParam);
       }

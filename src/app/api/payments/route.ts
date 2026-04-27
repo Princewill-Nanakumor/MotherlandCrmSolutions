@@ -6,6 +6,8 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import { ObjectId } from "mongodb";
 import Payment from "@/models/Payment";
 import User from "@/models/User";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
 
 // Get wallet addresses from environment variables
 const WALLET_ADDRESSES = {
@@ -123,10 +125,7 @@ export async function POST(request: NextRequest) {
     // Authentication check
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      return unauthorizedResponse("Authentication required");
     }
 
     // Parse and validate request data
@@ -150,13 +149,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Admin ID validation
-    const adminId = user.role === "ADMIN" ? user._id : user.adminId;
-    if (!adminId) {
-      return NextResponse.json(
-        { error: "Admin ID not found" },
-        { status: 400 }
-      );
-    }
+    const scopedAdminId = await withAdminScope(session, async (adminId) => adminId);
+    const adminId = new ObjectId(scopedAdminId);
 
     // Rate limiting check
     try {
@@ -245,10 +239,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      return unauthorizedResponse("Authentication required");
     }
 
     await connectMongoDB();
@@ -262,12 +253,8 @@ export async function GET(request: NextRequest) {
     );
     const skip = (page - 1) * limit;
 
-    const query: { adminId?: ObjectId } = {};
-    if (session.user.role === "ADMIN") {
-      query.adminId = new ObjectId(session.user.id);
-    } else if (session.user.role === "AGENT" && session.user.adminId) {
-      query.adminId = new ObjectId(session.user.adminId);
-    }
+    const scopedAdminId = await withAdminScope(session, async (adminId) => adminId);
+    const query: { adminId?: ObjectId } = { adminId: new ObjectId(scopedAdminId) };
 
     const [payments, total] = await Promise.all([
       Payment.find(query)

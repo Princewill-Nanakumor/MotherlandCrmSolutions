@@ -6,6 +6,8 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
 import { Db, ObjectId } from "mongodb";
 import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import { unauthorizedResponse } from "@/lib/apiResponses";
+import { withAdminScope } from "@/lib/withAdminScope";
 
 // Helper to get user details for assignedTo
 async function getAssignedToUser(
@@ -47,7 +49,7 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     await connectMongoDB();
@@ -56,14 +58,15 @@ export async function GET(
     const db = mongoose.connection.db;
     if (!db) throw new Error("Database connection not available");
 
-    // Check if id is a numeric leadId (5-6 digits) or MongoDB ObjectId
-    const isNumericId = /^\d{5,6}$/.test(id);
-    const baseQuery: { _id?: ObjectId; leadId?: number } = {};
+    // Support legacy numeric leadId, new LD-* leadId, and MongoDB _id.
+    const isLegacyNumericLeadId = /^\d{5,6}$/.test(id);
+    const isPrefixedLeadId = /^LD-[A-Za-z0-9_-]+$/i.test(id);
+    const baseQuery: { _id?: ObjectId; leadId?: string | number } = {};
 
-    if (isNumericId) {
-      // Search by leadId (5-6 digit display ID)
-      const numericId = parseInt(id, 10);
-      baseQuery.leadId = numericId;
+    if (isLegacyNumericLeadId) {
+      baseQuery.leadId = parseInt(id, 10);
+    } else if (isPrefixedLeadId) {
+      baseQuery.leadId = id.toUpperCase();
     } else if (mongoose.Types.ObjectId.isValid(id)) {
       // Search by MongoDB _id
       baseQuery._id = new ObjectId(id);
@@ -71,17 +74,11 @@ export async function GET(
       return NextResponse.json({ error: "Invalid lead ID" }, { status: 400 });
     }
 
-    const query: { _id?: ObjectId; leadId?: number; adminId?: ObjectId } = {
+    const query: { _id?: ObjectId; leadId?: string | number; adminId?: ObjectId } = {
       ...baseQuery,
     };
-
-    if (session.user.role === "ADMIN") {
-      // Admin can only see leads they created
-      query.adminId = new ObjectId(session.user.id);
-    } else if (session.user.role === "AGENT" && session.user.adminId) {
-      // Agent can only see leads from their admin
-      query.adminId = new ObjectId(session.user.adminId);
-    }
+    const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
+    query.adminId = new ObjectId(adminScopeId);
 
     const lead = await db.collection("leads").findOne(query);
 
@@ -161,7 +158,7 @@ export async function PUT(
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const updateData = await request.json();
@@ -173,14 +170,14 @@ export async function PUT(
       throw new Error("Database connection not available");
     }
 
-    // Check if id is a numeric leadId (5-6 digits) or MongoDB ObjectId
-    const isNumericId = /^\d{5,6}$/.test(id);
-    const baseQuery: { _id?: ObjectId; leadId?: number } = {};
+    const isLegacyNumericLeadId = /^\d{5,6}$/.test(id);
+    const isPrefixedLeadId = /^LD-[A-Za-z0-9_-]+$/i.test(id);
+    const baseQuery: { _id?: ObjectId; leadId?: string | number } = {};
 
-    if (isNumericId) {
-      // Search by leadId (5-6 digit display ID)
-      const numericId = parseInt(id, 10);
-      baseQuery.leadId = numericId;
+    if (isLegacyNumericLeadId) {
+      baseQuery.leadId = parseInt(id, 10);
+    } else if (isPrefixedLeadId) {
+      baseQuery.leadId = id.toUpperCase();
     } else if (mongoose.Types.ObjectId.isValid(id)) {
       // Search by MongoDB _id
       baseQuery._id = new ObjectId(id);
@@ -188,15 +185,11 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid lead ID" }, { status: 400 });
     }
 
-    const query: { _id?: ObjectId; leadId?: number; adminId?: ObjectId } = {
+    const query: { _id?: ObjectId; leadId?: string | number; adminId?: ObjectId } = {
       ...baseQuery,
     };
-
-    if (session.user.role === "ADMIN") {
-      query.adminId = new ObjectId(session.user.id);
-    } else if (session.user.role === "AGENT" && session.user.adminId) {
-      query.adminId = new ObjectId(session.user.adminId);
-    }
+    const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
+    query.adminId = new ObjectId(adminScopeId);
 
     const currentLead = await db.collection("leads").findOne(query);
 
@@ -217,11 +210,9 @@ export async function PUT(
     if (updateData.lastName !== undefined)
       updatePayload.lastName = String(updateData.lastName || "").trim();
     if (updateData.email !== undefined) {
-      // ✅ FIX: Lowercase email to match schema and prevent duplicate key errors
       updatePayload.email = String(updateData.email || "")
         .toLowerCase()
         .trim();
-      console.log("📧 Email normalized:", updatePayload.email);
     }
     if (updateData.phone !== undefined)
       updatePayload.phone = String(updateData.phone || "").trim();
@@ -335,14 +326,10 @@ export async function PUT(
     };
 
     try {
-      const adminScope =
-        session.user.role === "ADMIN" ? session.user.id : session.user.adminId;
-      if (adminScope) {
-        await publishLeadUpdatedEvent(String(adminScope), id, {
-          type: "lead_updated",
-          leadId: id,
-        });
-      }
+      await publishLeadUpdatedEvent(String(adminScopeId), id, {
+        type: "lead_updated",
+        leadId: id,
+      });
     } catch (publishError) {
       console.error("Failed to publish realtime lead update event:", publishError);
     }
