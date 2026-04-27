@@ -67,14 +67,64 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   const previousLeadRef = useRef<Lead | null>(null);
   const originalTitleRef = useRef<string>("");
   const lastManualUpdateRef = useRef<number>(0);
+  /** Unmasked email/phone for the open lead; list queries may still be masked. */
+  const unmaskedForPanelRef = useRef<{
+    leadId: string;
+    email: string;
+    phone: string;
+  } | null>(null);
+  const lastPanelLeadIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (lead) {
+      if (lastPanelLeadIdRef.current !== lead._id) {
+        unmaskedForPanelRef.current = null;
+        lastPanelLeadIdRef.current = lead._id;
+      }
       previousStatusRef.current = lead.status;
       previousLeadRef.current = lead;
       setCurrentLead(lead);
     }
   }, [lead]);
+
+  // List APIs (e.g. /api/leads/assigned) may return masked contact fields; load
+  // full contact for the same lead the user is already authorized to open.
+  useEffect(() => {
+    if (!isOpen || !lead?._id || !session?.user?.id) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiCallWithSessionRefresh(
+          `/api/leads/${lead._id}?detailPanel=1`,
+          {
+            method: "GET",
+            cache: "no-store",
+          },
+        );
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as Lead;
+        if (!data?._id || cancelled) return;
+
+        unmaskedForPanelRef.current = {
+          leadId: data._id,
+          email: data.email,
+          phone: data.phone ?? "",
+        };
+        setCurrentLead((prev) =>
+          prev && prev._id === data._id
+            ? { ...prev, email: data.email, phone: data.phone }
+            : prev,
+        );
+      } catch {
+        /* ignore */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, lead?._id, session?.user?.id]);
 
   // Realtime sync. Instead of refetching every leads-list query, we
   //   - re-fetch ONLY the single lead detail (server is source of truth), and
@@ -161,7 +211,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         messageListener = async () => {
           try {
             const response = await apiCallWithSessionRefresh(
-              `/api/leads/${lead._id}`,
+              `/api/leads/${lead._id}?detailPanel=1`,
               {
                 method: "GET",
                 cache: "no-store",
@@ -171,6 +221,11 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
             const freshLead = (await response.json()) as Lead;
             if (!freshLead?._id || isDisposed) return;
 
+            unmaskedForPanelRef.current = {
+              leadId: freshLead._id,
+              email: freshLead.email,
+              phone: freshLead.phone ?? "",
+            };
             previousStatusRef.current = freshLead.status;
             previousLeadRef.current = freshLead;
             setCurrentLead(freshLead);
@@ -266,8 +321,17 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         return;
       }
 
-      previousStatusRef.current = candidate.status;
-      setCurrentLead(candidate);
+      const merged =
+        unmaskedForPanelRef.current?.leadId === candidate._id
+          ? {
+              ...candidate,
+              email: unmaskedForPanelRef.current.email,
+              phone: unmaskedForPanelRef.current.phone,
+            }
+          : candidate;
+
+      previousStatusRef.current = merged.status;
+      setCurrentLead(merged);
     };
 
     reconcile();
@@ -300,6 +364,11 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       previousStatusRef.current = updatedLead.status;
       previousLeadRef.current = updatedLead;
       lastManualUpdateRef.current = Date.now();
+      unmaskedForPanelRef.current = {
+        leadId: updatedLead._id,
+        email: updatedLead.email,
+        phone: updatedLead.phone ?? "",
+      };
       setCurrentLead(updatedLead);
 
       const result = await onLeadUpdatedRef.current(updatedLead);

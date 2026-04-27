@@ -88,6 +88,9 @@ export async function GET(
       return unauthorizedResponse();
     }
 
+    const { searchParams } = new URL(request.url);
+    const detailPanel = searchParams.get("detailPanel") === "1";
+
     await connectMongoDB();
     const { id } = await params;
 
@@ -162,8 +165,8 @@ export async function GET(
       firstName: lead.firstName,
       lastName: lead.lastName,
       name: `${lead.firstName} ${lead.lastName}`,
-      email: maskEmail(lead.email, canViewEmails),
-      phone: maskPhone(lead.phone || "", canViewPhoneNumbers),
+      email: maskEmail(lead.email, canViewEmails || detailPanel),
+      phone: maskPhone(lead.phone || "", canViewPhoneNumbers || detailPanel),
       source: lead.source && lead.source !== "-" ? lead.source : "—",
       status: lead.status,
       country: lead.country || "",
