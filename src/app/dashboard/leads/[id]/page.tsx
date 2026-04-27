@@ -139,7 +139,7 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
   const { id } = use(params);
 
   // ✅ Use React Query hook for fetching lead
-  const { lead, isLoading, error, refetch } = useLeadDetails(
+  const { lead, isLoading, error } = useLeadDetails(
     status === "authenticated" ? id : null,
   );
 
@@ -169,19 +169,14 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
   const handleLeadUpdated = useCallback(
     async (updatedLead: Lead) => {
       try {
-        // Call the mutation
         await updateLeadAsync(updatedLead);
-
-        // Force refetch to get fresh data
-        await refetch();
-
         return true;
       } catch (error) {
         console.error("Error updating lead:", error);
         return false;
       }
     },
-    [updateLeadAsync, refetch],
+    [updateLeadAsync],
   );
 
   // Handle back navigation - preserve filters

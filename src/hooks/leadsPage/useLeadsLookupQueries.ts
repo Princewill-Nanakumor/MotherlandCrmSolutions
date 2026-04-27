@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { User } from "@/types/user.types";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 type StatusItem = {
   id: string;
@@ -9,12 +10,10 @@ type StatusItem = {
 
 type UseLeadsLookupQueriesParams = {
   isAuthenticated: boolean;
-  fetchWithTimeout: (url: string, ms?: number) => Promise<Response>;
 };
 
 export function useLeadsLookupQueries({
   isAuthenticated,
-  fetchWithTimeout,
 }: UseLeadsLookupQueriesParams) {
   const {
     data: users = [],
@@ -24,7 +23,9 @@ export function useLeadsLookupQueries({
   } = useQuery({
     queryKey: ["users"],
     queryFn: async (): Promise<User[]> => {
-      const response = await fetchWithTimeout("/api/users");
+      const response = await apiCallWithSessionRefresh("/api/users", {
+        cache: "no-store",
+      });
       if (!response.ok) throw new Error("Failed to fetch users");
       const data = await response.json();
       return Array.isArray(data) ? data : data.users || [];
@@ -44,7 +45,9 @@ export function useLeadsLookupQueries({
   } = useQuery({
     queryKey: ["statuses"],
     queryFn: async (): Promise<StatusItem[]> => {
-      const response = await fetchWithTimeout("/api/statuses");
+      const response = await apiCallWithSessionRefresh("/api/statuses", {
+        cache: "no-store",
+      });
       if (!response.ok) throw new Error("Failed to fetch statuses");
       return response.json();
     },

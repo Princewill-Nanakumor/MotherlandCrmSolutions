@@ -3,6 +3,7 @@ import { RefObject, useRef } from "react";
 import { Lead } from "@/types/leads";
 import { User } from "@/types/user.types";
 import { assignedLeadsKeys } from "@/hooks/useAssignedLeads";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 type LeadsResponse = {
   leads: Lead[];
@@ -66,11 +67,11 @@ export function useLeadsMutations({
 
   const assignLeadsMutation = useMutation({
     mutationFn: async ({ leadIds, userId }: { leadIds: string[]; userId: string }) => {
-      const response = await fetch("/api/leads/assign", {
+      const response = await apiCallWithSessionRefresh("/api/leads/assign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ leadIds, userId }),
-        credentials: "include",
+        cache: "no-store",
       });
       if (!response.ok) throw new Error("Failed to assign leads");
       return response.json();
@@ -182,11 +183,11 @@ export function useLeadsMutations({
 
   const unassignLeadsMutation = useMutation({
     mutationFn: async ({ leadIds }: { leadIds: string[] }) => {
-      const response = await fetch("/api/leads/unassign", {
+      const response = await apiCallWithSessionRefresh("/api/leads/unassign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ leadIds }),
-        credentials: "include",
+        cache: "no-store",
       });
       if (!response.ok) throw new Error("Failed to unassign leads");
       return response.json();
@@ -253,12 +254,15 @@ export function useLeadsMutations({
 
   const bulkStatusChangeMutation = useMutation({
     mutationFn: async ({ leadIds, status }: { leadIds: string[]; status: string }) => {
-      const response = await fetch("/api/leads/bulk/status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadIds, status }),
-        credentials: "include",
-      });
+      const response = await apiCallWithSessionRefresh(
+        "/api/leads/bulk/status",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ leadIds, status }),
+          cache: "no-store",
+        },
+      );
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to change lead statuses");
@@ -315,12 +319,15 @@ export function useLeadsMutations({
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async ({ leadIds }: { leadIds: string[] }) => {
-      const response = await fetch("/api/leads/bulk/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadIds }),
-        credentials: "include",
-      });
+      const response = await apiCallWithSessionRefresh(
+        "/api/leads/bulk/delete",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ leadIds }),
+          cache: "no-store",
+        },
+      );
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to delete leads");

@@ -4,7 +4,6 @@
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, use, useCallback } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LeadHeader } from "@/components/leads/leadDetailsPanel/LeadHeader";
@@ -27,7 +26,6 @@ const LeadDetailsPageContent = ({
   onLeadUpdated: (updatedLead: Lead) => Promise<boolean>;
   onBack: () => void;
 }) => {
-  const queryClient = useQueryClient();
   const [currentLead, setCurrentLead] = useState<Lead>(lead);
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
@@ -57,25 +55,15 @@ const LeadDetailsPageContent = ({
   const handleLeadUpdated = useCallback(
     async (updatedLead: Lead) => {
       try {
-        // Immediately update local state for responsive UI
         setCurrentLead(updatedLead);
-
-        // Call the parent update handler (which uses React Query mutation)
         await onLeadUpdated(updatedLead);
-
-        // Invalidate related queries to ensure fresh data
-        await queryClient.invalidateQueries({ queryKey: ["leads"] });
-        await queryClient.invalidateQueries({
-          queryKey: ["lead", updatedLead._id],
-        });
-
         return true;
       } catch (error) {
         console.error("Error in handleLeadUpdated:", error);
         return false;
       }
     },
-    [onLeadUpdated, queryClient]
+    [onLeadUpdated],
   );
 
   const handleNavigate = () => {};
@@ -143,7 +131,7 @@ const LeadDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = use(params);
 
   // ✅ Use React Query hook for fetching lead
-  const { lead, isLoading, error, refetch } = useLeadDetails(
+  const { lead, isLoading, error } = useLeadDetails(
     status === "authenticated" ? id : null
   );
 
@@ -163,19 +151,14 @@ const LeadDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const handleLeadUpdated = useCallback(
     async (updatedLead: Lead) => {
       try {
-        // Call the mutation
         await updateLeadAsync(updatedLead);
-
-        // Force refetch to get fresh data from server
-        await refetch();
-
         return true;
       } catch (error) {
         console.error("Error updating lead:", error);
         return false;
       }
     },
-    [updateLeadAsync, refetch]
+    [updateLeadAsync],
   );
 
   // Handle back navigation - preserve filters

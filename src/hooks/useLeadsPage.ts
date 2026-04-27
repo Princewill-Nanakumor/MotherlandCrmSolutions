@@ -11,6 +11,7 @@ import {
   getAvailableCountries,
 } from "../utils/LeadsUtils";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { Lead } from "@/types/leads";
 import { useLeadsLookupQueries } from "@/hooks/leadsPage/useLeadsLookupQueries";
 import { useLeadsMutations } from "@/hooks/leadsPage/useLeadsMutations";
@@ -31,30 +32,8 @@ export const useLeadsPage = (
   // Initialize state
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // ===== FETCH WITH TIMEOUT (production can hang without this) =====
-  // 90s allows slow cold starts / DB on Netlify; still prevents infinite hang
-  const API_TIMEOUT_MS = 90_000;
-  const fetchWithTimeout = useCallback(
-    async (url: string, ms = API_TIMEOUT_MS): Promise<Response> => {
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), ms);
-      try {
-        const res = await fetch(url, {
-          credentials: "include",
-          signal: controller.signal,
-        });
-        clearTimeout(id);
-        return res;
-      } catch (e) {
-        clearTimeout(id);
-        if (e instanceof Error && e.name === "AbortError") {
-          throw new Error("Request timed out. Please try again.");
-        }
-        throw e;
-      }
-    },
-    []
-  );
+  /** Longer timeout for paginated /api/leads/all (cold starts / slow DB). */
+  const LEADS_QUERY_TIMEOUT_MS = 90_000;
 
   // ===== PAGINATION (from URL; reset to 1 when filters change for correct first page) =====
   const pageFromUrl = Math.max(
@@ -99,7 +78,6 @@ export const useLeadsPage = (
     refetchStatuses,
   } = useLeadsLookupQueries({
     isAuthenticated,
-    fetchWithTimeout,
   });
 
   // ===== OPTIMIZED MUTATIONS =====
@@ -227,7 +205,10 @@ export const useLeadsPage = (
           "search=" + encodeURIComponent(searchTrimmed)
         );
       }
-      const response = await fetchWithTimeout(url);
+      const response = await apiCallWithSessionRefresh(url, {
+        cache: "no-store",
+        timeoutMs: LEADS_QUERY_TIMEOUT_MS,
+      });
       if (!response.ok) throw new Error("Failed to fetch leads");
       const data = await response.json();
       if (Array.isArray(data)) {

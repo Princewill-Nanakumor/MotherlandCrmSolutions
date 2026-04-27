@@ -11,6 +11,7 @@ import LeadStatus from "../leads/leadDetailsPanel/LeadStatus";
 import CommentsAndActivities from "../leads/leadDetailsPanel/CommentsAndActivities";
 import AdsImageSlider from "../ads/AdsImageSlider";
 import { useQueryClient } from "@tanstack/react-query";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { useSession } from "next-auth/react";
 import { LEAD_UPDATED_EVENT, getLeadChannelName } from "@/libs/realtime";
 import { getAblyRealtimeClient } from "@/libs/ablyClient";
@@ -95,10 +96,13 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
     const setupRealtime = async () => {
       try {
-        const scopeResponse = await fetch("/api/ably/scope", {
-          method: "GET",
-          credentials: "include",
-        });
+        const scopeResponse = await apiCallWithSessionRefresh(
+          "/api/ably/scope",
+          {
+            method: "GET",
+            cache: "no-store",
+          },
+        );
         if (!scopeResponse.ok) {
           if (scopeResponse.status === 401) return;
           throw new Error(
@@ -155,10 +159,13 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
         messageListener = async () => {
           try {
-            const response = await fetch(`/api/leads/${lead._id}`, {
-              method: "GET",
-              credentials: "include",
-            });
+            const response = await apiCallWithSessionRefresh(
+              `/api/leads/${lead._id}`,
+              {
+                method: "GET",
+                cache: "no-store",
+              },
+            );
             if (!response.ok) return;
             const freshLead = (await response.json()) as Lead;
             if (!freshLead?._id || isDisposed) return;

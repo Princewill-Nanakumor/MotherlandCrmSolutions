@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-query";
 import type { User } from "@/components/user-management/UserTableColumns";
 import type { UserFormCreateData, UserFormEditData } from "@/schemas/UserFormSchema";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 export type UserUpdateBody = UserFormEditData & {
   canViewPhoneNumbers?: boolean;
@@ -21,11 +22,11 @@ export async function updateUserRequest(
   userId: string,
   body: UserUpdateBody,
 ): Promise<User> {
-  const response = await fetch(`/api/users`, {
+  const response = await apiCallWithSessionRefresh(`/api/users`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    credentials: "include",
     body: JSON.stringify({ id: userId, ...body }),
+    cache: "no-store",
   });
 
   const data = await response.json();
@@ -85,15 +86,15 @@ export function useUserMutations({
         throw { message: "User session not found. Please log in again." };
       }
 
-      const response = await fetch("/api/users", {
+      const response = await apiCallWithSessionRefresh("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           ...userData,
           createdBy: session.user.id,
           status: "ACTIVE",
         }),
+        cache: "no-store",
       });
 
       const data = await response.json();
@@ -159,10 +160,13 @@ export function useUserMutations({
 
   const deleteUser = useMutation({
     mutationFn: async (userId: string) => {
-      const response = await fetch(`/api/users?id=${userId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const response = await apiCallWithSessionRefresh(
+        `/api/users?id=${userId}`,
+        {
+          method: "DELETE",
+          cache: "no-store",
+        },
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -198,14 +202,17 @@ export function useUserMutations({
       userId: string;
       password: string;
     }) => {
-      const response = await fetch(`/api/users/${userId}/reset-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await apiCallWithSessionRefresh(
+        `/api/users/${userId}/reset-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ password }),
+          cache: "no-store",
         },
-        credentials: "include",
-        body: JSON.stringify({ password }),
-      });
+      );
 
       if (!response.ok) {
         const error = await response.json();

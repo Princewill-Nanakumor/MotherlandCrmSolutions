@@ -1,25 +1,31 @@
 // src/lib/apiUtils.ts
 
+export type ApiCallOptions = RequestInit & {
+  /** Request timeout in ms (default 60000). Retry after 401 uses the same value. */
+  timeoutMs?: number;
+};
+
 /**
  * Helper function to handle API calls with session refresh and better timeout handling
  */
 export const apiCallWithSessionRefresh = async (
   url: string,
-  options: RequestInit = {}
+  options: ApiCallOptions = {},
 ) => {
+  const { timeoutMs = 60000, ...fetchOptions } = options;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   // Get cached ETag if available
   const cachedETag = typeof window !== 'undefined' ? localStorage.getItem(`etag-${url}`) : null;
 
   try {
     const response = await fetch(url, {
-      ...options,
+      ...fetchOptions,
       credentials: "include",
       signal: controller.signal,
       headers: {
-        ...options.headers,
+        ...fetchOptions.headers,
         ...(cachedETag && { "If-None-Match": cachedETag }),
       },
     });
@@ -79,12 +85,12 @@ export const apiCallWithSessionRefresh = async (
           const retryController = new AbortController();
           const retryTimeoutId = setTimeout(
             () => retryController.abort(),
-            60000
+            timeoutMs,
           );
 
           try {
             const retryResponse = await fetch(url, {
-              ...options,
+              ...fetchOptions,
               credentials: "include",
               signal: retryController.signal,
             });
@@ -113,6 +119,9 @@ export const apiCallWithSessionRefresh = async (
     return response;
   } catch (error) {
     clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Request timed out. Please try again.");
+    }
     throw error;
   }
 };

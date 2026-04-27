@@ -217,17 +217,18 @@ const updateLead = async (
   // Use /api/leads/[id] endpoint - remove 'id' from payload since it's in the URL
   const { id, ...updateData } = apiPayload;
 
-  const res = await fetch(`/api/leads/${id}`, {
+  const res = await apiCallWithSessionRefresh(`/api/leads/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(updateData),
+    cache: "no-store",
   });
 
   if (!res.ok) {
     throw new Error(`Failed to update lead: ${res.status}`);
   }
 
-  return res.json();
+  return (await res.json()) as Lead;
 };
 
 export const useAssignedLeads = () => {
@@ -326,7 +327,15 @@ export const useAssignedLeads = () => {
   const prefetchLead = (leadId: string) => {
     queryClient.prefetchQuery({
       queryKey: assignedLeadsKeys.detail(leadId),
-      queryFn: () => fetch(`/api/leads/${leadId}`).then((res) => res.json()),
+      queryFn: async () => {
+        const res = await apiCallWithSessionRefresh(`/api/leads/${leadId}`, {
+          cache: "no-store",
+        });
+        if (!res.ok) {
+          throw new Error(`Failed to prefetch lead: ${res.status}`);
+        }
+        return res.json();
+      },
       staleTime: 2 * 60 * 1000, // 2 minutes
     });
   };

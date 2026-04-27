@@ -141,7 +141,7 @@ export function UserLeadsMainContent({
       params.set("page", "1");
       params.set("pageSize", String(size));
       const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname);
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
     },
     [pathname, router, searchParams],
   );
@@ -153,7 +153,7 @@ export function UserLeadsMainContent({
       params.set("page", String(newPageIndex + 1));
       params.set("pageSize", String(pageSize));
       const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname);
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
     },
     [pathname, router, searchParams, pageSize],
   );
