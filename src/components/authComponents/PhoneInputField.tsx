@@ -53,7 +53,7 @@ export function PhoneInputField({
 
         {/* Show country code when country is selected */}
         {selectedCountry && (
-          <div className="absolute flex items-center text-sm font-medium text-gray-600 -translate-y-1/2 left-10 sm:left-12 top-1/2 sm:text-base dark:text-gray-300">
+          <div className="absolute flex items-center text-sm font-medium text-gray-600 -translate-y-1/2 left-10 sm:left-12 top-1/2 sm:text-base">
             <span>{selectedCountry.phoneCode}</span>
           </div>
         )}
@@ -67,7 +67,7 @@ export function PhoneInputField({
           disabled={isLoading}
           className={`h-10 sm:h-12 w-full rounded-lg border text-sm sm:text-base ${
             selectedCountry ? "pl-20 sm:pl-22" : "pl-10 sm:pl-12"
-          } ${error ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-600 focus:ring-indigo-500" } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900! dark:text-white! bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
+          } ${error ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-indigo-500" } placeholder-gray-500 text-gray-900! bg-white focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
         />
       </div>
 

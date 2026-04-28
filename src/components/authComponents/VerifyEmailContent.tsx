@@ -26,7 +26,7 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
       }, 1000);
       return () => clearTimeout(timer);
     } else if (status === "success" && countdown === 0) {
-      router.push("/");
+      router.push("/login");
     }
   }, [status, countdown, router]);
 
@@ -113,7 +113,7 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
                 </p>
               </div>
               <Link
-                href="/"
+                href="/login"
                 className="inline-flex items-center px-6 py-2 text-sm font-medium text-white transition-colors bg-green-500 rounded-lg shadow-lg 0 hover:bg-green-600"
               >
                 Continue to Sign In
@@ -144,7 +144,7 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
                 </Link>
                 <div>
                   <Link
-                    href="/"
+                    href="/login"
                     className="inline-flex items-center px-6 py-2 text-sm font-medium text-gray-700 transition-colors border border-gray-300 rounded-lg dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-300"
                   >
                     Back to Sign In
@@ -178,7 +178,7 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
                 </Link>
                 <div>
                   <Link
-                    href="/"
+                    href="/login"
                     className="inline-flex items-center px-6 py-2 text-sm font-medium text-gray-700 transition-colors border border-gray-300 rounded-lg dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-300"
                   >
                     Back to Sign In

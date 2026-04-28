@@ -50,40 +50,6 @@ export const getCountrySelectStyles = (
             ? "#6366F1"
             : "#D1D5DB",
       },
-      // Dark mode styles
-      "@media (prefers-color-scheme: dark)": {
-        borderColor: hasError
-          ? "#EF4444" // red-500
-          : state.isFocused
-            ? "#6366F1" // indigo-500
-            : "#4B5563", // gray-600 for dark mode
-        backgroundColor: "#374151", // gray-700 for dark mode
-        color: "#F3F4F6", // gray-100 for dark mode
-        "&:hover": {
-          borderColor: hasError
-            ? "#EF4444"
-            : state.isFocused
-              ? "#6366F1"
-              : "#4B5563",
-        },
-      },
-      // Manual dark mode class
-      ".dark &": {
-        borderColor: hasError
-          ? "#EF4444" // red-500
-          : state.isFocused
-            ? "#6366F1" // indigo-500
-            : "#4B5563", // gray-600 for dark mode
-        backgroundColor: "#374151", // gray-700 for dark mode
-        color: "#F3F4F6", // gray-100 for dark mode
-        "&:hover": {
-          borderColor: hasError
-            ? "#EF4444"
-            : state.isFocused
-              ? "#6366F1"
-              : "#4B5563",
-        },
-      },
       // Responsive height
       "@media (min-width: 640px)": {
         minHeight: "48px", // h-12 for desktop
@@ -116,13 +82,6 @@ export const getCountrySelectStyles = (
       marginLeft: 0,
       minWidth: 0,
       maxWidth: "100%",
-      // Dark mode styles
-      "@media (prefers-color-scheme: dark)": {
-        color: "#F3F4F6", // gray-100 for dark mode
-      },
-      ".dark &": {
-        color: "#F3F4F6", // gray-100 for dark mode
-      },
       // Responsive font size
       "@media (min-width: 640px)": {
         fontSize: "1rem", // text-base
@@ -136,13 +95,6 @@ export const getCountrySelectStyles = (
       color: "#111827", // gray-900 for light mode
       minWidth: 0,
       fontSize: "0.875rem", // text-sm
-      // Dark mode styles
-      "@media (prefers-color-scheme: dark)": {
-        color: "#F3F4F6", // gray-100 for dark mode
-      },
-      ".dark &": {
-        color: "#F3F4F6", // gray-100 for dark mode
-      },
       // Responsive font size
       "@media (min-width: 640px)": {
         fontSize: "1rem", // text-base
@@ -157,13 +109,6 @@ export const getCountrySelectStyles = (
       fontSize: "0.875rem", // text-sm
       display: "flex",
       alignItems: "center",
-      // Dark mode styles
-      "@media (prefers-color-scheme: dark)": {
-        color: "#9CA3AF", // gray-400 for dark mode
-      },
-      ".dark &": {
-        color: "#9CA3AF", // gray-400 for dark mode
-      },
       // Responsive font size
       "@media (min-width: 640px)": {
         fontSize: "1rem", // text-base
@@ -187,29 +132,6 @@ export const getCountrySelectStyles = (
       "&:active": {
         backgroundColor: "#EEF2FF",
       },
-      // Dark mode styles
-      "@media (prefers-color-scheme: dark)": {
-        backgroundColor: state.isSelected
-          ? "#312E81" // indigo-900 for dark mode
-          : state.isFocused
-            ? "#374151" // gray-700 for dark mode
-            : "#1F2937", // gray-800 for dark mode
-        color: "#F3F4F6", // gray-100 for dark mode
-        "&:active": {
-          backgroundColor: "#312E81",
-        },
-      },
-      ".dark &": {
-        backgroundColor: state.isSelected
-          ? "#312E81" // indigo-900 for dark mode
-          : state.isFocused
-            ? "#374151" // gray-700 for dark mode
-            : "#1F2937", // gray-800 for dark mode
-        color: "#F3F4F6", // gray-100 for dark mode
-        "&:active": {
-          backgroundColor: "#312E81",
-        },
-      },
       // Responsive font size
       "@media (min-width: 640px)": {
         fontSize: "1rem", // text-base
@@ -227,21 +149,6 @@ export const getCountrySelectStyles = (
       marginTop: "4px",
       zIndex: 9999,
       minWidth: 0,
-      // Dark mode styles
-      "@media (prefers-color-scheme: dark)": {
-        backgroundColor: "#1F2937", // gray-800 for dark mode
-        color: "#F3F4F6", // gray-100 for dark mode
-        border: "1px solid #374151", // gray-700 for dark mode
-        boxShadow:
-          "0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)",
-      },
-      ".dark &": {
-        backgroundColor: "#1F2937", // gray-800 for dark mode
-        color: "#F3F4F6", // gray-100 for dark mode
-        border: "1px solid #374151", // gray-700 for dark mode
-        boxShadow:
-          "0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)",
-      },
     }),
     menuList: (provided) => ({
       ...provided,
@@ -259,34 +166,11 @@ export const getCountrySelectStyles = (
         background: "#9CA3AF",
         borderRadius: "3px",
       },
-      // Dark mode scrollbar styles
-      "@media (prefers-color-scheme: dark)": {
-        "::-webkit-scrollbar-track": {
-          background: "#374151",
-        },
-        "::-webkit-scrollbar-thumb": {
-          background: "#818CF8",
-        },
-      },
-      ".dark &": {
-        "::-webkit-scrollbar-track": {
-          background: "#374151", // gray-700 for dark mode
-        },
-        "::-webkit-scrollbar-thumb": {
-          background: "#818CF8", // indigo-400 for dark mode
-        },
-      },
     }),
     dropdownIndicator: (provided) => ({
       ...provided,
       padding: "0 8px",
       color: "#6B7280",
-      "@media (prefers-color-scheme: dark)": {
-        color: "#9CA3AF",
-      },
-      ".dark &": {
-        color: "#9CA3AF",
-      },
     }),
     indicatorSeparator: () => ({
       display: "none",

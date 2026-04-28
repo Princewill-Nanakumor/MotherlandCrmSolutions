@@ -104,8 +104,8 @@ export function SignUpFormFields({
               className={`pl-10 sm:pl-12 h-10 sm:h-12 w-full px-3 rounded-lg border text-sm sm:text-base ${
                 errors.firstName
                   ? "border-red-500 focus:ring-red-500"
-                  : "border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
-              } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
+                  : "border-gray-300 focus:ring-indigo-500"
+              } placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
               placeholder="First Name"
               disabled={loading}
             />
@@ -130,8 +130,8 @@ export function SignUpFormFields({
               className={`pl-10 sm:pl-12 h-10 sm:h-12 w-full px-3 rounded-lg border text-sm sm:text-base ${
                 errors.lastName
                   ? "border-red-500 focus:ring-red-500"
-                  : "border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
-              } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
+                  : "border-gray-300 focus:ring-indigo-500"
+              } placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
               placeholder="Last Name"
               disabled={loading}
             />
@@ -157,8 +157,8 @@ export function SignUpFormFields({
             className={`pl-10 sm:pl-12 h-10 sm:h-12 w-full px-3 rounded-lg border text-sm sm:text-base ${
               errors.email
                 ? "border-red-500 focus:ring-red-500"
-                : "border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
-            } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
+                : "border-gray-300 focus:ring-indigo-500"
+            } placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
             placeholder="Email Address"
             disabled={loading}
           />
@@ -205,7 +205,7 @@ export function SignUpFormFields({
                   />
                 ) : (
                   // Fallback for SSR
-                  <div className="h-10 sm:h-12 w-full pl-10 sm:pl-12 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 flex items-center">
+                  <div className="h-10 sm:h-12 w-full pl-10 sm:pl-12 px-3 rounded-lg border border-gray-300 bg-white text-gray-500 flex items-center">
                     Select a country
                   </div>
                 )}
@@ -252,8 +252,8 @@ export function SignUpFormFields({
             className={`pl-10 sm:pl-12 pr-10 sm:pr-12 h-10 sm:h-12 w-full px-3 rounded-lg border text-sm sm:text-base ${
               errors.password
                 ? "border-red-500 focus:ring-red-500"
-                : "border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
-            } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
+                : "border-gray-300 focus:ring-indigo-500"
+            } placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
             placeholder="Password"
             disabled={loading}
           />
@@ -292,8 +292,8 @@ export function SignUpFormFields({
             className={`pl-10 sm:pl-12 pr-10 sm:pr-12 h-10 sm:h-12 w-full px-3 rounded-lg border text-sm sm:text-base ${
               errors.confirmPassword
                 ? "border-red-500 focus:ring-red-500"
-                : "border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
-            } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
+                : "border-gray-300 focus:ring-indigo-500"
+            } placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
             placeholder="Confirm Password"
             disabled={loading}
           />

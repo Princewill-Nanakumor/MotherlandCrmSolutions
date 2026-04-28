@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn, useSession, getSession } from "next-auth/react";
+import Link from "next/link";
 import { Mail, Lock, Loader2, ArrowRight } from "lucide-react";
 import { LoginSchema } from "@/schemas";
 import { z } from "zod";
@@ -247,7 +248,17 @@ export default function SignInForm() {
           )}
         </button>
 
-        {/* Signup link hidden */}
+        <p className="text-sm text-center text-white!">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/signup"
+            className={`font-semibold underline transition-colors ${
+              isFormDisabled ? "pointer-events-none opacity-75" : "hover:text-indigo-200"
+            }`}
+          >
+            Sign up
+          </Link>
+        </p>
       </form>
     </div>
   );

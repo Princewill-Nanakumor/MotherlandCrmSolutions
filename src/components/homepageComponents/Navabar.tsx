@@ -20,6 +20,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const isLoginPage = pathname === "/login";
+  const isSignupPage = pathname === "/signup";
   const [isScrolled, setIsScrolled] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
@@ -192,7 +193,22 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              {!isLoginPage && (
+              {!isSignupPage && (
+                <motion.div
+                  variants={buttonVariants}
+                  initial="visible"
+                  animate="visible"
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                >
+                  <Link
+                    href="/signup"
+                    className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-300 backdrop-blur-md shadow-lg ${isScrolled ? "text-gray-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200" : "text-white! bg-white/20 hover:bg-white/30 border border-white/30" }`}
+                  >
+                    Sign Up
+                  </Link>
+                </motion.div>
+              )}
+              {!isLoginPage && !isSignupPage && (
                 <motion.div
                   variants={buttonVariants}
                   initial="visible"

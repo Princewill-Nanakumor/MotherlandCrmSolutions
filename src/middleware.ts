@@ -71,7 +71,7 @@ export default withAuth(
       "/test-performance",
       "/contact",
       "/login",
-      // "/signup", // Hidden - will be enabled later
+      "/signup",
       // "/forgot-password", // Hidden - will be enabled later
       "/verify-email",
     ];
