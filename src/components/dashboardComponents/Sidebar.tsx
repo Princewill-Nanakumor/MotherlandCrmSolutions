@@ -92,6 +92,16 @@ export default function Sidebar() {
   // Check session on pathname change and redirect if unauthenticated
   useEffect(() => {
     if (status === "unauthenticated" || (!session && status !== "loading")) {
+      // Manual logout should not be treated as "session expired".
+      try {
+        if (sessionStorage.getItem("auth:intentionalSignOut") === "1") {
+          sessionStorage.removeItem("auth:intentionalSignOut");
+          return;
+        }
+      } catch {
+        /* ignore */
+      }
+
       // Redirect with expired parameter and remember where the user was
       const search =
         typeof window !== "undefined" ? window.location.search : "";

@@ -341,11 +341,6 @@ export default function LeadsTable({
       }
       // If lead not found but URL has param, keep panel open with current selectedLead
       // (lead might be filtered out, not deleted - don't close panel)
-    } else if (!leadIdParam && selectedLead) {
-      // If URL has no lead param but panel is open, close it
-      // (User manually closed or navigated away)
-      setSelectedLead(null);
-      setIsPanelOpen(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, leads]); // Depend on searchParams and leads

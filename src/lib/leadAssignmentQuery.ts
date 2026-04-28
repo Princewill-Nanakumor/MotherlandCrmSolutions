@@ -5,11 +5,16 @@ import mongoose from "mongoose";
  * ObjectId, string id, or populated `{ _id, ... }` from assign APIs.
  */
 export function agentAssignedToUserClause(agentUserId: string) {
-  const oid = new mongoose.Types.ObjectId(agentUserId);
+  const hasValidObjectId = mongoose.Types.ObjectId.isValid(agentUserId);
+  const oid = hasValidObjectId
+    ? new mongoose.Types.ObjectId(agentUserId)
+    : null;
+  const objectIdClauses = oid
+    ? [{ "assignedTo._id": oid }, { assignedTo: oid }]
+    : [];
   return {
     $or: [
-      { "assignedTo._id": oid },
-      { assignedTo: oid },
+      ...objectIdClauses,
       { assignedTo: agentUserId },
     ],
   };
