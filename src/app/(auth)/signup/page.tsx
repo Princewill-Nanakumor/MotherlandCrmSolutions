@@ -83,6 +83,40 @@ export default function SignUpPage() {
             background-color: transparent !important;
             background: transparent !important;
           }
+          body.is-signup-page div[class*="bg-white/10"] {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+          }
+          body.is-signup-page form {
+            background-color: transparent !important;
+            background: transparent !important;
+          }
+          body.is-signup-page input:not([type="checkbox"]),
+          body.is-signup-page textarea,
+          body.is-signup-page select,
+          body.is-signup-page .react-select__control {
+            border-color: rgb(209, 213, 219) !important;
+            background-color: white !important;
+            color: rgb(17, 24, 39) !important;
+          }
+          body.is-signup-page input:not([type="checkbox"])::placeholder,
+          body.is-signup-page textarea::placeholder,
+          body.is-signup-page .react-select__placeholder {
+            color: rgb(107, 114, 128) !important;
+          }
+          body.is-signup-page input:not([type="checkbox"]):-webkit-autofill,
+          body.is-signup-page input:not([type="checkbox"]):-webkit-autofill:hover,
+          body.is-signup-page input:not([type="checkbox"]):-webkit-autofill:focus {
+            -webkit-text-fill-color: rgb(17, 24, 39) !important;
+            -webkit-box-shadow: 0 0 0px 1000px white inset !important;
+            box-shadow: 0 0 0px 1000px white inset !important;
+            transition: background-color 5000s ease-in-out 0s;
+          }
+          body.is-signup-page .react-select__single-value,
+          body.is-signup-page .react-select__input-container,
+          body.is-signup-page .react-select__input input {
+            color: rgb(17, 24, 39) !important;
+          }
         `,
         }}
       />

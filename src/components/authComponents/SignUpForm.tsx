@@ -6,24 +6,32 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Inter } from "next/font/google";
 import { SignUpSchema } from "@/schemas";
 import * as z from "zod";
 import { FormError } from "./FormError";
 import { FormSuccess } from "./FormSucess";
 import { SignUpFormFields } from "./SignUpFormFields";
 import { SignUpFormActions } from "./SignUpFormActions";
-
-const inter = Inter({ subsets: ["latin"] });
+import { LoginCaptcha, RobotVerifyButton } from "./LoginCaptcha";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 type SignUpFormData = z.infer<typeof SignUpSchema>;
 
 export default function SignUpForm() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [captchaInput, setCaptchaInput] = useState("");
+  const [captchaCode, setCaptchaCode] = useState("");
+  const [captchaEnabled, setCaptchaEnabled] = useState(false);
+  const [captchaResetCounter, setCaptchaResetCounter] = useState(0);
+
+  const refreshCaptchaOnError = () => {
+    setCaptchaInput("");
+    setCaptchaResetCounter((prev) => prev + 1);
+  };
 
   const {
     register,
@@ -33,6 +41,7 @@ export default function SignUpForm() {
     control,
     setValue,
     watch,
+    getValues,
   } = useForm<SignUpFormData>({
     resolver: zodResolver(SignUpSchema),
     defaultValues: {
@@ -42,16 +51,53 @@ export default function SignUpForm() {
   });
 
   const watchedPassword = watch("password");
+  const watchedFirstName = watch("firstName");
+  const watchedLastName = watch("lastName");
+  const watchedEmail = watch("email");
+  const watchedConfirmPassword = watch("confirmPassword");
+  const watchedCountry = watch("country");
+  const watchedPhoneNumber = watch("phoneNumber");
+  const hasRequiredSignupFields =
+    !!watchedFirstName?.trim() &&
+    !!watchedLastName?.trim() &&
+    !!watchedEmail?.trim() &&
+    !!watchedPassword?.trim() &&
+    !!watchedConfirmPassword?.trim() &&
+    !!watchedCountry?.trim() &&
+    !!watchedPhoneNumber?.trim();
+  const canSubmitSignup =
+    !loading &&
+    !formSuccess &&
+    captchaEnabled &&
+    hasRequiredSignupFields &&
+    captchaInput.length === 6;
 
   useEffect(() => {
-    if (session) {
-      router.push("/dashboard");
+    if (hasAuthorizedSession(status, session)) {
+      router.replace("/dashboard");
     }
-  }, [session, router]);
+  }, [status, session, router]);
 
   const onSubmit: SubmitHandler<SignUpFormData> = async (data) => {
     setFormError("");
     setFormSuccess("");
+
+    if (!captchaEnabled) {
+      setFormError("Please confirm you are not a robot first.");
+      return;
+    }
+
+    if (captchaInput.length !== 6) {
+      setFormError("Please enter the full 6-digit captcha code.");
+      return;
+    }
+
+    if (captchaInput !== captchaCode) {
+      setFormError("incorrect captcha, please try again");
+      refreshCaptchaOnError();
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -69,12 +115,10 @@ export default function SignUpForm() {
 
       setFormSuccess("Account created successfully! Redirecting to login...");
 
-      // Reset the form
       reset();
 
-      // Auto-login for new admin user
       setTimeout(() => {
-        router.push("/login");
+        router.replace("/login");
       }, 2000);
     } catch (error: unknown) {
       setFormError(
@@ -82,16 +126,14 @@ export default function SignUpForm() {
           ? error.message
           : "An unexpected error occurred during sign up",
       );
+      refreshCaptchaOnError();
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      className={`p-4 border shadow-xl rounded-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8 ${inter.className}`}
-      style={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
-    >
+    <div className="p-4 border shadow-xl rounded-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8">
       <div className="mb-6 text-center sm:mb-8">
         <h2 className="text-xl font-bold text-white! sm:text-2xl md:text-3xl">
           Create your account
@@ -123,12 +165,31 @@ export default function SignUpForm() {
           register={register}
           control={control}
           errors={errors}
-          loading={loading}
+          loading={loading || !!formSuccess}
           setValue={setValue}
+          getValues={getValues}
           watchedPassword={watchedPassword || ""}
         />
 
-        <SignUpFormActions loading={loading} />
+        {!captchaEnabled ? (
+          <RobotVerifyButton
+            disabled={loading || !!formSuccess}
+            onClick={() => {
+              setCaptchaEnabled(true);
+              setFormError("");
+            }}
+          />
+        ) : (
+          <LoginCaptcha
+            value={captchaInput}
+            onChange={setCaptchaInput}
+            onCaptchaCodeChange={setCaptchaCode}
+            resetTrigger={captchaResetCounter}
+            disabled={loading || !!formSuccess}
+          />
+        )}
+
+        <SignUpFormActions loading={loading} disabled={!canSubmitSignup} />
       </form>
     </div>
   );

@@ -2,13 +2,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   UseFormRegister,
   Control,
   FieldErrors,
   UseFormSetValue,
+  UseFormGetValues,
 } from "react-hook-form";
 import { Controller } from "react-hook-form";
+import { OptionProps } from "react-select";
 import {
   User,
   Mail,
@@ -26,10 +29,7 @@ import {
   Select,
   countryOptions,
   SelectOption,
-  CustomOption,
-  CustomSingleValue,
 } from "../../components/user-management/CountrySelect";
-import { Country } from "react-phone-number-input";
 import { getCountrySelectStyles } from "./CountrySelectStyles";
 
 type SignUpFormData = z.infer<typeof SignUpSchema>;
@@ -40,8 +40,63 @@ interface SignUpFormFieldsProps {
   errors: FieldErrors<SignUpFormData>;
   loading: boolean;
   setValue: UseFormSetValue<SignUpFormData>;
+  getValues: UseFormGetValues<SignUpFormData>;
   watchedPassword: string;
 }
+
+const AuthCustomOption = ({
+  data,
+  innerProps,
+  isDisabled,
+  isFocused,
+  isSelected,
+}: OptionProps<SelectOption, false>) => (
+  <div
+    {...innerProps}
+    className={`flex items-center gap-3 p-2 cursor-pointer ${
+      isDisabled
+        ? "opacity-50 cursor-not-allowed"
+        : isSelected
+          ? "bg-indigo-50"
+          : isFocused
+            ? "bg-gray-50"
+            : "bg-white"
+    } hover:bg-gray-100`}
+  >
+    {data.flag ? (
+      <Image
+        src={`https://flagcdn.com/24x18/${data.flag}.png`}
+        alt={data.label}
+        width={24}
+        height={18}
+        className="object-cover w-6 h-4 shrink-0"
+        loading="lazy"
+      />
+    ) : (
+      <Globe className="w-6 h-4 text-gray-400 shrink-0" />
+    )}
+    <span className="flex-1 truncate text-gray-900!">{data.label}</span>
+    <span className="text-sm text-gray-500">{data.phoneCode}</span>
+  </div>
+);
+
+const AuthCustomSingleValue = ({ data }: { data: SelectOption }) => (
+  <div className="flex items-center h-full gap-2">
+    {data.flag ? (
+      <Image
+        src={`https://flagcdn.com/24x18/${data.flag}.png`}
+        alt={data.label}
+        width={24}
+        height={18}
+        className="object-cover w-6 h-4 shrink-0"
+        loading="lazy"
+      />
+    ) : (
+      <Globe className="w-6 h-4 text-gray-400 shrink-0" />
+    )}
+    <span className="truncate text-gray-900!">{data.label}</span>
+  </div>
+);
 
 export function SignUpFormFields({
   register,
@@ -49,6 +104,7 @@ export function SignUpFormFields({
   errors,
   loading,
   setValue,
+  getValues,
   watchedPassword,
 }: SignUpFormFieldsProps) {
   const [showPassword, setShowPassword] = useState(false);
@@ -70,16 +126,17 @@ export function SignUpFormFields({
       shouldDirty: true,
     });
 
-    // Update phone number with new country code (without space)
-    if (option) {
-      const currentPhone = control._formValues.phoneNumber || "";
-      const phoneWithoutCode = currentPhone.replace(/^\+\d+\s?/, "");
-      const newPhone = option.phoneCode + phoneWithoutCode; // Remove the space
-      setValue("phoneNumber", newPhone, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    }
+    // Update phone only when user already entered local digits.
+    // This prevents immediate validation errors right after country selection.
+    const currentPhone = getValues("phoneNumber") || "";
+    const phoneWithoutCode = currentPhone.replace(/^\+\d+\s?/, "").trim();
+    const newPhone =
+      option && phoneWithoutCode ? `${option.phoneCode}${phoneWithoutCode}` : "";
+
+    setValue("phoneNumber", newPhone, {
+      shouldValidate: false,
+      shouldDirty: !!phoneWithoutCode,
+    });
   };
 
   const handlePhoneChange = (value: string) => {
@@ -197,8 +254,8 @@ export function SignUpFormFields({
                     className="react-select-container"
                     classNamePrefix="react-select"
                     components={{
-                      Option: CustomOption,
-                      SingleValue: CustomSingleValue,
+                      Option: AuthCustomOption,
+                      SingleValue: AuthCustomSingleValue,
                     }}
                     menuPlacement="top"
                     instanceId="country-select"
@@ -230,7 +287,6 @@ export function SignUpFormFields({
             <PhoneInputField
               value={field.value || ""}
               onChange={handlePhoneChange}
-              defaultCountry={selectedCountry?.value as Country | undefined}
               isLoading={loading}
               error={errors.phoneNumber?.message}
               placeholder="Enter phone number"
@@ -260,7 +316,7 @@ export function SignUpFormFields({
           <button
             type="button"
             tabIndex={-1}
-            className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
             onClick={() => setShowPassword((v) => !v)}
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
@@ -300,7 +356,7 @@ export function SignUpFormFields({
           <button
             type="button"
             tabIndex={-1}
-            className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
             onClick={() => setShowConfirm((v) => !v)}
             aria-label={showConfirm ? "Hide password" : "Show password"}
           >

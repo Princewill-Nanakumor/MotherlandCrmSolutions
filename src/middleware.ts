@@ -3,6 +3,17 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import { SESSION_MAX_AGE_SECONDS } from "@/lib/sessionMaxAge";
 
+const PUBLIC_PAGES = [
+  "/",
+  "/about",
+  "/test-performance",
+  "/contact",
+  "/login",
+  "/signup",
+  // "/forgot-password", // Hidden - will be enabled later
+  "/verify-email",
+] as const;
+
 /** Match libs/auth.ts jwt/session callbacks: exp, iat, and loginTimestamp vs SESSION_MAX_AGE_SECONDS. */
 function isSessionTokenExpired(
   token:
@@ -65,18 +76,8 @@ export default withAuth(
       return NextResponse.next();
     }
 
-    const publicPages = [
-      "/",
-      "/about",
-      "/test-performance",
-      "/contact",
-      "/login",
-      "/signup",
-      // "/forgot-password", // Hidden - will be enabled later
-      "/verify-email",
-    ];
-
-    const isPublicPage = publicPages.includes(path) || isVerifyEmailPage;
+    const isPublicPage =
+      (PUBLIC_PAGES as readonly string[]).includes(path) || isVerifyEmailPage;
     // ✅ Allow access to public pages
     if (isPublicPage) {
       return NextResponse.next();
@@ -144,17 +145,6 @@ export default withAuth(
           return true;
         }
 
-        const publicPages = [
-          "/",
-          "/about",
-          "/test-performance",
-          "/contact",
-          "/signup",
-          "/forgot-password",
-          "/signin",
-          "/verify-email",
-        ];
-
         // Allow reset password pages without authentication
         if (path.startsWith("/reset-password")) {
           return true;
@@ -165,7 +155,7 @@ export default withAuth(
           return true;
         }
 
-        if (publicPages.includes(path)) {
+        if ((PUBLIC_PAGES as readonly string[]).includes(path)) {
           return true;
         }
 

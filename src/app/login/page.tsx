@@ -43,7 +43,7 @@ const sectionVariants = {
 // Loading screen component
 function LoadingScreen() {
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-linear-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950">
+    <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-linear-to-br from-gray-900 via-blue-900 to-purple-900">
       <div className="flex items-center gap-3">
         <div className="relative flex items-center justify-center w-16 h-16">
           <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
@@ -60,7 +60,7 @@ function LoadingScreen() {
 // Redirecting screen component
 function RedirectingScreen() {
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-linear-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950">
+    <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-linear-to-br from-gray-900 via-blue-900 to-purple-900">
       <div className="flex items-center gap-3">
         <div className="relative flex items-center justify-center w-16 h-16">
           <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
@@ -203,6 +203,16 @@ export default function LoginPage() {
     setMounted(true);
   }, []);
 
+  // Clear one-time marker used to suppress expiry redirects after manual sign-out.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      sessionStorage.removeItem("auth:intentionalSignOut");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   // Check if session expired and show toast (from ?expired=true or localStorage.sessionExpired)
   useEffect(() => {
     if (hasShownExpiredToastRef.current) return;
@@ -302,9 +312,24 @@ export default function LoginPage() {
             background-color: transparent !important;
             background: transparent !important;
           }
-          body.is-login-page input[type="email"],
-          body.is-login-page input[type="password"] {
+          body.is-login-page input:not([type="checkbox"]),
+          body.is-login-page textarea,
+          body.is-login-page select {
             border-color: rgb(209, 213, 219) !important;
+            background-color: white !important;
+            color: rgb(17, 24, 39) !important;
+          }
+          body.is-login-page input:not([type="checkbox"])::placeholder,
+          body.is-login-page textarea::placeholder {
+            color: rgb(107, 114, 128) !important;
+          }
+          body.is-login-page input:not([type="checkbox"]):-webkit-autofill,
+          body.is-login-page input:not([type="checkbox"]):-webkit-autofill:hover,
+          body.is-login-page input:not([type="checkbox"]):-webkit-autofill:focus {
+            -webkit-text-fill-color: rgb(17, 24, 39) !important;
+            -webkit-box-shadow: 0 0 0px 1000px white inset !important;
+            box-shadow: 0 0 0px 1000px white inset !important;
+            transition: background-color 5000s ease-in-out 0s;
           }
           body.is-login-page input[type="checkbox"] {
             background-color: white !important;

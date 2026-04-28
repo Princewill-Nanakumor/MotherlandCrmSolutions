@@ -80,6 +80,13 @@ export const useLeads = () => {
 
   const handleUnauthorized = useCallback(async () => {
     if (isSigningOutRef.current) return;
+    try {
+      if (sessionStorage.getItem("auth:intentionalSignOut") === "1") {
+        return;
+      }
+    } catch {
+      /* ignore */
+    }
     isSigningOutRef.current = true;
     try {
       await signOut({ redirect: false });

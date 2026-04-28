@@ -55,7 +55,7 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
   return (
     <div className="mt-2 space-y-1">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-gray-600 dark:text-gray-400">
+        <span className="text-gray-600">
           Password strength:
         </span>
         <span
@@ -72,13 +72,13 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
             className={`h-full rounded-full flex-1 transition-all duration-300 ${
               level <= strength
                 ? strengthColors[strength]
-                : "bg-gray-200 dark:bg-gray-600"
+                : "bg-gray-200"
             }`}
           />
         ))}
       </div>
 
-      <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1 mt-2">
+      <ul className="text-xs text-gray-500 space-y-1 mt-2">
         <li
           className={`flex items-center ${password.length >= 8 ? "text-green-500" : ""}`}
         >

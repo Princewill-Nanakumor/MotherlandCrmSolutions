@@ -3,13 +3,11 @@
 
 import React from "react";
 import { Phone, AlertCircle } from "lucide-react";
-import { Country } from "react-phone-number-input";
 import { SelectOption } from "./CountrySelectStyles";
 
 interface PhoneInputFieldProps {
   value: string;
   onChange: (value: string) => void;
-  defaultCountry?: Country;
   isLoading?: boolean;
   error?: string;
   placeholder?: string;
@@ -53,7 +51,7 @@ export function PhoneInputField({
 
         {/* Show country code when country is selected */}
         {selectedCountry && (
-          <div className="absolute flex items-center text-sm font-medium text-gray-600 -translate-y-1/2 left-10 sm:left-12 top-1/2 sm:text-base">
+          <div className="absolute flex items-center text-sm font-normal text-gray-900 -translate-y-1/2 left-10 sm:left-12 top-1/2 sm:text-base">
             <span>{selectedCountry.phoneCode}</span>
           </div>
         )}

@@ -195,10 +195,10 @@ export const authOptions: NextAuthOptions = {
         // Store the original expiration time in loginTimestamp to prevent sliding sessions extending it
         token.loginTimestamp = nowTimestamp;
         
-        // Store the original expiration time in iat (issued at) if not already set
-        if (!token.iat) {
-          token.iat = nowTimestamp;
-        }
+        // Always reset iat on fresh login.
+        // If we keep an old iat from a previous expired token, the next jwt() pass
+        // can immediately mark this brand-new login as expired.
+        token.iat = nowTimestamp;
       } else if (token) {
         // Existing token - check if it's expired. Don't throw (causes 500 on Netlify/serverless);
         // strip id so session callback can return null (empty id still counts as "authenticated" on the client).
@@ -218,17 +218,64 @@ export const authOptions: NextAuthOptions = {
           currentTime - token.iat > maxAge;
           
         if (expiredByExp || expiredByIat || expiredByLogin) {
-          return { ...token, id: undefined, exp: 0 };
+          return { ...token, id: "", exp: 0 };
         }
       }
 
-      // Handle session updates (but don't change expiration)
-      if (trigger === "update" && session) {
-        // Preserve the original expiration time when updating
-        const originalExp = token.exp;
-        const updatedToken = { ...token, ...session.user };
-        updatedToken.exp = originalExp; // Restore original expiration
-        return updatedToken;
+      // Handle session updates (but don't change expiration).
+      // Only apply defined user fields so we never clobber required token values
+      // (e.g. token.id) with undefined during client update() calls.
+      if (trigger === "update" && session?.user) {
+        const nextToken = { ...token };
+        const userPatch = session.user as Partial<{
+          id: string;
+          email: string;
+          role: string;
+          permissions: string[];
+          status: string;
+          firstName: string;
+          lastName: string;
+          phoneNumber: string;
+          country: string;
+          adminId: string;
+          canViewPhoneNumbers: boolean;
+        }>;
+
+        if (typeof userPatch.id === "string" && userPatch.id.length > 0) {
+          nextToken.id = userPatch.id;
+        }
+        if (typeof userPatch.email === "string") {
+          nextToken.email = userPatch.email;
+        }
+        if (typeof userPatch.role === "string") {
+          nextToken.role = userPatch.role;
+        }
+        if (Array.isArray(userPatch.permissions)) {
+          nextToken.permissions = userPatch.permissions;
+        }
+        if (typeof userPatch.status === "string") {
+          nextToken.status = userPatch.status;
+        }
+        if (typeof userPatch.firstName === "string") {
+          nextToken.firstName = userPatch.firstName;
+        }
+        if (typeof userPatch.lastName === "string") {
+          nextToken.lastName = userPatch.lastName;
+        }
+        if (typeof userPatch.phoneNumber === "string") {
+          nextToken.phoneNumber = userPatch.phoneNumber;
+        }
+        if (typeof userPatch.country === "string") {
+          nextToken.country = userPatch.country;
+        }
+        if (typeof userPatch.adminId === "string") {
+          nextToken.adminId = userPatch.adminId;
+        }
+        if (typeof userPatch.canViewPhoneNumbers === "boolean") {
+          nextToken.canViewPhoneNumbers = userPatch.canViewPhoneNumbers;
+        }
+
+        return nextToken;
       }
 
       return token;

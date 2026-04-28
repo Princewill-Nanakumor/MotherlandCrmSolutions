@@ -337,7 +337,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
     try {
       if (sessionStorage.getItem("auth:intentionalSignOut") === "1") {
-        sessionStorage.removeItem("auth:intentionalSignOut");
         return;
       }
     } catch {

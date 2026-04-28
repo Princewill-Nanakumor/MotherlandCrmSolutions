@@ -95,7 +95,6 @@ export default function Sidebar() {
       // Manual logout should not be treated as "session expired".
       try {
         if (sessionStorage.getItem("auth:intentionalSignOut") === "1") {
-          sessionStorage.removeItem("auth:intentionalSignOut");
           return;
         }
       } catch {

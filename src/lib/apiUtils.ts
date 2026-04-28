@@ -45,6 +45,21 @@ export const apiCallWithSessionRefresh = async (
 
     // If unauthorized, try to refresh session unless API explicitly requests forced logout.
     if (response.status === 401) {
+      // User intentionally logged out (manual sign-out). Avoid converting that
+      // race into an "expired session" redirect while in-flight requests fail.
+      if (typeof window !== "undefined") {
+        let intentionalSignOut = false;
+        try {
+          intentionalSignOut =
+            sessionStorage.getItem("auth:intentionalSignOut") === "1";
+        } catch {
+          /* ignore storage access issues */
+        }
+        if (intentionalSignOut) {
+          return response;
+        }
+      }
+
       let forceLogout = false;
       try {
         const cloned = response.clone();

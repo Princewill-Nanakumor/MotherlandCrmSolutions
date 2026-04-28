@@ -11,6 +11,7 @@ import { LoginSchema } from "@/schemas";
 import { z } from "zod";
 import { FormError } from "./FormError";
 import { FormSuccess } from "./FormSucess";
+import { LoginCaptcha, RobotVerifyButton } from "./LoginCaptcha";
 
 type LoginInput = z.infer<typeof LoginSchema>;
 
@@ -19,10 +20,20 @@ export default function SignInForm() {
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [captchaInput, setCaptchaInput] = useState("");
+  const [captchaCode, setCaptchaCode] = useState("");
+  const [captchaEnabled, setCaptchaEnabled] = useState(false);
+  const [captchaResetCounter, setCaptchaResetCounter] = useState(0);
+
+  const refreshCaptchaOnError = () => {
+    setCaptchaInput("");
+    setCaptchaResetCounter((prev) => prev + 1);
+  };
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(LoginSchema),
@@ -30,12 +41,38 @@ export default function SignInForm() {
   });
 
   const isFormDisabled = loading || !!formSuccess;
+  const watchedEmail = watch("email");
+  const watchedPassword = watch("password");
+  const hasRequiredCredentials =
+    !!watchedEmail?.trim() && !!watchedPassword?.trim();
+  const canSubmitLogin =
+    !isFormDisabled &&
+    captchaEnabled &&
+    hasRequiredCredentials &&
+    captchaInput.length === 6;
 
   // Do not auto-redirect on session changes here; sign-in flow will handle navigation
 
   const onSubmit: SubmitHandler<LoginInput> = async (data) => {
     setFormError("");
     setFormSuccess("");
+
+    if (!captchaEnabled) {
+      setFormError("Please confirm you are not a robot first.");
+      return;
+    }
+
+    if (captchaInput.length !== 6) {
+      setFormError("Please enter the full 6-digit captcha code.");
+      return;
+    }
+
+    if (captchaInput !== captchaCode) {
+      setFormError("incorrect captcha, please try again");
+      refreshCaptchaOnError();
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -53,6 +90,7 @@ export default function SignInForm() {
           sessionStorage.removeItem("auth:navigating");
         } catch {}
         setFormError(result.error);
+        refreshCaptchaOnError();
         setLoading(false);
       } else if (result?.ok) {
         setFormSuccess("Signed in successfully.");
@@ -117,15 +155,13 @@ export default function SignInForm() {
           ? `An error occurred during sign in: ${error.message}`
           : "An unexpected error occurred during sign in",
       );
+      refreshCaptchaOnError();
       setLoading(false);
     }
   };
 
   return (
-    <div
-      className="p-4 border shadow-xl rounded-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8"
-      style={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
-    >
+    <div className="p-4 border shadow-xl rounded-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8">
       <div className="mb-6 text-center sm:mb-8">
         <h2 className="text-2xl font-bold text-white! sm:text-3xl">
           Welcome Back
@@ -159,16 +195,12 @@ export default function SignInForm() {
                 disabled={isFormDisabled}
                 className={`
                   pl-10 pr-3 py-3 w-full rounded-lg border text-sm
-                  ${errors.email ? "border-red-500" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900!${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
+                  ${errors.email ? "border-red-500" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900! ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
             </div>
             {errors.email && (
-              <p className="flex items-start mt-1 text-xs text-red-500!">
-                <span className="ml-1 text-red-500!">
-                  {errors.email.message}
-                </span>
-              </p>
+              <p className="mt-1 text-xs text-red-500!">{errors.email.message}</p>
             )}
           </div>
 
@@ -185,19 +217,33 @@ export default function SignInForm() {
                 disabled={isFormDisabled}
                 className={`
                   pl-10 pr-10 py-3 w-full rounded-lg border text-sm
-                  ${errors.password ? "border-red-500" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900!${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
+                  ${errors.password ? "border-red-500" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900! ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
             </div>
             {errors.password && (
-              <p className="flex items-start mt-1 text-xs text-red-500!">
-                <span className="ml-1 text-red-500!">
-                  {errors.password.message}
-                </span>
-              </p>
+              <p className="mt-1 text-xs text-red-500!">{errors.password.message}</p>
             )}
           </div>
         </div>
+
+        {!captchaEnabled ? (
+          <RobotVerifyButton
+            disabled={isFormDisabled}
+            onClick={() => {
+              setCaptchaEnabled(true);
+              setFormError("");
+            }}
+          />
+        ) : (
+          <LoginCaptcha
+            value={captchaInput}
+            onChange={setCaptchaInput}
+            onCaptchaCodeChange={setCaptchaCode}
+            resetTrigger={captchaResetCounter}
+            disabled={isFormDisabled}
+          />
+        )}
 
         <div className="flex items-center justify-between">
           <label className="flex items-center space-x-2">
@@ -205,20 +251,9 @@ export default function SignInForm() {
               {...register("remember")}
               type="checkbox"
               disabled={isFormDisabled}
-              style={{
-                backgroundColor: "white",
-                background: "white",
-                borderColor: "rgb(209, 213, 219)",
-                appearance: "none",
-                WebkitAppearance: "none",
-                MozAppearance: "none",
-                borderWidth: "1px",
-                borderStyle: "solid",
-              }}
-              className={`
-                h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 bg-white
-                ${isFormDisabled ? "opacity-75 cursor-not-allowed" : "cursor-pointer"}
-              `}
+              className={`h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 bg-white ${
+                isFormDisabled ? "opacity-75 cursor-not-allowed" : "cursor-pointer"
+              }`}
             />
             <span className="text-sm text-white!">Remember me</span>
           </label>
@@ -227,22 +262,23 @@ export default function SignInForm() {
 
         <button
           type="submit"
-          disabled={isFormDisabled}
+          disabled={!canSubmitLogin}
+          aria-disabled={!canSubmitLogin}
           className={`
             w-full bg-linear-to-br from-indigo-600 to-purple-600 text-white font-medium
             py-3 px-4 rounded-lg flex items-center justify-center space-x-2
             transition-all duration-200
-            ${isFormDisabled ? "opacity-50 cursor-not-allowed" : "hover:from-indigo-700 hover:to-purple-700"}
+            ${canSubmitLogin ? "hover:from-indigo-700 hover:to-purple-700" : "opacity-50 cursor-not-allowed pointer-events-none"}
           `}
         >
           {loading ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span className="text-white!">Signing in...</span>
+              <span>Signing in...</span>
             </>
           ) : (
             <>
-              <span className="text-white!">Sign in</span>
+              <span>Sign in</span>
               <ArrowRight className="w-5 h-5" />
             </>
           )}

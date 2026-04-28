@@ -14,10 +14,17 @@ const SignUpSchema = z
     country: z.string().min(1, { message: "Country is required" }),
     phoneNumber: z
       .string()
-      .regex(/^\+?[1-9]\d{1,14}$/, {
-        message: "Invalid phone number format",
-      })
-      .min(1, { message: "Phone number is required" }),
+      .min(1, { message: "Phone number is required" })
+      .refine(
+        (val) => {
+          const cleanNumber = val.replace(/\s/g, "");
+          return /^\+?[1-9]\d{7,14}$/.test(cleanNumber);
+        },
+        {
+          message:
+            "Phone number must be at least 8 digits (excluding country code)",
+        }
+      ),
     email: z
       .string()
       .email({ message: "Invalid email format" })
