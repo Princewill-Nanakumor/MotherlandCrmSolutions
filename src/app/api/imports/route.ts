@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { checkTenantLeadImportAllowed } from "@/lib/tenantLeadImportLimits";
+import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 
 // Define query types for MongoDB filters
 interface ImportQuery {
@@ -208,6 +209,23 @@ export async function DELETE(request: Request) {
 
       await mongoose.connection.db.collection("imports").deleteOne(query);
 
+      const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
+      if (adminScopeId) {
+        try {
+          await publishAdminLeadsUpdatedEvent(adminScopeId, {
+            type: "import_deleted",
+            importId: id,
+            deletedLeads: deleteLeadsResult.deletedCount,
+            actorId: session.user.id,
+          });
+        } catch (publishError) {
+          console.error(
+            "Ably publish failed after deleting import leads:",
+            publishError,
+          );
+        }
+      }
+
       return NextResponse.json({
         message: "Import and associated leads deleted",
         deletedLeads: deleteLeadsResult.deletedCount,
@@ -232,6 +250,25 @@ export async function DELETE(request: Request) {
       const deleteImportsResult = await mongoose.connection.db
         .collection("imports")
         .deleteMany({ adminId: adminObjectId });
+
+      if (
+        deleteLeadsResult.deletedCount > 0 ||
+        deleteImportsResult.deletedCount > 0
+      ) {
+        try {
+          await publishAdminLeadsUpdatedEvent(adminScopeId, {
+            type: "imports_cleared",
+            deletedLeads: deleteLeadsResult.deletedCount,
+            deletedImports: deleteImportsResult.deletedCount,
+            actorId: session.user.id,
+          });
+        } catch (publishError) {
+          console.error(
+            "Ably publish failed after clearing import leads:",
+            publishError,
+          );
+        }
+      }
 
       return NextResponse.json({
         message: "All imports and leads deleted for this admin",

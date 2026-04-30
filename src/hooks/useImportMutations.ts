@@ -56,20 +56,23 @@ async function invalidateAfterImport(queryClient: QueryClient) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: ["import-usage-data"] }),
     queryClient.invalidateQueries({ queryKey: ["import-history"] }),
-    queryClient.invalidateQueries({ queryKey: ["leads"] }),
-    queryClient.invalidateQueries({ queryKey: ["users"] }),
-    queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
+    queryClient.invalidateQueries({ queryKey: ["leads-stats"], exact: false }),
     queryClient.invalidateQueries({
-      predicate: (query) => query.queryKey[0] === "leads",
-    }),
-    queryClient.invalidateQueries({
-      predicate: (query) => query.queryKey[0] === "users",
+      predicate: (query) => {
+        const root = Array.isArray(query.queryKey) ? query.queryKey[0] : null;
+        return (
+          root === "leads" ||
+          root === "users" ||
+          root === "assignedLeads" ||
+          root === "admin-overview"
+        );
+      },
     }),
   ]);
   await Promise.all([
     queryClient.refetchQueries({ queryKey: ["leads"] }),
     queryClient.refetchQueries({ queryKey: ["users"] }),
-    queryClient.refetchQueries({ queryKey: ["dashboard-stats"] }),
+    queryClient.refetchQueries({ queryKey: ["leads-stats"], exact: false }),
   ]);
 }
 

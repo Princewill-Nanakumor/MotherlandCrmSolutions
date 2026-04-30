@@ -11,6 +11,7 @@ import { withAdminScope } from "@/lib/withAdminScope";
 import { agentLeadsInTenantFilter, singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
 import { checkTenantLeadImportAllowed } from "@/lib/tenantLeadImportLimits";
+import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 
 interface MongoDocument {
   _id: mongoose.Types.ObjectId;
@@ -235,6 +236,16 @@ export async function POST(request: Request) {
           createdBy: new mongoose.Types.ObjectId(session.user.id),
         });
 
+        try {
+          await publishAdminLeadsUpdatedEvent(scopedAdminId, {
+            type: "lead_created",
+            leadId: newLead._id.toString(),
+            actorId: session.user.id,
+          });
+        } catch (publishError) {
+          console.error("Ably publish failed after lead creation:", publishError);
+        }
+
         return NextResponse.json({
           message: "Lead created successfully",
           inserted: 1,
@@ -391,6 +402,18 @@ export async function POST(request: Request) {
       }
     }
 
+    if (inserted > 0) {
+      try {
+        await publishAdminLeadsUpdatedEvent(scopedAdminId, {
+          type: "leads_imported",
+          inserted,
+          actorId: session.user.id,
+        });
+      } catch (publishError) {
+        console.error("Ably publish failed after leads import:", publishError);
+      }
+    }
+
     return NextResponse.json({
       message: "Leads processed",
       inserted,
@@ -521,6 +544,16 @@ export async function DELETE(request: Request) {
           { error: "Lead not found or not authorized" },
           { status: 404 },
         );
+      }
+
+      try {
+        await publishAdminLeadsUpdatedEvent(adminScopeId, {
+          type: "lead_deleted",
+          leadId: id,
+          actorId: session.user.id,
+        });
+      } catch (publishError) {
+        console.error("Ably publish failed after lead deletion:", publishError);
       }
 
       return NextResponse.json({ message: "Lead deleted successfully" });

@@ -8,6 +8,7 @@ import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { rateLimitEnhanced } from "@/lib/rateLimit";
 import { checkTenantLeadImportAllowed } from "@/lib/tenantLeadImportLimits";
+import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 
 // Define interface for imported lead data
 interface ImportedLead {
@@ -116,6 +117,18 @@ export async function POST(request: Request) {
       });
     } finally {
       await mongoSession.endSession();
+    }
+
+    if (insertedCount > 0 && adminScopeId) {
+      try {
+        await publishAdminLeadsUpdatedEvent(adminScopeId, {
+          type: "legacy_import_completed",
+          inserted: insertedCount,
+          actorId: session.user.id,
+        });
+      } catch (publishError) {
+        console.error("Ably publish failed after legacy lead import:", publishError);
+      }
     }
 
     return NextResponse.json({

@@ -8,6 +8,7 @@ import {
   listUsersForSession,
   updateUserForAdmin,
 } from "@/services/users/userService";
+import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 
 export async function POST(request: Request) {
   try {
@@ -19,6 +20,16 @@ export async function POST(request: Request) {
 
     const payload = await request.json();
     const result = await createUserForAdmin(session.user.id, payload);
+    if (result.status >= 200 && result.status < 300) {
+      try {
+        await publishAdminLeadsUpdatedEvent(session.user.id, {
+          type: "user_created",
+          actorId: session.user.id,
+        });
+      } catch (publishError) {
+        console.error("Ably publish failed after user creation:", publishError);
+      }
+    }
     return NextResponse.json(result.body, { status: result.status });
   } catch (error: unknown) {
     console.error("Error creating user:", error);
@@ -62,6 +73,17 @@ export async function PUT(request: Request) {
       session.user as { id: string; role: string; firstName?: string; lastName?: string },
       requestData,
     );
+    if (result.status >= 200 && result.status < 300) {
+      try {
+        await publishAdminLeadsUpdatedEvent(session.user.id, {
+          type: "user_updated",
+          actorId: session.user.id,
+          userId: requestData.id,
+        });
+      } catch (publishError) {
+        console.error("Ably publish failed after user update:", publishError);
+      }
+    }
     return NextResponse.json(result.body, { status: result.status });
   } catch (error: unknown) {
     console.error("Error updating user:", error);
@@ -131,6 +153,17 @@ export async function DELETE(request: Request) {
       session.user as { id: string; role: string; firstName?: string; lastName?: string },
       id,
     );
+    if (result.status >= 200 && result.status < 300) {
+      try {
+        await publishAdminLeadsUpdatedEvent(session.user.id, {
+          type: "user_deleted",
+          actorId: session.user.id,
+          userId: id,
+        });
+      } catch (publishError) {
+        console.error("Ably publish failed after user deletion:", publishError);
+      }
+    }
     return NextResponse.json(result.body, { status: result.status });
   } catch (error) {
     console.error("Error deleting user:", error);

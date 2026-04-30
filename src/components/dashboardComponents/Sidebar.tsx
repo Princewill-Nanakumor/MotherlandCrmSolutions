@@ -253,7 +253,7 @@ export default function Sidebar() {
             {/* Active indicator bar */}
             <span
               className={cn(
-                "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r bg-red-600 transition-all",
+                "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r bg-indigo-300 transition-all",
                 pathname === "/dashboard/settings"
                   ? "opacity-100"
                   : "opacity-0",
@@ -308,7 +308,7 @@ export default function Sidebar() {
               {/* Active indicator bar */}
               <span
                 className={cn(
-                  "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r bg-red-600 transition-all",
+                  "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r bg-indigo-300 transition-all",
                   pathname === "/dashboard/help" ? "opacity-100" : "opacity-0",
                 )}
                 aria-hidden="true"

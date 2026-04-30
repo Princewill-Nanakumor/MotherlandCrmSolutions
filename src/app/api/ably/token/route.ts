@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import Ably from "ably";
 import { authOptions } from "@/libs/auth";
 import {
+  getAdminLeadsChannelName,
   getUserCallLogsChannelName,
   getUserRemindersChannelName,
 } from "@/libs/realtime";
@@ -53,6 +54,7 @@ async function handleTokenRequest() {
       session.user.role === "ADMIN"
         ? { [`crm:admin:${adminScope}:*`]: ["subscribe"] }
         : {
+            [getAdminLeadsChannelName(adminScope)]: ["subscribe"],
             [getUserRemindersChannelName(adminScope, session.user.id)]: [
               "subscribe",
             ],

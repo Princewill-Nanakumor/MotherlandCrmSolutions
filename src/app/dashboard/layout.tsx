@@ -49,9 +49,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   // Keep leads views in sync across tabs/users when status changes happen elsewhere.
   useEffect(() => {
     if (!session?.user?.id) return;
-    // Tenant-wide lead sync is admin-only; agents use per-lead channels in panels.
-    if (session.user.role !== "ADMIN") return;
-
     let cancelled = false;
     let realtimeClient: ReturnType<typeof getAblyRealtimeClient> | null = null;
     let channelName: string | null = null;
@@ -70,7 +67,44 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     let subscribed = false;
 
     const onAdminLeadsUpdated = (message: { data?: unknown }) => {
-      const eventData = (message.data ?? {}) as { leadId?: string };
+      const eventData = (message.data ?? {}) as {
+        type?: string;
+        leadId?: string;
+        deletedLeads?: number;
+      };
+      const eventType = eventData.type ?? "";
+      const isUserEvent = eventType.startsWith("user_");
+      const isImportEvent =
+        eventType === "import_deleted" || eventType === "imports_cleared";
+      const importTouchedLeads = (eventData.deletedLeads ?? 0) > 0;
+
+      if (isUserEvent) {
+        void queryClient.invalidateQueries({
+          predicate: (query) => {
+            const root = Array.isArray(query.queryKey) ? query.queryKey[0] : null;
+            return (
+              root === "users" ||
+              root === "user-usage-data" ||
+              root === "admin-overview"
+            );
+          },
+        });
+        return;
+      }
+
+      if (isImportEvent && !importTouchedLeads) {
+        void queryClient.invalidateQueries({
+          predicate: (query) => {
+            const root = Array.isArray(query.queryKey) ? query.queryKey[0] : null;
+            return (
+              root === "import-history" ||
+              root === "import-usage-data" ||
+              root === "admin-overview"
+            );
+          },
+        });
+        return;
+      }
 
       void queryClient.invalidateQueries({
         predicate: (query) => {
@@ -78,7 +112,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           return (
             root === "leads" ||
             root === "assignedLeads" ||
-            root === "admin-overview"
+            root === "admin-overview" ||
+            root === "leads-stats" ||
+            root === "users" ||
+            root === "import-history" ||
+            root === "import-usage-data"
           );
         },
       });
