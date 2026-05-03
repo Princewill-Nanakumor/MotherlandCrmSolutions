@@ -732,6 +732,43 @@ textarea::placeholder {
   color: #9ca3af !important; /* gray-400 */
 }
 
+/* Non–hero auth layout: strip WebKit autofill tint (verify-email, etc.) */
+.auth-routes-shell input:-webkit-autofill,
+.auth-routes-shell input:-webkit-autofill:hover,
+.auth-routes-shell input:-webkit-autofill:focus,
+.auth-routes-shell input:-webkit-autofill:active,
+.auth-routes-shell textarea:-webkit-autofill,
+.auth-routes-shell textarea:-webkit-autofill:hover,
+.auth-routes-shell textarea:-webkit-autofill:focus,
+.auth-routes-shell textarea:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px rgb(255 255 255) inset !important;
+  box-shadow: 0 0 0 1000px rgb(255 255 255) inset !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
+  caret-color: rgb(17 24 39) !important;
+}
+
+.dark .auth-routes-shell input:-webkit-autofill,
+.dark .auth-routes-shell input:-webkit-autofill:hover,
+.dark .auth-routes-shell input:-webkit-autofill:focus,
+.dark .auth-routes-shell input:-webkit-autofill:active,
+.dark .auth-routes-shell textarea:-webkit-autofill,
+.dark .auth-routes-shell textarea:-webkit-autofill:hover,
+.dark .auth-routes-shell textarea:-webkit-autofill:focus,
+.dark .auth-routes-shell textarea:-webkit-autofill:active,
+html.dark .auth-routes-shell input:-webkit-autofill,
+html.dark .auth-routes-shell input:-webkit-autofill:hover,
+html.dark .auth-routes-shell input:-webkit-autofill:focus,
+html.dark .auth-routes-shell input:-webkit-autofill:active,
+html.dark .auth-routes-shell textarea:-webkit-autofill,
+html.dark .auth-routes-shell textarea:-webkit-autofill:hover,
+html.dark .auth-routes-shell textarea:-webkit-autofill:focus,
+html.dark .auth-routes-shell textarea:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px rgb(31 41 55) inset !important;
+  box-shadow: 0 0 0 1000px rgb(31 41 55) inset !important;
+  -webkit-text-fill-color: rgb(249 250 251) !important;
+  caret-color: rgb(249 250 251) !important;
+}
+
 /* Ensure data-slot="input" elements have proper text colors */
 [data-slot="input"] {
   color: #111827 !important; /* gray-900 */

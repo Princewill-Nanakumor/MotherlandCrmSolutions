@@ -154,22 +154,15 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
               <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
                 {message}
               </p>
-              <div className="space-y-3">
-                <Link
-                  href="/login?verifyEmail=1"
-                  className="inline-flex items-center px-6 py-2 text-sm font-medium text-white transition-colors rounded-lg shadow-lg bg-linear-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                >
-                  Request a new link
-                </Link>
-                <div>
-                  <Link
-                    href="/login"
-                    className="inline-flex items-center px-6 py-2 text-sm font-medium text-gray-700 transition-colors border border-gray-300 rounded-lg dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-300"
-                  >
-                    Back to Sign In
-                  </Link>
-                </div>
-              </div>
+              <p className="mb-4 text-xs text-gray-500 dark:text-gray-500">
+                If you need a new verification email, contact support.
+              </p>
+              <Link
+                href="/login"
+                className="inline-flex items-center px-6 py-2 text-sm font-medium text-white transition-colors rounded-lg shadow-lg bg-linear-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+              >
+                Back to Sign In
+              </Link>
             </div>
           </div>
         );

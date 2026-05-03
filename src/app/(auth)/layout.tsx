@@ -33,7 +33,7 @@ export default function AuthLayout({
           <div className={inter.className}>{children}</div>
         ) : (
           <div
-            className={`min-h-screen flex items-center justify-center bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 ${inter.className}`}
+            className={`auth-routes-shell min-h-screen flex items-center justify-center bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 ${inter.className}`}
           >
             <div className="w-full max-w-sm sm:max-w-md md:max-w-lg px-3 sm:px-4 py-4 sm:py-6">
               <div className="text-center mb-6 sm:mb-8">

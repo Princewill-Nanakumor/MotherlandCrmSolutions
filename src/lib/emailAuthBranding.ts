@@ -9,12 +9,17 @@ export function isProductionDeployment(): boolean {
   return process.env.NODE_ENV === "production";
 }
 
-/** When true, new signups must verify email before login (requires Resend). */
+/**
+ * When true, new signups get a verification email and must verify before
+ * ADMIN credential login (requires Resend). Default is **on** in all
+ * environments; set `REQUIRE_EMAIL_VERIFICATION=false` only for local/demo
+ * without mail.
+ */
 export function shouldRequireEmailVerification(): boolean {
   const v = process.env.REQUIRE_EMAIL_VERIFICATION?.trim().toLowerCase();
-  if (v === "true") return true;
   if (v === "false") return false;
-  return isProductionDeployment();
+  if (v === "true") return true;
+  return true;
 }
 
 /** Returns an error message if outbound auth email cannot be sent, else null. */

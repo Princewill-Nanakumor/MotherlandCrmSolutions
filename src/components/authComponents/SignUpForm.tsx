@@ -1,15 +1,16 @@
 // src/components/authComponents/SignUpForm.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { CheckCircle } from "lucide-react";
 import { SignUpSchema } from "@/schemas";
 import * as z from "zod";
 import { FormError } from "./FormError";
-import { FormSuccess } from "./FormSucess";
 import { SignUpFormFields } from "./SignUpFormFields";
 import { SignUpFormActions } from "./SignUpFormActions";
 import { LoginCaptcha, RobotVerifyButton } from "./LoginCaptcha";
@@ -17,11 +18,13 @@ import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 type SignUpFormData = z.infer<typeof SignUpSchema>;
 
+type PostSignupKind = "verify_sent" | "verify_failed" | "direct";
+
 export default function SignUpForm() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [formError, setFormError] = useState("");
-  const [formSuccess, setFormSuccess] = useState("");
+  const [postSignup, setPostSignup] = useState<PostSignupKind | null>(null);
   const [loading, setLoading] = useState(false);
   const [captchaInput, setCaptchaInput] = useState("");
   const [captchaEnabled, setCaptchaEnabled] = useState(false);
@@ -29,15 +32,6 @@ export default function SignUpForm() {
   const [captchaState, setCaptchaState] = useState<
     "idle" | "loading" | "ready" | "error"
   >("idle");
-  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (redirectTimerRef.current) {
-        clearTimeout(redirectTimerRef.current);
-      }
-    };
-  }, []);
 
   const refreshCaptchaOnError = () => {
     setCaptchaInput("");
@@ -79,7 +73,7 @@ export default function SignUpForm() {
     !!watchedPhoneNumber?.trim();
   const canSubmitSignup =
     !loading &&
-    !formSuccess &&
+    !postSignup &&
     captchaEnabled &&
     captchaState === "ready" &&
     hasRequiredSignupFields &&
@@ -93,7 +87,6 @@ export default function SignUpForm() {
 
   const onSubmit: SubmitHandler<SignUpFormData> = async (data) => {
     setFormError("");
-    setFormSuccess("");
 
     if (!captchaEnabled) {
       setFormError("Please confirm you are not a robot first.");
@@ -139,27 +132,13 @@ export default function SignUpForm() {
 
       const needsVerifyFlow = resData.emailVerificationRequired === true;
       const emailSent = resData.emailSent !== false;
-      let successMsg: string;
       if (needsVerifyFlow) {
-        successMsg = emailSent
-          ? "Account created. Check your email to verify your address, then sign in."
-          : "Account created, but the verification email could not be sent. Open sign-in, use \"Resend verification email\", and enter the same address.";
-      } else if (typeof resData.message === "string" && resData.message) {
-        successMsg = resData.message;
+        setPostSignup(emailSent ? "verify_sent" : "verify_failed");
       } else {
-        successMsg = "User created successfully. Please sign in.";
+        setPostSignup("direct");
       }
-      setFormSuccess(successMsg);
 
       reset();
-
-      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
-      const delay = needsVerifyFlow ? 4500 : 2000;
-      const dest = needsVerifyFlow ? "/login?verifyEmail=1" : "/login";
-      redirectTimerRef.current = setTimeout(() => {
-        redirectTimerRef.current = null;
-        router.replace(dest);
-      }, delay);
     } catch (error: unknown) {
       setFormError(
         error instanceof Error
@@ -171,6 +150,42 @@ export default function SignUpForm() {
       setLoading(false);
     }
   };
+
+  if (postSignup) {
+    const body =
+      postSignup === "verify_sent"
+        ? "A verification link has been sent to your email. Please confirm it to verify your account."
+        : postSignup === "verify_failed"
+          ? "Your account was created, but we could not send the verification email. Check your spam folder, or contact support if the problem continues."
+          : "Your account is ready. Sign in with your email and password.";
+
+    return (
+      <div className="p-4 border shadow-xl rounded-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8">
+        <div className="flex flex-col items-center gap-5 py-4 text-center sm:py-6">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20">
+            <CheckCircle
+              className="h-9 w-9 text-emerald-300"
+              aria-hidden
+            />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-white! sm:text-2xl md:text-3xl">
+              Sign up successful
+            </h2>
+            <p className="mx-auto max-w-md text-sm text-white/90 sm:text-base">
+              {body}
+            </p>
+          </div>
+          <Link
+            href="/login"
+            className="inline-flex min-w-40 items-center justify-center rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+          >
+            Sign in
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 border shadow-xl rounded-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8">
@@ -199,7 +214,6 @@ export default function SignUpForm() {
             errors.country?.message
           }
         />
-        <FormSuccess message={formSuccess} />
 
         <div
           data-auth-glass-fields
@@ -209,7 +223,7 @@ export default function SignUpForm() {
             register={register}
             control={control}
             errors={errors}
-            loading={loading || !!formSuccess}
+            loading={loading}
             setValue={setValue}
             getValues={getValues}
             trigger={trigger}
@@ -219,7 +233,7 @@ export default function SignUpForm() {
 
           {!captchaEnabled ? (
             <RobotVerifyButton
-              disabled={loading || !!formSuccess}
+              disabled={loading}
               onClick={() => {
                 setCaptchaEnabled(true);
                 setCaptchaState("loading");
@@ -231,7 +245,7 @@ export default function SignUpForm() {
               value={captchaInput}
               onChange={setCaptchaInput}
               resetTrigger={captchaResetCounter}
-              disabled={loading || !!formSuccess}
+              disabled={loading}
               onCaptchaStateChange={setCaptchaState}
             />
           )}

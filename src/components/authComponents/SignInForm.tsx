@@ -1,12 +1,11 @@
 // src/components/authComponents/SignInForm.tsx
 "use client";
 
-import { Suspense, useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn, useSession, getSession } from "next-auth/react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { LoginSchema } from "@/schemas";
 import { z } from "zod";
@@ -15,136 +14,6 @@ import { FormSuccess } from "./FormSucess";
 import { LoginCaptcha, RobotVerifyButton } from "./LoginCaptcha";
 
 type LoginInput = z.infer<typeof LoginSchema>;
-
-const resendEmailSchema = z.string().trim().email();
-
-/** Resend verification uses its own HttpOnly cookie; login captcha is unchanged. */
-function VerifyEmailResendBanner() {
-  const searchParams = useSearchParams();
-  const [resendEmail, setResendEmail] = useState("");
-  const [resendLoading, setResendLoading] = useState(false);
-  const [resendNotice, setResendNotice] = useState("");
-  const [resendCaptchaEnabled, setResendCaptchaEnabled] = useState(false);
-  const [captchaInput, setCaptchaInput] = useState("");
-  const [captchaReset, setCaptchaReset] = useState(0);
-  const [captchaState, setCaptchaState] = useState<
-    "idle" | "loading" | "ready" | "error"
-  >("idle");
-
-  if (searchParams.get("verifyEmail") !== "1") {
-    return null;
-  }
-
-  const onSubmitResend = async (e: FormEvent) => {
-    e.preventDefault();
-    setResendNotice("");
-    const parsedEmail = resendEmailSchema.safeParse(resendEmail);
-    if (!parsedEmail.success) {
-      setResendNotice("Enter a valid email address.");
-      return;
-    }
-    if (
-      !resendCaptchaEnabled ||
-      captchaState !== "ready" ||
-      captchaInput.length !== 6
-    ) {
-      setResendNotice("Complete the 6-digit security code.");
-      return;
-    }
-    setResendLoading(true);
-    try {
-      const res = await fetch("/api/auth/resend-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          email: parsedEmail.data,
-          captcha: captchaInput,
-        }),
-      });
-      let data: { error?: string; message?: string };
-      try {
-        data = await res.json();
-      } catch {
-        setResendNotice("Invalid response from server.");
-        return;
-      }
-      if (!res.ok) {
-        setResendNotice(data.error || "Could not send. Try again later.");
-        setCaptchaReset((n) => n + 1);
-        setCaptchaInput("");
-      } else {
-        setResendNotice(
-          data.message ||
-            "If an account needs verification, check your inbox.",
-        );
-        setCaptchaInput("");
-        setCaptchaState("idle");
-        setResendCaptchaEnabled(false);
-      }
-    } catch {
-      setResendNotice("Something went wrong. Try again later.");
-      setCaptchaReset((n) => n + 1);
-      setCaptchaInput("");
-    } finally {
-      setResendLoading(false);
-    }
-  };
-
-  return (
-    <div className="p-3 mb-4 text-left border rounded-lg border-indigo-300/40 bg-white/10 backdrop-blur-sm">
-      <p className="mb-2 text-sm font-semibold text-white!">
-        Verify your email before signing in. Check your spam folder if you do
-        not see the message.
-      </p>
-      <form onSubmit={onSubmitResend} className="space-y-3">
-        <input
-          type="email"
-          placeholder="Your signup email"
-          value={resendEmail}
-          onChange={(e) => setResendEmail(e.target.value)}
-          disabled={resendLoading}
-          className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-semibold text-white! transition-[border-color,background-color] duration-200 ease-out placeholder:font-semibold placeholder:text-white/70 focus:outline-none focus-visible:outline-none"
-        />
-        {!resendCaptchaEnabled ? (
-          <RobotVerifyButton
-            disabled={resendLoading}
-            onClick={() => {
-              setResendCaptchaEnabled(true);
-              setCaptchaState("loading");
-              setResendNotice("");
-            }}
-          />
-        ) : (
-          <LoginCaptcha
-            issueKind="resend"
-            value={captchaInput}
-            onChange={setCaptchaInput}
-            resetTrigger={captchaReset}
-            disabled={resendLoading}
-            onCaptchaStateChange={setCaptchaState}
-          />
-        )}
-        <button
-          type="submit"
-          disabled={
-            resendLoading ||
-            !resendEmail.trim() ||
-            !resendCaptchaEnabled ||
-            captchaState !== "ready" ||
-            captchaInput.length !== 6
-          }
-          className="w-full py-2 text-sm font-medium text-white transition-colors rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {resendLoading ? "Sending…" : "Resend verification email"}
-        </button>
-      </form>
-      {resendNotice ? (
-        <p className="mt-2 text-xs text-white/90">{resendNotice}</p>
-      ) : null}
-    </div>
-  );
-}
 
 export default function SignInForm() {
   const { update } = useSession();
@@ -299,9 +168,6 @@ export default function SignInForm() {
           Sign in to your account to continue
         </p>
       </div>
-      <Suspense fallback={null}>
-        <VerifyEmailResendBanner />
-      </Suspense>
       <form
         className="space-y-4 sm:space-y-6"
         onSubmit={handleSubmit(onSubmit)}

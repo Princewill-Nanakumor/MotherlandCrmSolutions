@@ -76,6 +76,25 @@ declare module "next-auth/jwt" {
   }
 }
 
+/**
+ * Agents under a verified tenant admin may sign in without their own
+ * `emailVerified` flag (invited accounts often share the org’s trust).
+ */
+async function isTenantAdminEmailVerifiedForAgent(user: {
+  role: string;
+  adminId?: { toString: () => string } | null;
+  createdBy?: { toString: () => string } | null;
+}): Promise<boolean> {
+  if (user.role !== "AGENT") return false;
+  const raw = user.adminId ?? user.createdBy;
+  if (!raw) return false;
+  const adminUser = await User.findById(raw.toString())
+    .select("role emailVerified")
+    .lean<{ role?: string; emailVerified?: boolean } | null>();
+  if (!adminUser || adminUser.role !== "ADMIN") return false;
+  return adminUser.emailVerified === true;
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -139,12 +158,21 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Invalid email or password");
           }
 
-          // Only block when explicitly false. Legacy users without the field
-          // (undefined) remain able to sign in.
-          if (user.emailVerified === false) {
+          // Tenant admins (self-service signups): must have verified email when
+          // using password login. AGENT accounts keep legacy behavior below.
+          if (user.role === "ADMIN" && user.emailVerified !== true) {
             throw new Error(
-              `Please verify your email before signing in. Check your inbox for the link from ${APP_DISPLAY_NAME}.`,
+              `Please verify your email before signing in. Open the link we sent from ${APP_DISPLAY_NAME}.`,
             );
+          }
+          if (user.role === "AGENT" && user.emailVerified === false) {
+            const waivedByVerifiedAdmin =
+              await isTenantAdminEmailVerifiedForAgent(user);
+            if (!waivedByVerifiedAdmin) {
+              throw new Error(
+                `Please verify your email before signing in. Contact your administrator if you need a new verification link.`,
+              );
+            }
           }
 
           // Consume captcha only after credentials succeed (wrong password does

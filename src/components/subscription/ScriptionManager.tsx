@@ -162,6 +162,12 @@ export default function SubscriptionManager() {
     }
   }, [error, toast]);
 
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/");
+    }
+  }, [status, router]);
+
   // Check if user should be redirected
   useEffect(() => {
     if (hasAuthorizedSession(status, session) && !loading && subscriptionData) {
@@ -293,7 +299,6 @@ export default function SubscriptionManager() {
   }
 
   if (status === "unauthenticated") {
-    router.push("/");
     return null;
   }
 

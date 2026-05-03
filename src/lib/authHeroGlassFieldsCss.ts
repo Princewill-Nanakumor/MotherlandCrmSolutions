@@ -64,5 +64,48 @@ ${scope('[data-auth-glass-fields] textarea::placeholder')} {
   color: rgba(255, 255, 255, 0.72) !important;
   font-weight: 600 !important;
 }
+/* Kill Chrome/Safari autofill yellow/blue so fields stay glass (same fill as base). */
+${scope('[data-auth-glass-fields] input:not([type="checkbox"]):-webkit-autofill')},
+${scope('[data-auth-glass-fields] input:not([type="checkbox"]):-webkit-autofill:hover')},
+${scope('[data-auth-glass-fields] input:not([type="checkbox"]):-webkit-autofill:focus')},
+${scope('[data-auth-glass-fields] input:not([type="checkbox"]):-webkit-autofill:active')},
+${scope('[data-auth-glass-fields] textarea:-webkit-autofill')},
+${scope('[data-auth-glass-fields] textarea:-webkit-autofill:hover')},
+${scope('[data-auth-glass-fields] textarea:-webkit-autofill:focus')},
+${scope('[data-auth-glass-fields] textarea:-webkit-autofill:active')} {
+  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
+  box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
+  -webkit-text-fill-color: rgb(255, 255, 255) !important;
+  caret-color: rgb(255, 255, 255) !important;
+}
+${scope('[data-auth-glass-fields] input.border-red-500:not([type="checkbox"]):-webkit-autofill')},
+${scope('[data-auth-glass-fields] input.border-red-500:not([type="checkbox"]):-webkit-autofill:hover')},
+${scope('[data-auth-glass-fields] input.border-red-500:not([type="checkbox"]):-webkit-autofill:focus')},
+${scope('[data-auth-glass-fields] input.border-red-500:not([type="checkbox"]):-webkit-autofill:active')} {
+  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
+  box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
+  -webkit-text-fill-color: rgb(255, 255, 255) !important;
+  caret-color: rgb(255, 255, 255) !important;
+}
+${scope('[data-auth-glass-fields] input:not([type="checkbox"]):not(.border-red-500):-webkit-autofill:focus-visible')} {
+  -webkit-box-shadow:
+    0 0 0 1000px rgba(255, 255, 255, 0.24) inset,
+    inset 0 0 0 2px rgba(255, 255, 255, 0.45) !important;
+  box-shadow:
+    0 0 0 1000px rgba(255, 255, 255, 0.24) inset,
+    inset 0 0 0 2px rgba(255, 255, 255, 0.45) !important;
+  -webkit-text-fill-color: rgb(255, 255, 255) !important;
+  caret-color: rgb(255, 255, 255) !important;
+}
+${scope('[data-auth-glass-fields] input.border-red-500:not([type="checkbox"]):-webkit-autofill:focus-visible')} {
+  -webkit-box-shadow:
+    0 0 0 1000px rgba(255, 255, 255, 0.16) inset,
+    inset 0 0 0 2px rgba(248, 113, 113, 0.5) !important;
+  box-shadow:
+    0 0 0 1000px rgba(255, 255, 255, 0.16) inset,
+    inset 0 0 0 2px rgba(248, 113, 113, 0.5) !important;
+  -webkit-text-fill-color: rgb(255, 255, 255) !important;
+  caret-color: rgb(255, 255, 255) !important;
+}
 `.trim();
 }
