@@ -101,16 +101,28 @@ export default function Sidebar() {
         /* ignore */
       }
 
-      // Redirect with expired parameter and remember where the user was
+      // Post-signin handshake race: SignInForm sets `auth:navigating` right
+      // before window.location.replace("/dashboard"). NextAuth's
+      // SessionProvider can briefly report "unauthenticated" while the new
+      // cookie is still propagating; let DashboardContent's debounce decide.
+      try {
+        if (sessionStorage.getItem("auth:navigating") === "1") {
+          return;
+        }
+      } catch {
+        /* ignore */
+      }
+
+      // We only know we became unauthenticated, not that the previous session
+      // expired — leave that judgement to the dashboard layout / middleware
+      // and route plainly to /login here.
       const search =
         typeof window !== "undefined" ? window.location.search : "";
       const callbackPath =
         pathname && pathname !== "/login"
           ? `${pathname}${search || ""}`
           : "/dashboard";
-      router.push(
-        `/login?expired=true&callbackUrl=${encodeURIComponent(callbackPath)}`,
-      );
+      router.push(`/login?callbackUrl=${encodeURIComponent(callbackPath)}`);
     }
   }, [pathname, status, session, router]);
 

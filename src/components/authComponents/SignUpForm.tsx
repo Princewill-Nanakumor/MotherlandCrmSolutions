@@ -1,7 +1,7 @@
 // src/components/authComponents/SignUpForm.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -24,9 +24,20 @@ export default function SignUpForm() {
   const [formSuccess, setFormSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [captchaInput, setCaptchaInput] = useState("");
-  const [captchaCode, setCaptchaCode] = useState("");
   const [captchaEnabled, setCaptchaEnabled] = useState(false);
   const [captchaResetCounter, setCaptchaResetCounter] = useState(0);
+  const [captchaState, setCaptchaState] = useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) {
+        clearTimeout(redirectTimerRef.current);
+      }
+    };
+  }, []);
 
   const refreshCaptchaOnError = () => {
     setCaptchaInput("");
@@ -42,6 +53,7 @@ export default function SignUpForm() {
     setValue,
     watch,
     getValues,
+    trigger,
   } = useForm<SignUpFormData>({
     resolver: zodResolver(SignUpSchema),
     defaultValues: {
@@ -69,6 +81,7 @@ export default function SignUpForm() {
     !loading &&
     !formSuccess &&
     captchaEnabled &&
+    captchaState === "ready" &&
     hasRequiredSignupFields &&
     captchaInput.length === 6;
 
@@ -92,34 +105,61 @@ export default function SignUpForm() {
       return;
     }
 
-    if (captchaInput !== captchaCode) {
-      setFormError("incorrect captcha, please try again");
-      refreshCaptchaOnError();
-      return;
-    }
-
     setLoading(true);
 
     try {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        credentials: "include",
+        body: JSON.stringify({ ...data, captcha: captchaInput }),
       });
 
-      const resData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(resData.message || "Something went wrong");
+      let resData: {
+        message?: string;
+        details?: { message?: string }[];
+        emailVerificationRequired?: boolean;
+        emailSent?: boolean;
+      };
+      try {
+        resData = await response.json();
+      } catch {
+        throw new Error("Invalid response from server. Please try again.");
       }
 
-      setFormSuccess("Account created successfully! Redirecting to login...");
+      if (!response.ok) {
+        const firstDetail =
+          Array.isArray(resData.details) && resData.details.length > 0
+            ? resData.details.find((d) => !!d.message)?.message
+            : null;
+        throw new Error(
+          firstDetail || resData.message || "Something went wrong",
+        );
+      }
+
+      const needsVerifyFlow = resData.emailVerificationRequired === true;
+      const emailSent = resData.emailSent !== false;
+      let successMsg: string;
+      if (needsVerifyFlow) {
+        successMsg = emailSent
+          ? "Account created. Check your email to verify your address, then sign in."
+          : "Account created, but the verification email could not be sent. Open sign-in, use \"Resend verification email\", and enter the same address.";
+      } else if (typeof resData.message === "string" && resData.message) {
+        successMsg = resData.message;
+      } else {
+        successMsg = "User created successfully. Please sign in.";
+      }
+      setFormSuccess(successMsg);
 
       reset();
 
-      setTimeout(() => {
-        router.replace("/login");
-      }, 2000);
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+      const delay = needsVerifyFlow ? 4500 : 2000;
+      const dest = needsVerifyFlow ? "/login?verifyEmail=1" : "/login";
+      redirectTimerRef.current = setTimeout(() => {
+        redirectTimerRef.current = null;
+        router.replace(dest);
+      }, delay);
     } catch (error: unknown) {
       setFormError(
         error instanceof Error
@@ -139,7 +179,7 @@ export default function SignUpForm() {
           Create your account
         </h2>
         <p className="mt-2 text-xs text-white! sm:text-sm md:text-base">
-          Start your journey with us today! Youll become an administrator.
+          Start your journey with us today! You&apos;ll become an administrator.
         </p>
       </div>
 
@@ -161,33 +201,41 @@ export default function SignUpForm() {
         />
         <FormSuccess message={formSuccess} />
 
-        <SignUpFormFields
-          register={register}
-          control={control}
-          errors={errors}
-          loading={loading || !!formSuccess}
-          setValue={setValue}
-          getValues={getValues}
-          watchedPassword={watchedPassword || ""}
-        />
+        <div
+          data-auth-glass-fields
+          className="space-y-3 sm:space-y-4 md:space-y-6"
+        >
+          <SignUpFormFields
+            register={register}
+            control={control}
+            errors={errors}
+            loading={loading || !!formSuccess}
+            setValue={setValue}
+            getValues={getValues}
+            trigger={trigger}
+            watchedPassword={watchedPassword || ""}
+            appearance="darkHero"
+          />
 
-        {!captchaEnabled ? (
-          <RobotVerifyButton
-            disabled={loading || !!formSuccess}
-            onClick={() => {
-              setCaptchaEnabled(true);
-              setFormError("");
-            }}
-          />
-        ) : (
-          <LoginCaptcha
-            value={captchaInput}
-            onChange={setCaptchaInput}
-            onCaptchaCodeChange={setCaptchaCode}
-            resetTrigger={captchaResetCounter}
-            disabled={loading || !!formSuccess}
-          />
-        )}
+          {!captchaEnabled ? (
+            <RobotVerifyButton
+              disabled={loading || !!formSuccess}
+              onClick={() => {
+                setCaptchaEnabled(true);
+                setCaptchaState("loading");
+                setFormError("");
+              }}
+            />
+          ) : (
+            <LoginCaptcha
+              value={captchaInput}
+              onChange={setCaptchaInput}
+              resetTrigger={captchaResetCounter}
+              disabled={loading || !!formSuccess}
+              onCaptchaStateChange={setCaptchaState}
+            />
+          )}
+        </div>
 
         <SignUpFormActions loading={loading} disabled={!canSubmitSignup} />
       </form>

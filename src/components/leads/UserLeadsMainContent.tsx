@@ -178,16 +178,16 @@ export function UserLeadsMainContent({
       };
 
   return (
-    <div className="flex flex-col h-full border rounded-lg bg-background dark:bg-gray-800">
+    <div className="flex flex-col min-h-0 h-full border rounded-lg bg-background dark:bg-gray-800">
       <div
-        className={`transition-opacity duration-300 ease-in-out px-8 mt-4 ${showHeader ? "opacity-100" : "opacity-0 pointer-events-none mt-10"}`}
+        className={`shrink-0 transition-opacity duration-300 ease-in-out ${showHeader ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         style={{ marginBottom: showHeader ? "0" : "-100px", transition: "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out" }}
       >
         <UserLeadsHeader shouldShowLoading={shouldShowLoading} counts={counts} />
       </div>
 
       <div
-        className={`transition-opacity duration-300 ease-in-out px-8 py-6 ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className={`shrink-0 transition-opacity duration-300 ease-in-out ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         style={{ marginBottom: showControls ? "0" : "-80px", transition: "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out" }}
       >
         <UserLeadsFilterControls
@@ -205,13 +205,13 @@ export function UserLeadsMainContent({
         />
       </div>
 
-      <div className="flex-1 px-8 pb-4 overflow-auto">
+      <div className="flex-1 min-h-0 px-8 pb-4 overflow-auto">
         {shouldShowLoading ? (
           <TableSkeleton />
         ) : filteredLeads.length === 0 ? (
           <EmptyState searchQuery={searchQuery} />
         ) : (
-          <div className="mb-2 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+          <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
             <UserLeadsTableContainer
               loading={loading}
               leads={sortedLeads}

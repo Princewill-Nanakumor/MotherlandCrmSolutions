@@ -24,6 +24,8 @@ export interface IUser extends Document {
   // Password reset fields
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+  /** Bumped on password reset; older JWTs whose iat predates this are treated as invalid. */
+  passwordChangedAt?: Date;
 
   // Subscription and billing fields
   balance?: number;
@@ -120,6 +122,9 @@ const userSchema = new Schema<IUser>(
     resetPasswordExpires: {
       type: Date,
     },
+    passwordChangedAt: {
+      type: Date,
+    },
 
     // Subscription and billing fields
     balance: {
@@ -175,6 +180,33 @@ const userSchema = new Schema<IUser>(
     timestamps: true,
   }
 );
+
+function stripAuthSecretsFromLean(
+  _doc: unknown,
+  ret: Record<string, unknown>,
+): void {
+  delete ret.password;
+  delete ret.verificationToken;
+  delete ret.verificationExpires;
+  delete ret.resetPasswordToken;
+  delete ret.resetPasswordExpires;
+  delete ret.__v;
+}
+
+userSchema.set("toJSON", {
+  virtuals: true,
+  transform(_doc, ret) {
+    stripAuthSecretsFromLean(_doc, ret as unknown as Record<string, unknown>);
+    return ret;
+  },
+});
+userSchema.set("toObject", {
+  virtuals: true,
+  transform(_doc, ret) {
+    stripAuthSecretsFromLean(_doc, ret as unknown as Record<string, unknown>);
+    return ret;
+  },
+});
 
 // Pre-save middleware to validate conditional required fields and set trial end date
 userSchema.pre("save", function (next) {

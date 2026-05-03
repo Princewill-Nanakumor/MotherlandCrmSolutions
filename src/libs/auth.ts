@@ -1,11 +1,24 @@
 // /Users/safeconnection/Downloads/drivecrm/src/libs/auth.ts
 import type { Session } from "next-auth";
 import { NextAuthOptions } from "next-auth";
-import { SESSION_MAX_AGE_SECONDS } from "@/lib/sessionMaxAge";
+import {
+  SESSION_MAX_AGE_SECONDS,
+  SESSION_REMEMBER_MAX_AGE_SECONDS,
+} from "@/lib/sessionMaxAge";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectMongoDB } from "./dbConfig";
 import User from "@/models/User";
+import { APP_DISPLAY_NAME } from "@/lib/emailAuthBranding";
+import { findUserForCredentialLoginByEmail } from "@/lib/authEmailUserLookup";
+import { getPasswordChangedAtUnixCached } from "@/lib/authPasswordVersion";
+import { tryConsumeCaptchaSignatureOnce } from "@/lib/captchaConsumeStore";
+import {
+  captchaConsumeTtlMs,
+  captchaUserMessage,
+  evaluateCaptchaCookie,
+} from "@/lib/serverCaptcha";
+import { getCookieHeaderFromNextAuthReq } from "@/lib/nextAuthCookieHeader";
 
 // Extend the built-in session types
 declare module "next-auth" {
@@ -21,6 +34,8 @@ declare module "next-auth" {
     country: string;
     adminId?: string;
     canViewPhoneNumbers?: boolean;
+    /** Set by `authorize` from the "Remember me" checkbox; consumed once in the jwt callback. */
+    rememberMe?: boolean;
   }
 
   interface Session {
@@ -56,6 +71,8 @@ declare module "next-auth/jwt" {
     canViewPhoneNumbers?: boolean;
     exp?: number; // Token expiration timestamp
     loginTimestamp?: number; // Absolute timestamp of initial login
+    /** Effective session lifetime in seconds chosen at login (default vs "Remember me"). */
+    maxAgeSec?: number;
   }
 }
 
@@ -66,31 +83,35 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        captcha: { label: "Captcha", type: "text" },
+        // "true"/"false" string from the SignInForm checkbox. Used in the jwt
+        // callback to extend session lifetime when the user opts in.
+        remember: { label: "Remember", type: "text" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Please enter an email and password");
         }
+
+        const captcha =
+          typeof credentials.captcha === "string"
+            ? credentials.captcha.trim()
+            : "";
+        const cookieHeader = getCookieHeaderFromNextAuthReq(
+          req as { headers?: unknown; cookies?: unknown } | null | undefined,
+        );
+        const captchaEval = evaluateCaptchaCookie(cookieHeader, captcha, "login");
+        if (!captchaEval.ok) {
+          throw new Error(captchaUserMessage(captchaEval.reason));
+        }
+        const captchaSig = captchaEval.sig;
 
         try {
           await connectMongoDB();
           const normalizedEmail = credentials.email.trim().toLowerCase();
 
-          // Single normalized lookup (schema stores lowercase).
-          const user = await User.findOne({ email: normalizedEmail }).lean<{
-            _id: { toString: () => string };
-            email: string;
-            firstName: string;
-            lastName: string;
-            role: string;
-            permissions?: string[];
-            status: string;
-            phoneNumber?: string;
-            country?: string;
-            adminId?: { toString: () => string };
-            canViewPhoneNumbers?: boolean;
-            password?: string;
-          } | null>();
+          // ADMIN-first explicit lookup; falls back to any matching row.
+          const user = await findUserForCredentialLoginByEmail(normalizedEmail);
 
           if (!user) {
             throw new Error("Invalid email or password");
@@ -118,11 +139,34 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Invalid email or password");
           }
 
+          // Only block when explicitly false. Legacy users without the field
+          // (undefined) remain able to sign in.
+          if (user.emailVerified === false) {
+            throw new Error(
+              `Please verify your email before signing in. Check your inbox for the link from ${APP_DISPLAY_NAME}.`,
+            );
+          }
+
+          // Consume captcha only after credentials succeed (wrong password does
+          // not burn the code). Distributed via Mongo / optional Upstash.
+          if (
+            !(await tryConsumeCaptchaSignatureOnce(
+              captchaSig,
+              captchaConsumeTtlMs(),
+            ))
+          ) {
+            throw new Error(captchaUserMessage("replay"));
+          }
+
           // Update last login time
           await User.updateOne(
             { _id: user._id },
             { $set: { lastLogin: new Date() } },
           );
+
+          const rememberMe =
+            typeof credentials.remember === "string" &&
+            credentials.remember.toLowerCase() === "true";
 
           return {
             id: user._id.toString(),
@@ -136,6 +180,7 @@ export const authOptions: NextAuthOptions = {
             country: user.country || "",
             adminId: user.adminId?.toString(),
             canViewPhoneNumbers: user.canViewPhoneNumbers ?? false,
+            rememberMe,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -146,21 +191,26 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
-    maxAge: SESSION_MAX_AGE_SECONDS,
+    // Cookie/JWT must live up to the LONGEST possible lifetime (Remember me).
+    // The jwt() callback enforces the actual per-token lifetime using
+    // `token.maxAgeSec`, so non-remembered sessions still expire at 12h.
+    maxAge: SESSION_REMEMBER_MAX_AGE_SECONDS,
     updateAge: 60 * 60, // Ignored for JWT
   },
   jwt: {
-    maxAge: SESSION_MAX_AGE_SECONDS,
+    maxAge: SESSION_REMEMBER_MAX_AGE_SECONDS,
   },
   pages: {
     signIn: "/login",
     error: "/login?error=true",
-    // Don't protect these pages
     newUser: "/signup",
-    verifyRequest: "/forgot-password",
   },
-  // Cookie configuration for Vercel/production
-  useSecureCookies: process.env.NEXTAUTH_URL?.startsWith("https://") ?? process.env.NODE_ENV === "production",
+  // Cookie configuration for Vercel/production.
+  // Use `||` (not `??`): when NEXTAUTH_URL is `http://...` the left side is
+  // `false` (defined) and `??` would skip the production fallback entirely.
+  useSecureCookies:
+    process.env.NEXTAUTH_URL?.startsWith("https://") ||
+    process.env.NODE_ENV === "production",
   callbacks: {
     async redirect({ url, baseUrl }) {
       // Ensure we only allow redirects to the same domain
@@ -174,8 +224,7 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, user, trigger, session }) {
       const nowTimestamp = Math.floor(Date.now() / 1000);
-      const maxAge = SESSION_MAX_AGE_SECONDS;
-      
+
       if (user) {
         // New token - set user data (user just logged in)
         token.id = user.id;
@@ -188,13 +237,20 @@ export const authOptions: NextAuthOptions = {
         token.country = user.country;
         token.adminId = user.adminId;
         token.canViewPhoneNumbers = user.canViewPhoneNumbers;
-        
+
+        // "Remember me" picks the longer lifetime; the chosen value is
+        // pinned on the JWT so middleware/session checks honor it.
+        const effectiveMaxAge = user.rememberMe
+          ? SESSION_REMEMBER_MAX_AGE_SECONDS
+          : SESSION_MAX_AGE_SECONDS;
+        token.maxAgeSec = effectiveMaxAge;
+
         // Set expiration time ONLY on initial login
-        token.exp = nowTimestamp + maxAge;
-        
+        token.exp = nowTimestamp + effectiveMaxAge;
+
         // Store the original expiration time in loginTimestamp to prevent sliding sessions extending it
         token.loginTimestamp = nowTimestamp;
-        
+
         // Always reset iat on fresh login.
         // If we keep an old iat from a previous expired token, the next jwt() pass
         // can immediately mark this brand-new login as expired.
@@ -203,22 +259,52 @@ export const authOptions: NextAuthOptions = {
         // Existing token - check if it's expired. Don't throw (causes 500 on Netlify/serverless);
         // strip id so session callback can return null (empty id still counts as "authenticated" on the client).
         const currentTime = Math.floor(Date.now() / 1000);
+        const effectiveMaxAge =
+          typeof token.maxAgeSec === "number" && token.maxAgeSec > 0
+            ? token.maxAgeSec
+            : SESSION_MAX_AGE_SECONDS;
         const expiredByExp =
           typeof token.exp === "number" &&
           token.exp > 0 &&
           token.exp < currentTime;
-        
+
         // Check our absolute loginTimestamp to prevent infinite sliding sessions
         const expiredByLogin =
           typeof token.loginTimestamp === "number" &&
-          currentTime - token.loginTimestamp > maxAge;
-          
+          currentTime - token.loginTimestamp > effectiveMaxAge;
+
         const expiredByIat =
           typeof token.iat === "number" &&
-          currentTime - token.iat > maxAge;
-          
+          currentTime - token.iat > effectiveMaxAge;
+
         if (expiredByExp || expiredByIat || expiredByLogin) {
           return { ...token, id: "", exp: 0 };
+        }
+
+        // Password reset after this JWT was issued — invalidate session (JWT has no server store).
+        if (typeof token.id === "string" && token.id.length > 0) {
+          try {
+            const changedAt = await getPasswordChangedAtUnixCached(token.id);
+            const iat =
+              typeof token.iat === "number" && token.iat > 0
+                ? token.iat
+                : typeof token.loginTimestamp === "number"
+                  ? token.loginTimestamp
+                  : 0;
+            if (changedAt > iat) {
+              return { ...token, id: "", exp: 0 };
+            }
+          } catch (e) {
+            // Soft-fail: a transient Mongo error must not invalidate every
+            // active session. The downside (stolen JWT surviving a password
+            // rotation while the DB is unreachable) is bounded by how long
+            // the DB is down — and during that window the rest of the app
+            // is unusable anyway. Crucially, fail-closing here would also
+            // turn the post-signin /api/auth/session call into an instant
+            // "Session Expired" bounce on any DB blip, which is worse UX
+            // than the security gain.
+            console.error("jwt passwordChangedAt check:", e);
+          }
         }
       }
 
@@ -282,15 +368,20 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       const nowSec = Math.floor(Date.now() / 1000);
-      const maxAge = SESSION_MAX_AGE_SECONDS;
+      const effectiveMaxAge =
+        typeof token.maxAgeSec === "number" && token.maxAgeSec > 0
+          ? token.maxAgeSec
+          : SESSION_MAX_AGE_SECONDS;
       const expiredByExp =
         typeof token.exp === "number" &&
         token.exp > 0 &&
         token.exp < nowSec;
       const expiredByIat =
-        typeof token.iat === "number" && nowSec - token.iat > maxAge;
+        typeof token.iat === "number" &&
+        nowSec - token.iat > effectiveMaxAge;
       const expiredByLogin =
-        typeof token.loginTimestamp === "number" && nowSec - token.loginTimestamp > maxAge;
+        typeof token.loginTimestamp === "number" &&
+        nowSec - token.loginTimestamp > effectiveMaxAge;
       const invalid =
         !token?.id ||
         token.exp === 0 ||
@@ -320,7 +411,9 @@ export const authOptions: NextAuthOptions = {
       session.user.canViewPhoneNumbers = token.canViewPhoneNumbers ?? false;
 
       if (token.loginTimestamp) {
-        session.expires = new Date((token.loginTimestamp as number + maxAge) * 1000).toISOString();
+        session.expires = new Date(
+          ((token.loginTimestamp as number) + effectiveMaxAge) * 1000,
+        ).toISOString();
       } else if (token.exp) {
         session.expires = new Date(token.exp * 1000).toISOString();
       }

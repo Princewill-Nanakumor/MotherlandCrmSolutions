@@ -17,7 +17,10 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isSignupPage = pathname === "/signup";
+  const isHeroAuthPage =
+    pathname === "/signup" ||
+    pathname === "/forgot-password" ||
+    (pathname?.startsWith("/reset-password/") ?? false);
 
   return (
     <SessionProvider
@@ -25,8 +28,8 @@ export default function AuthLayout({
       refetchOnWindowFocus={true} // Refetch when user returns to window (important for offline → online)
     >
       <ThemeProvider>
-        {isSignupPage ? (
-          // Signup page renders its own full-bleed background/navbar layout
+        {isHeroAuthPage ? (
+          // Full-bleed hero + navbar (same shell as login); pages inject their own <style>
           <div className={inter.className}>{children}</div>
         ) : (
           <div
@@ -45,7 +48,8 @@ export default function AuthLayout({
                     />
                   </div>
                   <div className="text-xl sm:text-2xl font-bold bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
-                    Motherland CRM
+                    {process.env.NEXT_PUBLIC_APP_NAME?.trim() ||
+                      "Motherland CRM Solutions"}
                   </div>
                 </Link>
               </div>

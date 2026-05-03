@@ -1,7 +1,7 @@
 // src/components/authComponents/VerifyEmailContent.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, XCircle, Loader2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
@@ -10,19 +10,18 @@ interface VerifyEmailContentProps {
   token: string;
 }
 
+type VerifyStatus = "loading" | "success" | "error" | "expired";
+
 export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
-  const [status, setStatus] = useState<
-    "loading" | "success" | "error" | "expired"
-  >("loading");
+  const [status, setStatus] = useState<VerifyStatus>("loading");
   const [message, setMessage] = useState("");
   const [countdown, setCountdown] = useState(5);
   const router = useRouter();
 
-  // Countdown timer for redirect
   useEffect(() => {
     if (status === "success" && countdown > 0) {
       const timer = setTimeout(() => {
-        setCountdown(countdown - 1);
+        setCountdown((c) => c - 1);
       }, 1000);
       return () => clearTimeout(timer);
     } else if (status === "success" && countdown === 0) {
@@ -30,45 +29,65 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
     }
   }, [status, countdown, router]);
 
+  // StrictMode in dev mounts effects twice. The verify endpoint is one-shot
+  // (the token gets cleared on first success), so a naive double-fire would
+  // surface the second response — invalid token — and overwrite the success UI.
+  const verifyRanRef = useRef(false);
   useEffect(() => {
+    if (!token) {
+      setStatus("error");
+      setMessage("No verification token provided");
+      return;
+    }
+    if (verifyRanRef.current) return;
+    verifyRanRef.current = true;
+
+    const controller = new AbortController();
+
     const verifyEmail = async () => {
       try {
         const response = await fetch("/api/verify-email", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
+          signal: controller.signal,
         });
 
-        const data = await response.json();
+        let data: { status?: string; message?: string };
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error("Invalid response from server");
+        }
 
-        if (response.ok) {
+        if (controller.signal.aborted) return;
+
+        // Server returns a stable `status` field; fall back to message
+        // string matching only as a last resort for older deployments.
+        const serverStatus = data.status;
+        if (response.ok && serverStatus === "success") {
           setStatus("success");
           setMessage(data.message || "Email verified successfully!");
-        } else {
-          // Check if it's an expired token
-          if (data.message?.includes("expired")) {
-            setStatus("expired");
-          } else {
-            setStatus("error");
-          }
-          setMessage(data.message || "Failed to verify email");
+          return;
         }
+
+        if (serverStatus === "expired" || data.message?.includes("expired")) {
+          setStatus("expired");
+        } else {
+          setStatus("error");
+        }
+        setMessage(data.message || "Failed to verify email");
       } catch (err) {
+        if (controller.signal.aborted) return;
         console.error("Verification error:", err);
         setStatus("error");
         setMessage("An error occurred while verifying your email.");
       }
     };
 
-    // Only verify if we have a token
-    if (token) {
-      verifyEmail();
-    } else {
-      setStatus("error");
-      setMessage("No verification token provided");
-    }
+    verifyEmail();
+
+    return () => controller.abort();
   }, [token]);
 
   const renderStatusContent = () => {
@@ -114,7 +133,7 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
               </div>
               <Link
                 href="/login"
-                className="inline-flex items-center px-6 py-2 text-sm font-medium text-white transition-colors bg-green-500 rounded-lg shadow-lg 0 hover:bg-green-600"
+                className="inline-flex items-center px-6 py-2 text-sm font-medium text-white transition-colors bg-green-500 rounded-lg shadow-lg hover:bg-green-600"
               >
                 Continue to Sign In
               </Link>
@@ -137,10 +156,10 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
               </p>
               <div className="space-y-3">
                 <Link
-                  href="/signup"
+                  href="/login?verifyEmail=1"
                   className="inline-flex items-center px-6 py-2 text-sm font-medium text-white transition-colors rounded-lg shadow-lg bg-linear-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                 >
-                  Sign Up Again
+                  Request a new link
                 </Link>
                 <div>
                   <Link

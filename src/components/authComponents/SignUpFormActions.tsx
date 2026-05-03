@@ -34,15 +34,16 @@ export function SignUpFormActions({
         )}
       </button>
 
-      {/* Sign In Link */}
-      <div className="text-xs text-center sm:text-sm">
+      {/* Match SignInForm footer: white copy + indigo hover on link */}
+      <p className="text-sm text-center text-white!">
+        Already have an account?{" "}
         <Link
           href="/login"
-          className="inline-block font-medium text-indigo-600 transition-colors hover:text-indigo-500"
+          className="font-semibold underline transition-colors hover:text-indigo-200"
         >
-          Already have an account? Sign in
+          Sign in
         </Link>
-      </div>
+      </p>
     </>
   );
 }

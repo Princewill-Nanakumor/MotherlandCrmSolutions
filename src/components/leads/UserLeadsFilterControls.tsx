@@ -54,8 +54,8 @@ export const UserLeadsFilterControls: React.FC<
 
   if (shouldShowLoading) {
     return (
-      <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
-        <div className="flex items-center justify-between">
+      <div className="sticky top-0 z-10 px-4 sm:px-6 lg:px-8 pb-5 mt-8 bg-white dark:bg-gray-800">
+        <div className="flex items-center justify-between px-3 py-4 sm:px-4 border rounded-xl">
           <FilterSkeleton />
           <div className="w-48 h-4 bg-gray-200 rounded dark:bg-gray-700 animate-pulse"></div>
         </div>
@@ -64,8 +64,8 @@ export const UserLeadsFilterControls: React.FC<
   }
 
   return (
-    <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 ">
-      <div className="flex items-center justify-between">
+    <div className="sticky top-0 z-10 px-4 sm:px-6 lg:px-8 pb-5 mt-8 bg-white dark:bg-gray-800">
+      <div className="flex items-center justify-between px-3 py-4 sm:px-4 border rounded-xl">
         <div className="flex items-center gap-3">
           {/* Country Filter */}
           <CountryFilter

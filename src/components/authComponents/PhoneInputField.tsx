@@ -8,20 +8,27 @@ import { SelectOption } from "./CountrySelectStyles";
 interface PhoneInputFieldProps {
   value: string;
   onChange: (value: string) => void;
+  /** Forwarded to the underlying input (e.g. react-hook-form `field.onBlur`). */
+  onBlur?: () => void;
   isLoading?: boolean;
   error?: string;
   placeholder?: string;
   selectedCountry?: SelectOption | null;
+  /** Glass fields on signup/login hero */
+  variant?: "default" | "darkHero";
 }
 
 export function PhoneInputField({
   value,
   onChange,
+  onBlur,
   isLoading = false,
   error,
   placeholder = "Enter phone number",
   selectedCountry,
+  variant = "default",
 }: PhoneInputFieldProps) {
+  const isHero = variant === "darkHero";
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let phoneValue = e.target.value;
 
@@ -33,7 +40,6 @@ export function PhoneInputField({
       phoneValue = selectedCountry.phoneCode + phoneValue;
     }
 
-    // Always call onChange to trigger form validation
     onChange(phoneValue);
   };
 
@@ -47,11 +53,17 @@ export function PhoneInputField({
     <div>
       <div className="relative flex items-center">
         {/* Always show the phone icon */}
-        <Phone className="absolute w-4 h-4 text-gray-400 -translate-y-1/2 pointer-events-none left-3 top-1/2 sm:h-5 sm:w-5" />
+        <Phone
+          className={`absolute w-4 h-4 -translate-y-1/2 pointer-events-none left-3 top-1/2 sm:h-5 sm:w-5 ${isHero ? "text-white/50" : "text-gray-400"}`}
+        />
 
         {/* Show country code when country is selected */}
         {selectedCountry && (
-          <div className="absolute flex items-center text-sm font-normal text-gray-900 -translate-y-1/2 left-10 sm:left-12 top-1/2 sm:text-base">
+          <div
+            className={`absolute flex items-center text-sm font-normal -translate-y-1/2 left-10 sm:left-12 top-1/2 sm:text-base ${
+              isHero ? "text-gray-100" : "text-gray-900"
+            }`}
+          >
             <span>{selectedCountry.phoneCode}</span>
           </div>
         )}
@@ -61,11 +73,18 @@ export function PhoneInputField({
           type="tel"
           value={displayPhoneNumber}
           onChange={handlePhoneChange}
+          onBlur={onBlur}
           placeholder={placeholder}
           disabled={isLoading}
-          className={`h-10 sm:h-12 w-full rounded-lg border text-sm sm:text-base ${
+          className={`h-10 sm:h-12 w-full rounded-md border text-sm sm:text-base focus:outline-none ${
             selectedCountry ? "pl-20 sm:pl-22" : "pl-10 sm:pl-12"
-          } ${error ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-indigo-500" } placeholder-gray-500 text-gray-900! bg-white focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
+          } ${
+            isHero
+              ? `font-semibold text-white! transition-[border-color,background-color,box-shadow] duration-200 ease-out focus-visible:outline-none placeholder:font-semibold placeholder:text-white/70 bg-white/10 ${
+                  error ? "border-red-500" : "border-white"
+                }`
+              : `transition-colors ${error ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-indigo-500"} placeholder-gray-500 text-gray-900! bg-white focus:ring-2 focus:border-transparent`
+          }`}
         />
       </div>
 

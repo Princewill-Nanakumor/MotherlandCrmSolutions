@@ -3,9 +3,14 @@
 
 interface PasswordStrengthProps {
   password: string;
+  variant?: "default" | "darkHero";
 }
 
-export function PasswordStrength({ password }: PasswordStrengthProps) {
+export function PasswordStrength({
+  password,
+  variant = "default",
+}: PasswordStrengthProps) {
+  const isHero = variant === "darkHero";
   const getStrength = (password: string) => {
     if (!password) return 0;
 
@@ -55,11 +60,15 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
   return (
     <div className="mt-2 space-y-1">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-gray-600">
+        <span
+          className={
+            isHero ? "text-sm font-semibold text-white!" : "text-gray-600"
+          }
+        >
           Password strength:
         </span>
         <span
-          className={`font-medium ${strengthTextColors[strength] || "text-gray-400"}`}
+          className={`${isHero ? "text-sm font-semibold" : "font-medium"} ${strengthTextColors[strength] || "text-gray-400"}`}
         >
           {strengthText[strength] || "Very Weak"}
         </span>
@@ -72,13 +81,17 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
             className={`h-full rounded-full flex-1 transition-all duration-300 ${
               level <= strength
                 ? strengthColors[strength]
-                : "bg-gray-200"
+                : isHero
+                  ? "bg-white/15"
+                  : "bg-gray-200"
             }`}
           />
         ))}
       </div>
 
-      <ul className="text-xs text-gray-500 space-y-1 mt-2">
+      <ul
+        className={`mt-2 space-y-1 ${isHero ? "text-sm font-semibold text-white/75!" : "text-xs text-gray-500"}`}
+      >
         <li
           className={`flex items-center ${password.length >= 8 ? "text-green-500" : ""}`}
         >

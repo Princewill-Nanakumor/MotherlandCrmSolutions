@@ -30,26 +30,38 @@ export const TableSkeleton = () => (
   </div>
 );
 
-export const LoadingSpinner = () => (
-  <div className="flex items-center justify-center h-screen">
-    <div className="relative flex items-center justify-center w-16 h-16">
-      {/* Rotating border */}
-      <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
-
-      <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
-        <Shield size={28} className="text-white" />
-      </div>
+/** Same glyph as dashboard layout session gate — reuse for full-page auth waits. */
+export const ShieldSpinnerGlyph = () => (
+  <div className="relative flex h-16 w-16 items-center justify-center">
+    <div className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent border-t-blue-400 border-r-purple-500" />
+    <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
+      <Shield size={28} className="text-white" />
     </div>
   </div>
 );
 
+export const LoadingSpinner = () => (
+  <div className="flex h-screen w-full items-center justify-center bg-background text-foreground">
+    <ShieldSpinnerGlyph />
+  </div>
+);
+
+export function LoadingSpinnerWithCaption({ caption }: { caption: string }) {
+  return (
+    <div className="flex h-screen w-full flex-col items-center justify-center gap-3 bg-background text-foreground">
+      <ShieldSpinnerGlyph />
+      <p className="text-sm text-muted-foreground">{caption}</p>
+    </div>
+  );
+}
+
 // New component for session refresh
 export const SessionRefreshSpinner = () => (
-  <div className="flex items-center justify-center h-screen">
+  <div className="flex h-screen w-full items-center justify-center bg-background text-foreground">
     <div className="text-center">
-      <div className="relative flex items-center justify-center w-16 h-16 mx-auto mb-4">
-        <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
-        <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
+      <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center">
+        <div className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent border-t-blue-400 border-r-purple-500" />
+        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
           <RefreshCw size={28} className="text-white" />
         </div>
       </div>

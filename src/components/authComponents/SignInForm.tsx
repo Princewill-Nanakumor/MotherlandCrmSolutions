@@ -1,12 +1,13 @@
 // src/components/authComponents/SignInForm.tsx
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn, useSession, getSession } from "next-auth/react";
 import Link from "next/link";
-import { Mail, Lock, Loader2, ArrowRight } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { LoginSchema } from "@/schemas";
 import { z } from "zod";
 import { FormError } from "./FormError";
@@ -15,15 +16,148 @@ import { LoginCaptcha, RobotVerifyButton } from "./LoginCaptcha";
 
 type LoginInput = z.infer<typeof LoginSchema>;
 
+const resendEmailSchema = z.string().trim().email();
+
+/** Resend verification uses its own HttpOnly cookie; login captcha is unchanged. */
+function VerifyEmailResendBanner() {
+  const searchParams = useSearchParams();
+  const [resendEmail, setResendEmail] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendNotice, setResendNotice] = useState("");
+  const [resendCaptchaEnabled, setResendCaptchaEnabled] = useState(false);
+  const [captchaInput, setCaptchaInput] = useState("");
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const [captchaState, setCaptchaState] = useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
+
+  if (searchParams.get("verifyEmail") !== "1") {
+    return null;
+  }
+
+  const onSubmitResend = async (e: FormEvent) => {
+    e.preventDefault();
+    setResendNotice("");
+    const parsedEmail = resendEmailSchema.safeParse(resendEmail);
+    if (!parsedEmail.success) {
+      setResendNotice("Enter a valid email address.");
+      return;
+    }
+    if (
+      !resendCaptchaEnabled ||
+      captchaState !== "ready" ||
+      captchaInput.length !== 6
+    ) {
+      setResendNotice("Complete the 6-digit security code.");
+      return;
+    }
+    setResendLoading(true);
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          email: parsedEmail.data,
+          captcha: captchaInput,
+        }),
+      });
+      let data: { error?: string; message?: string };
+      try {
+        data = await res.json();
+      } catch {
+        setResendNotice("Invalid response from server.");
+        return;
+      }
+      if (!res.ok) {
+        setResendNotice(data.error || "Could not send. Try again later.");
+        setCaptchaReset((n) => n + 1);
+        setCaptchaInput("");
+      } else {
+        setResendNotice(
+          data.message ||
+            "If an account needs verification, check your inbox.",
+        );
+        setCaptchaInput("");
+        setCaptchaState("idle");
+        setResendCaptchaEnabled(false);
+      }
+    } catch {
+      setResendNotice("Something went wrong. Try again later.");
+      setCaptchaReset((n) => n + 1);
+      setCaptchaInput("");
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-3 mb-4 text-left border rounded-lg border-indigo-300/40 bg-white/10 backdrop-blur-sm">
+      <p className="mb-2 text-sm font-semibold text-white!">
+        Verify your email before signing in. Check your spam folder if you do
+        not see the message.
+      </p>
+      <form onSubmit={onSubmitResend} className="space-y-3">
+        <input
+          type="email"
+          placeholder="Your signup email"
+          value={resendEmail}
+          onChange={(e) => setResendEmail(e.target.value)}
+          disabled={resendLoading}
+          className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-semibold text-white! transition-[border-color,background-color] duration-200 ease-out placeholder:font-semibold placeholder:text-white/70 focus:outline-none focus-visible:outline-none"
+        />
+        {!resendCaptchaEnabled ? (
+          <RobotVerifyButton
+            disabled={resendLoading}
+            onClick={() => {
+              setResendCaptchaEnabled(true);
+              setCaptchaState("loading");
+              setResendNotice("");
+            }}
+          />
+        ) : (
+          <LoginCaptcha
+            issueKind="resend"
+            value={captchaInput}
+            onChange={setCaptchaInput}
+            resetTrigger={captchaReset}
+            disabled={resendLoading}
+            onCaptchaStateChange={setCaptchaState}
+          />
+        )}
+        <button
+          type="submit"
+          disabled={
+            resendLoading ||
+            !resendEmail.trim() ||
+            !resendCaptchaEnabled ||
+            captchaState !== "ready" ||
+            captchaInput.length !== 6
+          }
+          className="w-full py-2 text-sm font-medium text-white transition-colors rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {resendLoading ? "Sending…" : "Resend verification email"}
+        </button>
+      </form>
+      {resendNotice ? (
+        <p className="mt-2 text-xs text-white/90">{resendNotice}</p>
+      ) : null}
+    </div>
+  );
+}
+
 export default function SignInForm() {
   const { update } = useSession();
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [captchaInput, setCaptchaInput] = useState("");
-  const [captchaCode, setCaptchaCode] = useState("");
-  const [captchaEnabled, setCaptchaEnabled] = useState(false);
   const [captchaResetCounter, setCaptchaResetCounter] = useState(0);
+  const [captchaState, setCaptchaState] = useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
+  const [loginCaptchaEnabled, setLoginCaptchaEnabled] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const refreshCaptchaOnError = () => {
     setCaptchaInput("");
@@ -47,29 +181,22 @@ export default function SignInForm() {
     !!watchedEmail?.trim() && !!watchedPassword?.trim();
   const canSubmitLogin =
     !isFormDisabled &&
-    captchaEnabled &&
+    loginCaptchaEnabled &&
+    captchaState === "ready" &&
     hasRequiredCredentials &&
     captchaInput.length === 6;
-
-  // Do not auto-redirect on session changes here; sign-in flow will handle navigation
 
   const onSubmit: SubmitHandler<LoginInput> = async (data) => {
     setFormError("");
     setFormSuccess("");
 
-    if (!captchaEnabled) {
+    if (!loginCaptchaEnabled) {
       setFormError("Please confirm you are not a robot first.");
       return;
     }
 
     if (captchaInput.length !== 6) {
       setFormError("Please enter the full 6-digit captcha code.");
-      return;
-    }
-
-    if (captchaInput !== captchaCode) {
-      setFormError("incorrect captcha, please try again");
-      refreshCaptchaOnError();
       return;
     }
 
@@ -81,8 +208,11 @@ export default function SignInForm() {
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
+        captcha: captchaInput,
+        // Credentials provider only forwards declared fields and they arrive
+        // as strings; coerce explicitly so authorize() can read it.
+        remember: data.remember ? "true" : "false",
         redirect: false,
-        remember: data.remember,
       });
 
       if (result?.error) {
@@ -96,14 +226,10 @@ export default function SignInForm() {
         setFormSuccess("Signed in successfully.");
 
         // Update session to ensure it's available before redirecting
-        // This is important for Vercel where cookies need to be properly set
         try {
           await update();
-        } catch {
-          // If update fails, continue with redirect anyway
-        }
+        } catch {}
 
-        // Indicate we're navigating so UI (Navbar) can show a loading spinner.
         try {
           sessionStorage.setItem("auth:navigating", "1");
           window.dispatchEvent(
@@ -129,7 +255,6 @@ export default function SignInForm() {
         }
 
         // Wait for the session endpoint to reflect the new login before navigation.
-        // This avoids a first-login race where dashboard briefly sees unauthenticated.
         let confirmed = false;
         for (let i = 0; i < 8; i += 1) {
           const s = await getSession();
@@ -145,6 +270,10 @@ export default function SignInForm() {
         window.location.replace(
           `${window.location.origin}${target}${window.location.hash ?? ""}`,
         );
+      } else {
+        setFormError("Sign in did not complete. Please try again.");
+        refreshCaptchaOnError();
+        setLoading(false);
       }
     } catch (error: unknown) {
       try {
@@ -170,6 +299,9 @@ export default function SignInForm() {
           Sign in to your account to continue
         </p>
       </div>
+      <Suspense fallback={null}>
+        <VerifyEmailResendBanner />
+      </Suspense>
       <form
         className="space-y-4 sm:space-y-6"
         onSubmit={handleSubmit(onSubmit)}
@@ -181,12 +313,13 @@ export default function SignInForm() {
         />
         <FormSuccess message={formSuccess} />
 
+        <div data-auth-glass-fields className="space-y-4 sm:space-y-6">
         <div className="space-y-4">
           {/* Email Field */}
           <div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <Mail className="w-5 h-5 text-gray-400" />
+                <Mail className="w-5 h-5 text-white/50" aria-hidden />
               </div>
               <input
                 {...register("email")}
@@ -194,8 +327,8 @@ export default function SignInForm() {
                 placeholder="Email address"
                 disabled={isFormDisabled}
                 className={`
-                  pl-10 pr-3 py-3 w-full rounded-lg border text-sm
-                  ${errors.email ? "border-red-500" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900! ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
+                  pl-10 pr-3 py-3 w-full rounded-md border text-sm font-semibold transition-[border-color,background-color,box-shadow] duration-200 ease-out
+                  ${errors.email ? "border-red-500" : "border-white"} focus:outline-none focus-visible:outline-none bg-white/10 placeholder:font-semibold placeholder:text-white/70 ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
             </div>
@@ -208,18 +341,33 @@ export default function SignInForm() {
           <div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <Lock className="w-5 h-5 text-gray-400" />
+                <Lock className="w-5 h-5 text-white/50" aria-hidden />
               </div>
               <input
                 {...register("password")}
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
+                autoComplete="current-password"
                 disabled={isFormDisabled}
                 className={`
-                  pl-10 pr-10 py-3 w-full rounded-lg border text-sm
-                  ${errors.password ? "border-red-500" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900! ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
+                  pl-10 pr-11 py-3 w-full rounded-md border text-sm font-semibold transition-[border-color,background-color,box-shadow] duration-200 ease-out
+                  ${errors.password ? "border-red-500" : "border-white"} focus:outline-none focus-visible:outline-none bg-white/10 placeholder:font-semibold placeholder:text-white/70 ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
+              <button
+                type="button"
+                tabIndex={-1}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                disabled={isFormDisabled}
+                onClick={() => !isFormDisabled && setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-white/50 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/35 rounded-r-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" aria-hidden />
+                ) : (
+                  <Eye className="w-5 h-5" aria-hidden />
+                )}
+              </button>
             </div>
             {errors.password && (
               <p className="mt-1 text-xs text-red-500!">{errors.password.message}</p>
@@ -227,11 +375,12 @@ export default function SignInForm() {
           </div>
         </div>
 
-        {!captchaEnabled ? (
+        {!loginCaptchaEnabled ? (
           <RobotVerifyButton
             disabled={isFormDisabled}
             onClick={() => {
-              setCaptchaEnabled(true);
+              setLoginCaptchaEnabled(true);
+              setCaptchaState("loading");
               setFormError("");
             }}
           />
@@ -239,13 +388,14 @@ export default function SignInForm() {
           <LoginCaptcha
             value={captchaInput}
             onChange={setCaptchaInput}
-            onCaptchaCodeChange={setCaptchaCode}
             resetTrigger={captchaResetCounter}
             disabled={isFormDisabled}
+            onCaptchaStateChange={setCaptchaState}
           />
         )}
+        </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <label className="flex items-center space-x-2">
             <input
               {...register("remember")}
@@ -255,9 +405,23 @@ export default function SignInForm() {
                 isFormDisabled ? "opacity-75 cursor-not-allowed" : "cursor-pointer"
               }`}
             />
-            <span className="text-sm text-white!">Remember me</span>
+            <span className="text-sm font-semibold text-white!">Remember me</span>
           </label>
-          {/* Forgot password hidden */}
+          {isFormDisabled ? (
+            <span
+              aria-disabled
+              className="text-sm font-semibold underline underline-offset-2 opacity-75 cursor-not-allowed text-white!"
+            >
+              Forgot password?
+            </span>
+          ) : (
+            <Link
+              href="/forgot-password"
+              className="text-sm font-semibold text-white! underline underline-offset-2 transition-colors hover:text-indigo-200"
+            >
+              Forgot password?
+            </Link>
+          )}
         </div>
 
         <button
@@ -286,14 +450,21 @@ export default function SignInForm() {
 
         <p className="text-sm text-center text-white!">
           Don&apos;t have an account?{" "}
-          <Link
-            href="/signup"
-            className={`font-semibold underline transition-colors ${
-              isFormDisabled ? "pointer-events-none opacity-75" : "hover:text-indigo-200"
-            }`}
-          >
-            Sign up
-          </Link>
+          {isFormDisabled ? (
+            <span
+              aria-disabled
+              className="font-semibold underline opacity-75 cursor-not-allowed"
+            >
+              Sign up
+            </span>
+          ) : (
+            <Link
+              href="/signup"
+              className="font-semibold underline transition-colors hover:text-indigo-200"
+            >
+              Sign up
+            </Link>
+          )}
         </p>
       </form>
     </div>

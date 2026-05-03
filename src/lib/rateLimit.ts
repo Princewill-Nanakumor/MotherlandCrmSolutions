@@ -1,10 +1,8 @@
 // src/lib/rateLimit.ts
-import { NextRequest } from "next/server";
-
 const rateLimitMap = new Map();
 
 export function rateLimit(
-  req: NextRequest,
+  req: Request,
   limit: number = 10,
   windowMs: number = 60000
 ) {
@@ -34,7 +32,7 @@ export function rateLimit(
 }
 
 // Alternative: More robust IP detection
-export function getClientIP(req: NextRequest): string {
+export function getClientIP(req: Request): string {
   // Try multiple headers for IP detection
   const headers = [
     "x-forwarded-for",
@@ -62,7 +60,7 @@ export function getClientIP(req: NextRequest): string {
 
 // Updated rate limit function with better IP detection
 export function rateLimitEnhanced(
-  req: NextRequest,
+  req: Request,
   limit: number = 10,
   windowMs: number = 60000
 ) {

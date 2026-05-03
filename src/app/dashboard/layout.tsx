@@ -10,8 +10,8 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/dashboardComponents/Sidebar";
 import DashboardNavbar from "@/components/dashboardComponents/DashboardNavbar";
 import { SearchProvider, useSearchContext } from "@/context/SearchContext";
-import { Shield } from "lucide-react";
 import Footer from "@/components/dashboardComponents/Footer";
+import { LoadingSpinner } from "@/components/dashboardComponents/LeadsLoadingState";
 import { DateTimeSettingsProvider } from "@/context/DateTimeSettingsContext";
 import { DialerSettingsProvider } from "@/context/DialerSettingsContext";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -381,18 +381,27 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
 
-    const redirectToExpiredLogin = () => {
+    /**
+     * `markExpired=true` only when we know the previous session actually
+     * expired (`hasSeenAuthenticatedRef`). For the post-signin handshake
+     * race the user never had a session here — bouncing them with
+     * `?expired=true` would surface a misleading "Session Expired" toast.
+     */
+    const redirectToLogin = (markExpired: boolean) => {
       if (redirectingDueToExpiryRef.current) return;
       redirectingDueToExpiryRef.current = true;
-      localStorage.setItem("sessionExpired", "true");
+      if (markExpired) {
+        localStorage.setItem("sessionExpired", "true");
+      }
       const search = searchParams?.toString();
       const callbackPath =
         pathname && pathname !== "/login"
           ? `${pathname}${search ? `?${search}` : ""}`
           : "/dashboard";
-      const loginUrl = `/login?expired=true&callbackUrl=${encodeURIComponent(
-        callbackPath,
-      )}`;
+      const params = new URLSearchParams();
+      if (markExpired) params.set("expired", "true");
+      params.set("callbackUrl", callbackPath);
+      const loginUrl = `/login?${params.toString()}`;
       void signOutWithoutInterstitial(loginUrl, router);
     };
 
@@ -424,7 +433,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             }
             return;
           }
-          redirectToExpiredLogin();
+          // Hand-off failure (cookie never propagated) — NOT an expiry.
+          redirectToLogin(false);
         })();
       }, 2400);
       return () => {
@@ -435,23 +445,15 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       };
     }
 
-    redirectToExpiredLogin();
+    // Real expiry only when the user was actually authenticated in this layout.
+    redirectToLogin(hasSeenAuthenticatedRef.current);
   }, [status, pathname, searchParams, router]);
 
   // Avoid full-page "reload" flash after profile save/session updates:
   // once user has already been authenticated in this layout, keep rendering
   // the current dashboard shell during short loading transitions.
   if (status === "loading" && !hasSeenAuthenticatedRef.current) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="relative flex items-center justify-center w-16 h-16">
-          <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
-          <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
-            <Shield size={28} className="text-white" />
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   const handleToggleHeader = () => setShowHeader(!showHeader);
@@ -509,18 +511,7 @@ export default function DashboardLayout({
         <QueryClientProvider client={queryClient}>
           <StatusProvider>
             <SearchProvider>
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center h-screen">
-                    <div className="relative flex items-center justify-center w-16 h-16">
-                      <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin" />
-                      <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
-                        <Shield size={28} className="text-white" />
-                      </div>
-                    </div>
-                  </div>
-                }
-              >
+              <Suspense fallback={<LoadingSpinner />}>
                 <DateTimeSettingsProvider>
                   <DialerSettingsProvider>
                     <DashboardContent>{children}</DashboardContent>

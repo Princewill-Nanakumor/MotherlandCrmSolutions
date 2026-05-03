@@ -4,9 +4,33 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { connectMongoDB } from "@/libs/dbConfig";
 import User from "@/models/User";
+import { Resend } from "resend";
 import { z } from "zod";
+import { hashAuthTokenForStorage } from "@/lib/authEmailTokens";
+import {
+  APP_DISPLAY_NAME,
+  assertAuthEmailConfigured,
+  createVerificationEmailHtml,
+  getPublicAppOrigin,
+  getResendFrom,
+  getResendReplyTo,
+  shouldRequireEmailVerification,
+} from "@/lib/emailAuthBranding";
+import { rateLimitEnhanced } from "@/lib/rateLimit";
+import {
+  buildClearCaptchaCookieHeader,
+  verifyAndConsumeCaptchaCookieAsync,
+} from "@/lib/serverCaptcha";
 
-// Strong validation schema
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const CaptchaShape = z.object({
+  captcha: z
+    .string()
+    .regex(/^\d{6}$/, { message: "Enter the 6-digit security code" }),
+});
+
 const SignUpSchema = z
   .object({
     firstName: z.string().min(1, { message: "First name is required" }),
@@ -42,6 +66,9 @@ const SignUpSchema = z
         message: "Password must contain at least one special character",
       }),
     confirmPassword: z.string(),
+    captcha: z
+      .string()
+      .regex(/^\d{6}$/, { message: "Enter the 6-digit security code" }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -59,9 +86,8 @@ interface UserDataToSave {
   status: string;
   permissions: string[];
   emailVerified: boolean;
-  verificationToken: string;
-  verificationExpires: Date;
-  createdBy?: string | null;
+  verificationToken?: string;
+  verificationExpires?: Date;
   balance: number;
   isOnTrial: boolean;
   trialEndsAt: Date;
@@ -73,42 +99,105 @@ interface UserDataToSave {
   maxUsers: number;
 }
 
+function isDuplicateKeyError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code: number }).code === 11000
+  );
+}
+
+function withClearCaptcha(res: NextResponse): NextResponse {
+  res.headers.append("Set-Cookie", buildClearCaptchaCookieHeader());
+  return res;
+}
+
 export async function POST(req: Request) {
+  if (!rateLimitEnhanced(req, 10, 60_000)) {
+    return NextResponse.json(
+      { message: "Too many signup attempts. Try again later." },
+      { status: 429 },
+    );
+  }
+
+  let userData: unknown;
   try {
-    const userData = await req.json();
+    userData = await req.json();
+  } catch {
+    return NextResponse.json({ message: "Invalid JSON body" }, { status: 400 });
+  }
+
+  // Verify captcha BEFORE running the full Zod schema so a missing
+  // captcha cannot be used to enumerate field-level validation errors.
+  const captchaShape = CaptchaShape.safeParse(userData);
+  const cookieHeader = req.headers.get("cookie");
+  if (!captchaShape.success) {
+    return withClearCaptcha(
+      NextResponse.json(
+        {
+          message: "Enter the 6-digit security code to continue.",
+          captchaReason: "invalid_answer_format",
+        },
+        { status: 400 },
+      ),
+    );
+  }
+  const captchaResult = await verifyAndConsumeCaptchaCookieAsync(
+    cookieHeader,
+    captchaShape.data.captcha,
+  );
+  if (!captchaResult.ok) {
+    return withClearCaptcha(
+      NextResponse.json(
+        {
+          message: captchaResult.message,
+          captchaReason: captchaResult.reason,
+        },
+        { status: 400 },
+      ),
+    );
+  }
+
+  try {
     const validatedData = SignUpSchema.parse(userData);
+
+    const mustVerify = shouldRequireEmailVerification();
+    if (mustVerify) {
+      const mailErr = assertAuthEmailConfigured();
+      if (mailErr) {
+        return NextResponse.json({ message: mailErr }, { status: 503 });
+      }
+    }
 
     await connectMongoDB();
 
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      email: validatedData.email.toLowerCase(),
-    });
+    const email = validatedData.email.trim().toLowerCase();
+    const phoneNumber = validatedData.phoneNumber.replace(/\s/g, "");
+
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json(
         { message: "User with this email already exists" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
-    // Check if this is the first user (system owner)
     const userCount = await User.countDocuments();
     const isFirstUser = userCount === 0;
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(validatedData.password, 12);
 
-    // ✅ Calculate trial end date (3 days from now)
     const trialEndDate = new Date();
     trialEndDate.setDate(trialEndDate.getDate() + 3);
 
     const userDataToSave: UserDataToSave = {
-      firstName: validatedData.firstName,
-      lastName: validatedData.lastName,
-      email: validatedData.email.toLowerCase(),
+      firstName: validatedData.firstName.trim(),
+      lastName: validatedData.lastName.trim(),
+      email,
       password: hashedPassword,
-      phoneNumber: validatedData.phoneNumber,
-      country: validatedData.country,
+      phoneNumber,
+      country: validatedData.country.trim(),
       role: "ADMIN",
       status: "ACTIVE",
       permissions: [
@@ -119,11 +208,7 @@ export async function POST(req: Request) {
         "MANAGE_USERS",
         "EDIT_LEAD_STATUS",
       ],
-      // Email verification + Resend have been disabled for this app.
-      // Mark email as verified immediately and skip sending any emails.
-      emailVerified: true,
-      verificationToken: crypto.randomBytes(32).toString("hex"),
-      verificationExpires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      emailVerified: !mustVerify,
       balance: 0,
       isOnTrial: true,
       trialEndsAt: trialEndDate,
@@ -135,24 +220,56 @@ export async function POST(req: Request) {
       maxUsers: 1,
     };
 
-    if (!isFirstUser) {
-      userDataToSave.createdBy = null;
+    // Token only needed when verification is on; allocate inside the branch
+    // so the non-verify path doesn't pay for crypto + hashing.
+    let rawVerificationToken: string | null = null;
+    if (mustVerify) {
+      rawVerificationToken = crypto.randomBytes(32).toString("hex");
+      userDataToSave.verificationToken = hashAuthTokenForStorage(
+        rawVerificationToken,
+      );
+      userDataToSave.verificationExpires = new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000,
+      );
     }
 
     const user = await User.create(userDataToSave);
 
-    // Remove password from response
-    const userObject = user.toObject();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...userWithoutPassword } = userObject;
+    let emailSent = false;
+    if (mustVerify && rawVerificationToken) {
+      const origin = getPublicAppOrigin();
+      const verificationUrl = `${origin}/verify-email/${rawVerificationToken}`;
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      try {
+        await resend.emails.send({
+          from: getResendFrom(),
+          to: [user.email],
+          subject: `${APP_DISPLAY_NAME} - verify your email`,
+          html: createVerificationEmailHtml(user.firstName, verificationUrl),
+          replyTo: getResendReplyTo(),
+          tags: [{ name: "category", value: "email_verification" }],
+        });
+        emailSent = true;
+      } catch (emailError) {
+        console.error("Failed to send verification email:", emailError);
+      }
+    }
+
+    const status = mustVerify && !emailSent ? 202 : 201;
 
     return NextResponse.json(
       {
-        message: "User created successfully",
-        user: userWithoutPassword,
+        message: emailSent
+          ? "User created successfully. Please sign in."
+          : mustVerify
+            ? "User created but verification email could not be sent. Use resend verification from the sign-in page."
+            : "User created successfully. Please sign in.",
+        user: user.toJSON(),
         isFirstUser,
+        emailVerificationRequired: mustVerify,
+        emailSent,
       },
-      { status: 201 }
+      { status },
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -165,6 +282,13 @@ export async function POST(req: Request) {
           })),
         },
         { status: 400 }
+      );
+    }
+
+    if (isDuplicateKeyError(error)) {
+      return NextResponse.json(
+        { message: "User with this email already exists" },
+        { status: 409 },
       );
     }
 

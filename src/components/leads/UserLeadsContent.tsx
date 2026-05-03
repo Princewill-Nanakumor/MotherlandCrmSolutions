@@ -242,7 +242,7 @@ export default function UserLeadsContent() {
       hasActiveSubscription={hasActiveSubscription}
       subscriptionData={subscriptionData || null}
     >
-      <div className="flex flex-col h-full border rounded-lg bg-background dark:bg-gray-800">
+      <div className="flex flex-col min-h-0 h-full border rounded-lg bg-background dark:bg-gray-800">
         {/* RefetchIndicator positioned like all-leads */}
         <RefetchIndicator />
 

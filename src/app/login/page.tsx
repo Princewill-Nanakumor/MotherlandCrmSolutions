@@ -5,16 +5,19 @@ import { SessionProvider, useSession } from "next-auth/react";
 import Navbar from "@/components/homepageComponents/Navabar";
 import SignInForm from "@/components/authComponents/SignInForm";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { MessageCircle, Shield } from "lucide-react";
-import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import {
+  LoadingSpinner,
+  LoadingSpinnerWithCaption,
+} from "@/components/dashboardComponents/LeadsLoadingState";
 import {
   hasAuthorizedSession,
   shouldBlockLoginAutoRedirect,
   shouldClearStaleSessionOnLoginPage,
   shouldForceLoginLanding,
 } from "@/lib/sessionUtils";
+import { getAuthHeroGlassFieldsCss } from "@/lib/authHeroGlassFieldsCss";
 import { signOut } from "next-auth/react";
 
 // Animation variants
@@ -40,37 +43,13 @@ const sectionVariants = {
   },
 };
 
-// Loading screen component
 function LoadingScreen() {
-  return (
-    <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-linear-to-br from-gray-900 via-blue-900 to-purple-900">
-      <div className="flex items-center gap-3">
-        <div className="relative flex items-center justify-center w-16 h-16">
-          <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
-          <div className="relative z-10 flex items-center justify-center w-12 h-12 bg-gray-800 rounded-full to-purple-600">
-            <Shield size={28} className="text-white" />
-          </div>
-        </div>
-        <span className="text-lg text-white">Loading...</span>
-      </div>
-    </div>
-  );
+  return <LoadingSpinner />;
 }
 
-// Redirecting screen component
 function RedirectingScreen() {
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 font-mono bg-linear-to-br from-gray-900 via-blue-900 to-purple-900">
-      <div className="flex items-center gap-3">
-        <div className="relative flex items-center justify-center w-16 h-16">
-          <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
-          <div className="relative z-10 flex items-center justify-center w-12 h-12 bg-gray-800 rounded-full to-purple-600">
-            <Shield size={28} className="text-white" />
-          </div>
-        </div>
-        <span className="text-lg text-white">Redirecting to dashboard...</span>
-      </div>
-    </div>
+    <LoadingSpinnerWithCaption caption="Redirecting to dashboard…" />
   );
 }
 
@@ -115,21 +94,6 @@ function LoginFormContent() {
           <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
             <SignInForm />
           </div>
-        </motion.div>
-        <motion.div
-          className="fixed z-50 bottom-6 right-4 sm:right-6 md:right-8"
-          variants={sectionVariants}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Link
-            href="/"
-            className="flex items-center space-x-2 px-4 py-2.5 text-sm font-medium text-white! bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg transition-all duration-200 border border-white/30 shadow-lg"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span className="hidden sm:inline text-white!">Contact Us</span>
-          </Link>
         </motion.div>
       </motion.div>
     </div>
@@ -218,9 +182,39 @@ export default function LoginPage() {
     if (hasShownExpiredToastRef.current) return;
     if (typeof window === "undefined") return;
 
+    // Post-signin handshake race: SignInForm sets `auth:navigating` right
+    // before window.location.replace(). If we still got here with an
+    // `expired` flag, it's a stale marker from before the click — clear it
+    // silently instead of telling the user their session expired.
+    let navigatingAfterSignIn = false;
+    try {
+      navigatingAfterSignIn =
+        sessionStorage.getItem("auth:navigating") === "1";
+    } catch {
+      /* ignore */
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const fromUrl = urlParams.get("expired") === "true";
     const fromStorage = localStorage.getItem("sessionExpired") === "true";
+
+    if (navigatingAfterSignIn) {
+      hasShownExpiredToastRef.current = true;
+      if (fromStorage) {
+        try {
+          localStorage.removeItem("sessionExpired");
+        } catch {
+          /* ignore */
+        }
+      }
+      if (fromUrl) {
+        urlParams.delete("expired");
+        const qs = urlParams.toString();
+        const nextUrl = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash ?? ""}`;
+        window.history.replaceState({}, "", nextUrl);
+      }
+      return;
+    }
 
     if (!fromUrl && !fromStorage) return;
 
@@ -282,12 +276,18 @@ export default function LoginPage() {
             background-image: none !important;
           }
           body.is-login-page {
-            background-color: #1a1a1a !important;
-            background-image: url('/motherlandImage.jpg') !important;
-            background-size: cover !important;
-            background-position: center !important;
-            background-repeat: no-repeat !important;
-            background-attachment: fixed !important;
+            background-color: #0f0f0f !important;
+            /* Dark overlay on top of hero image for readability */
+            background-image:
+              linear-gradient(
+                rgba(0, 0, 0, 0.58),
+                rgba(0, 0, 0, 0.52)
+              ),
+              url('/motherlandImage.jpg') !important;
+            background-size: cover, cover !important;
+            background-position: center, center !important;
+            background-repeat: no-repeat, no-repeat !important;
+            background-attachment: fixed, fixed !important;
           }
           body.is-login-page > div,
           body.is-login-page > div > div,
@@ -312,25 +312,7 @@ export default function LoginPage() {
             background-color: transparent !important;
             background: transparent !important;
           }
-          body.is-login-page input:not([type="checkbox"]),
-          body.is-login-page textarea,
-          body.is-login-page select {
-            border-color: rgb(209, 213, 219) !important;
-            background-color: white !important;
-            color: rgb(17, 24, 39) !important;
-          }
-          body.is-login-page input:not([type="checkbox"])::placeholder,
-          body.is-login-page textarea::placeholder {
-            color: rgb(107, 114, 128) !important;
-          }
-          body.is-login-page input:not([type="checkbox"]):-webkit-autofill,
-          body.is-login-page input:not([type="checkbox"]):-webkit-autofill:hover,
-          body.is-login-page input:not([type="checkbox"]):-webkit-autofill:focus {
-            -webkit-text-fill-color: rgb(17, 24, 39) !important;
-            -webkit-box-shadow: 0 0 0px 1000px white inset !important;
-            box-shadow: 0 0 0px 1000px white inset !important;
-            transition: background-color 5000s ease-in-out 0s;
-          }
+          ${getAuthHeroGlassFieldsCss()}
           body.is-login-page input[type="checkbox"] {
             background-color: white !important;
             background: white !important;

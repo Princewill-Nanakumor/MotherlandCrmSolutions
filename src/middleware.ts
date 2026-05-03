@@ -3,6 +3,10 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import { SESSION_MAX_AGE_SECONDS } from "@/lib/sessionMaxAge";
 
+// NOTE: Middleware only runs for paths in `config.matcher` below
+// (`/dashboard/*`, `/admin/*`, `/api/protected/*`). Most entries here are not
+// matched at all and are kept only so the auth-redirect helpers below stay
+// consistent with the route map. Update both when adding a public page.
 const PUBLIC_PAGES = [
   "/",
   "/about",
@@ -10,26 +14,39 @@ const PUBLIC_PAGES = [
   "/contact",
   "/login",
   "/signup",
-  // "/forgot-password", // Hidden - will be enabled later
+  "/forgot-password",
   "/verify-email",
 ] as const;
 
-/** Match libs/auth.ts jwt/session callbacks: exp, iat, and loginTimestamp vs SESSION_MAX_AGE_SECONDS. */
+/**
+ * Match libs/auth.ts jwt/session callbacks: exp, iat, and loginTimestamp vs
+ * the per-token `maxAgeSec` (chosen at login: default vs "Remember me"),
+ * falling back to SESSION_MAX_AGE_SECONDS for legacy tokens.
+ */
 function isSessionTokenExpired(
   token:
-    | { loginTimestamp?: number; exp?: number; iat?: number }
+    | {
+        loginTimestamp?: number;
+        exp?: number;
+        iat?: number;
+        maxAgeSec?: number;
+      }
     | undefined
     | null,
   nowSec: number,
-  maxAgeSeconds: number,
+  defaultMaxAgeSeconds: number,
 ): boolean {
+  const effective =
+    typeof token?.maxAgeSec === "number" && token.maxAgeSec > 0
+      ? token.maxAgeSec
+      : defaultMaxAgeSeconds;
   const exp = token?.exp;
   if (typeof exp === "number" && exp > 0 && exp < nowSec) return true;
   const iat = token?.iat;
-  if (typeof iat === "number" && nowSec - iat > maxAgeSeconds) return true;
+  if (typeof iat === "number" && nowSec - iat > effective) return true;
   if (
     typeof token?.loginTimestamp === "number" &&
-    nowSec - token.loginTimestamp > maxAgeSeconds
+    nowSec - token.loginTimestamp > effective
   ) {
     return true;
   }
@@ -62,10 +79,11 @@ export default withAuth(
     const buildLoginUrl = (callbackUrl: string) => {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("callbackUrl", callbackUrl);
-      // Protected-route auth redirects should surface the expiry toast.
-      // In some edge cases token is already missing by the time middleware runs,
-      // so isExpired can be false even though session just expired.
-      if (isExpired || isDashboardPage || isAdminPage) {
+      // Only tag `expired=true` when we KNOW the previous token expired.
+      // A missing/never-issued token (fresh visitor, post-signin race) must
+      // not surface as "Session Expired" — it's a different user story.
+      const tokenIsPresentButExpired = !!token && isExpired;
+      if (tokenIsPresentButExpired) {
         loginUrl.searchParams.set("expired", "true");
       }
       return loginUrl;
@@ -76,20 +94,11 @@ export default withAuth(
       return NextResponse.next();
     }
 
+    // Public pages (incl. /verify-email/*) and reset-password pages are
+    // open; everything else falls through to the auth checks below.
     const isPublicPage =
       (PUBLIC_PAGES as readonly string[]).includes(path) || isVerifyEmailPage;
-    // ✅ Allow access to public pages
-    if (isPublicPage) {
-      return NextResponse.next();
-    }
-
-    // ✅ Allow access to reset password pages (no auth required)
-    if (isResetPasswordPage) {
-      return NextResponse.next();
-    }
-
-    // ✅ Allow access to email verification pages (no auth required)
-    if (isVerifyEmailPage) {
+    if (isPublicPage || isResetPasswordPage) {
       return NextResponse.next();
     }
 
