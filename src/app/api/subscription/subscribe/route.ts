@@ -4,180 +4,164 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import User from "@/models/User";
 import { authOptions } from "@/libs/auth";
-import mongoose from "mongoose";
 import { rateLimitEnhanced } from "@/lib/rateLimit";
+import {
+  SUBSCRIPTION_PLAN_CATALOG,
+  type SubscriptionPlanCatalogKey,
+} from "@/lib/subscriptionPlanCatalog";
 
-const SUBSCRIPTION_PLANS = {
-  starter: {
-    id: "starter",
-    name: "Starter",
-    price: 10.99,
-    maxLeads: 10000,
-    maxUsers: 2,
-  },
-  professional: {
-    id: "professional",
-    name: "Professional",
-    price: 19.99,
-    maxLeads: 30000,
-    maxUsers: 5,
-  },
-  enterprise: {
-    id: "enterprise",
-    name: "Enterprise",
-    price: 199.99,
-    maxLeads: -1,
-    maxUsers: -1,
-  },
-};
+const SUBSCRIPTION_PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
+
+function roundCents(n: number): number {
+  return Math.round(n * 100) / 100;
+}
 
 export async function POST(req: NextRequest) {
-  // Rate limit: 5 requests per minute
   if (!rateLimitEnhanced(req, 5, 60000)) {
     return NextResponse.json(
       { error: "Rate limit exceeded. Please try again later." },
-      { status: 429 }
+      { status: 429 },
     );
   }
 
   try {
     const session = await getServerSession(authOptions);
-
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { planId, amount } = await req.json();
+    const body = (await req.json().catch(() => ({}))) as {
+      planId?: string;
+      amount?: unknown;
+    };
+    const planId = body.planId;
+    const rawAmount = body.amount;
 
-    // ✅ Validate input types
-    if (!planId || typeof amount !== "number" || amount <= 0) {
+    if (
+      !planId ||
+      typeof rawAmount !== "number" ||
+      !Number.isFinite(rawAmount) ||
+      rawAmount <= 0
+    ) {
       return NextResponse.json(
         { error: "Invalid request data" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    const plan =
+      SUBSCRIPTION_PLAN_CATALOG[planId as SubscriptionPlanCatalogKey];
+    if (!plan) {
+      return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+    }
+
+    // Compare in cents to avoid float drift; client-supplied amount is rounded.
+    const amount = roundCents(rawAmount);
+    if (Math.round(amount * 100) !== Math.round(plan.price * 100)) {
+      return NextResponse.json(
+        { error: "Invalid amount for selected plan" },
+        { status: 400 },
       );
     }
 
     await connectMongoDB();
 
-    // ✅ Get plan details with validation
-    const plan = SUBSCRIPTION_PLANS[planId as keyof typeof SUBSCRIPTION_PLANS];
-    if (!plan) {
-      return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+    const sessionUser = await User.findById(session.user.id)
+      .select({ role: 1 })
+      .lean();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-
-    // ✅ Server-side validation: amount must match plan price
-    if (amount !== plan.price) {
+    if (sessionUser.role !== "ADMIN") {
       return NextResponse.json(
-        { error: "Invalid amount for selected plan" },
-        { status: 400 }
+        { error: "Only the account owner can subscribe to a plan." },
+        { status: 403 },
       );
     }
 
-    // ✅ Get user with fresh data from database
-    const user = await User.findById(session.user.id);
+    const now = new Date();
+    const newEndDate = new Date(now.getTime() + SUBSCRIPTION_PERIOD_MS);
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    // Atomic compare-and-set: only succeeds when the document still has
+    // sufficient balance AND no currently active+unexpired subscription.
+    // Two concurrent POSTs cannot both pass this filter — one will fail
+    // with no match and we return 400, preventing double-spend / re-subscribe.
+    const updated = await User.findOneAndUpdate(
+      {
+        _id: sessionUser._id,
+        role: "ADMIN",
+        balance: { $gte: amount },
+        $or: [
+          { subscriptionStatus: { $ne: "active" } },
+          { subscriptionEndDate: { $lte: now } },
+          { subscriptionEndDate: { $exists: false } },
+          { subscriptionEndDate: null },
+        ],
+      },
+      {
+        $inc: { balance: -amount },
+        $set: {
+          currentPlan: planId,
+          subscriptionStatus: "active",
+          isOnTrial: false,
+          maxLeads: plan.maxLeads,
+          maxUsers: plan.maxUsers,
+          subscriptionStartDate: now,
+          subscriptionEndDate: newEndDate,
+        },
+      },
+      { new: true },
+    );
 
-    // ✅ Check if user already has an active subscription (but allow renewal of expired subscriptions)
-    if (user.subscriptionStatus === "active") {
-      // Check if the subscription has actually expired
-      const now = new Date();
-      const subscriptionEndDate = user.subscriptionEndDate
-        ? new Date(user.subscriptionEndDate)
-        : null;
-      const subscriptionExpired =
-        subscriptionEndDate && now > subscriptionEndDate;
-
-      if (!subscriptionExpired) {
+    if (!updated) {
+      // Distinguish the two failure modes for a better client message.
+      const fresh = await User.findById(sessionUser._id)
+        .select({ balance: 1, subscriptionStatus: 1, subscriptionEndDate: 1 })
+        .lean();
+      const hasActive =
+        fresh?.subscriptionStatus === "active" &&
+        fresh?.subscriptionEndDate &&
+        new Date(fresh.subscriptionEndDate) > now;
+      if (hasActive) {
         return NextResponse.json(
           { error: "You already have an active subscription" },
-          { status: 400 }
+          { status: 400 },
         );
       }
-      // If subscription is expired, allow renewal
-    }
-
-    // ✅ Server-side balance check with fallback
-    const userBalance = user.balance || 0;
-    if (userBalance < amount) {
-      const shortfall = amount - userBalance;
+      const current = roundCents(fresh?.balance ?? 0);
       return NextResponse.json(
         {
           error: "Insufficient balance",
-          shortfall: shortfall,
           required: amount,
-          current: userBalance,
+          current,
+          shortfall: roundCents(amount - current),
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // ✅ Security logging
-    console.log(
-      `Subscription attempt: User ${user.email} attempting to subscribe to ${planId} for $${amount}`
-    );
-
-    // ✅ Use database transaction for atomicity
-    const dbSession = await mongoose.startSession();
-    dbSession.startTransaction();
-
-    try {
-      // ✅ Update user with transaction
-      const updatedUser = await User.findByIdAndUpdate(
-        session.user.id,
-        {
-          $set: {
-            currentPlan: planId,
-            subscriptionStatus: "active",
-            isOnTrial: false,
-            balance: userBalance - amount, // ✅ Server-calculated balance
-            maxLeads: plan.maxLeads,
-            maxUsers: plan.maxUsers,
-            subscriptionStartDate: new Date(),
-            subscriptionEndDate: new Date(
-              Date.now() + 30 * 24 * 60 * 60 * 1000
-            ), // 30 days
-          },
-        },
-        { new: true, session: dbSession }
-      );
-
-      if (!updatedUser) {
-        throw new Error("Failed to update user");
-      }
-
-      await dbSession.commitTransaction();
-
-      // ✅ Success logging
+    if (process.env.NODE_ENV !== "production") {
       console.log(
-        `Subscription successful: User ${user.email} subscribed to ${plan.name} plan`
+        `[subscription/subscribe] user=${sessionUser._id} plan=${planId}`,
       );
-
-      return NextResponse.json({
-        success: true,
-        message: `Successfully subscribed to ${plan.name} plan`,
-        newBalance: userBalance - amount,
-        plan: {
-          id: plan.id,
-          name: plan.name,
-          maxLeads: plan.maxLeads,
-          maxUsers: plan.maxUsers,
-        },
-      });
-    } catch (error) {
-      await dbSession.abortTransaction();
-      console.error("Subscription transaction failed:", error);
-      throw error;
-    } finally {
-      dbSession.endSession();
     }
+
+    return NextResponse.json({
+      success: true,
+      message: `Successfully subscribed to ${plan.name} plan`,
+      newBalance: roundCents(updated.balance ?? 0),
+      plan: {
+        id: plan.id,
+        name: plan.name,
+        maxLeads: plan.maxLeads,
+        maxUsers: plan.maxUsers,
+      },
+    });
   } catch (error) {
-    console.error("Error processing subscription:", error);
+    console.error("[subscription/subscribe] failed", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

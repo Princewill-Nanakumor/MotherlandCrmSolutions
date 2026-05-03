@@ -1,7 +1,7 @@
 // src/components/authComponents/VerifyEmailContent.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, XCircle, Loader2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
@@ -45,17 +45,23 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
     }
   }, [status, countdown, router]);
 
-  const verifyRanRef = useRef(false);
   useEffect(() => {
     if (!token) {
       setStatus("error");
       setMessage("No verification token provided");
       return;
     }
-    if (verifyRanRef.current) return;
-    verifyRanRef.current = true;
 
     const controller = new AbortController();
+    /** Failsafe if the request hangs (never rely on loading forever). */
+    const hangTimer = window.setTimeout(() => {
+      if (controller.signal.aborted) return;
+      controller.abort();
+      setStatus("error");
+      setMessage(
+        "Verification is taking too long. Refresh the page or open the link again. You can also sign in if you already verified your email.",
+      );
+    }, 30_000);
 
     const verifyEmail = async () => {
       try {
@@ -64,6 +70,7 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
           signal: controller.signal,
+          credentials: "same-origin",
         });
 
         let data: { status?: string; message?: string };
@@ -136,16 +143,24 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
             "This link is invalid or no longer active. If you already have an account, try signing in.",
         );
       } catch (err) {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) {
+          // Strict dev double-mount or hang-timeout abort: remount / user can retry.
+          return;
+        }
         console.error("Verification error:", err);
         setStatus("error");
         setMessage("An error occurred while verifying your email.");
+      } finally {
+        window.clearTimeout(hangTimer);
       }
     };
 
-    verifyEmail();
+    void verifyEmail();
 
-    return () => controller.abort();
+    return () => {
+      window.clearTimeout(hangTimer);
+      controller.abort();
+    };
   }, [token]);
 
   const cardClass =

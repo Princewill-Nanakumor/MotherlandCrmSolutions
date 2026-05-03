@@ -6,6 +6,7 @@ import { X as CloseIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PaymentDetailsContent from "./PaymentDetailsContent";
 import { usePayment } from "@/hooks/useBillingData";
+import { clearPaymentStorage } from "./PaymentStorageManager";
 
 interface PaymentDetailsModalProps {
   paymentId: string;
@@ -31,12 +32,10 @@ export default function PaymentDetailsModal({
   } = usePayment(isOpen ? paymentId : null);
 
   const handleClose = () => {
-    // Clear localStorage
-    localStorage.removeItem("currentPayment");
-    localStorage.removeItem("paymentNetwork");
-    localStorage.removeItem("paymentConfirmed");
-
-    // Call the parent handlers
+    // M9: use the same storage keys as PaymentStorageManager (the previous
+    // ad-hoc `currentPayment`/`paymentNetwork`/`paymentConfirmed` keys never
+    // existed, so this never actually cleared anything).
+    clearPaymentStorage();
     onClearPayment();
     onClose();
   };

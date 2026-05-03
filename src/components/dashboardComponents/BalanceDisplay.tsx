@@ -1,6 +1,7 @@
 // src/components/dashboardComponents/BalanceDisplay.tsx
 "use client";
 import React, { useEffect, useState } from "react";
+import { RefreshCw } from "lucide-react";
 
 export function BalanceDisplay({
   balance,
@@ -14,7 +15,6 @@ export function BalanceDisplay({
   const [localBalance, setLocalBalance] = useState<number | undefined>(balance);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Update local balance when prop changes
   useEffect(() => {
     setLocalBalance(balance);
   }, [balance]);
@@ -26,7 +26,6 @@ export function BalanceDisplay({
     }).format(amount);
   };
 
-  // Function to refresh balance
   const refreshBalance = async () => {
     if (isUpdating) return;
 
@@ -50,7 +49,7 @@ export function BalanceDisplay({
   };
 
   return (
-    <span className="text-xs font-semibold text-gray-700! dark:text-gray-200!">
+    <span className="text-xs font-semibold text-gray-700! dark:text-gray-200! inline-flex items-center gap-2">
       Balance:{" "}
       {loading || isUpdating ? (
         <span className="text-gray-500! dark:text-gray-400!">Loading...</span>
@@ -59,11 +58,20 @@ export function BalanceDisplay({
           {formatCurrency(localBalance || 0)}
         </span>
       )}
+      {/* L7: real label + visible affordance for the refresh button. */}
       <button
+        type="button"
         onClick={refreshBalance}
-        className="ml-2 text-blue-600! hover:text-blue-800! dark:text-blue-400! dark:hover:text-blue-300! text-xs underline"
+        aria-label="Refresh balance"
+        title="Refresh balance"
         disabled={isUpdating}
-      ></button>
+        className="text-blue-600! hover:text-blue-800! dark:text-blue-400! dark:hover:text-blue-300! disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <RefreshCw
+          className={`h-3 w-3 ${isUpdating ? "animate-spin" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
     </span>
   );
 }

@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { CheckCircle } from "lucide-react";
+import { ArrowRight, CheckCircle } from "lucide-react";
 import { SignUpSchema } from "@/schemas";
 import * as z from "zod";
 import { FormError } from "./FormError";
@@ -190,9 +190,10 @@ export default function SignUpForm() {
           </div>
           <Link
             href="/login"
-            className="inline-flex min-w-40 items-center justify-center rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+            className="flex w-full items-center justify-center space-x-2 rounded-lg bg-linear-to-br from-indigo-600 to-purple-600 px-4 py-3 font-medium text-white transition-all duration-200 hover:from-indigo-700 hover:to-purple-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
           >
-            Sign in
+            <span>Sign in</span>
+            <ArrowRight className="h-5 w-5" aria-hidden />
           </Link>
         </div>
       </div>

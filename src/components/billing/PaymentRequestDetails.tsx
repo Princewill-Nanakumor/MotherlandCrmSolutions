@@ -14,6 +14,10 @@ import {
 import QRCode from "react-qr-code";
 import { Button } from "@/components/ui/button";
 import { Payment } from "@/types/payment.types";
+import {
+  clearNotificationLockForPayment,
+  clearPaymentStorage,
+} from "./PaymentStorageManager";
 
 interface PaymentRequestDetailsProps {
   currentPayment: Payment;
@@ -44,10 +48,10 @@ export default function PaymentRequestDetails({
   };
 
   const handleBackToDeposit = () => {
-    localStorage.removeItem("currentPayment");
-    localStorage.removeItem("paymentNetwork");
-    localStorage.removeItem("paymentConfirmed");
-    localStorage.removeItem(`notification_sent_${currentPayment._id}`);
+    // M9: route through the centralized helpers so the keys can never drift
+    // from `PaymentStorageManager`'s storage writer.
+    clearPaymentStorage();
+    clearNotificationLockForPayment(currentPayment._id);
     onBackToDeposit();
   };
 
@@ -87,8 +91,11 @@ export default function PaymentRequestDetails({
         console.error("❌ Failed to create notification:", errorText);
         throw new Error(errorText || "Failed to create notification");
       } else {
-        const notificationData = await notificationResponse.json();
-        console.log("✅ Notification created successfully:", notificationData);
+        // L4: don't dump the raw notification payload to user consoles.
+        if (process.env.NODE_ENV !== "production") {
+          await notificationResponse.json().catch(() => null);
+          console.log("Notification created successfully");
+        }
       }
 
       onConfirmPayment();
@@ -118,8 +125,9 @@ export default function PaymentRequestDetails({
 
           <div className="mb-6 space-y-3">
             <p className="text-blue-700! dark:text-white!">
-              Thank you for confirming your payment. We are now verifying your
-              transaction on the blockchain.
+              Thanks for letting us know — our team has been notified and will
+              review your transaction shortly. You&apos;ll receive a
+              confirmation when funds are credited to your balance.
             </p>
 
             <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
@@ -166,16 +174,16 @@ export default function PaymentRequestDetails({
                     What happens next?
                   </h4>
                   <ul className="text-yellow-700 dark:text-white! text-xs mt-1 space-y-1">
+                    <li>• Our team reviews and approves the transaction</li>
                     <li>
-                      • We&apos;ll verify your transaction on the blockchain
+                      • Typical processing time:{" "}
+                      {network === "TRC20"
+                        ? "a few minutes once received"
+                        : "5–10 minutes after the transaction confirms"}
                     </li>
                     <li>
-                      • Processing time:{" "}
-                      {network === "TRC20" ? "1-2 minutes" : "5-10 minutes"}
-                    </li>
-                    <li>
-                      • You&apos;ll receive a notification when your deposit has
-                      been confirmed
+                      • You&apos;ll receive a notification when your deposit
+                      has been confirmed
                     </li>
                     <li>• Funds will be available on your account balance</li>
                   </ul>

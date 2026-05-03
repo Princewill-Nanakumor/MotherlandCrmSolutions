@@ -13,6 +13,10 @@ import DowngradeWarningModal from "./DowngradeWarningModal";
 import { useToast } from "@/components/ui/use-toast";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
+import {
+  SUBSCRIPTION_PLAN_ORDER,
+  toDashboardSubscriptionPlan,
+} from "@/lib/subscriptionPlanCatalog";
 
 interface SubscriptionPlan {
   id: string;
@@ -46,46 +50,9 @@ interface UsageData {
   overLimitBy?: number;
 }
 
-const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
-  {
-    id: "starter",
-    name: "Starter",
-    price: 10.99,
-    billingCycle: "monthly",
-    features: ["Up to 10,000 leads", "2 team members", "Activity logging"],
-    maxLeads: 10000,
-    maxUsers: 2,
-  },
-  {
-    id: "professional",
-    name: "Professional",
-    price: 19.99,
-    billingCycle: "monthly",
-    features: [
-      "Up to 30,000 leads",
-      "5 team members",
-      "Activity logging",
-      "more leads imports",
-    ],
-    maxLeads: 30000,
-    maxUsers: 5,
-    isPopular: true,
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    price: 199.99,
-    billingCycle: "monthly",
-    features: [
-      "Unlimited leads",
-      "Unlimited team members",
-      "Activity logging",
-      "more leads imports",
-    ],
-    maxLeads: -1,
-    maxUsers: -1,
-  },
-];
+const SUBSCRIPTION_PLANS: SubscriptionPlan[] = SUBSCRIPTION_PLAN_ORDER.map(
+  (key) => toDashboardSubscriptionPlan(key),
+);
 
 export default function SubscriptionManager() {
   const { status, data: session } = useSession();
@@ -112,19 +79,23 @@ export default function SubscriptionManager() {
         { cache: "no-store" },
       );
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
+        const err = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+        };
         throw new Error(
-          (err as { message?: string }).message ||
-            "Failed to fetch subscription data",
+          err.error ?? err.message ?? "Failed to fetch subscription data",
         );
       }
       return response.json() as Promise<SubscriptionData>;
     },
     enabled: hasAuthorizedSession(status, session),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    // H8: shorter stale window + always-refetch on mount keeps caps and
+    // balance fresh after a successful subscribe.
+    staleTime: 30 * 1000,
     refetchOnWindowFocus: false,
     retry: 2,
-    refetchOnMount: false,
+    refetchOnMount: "always",
   });
 
   // Fetch usage data for downgrade prevention
@@ -135,19 +106,21 @@ export default function SubscriptionManager() {
         cache: "no-store",
       });
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
+        const err = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+        };
         throw new Error(
-          (err as { message?: string }).message ||
-            "Failed to fetch usage data",
+          err.error ?? err.message ?? "Failed to fetch usage data",
         );
       }
       return response.json() as Promise<UsageData>;
     },
     enabled: hasAuthorizedSession(status, session),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000,
     refetchOnWindowFocus: false,
     retry: 2,
-    refetchOnMount: false,
+    refetchOnMount: "always",
   });
 
   // Handle error state
@@ -236,10 +209,18 @@ export default function SubscriptionManager() {
     setShowSubscriptionModal(false);
     setSelectedPlan(null);
 
-    // Invalidate and refetch all subscription-related data
+    // H5: navbar dropdown reads ["user-profile-data"] for balance + plan.
+    // H8: this page reads ["subscription-usage-data"] for caps. Both need
+    // to be invalidated alongside the existing subscription/usage keys.
     await Promise.all([
       queryClient.invalidateQueries({
         queryKey: ["subscription", "status"],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["subscription-usage-data"],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["user-profile-data"],
       }),
       queryClient.invalidateQueries({
         queryKey: ["import-usage-data"],
@@ -250,20 +231,22 @@ export default function SubscriptionManager() {
       queryClient.invalidateQueries({
         queryKey: ["subscription-data"],
       }),
-      // Invalidate all usage-related queries
       queryClient.invalidateQueries({
         predicate: (query) =>
           query.queryKey[0] === "usage" ||
           query.queryKey[0] === "import-usage-data" ||
-          query.queryKey[0] === "user-usage-data",
+          query.queryKey[0] === "user-usage-data" ||
+          query.queryKey[0] === "subscription-usage-data" ||
+          query.queryKey[0] === "user-profile-data",
       }),
-      // Force refetch of all queries
       queryClient.refetchQueries({
         predicate: (query) =>
           query.queryKey[0] === "subscription" ||
           query.queryKey[0] === "usage" ||
           query.queryKey[0] === "import-usage-data" ||
-          query.queryKey[0] === "user-usage-data",
+          query.queryKey[0] === "user-usage-data" ||
+          query.queryKey[0] === "subscription-usage-data" ||
+          query.queryKey[0] === "user-profile-data",
       }),
     ]);
 

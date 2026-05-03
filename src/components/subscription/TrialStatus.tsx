@@ -6,6 +6,7 @@ import { Clock, AlertTriangle, CheckCircle, CreditCard } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toDashboardSubscriptionPlan } from "@/lib/subscriptionPlanCatalog";
 
 interface SubscriptionData {
   isOnTrial: boolean;
@@ -94,15 +95,6 @@ export default function TrialStatus({
         seconds,
         total: diff,
       };
-
-      // Add debug log
-      console.log("🕐 Countdown Update:", {
-        now: now.toISOString(),
-        trialEnd: trialEnd.toISOString(),
-        diff: diff,
-        formatted: formatCountdown(newTimeRemaining),
-        timeRemaining: newTimeRemaining,
-      });
 
       setTimeRemaining(newTimeRemaining);
     };
@@ -312,16 +304,7 @@ export default function TrialStatus({
             ) : (
               <Button
                 onClick={() =>
-                  onSubscribe({
-                    id: "professional",
-                    name: "Professional",
-                    price: 19.99,
-                    billingCycle: "monthly",
-                    features: [],
-                    maxLeads: 30000,
-                    maxUsers: 5,
-                    isPopular: true,
-                  })
+                  onSubscribe(toDashboardSubscriptionPlan("professional"))
                 }
                 className={`${
                   isLastDay

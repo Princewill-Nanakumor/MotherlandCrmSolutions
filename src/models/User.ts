@@ -1,5 +1,10 @@
 // src/models/User.ts
 import mongoose, { Schema, Document } from "mongoose";
+import {
+  SUBSCRIPTION_TRIAL_DURATION_DAYS,
+  SUBSCRIPTION_TRIAL_DEFAULT_MAX_LEADS,
+  SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
+} from "@/lib/subscriptionPlanCatalog";
 
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
@@ -143,9 +148,10 @@ const userSchema = new Schema<IUser>(
     trialEndsAt: {
       type: Date,
       default: function () {
-        // Set trial to end 3 days from now
         const trialEnd = new Date();
-        trialEnd.setDate(trialEnd.getDate() + 3);
+        trialEnd.setDate(
+          trialEnd.getDate() + SUBSCRIPTION_TRIAL_DURATION_DAYS,
+        );
         return trialEnd;
       },
     },
@@ -166,11 +172,11 @@ const userSchema = new Schema<IUser>(
     },
     maxLeads: {
       type: Number,
-      default: 50, // Default trial limit
+      default: SUBSCRIPTION_TRIAL_DEFAULT_MAX_LEADS,
     },
     maxUsers: {
       type: Number,
-      default: 1, // Default trial limit
+      default: SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
     },
     canViewPhoneNumbers: {
       type: Boolean,
@@ -219,7 +225,7 @@ userSchema.pre("save", function (next) {
   // Set trial end date if it's not already set
   if (!this.trialEndsAt) {
     const trialEnd = new Date();
-    trialEnd.setDate(trialEnd.getDate() + 3);
+    trialEnd.setDate(trialEnd.getDate() + SUBSCRIPTION_TRIAL_DURATION_DAYS);
     this.trialEndsAt = trialEnd;
   }
 

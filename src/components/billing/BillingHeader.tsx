@@ -4,12 +4,10 @@
 
 import React from "react";
 
-interface BillingHeaderProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-}
-
-export default function BillingHeader({}: BillingHeaderProps) {
+// L8: this header is purely visual; no tabs are rendered here. Drop the
+// unused `activeTab` / `onTabChange` props so callers don't pretend it
+// reacts to them.
+export default function BillingHeader() {
   return (
     <div className="space-y-6">
       {/* Header */}

@@ -4,13 +4,41 @@
 
 import { Payment } from "@/types/payment.types";
 
-// Local storage keys
-const STORAGE_KEYS = {
+/**
+ * Single source of truth for billing localStorage keys.
+ * Keep helper functions ({@link clearPaymentStorage}, {@link clearNotificationLockForPayment})
+ * exported so other components don't hardcode key strings (preventing the
+ * `current_payment` vs `currentPayment` mismatch we used to have).
+ */
+export const PAYMENT_STORAGE_KEYS = {
   CURRENT_PAYMENT: "current_payment",
   PAYMENT_NETWORK: "payment_network",
   PAYMENT_TIMESTAMP: "payment_timestamp",
   PAYMENT_CONFIRMED: "payment_confirmed",
-};
+} as const;
+
+const STORAGE_KEYS = PAYMENT_STORAGE_KEYS;
+
+export function clearPaymentStorage(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_PAYMENT);
+    localStorage.removeItem(STORAGE_KEYS.PAYMENT_NETWORK);
+    localStorage.removeItem(STORAGE_KEYS.PAYMENT_TIMESTAMP);
+    localStorage.removeItem(STORAGE_KEYS.PAYMENT_CONFIRMED);
+  } catch (error) {
+    console.error("Failed to clear payment from localStorage:", error);
+  }
+}
+
+export function clearNotificationLockForPayment(paymentId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(`notification_sent_${paymentId}`);
+  } catch {
+    // best effort
+  }
+}
 
 interface PaymentStorageManagerProps {
   currentPayment: Payment | null;

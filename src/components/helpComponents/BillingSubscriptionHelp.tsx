@@ -23,6 +23,19 @@ import {
   TrendingUp,
   Settings,
 } from "lucide-react";
+import {
+  SUBSCRIPTION_PLAN_CATALOG,
+  SUBSCRIPTION_PLAN_ORDER,
+  formatSubscriptionPriceUsd,
+  SUBSCRIPTION_TRIAL_DURATION_DAYS,
+  type SubscriptionPlanCatalogKey,
+} from "@/lib/subscriptionPlanCatalog";
+
+const PLAN_CARD_COLORS: Record<SubscriptionPlanCatalogKey, string> = {
+  starter: "from-blue-500 to-blue-600",
+  professional: "from-purple-500 to-purple-600",
+  enterprise: "from-green-500 to-green-600",
+};
 
 const BillingSubscriptionHelp: React.FC = () => {
   const [expandedSection, setExpandedSection] = useState<string | null>(
@@ -33,51 +46,22 @@ const BillingSubscriptionHelp: React.FC = () => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
-  const plans = [
-    {
-      name: "Starter",
-      price: "$30.00",
-      leads: "10,000",
-      users: "2",
-      features: [
-        "Up to 10,000 leads",
-        "2 team members",
-        "CSV/Excel import",
-        "Activity logging",
-      ],
-      color: "from-blue-500 to-blue-600",
-    },
-    {
-      name: "Professional",
-      price: "$60.00",
-      leads: "30,000",
-      users: "5",
-      features: [
-        "Up to 30,000 leads",
-        "5 team members",
-        "More Team collaboration",
-        "Custom fields",
-        "Bulk operations",
-      ],
-      color: "from-purple-500 to-purple-600",
-      popular: true,
-    },
-    {
-      name: "Enterprise",
-      price: "$199.99",
-      leads: "Unlimited",
-      users: "Unlimited",
-      features: [
-        "Unlimited leads",
-        "Unlimited members",
-        "All features included",
-        "24/7 dedicated support",
-        "Advanced security",
-        "Custom workflows",
-      ],
-      color: "from-green-500 to-green-600",
-    },
-  ];
+  const plans = SUBSCRIPTION_PLAN_ORDER.map((key) => {
+    const p = SUBSCRIPTION_PLAN_CATALOG[key];
+    const leadsDisplay =
+      p.maxLeads === -1 ? "Unlimited" : p.maxLeads.toLocaleString("en-US");
+    const usersDisplay =
+      p.maxUsers === -1 ? "Unlimited" : String(p.maxUsers);
+    return {
+      name: p.name,
+      price: formatSubscriptionPriceUsd(p.price),
+      leads: leadsDisplay,
+      users: usersDisplay,
+      features: [...p.marketingFeatures],
+      color: PLAN_CARD_COLORS[key],
+      popular: key === "professional",
+    };
+  });
 
   const sections = [
     {
@@ -178,8 +162,7 @@ const BillingSubscriptionHelp: React.FC = () => {
                   Free Trial
                 </h4>
                 <p className="text-sm text-amber-800! dark:text-amber-300! mt-1">
-                  All new accounts start with a 3-day free trial with full
-                  access to features. No credit card required to start.
+                  {`All new accounts start with a ${SUBSCRIPTION_TRIAL_DURATION_DAYS}-day free trial with full access to features. No credit card required to start.`}
                 </p>
               </div>
             </div>

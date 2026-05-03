@@ -89,7 +89,13 @@ export async function GET(
     }
 
     const { searchParams } = new URL(request.url);
-    const detailPanel = searchParams.get("detailPanel") === "1";
+    // `detailPanel=1` only unlocks unmasked PII for ADMINs; agents must rely
+    // solely on `canViewEmails` / `canViewPhoneNumbers`. Without this guard
+    // any agent with read access could append `?detailPanel=1` and bypass
+    // server-side masking.
+    const detailPanel =
+      searchParams.get("detailPanel") === "1" &&
+      session.user.role === "ADMIN";
 
     await connectMongoDB();
     const { id } = await params;

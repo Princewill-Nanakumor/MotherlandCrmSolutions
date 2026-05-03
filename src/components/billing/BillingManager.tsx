@@ -14,13 +14,10 @@ import PaymentStorageManager from "./PaymentStorageManager";
 import { useBillingSummary } from "@/hooks/useBillingData";
 import { useCreatePayment } from "@/hooks/usePaymentMutations";
 import { Payment } from "@/types/payment.types";
+import { getClientPaymentLimits } from "@/lib/paymentLimits";
 
-const MIN_DEPOSIT = parseFloat(
-  process.env.NEXT_PUBLIC_MIN_PAYMENT_AMOUNT || "10",
-);
-const MAX_DEPOSIT = parseFloat(
-  process.env.NEXT_PUBLIC_MAX_PAYMENT_AMOUNT || "1000000",
-);
+const { minAmount: MIN_DEPOSIT, maxAmount: MAX_DEPOSIT } =
+  getClientPaymentLimits();
 
 export default function BillingManager() {
   const [amount, setAmount] = useState("");
@@ -73,13 +70,18 @@ export default function BillingManager() {
       e.preventDefault();
       setError(null);
 
-      const amountNum = parseFloat(amount);
+      const amountNum = Number(amount);
 
+      // M2: reject NaN / Infinity / negative explicitly so the client doesn't
+      // silently fall through (NaN comparisons are always false).
+      if (!Number.isFinite(amountNum) || amountNum <= 0) {
+        setError("Please enter a valid deposit amount.");
+        return;
+      }
       if (amountNum < MIN_DEPOSIT) {
         setError(`Minimum deposit amount is ${MIN_DEPOSIT} USDT`);
         return;
       }
-
       if (amountNum > MAX_DEPOSIT) {
         setError(`Maximum deposit amount is ${MAX_DEPOSIT} USDT`);
         return;
@@ -190,7 +192,7 @@ export default function BillingManager() {
     <div className="min-h-screen">
       <div className="container px-4 py-8 mx-auto border rounded-lg">
         {/* Header */}
-        <BillingHeader activeTab={activeTab} onTabChange={handleTabChange} />
+        <BillingHeader />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Left Column - Main Content */}

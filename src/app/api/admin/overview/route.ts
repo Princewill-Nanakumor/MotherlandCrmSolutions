@@ -7,6 +7,10 @@ import User from "@/models/User";
 import Lead from "@/models/Lead";
 import Activity from "@/models/Activity";
 import Payment from "@/models/Payment";
+import {
+  SUBSCRIPTION_TRIAL_DEFAULT_MAX_LEADS,
+  SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
+} from "@/lib/subscriptionPlanCatalog";
 
 interface UserDocument {
   _id: string;
@@ -63,8 +67,8 @@ function extractSubscriptionDataFromUser(
   return {
     plan: user.currentPlan || "trial",
     status: subscriptionStatus,
-    maxUsers: user.maxUsers || 1,
-    maxLeads: user.maxLeads || 50,
+    maxUsers: user.maxUsers ?? SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
+    maxLeads: user.maxLeads ?? SUBSCRIPTION_TRIAL_DEFAULT_MAX_LEADS,
     endDate: user.subscriptionEndDate || user.trialEndsAt || new Date(),
   };
 }
@@ -95,15 +99,18 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get allowed emails from environment variable
+    // L2: normalize on both sides — emails are case-insensitive per RFC 5321,
+    // and SUPER_ADMIN_EMAILS is configured by humans (mixed casing creeps in).
+    const normEmail = (e: string) => e.trim().toLowerCase();
     const allowedEmails =
-      process.env.SUPER_ADMIN_EMAILS?.split(",").map((email) => email.trim()) ||
-      [];
+      process.env.SUPER_ADMIN_EMAILS?.split(",")
+        .map((email) => email.trim())
+        .filter(Boolean) || [];
+    const allowedEmailsNormalized = new Set(allowedEmails.map(normEmail));
 
-    // Check if the user's email is in the allowed list
     if (
       allowedEmails.length > 0 &&
-      !allowedEmails.includes(session.user.email)
+      !allowedEmailsNormalized.has(normEmail(session.user.email))
     ) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
@@ -231,13 +238,9 @@ export async function GET() {
       ],
     });
 
-    const normEmail = (e: string) => e.trim().toLowerCase();
-    const superAdminEmailsNormalized = allowedEmails.map(normEmail).filter(Boolean);
-    const superSet = new Set(superAdminEmailsNormalized);
-
     let totalSuperAdmins = 0;
     for (const a of admins) {
-      if (superSet.has(normEmail(a.email))) {
+      if (allowedEmailsNormalized.has(normEmail(a.email))) {
         totalSuperAdmins += 1;
       }
     }

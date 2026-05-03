@@ -26,6 +26,11 @@ import {
   resendEmailFailureHint,
   resendEmailOk,
 } from "@/lib/resendSend";
+import {
+  SUBSCRIPTION_TRIAL_DURATION_DAYS,
+  SUBSCRIPTION_TRIAL_DEFAULT_MAX_LEADS,
+  SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
+} from "@/lib/subscriptionPlanCatalog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -194,7 +199,9 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(validatedData.password, 12);
 
     const trialEndDate = new Date();
-    trialEndDate.setDate(trialEndDate.getDate() + 3);
+    trialEndDate.setDate(
+      trialEndDate.getDate() + SUBSCRIPTION_TRIAL_DURATION_DAYS,
+    );
 
     const userDataToSave: UserDataToSave = {
       firstName: validatedData.firstName.trim(),
@@ -221,8 +228,8 @@ export async function POST(req: Request) {
       subscriptionStatus: "trial",
       subscriptionStartDate: undefined,
       subscriptionEndDate: undefined,
-      maxLeads: 50,
-      maxUsers: 1,
+      maxLeads: SUBSCRIPTION_TRIAL_DEFAULT_MAX_LEADS,
+      maxUsers: SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
     };
 
     // Token only needed when verification is on; allocate inside the branch

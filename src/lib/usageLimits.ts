@@ -4,6 +4,10 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import User from "@/models/User";
 import Lead from "@/models/Lead";
 import { authOptions } from "@/libs/auth";
+import {
+  SUBSCRIPTION_TRIAL_DEFAULT_MAX_LEADS,
+  SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
+} from "@/lib/subscriptionPlanCatalog";
 
 export interface UsageLimits {
   canImport: boolean;
@@ -18,11 +22,19 @@ export interface UsageLimits {
   overLimitBy: number; // How many leads over the limit
 }
 
+/** Typed unauthorized signal so the route can map this to 401, not 500. */
+export class UsageLimitsUnauthorizedError extends Error {
+  constructor() {
+    super("Unauthorized");
+    this.name = "UsageLimitsUnauthorizedError";
+  }
+}
+
 export async function checkUsageLimits(): Promise<UsageLimits> {
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    throw new Error("Unauthorized");
+    throw new UsageLimitsUnauthorizedError();
   }
 
   await connectMongoDB();
@@ -70,22 +82,30 @@ export async function checkUsageLimits(): Promise<UsageLimits> {
   }
 
   // Get limits based on subscription
-  const maxLeads = user.maxLeads || 50; // Default trial limit
-  const maxUsers = user.maxUsers || 1; // Default trial limit
+  const maxLeads = user.maxLeads ?? SUBSCRIPTION_TRIAL_DEFAULT_MAX_LEADS;
+  const maxUsers = user.maxUsers ?? SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS;
+  const unlimitedLeads = maxLeads === -1;
+  const unlimitedUsers = maxUsers === -1;
 
   // Check if user is over their current plan limits (downgrade scenario)
-  const isOverLimit = currentLeads > maxLeads;
-  const overLimitBy = Math.max(0, currentLeads - maxLeads);
+  const isOverLimit = !unlimitedLeads && currentLeads > maxLeads;
+  const overLimitBy = unlimitedLeads
+    ? 0
+    : Math.max(0, currentLeads - maxLeads);
 
   const result = {
-    canImport: currentLeads < maxLeads,
-    canAddTeamMember: currentUsers < maxUsers,
+    canImport: unlimitedLeads || currentLeads < maxLeads,
+    canAddTeamMember: unlimitedUsers || currentUsers < maxUsers,
     currentLeads,
     maxLeads,
     currentUsers,
     maxUsers,
-    remainingLeads: Math.max(0, maxLeads - currentLeads),
-    remainingUsers: Math.max(0, maxUsers - currentUsers),
+    remainingLeads: unlimitedLeads
+      ? -1
+      : Math.max(0, maxLeads - currentLeads),
+    remainingUsers: unlimitedUsers
+      ? -1
+      : Math.max(0, maxUsers - currentUsers),
     isOverLimit,
     overLimitBy,
   };

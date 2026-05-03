@@ -7,6 +7,18 @@ import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { Payment, PaymentsResponse, BillingData } from "@/types/payment.types";
 
+/** Read `{ error }` first (server convention), then `message`, then a fallback. */
+async function extractApiError(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  const body = (await response.json().catch(() => ({}))) as {
+    error?: string;
+    message?: string;
+  };
+  return body.error ?? body.message ?? fallback;
+}
+
 interface UserProfile {
   user: {
     _id: string;
@@ -42,9 +54,8 @@ export const usePayments = (limit: number = 10) => {
       );
 
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
         throw new Error(
-          (err as { message?: string }).message || "Failed to fetch payments",
+          await extractApiError(response, "Failed to fetch payments"),
         );
       }
 
@@ -73,9 +84,8 @@ export const useUserBalance = () => {
       });
 
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
         throw new Error(
-          (err as { message?: string }).message || "Failed to fetch user balance",
+          await extractApiError(response, "Failed to fetch user balance"),
         );
       }
 
@@ -110,9 +120,8 @@ export const usePayment = (paymentId: string | null) => {
       );
 
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
         throw new Error(
-          (err as { message?: string }).message || "Failed to fetch payment",
+          await extractApiError(response, "Failed to fetch payment"),
         );
       }
 

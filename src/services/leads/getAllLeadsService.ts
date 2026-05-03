@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
 import { Db, ObjectId } from "mongodb";
+import { maskEmail, maskPhone } from "@/lib/contactMasking";
 
 interface SessionUser {
   id: string;
@@ -162,6 +163,20 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
   await connectMongoDB();
   const db = mongoose.connection.db;
   if (!db) throw new Error("Database connection not available");
+
+  // Permission-aware PII gating: agents only see unmasked email/phone when
+  // their user record explicitly grants `canViewEmails` / `canViewPhoneNumbers`.
+  // Admins always see raw values (same model as `GET /api/leads`).
+  let canViewEmails = sessionUser.role !== "AGENT";
+  let canViewPhoneNumbers = sessionUser.role !== "AGENT";
+  if (sessionUser.role === "AGENT") {
+    const me = await db.collection("users").findOne(
+      { _id: new ObjectId(sessionUser.id) },
+      { projection: { canViewEmails: 1, canViewPhoneNumbers: 1 } },
+    );
+    canViewEmails = Boolean(me?.canViewEmails);
+    canViewPhoneNumbers = Boolean(me?.canViewPhoneNumbers);
+  }
 
   const baseQuery: LeadFilter = {};
   if (sessionUser.role === "ADMIN") {
@@ -397,8 +412,8 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
         firstName: (lead.firstName as string) || "",
         lastName: (lead.lastName as string) || "",
         name: `${(lead.firstName as string) || ""} ${(lead.lastName as string) || ""}`.trim(),
-        email: (lead.email as string) || "",
-        phone: (lead.phone as string) || "",
+        email: maskEmail((lead.email as string) || "", canViewEmails),
+        phone: maskPhone((lead.phone as string) || "", canViewPhoneNumbers),
         source:
           lead.source && typeof lead.source === "string" && lead.source.trim() !== "" && lead.source !== "-"
             ? lead.source.trim()

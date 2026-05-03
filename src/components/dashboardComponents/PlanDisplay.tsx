@@ -3,6 +3,10 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Crown } from "lucide-react";
+import {
+  SUBSCRIPTION_TRIAL_DURATION_DAYS,
+  formatTrialPeriodFreeLabel,
+} from "@/lib/subscriptionPlanCatalog";
 
 interface SubscriptionData {
   isOnTrial: boolean;
@@ -71,9 +75,13 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
 
     const now = new Date();
     const diffTime = endDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    return diffDays > 0 ? diffDays : 0;
+    // L6: a past end date is never "0 days remaining"; surface it as ended
+    // (null) so the badge says "Expired" instead of "Time left: 0 days" on
+    // a stale active/trial row.
+    if (diffTime <= 0) {
+      return null;
+    }
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
   // Helper function to format plan name
@@ -115,17 +123,21 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
   };
 
   // Helper function to get plan status text
+  const trialFreeBadge = formatTrialPeriodFreeLabel(
+    SUBSCRIPTION_TRIAL_DURATION_DAYS,
+  );
+
   const getPlanStatusText = (status: string | undefined) => {
     // If no status but user is admin, assume trial
     if (isAdmin && !status) {
-      return "3 Days Free";
+      return trialFreeBadge;
     }
 
     switch (status) {
       case "active":
         return "Active";
       case "trial":
-        return "3 Days Free";
+        return trialFreeBadge;
       case "expired":
         return "Expired";
       case "inactive":

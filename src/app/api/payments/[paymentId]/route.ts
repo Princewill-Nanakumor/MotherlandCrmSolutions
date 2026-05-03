@@ -110,7 +110,28 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid payment ID" }, { status: 400 });
     }
 
-    const body = await request.json();
+    const body = (await request.json().catch(() => ({}))) as Record<
+      string,
+      unknown
+    >;
+
+    // Allowlist: super admins may only edit non-financial annotations through
+    // PUT. Status / amount / balance changes go through dedicated routes
+    // (`/approve`, `/reject`, `/verify`) so the audit trail and balance
+    // crediting cannot be bypassed via mass-assignment.
+    const ALLOWED_PUT_FIELDS = ["description", "notes"] as const;
+    const update: Record<string, unknown> = {};
+    for (const key of ALLOWED_PUT_FIELDS) {
+      if (key in body) {
+        update[key] = body[key];
+      }
+    }
+    if (Object.keys(update).length === 0) {
+      return NextResponse.json(
+        { error: "No editable fields provided" },
+        { status: 400 },
+      );
+    }
 
     // Get user info to check if they're a super admin
     const user = (await User.findOne({
@@ -141,7 +162,7 @@ export async function PUT(
     await txnSession.withTransaction(async () => {
       const updatedPayment = (await Payment.findByIdAndUpdate(
         paymentId,
-        { ...body },
+        { $set: update },
         { new: true, runValidators: true, session: txnSession! }
       ).lean()) as PaymentDocument | null;
       if (updatedPayment) {

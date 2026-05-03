@@ -3,52 +3,24 @@
 
 import { Check, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import {
+  SUBSCRIPTION_PLAN_CATALOG,
+  SUBSCRIPTION_PLAN_ORDER,
+  formatSubscriptionPriceUsd,
+} from "@/lib/subscriptionPlanCatalog";
 
-const SUBSCRIPTION_PLANS = [
-  {
-    id: "starter",
-    name: "Starter",
-    price: "$30.00",
+const SUBSCRIPTION_PLANS = SUBSCRIPTION_PLAN_ORDER.map((key) => {
+  const p = SUBSCRIPTION_PLAN_CATALOG[key];
+  return {
+    id: p.id,
+    name: p.name,
+    price: formatSubscriptionPriceUsd(p.price),
     period: "per month",
-    description: "Perfect for small businesses getting started",
-    features: [
-      "Up to 10,000 leads",
-      "2 team members",
-      "CSV/Excel import",
-      "Activity logging",
-    ],
-  },
-  {
-    id: "professional",
-    name: "Professional",
-    price: "$60.00",
-    period: "per month",
-    description: "Best for growing businesses",
-    features: [
-      "Up to 30,000 leads",
-      "5 team members",
-      "More Team collaboration",
-      "Custom fields",
-      "Bulk operations",
-    ],
-    popular: true,
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    price: "$199.99",
-    period: "per month",
-    description: "For large organizations",
-    features: [
-      "Unlimited leads",
-      "Unlimited members",
-      "All features included",
-      "24/7 dedicated support",
-      "Advanced security",
-      "Custom workflows",
-    ],
-  },
-];
+    description: p.description,
+    features: [...p.marketingFeatures],
+    popular: key === "professional",
+  };
+});
 
 export default function SubscriptionPlansSection() {
   const containerVariants = {
@@ -119,7 +91,10 @@ export default function SubscriptionPlansSection() {
                 </div>
                 <ul className="space-y-3">
                   {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start space-x-3">
+                    <li
+                      key={index}
+                      className="flex items-start space-x-3"
+                    >
                       <Check className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
                       <span className="text-sm text-gray-600!">{feature}</span>
                     </li>

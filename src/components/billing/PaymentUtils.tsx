@@ -32,11 +32,31 @@ export const getMethodColor = (method: string) => {
   }
 };
 
-export const formatCurrency = (amount: number, currency: string) => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency || "USD",
-  }).format(amount);
+// ISO 4217 alphabetic codes are exactly 3 uppercase letters; anything else
+// (e.g. "USDT", "BTC") will throw or render oddly via Intl currency style.
+// Render those as "<amount> <code>" with locale-aware decimal formatting.
+const ISO4217_RE = /^[A-Z]{3}$/;
+
+export const formatCurrency = (amount: number, currency?: string) => {
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
+  const code = (currency || "USD").toUpperCase();
+
+  if (ISO4217_RE.test(code) && code !== "USDT") {
+    try {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: code,
+      }).format(safeAmount);
+    } catch {
+      // Fall through to the plain-text formatter below.
+    }
+  }
+
+  const decimal = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(safeAmount);
+  return `${decimal} ${code}`;
 };
 
 export const formatDate = (dateString: string) => {

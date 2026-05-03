@@ -49,63 +49,71 @@ export default function UsageLimitsDisplay({
             </div>
           </CardContent>
         </Card>
-      ) : userUsageData ? (
-        <Card className="border-gray-200 dark:border-gray-700">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center space-x-2 text-sm text-gray-900 dark:text-white">
-              <Users className="h-4 w-4" />
-              <span>Team Members Usage</span>
-              {userUsageData.currentUsers >= userUsageData.maxUsers * 0.8 && (
-                <AlertTriangle className="h-4 w-4 text-yellow-500 dark:text-yellow-400" />
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
-                <span>{userUsageData.currentUsers} used</span>
-                <span>
-                  {userUsageData.maxUsers === -1
-                    ? "Unlimited"
-                    : `${userUsageData.maxUsers} total`}
-                </span>
-              </div>
-              <Progress
-                value={
-                  userUsageData.maxUsers === -1
-                    ? 0
-                    : (userUsageData.currentUsers / userUsageData.maxUsers) *
-                      100
-                }
-                className={`${
-                  userUsageData.currentUsers >= userUsageData.maxUsers
-                    ? "bg-red-200"
-                    : userUsageData.currentUsers >= userUsageData.maxUsers * 0.8
-                      ? "bg-yellow-200"
-                      : "bg-green-200"
-                }`}
-              />
-              {userUsageData.maxUsers !== -1 &&
-                userUsageData.remainingUsers > 0 && (
+      ) : userUsageData ? (() => {
+        const unlimited = userUsageData.maxUsers === -1;
+        const nearLimit =
+          !unlimited &&
+          userUsageData.maxUsers > 0 &&
+          userUsageData.currentUsers >= userUsageData.maxUsers * 0.8;
+        const atLimit =
+          !unlimited && userUsageData.currentUsers >= userUsageData.maxUsers;
+        const progressValue = unlimited
+          ? 0
+          : Math.min(
+              100,
+              (userUsageData.currentUsers / userUsageData.maxUsers) * 100,
+            );
+        return (
+          <Card className="border-gray-200 dark:border-gray-700">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center space-x-2 text-sm text-gray-900 dark:text-white">
+                <Users className="h-4 w-4" />
+                <span>Team Members Usage</span>
+                {nearLimit && (
+                  <AlertTriangle className="h-4 w-4 text-yellow-500 dark:text-yellow-400" />
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
+                  <span>{userUsageData.currentUsers} used</span>
+                  <span>
+                    {unlimited
+                      ? "Unlimited"
+                      : `${userUsageData.maxUsers} total`}
+                  </span>
+                </div>
+                <Progress
+                  value={progressValue}
+                  className={`${
+                    atLimit
+                      ? "bg-red-200"
+                      : nearLimit
+                        ? "bg-yellow-200"
+                        : "bg-green-200"
+                  }`}
+                />
+                {!unlimited && userUsageData.remainingUsers > 0 && (
                   <p className="text-xs text-gray-600 dark:text-gray-400">
                     {userUsageData.remainingUsers} members remaining
                   </p>
                 )}
-              {userUsageData.maxUsers !== -1 &&
-                userUsageData.remainingUsers === 0 && (
+                {!unlimited && userUsageData.remainingUsers === 0 && (
                   <p className="text-xs text-red-600 dark:text-red-400">
                     Limit reached - upgrade to add more team members
                   </p>
                 )}
-              {userUsageData.maxUsers === -1 && (
-                <p className="text-xs text-green-600 dark:text-green-400">
-                  Unlimited team members
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
+                {unlimited && (
+                  <p className="text-xs text-green-600 dark:text-green-400">
+                    Unlimited team members
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })() : null}
 
       {/* Usage Limit Warning */}
       {showUsageLimit && userUsageData && (
@@ -128,8 +136,12 @@ export default function UsageLimitsDisplay({
                     You currently have{" "}
                     <strong>{userUsageData.currentUsers}</strong> team members,
                     but your current plan only allows{" "}
-                    <strong>{userUsageData.maxUsers}</strong> members.
-                    You&apos;re over the limit by{" "}
+                    <strong>
+                      {userUsageData.maxUsers === -1
+                        ? "unlimited"
+                        : userUsageData.maxUsers}
+                    </strong>{" "}
+                    members. You&apos;re over the limit by{" "}
                     <strong>{userUsageData.overLimitBy}</strong> members.
                   </p>
                   <p className="text-red-600 dark:text-red-400 text-sm">
@@ -158,7 +170,9 @@ export default function UsageLimitsDisplay({
                   variant="outline"
                   className="text-red-600 dark:text-red-400"
                 >
-                  {userUsageData.currentUsers}/{userUsageData.maxUsers} Members
+                  {userUsageData.currentUsers}/
+                  {userUsageData.maxUsers === -1 ? "∞" : userUsageData.maxUsers}{" "}
+                  Members
                 </Badge>
                 {userUsageData.isOverLimit && userUsageData.overLimitBy && (
                   <Badge

@@ -8,18 +8,21 @@ import Payment from "@/models/Payment";
 import User from "@/models/User";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
+import {
+  getServerPaymentLimits,
+  roundCents,
+} from "@/lib/paymentLimits";
 
-// Get wallet addresses from environment variables
 const WALLET_ADDRESSES = {
   TRC20: process.env.TRC20_WALLET_ADDRESS,
   ERC20: process.env.ERC20_WALLET_ADDRESS,
 };
 
-const MAX_AMOUNT = parseFloat(process.env.MAX_PAYMENT_AMOUNT || "1000000");
-const MAX_PAYMENTS_PER_HOUR = parseInt(
-  process.env.MAX_PAYMENTS_PER_HOUR || "500"
-);
-const MAX_PAYMENTS_PER_DAY = parseInt(process.env.MAX_PAYMENTS_PER_DAY || "50");
+const PAYMENT_LIMITS = getServerPaymentLimits();
+const MIN_AMOUNT = PAYMENT_LIMITS.minAmount;
+const MAX_AMOUNT = PAYMENT_LIMITS.maxAmount;
+const MAX_PAYMENTS_PER_HOUR = PAYMENT_LIMITS.maxPerHour;
+const MAX_PAYMENTS_PER_DAY = PAYMENT_LIMITS.maxPerDay;
 
 const VALID_NETWORKS = ["TRC20", "ERC20"] as const;
 const VALID_METHODS = ["CRYPTO"] as const;
@@ -59,16 +62,18 @@ function isValidCurrency(
 function validatePaymentRequest(data: PaymentRequestData) {
   const errors: string[] = [];
 
-  // Amount validation
-  if (!data.amount || isNaN(Number(data.amount))) {
+  // M2: enforce min/max + finite check on the server. Reject NaN/Infinity
+  // explicitly so a malformed body cannot bypass the cap.
+  const amount = Number(data.amount);
+  if (!Number.isFinite(amount)) {
     errors.push("Amount is required and must be a valid number");
   } else {
-    const amount = parseFloat(String(data.amount));
-    if (amount > MAX_AMOUNT) {
-      errors.push(`Maximum payment amount is ${MAX_AMOUNT} USDT`);
-    }
     if (amount <= 0) {
       errors.push("Amount must be greater than 0");
+    } else if (amount < MIN_AMOUNT) {
+      errors.push(`Minimum payment amount is ${MIN_AMOUNT} USDT`);
+    } else if (amount > MAX_AMOUNT) {
+      errors.push(`Maximum payment amount is ${MAX_AMOUNT} USDT`);
     }
   }
 
@@ -184,10 +189,11 @@ export async function POST(request: NextRequest) {
     const random = Math.random().toString(36).substr(2, 9);
     const transactionId = `TXN_${timestamp}_${random.toUpperCase()}`;
 
-    // Create payment document
+    // M4: round to two decimals at the boundary so subsequent arithmetic is
+    // free of accumulated float drift.
     const payment = new Payment({
-      amount: parseFloat(String(requestData.amount)),
-      currency: requestData.currency || "USD",
+      amount: roundCents(Number(requestData.amount)),
+      currency: requestData.currency || "USDT",
       status: "PENDING",
       method: requestData.method,
       transactionId: transactionId,
@@ -253,8 +259,21 @@ export async function GET(request: NextRequest) {
     );
     const skip = (page - 1) * limit;
 
-    const scopedAdminId = await withAdminScope(session, async (adminId) => adminId);
-    const query: { adminId?: ObjectId } = { adminId: new ObjectId(scopedAdminId) };
+    const scopedAdminId = await withAdminScope(
+      session,
+      async (adminId) => adminId,
+    );
+    // M7: agents can only see their own payments. Tenant admins (and super
+    // admins implicitly via filterless reads on the detail route) keep the
+    // full ledger; agents previously saw the whole tenant ledger because
+    // this query was scoped only by `adminId`.
+    const role = session.user.role;
+    const query: { adminId: ObjectId; createdBy?: ObjectId } = {
+      adminId: new ObjectId(scopedAdminId),
+    };
+    if (role !== "ADMIN") {
+      query.createdBy = new ObjectId(session.user.id);
+    }
 
     const [payments, total] = await Promise.all([
       Payment.find(query)

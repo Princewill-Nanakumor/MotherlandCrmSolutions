@@ -122,19 +122,98 @@ export const processExcelFile = async (file: File): Promise<LeadRequest[]> => {
   }
 };
 
+/**
+ * L9: minimal RFC-4180-compatible CSV/TSV parser. Handles:
+ *   - quoted fields containing the delimiter
+ *   - quoted fields containing CR/LF
+ *   - escaped quotes ("")
+ * Returns a 2-D array of rows. We avoid `text.split(/[\n\r]+/)` and
+ * `firstLine.split(delimiter)` because both mangle quoted content.
+ */
+function parseDelimited(text: string, delimiter: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let i = 0;
+  let inQuotes = false;
+  const len = text.length;
+
+  while (i < len) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i += 2;
+          continue;
+        }
+        inQuotes = false;
+        i++;
+        continue;
+      }
+      field += ch;
+      i++;
+      continue;
+    }
+    if (ch === '"') {
+      inQuotes = true;
+      i++;
+      continue;
+    }
+    if (ch === delimiter) {
+      row.push(field);
+      field = "";
+      i++;
+      continue;
+    }
+    if (ch === "\r") {
+      // Treat CRLF as one line break.
+      if (text[i + 1] === "\n") i++;
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+      i++;
+      continue;
+    }
+    if (ch === "\n") {
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+      i++;
+      continue;
+    }
+    field += ch;
+    i++;
+  }
+  // Flush trailing field/row (when file doesn't end with a newline).
+  if (field.length > 0 || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+  return rows.filter((r) => r.length > 0 && r.some((f) => f.trim() !== ""));
+}
+
 export const processTextData = async (text: string): Promise<LeadRequest[]> => {
   try {
-    // Split by both newlines and tabs to handle various formats
-    const lines = text.split(/[\n\r]+/).filter((line) => line.trim());
-    if (lines.length < 2) {
+    if (!text || text.trim() === "") {
       throw new Error("Data must contain headers and at least one data row");
     }
 
-    // Try to detect the delimiter (tab or comma)
-    const firstLine = lines[0];
+    // Detect the delimiter from the first non-empty line. Tab-separated
+    // pastes are common from spreadsheets, otherwise default to comma.
+    const firstLineEnd = text.search(/\r|\n/);
+    const firstLine =
+      firstLineEnd === -1 ? text : text.slice(0, firstLineEnd);
     const delimiter = firstLine.includes("\t") ? "\t" : ",";
 
-    const headers = firstLine.split(delimiter).map((h) => h.trim());
+    const rows = parseDelimited(text, delimiter);
+    if (rows.length < 2) {
+      throw new Error("Data must contain headers and at least one data row");
+    }
+
+    const headers = rows[0].map((h) => h.trim());
 
     // Enhanced validation with detailed error messages
     const { missingFields, foundHeaders, errorMessage } =
@@ -166,10 +245,9 @@ export const processTextData = async (text: string): Promise<LeadRequest[]> => {
 
     const validLeads: LeadRequest[] = [];
 
-    for (const line of lines.slice(1)) {
-      if (!line.trim()) continue;
-
-      const values = line.split(delimiter).map((v) => v.trim());
+    for (const valuesRaw of rows.slice(1)) {
+      const values = valuesRaw.map((v) => v.trim());
+      if (values.every((v) => v === "")) continue;
 
       // Use "Name" or "Full Name" if available, else combine "First Name" + "Last Name"
       let fullName = "";

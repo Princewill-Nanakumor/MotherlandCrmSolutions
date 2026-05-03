@@ -1,6 +1,9 @@
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import { executeDbOperation, withDatabase } from "@/libs/dbConfig";
+import {
+  SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
+} from "@/lib/subscriptionPlanCatalog";
 
 type UserUpdateFields = {
   firstName?: string;
@@ -40,6 +43,7 @@ interface UserDocument {
   isOnTrial?: boolean;
   trialEndsAt?: Date;
   subscriptionStatus?: "active" | "inactive" | "trial" | "expired";
+  subscriptionEndDate?: Date;
   maxUsers?: number;
   canViewPhoneNumbers?: boolean;
   canViewEmails?: boolean;
@@ -54,8 +58,13 @@ interface UserQuery {
 }
 
 const TRIAL_LIMITS = {
-  maxUsers: 1,
+  maxUsers: SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
 };
+
+/** -1 in `maxUsers`/`maxLeads` means unlimited. */
+function isUnlimited(n: number | undefined): boolean {
+  return n === -1;
+}
 
 export async function createUserForAdmin(
   sessionUserId: string,
@@ -71,56 +80,68 @@ export async function createUserForAdmin(
     permissions?: string[];
   },
 ) {
-  const adminUser = await withDatabase(async () => {
+  const adminId = new mongoose.Types.ObjectId(sessionUserId);
+
+  const adminUser = (await withDatabase(async () => {
     const db = mongoose.connection.db;
     if (!db) throw new Error("Database connection not available");
-    return db.collection("users").findOne({
-      _id: new mongoose.Types.ObjectId(sessionUserId),
-    });
-  });
+    return db.collection("users").findOne({ _id: adminId });
+  })) as UserDocument | null;
 
   if (!adminUser) {
     return { status: 404, body: { message: "Admin user not found" } };
   }
 
-  const isOnTrial =
+  const now = new Date();
+  const isOnTrial = Boolean(
     adminUser.isOnTrial &&
-    adminUser.trialEndsAt &&
-    new Date() < new Date(adminUser.trialEndsAt);
-  const hasActiveSubscription = adminUser.subscriptionStatus === "active";
-  const maxUsers = adminUser.maxUsers || TRIAL_LIMITS.maxUsers;
+      adminUser.trialEndsAt &&
+      now < new Date(adminUser.trialEndsAt),
+  );
+  const subscriptionEndDate = adminUser.subscriptionEndDate
+    ? new Date(adminUser.subscriptionEndDate)
+    : null;
+  const subscriptionExpired = Boolean(
+    subscriptionEndDate && now > subscriptionEndDate,
+  );
+  const hasActiveSubscription =
+    adminUser.subscriptionStatus === "active" && !subscriptionExpired;
 
   if (!isOnTrial && !hasActiveSubscription) {
     return {
       status: 403,
       body: {
-        message: "Trial expired. Please subscribe to continue adding team members.",
+        message:
+          "Trial expired. Please subscribe to continue adding team members.",
         upgradeRequired: true,
       },
     };
   }
 
-  const currentUsers = await withDatabase(async () => {
-    const db = mongoose.connection.db;
-    if (!db) throw new Error("Database connection not available");
-    return db.collection("users").countDocuments({
-      adminId: new mongoose.Types.ObjectId(sessionUserId),
-    });
-  });
+  const rawMax = adminUser.maxUsers ?? TRIAL_LIMITS.maxUsers;
+  const unlimited = isUnlimited(rawMax);
 
-  if (currentUsers >= maxUsers) {
-    return {
-      status: 403,
-      body: {
-        message: "User limit reached",
-        details: {
-          currentUsers,
-          maxUsers,
-          remainingSlots: Math.max(0, maxUsers - currentUsers),
+  // Pre-flight: cheap reject before pre-checking email/hashing the password.
+  if (!unlimited) {
+    const currentUsers = await withDatabase(async () => {
+      const db = mongoose.connection.db;
+      if (!db) throw new Error("Database connection not available");
+      return db.collection("users").countDocuments({ adminId });
+    });
+    if (currentUsers >= rawMax) {
+      return {
+        status: 403,
+        body: {
+          message: "User limit reached",
+          details: {
+            currentUsers,
+            maxUsers: rawMax,
+            remainingSlots: 0,
+          },
+          upgradeRequired: true,
         },
-        upgradeRequired: true,
-      },
-    };
+      };
+    }
   }
 
   const existingUser = await withDatabase(async () => {
@@ -129,15 +150,17 @@ export async function createUserForAdmin(
     return db.collection("users").findOne({ email: data.email });
   });
   if (existingUser) {
-    return { status: 409, body: { message: "User with this email already exists" } };
+    return {
+      status: 409,
+      body: { message: "User with this email already exists" },
+    };
   }
 
-  const result = await executeDbOperation(async () => {
+  const inserted = await executeDbOperation(async () => {
     const db = mongoose.connection.db;
     if (!db) throw new Error("Database connection not available");
-
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    const newUser = await db.collection("users").insertOne({
+    return db.collection("users").insertOne({
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
@@ -147,18 +170,58 @@ export async function createUserForAdmin(
       role: data.role || "AGENT",
       status: data.status || "ACTIVE",
       permissions: data.permissions || [],
-      adminId: new mongoose.Types.ObjectId(sessionUserId),
-      createdBy: new mongoose.Types.ObjectId(sessionUserId),
+      adminId,
+      createdBy: adminId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+  }, "Error creating user");
 
-    const createdUser = (await db.collection("users").findOne({
-      _id: newUser.insertedId,
-    })) as UserDocument | null;
-    if (!createdUser) throw new Error("Failed to create user");
+  // Post-insert seat reconciliation. Two concurrent POSTs can both pass the
+  // pre-flight count, so we recount after the insert and compensate (delete
+  // exactly the row we inserted) if we now exceed `maxUsers`.
+  let finalCount: number | null = null;
+  if (!unlimited) {
+    const db = mongoose.connection.db;
+    if (db) {
+      finalCount = await db.collection("users").countDocuments({ adminId });
+      if (finalCount > rawMax) {
+        await db
+          .collection("users")
+          .deleteOne({ _id: inserted.insertedId, adminId });
+        return {
+          status: 403,
+          body: {
+            message: "User limit reached",
+            details: {
+              currentUsers: finalCount - 1,
+              maxUsers: rawMax,
+              remainingSlots: 0,
+            },
+            upgradeRequired: true,
+          },
+        };
+      }
+    }
+  }
 
+  const createdUser = (await withDatabase(async () => {
+    const db = mongoose.connection.db;
+    if (!db) throw new Error("Database connection not available");
+    return db
+      .collection("users")
+      .findOne({ _id: inserted.insertedId });
+  })) as UserDocument | null;
+  if (!createdUser) {
     return {
+      status: 500,
+      body: { message: "Failed to load created user" },
+    };
+  }
+
+  return {
+    status: 201,
+    body: {
       message: "User created successfully",
       user: {
         id: createdUser._id,
@@ -170,14 +233,14 @@ export async function createUserForAdmin(
         createdAt: createdUser.createdAt.toISOString(),
       },
       usage: {
-        currentUsers: currentUsers + 1,
-        maxUsers,
-        remainingUsers: Math.max(0, maxUsers - (currentUsers + 1)),
+        currentUsers: unlimited ? finalCount ?? 0 : finalCount ?? 0,
+        maxUsers: rawMax,
+        remainingUsers: unlimited
+          ? -1
+          : Math.max(0, rawMax - (finalCount ?? 0)),
       },
-    };
-  }, "Error creating user");
-
-  return { status: 201, body: result };
+    },
+  };
 }
 
 export async function listUsersForSession(sessionUser: SessionUser) {

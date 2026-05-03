@@ -70,7 +70,8 @@ export function UsageLimitsDisplay({ usageData }: { usageData: UsageData }) {
               Unlimited leads
             </p>
           )}
-          {usageData.maxLeads !== -1 && (
+          {/* L10: only show the "import up to N more" hint when N > 0. */}
+          {usageData.maxLeads !== -1 && usageData.remainingLeads > 0 && (
             <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
               <div className="flex items-center gap-1 text-blue-700 dark:text-blue-300">
                 <Info className="h-3 w-3" />

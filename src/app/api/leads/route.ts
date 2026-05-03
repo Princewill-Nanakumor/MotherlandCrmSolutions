@@ -10,7 +10,10 @@ import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { agentLeadsInTenantFilter, singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
-import { checkTenantLeadImportAllowed } from "@/lib/tenantLeadImportLimits";
+import {
+  checkTenantLeadImportAllowed,
+  reconcileLeadQuotaOrRollback,
+} from "@/lib/tenantLeadImportLimits";
 import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 
 interface MongoDocument {
@@ -236,6 +239,23 @@ export async function POST(request: Request) {
           createdBy: new mongoose.Types.ObjectId(session.user.id),
         });
 
+        // H2 (single-lead path): reconcile after the insert in case a parallel
+        // create just put us over the cap.
+        if (mongoose.connection.db) {
+          const overage = await reconcileLeadQuotaOrRollback(
+            mongoose.connection.db,
+            {
+              adminObjectId: scopedAdminObjectId,
+              insertedIds: [
+                newLead._id as unknown as import("mongodb").ObjectId,
+              ],
+            },
+          );
+          if (overage) {
+            return NextResponse.json(overage.body, { status: overage.status });
+          }
+        }
+
         try {
           await publishAdminLeadsUpdatedEvent(scopedAdminId, {
             type: "lead_created",
@@ -370,24 +390,79 @@ export async function POST(request: Request) {
       });
     }
 
+    // M11: classify bulkWrite outcomes precisely so the UI summary doesn't
+    // conflate duplicates / validation failures / intra-file dupes.
     let inserted = 0;
     let duplicates = 0;
     let errors = 0;
 
+    let upsertedIds: mongoose.Types.ObjectId[] = [];
     try {
       const result = await Lead.bulkWrite(operations, { ordered: false });
-      inserted = result.upsertedCount;
-      duplicates = leads.length - inserted;
+      inserted = result.upsertedCount ?? 0;
+      duplicates = Math.max(0, (result.matchedCount ?? 0));
+      const accountedFor = inserted + duplicates;
+      errors = Math.max(0, operations.length - accountedFor);
+      const upserted = (result.upsertedIds ?? {}) as Record<
+        string,
+        mongoose.Types.ObjectId
+      >;
+      upsertedIds = Object.values(upserted);
     } catch (error) {
-      console.error("Bulk import error:", error);
-      errors = leads.length - inserted;
+      const err = error as {
+        code?: number;
+        result?: {
+          upsertedCount?: number;
+          matchedCount?: number;
+          writeErrors?: { code?: number }[];
+        };
+        writeErrors?: { code?: number }[];
+      };
+      console.error("Bulk import error:", err);
+      const partial = err.result;
+      inserted = partial?.upsertedCount ?? inserted;
+      duplicates = partial?.matchedCount ?? duplicates;
+      const writeErrors = partial?.writeErrors ?? err.writeErrors ?? [];
+      const dupErrors = writeErrors.filter((e) => e.code === 11000).length;
+      duplicates += dupErrors;
+      errors = Math.max(
+        0,
+        operations.length - inserted - duplicates,
+      );
     }
 
+    // H2: reconcile after the bulk write. Two concurrent imports can each
+    // pass `checkTenantLeadImportAllowed`; if the combined result exceeds
+    // `maxLeads`, delete the most recent inserts and report the overage.
+    if (
+      upsertedIds.length > 0 &&
+      mongoose.connection &&
+      mongoose.connection.db
+    ) {
+      const overage = await reconcileLeadQuotaOrRollback(
+        mongoose.connection.db,
+        {
+          adminObjectId: scopedAdminObjectId,
+          insertedIds: upsertedIds.map(
+            (id) => id as unknown as import("mongodb").ObjectId,
+          ),
+        },
+      );
+      if (overage) {
+        return NextResponse.json(overage.body, { status: overage.status });
+      }
+    }
+
+    // H4: scope import-completion update by tenant so a tenant who guesses
+    // another tenant's import _id cannot mutate that doc's status/counts.
     const importId = leads[0]?.importId;
     if (importId && mongoose.connection && mongoose.connection.db) {
       try {
         await mongoose.connection.db.collection("imports").updateOne(
-          { _id: new mongoose.Types.ObjectId(importId) },
+          {
+            _id: new mongoose.Types.ObjectId(importId),
+            adminId: scopedAdminObjectId,
+          },
           {
             $set: {
               status: "completed",
