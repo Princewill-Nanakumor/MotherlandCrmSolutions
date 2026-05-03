@@ -12,6 +12,12 @@ import { z } from "zod";
 import { FormError } from "./FormError";
 import { FormSuccess } from "./FormSucess";
 import { LoginCaptcha, RobotVerifyButton } from "./LoginCaptcha";
+import { LoginVerificationResendBlock } from "./LoginVerificationResendBlock";
+import {
+  humanMessageForCredEmailVerifyCode,
+  isCredEmailVerifyCode,
+  isCredEmailVerifyExpiredAdmin,
+} from "@/lib/credentialsEmailVerifyErrors";
 
 type LoginInput = z.infer<typeof LoginSchema>;
 
@@ -27,6 +33,7 @@ export default function SignInForm() {
   >("idle");
   const [loginCaptchaEnabled, setLoginCaptchaEnabled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showExpiredVerifyResend, setShowExpiredVerifyResend] = useState(false);
 
   const refreshCaptchaOnError = () => {
     setCaptchaInput("");
@@ -58,6 +65,7 @@ export default function SignInForm() {
   const onSubmit: SubmitHandler<LoginInput> = async (data) => {
     setFormError("");
     setFormSuccess("");
+    setShowExpiredVerifyResend(false);
 
     if (!loginCaptchaEnabled) {
       setFormError("Please confirm you are not a robot first.");
@@ -88,7 +96,14 @@ export default function SignInForm() {
         try {
           sessionStorage.removeItem("auth:navigating");
         } catch {}
-        setFormError(result.error);
+        const err = result.error;
+        if (isCredEmailVerifyCode(err)) {
+          setFormError(humanMessageForCredEmailVerifyCode(err));
+          setShowExpiredVerifyResend(isCredEmailVerifyExpiredAdmin(err));
+        } else {
+          setFormError(err);
+          setShowExpiredVerifyResend(false);
+        }
         refreshCaptchaOnError();
         setLoading(false);
       } else if (result?.ok) {
@@ -177,6 +192,12 @@ export default function SignInForm() {
             formError || errors.email?.message || errors.password?.message
           }
         />
+        {showExpiredVerifyResend ? (
+          <LoginVerificationResendBlock
+            email={(watchedEmail || "").trim()}
+            disabled={isFormDisabled}
+          />
+        ) : null}
         <FormSuccess message={formSuccess} />
 
         <div data-auth-glass-fields className="space-y-4 sm:space-y-6">

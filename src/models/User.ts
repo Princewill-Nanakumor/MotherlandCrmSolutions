@@ -20,6 +20,8 @@ export interface IUser extends Document {
   emailVerified?: boolean;
   verificationToken?: string;
   verificationExpires?: Date;
+  /** Set when a verification link is consumed; allows "already verified" on repeat open. */
+  consumedVerificationTokenHash?: string;
 
   // Password reset fields
   resetPasswordToken?: string;
@@ -114,6 +116,9 @@ const userSchema = new Schema<IUser>(
     verificationExpires: {
       type: Date,
     },
+    consumedVerificationTokenHash: {
+      type: String,
+    },
 
     // Password reset fields
     resetPasswordToken: {
@@ -188,6 +193,7 @@ function stripAuthSecretsFromLean(
   delete ret.password;
   delete ret.verificationToken;
   delete ret.verificationExpires;
+  delete ret.consumedVerificationTokenHash;
   delete ret.resetPasswordToken;
   delete ret.resetPasswordExpires;
   delete ret.__v;
@@ -247,6 +253,10 @@ userSchema.index(
 userSchema.index({ adminId: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ status: 1 });
+userSchema.index(
+  { consumedVerificationTokenHash: 1, emailVerified: 1 },
+  { sparse: true },
+);
 
 // Delete existing model to prevent conflicts
 if (mongoose.models.User) {

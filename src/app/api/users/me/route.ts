@@ -4,6 +4,7 @@ import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
 import { unauthorizedResponse } from "@/lib/apiResponses";
+import { getSuperAdminEmails } from "@/lib/notificationQuery";
 
 // Define proper types
 interface UserQuery {
@@ -49,6 +50,13 @@ export async function GET() {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
+    const superEmails = getSuperAdminEmails();
+    const sessionEmail = session.user.email?.trim() ?? "";
+    const isSuperAdmin =
+      session.user.role === "ADMIN" &&
+      superEmails.length > 0 &&
+      superEmails.includes(sessionEmail);
+
     const userProfile = {
       id: user._id.toString(),
       firstName: user.firstName || "",
@@ -68,6 +76,7 @@ export async function GET() {
         : undefined,
       canViewPhoneNumbers: user.canViewPhoneNumbers ?? false,
       canViewEmails: user.canViewEmails ?? false,
+      isSuperAdmin,
     };
 
     return NextResponse.json(userProfile);

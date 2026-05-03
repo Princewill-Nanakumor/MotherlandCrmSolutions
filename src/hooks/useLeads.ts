@@ -5,6 +5,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { disconnectAblyRealtimeClient } from "@/libs/ablyClient";
+import { disconnectAblyLeadRealtimeClient } from "@/libs/ablyLeadClient";
 import { useEffect, useRef, useCallback } from "react";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { useLeadsQueries } from "@/hooks/leads/useLeadsQueries";
@@ -90,6 +92,8 @@ export const useLeads = () => {
     isSigningOutRef.current = true;
     try {
       await signOut({ redirect: false });
+      disconnectAblyRealtimeClient();
+      disconnectAblyLeadRealtimeClient();
     } finally {
       router.push("/login");
     }

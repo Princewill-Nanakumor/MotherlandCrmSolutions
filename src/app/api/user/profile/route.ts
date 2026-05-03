@@ -5,6 +5,7 @@ import { authOptions } from "@/libs/auth";
 import User from "@/models/User";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { Types } from "mongoose";
+import { getSuperAdminEmails } from "@/lib/notificationQuery";
 
 interface UserDocument {
   _id: Types.ObjectId;
@@ -37,6 +38,13 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    const superEmails = getSuperAdminEmails();
+    const sessionEmail = session.user.email?.trim() ?? "";
+    const isSuperAdmin =
+      session.user.role === "ADMIN" &&
+      superEmails.length > 0 &&
+      superEmails.includes(sessionEmail);
+
     return NextResponse.json({
       success: true,
       user: {
@@ -47,6 +55,7 @@ export async function GET() {
         role: user.role,
         balance: user.balance || 0,
         status: user.status,
+        isSuperAdmin,
       },
     });
   } catch (error) {

@@ -59,8 +59,22 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
-      // Distinguish "already verified for a now-cleared token" from
-      // "expired" from "never existed" so the UI can show accurate copy.
+      const alreadyVerified = await User.findOne({
+        consumedVerificationTokenHash: tokenHash,
+        emailVerified: true,
+      });
+      if (alreadyVerified) {
+        return NextResponse.json(
+          {
+            status: "already_verified",
+            message:
+              "This email is already verified. You can sign in with your email and password.",
+          },
+          { status: 200 },
+        );
+      }
+
+      // Distinguish "expired" from "never existed" so the UI can show accurate copy.
       const anyMatch = await User.findOne({
         $or: [{ verificationToken: tokenHash }, { verificationToken: token }],
       });
@@ -81,7 +95,10 @@ export async function POST(req: Request) {
     await User.updateOne(
       { _id: user._id },
       {
-        $set: { emailVerified: true },
+        $set: {
+          emailVerified: true,
+          consumedVerificationTokenHash: tokenHash,
+        },
         $unset: { verificationToken: "", verificationExpires: "" },
       },
     );

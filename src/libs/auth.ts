@@ -10,6 +10,13 @@ import bcrypt from "bcryptjs";
 import { connectMongoDB } from "./dbConfig";
 import User from "@/models/User";
 import { APP_DISPLAY_NAME } from "@/lib/emailAuthBranding";
+import { hasActiveEmailVerificationInvite } from "@/lib/authEmailVerificationWindow";
+import {
+  CRED_EMAIL_VERIFY_EXPIRED_ADMIN,
+  CRED_EMAIL_VERIFY_EXPIRED_AGENT,
+  CRED_EMAIL_VERIFY_PENDING_ADMIN,
+  CRED_EMAIL_VERIFY_PENDING_AGENT,
+} from "@/lib/credentialsEmailVerifyErrors";
 import { findUserForCredentialLoginByEmail } from "@/lib/authEmailUserLookup";
 import { getPasswordChangedAtUnixCached } from "@/lib/authPasswordVersion";
 import { tryConsumeCaptchaSignatureOnce } from "@/lib/captchaConsumeStore";
@@ -19,6 +26,18 @@ import {
   evaluateCaptchaCookie,
 } from "@/lib/serverCaptcha";
 import { getCookieHeaderFromNextAuthReq } from "@/lib/nextAuthCookieHeader";
+import { getSuperAdminEmails } from "@/lib/notificationQuery";
+import type { JWT } from "next-auth/jwt";
+
+function applySuperAdminToToken(token: JWT): JWT {
+  const id = typeof token.id === "string" ? token.id : "";
+  const emails = getSuperAdminEmails();
+  const email = typeof token.email === "string" ? token.email.trim() : "";
+  if (!id || token.role !== "ADMIN" || !email || emails.length === 0) {
+    return { ...token, isSuperAdmin: false };
+  }
+  return { ...token, isSuperAdmin: emails.includes(email) };
+}
 
 // Extend the built-in session types
 declare module "next-auth" {
@@ -52,6 +71,8 @@ declare module "next-auth" {
       country: string;
       adminId?: string;
       canViewPhoneNumbers?: boolean;
+      /** Platform super admin (SUPER_ADMIN_EMAILS); only meaningful when role is ADMIN. */
+      isSuperAdmin?: boolean;
     };
   }
 }
@@ -73,6 +94,8 @@ declare module "next-auth/jwt" {
     loginTimestamp?: number; // Absolute timestamp of initial login
     /** Effective session lifetime in seconds chosen at login (default vs "Remember me"). */
     maxAgeSec?: number;
+    email?: string;
+    isSuperAdmin?: boolean;
   }
 }
 
@@ -162,7 +185,9 @@ export const authOptions: NextAuthOptions = {
           // using password login. AGENT accounts keep legacy behavior below.
           if (user.role === "ADMIN" && user.emailVerified !== true) {
             throw new Error(
-              `Please verify your email before signing in. Open the link we sent from ${APP_DISPLAY_NAME}.`,
+              hasActiveEmailVerificationInvite(user)
+                ? CRED_EMAIL_VERIFY_PENDING_ADMIN
+                : CRED_EMAIL_VERIFY_EXPIRED_ADMIN,
             );
           }
           if (user.role === "AGENT" && user.emailVerified === false) {
@@ -170,7 +195,9 @@ export const authOptions: NextAuthOptions = {
               await isTenantAdminEmailVerifiedForAgent(user);
             if (!waivedByVerifiedAdmin) {
               throw new Error(
-                `Please verify your email before signing in. Contact your administrator if you need a new verification link.`,
+                hasActiveEmailVerificationInvite(user)
+                  ? CRED_EMAIL_VERIFY_PENDING_AGENT
+                  : CRED_EMAIL_VERIFY_EXPIRED_AGENT,
               );
             }
           }
@@ -256,6 +283,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         // New token - set user data (user just logged in)
         token.id = user.id;
+        token.email = user.email;
         token.role = user.role;
         token.permissions = user.permissions;
         token.status = user.status;
@@ -389,10 +417,10 @@ export const authOptions: NextAuthOptions = {
           nextToken.canViewPhoneNumbers = userPatch.canViewPhoneNumbers;
         }
 
-        return nextToken;
+        return applySuperAdminToToken(nextToken);
       }
 
-      return token;
+      return applySuperAdminToToken(token);
     },
     async session({ session, token }) {
       const nowSec = Math.floor(Date.now() / 1000);
@@ -437,6 +465,11 @@ export const authOptions: NextAuthOptions = {
       session.user.country = token.country ?? "";
       session.user.adminId = token.adminId ?? undefined;
       session.user.canViewPhoneNumbers = token.canViewPhoneNumbers ?? false;
+      session.user.email =
+        typeof token.email === "string"
+          ? token.email
+          : (session.user.email ?? "");
+      session.user.isSuperAdmin = Boolean(token.isSuperAdmin);
 
       if (token.loginTimestamp) {
         session.expires = new Date(

@@ -25,3 +25,16 @@ export function getAblyRealtimeClient(userId: string): Ably.Realtime {
 
   return realtimeClient;
 }
+
+/** Close the shared dashboard connection (e.g. after sign-out) so token refresh stops. */
+export function disconnectAblyRealtimeClient(): void {
+  if (realtimeClient) {
+    try {
+      realtimeClient.close();
+    } catch {
+      /* ignore */
+    }
+    realtimeClient = null;
+    realtimeClientUserId = null;
+  }
+}

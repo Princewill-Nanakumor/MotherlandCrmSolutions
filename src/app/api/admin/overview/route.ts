@@ -231,8 +231,20 @@ export async function GET() {
       ],
     });
 
+    const normEmail = (e: string) => e.trim().toLowerCase();
+    const superAdminEmailsNormalized = allowedEmails.map(normEmail).filter(Boolean);
+    const superSet = new Set(superAdminEmailsNormalized);
+
+    let totalSuperAdmins = 0;
+    for (const a of admins) {
+      if (superSet.has(normEmail(a.email))) {
+        totalSuperAdmins += 1;
+      }
+    }
+
     // Overall platform stats
     const totalAdmins = admins.length;
+    const tenantOnlyAdmins = Math.max(0, totalAdmins - totalSuperAdmins);
     const totalAgents = await User.countDocuments({ role: "AGENT" });
     const totalLeads = await Lead.countDocuments();
 
@@ -299,8 +311,11 @@ export async function GET() {
 
     return NextResponse.json({
       admins: adminStats,
+      superAdminEmailsNormalized,
       platformStats: {
         totalAdmins,
+        totalSuperAdmins,
+        tenantOnlyAdmins,
         totalAgents,
         totalLeads,
         activeSubscriptions: activeSubscriptionsCount, // ✅ Now calculated correctly

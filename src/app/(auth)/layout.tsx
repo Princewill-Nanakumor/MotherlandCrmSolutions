@@ -20,7 +20,8 @@ export default function AuthLayout({
   const isHeroAuthPage =
     pathname === "/signup" ||
     pathname === "/forgot-password" ||
-    (pathname?.startsWith("/reset-password/") ?? false);
+    (pathname?.startsWith("/reset-password/") ?? false) ||
+    (pathname?.startsWith("/verify-email/") ?? false);
 
   return (
     <SessionProvider

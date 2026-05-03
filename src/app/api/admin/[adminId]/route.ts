@@ -43,10 +43,10 @@ export async function GET(
       [];
 
     // Check if the user's email is in the allowed list
-    if (
+    const isSuperAdminViewer =
       allowedEmails.length > 0 &&
-      !allowedEmails.includes(session.user.email)
-    ) {
+      allowedEmails.includes(session.user.email);
+    if (allowedEmails.length > 0 && !isSuperAdminViewer) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -114,6 +114,7 @@ export async function GET(
       activities,
       payments,
       ads,
+      isSuperAdminViewer,
     });
   } catch (error) {
     console.error("Error fetching admin details:", error);

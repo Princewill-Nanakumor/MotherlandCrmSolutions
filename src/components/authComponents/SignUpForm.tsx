@@ -32,6 +32,7 @@ export default function SignUpForm() {
   const [captchaState, setCaptchaState] = useState<
     "idle" | "loading" | "ready" | "error"
   >("idle");
+  const [emailSendHint, setEmailSendHint] = useState<string | null>(null);
 
   const refreshCaptchaOnError = () => {
     setCaptchaInput("");
@@ -99,6 +100,7 @@ export default function SignUpForm() {
     }
 
     setLoading(true);
+    setEmailSendHint(null);
 
     try {
       const response = await fetch("/api/auth/signup", {
@@ -113,11 +115,16 @@ export default function SignUpForm() {
         details?: { message?: string }[];
         emailVerificationRequired?: boolean;
         emailSent?: boolean;
+        emailSendHint?: string;
       };
       try {
         resData = await response.json();
       } catch {
         throw new Error("Invalid response from server. Please try again.");
+      }
+
+      if (typeof resData.emailSendHint === "string" && resData.emailSendHint) {
+        setEmailSendHint(resData.emailSendHint);
       }
 
       if (!response.ok) {
@@ -131,7 +138,7 @@ export default function SignUpForm() {
       }
 
       const needsVerifyFlow = resData.emailVerificationRequired === true;
-      const emailSent = resData.emailSent !== false;
+      const emailSent = resData.emailSent === true;
       if (needsVerifyFlow) {
         setPostSignup(emailSent ? "verify_sent" : "verify_failed");
       } else {
@@ -175,6 +182,11 @@ export default function SignUpForm() {
             <p className="mx-auto max-w-md text-sm text-white/90 sm:text-base">
               {body}
             </p>
+            {postSignup === "verify_failed" && emailSendHint ? (
+              <p className="mx-auto max-w-lg rounded-lg border border-amber-400/50 bg-amber-500/10 px-3 py-2 text-left text-xs leading-snug text-amber-100 sm:text-sm">
+                {emailSendHint}
+              </p>
+            ) : null}
           </div>
           <Link
             href="/login"

@@ -1,7 +1,7 @@
 // src/components/dashboardComponents/UserDropdownMenu.tsx
 "use client";
 import React from "react";
-import { UserCircle, LogOut, User, Settings } from "lucide-react";
+import { UserCircle, LogOut, User, Settings, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 import { BalanceDisplay } from "./BalanceDisplay";
@@ -14,6 +14,7 @@ export interface UserDropdownMenuProps {
       email?: string;
       lastName?: string;
       role?: string;
+      isSuperAdmin?: boolean;
     };
   } | null;
   userProfile:
@@ -23,6 +24,7 @@ export interface UserDropdownMenuProps {
         email?: string;
         balance?: number;
         role?: string;
+        isSuperAdmin?: boolean;
         currentPlan?: string;
         subscriptionStatus?: "active" | "inactive" | "trial" | "expired";
         trialEndsAt?: string;
@@ -49,6 +51,11 @@ export function UserDropdownMenu({
   const isAdmin =
     session?.user?.role === "ADMIN" || userProfile?.role === "ADMIN";
 
+  const isSuperAdmin =
+    isAdmin &&
+    (session?.user?.isSuperAdmin === true ||
+      userProfile?.isSuperAdmin === true);
+
   const handleProfile = () => {
     setDropdownOpen(false);
     router.push("/dashboard/profile");
@@ -57,6 +64,11 @@ export function UserDropdownMenu({
   const handleSettings = () => {
     setDropdownOpen(false);
     router.push("/dashboard/settings");
+  };
+
+  const handleAdminManagement = () => {
+    setDropdownOpen(false);
+    router.push("/dashboard/admin-management");
   };
 
   const handleLogout = async () => {
@@ -80,10 +92,10 @@ export function UserDropdownMenu({
         </div>
       </button>
       {dropdownOpen && (
-        <div className="absolute right-0 w-56 mt-2 overflow-hidden transition-all duration-200 ease-out origin-top-right transform scale-100 bg-white divide-y divide-gray-100 rounded-md shadow-xl opacity-100 dark:divide-gray-700 dark:bg-gray-800 ring-1 ring-black/10 dark:ring-white/10 z-60">
+        <div className="absolute right-0 z-60 mt-2 w-[min(100vw-1.5rem,16rem)] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-md bg-white opacity-100 shadow-xl ring-1 ring-black/10 transition-all duration-200 ease-out divide-y divide-gray-100 origin-top-right transform scale-100 dark:divide-gray-700 dark:bg-gray-800 dark:ring-white/10 sm:w-60">
           {/* User Info Section */}
           <div className="px-4 py-3">
-            <div className="ml-3 max-w-[180px]">
+            <div className="ml-3 min-w-0 max-w-full pr-1 sm:max-w-[13.5rem]">
               <p className="text-sm font-medium text-gray-900! dark:text-white! break-all">
                 {session?.user?.firstName && session?.user?.lastName
                   ? `${session.user.firstName} ${session.user.lastName}`
@@ -128,6 +140,16 @@ export function UserDropdownMenu({
               <Settings className="w-4 h-4 mr-3 text-blue-500 dark:text-blue-400" />
               Settings
             </button>
+            {isSuperAdmin ? (
+              <button
+                type="button"
+                onClick={handleAdminManagement}
+                className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out"
+              >
+                <Shield className="w-4 h-4 mr-3 text-amber-600 dark:text-amber-400" />
+                Admin management
+              </button>
+            ) : null}
           </div>
           <div className="py-1 ml-4">
             <button

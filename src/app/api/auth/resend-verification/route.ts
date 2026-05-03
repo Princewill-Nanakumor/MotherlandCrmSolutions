@@ -18,6 +18,7 @@ import {
   buildClearCaptchaCookieHeader,
   verifyAndConsumeCaptchaCookieAsync,
 } from "@/lib/serverCaptcha";
+import { logResendFailure, resendEmailOk } from "@/lib/resendSend";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -129,7 +130,7 @@ export async function POST(req: Request) {
       const resend = new Resend(process.env.RESEND_API_KEY);
 
       try {
-        await resend.emails.send({
+        const sendResult = await resend.emails.send({
           from: getResendFrom(),
           to: [user.email],
           subject: `${APP_DISPLAY_NAME} - verify your email`,
@@ -137,6 +138,9 @@ export async function POST(req: Request) {
           replyTo: getResendReplyTo(),
           tags: [{ name: "category", value: "email_verification_resend" }],
         });
+        if (!resendEmailOk(sendResult)) {
+          logResendFailure("resend-verification", sendResult);
+        }
       } catch (emailError) {
         // Token is rotated even on failure so the next click is a fresh
         // attempt. Log loudly so Resend outages are visible in monitoring.

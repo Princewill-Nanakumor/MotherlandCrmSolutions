@@ -50,3 +50,16 @@ export function releaseAblyLeadRealtimeClient(leadId: string): void {
   leadRealtime = null;
   leadRealtimeCacheKey = null;
 }
+
+/** Close the lead-scoped Realtime client (call on sign-out with main client). */
+export function disconnectAblyLeadRealtimeClient(): void {
+  if (leadRealtime) {
+    try {
+      leadRealtime.close();
+    } catch {
+      // ignore
+    }
+    leadRealtime = null;
+    leadRealtimeCacheKey = null;
+  }
+}

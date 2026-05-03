@@ -17,6 +17,7 @@ import {
   AdminOverviewResponse,
   RawAdminOverviewResponse,
 } from "@/types/adminTypes";
+import { buildOverviewPlatformStats } from "@/lib/adminOverviewPlatformStats";
 
 // Custom hooks
 
@@ -50,6 +51,7 @@ export function useAdminDetails(adminId: string) {
         activities: data.activities || [],
         ads: data.ads || [],
         payments: data.payments || [],
+        isSuperAdminViewer: Boolean(data.isSuperAdminViewer),
       };
     },
     enabled: !!session?.user && !!adminId && session.user.role === "ADMIN",
@@ -97,41 +99,92 @@ export function useAdminOverview() {
         })
       );
 
-      // Calculate accurate platform stats from the transformed admin data
-      const calculatedStats: PlatformStats = {
-        totalAdmins: transformedAdmins.length,
-        totalAgents: transformedAdmins.reduce(
-          (sum, admin) => sum + admin.agentCount,
-          0
-        ),
-        totalLeads: transformedAdmins.reduce(
-          (sum, admin) => sum + admin.leadCount,
-          0
-        ),
-        activeSubscriptions: transformedAdmins.filter((admin) => {
-          const hasActiveSubscription =
-            admin.subscription &&
-            (admin.subscription.status === "ACTIVE" ||
-              admin.subscription.status === "active" ||
-              admin.subscription.status === "Active");
-
-          return hasActiveSubscription;
-        }).length,
-        totalBalance: transformedAdmins.reduce(
-          (sum, admin) => sum + admin.balance,
-          0
-        ),
-      };
+      const superEmails = data.superAdminEmailsNormalized ?? [];
+      const calculatedStats = buildOverviewPlatformStats(
+        transformedAdmins,
+        superEmails,
+      );
 
       return {
         admins: transformedAdmins,
         platformStats: calculatedStats,
+        superAdminEmailsNormalized: superEmails,
       };
     },
     enabled: !!session?.user && session.user.role === "ADMIN",
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: true,
     retry: 2,
+  });
+}
+
+/** Super-admin only: remove a single AGENT from a tenant administrator. */
+export function useDeleteAgentFromTenant() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      adminId,
+      agentId,
+    }: {
+      adminId: string;
+      agentId: string;
+    }) => {
+      const response = await fetch(
+        `/api/admin/${adminId}/agents/${agentId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          (errorData as { error?: string }).error || "Failed to remove agent",
+        );
+      }
+
+      return response.json();
+    },
+    onSuccess: (_data, { adminId, agentId }) => {
+      // Immediate UI on /dashboard/admin-management (may be unmounted) and this page
+      queryClient.setQueryData<AdminOverviewResponse>(
+        ["admin-overview"],
+        (old) => {
+          if (!old) return old;
+          const admins = old.admins.map((a) =>
+            a._id === adminId
+              ? { ...a, agentCount: Math.max(0, a.agentCount - 1) }
+              : a,
+          );
+          const superEmails = old.superAdminEmailsNormalized ?? [];
+          const platformStats = buildOverviewPlatformStats(admins, superEmails);
+          return {
+            admins,
+            platformStats,
+            superAdminEmailsNormalized: superEmails,
+          };
+        },
+      );
+
+      queryClient.setQueryData<AdminDetailsResponse>(
+        ["admin-details", adminId],
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            agents: old.agents.filter((ag) => ag._id !== agentId),
+          };
+        },
+      );
+
+      void queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin-details", adminId] });
+    },
+    onError: (error) => {
+      console.error("Error removing agent:", error);
+    },
   });
 }
 
@@ -174,33 +227,16 @@ export function useDeleteAdmin() {
             (admin) => admin._id !== deletedAdminId
           );
 
-          // Recalculate platform stats after deletion
-          const updatedStats: PlatformStats = {
-            totalAdmins: remainingAdmins.length,
-            totalAgents: remainingAdmins.reduce(
-              (sum, admin) => sum + admin.agentCount,
-              0
-            ),
-            totalLeads: remainingAdmins.reduce(
-              (sum, admin) => sum + admin.leadCount,
-              0
-            ),
-            activeSubscriptions: remainingAdmins.filter(
-              (admin) =>
-                admin.subscription &&
-                (admin.subscription.status === "ACTIVE" ||
-                  admin.subscription.status === "active" ||
-                  admin.subscription.status === "Active")
-            ).length,
-            totalBalance: remainingAdmins.reduce(
-              (sum, admin) => sum + admin.balance,
-              0
-            ),
-          };
+          const superEmails = oldData.superAdminEmailsNormalized ?? [];
+          const updatedStats = buildOverviewPlatformStats(
+            remainingAdmins,
+            superEmails,
+          );
 
           return {
             admins: remainingAdmins,
             platformStats: updatedStats,
+            superAdminEmailsNormalized: superEmails,
           };
         }
       );
@@ -256,21 +292,16 @@ export function useUpdateAdminStatus() {
             admin._id === adminId ? { ...admin, status } : admin
           );
 
-          // Recalculate active subscriptions if status affects subscription
-          const updatedStats: PlatformStats = {
-            ...oldData.platformStats,
-            activeSubscriptions: updatedAdmins.filter(
-              (admin) =>
-                admin.subscription &&
-                (admin.subscription.status === "ACTIVE" ||
-                  admin.subscription.status === "active" ||
-                  admin.subscription.status === "Active")
-            ).length,
-          };
+          const superEmails = oldData.superAdminEmailsNormalized ?? [];
+          const updatedStats = buildOverviewPlatformStats(
+            updatedAdmins,
+            superEmails,
+          );
 
           return {
             admins: updatedAdmins,
             platformStats: updatedStats,
+            superAdminEmailsNormalized: superEmails,
           };
         }
       );
@@ -320,18 +351,16 @@ export function useOptimisticTeamUpdate() {
               : admin
           );
 
-          // Recalculate total agents
-          const updatedStats: PlatformStats = {
-            ...oldData.platformStats,
-            totalAgents: updatedAdmins.reduce(
-              (sum, admin) => sum + admin.agentCount,
-              0
-            ),
-          };
+          const superEmails = oldData.superAdminEmailsNormalized ?? [];
+          const updatedStats = buildOverviewPlatformStats(
+            updatedAdmins,
+            superEmails,
+          );
 
           return {
             admins: updatedAdmins,
             platformStats: updatedStats,
+            superAdminEmailsNormalized: superEmails,
           };
         }
       );
@@ -369,18 +398,16 @@ export function useOptimisticTeamUpdate() {
               : admin
           );
 
-          // Recalculate total leads
-          const updatedStats: PlatformStats = {
-            ...oldData.platformStats,
-            totalLeads: updatedAdmins.reduce(
-              (sum, admin) => sum + admin.leadCount,
-              0
-            ),
-          };
+          const superEmails = oldData.superAdminEmailsNormalized ?? [];
+          const updatedStats = buildOverviewPlatformStats(
+            updatedAdmins,
+            superEmails,
+          );
 
           return {
             admins: updatedAdmins,
             platformStats: updatedStats,
+            superAdminEmailsNormalized: superEmails,
           };
         }
       );

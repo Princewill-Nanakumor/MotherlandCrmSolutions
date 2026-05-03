@@ -11,6 +11,8 @@ interface UserProfile {
   role: string;
   balance: number;
   status: string;
+  /** Mirrors JWT / middleware: ADMIN and email in SUPER_ADMIN_EMAILS. */
+  isSuperAdmin?: boolean;
 }
 
 interface SubscriptionData {

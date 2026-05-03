@@ -10,28 +10,41 @@ interface VerifyEmailContentProps {
   token: string;
 }
 
-type VerifyStatus = "loading" | "success" | "error" | "expired";
+type VerifyStatus =
+  | "loading"
+  | "success"
+  | "already_verified"
+  | "error"
+  | "expired";
+
+type ReissuePhase = "idle" | "loading" | "done";
 
 export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
   const [status, setStatus] = useState<VerifyStatus>("loading");
   const [message, setMessage] = useState("");
   const [countdown, setCountdown] = useState(5);
+  const [reissuePhase, setReissuePhase] = useState<ReissuePhase>("idle");
+  const [reissueLine, setReissueLine] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "success" && countdown > 0) {
+    const shouldRedirect =
+      (status === "success" || status === "already_verified") &&
+      countdown > 0;
+    if (shouldRedirect) {
       const timer = setTimeout(() => {
         setCountdown((c) => c - 1);
       }, 1000);
       return () => clearTimeout(timer);
-    } else if (status === "success" && countdown === 0) {
+    }
+    if (
+      (status === "success" || status === "already_verified") &&
+      countdown === 0
+    ) {
       router.push("/login");
     }
   }, [status, countdown, router]);
 
-  // StrictMode in dev mounts effects twice. The verify endpoint is one-shot
-  // (the token gets cleared on first success), so a naive double-fire would
-  // surface the second response — invalid token — and overwrite the success UI.
   const verifyRanRef = useRef(false);
   useEffect(() => {
     if (!token) {
@@ -62,8 +75,6 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
 
         if (controller.signal.aborted) return;
 
-        // Server returns a stable `status` field; fall back to message
-        // string matching only as a last resort for older deployments.
         const serverStatus = data.status;
         if (response.ok && serverStatus === "success") {
           setStatus("success");
@@ -71,12 +82,59 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
           return;
         }
 
+        if (response.ok && serverStatus === "already_verified") {
+          setStatus("already_verified");
+          setMessage(
+            data.message ||
+              "This email is already verified. You can sign in with your email and password.",
+          );
+          return;
+        }
+
         if (serverStatus === "expired" || data.message?.includes("expired")) {
           setStatus("expired");
-        } else {
-          setStatus("error");
+          setMessage(data.message || "Verification link has expired");
+          setReissuePhase("loading");
+          setReissueLine(null);
+          void (async () => {
+            try {
+              const res = await fetch("/api/auth/reissue-verification-token", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token }),
+              });
+              let reissueData: { status?: string; message?: string };
+              try {
+                reissueData = await res.json();
+              } catch {
+                setReissuePhase("done");
+                return;
+              }
+              if (
+                reissueData.status === "resent" ||
+                reissueData.status === "already_verified"
+              ) {
+                setReissueLine(reissueData.message || null);
+              } else if (
+                reissueData.message &&
+                (reissueData.status === "send_failed" ||
+                  reissueData.status === "unavailable")
+              ) {
+                setReissueLine(reissueData.message);
+              }
+            } catch {
+              /* leave reissueLine null */
+            } finally {
+              setReissuePhase("done");
+            }
+          })();
+          return;
         }
-        setMessage(data.message || "Failed to verify email");
+        setStatus("error");
+        setMessage(
+          data.message ||
+            "This link is invalid or no longer active. If you already have an account, try signing in.",
+        );
       } catch (err) {
         if (controller.signal.aborted) return;
         console.error("Verification error:", err);
@@ -90,23 +148,32 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
     return () => controller.abort();
   }, [token]);
 
+  const cardClass =
+    "p-4 border shadow-xl rounded-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8";
+
+  const primaryBtnClass =
+    "inline-flex min-w-40 items-center justify-center rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
+
+  const secondaryBtnClass =
+    "inline-flex items-center justify-center rounded-lg border border-white/30 bg-white/5 px-6 py-2.5 text-sm font-medium text-white/90 transition-colors hover:bg-white/10";
+
   const renderStatusContent = () => {
     switch (status) {
       case "loading":
         return (
           <div className="flex flex-col items-center gap-4">
-            <div className="relative flex items-center justify-center w-16 h-16">
-              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-indigo-400 border-r-purple-500 animate-spin"></div>
-              <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-linear-to-br from-indigo-600 to-purple-600">
-                <Loader2 size={24} className="text-white animate-spin" />
+            <div className="relative flex h-16 w-16 items-center justify-center">
+              <div className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent border-t-indigo-400 border-r-purple-500" />
+              <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-br from-indigo-600 to-purple-600">
+                <Loader2 size={24} className="animate-spin text-white" />
               </div>
             </div>
             <div className="text-center">
-              <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-                Verifying Email
+              <h3 className="mb-2 text-lg font-semibold text-white!">
+                Verifying email
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Please wait while we verify your email address...
+              <p className="text-sm text-white/80">
+                Please wait while we confirm your email address…
               </p>
             </div>
           </div>
@@ -115,27 +182,46 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
       case "success":
         return (
           <div className="flex flex-col items-center gap-4">
-            <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full dark:bg-green-900/30">
-              <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20">
+              <CheckCircle className="h-9 w-9 text-emerald-300" aria-hidden />
             </div>
             <div className="text-center">
-              <h3 className="mb-2 text-lg font-semibold text-green-600 dark:text-green-400">
-                Email Verified Successfully!
+              <h3 className="mb-2 text-xl font-bold text-white! sm:text-2xl">
+                Email verified
               </h3>
-              <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+              <p className="mx-auto mb-4 max-w-md text-sm text-white/90 sm:text-base">
                 {message}
               </p>
-              <div className="p-3 mb-4 border border-green-200 rounded-lg bg-green-50 dark:bg-green-900/20 dark:border-green-800">
-                <p className="text-xs text-green-700 dark:text-green-300">
-                  Redirecting to sign in in {countdown} second
-                  {countdown !== 1 ? "s" : ""}...
-                </p>
-              </div>
-              <Link
-                href="/login"
-                className="inline-flex items-center px-6 py-2 text-sm font-medium text-white transition-colors bg-green-500 rounded-lg shadow-lg hover:bg-green-600"
-              >
-                Continue to Sign In
+              <p className="mb-4 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
+                Redirecting to sign in in {countdown} second
+                {countdown !== 1 ? "s" : ""}…
+              </p>
+              <Link href="/login" className={primaryBtnClass}>
+                Continue to sign in
+              </Link>
+            </div>
+          </div>
+        );
+
+      case "already_verified":
+        return (
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20">
+              <CheckCircle className="h-9 w-9 text-emerald-300" aria-hidden />
+            </div>
+            <div className="text-center">
+              <h3 className="mb-2 text-xl font-bold text-white! sm:text-2xl">
+                Already verified
+              </h3>
+              <p className="mx-auto mb-4 max-w-md text-sm text-white/90 sm:text-base">
+                {message}
+              </p>
+              <p className="mb-4 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs text-white/80">
+                Taking you to sign in in {countdown} second
+                {countdown !== 1 ? "s" : ""}…
+              </p>
+              <Link href="/login" className={primaryBtnClass}>
+                Go to sign in
               </Link>
             </div>
           </div>
@@ -144,24 +230,42 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
       case "expired":
         return (
           <div className="flex flex-col items-center gap-4">
-            <div className="flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full dark:bg-yellow-900/30">
-              <AlertTriangle className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/20">
+              <AlertTriangle
+                className="h-9 w-9 text-amber-300"
+                aria-hidden
+              />
             </div>
             <div className="text-center">
-              <h3 className="mb-2 text-lg font-semibold text-yellow-600 dark:text-yellow-400">
-                Verification Link Expired
+              <h3 className="mb-2 text-xl font-bold text-white! sm:text-2xl">
+                Link expired
               </h3>
-              <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+              <p className="mx-auto mb-4 max-w-md text-sm text-white/90 sm:text-base">
                 {message}
               </p>
-              <p className="mb-4 text-xs text-gray-500 dark:text-gray-500">
-                If you need a new verification email, contact support.
-              </p>
-              <Link
-                href="/login"
-                className="inline-flex items-center px-6 py-2 text-sm font-medium text-white transition-colors rounded-lg shadow-lg bg-linear-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-              >
-                Back to Sign In
+              {reissuePhase === "loading" ? (
+                <p className="mb-4 text-sm text-white/75">
+                  Checking whether we can email you a fresh link…
+                </p>
+              ) : null}
+              {reissueLine ? (
+                <p
+                  className={`mx-auto mb-4 max-w-md rounded-lg border px-3 py-2 text-left text-sm ${
+                    reissueLine.includes("already verified")
+                      ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-100"
+                      : "border-indigo-400/40 bg-indigo-500/10 text-indigo-100"
+                  }`}
+                >
+                  {reissueLine}
+                </p>
+              ) : reissuePhase === "done" ? (
+                <p className="mb-4 text-xs text-white/70">
+                  You can go to sign in and use &quot;Request a new verification
+                  email&quot; if you still need a link.
+                </p>
+              ) : null}
+              <Link href="/login" className={primaryBtnClass}>
+                Back to sign in
               </Link>
             </div>
           </div>
@@ -171,31 +275,23 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
       default:
         return (
           <div className="flex flex-col items-center gap-4">
-            <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full dark:bg-red-900/30">
-              <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20">
+              <XCircle className="h-9 w-9 text-red-300" aria-hidden />
             </div>
             <div className="text-center">
-              <h3 className="mb-2 text-lg font-semibold text-red-600 dark:text-red-400">
-                Verification Failed
+              <h3 className="mb-2 text-xl font-bold text-white! sm:text-2xl">
+                Could not verify
               </h3>
-              <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+              <p className="mx-auto mb-6 max-w-md text-sm text-white/90 sm:text-base">
                 {message}
               </p>
-              <div className="space-y-3">
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center px-6 py-2 text-sm font-medium text-white transition-colors rounded-lg shadow-lg bg-linear-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                >
-                  Try Signing Up Again
+              <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                <Link href="/login" className={primaryBtnClass}>
+                  Sign in
                 </Link>
-                <div>
-                  <Link
-                    href="/login"
-                    className="inline-flex items-center px-6 py-2 text-sm font-medium text-gray-700 transition-colors border border-gray-300 rounded-lg dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-300"
-                  >
-                    Back to Sign In
-                  </Link>
-                </div>
+                <Link href="/signup" className={secondaryBtnClass}>
+                  Create an account
+                </Link>
               </div>
             </div>
           </div>
@@ -203,20 +299,31 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
     }
   };
 
+  const subtitle =
+    status === "loading"
+      ? "Confirming your email…"
+      : status === "success"
+        ? "You are all set"
+        : status === "already_verified"
+          ? "Your account is ready"
+          : status === "expired"
+            ? "Request a new link if you need one"
+            : status === "error"
+              ? "Something went wrong with this link"
+              : "Status";
+
   return (
-    <div className="p-4 bg-white border border-gray-200 shadow-xl dark:bg-gray-800 rounded-xl sm:rounded-2xl dark:border-gray-700 sm:p-6 md:p-8">
+    <div className={cardClass}>
       <div className="mb-6 text-center sm:mb-8">
-        <h2 className="text-xl font-bold text-transparent sm:text-2xl md:text-3xl bg-linear-to-br from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text">
-          Email Verification
+        <h2 className="text-xl font-bold text-white! sm:text-2xl md:text-3xl">
+          Email verification
         </h2>
-        <p className="mt-2 text-xs text-gray-600 sm:text-sm md:text-base dark:text-gray-400">
-          {status === "loading"
-            ? "Verifying your email address..."
-            : "Email verification status"}
+        <p className="mt-2 text-xs text-white/85 sm:text-sm md:text-base">
+          {subtitle}
         </p>
       </div>
 
-      <div className="flex items-center justify-center w-full">
+      <div className="flex w-full items-center justify-center">
         {renderStatusContent()}
       </div>
     </div>

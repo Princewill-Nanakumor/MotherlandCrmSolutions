@@ -1,6 +1,13 @@
 /**
  * Shared branding and URLs for auth-related emails (Resend).
  * Override via env in production (verified sender domain, public URL).
+ *
+ * Resend returns `{ data, error }` (no throw on API errors) — use
+ * `resendEmailOk` from `@/lib/resendSend` after `emails.send`.
+ *
+ * With the default dev sender `onboarding@resend.dev`, Resend only delivers
+ * to addresses you are allowed to test with (see Resend dashboard / docs).
+ * Production needs `RESEND_FROM` on a verified domain.
  */
 export const APP_DISPLAY_NAME =
   process.env.NEXT_PUBLIC_APP_NAME?.trim() || "Motherland CRM Solutions";

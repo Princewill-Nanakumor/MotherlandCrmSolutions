@@ -18,6 +18,8 @@ import {
   shouldForceLoginLanding,
 } from "@/lib/sessionUtils";
 import { getAuthHeroGlassFieldsCss } from "@/lib/authHeroGlassFieldsCss";
+import { disconnectAblyRealtimeClient } from "@/libs/ablyClient";
+import { disconnectAblyLeadRealtimeClient } from "@/libs/ablyLeadClient";
 import { signOut } from "next-auth/react";
 
 // Animation variants
@@ -116,7 +118,10 @@ function AuthStateHandler() {
     }
     if (staleSignOutStartedRef.current) return;
     staleSignOutStartedRef.current = true;
-    void signOut({ redirect: false });
+    void signOut({ redirect: false }).then(() => {
+      disconnectAblyRealtimeClient();
+      disconnectAblyLeadRealtimeClient();
+    });
   }, [status, session]);
 
   // If session stays "loading" (e.g. /api/auth/session slow or fails in production), show form after 2.5s so user can sign in

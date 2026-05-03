@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { connectMongoDB } from "@/libs/dbConfig";
 import User from "@/models/User";
-import { Resend } from "resend";
+import { Resend, type CreateEmailResponse } from "resend";
 import { z } from "zod";
 import { hashAuthTokenForStorage } from "@/lib/authEmailTokens";
 import {
@@ -21,6 +21,11 @@ import {
   buildClearCaptchaCookieHeader,
   verifyAndConsumeCaptchaCookieAsync,
 } from "@/lib/serverCaptcha";
+import {
+  logResendFailure,
+  resendEmailFailureHint,
+  resendEmailOk,
+} from "@/lib/resendSend";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -236,26 +241,40 @@ export async function POST(req: Request) {
     const user = await User.create(userDataToSave);
 
     let emailSent = false;
+    let sendResult: CreateEmailResponse | null = null;
+    let sendException: string | null = null;
+    const subjectUsed = `${APP_DISPLAY_NAME} - verify your email`;
     if (mustVerify && rawVerificationToken) {
       const origin = getPublicAppOrigin();
       const verificationUrl = `${origin}/verify-email/${rawVerificationToken}`;
       const resend = new Resend(process.env.RESEND_API_KEY);
       try {
-        await resend.emails.send({
+        sendResult = await resend.emails.send({
           from: getResendFrom(),
           to: [user.email],
-          subject: `${APP_DISPLAY_NAME} - verify your email`,
+          subject: subjectUsed,
           html: createVerificationEmailHtml(user.firstName, verificationUrl),
           replyTo: getResendReplyTo(),
           tags: [{ name: "category", value: "email_verification" }],
         });
-        emailSent = true;
+        if (resendEmailOk(sendResult)) {
+          emailSent = true;
+        } else {
+          logResendFailure("signup-verification", sendResult);
+        }
       } catch (emailError) {
+        sendException =
+          emailError instanceof Error ? emailError.message : String(emailError);
         console.error("Failed to send verification email:", emailError);
       }
     }
 
     const status = mustVerify && !emailSent ? 202 : 201;
+
+    const emailSendHint =
+      mustVerify && !emailSent
+        ? resendEmailFailureHint(sendResult, sendException)
+        : null;
 
     return NextResponse.json(
       {
@@ -268,6 +287,7 @@ export async function POST(req: Request) {
         isFirstUser,
         emailVerificationRequired: mustVerify,
         emailSent,
+        ...(emailSendHint ? { emailSendHint } : {}),
       },
       { status },
     );

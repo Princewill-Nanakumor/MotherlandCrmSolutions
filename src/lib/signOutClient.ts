@@ -1,6 +1,8 @@
 "use client";
 
 import { signOut } from "next-auth/react";
+import { disconnectAblyRealtimeClient } from "@/libs/ablyClient";
+import { disconnectAblyLeadRealtimeClient } from "@/libs/ablyLeadClient";
 
 type AppRouterLike = {
   replace: (href: string) => void;
@@ -26,6 +28,8 @@ export async function signOutWithoutInterstitial(
     }
   }
   const result = await signOut({ redirect: false, callbackUrl });
+  disconnectAblyRealtimeClient();
+  disconnectAblyLeadRealtimeClient();
   const target = result?.url ?? callbackUrl;
   if (router) {
     router.replace(target);

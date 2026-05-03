@@ -97,10 +97,17 @@ export interface AdminDetailsResponse {
   activities: ActivityType[];
   ads: Ad[];
   payments: Payment[];
+  /** Set by GET /api/admin/[adminId] — true when the session user is a super admin. */
+  isSuperAdminViewer?: boolean;
 }
 
 export interface PlatformStats {
+  /** All users with role ADMIN (tenant administrator accounts). */
   totalAdmins: number;
+  /** ADMIN accounts whose email is listed in SUPER_ADMIN_EMAILS (subset of totalAdmins). */
+  totalSuperAdmins: number;
+  /** ADMIN accounts not in SUPER_ADMIN_EMAILS — tenant admins without platform super access. */
+  tenantOnlyAdmins: number;
   totalAgents: number;
   totalLeads: number;
   activeSubscriptions: number;
@@ -174,9 +181,12 @@ export interface RawAdminData {
 export interface AdminOverviewResponse {
   admins: AdminStats[];
   platformStats: PlatformStats;
+  /** Lowercased trimmed emails from SUPER_ADMIN_EMAILS (server); used to derive super vs tenant-only counts. */
+  superAdminEmailsNormalized?: string[];
 }
 
 export interface RawAdminOverviewResponse {
   admins: RawAdminData[];
   platformStats: PlatformStats;
+  superAdminEmailsNormalized?: string[];
 }

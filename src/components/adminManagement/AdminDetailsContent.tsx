@@ -32,6 +32,7 @@ export default function AdminDetailsContent() {
   // Extract data from React Query response
   const admin = data?.admin;
   const agents = data?.agents || [];
+  const isSuperAdminViewer = data?.isSuperAdminViewer === true;
   const leads = data?.leads?.data || [];
   const leadsResponse = data?.leads;
   const subscription = data?.subscription;
@@ -264,6 +265,8 @@ export default function AdminDetailsContent() {
         <TabsContent value="agents" className="space-y-4">
           <AgentsList
             agents={agents}
+            tenantAdminId={adminId}
+            isSuperAdmin={isSuperAdminViewer}
             getStatusColor={getStatusColor}
             formatLastLogin={formatLastLogin}
           />

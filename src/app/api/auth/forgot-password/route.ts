@@ -18,6 +18,7 @@ import {
   buildClearCaptchaCookieHeader,
   verifyAndConsumeCaptchaCookieAsync,
 } from "@/lib/serverCaptcha";
+import { logResendFailure, resendEmailOk } from "@/lib/resendSend";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -119,7 +120,7 @@ export async function POST(req: Request) {
         const resetUrl = `${getPublicAppOrigin()}/reset-password/${resetToken}`;
         const resend = new Resend(process.env.RESEND_API_KEY);
 
-        await resend.emails.send({
+        const sendResult = await resend.emails.send({
           from: getResendFrom(),
           to: [user.email],
           subject: `${APP_DISPLAY_NAME} - reset your password`,
@@ -130,6 +131,9 @@ export async function POST(req: Request) {
           replyTo: getResendReplyTo(),
           tags: [{ name: "category", value: "password_reset" }],
         });
+        if (!resendEmailOk(sendResult)) {
+          logResendFailure("forgot-password", sendResult);
+        }
       } catch (emailError) {
         console.error("Failed to send reset email:", emailError);
       }
