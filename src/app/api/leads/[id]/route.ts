@@ -88,15 +88,6 @@ export async function GET(
       return unauthorizedResponse();
     }
 
-    const { searchParams } = new URL(request.url);
-    // `detailPanel=1` only unlocks unmasked PII for ADMINs; agents must rely
-    // solely on `canViewEmails` / `canViewPhoneNumbers`. Without this guard
-    // any agent with read access could append `?detailPanel=1` and bypass
-    // server-side masking.
-    const detailPanel =
-      searchParams.get("detailPanel") === "1" &&
-      session.user.role === "ADMIN";
-
     await connectMongoDB();
     const { id } = await params;
 
@@ -121,17 +112,6 @@ export async function GET(
 
     const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
     const query = buildLeadAccessFilter(session, adminScopeId, baseQuery);
-
-    let canViewEmails = session.user.role !== "AGENT";
-    let canViewPhoneNumbers = session.user.role !== "AGENT";
-    if (session.user.role === "AGENT") {
-      const me = await db.collection("users").findOne(
-        { _id: new ObjectId(session.user.id) },
-        { projection: { canViewEmails: 1, canViewPhoneNumbers: 1 } },
-      );
-      canViewEmails = Boolean(me?.canViewEmails);
-      canViewPhoneNumbers = Boolean(me?.canViewPhoneNumbers);
-    }
 
     const lead = await db.collection("leads").findOne(query);
 
@@ -171,8 +151,16 @@ export async function GET(
       firstName: lead.firstName,
       lastName: lead.lastName,
       name: `${lead.firstName} ${lead.lastName}`,
-      email: maskEmail(lead.email, canViewEmails || detailPanel),
-      phone: maskPhone(lead.phone || "", canViewPhoneNumbers || detailPanel),
+      // Anyone who can read this lead by id may use full contact (dialer / copy).
+      // List endpoints may still mask; this route is the panel detail source of truth.
+      email: maskEmail(
+        typeof lead.email === "string" ? lead.email : "",
+        true,
+      ),
+      phone: maskPhone(
+        typeof lead.phone === "string" ? lead.phone : "",
+        true,
+      ),
       source: lead.source && lead.source !== "-" ? lead.source : "—",
       status: lead.status,
       country: lead.country || "",
@@ -367,17 +355,6 @@ export async function PUT(
       updatedLead.assignedTo,
     );
 
-    let putCanViewEmails = session.user.role !== "AGENT";
-    let putCanViewPhoneNumbers = session.user.role !== "AGENT";
-    if (session.user.role === "AGENT") {
-      const me = await db.collection("users").findOne(
-        { _id: new ObjectId(session.user.id) },
-        { projection: { canViewEmails: 1, canViewPhoneNumbers: 1 } },
-      );
-      putCanViewEmails = Boolean(me?.canViewEmails);
-      putCanViewPhoneNumbers = Boolean(me?.canViewPhoneNumbers);
-    }
-
     const transformedLead = {
       _id: updatedLead._id.toString(),
       id: updatedLead._id.toString(),
@@ -385,8 +362,14 @@ export async function PUT(
       firstName: updatedLead.firstName,
       lastName: updatedLead.lastName,
       name: `${updatedLead.firstName} ${updatedLead.lastName}`,
-      email: maskEmail(updatedLead.email, putCanViewEmails),
-      phone: maskPhone(updatedLead.phone || "", putCanViewPhoneNumbers),
+      email: maskEmail(
+        typeof updatedLead.email === "string" ? updatedLead.email : "",
+        true,
+      ),
+      phone: maskPhone(
+        typeof updatedLead.phone === "string" ? updatedLead.phone : "",
+        true,
+      ),
       source: updatedLead.source,
       status: updatedLead.status,
       country: updatedLead.country || "",

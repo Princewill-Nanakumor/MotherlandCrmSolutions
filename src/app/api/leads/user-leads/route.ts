@@ -5,9 +5,9 @@ import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import Lead from "@/models/Lead";
 import mongoose from "mongoose";
-import { ObjectId } from "mongodb";
 import { agentLeadsInTenantFilter } from "@/lib/leadAssignmentQuery";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
+import { getAgentContactVisibilityFromDb } from "@/lib/getAgentContactVisibilityFromDb";
 
 interface LeadDocument {
   _id: mongoose.Types.ObjectId;
@@ -76,12 +76,9 @@ export async function GET() {
         session.user.id,
       );
 
-      const me = await db.collection("users").findOne(
-        { _id: new ObjectId(session.user.id) },
-        { projection: { canViewEmails: 1, canViewPhoneNumbers: 1 } },
-      );
-      canViewEmails = Boolean(me?.canViewEmails);
-      canViewPhoneNumbers = Boolean(me?.canViewPhoneNumbers);
+      const flags = await getAgentContactVisibilityFromDb(db, session);
+      canViewEmails = flags.canViewEmails;
+      canViewPhoneNumbers = flags.canViewPhoneNumbers;
     } else {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }

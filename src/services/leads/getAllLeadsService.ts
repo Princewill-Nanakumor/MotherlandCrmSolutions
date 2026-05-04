@@ -3,11 +3,14 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
 import { Db, ObjectId } from "mongodb";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
+import { getAgentContactVisibilityFromDb } from "@/lib/getAgentContactVisibilityFromDb";
 
 interface SessionUser {
   id: string;
   role: string;
   adminId?: string;
+  /** Required for agent PII flags to match GET /api/users/me (same as JWT email). */
+  email?: string | null;
 }
 
 interface UserData {
@@ -170,12 +173,16 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
   let canViewEmails = sessionUser.role !== "AGENT";
   let canViewPhoneNumbers = sessionUser.role !== "AGENT";
   if (sessionUser.role === "AGENT") {
-    const me = await db.collection("users").findOne(
-      { _id: new ObjectId(sessionUser.id) },
-      { projection: { canViewEmails: 1, canViewPhoneNumbers: 1 } },
-    );
-    canViewEmails = Boolean(me?.canViewEmails);
-    canViewPhoneNumbers = Boolean(me?.canViewPhoneNumbers);
+    const flags = await getAgentContactVisibilityFromDb(db, {
+      user: {
+        id: sessionUser.id,
+        email: sessionUser.email ?? undefined,
+        adminId: sessionUser.adminId,
+        role: sessionUser.role,
+      },
+    });
+    canViewEmails = flags.canViewEmails;
+    canViewPhoneNumbers = flags.canViewPhoneNumbers;
   }
 
   const baseQuery: LeadFilter = {};

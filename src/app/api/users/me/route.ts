@@ -28,7 +28,8 @@ export async function GET() {
       throw new Error("Database connection not available");
     }
 
-    const query: UserQuery = { email: session.user.email };
+    const emailNormalized = session.user.email.trim().toLowerCase();
+    const query: UserQuery = { email: emailNormalized };
     if (session.user.role === "AGENT") {
       if (session.user.adminId) {
         query.adminId = session.user.adminId;
@@ -41,9 +42,12 @@ export async function GET() {
     let user = await db.collection("users").findOne(query);
 
     if (!user && session.user.role === "AGENT") {
-      user = await db
-        .collection("users")
-        .findOne({ email: session.user.email });
+      user = await db.collection("users").findOne({ email: emailNormalized });
+      if (!user && session.user.email.trim() !== emailNormalized) {
+        user = await db
+          .collection("users")
+          .findOne({ email: session.user.email.trim() });
+      }
     }
 
     if (!user) {

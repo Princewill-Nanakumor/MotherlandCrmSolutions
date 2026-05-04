@@ -71,22 +71,24 @@ export const PhoneField: FC<PhoneFieldProps> = ({
             <div className="flex items-center gap-1 ml-2">
               {onCall ? (
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     onCall(phone);
                   }}
                   className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors text-blue-600 dark:text-blue-400"
-                  title="Call with Zoiper"
+                  title="Click to call"
                 >
                   <PhoneCall className="w-4 h-4" />
                 </button>
               ) : (
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Fallback: try to initiate call even if onCall handler not provided
-                    if (phone) {
-                      window.location.href = `tel:${phone}`;
+                    const digits = (phone || "").replace(/\D/g, "");
+                    if (digits.length >= 3) {
+                      window.location.href = `tel:${encodeURIComponent(digits)}`;
                     }
                   }}
                   className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors text-blue-600 dark:text-blue-400"
@@ -95,8 +97,9 @@ export const PhoneField: FC<PhoneFieldProps> = ({
                   <PhoneCall className="w-4 h-4" />
                 </button>
               )}
-              {onCopy && canViewPhoneNumbers && (
+              {onCopy ? (
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     onCopy(phone);
@@ -110,7 +113,7 @@ export const PhoneField: FC<PhoneFieldProps> = ({
                     <Copy className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                   )}
                 </button>
-              )}
+              ) : null}
             </div>
           )}
         </div>

@@ -10,7 +10,7 @@ import { DetailsSection } from "../leads/leadDetailsPanel/DetailsSection";
 import LeadStatus from "../leads/leadDetailsPanel/LeadStatus";
 import CommentsAndActivities from "../leads/leadDetailsPanel/CommentsAndActivities";
 import AdsImageSlider from "../ads/AdsImageSlider";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { useSession } from "next-auth/react";
 import { LEAD_UPDATED_EVENT, getLeadChannelName } from "@/libs/realtime";
@@ -40,6 +40,39 @@ function findLeadInQueryData(data: unknown, leadId: string): Lead | undefined {
     if (Array.isArray(d.leads)) return d.leads.find((l) => l?._id === leadId);
   }
   return undefined;
+}
+
+/** Keep list caches aligned with GET /api/leads/[id] so reconcile never re-applies masked contact. */
+function mergeContactIntoListCaches(
+  queryClient: QueryClient,
+  leadId: string,
+  email: string,
+  phone: string,
+) {
+  const patch = (old: unknown): unknown => {
+    const apply = (l: Lead): Lead =>
+      l._id === leadId ? { ...l, email, phone } : l;
+    if (Array.isArray(old)) {
+      return (old as Lead[]).map(apply);
+    }
+    if (
+      old &&
+      typeof old === "object" &&
+      Array.isArray((old as { leads?: Lead[] }).leads)
+    ) {
+      const d = old as { leads: Lead[]; total?: number; totalAll?: number };
+      return { ...d, leads: d.leads.map(apply) };
+    }
+    return old;
+  };
+  queryClient.setQueriesData(
+    { predicate: (q) => q.queryKey[0] === "leads" },
+    patch,
+  );
+  queryClient.setQueriesData(
+    { predicate: (q) => q.queryKey[0] === "assignedLeads" },
+    patch,
+  );
 }
 
 export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
@@ -95,13 +128,10 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     let cancelled = false;
     (async () => {
       try {
-        const res = await apiCallWithSessionRefresh(
-          `/api/leads/${lead._id}?detailPanel=1`,
-          {
-            method: "GET",
-            cache: "no-store",
-          },
-        );
+        const res = await apiCallWithSessionRefresh(`/api/leads/${lead._id}`, {
+          method: "GET",
+          cache: "no-store",
+        });
         if (!res.ok || cancelled) return;
         const data = (await res.json()) as Lead;
         if (!data?._id || cancelled) return;
@@ -111,6 +141,12 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           email: data.email,
           phone: data.phone ?? "",
         };
+        mergeContactIntoListCaches(
+          queryClient,
+          data._id,
+          data.email,
+          data.phone ?? "",
+        );
         setCurrentLead((prev) =>
           prev && prev._id === data._id
             ? { ...prev, email: data.email, phone: data.phone }
@@ -124,7 +160,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, lead?._id, session?.user?.id]);
+  }, [isOpen, lead?._id, session?.user?.id, queryClient]);
 
   // Realtime sync. Instead of refetching every leads-list query, we
   //   - re-fetch ONLY the single lead detail (server is source of truth), and
@@ -211,7 +247,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         messageListener = async () => {
           try {
             const response = await apiCallWithSessionRefresh(
-              `/api/leads/${lead._id}?detailPanel=1`,
+              `/api/leads/${lead._id}`,
               {
                 method: "GET",
                 cache: "no-store",
@@ -226,6 +262,12 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
               email: freshLead.email,
               phone: freshLead.phone ?? "",
             };
+            mergeContactIntoListCaches(
+              queryClient,
+              freshLead._id,
+              freshLead.email,
+              freshLead.phone ?? "",
+            );
             previousStatusRef.current = freshLead.status;
             previousLeadRef.current = freshLead;
             setCurrentLead(freshLead);
@@ -292,9 +334,11 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const reconcile = () => {
-      const allLeadKeys = queryClient
-        .getQueryCache()
-        .findAll({ queryKey: ["leads"] });
+      const cache = queryClient.getQueryCache();
+      const allLeadKeys = [
+        ...cache.findAll({ queryKey: ["leads"] }),
+        ...cache.findAll({ queryKey: ["assignedLeads"] }),
+      ];
       let candidate: Lead | undefined;
       let candidateUpdatedAt = 0;
       for (const q of allLeadKeys) {
@@ -337,7 +381,11 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     reconcile();
 
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      if (event.type === "updated" && event.query.queryKey[0] === "leads") {
+      if (
+        event.type === "updated" &&
+        (event.query.queryKey[0] === "leads" ||
+          event.query.queryKey[0] === "assignedLeads")
+      ) {
         if (debounceTimeout) clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(reconcile, 100);
       }

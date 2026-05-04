@@ -7,6 +7,7 @@ import { authOptions } from "@/libs/auth";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { agentAssignedToUserClause } from "@/lib/leadAssignmentQuery";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
+import { getAgentContactVisibilityFromDb } from "@/lib/getAgentContactVisibilityFromDb";
 
 export async function GET() {
   try {
@@ -35,12 +36,12 @@ export async function GET() {
     let canViewEmails = session.user.role !== "AGENT";
     let canViewPhoneNumbers = session.user.role !== "AGENT";
     if (session.user.role === "AGENT" && mongoose.connection.db) {
-      const me = await mongoose.connection.db.collection("users").findOne(
-        { _id: userObjectId },
-        { projection: { canViewEmails: 1, canViewPhoneNumbers: 1 } },
+      const flags = await getAgentContactVisibilityFromDb(
+        mongoose.connection.db,
+        session,
       );
-      canViewEmails = Boolean(me?.canViewEmails);
-      canViewPhoneNumbers = Boolean(me?.canViewPhoneNumbers);
+      canViewEmails = flags.canViewEmails;
+      canViewPhoneNumbers = flags.canViewPhoneNumbers;
     }
 
     const query: Record<string, unknown> =

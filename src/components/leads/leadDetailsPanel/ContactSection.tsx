@@ -24,6 +24,33 @@ import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
 import { useQueryClient } from "@tanstack/react-query";
 import { callLogsKeys } from "@/components/user-management/CallLogsModal";
 
+async function writeTextToClipboard(text: string): Promise<boolean> {
+  try {
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* fall through */
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    ta.style.top = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 interface ContactSectionProps {
   lead: Lead | null;
   isExpanded: boolean;
@@ -42,7 +69,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
   const { dialer } = useDialerSettings();
   const queryClient = useQueryClient();
   const isAdmin = session?.user?.role === "ADMIN";
-  const { canViewPhoneNumbers, isLoading: isLoadingPermission } =
+  const { canViewPhoneNumbers, canViewEmails, isLoading: isLoadingPermission } =
     useCurrentUserPermission();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -64,44 +91,68 @@ export const ContactSection: FC<ContactSectionProps> = ({
   const handleCopy = useCallback(
     async (
       text: string,
-      field: "leadId" | "name" | "email" | "phone" | "country" | "source"
+      field: "leadId" | "name" | "email" | "phone" | "country" | "source",
     ) => {
-      try {
-        await navigator.clipboard.writeText(text);
-        setCopiedField(field);
+      const value = text.trim();
+      if (!value) {
         toast({
-          description: `${
-            field === "leadId"
-              ? "Lead ID"
-              : field === "name"
-                ? "Name"
-                : field === "email"
-                  ? "Email"
-                  : field === "phone"
-                    ? "Phone number"
-                    : field === "country"
-                      ? "Country"
-                      : "Source"
-          } copied to clipboard`,
+          variant: "destructive",
+          description: "Nothing to copy",
         });
-        setTimeout(() => setCopiedField(null), 2000);
-      } catch {
+        return;
+      }
+      const ok = await writeTextToClipboard(value);
+      if (!ok) {
         toast({
           variant: "destructive",
           description: "Failed to copy to clipboard",
         });
+        return;
       }
+      setCopiedField(field);
+      toast({
+        description: `${
+          field === "leadId"
+            ? "Lead ID"
+            : field === "name"
+              ? "Name"
+              : field === "email"
+                ? "Email"
+                : field === "phone"
+                  ? "Phone number"
+                  : field === "country"
+                    ? "Country"
+                    : "Source"
+        } copied to clipboard`,
+      });
+      setTimeout(() => setCopiedField(null), 2000);
     },
-    [toast]
+    [toast],
   );
 
   const handleCall = useCallback(
     async (phoneNumber: string) => {
       try {
-        // Clean the phone number: remove spaces, dashes, parentheses, but keep + sign
-        let cleanedNumber = phoneNumber.replace(/[\s\-\(\)\.]/g, "").trim();
+        // Normalize whitespace and common separators; keep leading +
+        let cleanedNumber = phoneNumber
+          .replace(/[\s\u00A0\-\(\)\.]/g, "")
+          .trim();
+
+        // Do not dial server-masked values (would be only partial digits)
+        if (/[•\u2022]/.test(cleanedNumber)) {
+          toast({
+            variant: "destructive",
+            description:
+              "Full phone is still loading. Close and reopen this lead, or wait a moment.",
+          });
+          return;
+        }
 
         if (!cleanedNumber) {
+          toast({
+            variant: "destructive",
+            description: "No phone number to call",
+          });
           return;
         }
 
@@ -117,8 +168,23 @@ export const ContactSection: FC<ContactSectionProps> = ({
           }
         }
 
-        // Check if dialer is set
         if (!dialer) {
+          window.location.assign(
+            `tel:${encodeURIComponent(cleanedNumber.replace(/\s/g, ""))}`,
+          );
+          try {
+            await fetch("/api/calls/log", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                leadId: lead?._id || null,
+                phoneNumber: cleanedNumber,
+                dialer: "tel",
+              }),
+            });
+          } catch {
+            /* ignore */
+          }
           return;
         }
 
@@ -184,7 +250,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
         console.error("Error initiating call:", error);
       }
     },
-    [dialer, lead, session?.user?.id, queryClient]
+    [dialer, lead, session?.user?.id, queryClient, toast]
   );
 
   const handleEdit = useCallback(() => {
@@ -434,6 +500,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
                 isEditing={false}
                 editedEmail=""
                 onEmailChange={() => {}}
+                maskForDisplay={!canViewEmails}
                 onCopy={(text) => handleCopy(text, "email")}
                 copied={copiedField === "email"}
               />
@@ -443,9 +510,11 @@ export const ContactSection: FC<ContactSectionProps> = ({
                 isEditing={false}
                 editedPhone=""
                 onPhoneChange={() => {}}
-                onCopy={(text) => handleCopy(text, "phone")}
-                onCall={dialer ? handleCall : undefined}
-                copied={copiedField === "phone"}
+                onCopy={
+                  isAdmin ? (text) => handleCopy(text, "phone") : undefined
+                }
+                onCall={handleCall}
+                copied={isAdmin ? copiedField === "phone" : false}
                 canViewPhoneNumbers={canViewPhoneNumbers}
                 isLoadingPermission={isLoadingPermission}
               />

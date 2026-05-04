@@ -2,12 +2,15 @@
 import { FC } from "react";
 import { Mail, Copy, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { maskEmail } from "@/lib/contactMasking";
 
 interface EmailFieldProps {
   email: string;
   isEditing: boolean;
   editedEmail: string;
   onEmailChange: (value: string) => void;
+  /** When true, show masked email but copy still uses the full `email` value. */
+  maskForDisplay?: boolean;
   onCopy?: (text: string) => void;
   copied?: boolean;
 }
@@ -17,6 +20,7 @@ export const EmailField: FC<EmailFieldProps> = ({
   isEditing,
   editedEmail,
   onEmailChange,
+  maskForDisplay = false,
   onCopy,
   copied = false,
 }) => {
@@ -40,24 +44,30 @@ export const EmailField: FC<EmailFieldProps> = ({
     );
   }
 
-  const capitalizedEmail = email.length > 0 
-    ? email.charAt(0).toUpperCase() + email.slice(1)
-    : email;
+  const fullEmail = (email ?? "").trim();
+  const looksServerMasked = /[•\u2022]/.test(fullEmail);
+  const displayEmail =
+    maskForDisplay && fullEmail && !looksServerMasked
+      ? maskEmail(fullEmail, false)
+      : fullEmail;
 
   return (
     <div className="flex items-center gap-3 text-gray-700! dark:text-gray-300!">
       <Mail className="w-5 h-5 text-gray-400! dark:text-gray-500!" />
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <p className="text-sm text-gray-500! dark:text-gray-400!">Email</p>
-        <div className="flex items-center justify-between">
-          <p className="text-gray-900! dark:text-white!">{capitalizedEmail}</p>
-          {onCopy && (
+        <div className="flex items-center justify-between gap-2">
+          <p className="min-w-0 break-all text-gray-900! dark:text-white!">
+            {displayEmail || "—"}
+          </p>
+          {onCopy && fullEmail ? (
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onCopy(email);
+                onCopy(fullEmail);
               }}
-              className="ml-2 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              className="ml-2 shrink-0 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
               title="Copy email"
             >
               {copied ? (
@@ -66,7 +76,7 @@ export const EmailField: FC<EmailFieldProps> = ({
                 <Copy className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               )}
             </button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

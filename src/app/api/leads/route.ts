@@ -10,6 +10,7 @@ import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { agentLeadsInTenantFilter, singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
+import { getAgentContactVisibilityFromDb } from "@/lib/getAgentContactVisibilityFromDb";
 import {
   checkTenantLeadImportAllowed,
   reconcileLeadQuotaOrRollback,
@@ -108,12 +109,12 @@ export async function GET(request: Request) {
       let canViewEmails = session.user.role !== "AGENT";
       let canViewPhoneNumbers = session.user.role !== "AGENT";
       if (session.user.role === "AGENT" && mongoose.connection.db) {
-        const me = await mongoose.connection.db.collection("users").findOne(
-          { _id: new mongoose.Types.ObjectId(session.user.id) },
-          { projection: { canViewEmails: 1, canViewPhoneNumbers: 1 } },
+        const flags = await getAgentContactVisibilityFromDb(
+          mongoose.connection.db,
+          session,
         );
-        canViewEmails = Boolean(me?.canViewEmails);
-        canViewPhoneNumbers = Boolean(me?.canViewPhoneNumbers);
+        canViewEmails = flags.canViewEmails;
+        canViewPhoneNumbers = flags.canViewPhoneNumbers;
       }
 
       const [leads, total] = await Promise.all([
