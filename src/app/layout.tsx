@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Geist_Mono } from "next/font/google";
 import Script from "next/script";
+import { AblyTeardownOutsideDashboard } from "@/components/AblyTeardownOutsideDashboard";
 import "./globals.css";
 // Temporarily removed ClientProviders due to persistent webpack issues
 
@@ -138,6 +139,7 @@ export default function RootLayout({
             __html: JSON.stringify(structuredData),
           }}
         />
+        <AblyTeardownOutsideDashboard />
         {children}
       </body>
     </html>

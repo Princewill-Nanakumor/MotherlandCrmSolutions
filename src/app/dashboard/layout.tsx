@@ -20,7 +20,10 @@ import ReminderNotifications from "@/components/notifications/ReminderNotificati
 import { Toaster } from "@/components/ui/toaster";
 import { SelectedLeadsBanner } from "@/components/dashboardComponents/SelectedLeadsBanner";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
-import { getAblyRealtimeClient } from "@/libs/ablyClient";
+import {
+  disconnectAblyRealtimeClient,
+  getAblyRealtimeClient,
+} from "@/libs/ablyClient";
 import {
   ADMIN_LEADS_UPDATED_EVENT,
   getAdminLeadsChannelName,
@@ -45,6 +48,15 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       hasSeenAuthenticatedRef.current = true;
     }
   }, [status]);
+
+  // Shared Ably client lives in `ablyClient.ts` module scope. Without closing it
+  // when this shell unmounts (e.g. navigate to /login or /signup), the SDK
+  // keeps renewing tokens → GET /api/ably/token 401 once the session is gone.
+  useEffect(() => {
+    return () => {
+      disconnectAblyRealtimeClient();
+    };
+  }, []);
 
   // Keep leads views in sync across tabs/users when status changes happen elsewhere.
   useEffect(() => {

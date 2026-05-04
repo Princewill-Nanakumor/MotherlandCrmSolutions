@@ -1,11 +1,13 @@
 // src/components/dashboardComponents/UserDropdownMenu.tsx
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal, flushSync } from "react-dom";
 import { UserCircle, LogOut, User, Settings, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 import { BalanceDisplay } from "./BalanceDisplay";
 import { PlanDisplay } from "./PlanDisplay";
+import { ShieldSpinnerGlyph } from "./LeadsLoadingState";
 
 export interface UserDropdownMenuProps {
   session: {
@@ -47,6 +49,12 @@ export function UserDropdownMenu({
   dropdownRef,
 }: UserDropdownMenuProps) {
   const router = useRouter();
+  const [logoutLoading, setLogoutLoading] = useState(false);
+  const [portalReady, setPortalReady] = useState(false);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   const isAdmin =
     session?.user?.role === "ADMIN" || userProfile?.role === "ADMIN";
@@ -72,15 +80,43 @@ export function UserDropdownMenu({
   };
 
   const handleLogout = async () => {
-    setDropdownOpen(false);
-    await signOutWithoutInterstitial("/", router, { intentional: true });
+    if (logoutLoading) return;
+    // Paint spinner before signOut clears the session (otherwise React batches
+    // and the dashboard can flash wrong nav before navigation).
+    flushSync(() => {
+      setLogoutLoading(true);
+    });
+    try {
+      await signOutWithoutInterstitial("/", router, { intentional: true });
+    } catch {
+      setLogoutLoading(false);
+    }
   };
 
   return (
     <div className="relative" ref={dropdownRef}>
+      {portalReady && logoutLoading
+        ? createPortal(
+            <div
+              role="alert"
+              aria-live="assertive"
+              aria-busy="true"
+              className="fixed inset-0 z-9999 flex items-center justify-center bg-black/30 backdrop-blur-[1px] dark:bg-black/55"
+            >
+              <div className="flex flex-col items-center gap-4 rounded-xl bg-white px-10 py-8 shadow-2xl ring-1 ring-black/10 dark:bg-gray-900 dark:ring-white/15">
+                <ShieldSpinnerGlyph />
+                <p className="text-center text-sm font-semibold text-gray-900! dark:text-white!">
+                  Logging out…
+                </p>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
       <button
         className="p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-50"
-        onClick={() => setDropdownOpen(!dropdownOpen)}
+        onClick={() => !logoutLoading && setDropdownOpen(!dropdownOpen)}
+        disabled={logoutLoading}
         aria-haspopup="true"
         aria-expanded={dropdownOpen}
         aria-label="User menu"
@@ -95,7 +131,7 @@ export function UserDropdownMenu({
         <div className="absolute right-0 z-60 mt-2 w-[min(100vw-1.5rem,16rem)] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-md bg-white opacity-100 shadow-xl ring-1 ring-black/10 transition-all duration-200 ease-out divide-y divide-gray-100 origin-top-right transform scale-100 dark:divide-gray-700 dark:bg-gray-800 dark:ring-white/10 sm:w-60">
           {/* User Info Section */}
           <div className="px-4 py-3">
-            <div className="ml-3 min-w-0 max-w-full pr-1 sm:max-w-[13.5rem]">
+            <div className="max-w-full min-w-0 pr-1 ml-3 sm:max-w-54">
               <p className="text-sm font-medium text-gray-900! dark:text-white! break-all">
                 {session?.user?.firstName && session?.user?.lastName
                   ? `${session.user.firstName} ${session.user.lastName}`
@@ -127,15 +163,19 @@ export function UserDropdownMenu({
           {/* Menu Items */}
           <div className="py-1 ml-4">
             <button
+              type="button"
               onClick={handleProfile}
-              className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out"
+              disabled={logoutLoading}
+              className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out disabled:pointer-events-none disabled:opacity-50"
             >
               <User className="w-4 h-4 mr-3 text-purple-500 dark:text-purple-400" />
               Profile
             </button>
             <button
+              type="button"
               onClick={handleSettings}
-              className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out"
+              disabled={logoutLoading}
+              className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out disabled:pointer-events-none disabled:opacity-50"
             >
               <Settings className="w-4 h-4 mr-3 text-blue-500 dark:text-blue-400" />
               Settings
@@ -144,7 +184,8 @@ export function UserDropdownMenu({
               <button
                 type="button"
                 onClick={handleAdminManagement}
-                className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out"
+                disabled={logoutLoading}
+                className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out disabled:pointer-events-none disabled:opacity-50"
               >
                 <Shield className="w-4 h-4 mr-3 text-amber-600 dark:text-amber-400" />
                 Admin management
@@ -153,11 +194,34 @@ export function UserDropdownMenu({
           </div>
           <div className="py-1 ml-4">
             <button
+              type="button"
               onClick={handleLogout}
-              className="flex w-full items-center px-4 py-2.5 text-sm text-red-600! dark:text-red-400! hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150 ease-in-out"
+              disabled={logoutLoading}
+              aria-busy={logoutLoading}
+              aria-label={logoutLoading ? "Logging out" : "Log out"}
+              className="flex w-full items-center px-4 py-2.5 text-sm text-red-600! dark:text-red-400! hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150 ease-in-out disabled:pointer-events-none disabled:opacity-90"
             >
-              <LogOut className="w-4 h-4 mr-3" />
-              Logout
+              {logoutLoading ? (
+                <div
+                  className="mr-3 flex h-6 w-6 shrink-0 items-center justify-center"
+                  aria-hidden
+                >
+                  <div className="origin-center scale-[0.25]">
+                    <ShieldSpinnerGlyph />
+                  </div>
+                </div>
+              ) : (
+                <LogOut className="w-4 h-4 mr-3 shrink-0" aria-hidden />
+              )}
+              <span
+                className={
+                  logoutLoading
+                    ? "text-red-700! dark:text-red-200!"
+                    : undefined
+                }
+              >
+                {logoutLoading ? "Logging out…" : "Logout"}
+              </span>
             </button>
           </div>
         </div>

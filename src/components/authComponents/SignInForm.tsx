@@ -47,7 +47,6 @@ export default function SignInForm() {
     formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(LoginSchema),
-    defaultValues: { remember: false },
   });
 
   const isFormDisabled = loading || !!formSuccess;
@@ -86,9 +85,6 @@ export default function SignInForm() {
         email: data.email,
         password: data.password,
         captcha: captchaInput,
-        // Credentials provider only forwards declared fields and they arrive
-        // as strings; coerce explicitly so authorize() can read it.
-        remember: data.remember ? "true" : "false",
         redirect: false,
       });
 
@@ -282,18 +278,7 @@ export default function SignInForm() {
         )}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <label className="flex items-center space-x-2">
-            <input
-              {...register("remember")}
-              type="checkbox"
-              disabled={isFormDisabled}
-              className={`h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 bg-white ${
-                isFormDisabled ? "opacity-75 cursor-not-allowed" : "cursor-pointer"
-              }`}
-            />
-            <span className="text-sm font-semibold text-white!">Remember me</span>
-          </label>
+        <div className="flex flex-wrap justify-end gap-2">
           {isFormDisabled ? (
             <span
               aria-disabled

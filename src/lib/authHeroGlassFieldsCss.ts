@@ -6,15 +6,15 @@
  * Visual language matches sign-in: solid white 1px border, hover fill, focus inset ring
  * (no border-width change — avoids card layout shift).
  */
-const AUTH_HERO_GLASS_BODY_SELECTORS = [
-  "body.is-login-page",
-  "body.is-signup-page",
-  "body.is-auth-forgot-page",
-  "body.is-auth-reset-page",
+const AUTH_HERO_GLASS_PAGE_ROOTS = [
+  ":is(html, body).is-login-page",
+  ":is(html, body).is-signup-page",
+  ":is(html, body).is-auth-forgot-page",
+  ":is(html, body).is-auth-reset-page",
 ] as const;
 
 function scope(selectorTail: string): string {
-  return AUTH_HERO_GLASS_BODY_SELECTORS.map((b) => `${b} ${selectorTail}`).join(
+  return AUTH_HERO_GLASS_PAGE_ROOTS.map((root) => `${root} ${selectorTail}`).join(
     ",\n",
   );
 }
@@ -28,6 +28,7 @@ ${scope('[data-auth-glass-fields] input:not([type="checkbox"])')} {
   border-radius: 0.375rem !important;
   background-color: rgba(255, 255, 255, 0.1) !important;
   color: rgb(255, 255, 255) !important;
+  color-scheme: dark !important;
   font-size: 0.875rem !important;
   font-weight: 600 !important;
   outline: none !important;
@@ -73,21 +74,39 @@ ${scope('[data-auth-glass-fields] textarea:-webkit-autofill')},
 ${scope('[data-auth-glass-fields] textarea:-webkit-autofill:hover')},
 ${scope('[data-auth-glass-fields] textarea:-webkit-autofill:focus')},
 ${scope('[data-auth-glass-fields] textarea:-webkit-autofill:active')} {
+  /* Delay UA autofill background so our fill + inset shadow stay visible (Chrome/Safari). */
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 600000s ease 0s !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
   -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
   box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
   -webkit-text-fill-color: rgb(255, 255, 255) !important;
   caret-color: rgb(255, 255, 255) !important;
+  color-scheme: dark !important;
 }
 ${scope('[data-auth-glass-fields] input.border-red-500:not([type="checkbox"]):-webkit-autofill')},
 ${scope('[data-auth-glass-fields] input.border-red-500:not([type="checkbox"]):-webkit-autofill:hover')},
 ${scope('[data-auth-glass-fields] input.border-red-500:not([type="checkbox"]):-webkit-autofill:focus')},
 ${scope('[data-auth-glass-fields] input.border-red-500:not([type="checkbox"]):-webkit-autofill:active')} {
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 600000s ease 0s !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
   -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
   box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
   -webkit-text-fill-color: rgb(255, 255, 255) !important;
   caret-color: rgb(255, 255, 255) !important;
+  color-scheme: dark !important;
 }
 ${scope('[data-auth-glass-fields] input:not([type="checkbox"]):not(.border-red-500):-webkit-autofill:focus-visible')} {
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 600000s ease 0s !important;
+  background-color: rgba(255, 255, 255, 0.24) !important;
   -webkit-box-shadow:
     0 0 0 1000px rgba(255, 255, 255, 0.24) inset,
     inset 0 0 0 2px rgba(255, 255, 255, 0.45) !important;
@@ -96,8 +115,14 @@ ${scope('[data-auth-glass-fields] input:not([type="checkbox"]):not(.border-red-5
     inset 0 0 0 2px rgba(255, 255, 255, 0.45) !important;
   -webkit-text-fill-color: rgb(255, 255, 255) !important;
   caret-color: rgb(255, 255, 255) !important;
+  color-scheme: dark !important;
 }
 ${scope('[data-auth-glass-fields] input.border-red-500:not([type="checkbox"]):-webkit-autofill:focus-visible')} {
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 600000s ease 0s !important;
+  background-color: rgba(255, 255, 255, 0.16) !important;
   -webkit-box-shadow:
     0 0 0 1000px rgba(255, 255, 255, 0.16) inset,
     inset 0 0 0 2px rgba(248, 113, 113, 0.5) !important;
@@ -106,6 +131,7 @@ ${scope('[data-auth-glass-fields] input.border-red-500:not([type="checkbox"]):-w
     inset 0 0 0 2px rgba(248, 113, 113, 0.5) !important;
   -webkit-text-fill-color: rgb(255, 255, 255) !important;
   caret-color: rgb(255, 255, 255) !important;
+  color-scheme: dark !important;
 }
 `.trim();
 }

@@ -101,7 +101,6 @@ export const LoginSchema = z.object({
     .min(6, { message: "Password must be at least 6 characters" })
     .max(20, { message: "Password must be at most 20 characters" }),
   code: z.optional(z.string()),
-  remember: z.boolean().optional(),
 });
 
 export const SignUpSchema = z
