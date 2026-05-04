@@ -40,7 +40,7 @@ export const CommentForm: FC<CommentFormProps> = ({
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold text-gray-800! dark:text-white!">
           Comment
         </h3>
@@ -85,7 +85,7 @@ export const CommentForm: FC<CommentFormProps> = ({
               {isSaving ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Posting...
+                  Commenting...
                 </>
               ) : (
                 <>
