@@ -76,18 +76,19 @@ export default function Sidebar() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const hasSeenAuthenticatedRef = useRef(false);
-  const lastKnownIsAdminRef = useRef(false);
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.id) {
       hasSeenAuthenticatedRef.current = true;
-      lastKnownIsAdminRef.current = session.user.role === "ADMIN";
+    }
+    if (status === "unauthenticated") {
+      hasSeenAuthenticatedRef.current = false;
     }
   }, [status, session?.user?.id, session?.user?.role]);
 
-  const isAdmin =
-    session?.user?.role === "ADMIN" ||
-    (status === "loading" && lastKnownIsAdminRef.current);
+  // Never infer ADMIN from a previous session during `loading` — that leaked
+  // admin nav (and links) to agents after an admin logged out on the same tab.
+  const isAdmin = session?.user?.role === "ADMIN";
 
   // Check session on pathname change and redirect if unauthenticated
   useEffect(() => {

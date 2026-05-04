@@ -2,6 +2,7 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import { SESSION_MAX_AGE_SECONDS } from "@/lib/sessionMaxAge";
+import { isAdminOnlyDashboardPath } from "@/lib/dashboardAdminOnlyPaths";
 
 // NOTE: Middleware only runs for paths in `config.matcher` below
 // (`/dashboard/*`, `/admin/*`, `/api/protected/*`). Most entries here are not
@@ -114,6 +115,16 @@ export default withAuth(
       const url = request.nextUrl;
       const callbackUrl = url.pathname + (url.search || "");
       return NextResponse.redirect(buildLoginUrl(callbackUrl));
+    }
+
+    // ✅ Dashboard routes that are ADMIN-only (agents may not open by URL)
+    if (
+      isDashboardPage &&
+      isAuth &&
+      token?.role !== "ADMIN" &&
+      isAdminOnlyDashboardPath(path)
+    ) {
+      return NextResponse.redirect(new URL("/dashboard/leads", request.url));
     }
 
     // ✅ Protect admin routes by role

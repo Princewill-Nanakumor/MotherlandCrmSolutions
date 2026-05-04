@@ -314,7 +314,7 @@ export async function GET() {
 
     return NextResponse.json({
       admins: adminStats,
-      superAdminEmailsNormalized,
+      superAdminEmailsNormalized: Array.from(allowedEmailsNormalized),
       platformStats: {
         totalAdmins,
         totalSuperAdmins,

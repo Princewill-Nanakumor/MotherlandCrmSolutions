@@ -29,6 +29,7 @@ import {
   getAdminLeadsChannelName,
 } from "@/libs/realtime";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { isAdminOnlyDashboardPath } from "@/lib/dashboardAdminOnlyPaths";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { searchQuery, setSearchQuery, isLoading } = useSearchContext();
@@ -231,6 +232,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     pathname?.startsWith("/dashboard/leads/");
 
   const isAdmin = session?.user?.role === "ADMIN";
+
+  // Agents must not open admin-only dashboard URLs (bookmarks / typed paths).
+  useEffect(() => {
+    if (status !== "authenticated" || !pathname) return;
+    if (session?.user?.role === "ADMIN") return;
+    if (!isAdminOnlyDashboardPath(pathname)) return;
+    router.replace("/dashboard/leads");
+  }, [status, session?.user?.role, pathname, router]);
 
   // Show toggle buttons for:
   // - Admin users on admin leads pages (/all-leads)
