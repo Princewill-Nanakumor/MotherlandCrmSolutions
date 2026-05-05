@@ -123,7 +123,7 @@ export const UserLeadsTableContainer: React.FC<
   });
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+    <div>
       <UserLeadTableControls
         pageSize={pageSize}
         pageIndex={pageIndex}

@@ -23,5 +23,5 @@ export function URLStateManager({ children }: URLStateManagerProps) {
     }
   }, [searchParams, filterByCountry]);
 
-  return <div>{children}</div>;
+  return <>{children}</>;
 }

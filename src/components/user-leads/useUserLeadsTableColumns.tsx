@@ -291,13 +291,15 @@ export const useUserLeadsTableColumns = ({
 
           if (statusesLoading) {
             return (
-              <div className="flex items-center justify-center">
+              <div className="w-full min-w-0">
                 <Badge
                   variant="outline"
-                  className="flex items-center gap-1.5 text-gray-900! dark:text-white!"
+                  className="flex items-center gap-1.5 w-full max-w-30 justify-center dark:border-gray-700"
                 >
-                  <Loader2 className="h-3 w-3 animate-spin text-gray-900! dark:text-white!" />
-                  Loading...
+                  <Loader2 className="w-3 h-3 animate-spin dark:text-gray-400 shrink-0" />
+                  <span className="text-xs truncate dark:text-gray-400">
+                    Loading...
+                  </span>
                 </Badge>
               </div>
             );
@@ -311,17 +313,18 @@ export const useUserLeadsTableColumns = ({
           } as React.CSSProperties;
 
           return (
-            <div className="flex items-center justify-center">
+            <div className="w-full min-w-0">
               <Badge
                 variant="outline"
                 style={statusStyle}
-                className="flex items-center gap-1.5"
+                className="flex items-center gap-1.5 w-full max-w-30 justify-center dark:border-gray-700"
+                title={currentStatus.name}
               >
                 <div
-                  className="w-1.5 h-1.5 rounded-full"
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
                   style={{ backgroundColor: currentStatus.color }}
                 />
-                <span className="text-xs font-medium text-black! dark:text-(--status-color)!">
+                <span className="text-xs truncate text-black! dark:text-(--status-color)!">
                   {currentStatus.name}
                 </span>
               </Badge>

@@ -178,7 +178,7 @@ export function UserLeadsMainContent({
       };
 
   return (
-    <div className="flex flex-col min-h-0 h-full border rounded-lg bg-background dark:bg-gray-800">
+    <div className="flex flex-col flex-1 min-h-0 h-full border rounded-lg bg-background dark:bg-gray-800">
       <div
         className={`shrink-0 transition-opacity duration-300 ease-in-out ${showHeader ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         style={{ marginBottom: showHeader ? "0" : "-100px", transition: "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out" }}
