@@ -4,7 +4,10 @@ import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
-import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import {
+  publishAdminLeadsUpdatedEvent,
+  publishLeadUpdatedEvent,
+} from "@/libs/ablyServer";
 
 interface AssignLeadsRequest {
   leadIds: string[];
@@ -192,6 +195,11 @@ export async function POST(request: Request) {
         })
       )
     );
+    await publishAdminLeadsUpdatedEvent(adminObjectId.toString(), {
+      type: "lead_assigned_bulk",
+      leadIds: beforeLeads.map((lead) => lead._id.toString()),
+      assignedTo: userId,
+    });
 
     return NextResponse.json({
       success: true,

@@ -4,7 +4,10 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
-import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import {
+  publishAdminLeadsUpdatedEvent,
+  publishLeadUpdatedEvent,
+} from "@/libs/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 
@@ -151,6 +154,10 @@ export async function POST(request: Request) {
       const adminScope = await withAdminScope(session, async (adminId) => adminId);
       if (adminScope) {
         await publishLeadUpdatedEvent(String(adminScope), id, {
+          type: "lead_assigned",
+          leadId: id,
+        });
+        await publishAdminLeadsUpdatedEvent(String(adminScope), {
           type: "lead_assigned",
           leadId: id,
         });

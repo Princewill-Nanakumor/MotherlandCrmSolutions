@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
+import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { rateLimitEnhanced } from "@/lib/rateLimit";
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
 
     const mongoSession = await mongoose.startSession();
     let deletedCount = 0;
+    let deletedLeadIds: string[] = [];
     try {
       await mongoSession.withTransaction(async () => {
         const leadsToDelete = (await db
@@ -87,6 +89,7 @@ export async function POST(request: NextRequest) {
         }
 
         const leadIdsToDelete = leadsToDelete.map((lead) => lead._id);
+        deletedLeadIds = leadIdsToDelete.map((id) => id.toString());
 
         const deleteResult = await db.collection("leads").deleteMany(
           {
@@ -115,6 +118,18 @@ export async function POST(request: NextRequest) {
       throw error;
     } finally {
       await mongoSession.endSession();
+    }
+
+    if (deletedCount > 0) {
+      try {
+        await publishAdminLeadsUpdatedEvent(adminScopeId, {
+          type: "bulk_deleted",
+          leadIds: deletedLeadIds,
+          deletedCount,
+        });
+      } catch (publishError) {
+        console.error("Failed to publish realtime bulk delete event:", publishError);
+      }
     }
 
     return NextResponse.json({
