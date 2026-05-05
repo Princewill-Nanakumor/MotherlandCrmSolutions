@@ -30,6 +30,7 @@ import {
 } from "@/libs/realtime";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { isAdminOnlyDashboardPath } from "@/lib/dashboardAdminOnlyPaths";
+import { hasRecentIntentionalSignOut } from "@/lib/sessionUtils";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { searchQuery, setSearchQuery, isLoading } = useSearchContext();
@@ -394,14 +395,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     if (status === "loading") return;
     if (status !== "unauthenticated") return;
 
-    try {
-      if (sessionStorage.getItem("auth:intentionalSignOut") === "1") {
-        return;
-      }
-    } catch {
-      /* ignore */
-    }
-
     /**
      * `markExpired=true` only when we know the previous session actually
      * expired (`hasSeenAuthenticatedRef`). For the post-signin handshake
@@ -425,6 +418,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       const loginUrl = `/login?${params.toString()}`;
       void signOutWithoutInterstitial(loginUrl, router);
     };
+
+    // Manual logout happened in this or another tab:
+    // redirect to login without "expired" marker/toast.
+    if (hasRecentIntentionalSignOut()) {
+      redirectToLogin(false);
+      return;
+    }
 
     // Right after successful login we may briefly see "unauthenticated" while
     // NextAuth finishes hydrating the new cookie in the dashboard tree.

@@ -2,6 +2,10 @@
 
 import type { Session } from "next-auth";
 
+const INTENTIONAL_SIGN_OUT_SESSION_KEY = "auth:intentionalSignOut";
+const INTENTIONAL_SIGN_OUT_AT_KEY = "auth:intentionalSignOutAt";
+const INTENTIONAL_SIGN_OUT_TTL_MS = 60_000;
+
 /**
  * NextAuth marks status "authenticated" whenever /api/auth/session returns a non-null body.
  * Invalid/expired JWTs must not be treated as logged-in (empty user.id used to still count).
@@ -60,4 +64,60 @@ export function shouldBlockLoginAutoRedirect(
   session: Session | null | undefined,
 ): boolean {
   return shouldClearStaleSessionOnLoginPage(status, session);
+}
+
+export function markIntentionalSignOut(): void {
+  if (typeof window === "undefined") return;
+  const now = Date.now().toString();
+  try {
+    sessionStorage.setItem(INTENTIONAL_SIGN_OUT_SESSION_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+  try {
+    localStorage.setItem(INTENTIONAL_SIGN_OUT_AT_KEY, now);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function hasRecentIntentionalSignOut(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (sessionStorage.getItem(INTENTIONAL_SIGN_OUT_SESSION_KEY) === "1") {
+      return true;
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    const raw = localStorage.getItem(INTENTIONAL_SIGN_OUT_AT_KEY);
+    if (!raw) return false;
+    const ts = Number(raw);
+    if (!Number.isFinite(ts)) {
+      localStorage.removeItem(INTENTIONAL_SIGN_OUT_AT_KEY);
+      return false;
+    }
+    if (Date.now() - ts <= INTENTIONAL_SIGN_OUT_TTL_MS) {
+      return true;
+    }
+    localStorage.removeItem(INTENTIONAL_SIGN_OUT_AT_KEY);
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+export function clearIntentionalSignOutMarkers(): void {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(INTENTIONAL_SIGN_OUT_SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+  try {
+    localStorage.removeItem(INTENTIONAL_SIGN_OUT_AT_KEY);
+  } catch {
+    /* ignore */
+  }
 }

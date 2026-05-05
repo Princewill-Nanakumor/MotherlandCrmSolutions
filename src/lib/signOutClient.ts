@@ -3,6 +3,7 @@
 import { getCsrfToken, signOut } from "next-auth/react";
 import { disconnectAblyRealtimeClient } from "@/libs/ablyClient";
 import { disconnectAblyLeadRealtimeClient } from "@/libs/ablyLeadClient";
+import { markIntentionalSignOut } from "@/lib/sessionUtils";
 
 type AppRouterLike = {
   replace: (href: string) => void;
@@ -66,11 +67,7 @@ export async function signOutWithoutInterstitial(
   options?: SignOutWithoutInterstitialOptions,
 ) {
   if (options?.intentional && typeof window !== "undefined") {
-    try {
-      sessionStorage.setItem("auth:intentionalSignOut", "1");
-    } catch {
-      /* ignore */
-    }
+    markIntentionalSignOut();
     await postNextAuthSignOutThenNavigate(callbackUrl);
     return;
   }

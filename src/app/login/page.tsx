@@ -12,6 +12,7 @@ import {
   LoadingSpinnerWithCaption,
 } from "@/components/dashboardComponents/LeadsLoadingState";
 import {
+  clearIntentionalSignOutMarkers,
   hasAuthorizedSession,
   shouldBlockLoginAutoRedirect,
   shouldClearStaleSessionOnLoginPage,
@@ -175,11 +176,7 @@ export default function LoginPage() {
   // Clear one-time marker used to suppress expiry redirects after manual sign-out.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      sessionStorage.removeItem("auth:intentionalSignOut");
-    } catch {
-      /* ignore */
-    }
+    clearIntentionalSignOutMarkers();
   }, []);
 
   // Check if session expired and show toast (from ?expired=true or localStorage.sessionExpired)

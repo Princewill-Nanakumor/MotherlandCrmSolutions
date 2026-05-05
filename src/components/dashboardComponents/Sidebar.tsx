@@ -20,6 +20,7 @@ import {
   Crown,
 } from "lucide-react";
 import { cn } from "@/libs/utils";
+import { hasRecentIntentionalSignOut } from "@/lib/sessionUtils";
 
 interface NavItem {
   href: string;
@@ -94,12 +95,8 @@ export default function Sidebar() {
   useEffect(() => {
     if (status === "unauthenticated" || (!session && status !== "loading")) {
       // Manual logout should not be treated as "session expired".
-      try {
-        if (sessionStorage.getItem("auth:intentionalSignOut") === "1") {
-          return;
-        }
-      } catch {
-        /* ignore */
+      if (hasRecentIntentionalSignOut()) {
+        return;
       }
 
       // Post-signin handshake race: SignInForm sets `auth:navigating` right

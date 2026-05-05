@@ -1,5 +1,7 @@
 // src/lib/apiUtils.ts
 
+import { hasRecentIntentionalSignOut } from "@/lib/sessionUtils";
+
 export type ApiCallOptions = RequestInit & {
   /** Request timeout in ms (default 60000). Retry after 401 uses the same value. */
   timeoutMs?: number;
@@ -48,14 +50,7 @@ export const apiCallWithSessionRefresh = async (
       // User intentionally logged out (manual sign-out). Avoid converting that
       // race into an "expired session" redirect while in-flight requests fail.
       if (typeof window !== "undefined") {
-        let intentionalSignOut = false;
-        try {
-          intentionalSignOut =
-            sessionStorage.getItem("auth:intentionalSignOut") === "1";
-        } catch {
-          /* ignore storage access issues */
-        }
-        if (intentionalSignOut) {
+        if (hasRecentIntentionalSignOut()) {
           return response;
         }
       }
