@@ -6,7 +6,10 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import Comment, { IComment } from "@/models/Comment";
 import Lead from "@/models/Lead";
-import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import {
+  publishAdminLeadsUpdatedEvent,
+  publishLeadUpdatedEvent,
+} from "@/libs/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 
@@ -136,6 +139,8 @@ export async function POST(request: Request) {
       );
     }
 
+    const canonicalLeadId = leadObjectId.toString();
+
     const savedComment = await Comment.create({
       leadId: leadObjectId,
       content: content.trim(),
@@ -148,9 +153,14 @@ export async function POST(request: Request) {
     });
 
     try {
-      await publishLeadUpdatedEvent(adminId.toString(), id, {
+      await publishLeadUpdatedEvent(adminId.toString(), canonicalLeadId, {
         type: "comment_created",
-        leadId: id,
+        leadId: canonicalLeadId,
+        commentId: savedComment._id.toString(),
+      });
+      await publishAdminLeadsUpdatedEvent(adminId.toString(), {
+        type: "comment_created",
+        leadId: canonicalLeadId,
         commentId: savedComment._id.toString(),
       });
     } catch (publishError) {

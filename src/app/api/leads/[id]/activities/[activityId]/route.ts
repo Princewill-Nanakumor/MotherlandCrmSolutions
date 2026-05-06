@@ -6,7 +6,10 @@ import { authOptions } from "@/libs/auth";
 import Activity from "@/models/Activity";
 import Lead from "@/models/Lead";
 import mongoose from "mongoose";
-import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import {
+  publishAdminLeadsUpdatedEvent,
+  publishLeadUpdatedEvent,
+} from "@/libs/ablyServer";
 import { forbiddenResponse } from "@/lib/apiResponses";
 
 function extractParamsFromUrl(urlString: string): {
@@ -103,6 +106,11 @@ export async function DELETE(request: Request) {
 
     try {
       await publishLeadUpdatedEvent(adminId.toString(), leadId, {
+        type: "activity_deleted",
+        leadId,
+        activityId,
+      });
+      await publishAdminLeadsUpdatedEvent(adminId.toString(), {
         type: "activity_deleted",
         leadId,
         activityId,

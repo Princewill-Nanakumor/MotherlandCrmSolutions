@@ -122,9 +122,13 @@ export const CommentsAndActivitiesCombined: FC<
   // Combine and sort comments and activities by timestamp (newest first)
   const combinedItems: CombinedItem[] = useMemo(() => {
     const items: CombinedItem[] = [];
+    const seenCommentIds = new Set<string>();
+    const seenActivityIds = new Set<string>();
 
     // Add comments
     comments.forEach((comment) => {
+      if (seenCommentIds.has(comment._id)) return;
+      seenCommentIds.add(comment._id);
       const timestamp = new Date(comment.createdAt);
       if (!isNaN(timestamp.getTime())) {
         items.push({
@@ -138,6 +142,8 @@ export const CommentsAndActivitiesCombined: FC<
 
     // Add activities (excluding COMMENT type as they're now shown as comments)
     activities.forEach((activity) => {
+      if (seenActivityIds.has(activity._id)) return;
+      seenActivityIds.add(activity._id);
       const timestamp = new Date(activity.createdAt);
       if (!isNaN(timestamp.getTime())) {
         items.push({
@@ -173,7 +179,11 @@ export const CommentsAndActivitiesCombined: FC<
     onSuccess: (newComment) => {
       queryClient.setQueryData(
         ["comments", leadId],
-        (oldComments: Comment[] = []) => [newComment, ...oldComments],
+        (oldComments: Comment[] = []) => {
+          // Refetch from realtime invalidation may already include this row — avoid duplicate keys.
+          const rest = oldComments.filter((c) => c._id !== newComment._id);
+          return [newComment, ...rest];
+        },
       );
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });

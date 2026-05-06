@@ -6,7 +6,10 @@ import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
 import { Db, ObjectId } from "mongodb";
-import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import {
+  publishAdminLeadsUpdatedEvent,
+  publishLeadUpdatedEvent,
+} from "@/libs/ablyServer";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { agentAssignedToUserClause } from "@/lib/leadAssignmentQuery";
@@ -392,6 +395,10 @@ export async function PUT(
 
     try {
       await publishLeadUpdatedEvent(String(adminScopeId), id, {
+        type: "lead_updated",
+        leadId: id,
+      });
+      await publishAdminLeadsUpdatedEvent(String(adminScopeId), {
         type: "lead_updated",
         leadId: id,
       });

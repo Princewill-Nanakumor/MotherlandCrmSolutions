@@ -6,7 +6,10 @@ import { authOptions } from "@/libs/auth";
 import Comment from "@/models/Comment";
 import Lead from "@/models/Lead";
 import mongoose from "mongoose";
-import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import {
+  publishAdminLeadsUpdatedEvent,
+  publishLeadUpdatedEvent,
+} from "@/libs/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 
@@ -163,6 +166,8 @@ export async function PUT(request: Request) {
       return NextResponse.json({ message: auth.message }, { status: auth.status });
     }
 
+    const canonicalLeadId = auth.comment.leadId.toString();
+
     const updated = await Comment.findOneAndUpdate(
       { _id: auth.comment._id, adminId },
       { content: content.trim() },
@@ -177,9 +182,14 @@ export async function PUT(request: Request) {
     }
 
     try {
-      await publishLeadUpdatedEvent(adminId.toString(), id, {
+      await publishLeadUpdatedEvent(adminId.toString(), canonicalLeadId, {
         type: "comment_updated",
-        leadId: id,
+        leadId: canonicalLeadId,
+        commentId: updated._id.toString(),
+      });
+      await publishAdminLeadsUpdatedEvent(adminId.toString(), {
+        type: "comment_updated",
+        leadId: canonicalLeadId,
         commentId: updated._id.toString(),
       });
     } catch (publishError) {
@@ -217,6 +227,8 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ message: auth.message }, { status: auth.status });
     }
 
+    const canonicalLeadId = auth.comment.leadId.toString();
+
     const deleted = await Comment.findOneAndDelete({
       _id: auth.comment._id,
       adminId,
@@ -230,9 +242,14 @@ export async function DELETE(request: Request) {
     }
 
     try {
-      await publishLeadUpdatedEvent(adminId.toString(), id, {
+      await publishLeadUpdatedEvent(adminId.toString(), canonicalLeadId, {
         type: "comment_deleted",
-        leadId: id,
+        leadId: canonicalLeadId,
+        commentId: deleted._id.toString(),
+      });
+      await publishAdminLeadsUpdatedEvent(adminId.toString(), {
+        type: "comment_deleted",
+        leadId: canonicalLeadId,
         commentId: deleted._id.toString(),
       });
     } catch (publishError) {

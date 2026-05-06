@@ -95,10 +95,12 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
       return transformComment(newComment);
     },
     onSuccess: (newComment) => {
-      // Optimistically update the cache
       queryClient.setQueryData(
         ["comments", leadId],
-        (oldComments: Comment[] = []) => [newComment, ...oldComments],
+        (oldComments: Comment[] = []) => {
+          const rest = oldComments.filter((c) => c._id !== newComment._id);
+          return [newComment, ...rest];
+        },
       );
 
       // Don't invalidate activities - comments don't create activities anymore

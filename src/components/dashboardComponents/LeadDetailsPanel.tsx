@@ -176,6 +176,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         listener: (message: { data?: unknown }) => void,
       ) => void;
       detach: () => Promise<void>;
+      state?: string;
     } | null = null;
     let messageListener: ((message: { data?: unknown }) => void) | null = null;
     let channelName: string | null = null;
@@ -246,6 +247,21 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
         messageListener = async () => {
           try {
+            // Invalidate timeline caches immediately — do not wait on GET /leads/[id].
+            // Otherwise a failed/slow refetch leaves comments stale after remote deletes.
+            if (!isDisposed) {
+              await Promise.all([
+                queryClient.invalidateQueries({
+                  queryKey: ["comments", lead._id],
+                  exact: true,
+                }),
+                queryClient.invalidateQueries({
+                  queryKey: ["activities", lead._id],
+                  exact: true,
+                }),
+              ]);
+            }
+
             const response = await apiCallWithSessionRefresh(
               `/api/leads/${lead._id}`,
               {
@@ -271,18 +287,6 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
             previousStatusRef.current = freshLead.status;
             previousLeadRef.current = freshLead;
             setCurrentLead(freshLead);
-
-            // Targeted invalidation of THIS lead's timeline, not all leads.
-            await Promise.all([
-              queryClient.invalidateQueries({
-                queryKey: ["comments", lead._id],
-                exact: true,
-              }),
-              queryClient.invalidateQueries({
-                queryKey: ["activities", lead._id],
-                exact: true,
-              }),
-            ]);
           } catch (error) {
             console.error(
               "Failed to sync lead details from realtime event:",
@@ -311,13 +315,9 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         if (didSubscribe && channel && messageListener) {
           channel.unsubscribe(LEAD_UPDATED_EVENT, messageListener);
         }
-        if (channel) {
-          try {
-            await channel.detach();
-          } catch (error) {
-            console.error("Failed to detach panel realtime channel:", error);
-          }
-        }
+        // Do not explicitly detach here. During rapid close/reopen, detach can race
+        // with the next attach and produce noisy "state = detached" SDK errors.
+        // Releasing/closing the lead-scoped realtime client below is sufficient.
         if (lead?._id) {
           releaseAblyLeadRealtimeClient(lead._id);
         }
