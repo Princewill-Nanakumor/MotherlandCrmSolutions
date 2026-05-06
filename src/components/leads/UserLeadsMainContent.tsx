@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import LeadDetailsPanel from "@/components/dashboardComponents/LeadDetailsPanel";
 import { UserLeadsHeader } from "@/components/leads/UserLeadsHeader";
 import { UserLeadsFilterControls } from "@/components/leads/UserLeadsFilterControls";
@@ -35,6 +35,12 @@ interface UserLeadsMainContentProps {
   handleCountryFilterChange: (countries: string[]) => void;
   handleStatusFilterChange: (statuses: string[]) => void;
   handleSourceFilterChange: (sources: string[]) => void;
+  countryFilterMode: "include" | "exclude";
+  statusFilterMode: "include" | "exclude";
+  sourceFilterMode: "include" | "exclude";
+  handleCountryFilterModeChange: (mode: "include" | "exclude") => void;
+  handleStatusFilterModeChange: (mode: "include" | "exclude") => void;
+  handleSourceFilterModeChange: (mode: "include" | "exclude") => void;
   handleLeadClick: (lead: Lead) => void;
   handleSort: (field: SortField) => void;
   handlePanelClose: () => void;
@@ -115,6 +121,12 @@ export function UserLeadsMainContent({
   handleCountryFilterChange,
   handleStatusFilterChange,
   handleSourceFilterChange,
+  countryFilterMode,
+  statusFilterMode,
+  sourceFilterMode,
+  handleCountryFilterModeChange,
+  handleStatusFilterModeChange,
+  handleSourceFilterModeChange,
   handleLeadClick,
   handleSort,
   handlePanelClose,
@@ -122,40 +134,63 @@ export function UserLeadsMainContent({
   handleNavigation,
 }: UserLeadsMainContentProps) {
   const searchParams = useSearchParams()!;
-  const router = useRouter();
   const pathname = usePathname() || "";
+  const createParams = useCallback(() => {
+    if (typeof window !== "undefined") {
+      return new URLSearchParams(window.location.search);
+    }
+    return new URLSearchParams(Array.from(searchParams.entries()));
+  }, [searchParams]);
 
   const initialPageFromUrl = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const initialPageSizeFromUrl = Math.min(500, Math.max(1, parseInt(searchParams.get("pageSize") || "15", 10)));
   const [pageSize, setPageSize] = useState<number>(initialPageSizeFromUrl);
   const [pageIndex, setPageIndex] = useState<number>(initialPageFromUrl - 1);
 
+  // Keep local pagination state in sync when URL changes (e.g. filter change resets page=1).
+  useEffect(() => {
+    const nextPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const nextPageSize = Math.min(
+      500,
+      Math.max(1, parseInt(searchParams.get("pageSize") || "15", 10)),
+    );
+    setPageIndex(nextPage - 1);
+    setPageSize(nextPageSize);
+  }, [searchParams]);
+
   const handlePageSizeChange = useCallback(
     (value: string) => {
       const newSize = parseInt(value, 10);
       if (Number.isNaN(newSize) || newSize <= 0) return;
       const size = Math.min(500, Math.max(1, newSize));
+      if (size === pageSize && pageIndex === 0) {
+        return;
+      }
       setPageSize(size);
       setPageIndex(0);
-      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      const params = createParams();
       params.set("page", "1");
       params.set("pageSize", String(size));
       const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      const url = query ? `${pathname}?${query}` : pathname;
+      window.history.replaceState(null, "", url);
     },
-    [pathname, router, searchParams],
+    [createParams, pageIndex, pageSize, pathname],
   );
 
   const handlePageChange = useCallback(
     (newPageIndex: number) => {
+      if (newPageIndex === pageIndex) {
+        return;
+      }
       setPageIndex(newPageIndex);
-      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      const params = createParams();
       params.set("page", String(newPageIndex + 1));
-      params.set("pageSize", String(pageSize));
       const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      const url = query ? `${pathname}?${query}` : pathname;
+      window.history.replaceState(null, "", url);
     },
-    [pathname, router, searchParams, pageSize],
+    [createParams, pageIndex, pathname],
   );
 
   const totalPages = Math.max(1, Math.ceil(filteredLeads.length / pageSize) || 1);
@@ -198,6 +233,12 @@ export function UserLeadsMainContent({
           onCountryFilterChange={handleCountryFilterChange}
           onStatusFilterChange={handleStatusFilterChange}
           onSourceFilterChange={handleSourceFilterChange}
+          countryFilterMode={countryFilterMode}
+          statusFilterMode={statusFilterMode}
+          sourceFilterMode={sourceFilterMode}
+          onCountryFilterModeChange={handleCountryFilterModeChange}
+          onStatusFilterModeChange={handleStatusFilterModeChange}
+          onSourceFilterModeChange={handleSourceFilterModeChange}
           availableCountries={availableCountries}
           availableStatuses={availableStatuses}
           availableSources={availableSources}

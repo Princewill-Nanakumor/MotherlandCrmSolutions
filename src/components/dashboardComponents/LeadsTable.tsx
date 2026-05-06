@@ -2,7 +2,7 @@
 "use client";
 
 import { useMemo, useEffect, useState, useCallback, useRef } from "react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useSearchParams, usePathname } from "next/navigation";
 import { EmptyStateAdminLeadsTable } from "./EmptyStateAdminLeadsTable";
 import LeadDetailsPanel from "@/components/dashboardComponents/LeadDetailsPanel";
 import { Lead } from "@/types/leads";
@@ -93,7 +93,6 @@ export default function LeadsTable({
   filterByStatus = "all",
   filterBySource = "all",
 }: LeadsTableProps) {
-  const router = useRouter();
   const pathname = usePathname() || "";
   const isServerPagination = typeof serverTotalRows === "number";
   // Normalize filters to arrays for consistent handling
@@ -203,20 +202,6 @@ export default function LeadsTable({
   const handlePageChange = useCallback(
     (page: number) => {
       const pageOneBased = page + 1;
-      if (
-        typeof process !== "undefined" &&
-        process.env.NODE_ENV === "development"
-      ) {
-        console.log("[Leads Pagination] Table handlePageChange", {
-          pageIndex: page,
-          pageOneBased,
-          isServerPagination,
-          action:
-            isServerPagination && onServerPageChange
-              ? "calling onServerPageChange"
-              : "router.replace",
-        });
-      }
       setPageIndex(page);
       if (isServerPagination && onServerPageChange) {
         onServerPageChange(pageOneBased);
@@ -226,12 +211,11 @@ export default function LeadsTable({
         );
         params.set("page", String(pageOneBased));
         const query = params.toString();
-        router.replace(query ? `${pathname}?${query}` : pathname, {
-          scroll: false,
-        });
+        const url = query ? `${pathname}?${query}` : pathname;
+        window.history.replaceState(null, "", url);
       }
     },
-    [isServerPagination, onServerPageChange, pathname, router, searchParams],
+    [isServerPagination, onServerPageChange, pathname, searchParams],
   );
 
   // Use props selectedLeads if provided, otherwise use store

@@ -23,6 +23,7 @@ import { useDialerSettings } from "@/context/DialerSettingsContext";
 import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
 import { useQueryClient } from "@tanstack/react-query";
 import { callLogsKeys } from "@/components/user-management/CallLogsModal";
+import { usePathname } from "next/navigation";
 
 async function writeTextToClipboard(text: string): Promise<boolean> {
   try {
@@ -68,9 +69,12 @@ export const ContactSection: FC<ContactSectionProps> = ({
   const { data: session } = useSession();
   const { dialer } = useDialerSettings();
   const queryClient = useQueryClient();
+  const pathname = usePathname() || "";
   const isAdmin = session?.user?.role === "ADMIN";
   const { canViewPhoneNumbers, canViewEmails, isLoading: isLoadingPermission } =
     useCurrentUserPermission();
+  const isAgentLeadsPage = pathname.startsWith("/dashboard/leads");
+  const shouldMaskEmail = !isAgentLeadsPage && !canViewEmails;
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -500,7 +504,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
                 isEditing={false}
                 editedEmail=""
                 onEmailChange={() => {}}
-                maskForDisplay={!canViewEmails}
+                maskForDisplay={shouldMaskEmail}
                 onCopy={(text) => handleCopy(text, "email")}
                 copied={copiedField === "email"}
               />

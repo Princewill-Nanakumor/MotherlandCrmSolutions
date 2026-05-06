@@ -18,7 +18,11 @@ const AllLeadsPage: React.FC = () => {
   // Handle navigation in useEffect instead of during render
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/");
+      const callbackUrl =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : "/dashboard/all-leads";
+      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     } else if (status === "authenticated" && session?.user?.role !== "ADMIN") {
       router.push("/dashboard");
     }

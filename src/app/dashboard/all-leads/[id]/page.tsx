@@ -141,7 +141,11 @@ const LeadDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   // Authentication check
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/");
+      const callbackUrl =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : `/dashboard/all-leads/${id}`;
+      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     } else if (status === "authenticated" && session?.user?.role !== "ADMIN") {
       router.push("/dashboard");
     }

@@ -6,6 +6,7 @@ import { normalizeLeadId } from "@/lib/leadId";
 
 type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "statusChangedAt" | "lastComment" | "lastCommentDate" | "commentCount";
 type SortOrder = "asc" | "desc";
+type FilterMode = "include" | "exclude";
 
 export const useLeadsURLManagement = () => {
   const router = useRouter();
@@ -24,6 +25,38 @@ export const useLeadsURLManagement = () => {
     return new URLSearchParams(searchParams ?? undefined);
   }, [searchParams]);
 
+  // Keep query order visually aligned with /dashboard/all-leads.
+  const normalizeQueryOrder = useCallback((params: URLSearchParams) => {
+    const ordered = new URLSearchParams();
+    const preferredOrder = [
+      "page",
+      "user",
+      "countryMode",
+      "statusMode",
+      "sourceMode",
+      "country",
+      "status",
+      "source",
+      "lead",
+      "name",
+      "sortField",
+      "sortOrder",
+      "pageSize",
+      "search",
+    ] as const;
+
+    for (const key of preferredOrder) {
+      const value = params.get(key);
+      if (value !== null) ordered.set(key, value);
+    }
+
+    for (const [key, value] of params.entries()) {
+      if (!ordered.has(key)) ordered.set(key, value);
+    }
+
+    return ordered;
+  }, []);
+
   /**
    * Helper to push an updated URL, mirroring the behavior used on
    * `/dashboard/all-leads`:
@@ -32,18 +65,24 @@ export const useLeadsURLManagement = () => {
    */
   const pushWithParams = useCallback(
     (params: URLSearchParams) => {
+      const orderedParams = normalizeQueryOrder(params);
+      const query = orderedParams.toString();
       if (typeof window !== "undefined") {
         const basePath = window.location.pathname;
-        const query = params.toString();
         const url = query ? `${basePath}?${query}` : basePath;
-        router.push(url, { scroll: false });
+        window.history.replaceState(null, "", url);
       } else {
-        const query = params.toString();
-        router.push(query ? `?${query}` : "?", { scroll: false });
+        router.replace(query ? `?${query}` : "?", { scroll: false });
       }
     },
-    [router],
+    [normalizeQueryOrder, router],
   );
+
+  const ensureDefaultFilterModes = useCallback((params: URLSearchParams) => {
+    if (!params.has("countryMode")) params.set("countryMode", "include");
+    if (!params.has("statusMode")) params.set("statusMode", "include");
+    if (!params.has("sourceMode")) params.set("sourceMode", "include");
+  }, []);
 
   const handleSort = useCallback(
     (field: SortField, currentField: SortField, currentOrder: SortOrder) => {
@@ -80,6 +119,8 @@ export const useLeadsURLManagement = () => {
   const handleCountryFilterChange = useCallback(
     (country: string) => {
       const params = createParams();
+      params.set("page", "1");
+      ensureDefaultFilterModes(params);
       if (country === "all") {
         params.delete("country");
       } else {
@@ -87,13 +128,15 @@ export const useLeadsURLManagement = () => {
       }
       pushWithParams(params);
     },
-    [createParams, pushWithParams]
+    [createParams, ensureDefaultFilterModes, pushWithParams]
   );
 
   // Add status filter change handler
   const handleStatusFilterChange = useCallback(
     (status: string) => {
       const params = createParams();
+      params.set("page", "1");
+      ensureDefaultFilterModes(params);
       if (status === "all") {
         params.delete("status");
       } else {
@@ -101,13 +144,15 @@ export const useLeadsURLManagement = () => {
       }
       pushWithParams(params);
     },
-    [createParams, pushWithParams]
+    [createParams, ensureDefaultFilterModes, pushWithParams]
   );
 
   // Add source filter change handler
   const handleSourceFilterChange = useCallback(
     (source: string) => {
       const params = createParams();
+      params.set("page", "1");
+      ensureDefaultFilterModes(params);
       if (source === "all") {
         params.delete("source");
       } else {
@@ -115,7 +160,40 @@ export const useLeadsURLManagement = () => {
       }
       pushWithParams(params);
     },
-    [createParams, pushWithParams]
+    [createParams, ensureDefaultFilterModes, pushWithParams]
+  );
+
+  const handleCountryFilterModeChange = useCallback(
+    (mode: FilterMode) => {
+      const params = createParams();
+      params.set("page", "1");
+      params.set("countryMode", mode);
+      ensureDefaultFilterModes(params);
+      pushWithParams(params);
+    },
+    [createParams, ensureDefaultFilterModes, pushWithParams]
+  );
+
+  const handleStatusFilterModeChange = useCallback(
+    (mode: FilterMode) => {
+      const params = createParams();
+      params.set("page", "1");
+      params.set("statusMode", mode);
+      ensureDefaultFilterModes(params);
+      pushWithParams(params);
+    },
+    [createParams, ensureDefaultFilterModes, pushWithParams]
+  );
+
+  const handleSourceFilterModeChange = useCallback(
+    (mode: FilterMode) => {
+      const params = createParams();
+      params.set("page", "1");
+      params.set("sourceMode", mode);
+      ensureDefaultFilterModes(params);
+      pushWithParams(params);
+    },
+    [createParams, ensureDefaultFilterModes, pushWithParams]
   );
 
   const handleNavigation = useCallback(
@@ -147,6 +225,9 @@ export const useLeadsURLManagement = () => {
     handleCountryFilterChange,
     handleStatusFilterChange,
     handleSourceFilterChange,
+    handleCountryFilterModeChange,
+    handleStatusFilterModeChange,
+    handleSourceFilterModeChange,
     handleNavigation,
   };
 };

@@ -16,7 +16,11 @@ export default function UserLeadsPage() {
     if (status === "loading") return;
 
     if (status === "unauthenticated") {
-      router.push("/");
+      const callbackUrl =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : "/dashboard/leads";
+      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
       return;
     }
 

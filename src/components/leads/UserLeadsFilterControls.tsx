@@ -16,6 +16,12 @@ interface UserLeadsFilterControlsProps {
   onCountryFilterChange: (countries: string[]) => void;
   onStatusFilterChange: (statuses: string[]) => void;
   onSourceFilterChange: (sources: string[]) => void;
+  countryFilterMode: "include" | "exclude";
+  statusFilterMode: "include" | "exclude";
+  sourceFilterMode: "include" | "exclude";
+  onCountryFilterModeChange: (mode: "include" | "exclude") => void;
+  onStatusFilterModeChange: (mode: "include" | "exclude") => void;
+  onSourceFilterModeChange: (mode: "include" | "exclude") => void;
   availableCountries: string[];
   availableStatuses: string[]; // Keep this for backward compatibility but won't use it
   availableSources: string[];
@@ -39,6 +45,12 @@ export const UserLeadsFilterControls: React.FC<
   onCountryFilterChange,
   onStatusFilterChange,
   onSourceFilterChange,
+  countryFilterMode,
+  statusFilterMode,
+  sourceFilterMode,
+  onCountryFilterModeChange,
+  onStatusFilterModeChange,
+  onSourceFilterModeChange,
   availableCountries,
   availableSources,
 }) => {
@@ -73,6 +85,8 @@ export const UserLeadsFilterControls: React.FC<
             onChange={onCountryFilterChange}
             disabled={shouldShowLoading}
             isLoading={false}
+            mode={countryFilterMode}
+            onModeChange={onCountryFilterModeChange}
             availableCountries={availableCountries}
           />
 
@@ -82,6 +96,8 @@ export const UserLeadsFilterControls: React.FC<
             onChange={onStatusFilterChange}
             disabled={shouldShowLoading}
             isLoading={false}
+            mode={statusFilterMode}
+            onModeChange={onStatusFilterModeChange}
           />
 
           {/* Source Filter */}
@@ -90,6 +106,8 @@ export const UserLeadsFilterControls: React.FC<
             onChange={onSourceFilterChange}
             disabled={shouldShowLoading}
             isLoading={false}
+            mode={sourceFilterMode}
+            onModeChange={onSourceFilterModeChange}
             availableSources={availableSources}
           />
         </div>

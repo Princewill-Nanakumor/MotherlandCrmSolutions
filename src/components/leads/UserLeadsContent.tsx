@@ -17,6 +17,11 @@ import { useAssignedLeads } from "@/hooks/useAssignedLeads";
 import { RefetchIndicator } from "@/components/ui/RefetchIndicator";
 import { UserLeadsMainContent } from "@/components/leads/UserLeadsMainContent";
 import { SortField, SortOrder } from "@/components/leads/userLeadsTypes";
+import {
+  isLegacyNumericLeadId,
+  isPrefixedLeadId,
+  normalizeLeadId,
+} from "@/lib/leadId";
 
 export default function UserLeadsContent() {
   const { status } = useSession();
@@ -46,6 +51,24 @@ export default function UserLeadsContent() {
   const [filterByCountry, setFilterByCountry] = useState<string[]>([]);
   const [filterByStatus, setFilterByStatus] = useState<string[]>([]);
   const [filterBySource, setFilterBySource] = useState<string[]>([]);
+  const [countryFilterMode, setCountryFilterMode] = useState<"include" | "exclude">(
+    () =>
+      (searchParams.get("countryMode") === "exclude" ? "exclude" : "include") as
+        | "include"
+        | "exclude",
+  );
+  const [statusFilterMode, setStatusFilterMode] = useState<"include" | "exclude">(
+    () =>
+      (searchParams.get("statusMode") === "exclude" ? "exclude" : "include") as
+        | "include"
+        | "exclude",
+  );
+  const [sourceFilterMode, setSourceFilterMode] = useState<"include" | "exclude">(
+    () =>
+      (searchParams.get("sourceMode") === "exclude" ? "exclude" : "include") as
+        | "include"
+        | "exclude",
+  );
 
   // Get sort parameters from URL or use defaults
   const [sortField, setSortField] = useState<SortField>(() => {
@@ -91,6 +114,21 @@ export default function UserLeadsContent() {
     setFilterByCountry(parseUrlParamToArray(urlCountry));
     setFilterByStatus(parseUrlParamToArray(urlStatus));
     setFilterBySource(parseUrlParamToArray(urlSource));
+    setCountryFilterMode(
+      (searchParams.get("countryMode") === "exclude" ? "exclude" : "include") as
+        | "include"
+        | "exclude",
+    );
+    setStatusFilterMode(
+      (searchParams.get("statusMode") === "exclude" ? "exclude" : "include") as
+        | "include"
+        | "exclude",
+    );
+    setSourceFilterMode(
+      (searchParams.get("sourceMode") === "exclude" ? "exclude" : "include") as
+        | "include"
+        | "exclude",
+    );
   }, [searchParams]);
 
   // Custom hooks - called at component level (only for sort + filters on this page)
@@ -99,6 +137,12 @@ export default function UserLeadsContent() {
     handleCountryFilterChange: handleURLCountryChange,
     handleStatusFilterChange: handleURLStatusChange,
     handleSourceFilterChange: handleURLSourceChange,
+    handleCountryFilterModeChange: handleURLCountryModeChange,
+    handleStatusFilterModeChange: handleURLStatusModeChange,
+    handleSourceFilterModeChange: handleURLSourceModeChange,
+    handleLeadClick: handleURLLeadClick,
+    handlePanelClose: handleURLPanelClose,
+    handleNavigation: handleURLNavigation,
   } = useLeadsURLManagement();
 
   // Lead update handler with React Query mutation
@@ -167,19 +211,79 @@ export default function UserLeadsContent() {
     [handleURLSourceChange],
   );
 
-  // Row click handler: open side panel using local state only (no route change)
+  const handleCountryFilterModeChange = useCallback(
+    (mode: "include" | "exclude") => {
+      setCountryFilterMode(mode);
+      handleURLCountryModeChange(mode);
+    },
+    [handleURLCountryModeChange],
+  );
+
+  const handleStatusFilterModeChange = useCallback(
+    (mode: "include" | "exclude") => {
+      setStatusFilterMode(mode);
+      handleURLStatusModeChange(mode);
+    },
+    [handleURLStatusModeChange],
+  );
+
+  const handleSourceFilterModeChange = useCallback(
+    (mode: "include" | "exclude") => {
+      setSourceFilterMode(mode);
+      handleURLSourceModeChange(mode);
+    },
+    [handleURLSourceModeChange],
+  );
+
+  // Keep selected lead/panel synced from URL like /dashboard/all-leads.
+  useEffect(() => {
+    const leadIdParam = searchParams.get("lead");
+    if (!leadIdParam) {
+      if (isPanelOpen || selectedLead) {
+        setIsPanelOpen(false);
+        setSelectedLead(null);
+      }
+      return;
+    }
+
+    let urlLead: Lead | undefined;
+    if (isLegacyNumericLeadId(leadIdParam)) {
+      const numericId = parseInt(leadIdParam, 10);
+      urlLead = leads.find(
+        (l) => normalizeLeadId(l.leadId) === normalizeLeadId(numericId),
+      );
+    } else if (isPrefixedLeadId(leadIdParam)) {
+      urlLead = leads.find(
+        (l) =>
+          normalizeLeadId(l.leadId).toUpperCase() === leadIdParam.toUpperCase(),
+      );
+    } else {
+      urlLead = leads.find((l) => l._id === leadIdParam);
+    }
+
+    if (urlLead) {
+      if (!selectedLead || selectedLead._id !== urlLead._id) {
+        setSelectedLead(urlLead);
+      }
+      if (!isPanelOpen) setIsPanelOpen(true);
+    }
+  }, [searchParams, leads, isPanelOpen, selectedLead]);
+
+  // Row click handler: open side panel and sync URL
   const handleRowClick = useCallback((lead: Lead) => {
     setSelectedLead(lead);
     setIsPanelOpen(true);
-  }, []);
+    handleURLLeadClick(lead);
+  }, [handleURLLeadClick]);
 
-  // Panel close handler: update local state only
+  // Panel close handler: update local state and URL
   const handlePanelCloseLocal = useCallback(() => {
     setIsPanelOpen(false);
     setSelectedLead(null);
-  }, []);
+    handleURLPanelClose();
+  }, [handleURLPanelClose]);
 
-  // Panel navigation handler: move to prev/next lead using local state only
+  // Panel navigation handler: move to prev/next lead and sync URL
   const handlePanelNavigationLocal = useCallback(
     (
       direction: "prev" | "next",
@@ -199,14 +303,19 @@ export default function UserLeadsContent() {
       const newLead = sortedLeads[newIndex];
       setSelectedLead(newLead);
       setIsPanelOpen(true);
+      handleURLNavigation(direction, currentSelectedLead, sortedLeads);
     },
-    [],
+    [handleURLNavigation],
   );
 
   // Auth check
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/");
+      const callbackUrl =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : "/dashboard/leads";
+      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     }
   }, [status, router]);
 
@@ -295,6 +404,12 @@ export default function UserLeadsContent() {
                   handleCountryFilterChange={handleCountryFilterChange}
                   handleStatusFilterChange={handleStatusFilterChange}
                   handleSourceFilterChange={handleSourceFilterChange}
+                  countryFilterMode={countryFilterMode}
+                  statusFilterMode={statusFilterMode}
+                  sourceFilterMode={sourceFilterMode}
+                  handleCountryFilterModeChange={handleCountryFilterModeChange}
+                  handleStatusFilterModeChange={handleStatusFilterModeChange}
+                  handleSourceFilterModeChange={handleSourceFilterModeChange}
                   handleLeadClick={handleRowClick}
                   handleSort={handleSort}
                   handlePanelClose={handlePanelCloseLocal}

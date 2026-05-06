@@ -101,7 +101,11 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/");
+      const callbackUrl =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : "/dashboard/notifications";
+      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     }
   }, [status, router]);
 

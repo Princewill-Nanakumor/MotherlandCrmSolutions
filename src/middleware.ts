@@ -127,6 +127,16 @@ export default withAuth(
       return NextResponse.redirect(new URL("/dashboard/leads", request.url));
     }
 
+    // ✅ Dashboard routes that are AGENT-only (admins may not open by URL)
+    if (
+      isDashboardPage &&
+      isAuth &&
+      token?.role === "ADMIN" &&
+      (path === "/dashboard/leads" || path.startsWith("/dashboard/leads/"))
+    ) {
+      return NextResponse.redirect(new URL("/dashboard/all-leads", request.url));
+    }
+
     // ✅ Protect admin routes by role
     if (isAdminPage && token?.role !== "ADMIN") {
       return NextResponse.redirect(new URL("/dashboard", request.url));

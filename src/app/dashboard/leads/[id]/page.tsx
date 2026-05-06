@@ -157,7 +157,11 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
 
     if (status === "unauthenticated") {
       console.log("❌ User not authenticated - redirecting to homepage");
-      router.push("/");
+      const callbackUrl =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : `/dashboard/leads/${id}`;
+      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     } else if (status === "authenticated" && session?.user?.role === "ADMIN") {
       console.log("🔀 Admin user - redirecting to admin leads page");
       router.push(`/dashboard/all-leads/${id}`);

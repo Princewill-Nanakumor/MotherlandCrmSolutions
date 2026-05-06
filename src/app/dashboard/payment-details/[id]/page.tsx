@@ -16,7 +16,11 @@ export default function PaymentDetailsPage({ params }: PageProps) {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/");
+      const callbackUrl =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : "/dashboard/payment-details";
+      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     } else if (status === "authenticated" && session?.user?.role !== "ADMIN") {
       router.push("/dashboard");
     }

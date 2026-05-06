@@ -193,9 +193,8 @@ export function useLeadsFilters({
         if (searchQuery) params.set("search", searchQuery);
         else params.delete("search");
         params.set("page", "1");
-        router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname, {
-          scroll: false,
-        });
+        const url = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+        window.history.replaceState(null, "", url);
       }
     }
   }, [
@@ -376,9 +375,8 @@ export function useLeadsFilters({
     if (!params.has("countryMode")) params.set("countryMode", uiState.countryFilterMode);
     if (!params.has("statusMode")) params.set("statusMode", uiState.statusFilterMode);
     if (!params.has("sourceMode")) params.set("sourceMode", uiState.sourceFilterMode);
-    router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname, {
-      scroll: false,
-    });
+    const url = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    window.history.replaceState(null, "", url);
 
     pendingFilterByStatusRef.current = null;
     pendingFilterByCountryRef.current = null;
@@ -462,9 +460,8 @@ export function useLeadsFilters({
       const params = new URLSearchParams(Array.from(searchParams.entries()));
       params.set("page", "1");
       params.set(param, mode);
-      router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname, {
-        scroll: false,
-      });
+      const url = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+      window.history.replaceState(null, "", url);
     },
     [pathname, router, searchParams, setFilterJustChanged, setPageState],
   );
@@ -490,9 +487,8 @@ export function useLeadsFilters({
       const params = new URLSearchParams(Array.from(searchParams.entries()));
       params.set("page", "1");
       params.set("pageSize", String(size));
-      router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname, {
-        scroll: false,
-      });
+      const url = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+      window.history.replaceState(null, "", url);
     },
     [pathname, pendingPageFromPaginationRef, router, searchParams, setFilterJustChanged],
   );
@@ -504,9 +500,8 @@ export function useLeadsFilters({
       setPageState(newPageOneBased);
       const params = new URLSearchParams(Array.from(searchParams.entries()));
       params.set("page", String(newPageOneBased));
-      router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname, {
-        scroll: false,
-      });
+      const url = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+      window.history.replaceState(null, "", url);
     },
     [pathname, pendingPageFromPaginationRef, router, searchParams, setFilterJustChanged, setPageState],
   );
@@ -540,7 +535,7 @@ export function useLeadsFilters({
       filterBySource: [],
     }));
     setFilterByUser("all");
-    router.replace(pathname, { scroll: false });
+    window.history.replaceState(null, "", pathname);
   }, [
     filterJustChangedRef,
     pathname,
