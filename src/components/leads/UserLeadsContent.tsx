@@ -361,6 +361,9 @@ export default function UserLeadsContent() {
             filterByCountry={filterByCountry}
             filterByStatus={filterByStatus}
             filterBySource={filterBySource}
+            countryFilterMode={countryFilterMode}
+            statusFilterMode={statusFilterMode}
+            sourceFilterMode={sourceFilterMode}
             sortField={sortField}
             sortOrder={sortOrder}
             isDataReady={isDataReady}

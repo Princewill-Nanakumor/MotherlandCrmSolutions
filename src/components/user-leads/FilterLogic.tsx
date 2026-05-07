@@ -1,5 +1,5 @@
 // src/components/user-leads/FilterLogic.tsx
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import { Lead } from "@/types/leads";
 import {
   filterLeadsByCountry,
@@ -28,6 +28,9 @@ interface FilterLogicProps {
   filterByCountry: string | string[];
   filterByStatus: string | string[];
   filterBySource: string | string[];
+  countryFilterMode?: "include" | "exclude";
+  statusFilterMode?: "include" | "exclude";
+  sourceFilterMode?: "include" | "exclude";
   sortField: SortField;
   sortOrder: SortOrder;
   isDataReady: boolean;
@@ -46,158 +49,15 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
   filterByCountry,
   filterByStatus,
   filterBySource,
+  countryFilterMode = "include",
+  statusFilterMode = "include",
+  sourceFilterMode = "include",
   sortField,
   sortOrder,
   isDataReady,
   searchQuery = "",
   children,
 }) => {
-  // Get filter modes from localStorage and sync with changes
-  const [countryFilterMode, setCountryFilterMode] = useState<
-    "include" | "exclude"
-  >(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("countryFilterMode");
-      return (stored === "exclude" ? "exclude" : "include") as
-        | "include"
-        | "exclude";
-    }
-    return "include";
-  });
-
-  const [statusFilterMode, setStatusFilterMode] = useState<
-    "include" | "exclude"
-  >(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("statusFilterMode");
-      return (stored === "exclude" ? "exclude" : "include") as
-        | "include"
-        | "exclude";
-    }
-    return "include";
-  });
-
-  const [sourceFilterMode, setSourceFilterMode] = useState<
-    "include" | "exclude"
-  >(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("sourceFilterMode");
-      return (stored === "exclude" ? "exclude" : "include") as
-        | "include"
-        | "exclude";
-    }
-    return "include";
-  });
-
-  // Listen for localStorage changes and custom events for all filter modes
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "countryFilterMode") {
-        setCountryFilterMode(
-          (e.newValue === "exclude" ? "exclude" : "include") as
-            | "include"
-            | "exclude"
-        );
-      } else if (e.key === "statusFilterMode") {
-        setStatusFilterMode(
-          (e.newValue === "exclude" ? "exclude" : "include") as
-            | "include"
-            | "exclude"
-        );
-      } else if (e.key === "sourceFilterMode") {
-        setSourceFilterMode(
-          (e.newValue === "exclude" ? "exclude" : "include") as
-            | "include"
-            | "exclude"
-        );
-      }
-    };
-
-    // Listen for custom events when modes change in same tab
-    const handleCountryModeChange = () => {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("countryFilterMode");
-        const newMode = (stored === "exclude" ? "exclude" : "include") as
-          | "include"
-          | "exclude";
-        setCountryFilterMode(newMode);
-      }
-    };
-
-    const handleStatusModeChange = () => {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("statusFilterMode");
-        const newMode = (stored === "exclude" ? "exclude" : "include") as
-          | "include"
-          | "exclude";
-        setStatusFilterMode(newMode);
-      }
-    };
-
-    const handleSourceModeChange = () => {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("sourceFilterMode");
-        const newMode = (stored === "exclude" ? "exclude" : "include") as
-          | "include"
-          | "exclude";
-        setSourceFilterMode(newMode);
-      }
-    };
-
-    // Also check localStorage periodically as fallback (for cross-tab sync)
-    const interval = setInterval(() => {
-      if (typeof window !== "undefined") {
-        const countryStored = localStorage.getItem("countryFilterMode");
-        const countryNewMode = (
-          countryStored === "exclude" ? "exclude" : "include"
-        ) as "include" | "exclude";
-        if (countryNewMode !== countryFilterMode) {
-          setCountryFilterMode(countryNewMode);
-        }
-
-        const statusStored = localStorage.getItem("statusFilterMode");
-        const statusNewMode = (
-          statusStored === "exclude" ? "exclude" : "include"
-        ) as "include" | "exclude";
-        if (statusNewMode !== statusFilterMode) {
-          setStatusFilterMode(statusNewMode);
-        }
-
-        const sourceStored = localStorage.getItem("sourceFilterMode");
-        const sourceNewMode = (
-          sourceStored === "exclude" ? "exclude" : "include"
-        ) as "include" | "exclude";
-        if (sourceNewMode !== sourceFilterMode) {
-          setSourceFilterMode(sourceNewMode);
-        }
-      }
-    }, 200); // Check every 200ms (reduced frequency since we have custom events)
-
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener(
-      "countryFilterModeChanged",
-      handleCountryModeChange
-    );
-    window.addEventListener("statusFilterModeChanged", handleStatusModeChange);
-    window.addEventListener("sourceFilterModeChanged", handleSourceModeChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener(
-        "countryFilterModeChanged",
-        handleCountryModeChange
-      );
-      window.removeEventListener(
-        "statusFilterModeChanged",
-        handleStatusModeChange
-      );
-      window.removeEventListener(
-        "sourceFilterModeChanged",
-        handleSourceModeChange
-      );
-      clearInterval(interval);
-    };
-  }, [countryFilterMode, statusFilterMode, sourceFilterMode]);
   // Get available countries - filter out undefined values and ensure string type
   const availableCountries = useMemo(() => {
     if (!isDataReady || leads.length === 0) return [];
