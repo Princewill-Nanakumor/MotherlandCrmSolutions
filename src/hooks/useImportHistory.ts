@@ -46,7 +46,7 @@ export const useImportHistory = () => {
 
       return result;
     },
-    onSuccess: (data, deletedImportId) => {
+    onSuccess: async (data, deletedImportId) => {
       queryClient.setQueryData<ImportHistoryItem[]>(
         ["import-history"],
         (oldData) => {
@@ -55,11 +55,12 @@ export const useImportHistory = () => {
         },
       );
 
-      void Promise.all([
+      await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["import-usage-data"] }),
         queryClient.invalidateQueries({ queryKey: ["import-history"] }),
         queryClient.invalidateQueries({ queryKey: ["leads-stats"], exact: false }),
         queryClient.invalidateQueries({
+          refetchType: "all",
           predicate: (query) => {
             const root = Array.isArray(query.queryKey)
               ? query.queryKey[0]
@@ -72,6 +73,14 @@ export const useImportHistory = () => {
             );
           },
         }),
+      ]);
+
+      // Ensure inactive tables refetch too (all-leads and leads pages may be off-screen now).
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["leads"], type: "all" }),
+        queryClient.refetchQueries({ queryKey: ["assignedLeads"], type: "all" }),
+        queryClient.refetchQueries({ queryKey: ["users"], type: "all" }),
+        queryClient.refetchQueries({ queryKey: ["leads-stats"], type: "all" }),
       ]);
 
       toast({

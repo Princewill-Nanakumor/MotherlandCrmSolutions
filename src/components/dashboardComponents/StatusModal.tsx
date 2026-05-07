@@ -41,6 +41,12 @@ const StatusModal = ({
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const isProtectedStatus = (status: Status) => {
+    const statusId = status.id || status._id || "";
+    const statusName = (status.name || "").trim().toUpperCase();
+    return statusId === "NEW" || statusName === "NEW";
+  };
+
   const fetchStatuses = useCallback(async () => {
     try {
       setLoading(true);
@@ -152,6 +158,7 @@ const StatusModal = ({
   };
 
   const handleEdit = (status: Status) => {
+    if (isProtectedStatus(status)) return;
     setFormData({
       name: status.name,
       color: status.color || "#000000",
@@ -344,23 +351,31 @@ const StatusModal = ({
                         </code>
                       </div>
                       <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(status)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
+                        {!isProtectedStatus(status) ? (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(status)}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
 
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            handleDelete(status.id || status._id || "")
-                          }
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                handleDelete(status.id || status._id || "")
+                              }
+                            >
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                          </>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+                            Default
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))

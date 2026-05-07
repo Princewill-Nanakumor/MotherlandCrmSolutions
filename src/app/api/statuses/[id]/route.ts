@@ -46,6 +46,13 @@ export async function PUT(req: NextRequest) {
     const segments = req.url.split("/");
     const id = segments[segments.length - 1];
 
+    if (id === "NEW") {
+      return NextResponse.json(
+        { error: "Default NEW status cannot be edited" },
+        { status: 403 }
+      );
+    }
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid status ID" }, { status: 400 });
     }
@@ -66,6 +73,21 @@ export async function PUT(req: NextRequest) {
       _id: new mongoose.Types.ObjectId(id),
       adminId: new mongoose.Types.ObjectId(session.user.id),
     };
+
+    const existingStatus = await withDbRetry(() => Status.findOne(query));
+    if (!existingStatus) {
+      return NextResponse.json(
+        { error: "Status not found or not authorized" },
+        { status: 404 }
+      );
+    }
+
+    if ((existingStatus.name || "").trim().toUpperCase() === "NEW") {
+      return NextResponse.json(
+        { error: "Default NEW status cannot be edited" },
+        { status: 403 }
+      );
+    }
 
     const updatedStatus = await withDbRetry(() =>
       Status.findOneAndUpdate(
@@ -124,6 +146,13 @@ export async function DELETE(req: NextRequest) {
     const segments = req.url.split("/");
     const id = segments[segments.length - 1];
 
+    if (id === "NEW") {
+      return NextResponse.json(
+        { error: "Default NEW status cannot be deleted" },
+        { status: 403 }
+      );
+    }
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid status ID" }, { status: 400 });
     }
@@ -137,9 +166,22 @@ export async function DELETE(req: NextRequest) {
       adminId: new mongoose.Types.ObjectId(session.user.id),
     };
 
-    const deletedStatus = await withDbRetry(() =>
-      Status.findOneAndDelete(query)
-    );
+    const existingStatus = await withDbRetry(() => Status.findOne(query));
+    if (!existingStatus) {
+      return NextResponse.json(
+        { error: "Status not found or not authorized" },
+        { status: 404 }
+      );
+    }
+
+    if ((existingStatus.name || "").trim().toUpperCase() === "NEW") {
+      return NextResponse.json(
+        { error: "Default NEW status cannot be deleted" },
+        { status: 403 }
+      );
+    }
+
+    const deletedStatus = await withDbRetry(() => Status.findOneAndDelete(query));
 
     if (!deletedStatus) {
       return NextResponse.json(

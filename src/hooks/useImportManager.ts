@@ -177,6 +177,15 @@ export const useImportManager = () => {
     }
   }, [status, session, router, toast]);
 
+  useEffect(() => {
+    if (!successMessage) return;
+    toast({
+      title: "Import Success",
+      description: successMessage,
+      variant: "success",
+    });
+  }, [successMessage, toast]);
+
   return {
     session,
     status,

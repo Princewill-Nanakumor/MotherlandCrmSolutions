@@ -18,7 +18,7 @@ export default function Support({
   description = "Contact our support team if you encounter any issues or have questions about the deposit process.",
   buttonText = "Contact Support",
   onContactSupport,
-  supportEmail = "support@zohashield.com",
+  supportEmail = "support@motherlandcrmsolutions.com",
 }: SupportProps) {
   const [copied, setCopied] = useState(false);
 
@@ -52,7 +52,7 @@ export default function Support({
   };
 
   return (
-    <div className="p-6 bg-white border border-gray-200 shadow-lg dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl dark:border dark:border-white/10">
+    <div className="p-6 bg-white rounded-2xl border border-gray-200 shadow-lg dark:backdrop-blur-lg dark:bg-white/5 dark:border dark:border-white/10">
       <h3 className="text-lg font-semibold dark:text-white! text-gray-900! mb-4">
         {title}
       </h3>
@@ -61,7 +61,7 @@ export default function Support({
         {description}
       </p>
 
-      <div className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-gray-50 dark:bg-white/5">
+      <div className="flex gap-2 items-center p-3 mb-4 bg-gray-50 rounded-lg dark:bg-white/5">
         <Mail className="w-4 h-4 text-gray-500 dark:text-gray-400" />
         <span className="text-sm text-gray-700! dark:text-gray-300!">
           {supportEmail}

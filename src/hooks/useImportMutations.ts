@@ -5,7 +5,6 @@ import {
   useQueryClient,
   type QueryClient,
 } from "@tanstack/react-query";
-import { useToast } from "@/components/ui/use-toast";
 import { ImportHistoryItem, ProcessedLead } from "@/types/import";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
@@ -86,7 +85,6 @@ export function useImportMutations({
   onImportSuccess,
 }: UseImportMutationsOptions) {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const importLeads = useMutation({
     mutationFn: async ({
@@ -161,11 +159,6 @@ export function useImportMutations({
     },
     onSuccess: async (data) => {
       onImportSuccess?.(data.successMessage);
-      toast({
-        title: "Import Success",
-        description: data.successMessage,
-        variant: "default",
-      });
       await invalidateAfterImport(queryClient);
       await refreshImportHistory();
     },
