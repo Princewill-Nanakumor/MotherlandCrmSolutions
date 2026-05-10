@@ -13,19 +13,7 @@ import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
 import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
-
-type SortField =
-  | "leadId"
-  | "name"
-  | "country"
-  | "status"
-  | "source"
-  | "assignedTo"
-  | "createdAt"
-  | "statusChangedAt"
-  | "lastComment"
-  | "lastCommentDate"
-  | "commentCount";
+import type { SortField } from "@/components/leads/userLeadsTypes";
 
 interface UseUserLeadsTableColumnsProps {
   sortField: SortField;
@@ -74,16 +62,6 @@ export const useUserLeadsTableColumns = ({
         color: "#3B82F6",
       }
     );
-  };
-
-  // Helper to get assigned user name
-  const getAssignedUserName = (lead: Lead) => {
-    if (!lead.assignedTo) return "Unassigned";
-    if (typeof lead.assignedTo === "string") return lead.assignedTo;
-    if (lead.assignedTo.firstName && lead.assignedTo.lastName) {
-      return `${lead.assignedTo.firstName} ${lead.assignedTo.lastName}`;
-    }
-    return "Unknown User";
   };
 
   const columns = useMemo<ColumnDef<Lead>[]>(
@@ -357,49 +335,6 @@ export const useUserLeadsTableColumns = ({
               {row.original.source || "—"}
             </div>
           );
-        },
-        enableSorting: true,
-      },
-      {
-        id: "assignedTo",
-        header: () => (
-          <Button
-            variant="ghost"
-            onClick={() => handleSort("assignedTo")}
-            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
-          >
-            <span
-              className={`${sortField === "assignedTo" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
-            >
-              Assigned To
-            </span>
-            <ArrowUpDown
-              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "assignedTo" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
-            />
-          </Button>
-        ),
-        cell: ({ row }) => {
-          const lead = row.original;
-          const assignedName = getAssignedUserName(lead);
-          return (
-            <div className="text-center font-medium text-gray-900! dark:text-white!">
-              <span
-                className={
-                  !lead.assignedTo ? "text-gray-500! dark:text-gray-400!" : ""
-                }
-              >
-                {assignedName}
-              </span>
-            </div>
-          );
-        },
-        sortingFn: (a, b) => {
-          const nameA = getAssignedUserName(a.original).toLowerCase();
-          const nameB = getAssignedUserName(b.original).toLowerCase();
-          if (nameA === "unassigned" && nameB !== "unassigned") return -1;
-          if (nameA !== "unassigned" && nameB === "unassigned") return 1;
-          if (nameA === "unassigned" && nameB === "unassigned") return 0;
-          return nameA.localeCompare(nameB);
         },
         enableSorting: true,
       },

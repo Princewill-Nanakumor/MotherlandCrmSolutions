@@ -121,20 +121,6 @@ export function UserLeadRow({
   };
 
   // Helper function to get assigned user name
-  const getAssignedUserName = () => {
-    if (!lead.assignedTo) return "Unassigned";
-
-    if (typeof lead.assignedTo === "string") {
-      return lead.assignedTo;
-    }
-
-    if (lead.assignedTo.firstName && lead.assignedTo.lastName) {
-      return `${lead.assignedTo.firstName} ${lead.assignedTo.lastName}`;
-    }
-
-    return "Unknown User";
-  };
-
   return (
     <TableRow
       data-state={isSelected ? "selected" : undefined}
@@ -211,21 +197,6 @@ export function UserLeadRow({
         }
       >
         <span>{lead.source || "—"}</span>
-      </TableCell>
-      <TableCell
-        className={
-          isSelected
-            ? "text-gray-900! dark:text-white!"
-            : "text-gray-800! dark:text-gray-300!"
-        }
-      >
-        <span
-          className={
-            !lead.assignedTo ? "text-gray-500! dark:text-gray-400!" : ""
-          }
-        >
-          {getAssignedUserName()}
-        </span>
       </TableCell>
     </TableRow>
   );

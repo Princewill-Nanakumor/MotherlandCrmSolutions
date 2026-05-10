@@ -9,6 +9,12 @@ import { useTableConfiguration } from "@/components/dashboardComponents/TableCon
 import { useColumnOrder } from "@/hooks/useColumnOrder";
 import { useColumnVisibility } from "@/hooks/useColumnVisibility";
 import { useMemo, useCallback } from "react";
+import type { ColumnOrderState } from "@tanstack/react-table";
+
+/** Agent leads table does not include an "Assigned To" column; strip if present from shared column-order storage. */
+function columnOrderWithoutAssignedTo(order: ColumnOrderState): ColumnOrderState {
+  return order.filter((id) => id !== "assignedTo");
+}
 
 type SortField =
   | "leadId"
@@ -57,8 +63,12 @@ export const UserLeadsTableContainer: React.FC<
   onPageSizeChange,
   onPageChange,
 }) => {
-  // Column ordering with localStorage persistence
-  const { columnOrder, setColumnOrder } = useColumnOrder();
+  // Column ordering with localStorage persistence (shared hook with all-leads; agents hide Assigned To)
+  const { columnOrder: rawColumnOrder, setColumnOrder } = useColumnOrder();
+  const columnOrder = useMemo(
+    () => columnOrderWithoutAssignedTo(rawColumnOrder),
+    [rawColumnOrder],
+  );
 
   // Column visibility with localStorage persistence
   const { columnVisibility, setColumnVisibility } =

@@ -15,7 +15,6 @@ export const DEFAULT_USER_LEADS_COLUMN_ORDER = [
   "country",
   "status",
   "source",
-  "assignedTo",
   "createdAt",
   "statusChangedAt",
   "lastComment",

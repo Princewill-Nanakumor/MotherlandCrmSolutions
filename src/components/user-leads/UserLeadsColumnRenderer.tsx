@@ -39,15 +39,6 @@ export function renderUserLeadCell({
   canViewPhoneNumbers = false,
   canViewEmails = false,
 }: ColumnRendererProps): React.ReactElement | null {
-  const getAssignedUserName = () => {
-    if (!lead.assignedTo) return "Unassigned";
-    if (typeof lead.assignedTo === "string") return lead.assignedTo;
-    if (lead.assignedTo.firstName && lead.assignedTo.lastName) {
-      return `${lead.assignedTo.firstName} ${lead.assignedTo.lastName}`;
-    }
-    return "Unknown User";
-  };
-
   const currentStatus = statuses.find((s) => s._id === lead.status) ||
     statuses.find((s) => s._id === "NEW") || {
       _id: "NEW",
@@ -210,21 +201,6 @@ export function renderUserLeadCell({
         >
           <span className="text-gray-900! dark:text-white!">
             {lead.source || "—"}
-          </span>
-        </TableCell>
-      );
-
-    case "assignedTo":
-      return (
-        <TableCell
-          className={`text-center ${isSelected ? "text-gray-900! dark:text-white"! : "text-gray-800! dark:text-gray-300"}!`}
-        >
-          <span
-            className={
-              !lead.assignedTo ? "text-gray-500! dark:text-gray-400!" : ""
-            }
-          >
-            {getAssignedUserName()}
           </span>
         </TableCell>
       );

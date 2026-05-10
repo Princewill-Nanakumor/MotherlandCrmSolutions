@@ -27,7 +27,6 @@ const COLUMN_LABELS: Record<UserLeadsColumnId, string> = {
   country: "Country",
   status: "Status",
   source: "Source",
-  assignedTo: "Assigned To",
   createdAt: "Created At",
   statusChangedAt: "Last status change",
   lastComment: "Last Comment",
