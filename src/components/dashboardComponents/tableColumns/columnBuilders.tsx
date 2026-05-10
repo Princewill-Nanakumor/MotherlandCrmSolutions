@@ -2,8 +2,9 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpDown, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TableSortIcon } from "@/components/ui/table-sort-icon";
 import Link from "next/link";
 import { Lead } from "@/types/leads";
 import { User } from "@/types/user.types";
@@ -121,11 +122,17 @@ export function buildSelectionAndActionColumns(params: {
 
 export function buildCoreColumns(params: {
   sortField: SortField;
+  sortOrder: "asc" | "desc";
   handleSort: (field: SortField) => void;
   users: User[];
   statuses: Array<{ id: string; name: string; color?: string }>;
 }): ColumnDef<Lead>[] {
-  const { sortField, handleSort, users, statuses } = params;
+  const { sortField, sortOrder, handleSort, users, statuses } = params;
+
+  const sortIcon = (field: SortField) => (
+    <TableSortIcon active={sortField === field} direction={sortOrder} />
+  );
+
   return [
     {
       id: "leadId",
@@ -136,7 +143,7 @@ export function buildCoreColumns(params: {
           className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
         >
           <span className={sortField === "leadId" ? "font-bold" : "font-medium"}>ID</span>
-          <ArrowUpDown className={`h-4 w-4 ${sortField === "leadId" ? "text-foreground" : "text-muted-foreground"}`} />
+          {sortIcon("leadId")}
         </Button>
       ),
       cell: ({ row }) => (
@@ -154,7 +161,7 @@ export function buildCoreColumns(params: {
           className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
         >
           <span className={sortField === "name" ? "font-bold" : "font-medium"}>Name</span>
-          <ArrowUpDown className={`h-4 w-4 ${sortField === "name" ? "text-foreground" : "text-muted-foreground"}`} />
+          {sortIcon("name")}
         </Button>
       ),
       cell: ({ row }) => {
@@ -192,7 +199,7 @@ export function buildCoreColumns(params: {
           className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
         >
           <span className={sortField === "country" ? "font-bold" : "font-medium"}>Country</span>
-          <ArrowUpDown className={`h-4 w-4 ${sortField === "country" ? "text-foreground" : "text-muted-foreground"}`} />
+          {sortIcon("country")}
         </Button>
       ),
       cell: ({ row }) => (
@@ -208,7 +215,7 @@ export function buildCoreColumns(params: {
           className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
         >
           <span className={sortField === "status" ? "font-bold" : "font-medium"}>Status</span>
-          <ArrowUpDown className={`h-4 w-4 ${sortField === "status" ? "text-foreground" : "text-muted-foreground"}`} />
+          {sortIcon("status")}
         </Button>
       ),
       cell: ({ row }) => {
@@ -242,7 +249,7 @@ export function buildCoreColumns(params: {
           className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
         >
           <span className={sortField === "source" ? "font-bold" : "font-medium"}>Source</span>
-          <ArrowUpDown className={`h-4 w-4 ${sortField === "source" ? "text-foreground" : "text-muted-foreground"}`} />
+          {sortIcon("source")}
         </Button>
       ),
       cell: ({ row }) => (
@@ -258,7 +265,7 @@ export function buildCoreColumns(params: {
           className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
         >
           <span className={sortField === "assignedTo" ? "font-bold" : "font-medium"}>Assigned To</span>
-          <ArrowUpDown className={`h-4 w-4 ${sortField === "assignedTo" ? "text-foreground" : "text-muted-foreground"}`} />
+          {sortIcon("assignedTo")}
         </Button>
       ),
       cell: ({ row }) => {
@@ -284,7 +291,7 @@ export function buildCoreColumns(params: {
           className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
         >
           <span className={sortField === "createdAt" ? "font-bold" : "font-medium"}>Created</span>
-          <ArrowUpDown className={`h-4 w-4 ${sortField === "createdAt" ? "text-foreground" : "text-muted-foreground"}`} />
+          {sortIcon("createdAt")}
         </Button>
       ),
       cell: ({ row }) => (
@@ -302,7 +309,7 @@ export function buildCoreColumns(params: {
           className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
         >
           <span className={sortField === "statusChangedAt" ? "font-bold" : "font-medium"}>Last status change</span>
-          <ArrowUpDown className={`h-4 w-4 ${sortField === "statusChangedAt" ? "text-foreground" : "text-muted-foreground"}`} />
+          {sortIcon("statusChangedAt")}
         </Button>
       ),
       cell: ({ row }) => {
@@ -319,8 +326,17 @@ export function buildCoreColumns(params: {
   ];
 }
 
-export function buildTimelineColumns(params: { sortField: SortField; handleSort: (field: SortField) => void }): ColumnDef<Lead>[] {
-  const { sortField, handleSort } = params;
+export function buildTimelineColumns(params: {
+  sortField: SortField;
+  sortOrder: "asc" | "desc";
+  handleSort: (field: SortField) => void;
+}): ColumnDef<Lead>[] {
+  const { sortField, sortOrder, handleSort } = params;
+
+  const sortIcon = (field: SortField) => (
+    <TableSortIcon active={sortField === field} direction={sortOrder} />
+  );
+
   return [
     {
       id: "lastComment",
@@ -331,7 +347,7 @@ export function buildTimelineColumns(params: { sortField: SortField; handleSort:
           className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
         >
           <span className={sortField === "lastComment" ? "font-bold" : "font-medium"}>Last Comment</span>
-          <ArrowUpDown className={`h-4 w-4 ${sortField === "lastComment" ? "text-foreground" : "text-muted-foreground"}`} />
+          {sortIcon("lastComment")}
         </Button>
       ),
       size: 200,
@@ -363,7 +379,7 @@ export function buildTimelineColumns(params: { sortField: SortField; handleSort:
           className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
         >
           <span className={sortField === "lastCommentDate" ? "font-bold" : "font-medium"}>Last Comment Date</span>
-          <ArrowUpDown className={`h-4 w-4 ${sortField === "lastCommentDate" ? "text-foreground" : "text-muted-foreground"}`} />
+          {sortIcon("lastCommentDate")}
         </Button>
       ),
       cell: ({ row }) => {
@@ -386,7 +402,7 @@ export function buildTimelineColumns(params: { sortField: SortField; handleSort:
           className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
         >
           <span className={sortField === "commentCount" ? "font-bold" : "font-medium"}>Timeline</span>
-          <ArrowUpDown className={`h-4 w-4 ${sortField === "commentCount" ? "text-foreground" : "text-muted-foreground"}`} />
+          {sortIcon("commentCount")}
         </Button>
       ),
       cell: ({ row }) => {

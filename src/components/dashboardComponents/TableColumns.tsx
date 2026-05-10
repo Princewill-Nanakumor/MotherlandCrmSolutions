@@ -15,6 +15,7 @@ import {
 
 interface TableColumnsProps {
   sortField: SortField;
+  sortOrder: "asc" | "desc";
   handleSort: (field: SortField) => void;
   allSelected: boolean;
   selectedLeads: Lead[];
@@ -27,6 +28,7 @@ interface TableColumnsProps {
 
 export const useTableColumns = ({
   sortField,
+  sortOrder,
   handleSort,
   allSelected,
   selectedLeads,
@@ -52,17 +54,20 @@ export const useTableColumns = ({
       }),
       ...buildCoreColumns({
         sortField,
+        sortOrder,
         handleSort,
         users,
         statuses,
       }),
       ...buildTimelineColumns({
         sortField,
+        sortOrder,
         handleSort,
       }),
     ],
     [
       sortField,
+      sortOrder,
       handleSort,
       allSelected,
       selectedLeads,

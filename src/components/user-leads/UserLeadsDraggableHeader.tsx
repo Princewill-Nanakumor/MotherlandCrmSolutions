@@ -5,7 +5,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TableHead } from "@/components/ui/Table";
 import { Button } from "@/components/ui/button";
-import { GripVertical, ArrowUpDown } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import { UserLeadsColumnId } from "@/hooks/useUserLeadsColumnOrder";
 
 interface UserLeadsDraggableHeaderProps {
@@ -13,7 +13,6 @@ interface UserLeadsDraggableHeaderProps {
   children: React.ReactNode;
   isSortable?: boolean;
   isSorted?: boolean;
-  sortOrder?: "asc" | "desc";
   onSort?: () => void;
 }
 
@@ -22,7 +21,6 @@ export function UserLeadsDraggableHeader({
   children,
   isSortable = false,
   isSorted = false,
-  sortOrder,
   onSort,
 }: UserLeadsDraggableHeaderProps) {
   const {
@@ -58,18 +56,13 @@ export function UserLeadsDraggableHeader({
     <Button
       variant="ghost"
       onClick={onSort}
-      className="flex gap-1 justify-center items-center h-8 text-gray-900! dark:text-white! hover:text-gray-700! dark:hover:text-gray-200! hover:bg-transparent! dark:hover:bg-transparent!"
+      className="flex justify-center items-center h-8 text-gray-900! dark:text-white! hover:text-gray-700! dark:hover:text-gray-200! hover:bg-transparent! dark:hover:bg-transparent!"
     >
       <span
         className={`${isSorted ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
       >
         {children}
       </span>
-      <ArrowUpDown
-        className={`h-4 w-4 text-gray-600! dark:text-gray-400!${
-          isSorted ? (sortOrder === "asc" ? "rotate-180" : "") : ""
-        }`}
-      />
     </Button>
   ) : (
     <span

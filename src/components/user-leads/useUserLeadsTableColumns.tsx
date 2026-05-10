@@ -5,23 +5,26 @@ import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Lead } from "@/types/leads";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useStatuses } from "@/hooks/useStatuses";
 import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
 import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
 import { Badge } from "@/components/ui/badge";
+import { TableSortIcon } from "@/components/ui/table-sort-icon";
 import { Loader2 } from "lucide-react";
 import type { SortField } from "@/components/leads/userLeadsTypes";
 
 interface UseUserLeadsTableColumnsProps {
   sortField: SortField;
+  sortOrder: "asc" | "desc";
   handleSort: (field: SortField) => void;
 }
 
 export const useUserLeadsTableColumns = ({
   sortField,
+  sortOrder,
   handleSort,
 }: UseUserLeadsTableColumnsProps) => {
   const searchParams = useSearchParams();
@@ -64,8 +67,17 @@ export const useUserLeadsTableColumns = ({
     );
   };
 
-  const columns = useMemo<ColumnDef<Lead>[]>(
-    () => [
+  const columns = useMemo<ColumnDef<Lead>[]>(() => {
+    const sortIcon = (field: SortField) => (
+      <TableSortIcon
+        active={sortField === field}
+        direction={sortOrder}
+        neutralClassName="text-gray-600! dark:text-gray-400!"
+        activeClassName="text-gray-900! dark:text-white!"
+      />
+    );
+
+    return [
       {
         id: "actions",
         header: () => (
@@ -124,9 +136,7 @@ export const useUserLeadsTableColumns = ({
             >
               ID
             </span>
-            <ArrowUpDown
-              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "leadId" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
-            />
+            {sortIcon("leadId")}
           </Button>
         ),
         cell: ({ row }) => {
@@ -152,9 +162,7 @@ export const useUserLeadsTableColumns = ({
             >
               Name
             </span>
-            <ArrowUpDown
-              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "name" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
-            />
+            {sortIcon("name")}
           </Button>
         ),
         cell: ({ row }) => {
@@ -231,9 +239,7 @@ export const useUserLeadsTableColumns = ({
             >
               Country
             </span>
-            <ArrowUpDown
-              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "country" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
-            />
+            {sortIcon("country")}
           </Button>
         ),
         cell: ({ row }) => {
@@ -258,9 +264,7 @@ export const useUserLeadsTableColumns = ({
             >
               Status
             </span>
-            <ArrowUpDown
-              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "status" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
-            />
+            {sortIcon("status")}
           </Button>
         ),
         cell: ({ row }) => {
@@ -324,9 +328,7 @@ export const useUserLeadsTableColumns = ({
             >
               Source
             </span>
-            <ArrowUpDown
-              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "source" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
-            />
+            {sortIcon("source")}
           </Button>
         ),
         cell: ({ row }) => {
@@ -351,9 +353,7 @@ export const useUserLeadsTableColumns = ({
             >
               Created At
             </span>
-            <ArrowUpDown
-              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "createdAt" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
-            />
+            {sortIcon("createdAt")}
           </Button>
         ),
         cell: ({ row }) => {
@@ -379,9 +379,7 @@ export const useUserLeadsTableColumns = ({
             >
               Last status change
             </span>
-            <ArrowUpDown
-              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "statusChangedAt" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
-            />
+            {sortIcon("statusChangedAt")}
           </Button>
         ),
         cell: ({ row }) => {
@@ -407,9 +405,7 @@ export const useUserLeadsTableColumns = ({
             >
               Last Comment
             </span>
-            <ArrowUpDown
-              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "lastComment" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
-            />
+            {sortIcon("lastComment")}
           </Button>
         ),
         cell: ({ row }) => {
@@ -451,9 +447,7 @@ export const useUserLeadsTableColumns = ({
             >
               Last Comment Date
             </span>
-            <ArrowUpDown
-              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "lastCommentDate" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
-            />
+            {sortIcon("lastCommentDate")}
           </Button>
         ),
         cell: ({ row }) => {
@@ -479,9 +473,7 @@ export const useUserLeadsTableColumns = ({
             >
               Timeline
             </span>
-            <ArrowUpDown
-              className={`h-4 w-4 text-gray-600! dark:text-gray-400!${sortField === "commentCount" ? "text-gray-900! dark:text-white"! : "text-gray-600! dark:text-gray-400"!}`}
-            />
+            {sortIcon("commentCount")}
           </Button>
         ),
         cell: ({ row }) => {
@@ -494,10 +486,12 @@ export const useUserLeadsTableColumns = ({
         },
         enableSorting: true,
       },
-    ],
+    ];
+  },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       sortField,
+      sortOrder,
       handleSort,
       statuses,
       statusesLoading,

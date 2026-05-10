@@ -423,6 +423,7 @@ export default function LeadsTable({
 
   const { columns } = useTableColumns({
     sortField: (stableSorting[0]?.id as SortField) || "name",
+    sortOrder: stableSorting[0]?.desc ? "desc" : "asc",
     handleSort,
     allSelected,
     selectedLeads: displaySelectedLeads,

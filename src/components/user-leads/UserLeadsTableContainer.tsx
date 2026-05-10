@@ -106,6 +106,7 @@ export const UserLeadsTableContainer: React.FC<
   // Get column definitions
   const { columns } = useUserLeadsTableColumns({
     sortField,
+    sortOrder,
     handleSort,
   });
 

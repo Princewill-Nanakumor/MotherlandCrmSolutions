@@ -8,9 +8,6 @@ import {
   Trash,
   KeyRound,
   Eye,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
   PhoneCall,
   Shield,
   User as UserIcon,
@@ -80,16 +77,7 @@ export function useUserTableColumns({
           onClick={() => column.toggleSorting()}
           className="h-auto p-0 hover:bg-transparent text-gray-700! dark:text-white! font-semibold cursor-pointer"
         >
-          <div className="flex items-center gap-2">
-            Name
-            {column.getIsSorted() === "asc" ? (
-              <ArrowUp className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
-            ) : column.getIsSorted() === "desc" ? (
-              <ArrowDown className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
-            ) : (
-              <ArrowUpDown className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
-            )}
-          </div>
+          <span>Name</span>
         </Button>
       ),
       cell: ({ row }) => (
@@ -174,16 +162,7 @@ export function useUserTableColumns({
           onClick={() => column.toggleSorting()}
           className="h-auto p-0 hover:bg-transparent text-gray-700! dark:text-white! font-semibold cursor-pointer"
         >
-          <div className="flex items-center gap-2">
-            Created
-            {column.getIsSorted() === "asc" ? (
-              <ArrowUp className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
-            ) : column.getIsSorted() === "desc" ? (
-              <ArrowDown className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
-            ) : (
-              <ArrowUpDown className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
-            )}
-          </div>
+          <span>Created</span>
         </Button>
       ),
       cell: ({ row }) => (
@@ -207,16 +186,7 @@ export function useUserTableColumns({
           onClick={() => column.toggleSorting()}
           className="h-auto p-0 hover:bg-transparent text-gray-700! dark:text-white! font-semibold cursor-pointer"
         >
-          <div className="flex items-center gap-2">
-            Last Login
-            {column.getIsSorted() === "asc" ? (
-              <ArrowUp className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
-            ) : column.getIsSorted() === "desc" ? (
-              <ArrowDown className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
-            ) : (
-              <ArrowUpDown className="h-4 w-4 text-gray-600! dark:text-gray-400!" />
-            )}
-          </div>
+          <span>Last Login</span>
         </Button>
       ),
       cell: ({ row }) => (
