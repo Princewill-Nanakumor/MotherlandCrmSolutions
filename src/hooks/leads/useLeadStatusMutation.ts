@@ -73,10 +73,18 @@ export function useLeadStatusMutation({
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const applyStatusOptimistic = useCallback(
-    (leadId: string, status: string) => {
+    (leadId: string, status: string, touchActivity = false) => {
+      const now = touchActivity ? new Date().toISOString() : null;
       queryClient.setQueriesData<LeadsData>(
         { predicate: (q) => isLeadsListQueryKey(q.queryKey) },
-        (oldData) => patchLeadInData(oldData, leadId, (l) => ({ ...l, status })),
+        (oldData) =>
+          patchLeadInData(oldData, leadId, (l) => ({
+            ...l,
+            status,
+            ...(now
+              ? { statusChangedAt: now, lastActivityAt: now, updatedAt: now }
+              : {}),
+          })),
       );
     },
     [queryClient],
@@ -86,7 +94,20 @@ export function useLeadStatusMutation({
     (leadId: string, replacement: Lead) => {
       queryClient.setQueriesData<LeadsData>(
         { predicate: (q) => isLeadsListQueryKey(q.queryKey) },
-        (oldData) => patchLeadInData(oldData, leadId, () => replacement),
+        (oldData) =>
+          patchLeadInData(oldData, leadId, (existingLead) => ({
+            ...existingLead,
+            ...replacement,
+            lastComment: replacement.lastComment ?? existingLead.lastComment,
+            lastCommentDate:
+              replacement.lastCommentDate ?? existingLead.lastCommentDate,
+            commentCount: replacement.commentCount ?? existingLead.commentCount,
+            lastActivityAt:
+              replacement.lastActivityAt ??
+              existingLead.lastActivityAt ??
+              replacement.statusChangedAt ??
+              existingLead.statusChangedAt,
+          })),
       );
     },
     [queryClient],
@@ -128,7 +149,7 @@ export function useLeadStatusMutation({
       });
 
       const previousStatus = lead.status;
-      applyStatusOptimistic(leadId, newStatusId);
+      applyStatusOptimistic(leadId, newStatusId, true);
 
       return { previousStatus, leadId, newStatusId };
     },
@@ -204,6 +225,10 @@ export function useLeadStatusMutation({
         exact: false,
       });
 
+      await queryClient.invalidateQueries({
+        predicate: (query) => isLeadsListQueryKey(query.queryKey),
+      });
+
       if (onLeadUpdated) {
         onLeadUpdated(updatedLead).catch((err) =>
           console.error("Error notifying parent of status update:", err),
@@ -233,4 +258,3 @@ export function useLeadStatusMutation({
     handleStatusChange,
   };
 }
-

@@ -13,8 +13,17 @@ function patchLeadInListCache(
   leadId: string,
   updated: Lead,
 ): unknown {
+  const mergeLead = (existing: Lead) => ({
+    ...existing,
+    ...updated,
+    lastComment: updated.lastComment ?? existing.lastComment,
+    lastCommentDate: updated.lastCommentDate ?? existing.lastCommentDate,
+    commentCount: updated.commentCount ?? existing.commentCount,
+    lastActivityAt: updated.lastActivityAt ?? existing.lastActivityAt,
+  });
+
   if (Array.isArray(data)) {
-    return (data as Lead[]).map((l) => (l._id === leadId ? updated : l));
+    return (data as Lead[]).map((l) => (l._id === leadId ? mergeLead(l) : l));
   }
   if (
     data &&
@@ -24,7 +33,7 @@ function patchLeadInListCache(
     const d = data as { leads: Lead[]; total?: number; totalAll?: number };
     return {
       ...d,
-      leads: d.leads.map((l) => (l._id === leadId ? updated : l)),
+      leads: d.leads.map((l) => (l._id === leadId ? mergeLead(l) : l)),
     };
   }
   return data;

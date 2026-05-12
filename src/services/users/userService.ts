@@ -144,10 +144,12 @@ export async function createUserForAdmin(
     }
   }
 
+  const normalizedEmail = data.email.trim().toLowerCase();
+
   const existingUser = await withDatabase(async () => {
     const db = mongoose.connection.db;
     if (!db) throw new Error("Database connection not available");
-    return db.collection("users").findOne({ email: data.email });
+    return db.collection("users").findOne({ email: normalizedEmail });
   });
   if (existingUser) {
     return {
@@ -163,7 +165,7 @@ export async function createUserForAdmin(
     return db.collection("users").insertOne({
       firstName: data.firstName,
       lastName: data.lastName,
-      email: data.email,
+      email: normalizedEmail,
       password: hashedPassword,
       phoneNumber: data.phoneNumber,
       country: data.country,
@@ -338,7 +340,7 @@ export async function updateUserForAdmin(
   const updateFields: UserUpdateFields = {};
   if (requestData.firstName !== undefined) updateFields.firstName = requestData.firstName;
   if (requestData.lastName !== undefined) updateFields.lastName = requestData.lastName;
-  if (requestData.email !== undefined) updateFields.email = requestData.email;
+  if (requestData.email !== undefined) updateFields.email = requestData.email.trim().toLowerCase();
   if (requestData.phoneNumber !== undefined) updateFields.phoneNumber = requestData.phoneNumber;
   if (requestData.country !== undefined) updateFields.country = requestData.country;
   if (requestData.role !== undefined) updateFields.role = requestData.role;

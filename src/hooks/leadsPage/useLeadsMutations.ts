@@ -46,7 +46,8 @@ export function useLeadsMutations({
     queryClient.setQueriesData<LeadsResponse>(
       {
         predicate: (query) =>
-          Array.isArray(query.queryKey) && query.queryKey[0] === "leads",
+          Array.isArray(query.queryKey) &&
+          (query.queryKey[0] === "leads" || query.queryKey[0] === "assignedLeads"),
       },
       (old) => {
         if (!old?.leads) return old;
@@ -64,6 +65,12 @@ export function useLeadsMutations({
       },
     );
   };
+
+  const touchLeadActivity = (lead: Lead, timestamp: string): Lead => ({
+    ...lead,
+    updatedAt: timestamp,
+    lastActivityAt: timestamp,
+  });
 
   const assignLeadsMutation = useMutation({
     mutationFn: async ({ leadIds, userId }: { leadIds: string[]; userId: string }) => {
@@ -83,13 +90,15 @@ export function useLeadsMutations({
 
       const previousData = queryClient.getQueryData<LeadsResponse>(leadsQueryKey);
       const assignedUser = users.find((u) => u.id === userId);
+      const now = new Date().toISOString();
 
       queryClient.setQueryData<LeadsResponse>(leadsQueryKey, (old) => {
         const currentLeads = old?.leads ?? [];
         return {
           leads: currentLeads.map((lead) =>
             leadIds.includes(lead._id)
-              ? {
+              ? touchLeadActivity(
+                  {
                   ...lead,
                   assignedTo: assignedUser
                     ? {
@@ -98,7 +107,9 @@ export function useLeadsMutations({
                         lastName: assignedUser.lastName,
                       }
                     : null,
-                }
+                  },
+                  now,
+                )
               : lead,
           ),
           total: old?.total ?? 0,
@@ -110,7 +121,7 @@ export function useLeadsMutations({
         const currentSelected = selectedLeads.map((lead) =>
           leadIds.includes(lead._id)
             ? {
-                ...lead,
+                ...touchLeadActivity(lead, now),
                 assignedTo: {
                   id: assignedUser.id,
                   firstName: assignedUser.firstName,
@@ -151,7 +162,8 @@ export function useLeadsMutations({
 
       updateLeadCaches((lead) =>
         variables.leadIds.includes(lead._id)
-          ? {
+          ? touchLeadActivity(
+              {
               ...lead,
               assignedTo:
                 users.find((u) => u.id === variables.userId)
@@ -164,10 +176,15 @@ export function useLeadsMutations({
                         users.find((u) => u.id === variables.userId)?.lastName ?? "",
                     }
                   : null,
-            }
+              },
+              new Date().toISOString(),
+            )
           : lead,
       );
-      queryClient.invalidateQueries({ queryKey: leadsQueryKey });
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) && query.queryKey[0] === "leads",
+      });
       queryClient.invalidateQueries({
         predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
       });
@@ -197,16 +214,23 @@ export function useLeadsMutations({
       mutationInProgressRef.current = true;
       await queryClient.cancelQueries({ queryKey: ["leads"] });
       const previousData = queryClient.getQueryData<LeadsResponse>(leadsQueryKey);
+      const now = new Date().toISOString();
       queryClient.setQueryData<LeadsResponse>(leadsQueryKey, (old) => {
         const currentLeads = old?.leads ?? [];
         return {
-          leads: currentLeads.map((lead) => (leadIds.includes(lead._id) ? { ...lead, assignedTo: null } : lead)),
+          leads: currentLeads.map((lead) =>
+            leadIds.includes(lead._id)
+              ? touchLeadActivity({ ...lead, assignedTo: null }, now)
+              : lead,
+          ),
           total: old?.total ?? 0,
           totalAll: old?.totalAll ?? 0,
         };
       });
       const currentSelected = selectedLeads.map((lead) =>
-        leadIds.includes(lead._id) ? { ...lead, assignedTo: null } : lead,
+        leadIds.includes(lead._id)
+          ? touchLeadActivity({ ...lead, assignedTo: null }, now)
+          : lead,
       );
       setSelectedLeads(currentSelected);
       return { previousData };
@@ -236,9 +260,14 @@ export function useLeadsMutations({
         variant: "success",
       });
       updateLeadCaches((lead) =>
-        variables.leadIds.includes(lead._id) ? { ...lead, assignedTo: null } : lead,
+        variables.leadIds.includes(lead._id)
+          ? touchLeadActivity({ ...lead, assignedTo: null }, new Date().toISOString())
+          : lead,
       );
-      queryClient.invalidateQueries({ queryKey: leadsQueryKey });
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) && query.queryKey[0] === "leads",
+      });
       queryClient.invalidateQueries({
         predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
       });
@@ -274,11 +303,20 @@ export function useLeadsMutations({
       mutationInProgressRef.current = true;
       await queryClient.cancelQueries({ queryKey: ["leads"] });
       const previousData = queryClient.getQueryData<LeadsResponse>(leadsQueryKey);
+      const now = new Date().toISOString();
       queryClient.setQueryData<LeadsResponse>(leadsQueryKey, (old) => {
         const currentLeads = old?.leads ?? [];
         return {
           leads: currentLeads.map((lead) =>
-            leadIds.includes(lead._id) ? { ...lead, status, updatedAt: new Date().toISOString() } : lead,
+            leadIds.includes(lead._id)
+              ? {
+                  ...lead,
+                  status,
+                  statusChangedAt: now,
+                  updatedAt: now,
+                  lastActivityAt: now,
+                }
+              : lead,
           ),
           total: old?.total ?? 0,
           totalAll: old?.totalAll ?? 0,
@@ -297,12 +335,23 @@ export function useLeadsMutations({
     },
     onSuccess: (data, variables) => {
       mutationInProgressRef.current = false;
+      const now = new Date().toISOString();
       updateLeadCaches((lead) =>
         variables.leadIds.includes(lead._id)
-          ? { ...lead, status: variables.status, updatedAt: new Date().toISOString() }
+          ? {
+              ...lead,
+              status: variables.status,
+              statusChangedAt: now,
+              updatedAt: now,
+              lastActivityAt: now,
+            }
           : lead,
       );
-      queryClient.invalidateQueries({ queryKey: leadsQueryKey });
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) &&
+          (query.queryKey[0] === "leads" || query.queryKey[0] === "assignedLeads"),
+      });
       queryClient.invalidateQueries({
         predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
       });
@@ -368,11 +417,14 @@ export function useLeadsMutations({
           totalAll: Math.max(0, cache.totalAll - 1),
         }),
       );
-      queryClient.invalidateQueries({ queryKey: leadsQueryKey });
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) &&
+          (query.queryKey[0] === "leads" || query.queryKey[0] === "assignedLeads"),
+      });
       queryClient.invalidateQueries({
         predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
       });
-      queryClient.invalidateQueries({ queryKey: assignedLeadsKeys.all });
       toast({
         title: "Success!",
         description: `Successfully deleted ${variables.leadIds.length} lead(s)`,

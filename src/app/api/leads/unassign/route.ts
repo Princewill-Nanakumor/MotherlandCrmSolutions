@@ -96,6 +96,7 @@ export async function POST(request: Request) {
 
     // Update leads and create activities
     const updatePromises = beforeLeads.map(async (lead) => {
+      const now = new Date();
       const oldAssignedTo = lead.assignedTo;
 
       // Get the user being unassigned (handle both object and ObjectId formats)
@@ -130,7 +131,8 @@ export async function POST(request: Request) {
         {
           $set: {
             assignedTo: null,
-            updatedAt: new Date(),
+            updatedAt: now,
+            lastActivityAt: now,
           },
         },
         { returnDocument: "after" }
@@ -143,7 +145,7 @@ export async function POST(request: Request) {
         details: `Lead unassigned from ${unassignedUser ? `${unassignedUser.firstName} ${unassignedUser.lastName}` : "Unknown User"}`,
         leadId: lead._id,
         adminId: adminObjectId, // Multi-tenancy
-        timestamp: new Date(),
+        timestamp: now,
         metadata: {
           assignedTo: null,
           assignedFrom: unassignedUser

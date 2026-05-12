@@ -174,6 +174,7 @@ export interface Lead {
   lastComment?: string;
   lastCommentDate?: string;
   commentCount?: number;
+  lastActivityAt?: string;
   assignedTo?: {
     id: string;
     firstName: string;

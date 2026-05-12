@@ -26,6 +26,7 @@ interface LeadDoc {
   createdAt: Date;
   updatedAt: Date;
   statusChangedAt?: Date;
+  lastActivityAt?: Date;
 }
 
 interface SessionUser {
@@ -137,7 +138,12 @@ async function runStatusUpdate(
         const now = new Date();
         const updatedLead = (await Lead.findOneAndUpdate(
           query,
-          { status: newStatus, updatedAt: now, statusChangedAt: now },
+          {
+            status: newStatus,
+            updatedAt: now,
+            statusChangedAt: now,
+            lastActivityAt: now,
+          },
           {
             new: true,
             lean: true,
@@ -158,6 +164,7 @@ async function runStatusUpdate(
               createdAt: 1,
               updatedAt: 1,
               statusChangedAt: 1,
+              lastActivityAt: 1,
             },
           }
         )) as LeadDoc | null;
@@ -209,6 +216,7 @@ async function runStatusUpdate(
           createdAt: updatedLead.createdAt,
           updatedAt: updatedLead.updatedAt,
           statusChangedAt: (updatedLead as LeadDoc & { statusChangedAt?: Date }).statusChangedAt ?? undefined,
+          lastActivityAt: updatedLead.lastActivityAt ?? now,
         };
       })) as Record<string, unknown>;
       return responseData;
@@ -261,7 +269,12 @@ async function updateStatusWithoutTransaction(
   const now = new Date();
   const updatedLead = (await Lead.findOneAndUpdate(
     query,
-    { status: newStatus, updatedAt: now, statusChangedAt: now },
+    {
+      status: newStatus,
+      updatedAt: now,
+      statusChangedAt: now,
+      lastActivityAt: now,
+    },
     {
       new: true,
       lean: true,
@@ -281,6 +294,7 @@ async function updateStatusWithoutTransaction(
         createdAt: 1,
         updatedAt: 1,
         statusChangedAt: 1,
+        lastActivityAt: 1,
       },
     }
   )) as LeadDoc | null;
@@ -347,6 +361,7 @@ async function updateStatusWithoutTransaction(
       createdAt: updatedLead.createdAt,
       updatedAt: updatedLead.updatedAt,
       statusChangedAt: updatedLead.statusChangedAt ?? undefined,
+      lastActivityAt: updatedLead.lastActivityAt ?? now,
     },
   };
 }

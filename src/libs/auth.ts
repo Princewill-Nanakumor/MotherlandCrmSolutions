@@ -155,7 +155,20 @@ export const authOptions: NextAuthOptions = {
           // ADMIN-first explicit lookup; falls back to any matching row.
           const user = await findUserForCredentialLoginByEmail(normalizedEmail);
 
+          // --- DEBUG: remove after investigation ---
           if (!user) {
+            const User = (await import("@/models/User")).default;
+            const allMatches = await User.find({ email: normalizedEmail })
+              .select("_id email role status adminId createdBy")
+              .lean();
+            console.error(
+              "[AUTH DEBUG] No user found for login.",
+              JSON.stringify({
+                inputEmail: normalizedEmail,
+                rawInput: credentials.email,
+                matchesInDb: allMatches,
+              }, null, 2),
+            );
             throw new Error("Invalid email or password");
           }
 

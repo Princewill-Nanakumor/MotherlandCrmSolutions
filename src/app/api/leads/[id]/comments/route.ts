@@ -152,6 +152,16 @@ export async function POST(request: Request) {
       },
     });
 
+    await Lead.updateOne(
+      { _id: leadObjectId },
+      {
+        $set: {
+          lastActivityAt: savedComment.createdAt,
+          updatedAt: savedComment.createdAt,
+        },
+      },
+    );
+
     try {
       await publishLeadUpdatedEvent(adminId.toString(), canonicalLeadId, {
         type: "comment_created",

@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Lead } from "@/types/leads";
 import { normalizeLeadId } from "@/lib/leadId";
 
-type SortField = "leadId" | "name" | "country" | "status" | "source" | "assignedTo" | "createdAt" | "statusChangedAt" | "lastComment" | "lastCommentDate" | "commentCount";
+type SortField = "leadId" | "name" | "country" | "status" | "source" | "lastActivityAt" | "assignedTo" | "createdAt" | "statusChangedAt" | "lastComment" | "lastCommentDate" | "commentCount";
 type SortOrder = "asc" | "desc";
 type FilterMode = "include" | "exclude";
 

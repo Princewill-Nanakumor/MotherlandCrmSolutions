@@ -73,11 +73,11 @@ export default function UserLeadsContent() {
   // Get sort parameters from URL or use defaults
   const [sortField, setSortField] = useState<SortField>(() => {
     const urlSortField = searchParams.get("sortField") as SortField;
-    return urlSortField || "name";
+    return urlSortField || "lastActivityAt";
   });
   const [sortOrder, setSortOrder] = useState<SortOrder>(() => {
     const urlSortOrder = searchParams.get("sortOrder") as SortOrder;
-    return urlSortOrder || "asc";
+    return urlSortOrder || "desc";
   });
 
   // Helper to parse URL params into string arrays (JSON array or legacy string)

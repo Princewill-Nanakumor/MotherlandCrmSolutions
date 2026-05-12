@@ -16,6 +16,7 @@ export type SortField =
   | "country"
   | "status"
   | "source"
+  | "lastActivityAt"
   | "createdAt"
   | "assignedTo"
   | "statusChangedAt"
@@ -126,12 +127,26 @@ export function buildCoreColumns(params: {
   handleSort: (field: SortField) => void;
   users: User[];
   statuses: Array<{ id: string; name: string; color?: string }>;
+  timeFormat?: "12h" | "24h";
+  dateFormat?: "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD";
+  timezone?: string;
 }): ColumnDef<Lead>[] {
-  const { sortField, sortOrder, handleSort, users, statuses } = params;
+  const { sortField, sortOrder, handleSort, users, statuses, timeFormat = "12h", dateFormat = "DD/MM/YYYY", timezone } = params;
 
   const sortIcon = (field: SortField) => (
     <TableSortIcon active={sortField === field} direction={sortOrder} />
   );
+
+  const formatDT = (value: string | undefined) => {
+    if (!value) return null;
+    const date = new Date(value);
+    const locale = dateFormat === "MM/DD/YYYY" ? "en-US" : dateFormat === "YYYY-MM-DD" ? "en-CA" : "en-GB";
+    const dateStr = date.toLocaleDateString(locale, timezone ? { timeZone: timezone } : undefined);
+    const hour12 = timeFormat === "12h";
+    let timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12, ...(timezone ? { timeZone: timezone } : {}) });
+    if (hour12) timeStr = timeStr.replace(/ (\w{2})$/, "\u2009$1");
+    return { dateStr, timeStr };
+  };
 
   return [
     {
@@ -187,8 +202,9 @@ export function buildCoreColumns(params: {
       id: "phone",
       header: () => <div className="flex items-center justify-start w-full h-8 font-medium cursor-pointer">Phone</div>,
       cell: ({ row }) => (
-        <div className="text-center font-medium text-gray-900! dark:text-white!">{row.original.phone || "—"}</div>
+        <div className="text-center font-medium text-gray-900! dark:text-white! whitespace-nowrap">{row.original.phone || "—"}</div>
       ),
+      minSize: 140,
     },
     {
       id: "country",
@@ -294,11 +310,16 @@ export function buildCoreColumns(params: {
           {sortIcon("createdAt")}
         </Button>
       ),
-      cell: ({ row }) => (
-        <div className="text-center font-medium text-gray-900! dark:text-white!">
-          {new Date(row.original.createdAt).toLocaleDateString()}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const dt = formatDT(row.original.createdAt);
+        if (!dt) return <div className="text-center font-medium text-gray-900! dark:text-white!">—</div>;
+        return (
+          <div className="text-sm text-center font-medium text-gray-900! dark:text-white!">
+            <div>{dt.dateStr}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{dt.timeStr}</div>
+          </div>
+        );
+      },
     },
     {
       id: "statusChangedAt",
@@ -313,12 +334,12 @@ export function buildCoreColumns(params: {
         </Button>
       ),
       cell: ({ row }) => {
-        if (!row.original.statusChangedAt) {
-          return <div className="text-center font-medium text-gray-900! dark:text-white!">—</div>;
-        }
+        const dt = formatDT(row.original.statusChangedAt);
+        if (!dt) return <div className="text-center font-medium text-gray-900! dark:text-white!">—</div>;
         return (
-          <div className="text-center font-medium text-gray-900! dark:text-white!">
-            {new Date(row.original.statusChangedAt).toLocaleDateString()}
+          <div className="text-sm text-center font-medium text-gray-900! dark:text-white!">
+            <div>{dt.dateStr}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{dt.timeStr}</div>
           </div>
         );
       },
@@ -330,8 +351,22 @@ export function buildTimelineColumns(params: {
   sortField: SortField;
   sortOrder: "asc" | "desc";
   handleSort: (field: SortField) => void;
+  timeFormat?: "12h" | "24h";
+  dateFormat?: "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD";
+  timezone?: string;
 }): ColumnDef<Lead>[] {
-  const { sortField, sortOrder, handleSort } = params;
+  const { sortField, sortOrder, handleSort, timeFormat = "12h", dateFormat = "DD/MM/YYYY", timezone } = params;
+
+  const formatDate = (value: string | undefined) => {
+    if (!value) return null;
+    const date = new Date(value);
+    const locale = dateFormat === "MM/DD/YYYY" ? "en-US" : dateFormat === "YYYY-MM-DD" ? "en-CA" : "en-GB";
+    const dateStr = date.toLocaleDateString(locale, timezone ? { timeZone: timezone } : undefined);
+    const hour12 = timeFormat === "12h";
+    let timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12, ...(timezone ? { timeZone: timezone } : {}) });
+    if (hour12) timeStr = timeStr.replace(/ (\w{2})$/, "\u2009$1");
+    return { dateStr, timeStr };
+  };
 
   const sortIcon = (field: SortField) => (
     <TableSortIcon active={sortField === field} direction={sortOrder} />
@@ -383,12 +418,12 @@ export function buildTimelineColumns(params: {
         </Button>
       ),
       cell: ({ row }) => {
-        const value = row.original.lastCommentDate;
-        if (!value) return <div className="text-center font-medium text-gray-900! dark:text-white!">—</div>;
-        const date = new Date(value);
+        const dt = formatDate(row.original.lastCommentDate);
+        if (!dt) return <div className="text-center font-medium text-gray-900! dark:text-white!">—</div>;
         return (
           <div className="text-sm text-center font-medium text-gray-900! dark:text-white!">
-            {String(date.getDate()).padStart(2, "0")}/{String(date.getMonth() + 1).padStart(2, "0")}/{date.getFullYear()}
+            <div>{dt.dateStr}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{dt.timeStr}</div>
           </div>
         );
       },

@@ -181,6 +181,16 @@ export async function PUT(request: Request) {
       );
     }
 
+    await Lead.updateOne(
+      { _id: auth.comment.leadId, adminId },
+      {
+        $set: {
+          lastActivityAt: updated.updatedAt,
+          updatedAt: updated.updatedAt,
+        },
+      },
+    );
+
     try {
       await publishLeadUpdatedEvent(adminId.toString(), canonicalLeadId, {
         type: "comment_updated",
@@ -240,6 +250,12 @@ export async function DELETE(request: Request) {
         { status: 404 },
       );
     }
+
+    const activityAt = new Date();
+    await Lead.updateOne(
+      { _id: auth.comment.leadId, adminId },
+      { $set: { lastActivityAt: activityAt, updatedAt: activityAt } },
+    );
 
     try {
       await publishLeadUpdatedEvent(adminId.toString(), canonicalLeadId, {

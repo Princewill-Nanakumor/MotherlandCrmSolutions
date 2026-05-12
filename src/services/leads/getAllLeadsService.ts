@@ -40,6 +40,7 @@ const LEADS_LIST_PROJECTION = {
   createdAt: 1,
   updatedAt: 1,
   statusChangedAt: 1,
+  lastActivityAt: 1,
   comments: 1,
 } as const;
 
@@ -303,7 +304,7 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
     .collection("leads")
     .find(filter)
     .project(LEADS_LIST_PROJECTION)
-    .sort({ createdAt: -1 })
+    .sort({ lastActivityAt: -1, updatedAt: -1, createdAt: -1 })
     .skip((page - 1) * pageSize)
     .limit(pageSize)
     .toArray();
@@ -441,6 +442,13 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
             ? lead.statusChangedAt.toISOString()
             : (lead.statusChangedAt as string)
           : undefined,
+        lastActivityAt: lead.lastActivityAt
+          ? lead.lastActivityAt instanceof Date
+            ? lead.lastActivityAt.toISOString()
+            : (lead.lastActivityAt as string)
+          : lead.updatedAt instanceof Date
+            ? lead.updatedAt.toISOString()
+            : (lead.updatedAt as string) || undefined,
         comments: (lead.comments as string) || "",
         lastComment: lastComment?.content || null,
         lastCommentDate: lastComment?.createdAt

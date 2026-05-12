@@ -5,6 +5,7 @@ import User from "@/models/User";
 import { authOptions } from "@/libs/auth";
 import bcrypt from "bcryptjs";
 import { unauthorizedResponse } from "@/lib/apiResponses";
+import { invalidatePasswordChangedAtCache } from "@/lib/authPasswordVersion";
 
 function extractUserIdFromUrl(urlString: string): string {
   const url = new URL(urlString);
@@ -45,14 +46,22 @@ export async function POST(request: Request) {
     // Admin can only reset passwords for users they created
     query.createdBy = session.user.id;
 
+    const now = new Date();
     const user = await User.findOneAndUpdate(
       query,
       {
         password: hashedPassword,
-        updatedAt: new Date(),
+        passwordChangedAt: now,
+        updatedAt: now,
       },
       { new: true }
     );
+
+    // Fix any email casing mismatch from raw MongoDB inserts
+    if (user && user.email !== user.email.toLowerCase()) {
+      user.email = user.email.toLowerCase();
+      await user.save();
+    }
 
     if (!user) {
       return NextResponse.json(
@@ -60,6 +69,8 @@ export async function POST(request: Request) {
         { status: 404 }
       );
     }
+
+    invalidatePasswordChangedAtCache(userId);
 
     return NextResponse.json({
       message: "Password reset successful",

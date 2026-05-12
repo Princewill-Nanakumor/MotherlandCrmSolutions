@@ -22,6 +22,7 @@ type SortField =
   | "country"
   | "status"
   | "source"
+  | "lastActivityAt"
   | "assignedTo"
   | "createdAt"
   | "statusChangedAt"

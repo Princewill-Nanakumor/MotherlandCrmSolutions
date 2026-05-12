@@ -4,6 +4,7 @@ export type SortField =
   | "country"
   | "status"
   | "source"
+  | "lastActivityAt"
   | "createdAt"
   | "assignedTo"
   | "statusChangedAt";

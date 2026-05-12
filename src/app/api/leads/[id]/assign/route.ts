@@ -67,6 +67,7 @@ export async function POST(request: Request) {
 
       const oldAssignedTo = currentLead.assignedTo;
       const isReassignment = !!oldAssignedTo;
+      const now = new Date();
 
       // Get user details for activity logging with multi-tenancy check
       const User = mongoose.model("User");
@@ -93,7 +94,8 @@ export async function POST(request: Request) {
         query, // Use the same query with multi-tenancy filter
         {
           assignedTo: userId,
-          updatedAt: new Date(),
+          updatedAt: now,
+          lastActivityAt: now,
         },
         { new: true, session: dbSession }
       ).populate("assignedTo", "firstName lastName");
@@ -113,7 +115,7 @@ export async function POST(request: Request) {
             : `Lead assigned to ${assignedToUser.firstName} ${assignedToUser.lastName}`,
           leadId: new mongoose.Types.ObjectId(id),
           adminId: new mongoose.Types.ObjectId(adminScope), // Multi-tenancy
-          timestamp: new Date(),
+          timestamp: now,
           metadata: {
             assignedTo: {
               id: assignedToUser._id.toString(),

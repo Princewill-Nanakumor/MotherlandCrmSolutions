@@ -119,6 +119,7 @@ export async function POST(request: Request) {
 
     // Update leads and create activities
     const updatePromises = beforeLeads.map(async (lead) => {
+      const now = new Date();
       const oldAssignedTo = lead.assignedTo;
       const isReassignment = !!oldAssignedTo;
 
@@ -140,8 +141,9 @@ export async function POST(request: Request) {
         {
           $set: {
             assignedTo: assignedToData,
-            assignedAt: new Date(),
-            updatedAt: new Date(),
+            assignedAt: now,
+            updatedAt: now,
+            lastActivityAt: now,
           },
         },
         { returnDocument: "after" }
@@ -156,7 +158,7 @@ export async function POST(request: Request) {
           : `Lead assigned to ${assignedToUser.firstName} ${assignedToUser.lastName}`,
         leadId: lead._id,
         adminId: adminObjectId, // Multi-tenancy
-        timestamp: new Date(),
+        timestamp: now,
         metadata: {
           assignedTo: {
             _id: assignedToUser._id,

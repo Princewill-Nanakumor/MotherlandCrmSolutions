@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { TableSortIcon } from "@/components/ui/table-sort-icon";
 import { Loader2 } from "lucide-react";
 import type { SortField } from "@/components/leads/userLeadsTypes";
+import { useDateTimeSettings } from "@/context/DateTimeSettingsContext";
 
 interface UseUserLeadsTableColumnsProps {
   sortField: SortField;
@@ -30,6 +31,7 @@ export const useUserLeadsTableColumns = ({
   const searchParams = useSearchParams();
   const { statuses, isLoading: statusesLoading } = useStatuses();
   const { canViewPhoneNumbers, canViewEmails } = useCurrentUserPermission();
+  const { timeFormat, dateFormat, timezone } = useDateTimeSettings();
 
   const currentParams = searchParams?.toString() || "";
 
@@ -45,14 +47,22 @@ export const useUserLeadsTableColumns = ({
     return email.charAt(0).toUpperCase() + email.slice(1);
   };
 
-  // Helper to format date
+  const locale = dateFormat === "MM/DD/YYYY" ? "en-US" : dateFormat === "YYYY-MM-DD" ? "en-CA" : "en-GB";
+  const tzOpt = timezone ? { timeZone: timezone } : undefined;
+
   const formatDateDMY = (dateString: string | undefined) => {
     if (!dateString) return "—";
+    return new Date(dateString).toLocaleDateString(locale, tzOpt);
+  };
+
+  const formatDateTime = (dateString: string | undefined) => {
+    if (!dateString) return null;
     const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+    const dateStr = date.toLocaleDateString(locale, tzOpt);
+    const hour12 = timeFormat === "12h";
+    let timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12, ...tzOpt });
+    if (hour12) timeStr = timeStr.replace(/ (\w{2})$/, "\u2009$1");
+    return { date: dateStr, time: timeStr };
   };
 
   // Helper to get status
@@ -219,11 +229,12 @@ export const useUserLeadsTableColumns = ({
             ? phone
             : maskPhoneNumber(phone);
           return (
-            <div className="text-center font-medium text-gray-900! dark:text-white!">
+            <div className="text-center font-medium text-gray-900! dark:text-white! whitespace-nowrap">
               {displayPhone || "—"}
             </div>
           );
         },
+        minSize: 140,
         enableSorting: false,
       },
       {
@@ -357,10 +368,12 @@ export const useUserLeadsTableColumns = ({
           </Button>
         ),
         cell: ({ row }) => {
-          const createdAt = row.original.createdAt;
+          const dt = formatDateTime(row.original.createdAt);
+          if (!dt) return <div className="text-center text-sm font-medium text-gray-900! dark:text-white!">—</div>;
           return (
             <div className="text-center text-sm font-medium text-gray-900! dark:text-white!">
-              {formatDateDMY(createdAt)}
+              <div>{dt.date}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{dt.time}</div>
             </div>
           );
         },
@@ -383,10 +396,12 @@ export const useUserLeadsTableColumns = ({
           </Button>
         ),
         cell: ({ row }) => {
-          const statusChangedAt = row.original.statusChangedAt;
+          const dt = formatDateTime(row.original.statusChangedAt);
+          if (!dt) return <div className="text-center text-sm font-medium text-gray-900! dark:text-white!">—</div>;
           return (
             <div className="text-center text-sm font-medium text-gray-900! dark:text-white!">
-              {formatDateDMY(statusChangedAt)}
+              <div>{dt.date}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{dt.time}</div>
             </div>
           );
         },
@@ -451,10 +466,18 @@ export const useUserLeadsTableColumns = ({
           </Button>
         ),
         cell: ({ row }) => {
-          const lastCommentDate = row.original.lastCommentDate;
+          const dt = formatDateTime(row.original.lastCommentDate);
+          if (!dt) {
+            return (
+              <div className="text-center text-sm font-medium text-gray-900! dark:text-white!">
+                —
+              </div>
+            );
+          }
           return (
             <div className="text-center text-sm font-medium text-gray-900! dark:text-white!">
-              {formatDateDMY(lastCommentDate)}
+              <div>{dt.date}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{dt.time}</div>
             </div>
           );
         },
@@ -497,6 +520,9 @@ export const useUserLeadsTableColumns = ({
       statusesLoading,
       canViewPhoneNumbers,
       currentParams,
+      timeFormat,
+      dateFormat,
+      timezone,
     ],
   );
 

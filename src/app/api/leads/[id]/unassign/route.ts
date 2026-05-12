@@ -71,13 +71,15 @@ export async function POST(request: Request) {
     }
 
     const oldAssignedTo = currentLead.assignedTo;
+    const now = new Date();
 
     // Update the lead to unassign
     const lead = await Lead.findOneAndUpdate(
       query,
       {
         assignedTo: null,
-        updatedAt: new Date(),
+        updatedAt: now,
+        lastActivityAt: now,
       },
       { new: true }
     );
@@ -138,7 +140,7 @@ export async function POST(request: Request) {
         details: `Lead unassigned from ${assignedFromUser ? `${assignedFromUser.firstName} ${assignedFromUser.lastName}` : "Unknown"}`,
         leadId: new mongoose.Types.ObjectId(id),
         adminId: new mongoose.Types.ObjectId(adminScope), // Multi-tenancy
-        timestamp: new Date(),
+        timestamp: now,
         metadata: {
           assignedTo: null,
           assignedFrom: assignedFromUser,

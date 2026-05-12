@@ -192,6 +192,7 @@ export async function POST(request: NextRequest) {
                 status: newStatus,
                 updatedAt: now,
                 statusChangedAt: now,
+                lastActivityAt: now,
               },
             },
             { session: mongoSession },
@@ -274,4 +275,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

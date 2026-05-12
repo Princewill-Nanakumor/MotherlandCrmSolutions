@@ -104,6 +104,12 @@ export async function DELETE(request: Request) {
       );
     }
 
+    const activityAt = new Date();
+    await Lead.updateOne(
+      { _id: leadObjectId, adminId },
+      { $set: { lastActivityAt: activityAt, updatedAt: activityAt } },
+    );
+
     try {
       await publishLeadUpdatedEvent(adminId.toString(), leadId, {
         type: "activity_deleted",

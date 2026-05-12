@@ -12,6 +12,7 @@ import {
   buildTimelineColumns,
   SortField,
 } from "@/components/dashboardComponents/tableColumns/columnBuilders";
+import { useDateTimeSettings } from "@/context/DateTimeSettingsContext";
 
 interface TableColumnsProps {
   sortField: SortField;
@@ -38,9 +39,9 @@ export const useTableColumns = ({
   selectAllRef,
   statuses = [],
 }: TableColumnsProps) => {
-  // Get current URL params to preserve filters when navigating
   const searchParams = useSearchParams();
   const currentParams = searchParams?.toString() || "";
+  const { timeFormat, dateFormat, timezone } = useDateTimeSettings();
 
   const columns = useMemo<ColumnDef<Lead>[]>(
     () => [
@@ -58,11 +59,17 @@ export const useTableColumns = ({
         handleSort,
         users,
         statuses,
+        timeFormat,
+        dateFormat,
+        timezone,
       }),
       ...buildTimelineColumns({
         sortField,
         sortOrder,
         handleSort,
+        timeFormat,
+        dateFormat,
+        timezone,
       }),
     ],
     [
@@ -77,6 +84,9 @@ export const useTableColumns = ({
       selectAllRef,
       statuses,
       currentParams,
+      timeFormat,
+      dateFormat,
+      timezone,
     ],
   );
 

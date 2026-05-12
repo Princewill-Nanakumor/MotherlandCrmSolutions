@@ -17,6 +17,7 @@ export interface ILead {
   assignedTo?: mongoose.Types.ObjectId | null;
   adminId: mongoose.Types.ObjectId;
   statusChangedAt?: Date;
+  lastActivityAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   __v: number;
@@ -93,6 +94,10 @@ const leadSchema = new Schema(
       type: Date,
       default: null,
     },
+    lastActivityAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -111,6 +116,7 @@ leadSchema.index({ leadId: 1 }, { unique: true, sparse: true });
 // Compound indexes for filtered list queries (adminId + filter + sort)
 leadSchema.index({ adminId: 1, country: 1, createdAt: -1 });
 leadSchema.index({ adminId: 1, source: 1, createdAt: -1 });
+leadSchema.index({ adminId: 1, lastActivityAt: -1, updatedAt: -1 });
 
 // Generate collision-resistant public lead ID.
 export function generateLeadId(): string {

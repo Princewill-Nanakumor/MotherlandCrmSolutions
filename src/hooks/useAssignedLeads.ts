@@ -25,6 +25,7 @@ interface LeadFromAPI {
   comments?: string; // Not used since Lead expects Comment[] | undefined
   lastComment?: string;
   lastCommentDate?: string;
+  lastActivityAt?: string;
   commentCount?: number;
   assignedAt?: string;
   assignedTo: AssignedToUser | string | null; // Can be object, string, or null
@@ -166,6 +167,7 @@ const fetchAssignedLeads = async (): Promise<Lead[]> => {
       comments: undefined, // Always undefined since API returns string but Lead expects Comment[]
       lastComment: lead.lastComment,
       lastCommentDate: lead.lastCommentDate,
+      lastActivityAt: lead.lastActivityAt,
       commentCount: lead.commentCount,
       assignedTo: normalizeAssignedTo(lead.assignedTo),
       assignedAt: lead.assignedAt,

@@ -61,7 +61,7 @@ export async function GET() {
     const assignedLeads = await mongoose.connection.db
       .collection("leads")
       .find(query)
-      .sort({ updatedAt: -1 })
+      .sort({ lastActivityAt: -1, updatedAt: -1, createdAt: -1 })
       .toArray();
 
     const adminIdForComments = scopedAdminId;
@@ -241,6 +241,7 @@ export async function GET() {
         assignedTo: assignedToUser,
         createdAt: lead.createdAt,
         updatedAt: lead.updatedAt,
+        lastActivityAt: lead.lastActivityAt || lead.updatedAt,
         statusChangedAt: lead.statusChangedAt
           ? lead.statusChangedAt instanceof Date
             ? lead.statusChangedAt.toISOString()

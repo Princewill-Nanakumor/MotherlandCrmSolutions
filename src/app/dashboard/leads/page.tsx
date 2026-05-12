@@ -2,8 +2,16 @@
 "use client";
 
 import UserLeadsContent from "@/components/leads/UserLeadsContent";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import dynamic from "next/dynamic";
 import { useEffect } from "react";
+
+const ReactQueryDevtools = dynamic(
+  () =>
+    import("@tanstack/react-query-devtools").then(
+      (mod) => mod.ReactQueryDevtools,
+    ),
+  { ssr: false },
+);
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 

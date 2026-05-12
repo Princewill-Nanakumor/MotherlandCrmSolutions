@@ -16,6 +16,7 @@ type SortField =
   | "country"
   | "status"
   | "source"
+  | "lastActivityAt"
   | "createdAt"
   | "assignedTo"
   | "statusChangedAt"
@@ -139,6 +140,17 @@ export const useTableSorting = ({
               new Date(b.createdAt).getTime()) *
             multiplier
           );
+        case "lastActivityAt": {
+          const getActivityTime = (lead: Lead) =>
+            new Date(
+              lead.lastActivityAt ||
+                lead.lastCommentDate ||
+                lead.statusChangedAt ||
+                lead.updatedAt ||
+                lead.createdAt,
+            ).getTime();
+          return (getActivityTime(a) - getActivityTime(b)) * multiplier;
+        }
         case "statusChangedAt": {
           const timeA = a.statusChangedAt ? new Date(a.statusChangedAt).getTime() : 0;
           const timeB = b.statusChangedAt ? new Date(b.statusChangedAt).getTime() : 0;

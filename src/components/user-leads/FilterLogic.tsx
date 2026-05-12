@@ -15,6 +15,7 @@ type SortField =
   | "country"
   | "status"
   | "source"
+  | "lastActivityAt"
   | "assignedTo"
   | "createdAt"
   | "statusChangedAt"
@@ -209,6 +210,20 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
           aValue = new Date(a.createdAt || "").getTime();
           bValue = new Date(b.createdAt || "").getTime();
           break;
+        case "lastActivityAt": {
+          const getActivityTime = (lead: Lead) =>
+            new Date(
+              lead.lastActivityAt ||
+                lead.lastCommentDate ||
+                lead.statusChangedAt ||
+                lead.updatedAt ||
+                lead.createdAt ||
+                "",
+            ).getTime();
+          aValue = getActivityTime(a);
+          bValue = getActivityTime(b);
+          break;
+        }
         case "statusChangedAt": {
           const timeA = a.statusChangedAt ? new Date(a.statusChangedAt).getTime() : 0;
           const timeB = b.statusChangedAt ? new Date(b.statusChangedAt).getTime() : 0;

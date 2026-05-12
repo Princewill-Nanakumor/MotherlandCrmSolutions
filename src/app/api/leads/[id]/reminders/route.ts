@@ -7,7 +7,10 @@ import Activity from "@/models/Activity";
 import Lead from "@/models/Lead";
 import mongoose from "mongoose";
 import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
-import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import {
+  publishAdminLeadsUpdatedEvent,
+  publishLeadUpdatedEvent,
+} from "@/libs/ablyServer";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 
@@ -164,6 +167,8 @@ export async function POST(
       .populate("assignedTo", "firstName lastName")
       .populate("createdBy", "firstName lastName");
 
+    const activityAt = new Date();
+
     // Create activity log for reminder creation
     try {
       await Activity.create({
@@ -172,7 +177,7 @@ export async function POST(
         details: `Created reminder: ${title}`,
         leadId: new mongoose.Types.ObjectId(id),
         adminId: new mongoose.Types.ObjectId(adminId),
-        timestamp: new Date(),
+        timestamp: activityAt,
         metadata: {
           reminderId: reminder._id.toString(),
           reminderTitle: title,
@@ -188,8 +193,21 @@ export async function POST(
       // Don't fail the request if activity logging fails
     }
 
+    await Lead.updateOne(
+      {
+        _id: new mongoose.Types.ObjectId(id),
+        adminId: new mongoose.Types.ObjectId(adminId),
+      },
+      { $set: { lastActivityAt: activityAt, updatedAt: activityAt } },
+    );
+
     try {
       await publishLeadUpdatedEvent(String(adminId), id, {
+        type: "reminder_created",
+        leadId: id,
+        reminderId: reminder._id.toString(),
+      });
+      await publishAdminLeadsUpdatedEvent(String(adminId), {
         type: "reminder_created",
         leadId: id,
         reminderId: reminder._id.toString(),

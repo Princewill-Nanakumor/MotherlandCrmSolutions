@@ -181,6 +181,11 @@ export async function GET(
           ? lead.statusChangedAt.toISOString()
           : String(lead.statusChangedAt)
         : undefined,
+      lastActivityAt: lead.lastActivityAt
+        ? lead.lastActivityAt instanceof Date
+          ? lead.lastActivityAt.toISOString()
+          : String(lead.lastActivityAt)
+        : undefined,
       comments: lead.comments || "",
     };
 
@@ -251,8 +256,10 @@ export async function PUT(
     if (isAgent) {
       let agentHasUpdate = false;
       if (updateData.status !== undefined) {
+        const statusChangedAt = new Date();
         updatePayload.status = updateData.status;
-        updatePayload.statusChangedAt = new Date();
+        updatePayload.statusChangedAt = statusChangedAt;
+        updatePayload.lastActivityAt = statusChangedAt;
         agentHasUpdate = true;
       }
       if (updateData.comments !== undefined) {
@@ -280,8 +287,10 @@ export async function PUT(
       if (updateData.source !== undefined)
         updatePayload.source = String(updateData.source || "").trim();
       if (updateData.status !== undefined) {
+        const statusChangedAt = new Date();
         updatePayload.status = updateData.status;
-        updatePayload.statusChangedAt = new Date();
+        updatePayload.statusChangedAt = statusChangedAt;
+        updatePayload.lastActivityAt = statusChangedAt;
       }
       if (updateData.country !== undefined)
         updatePayload.country = String(updateData.country || "").trim();
@@ -389,6 +398,11 @@ export async function PUT(
         ? (updatedLead.statusChangedAt instanceof Date
             ? updatedLead.statusChangedAt.toISOString()
             : String(updatedLead.statusChangedAt))
+        : undefined,
+      lastActivityAt: updatedLead.lastActivityAt
+        ? updatedLead.lastActivityAt instanceof Date
+          ? updatedLead.lastActivityAt.toISOString()
+          : String(updatedLead.lastActivityAt)
         : undefined,
       comments: updatedLead.comments || "",
     };

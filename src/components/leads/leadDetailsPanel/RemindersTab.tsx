@@ -60,6 +60,8 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders", leadId] });
       queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       queryClient.refetchQueries({ queryKey: ["activities", leadId] });
       toast({
         title: "Success",
@@ -143,6 +145,8 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
 
       // Refresh timeline - reminder updates create activity logs
       queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       queryClient.refetchQueries({ queryKey: ["activities", leadId] });
 
       // Only show toast for non-sound toggle updates
@@ -168,6 +172,8 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders", leadId] });
       queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       queryClient.refetchQueries({ queryKey: ["activities", leadId] });
       toast({
         title: "Success",

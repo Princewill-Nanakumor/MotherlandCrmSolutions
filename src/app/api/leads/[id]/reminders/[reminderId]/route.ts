@@ -8,7 +8,10 @@ import Activity, { type ActivityType, type IActivity } from "@/models/Activity";
 import Lead from "@/models/Lead";
 import mongoose from "mongoose";
 import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
-import { publishLeadUpdatedEvent } from "@/libs/ablyServer";
+import {
+  publishAdminLeadsUpdatedEvent,
+  publishLeadUpdatedEvent,
+} from "@/libs/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 
@@ -192,15 +195,23 @@ export async function PUT(
         }
       }
 
+      const activityAt = new Date();
       await Activity.create({
         type: activityType,
         userId: new mongoose.Types.ObjectId(session.user.id),
         details: activityDetails,
         leadId: new mongoose.Types.ObjectId(id),
         adminId: new mongoose.Types.ObjectId(adminId),
-        timestamp: new Date(),
+        timestamp: activityAt,
         metadata,
       });
+      await Lead.updateOne(
+        {
+          _id: new mongoose.Types.ObjectId(id),
+          adminId: new mongoose.Types.ObjectId(adminId),
+        },
+        { $set: { lastActivityAt: activityAt, updatedAt: activityAt } },
+      );
     } catch (activityError) {
       console.error("Error logging reminder update activity:", activityError);
       // Don't fail the request if activity logging fails
@@ -208,6 +219,11 @@ export async function PUT(
 
     try {
       await publishLeadUpdatedEvent(String(adminId), id, {
+        type: "reminder_updated",
+        leadId: id,
+        reminderId: reminder._id.toString(),
+      });
+      await publishAdminLeadsUpdatedEvent(String(adminId), {
         type: "reminder_updated",
         leadId: id,
         reminderId: reminder._id.toString(),
@@ -346,13 +362,14 @@ export async function DELETE(
 
     // Create activity log for reminder deletion
     try {
+      const activityAt = new Date();
       await Activity.create({
         type: "REMINDER_DELETED",
         userId: new mongoose.Types.ObjectId(session.user.id),
         details: `Deleted reminder: ${reminder.title}`,
         leadId: new mongoose.Types.ObjectId(id),
         adminId: new mongoose.Types.ObjectId(adminId),
-        timestamp: new Date(),
+        timestamp: activityAt,
         metadata: {
           reminderId: reminder._id.toString(),
           reminderTitle: reminder.title,
@@ -362,6 +379,13 @@ export async function DELETE(
           reminderTime: reminder.reminderTime,
         },
       });
+      await Lead.updateOne(
+        {
+          _id: new mongoose.Types.ObjectId(id),
+          adminId: new mongoose.Types.ObjectId(adminId),
+        },
+        { $set: { lastActivityAt: activityAt, updatedAt: activityAt } },
+      );
     } catch (activityError) {
       console.error("Error logging reminder deletion activity:", activityError);
       // Don't fail the request if activity logging fails
@@ -369,6 +393,11 @@ export async function DELETE(
 
     try {
       await publishLeadUpdatedEvent(String(adminId), id, {
+        type: "reminder_deleted",
+        leadId: id,
+        reminderId: reminder._id.toString(),
+      });
+      await publishAdminLeadsUpdatedEvent(String(adminId), {
         type: "reminder_deleted",
         leadId: id,
         reminderId: reminder._id.toString(),

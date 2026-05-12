@@ -11,6 +11,7 @@ const ADMIN_ONLY_PREFIXES = [
   "/dashboard/users",
   "/dashboard/import",
   "/dashboard/admin-management",
+  "/dashboard/notifications",
   "/dashboard/payment-details",
 ] as const;
 

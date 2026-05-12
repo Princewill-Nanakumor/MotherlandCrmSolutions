@@ -106,8 +106,10 @@ export default function NotificationsPage() {
           ? `${window.location.pathname}${window.location.search}`
           : "/dashboard/notifications";
       router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+    } else if (status === "authenticated" && session?.user?.role !== "ADMIN") {
+      router.push("/dashboard/leads");
     }
-  }, [status, router]);
+  }, [status, session, router]);
 
   useEffect(() => {
     if (session?.user) {
@@ -119,7 +121,10 @@ export default function NotificationsPage() {
     return <LoadingSpinner />;
   }
 
-  if (status === "unauthenticated") {
+  if (
+    status === "unauthenticated" ||
+    (status === "authenticated" && session?.user?.role !== "ADMIN")
+  ) {
     return null;
   }
 

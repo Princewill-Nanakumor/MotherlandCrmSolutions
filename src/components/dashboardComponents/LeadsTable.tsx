@@ -160,7 +160,7 @@ export default function LeadsTable({
   // --- STABILIZED SORTING STATE ---
   const stableSorting = useMemo(() => {
     if (!sorting || sorting.length === 0) {
-      return [{ id: "name", desc: false }];
+      return [{ id: "lastActivityAt", desc: true }];
     }
     return sorting;
   }, [sorting]);
@@ -225,7 +225,7 @@ export default function LeadsTable({
   // Custom hooks
   const { sortedLeads, handleSort } = useTableSorting({
     leads,
-    sortField: (stableSorting[0]?.id as SortField) || "name",
+    sortField: (stableSorting[0]?.id as SortField) || "lastActivityAt",
     sortOrder: stableSorting[0]?.desc ? "desc" : "asc",
     users,
     searchQuery,
@@ -422,7 +422,7 @@ export default function LeadsTable({
   );
 
   const { columns } = useTableColumns({
-    sortField: (stableSorting[0]?.id as SortField) || "name",
+    sortField: (stableSorting[0]?.id as SortField) || "lastActivityAt",
     sortOrder: stableSorting[0]?.desc ? "desc" : "asc",
     handleSort,
     allSelected,
