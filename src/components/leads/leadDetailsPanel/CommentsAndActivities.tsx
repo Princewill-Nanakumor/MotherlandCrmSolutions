@@ -67,7 +67,7 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
       {/* This is the scrollable/fill area */}
       <div className="flex flex-col flex-1 min-h-0">
         {activeTab === "comments" && (
-          <CommentsAndActivitiesCombined leadId={lead._id} />
+          <CommentsAndActivitiesCombined leadId={lead._id} leadCreatedAt={lead.createdAt} />
         )}
         {activeTab === "reminders" && <RemindersTab leadId={lead._id} />}
       </div>

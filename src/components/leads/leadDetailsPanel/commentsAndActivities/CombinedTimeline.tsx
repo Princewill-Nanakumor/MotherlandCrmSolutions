@@ -2,11 +2,12 @@
 "use client";
 
 import { FC } from "react";
-import { Activity as ActivityIcon } from "lucide-react";
+import { Activity as ActivityIcon, CalendarPlus } from "lucide-react";
 import type { Status } from "@/types/leads";
 import { CombinedItem, Comment } from "./types";
 import { CommentItem } from "./CommentItem";
 import { ActivityItem } from "./ActivityItem";
+import { useDateTimeSettings } from "@/context/DateTimeSettingsContext";
 
 interface CombinedTimelineProps {
   combinedItems: CombinedItem[];
@@ -25,6 +26,7 @@ interface CombinedTimelineProps {
   onCancelEdit: () => void;
   onDelete: (commentId: string) => void;
   onDeleteActivity?: (activityId: string) => void;
+  leadCreatedAt?: string;
 }
 
 export const CombinedTimeline: FC<CombinedTimelineProps> = ({
@@ -42,19 +44,50 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
   onCancelEdit,
   onDelete,
   onDeleteActivity,
+  leadCreatedAt,
 }) => {
-  if (combinedItems.length === 0) {
+  const { timeFormat, dateFormat, timezone } = useDateTimeSettings();
+
+  const leadCreatedEntry = leadCreatedAt ? (() => {
+    const date = new Date(leadCreatedAt);
+    const locale = dateFormat === "MM/DD/YYYY" ? "en-US" : dateFormat === "YYYY-MM-DD" ? "en-CA" : "en-GB";
+    const tzOpt = timezone ? { timeZone: timezone } : undefined;
+    const dateStr = date.toLocaleDateString(locale, tzOpt);
+    const hour12 = timeFormat === "12h";
+    let timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12, ...tzOpt });
+    if (hour12) timeStr = timeStr.replace(/ (\w{2})$/, "\u2009$1");
     return (
-      <div className="flex items-center justify-center flex-1 bg-gray-100 border border-gray-300 border-dashed rounded-lg dark:bg-gray-800 dark:border-gray-700">
-        <div className="text-center">
-          <ActivityIcon className="w-12 h-12 mx-auto mb-4 text-gray-300! dark:text-gray-600!" />
-          <p className="text-lg font-medium text-gray-700 dark:text-gray-300! mb-2">
-            No Comments or Activities Yet
+      <div className="flex items-center gap-3 px-3 py-2.5 rounded-md bg-gray-100 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-center p-2.5 rounded-full bg-orange-100 dark:bg-orange-900/30 shrink-0">
+          <CalendarPlus className="w-5 h-5 text-orange-600! dark:text-orange-400!" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-900! dark:text-white!">
+            Lead Created
           </p>
-          <p className="text-sm text-gray-500! dark:text-gray-400!">
-            Add a comment or make changes to this lead to see activity here.
+          <p className="text-xs text-gray-600! dark:text-gray-400!">
+            {dateStr} at {timeStr}
           </p>
         </div>
+      </div>
+    );
+  })() : null;
+
+  if (combinedItems.length === 0) {
+    return (
+      <div className="flex flex-col flex-1 min-h-0 gap-4 p-4 bg-white border border-gray-200 rounded-lg shadow-inner dark:bg-gray-800 dark:border-gray-700">
+        <div className="flex items-center justify-center flex-1 bg-gray-100 border border-gray-300 border-dashed rounded-lg dark:bg-gray-800 dark:border-gray-700">
+          <div className="text-center">
+            <ActivityIcon className="w-12 h-12 mx-auto mb-4 text-gray-300! dark:text-gray-600!" />
+            <p className="text-lg font-medium text-gray-700 dark:text-gray-300! mb-2">
+              No Comments or Activities Yet
+            </p>
+            <p className="text-sm text-gray-500! dark:text-gray-400!">
+              Add a comment or make changes to this lead to see activity here.
+            </p>
+          </div>
+        </div>
+        {leadCreatedEntry}
       </div>
     );
   }
@@ -129,6 +162,8 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
         }
         return null;
       })}
+
+      {leadCreatedEntry}
     </div>
   );
 };

@@ -18,11 +18,12 @@ import { CombinedTimeline } from "./commentsAndActivities/CombinedTimeline";
 
 interface CommentsAndActivitiesCombinedProps {
   leadId: string;
+  leadCreatedAt?: string;
 }
 
 export const CommentsAndActivitiesCombined: FC<
   CommentsAndActivitiesCombinedProps
-> = ({ leadId }) => {
+> = ({ leadId, leadCreatedAt }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
@@ -437,6 +438,7 @@ export const CommentsAndActivitiesCombined: FC<
             onCancelEdit={handleCancelEdit}
             onDelete={handleDelete}
             onDeleteActivity={handleDeleteActivity}
+            leadCreatedAt={leadCreatedAt}
           />
         </div>
       </div>
