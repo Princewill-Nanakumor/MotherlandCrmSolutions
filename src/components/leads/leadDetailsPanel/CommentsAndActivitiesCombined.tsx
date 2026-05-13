@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { Activity, Status } from "@/types/leads";
+import { Activity, Lead, Status } from "@/types/leads";
 import { Comment, CombinedItem } from "./commentsAndActivities/types";
 import {
   transformComment,
@@ -37,6 +37,73 @@ export const CommentsAndActivitiesCombined: FC<
   const [showTextarea, setShowTextarea] = useState<boolean>(true);
 
   const isAdmin = session?.user?.role === "ADMIN";
+
+  const patchLeadCachesFromComments = useCallback(
+    (nextComments: Comment[], fallbackTimestamp?: string) => {
+      const latestComment =
+        nextComments.length > 0
+          ? [...nextComments].sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+            )[0]
+          : undefined;
+      const timestamp =
+        fallbackTimestamp ||
+        latestComment?.createdAt ||
+        new Date().toISOString();
+
+      const patchLeadArray = (rows: Lead[] = []): Lead[] =>
+        rows.map((lead) => {
+          if (lead._id !== leadId) return lead;
+
+          const nextLastComment = latestComment?.content;
+          const nextLastCommentDate = latestComment?.createdAt;
+          const fallbackActivityAt =
+            lead.statusChangedAt || lead.updatedAt || lead.createdAt;
+
+          return {
+            ...lead,
+            lastComment: nextLastComment,
+            lastCommentDate: nextLastCommentDate,
+            lastActivityAt: nextLastCommentDate || fallbackActivityAt,
+            updatedAt: timestamp,
+            commentCount: Math.max(0, nextComments.length),
+          };
+        });
+
+      const patchUnknownShape = (oldData: unknown): unknown => {
+        if (Array.isArray(oldData)) {
+          return patchLeadArray(oldData as Lead[]);
+        }
+
+        if (oldData && typeof oldData === "object") {
+          const typed = oldData as {
+            leads?: Lead[];
+            data?: Lead[];
+          };
+
+          if (Array.isArray(typed.leads)) {
+            return { ...typed, leads: patchLeadArray(typed.leads) };
+          }
+
+          if (Array.isArray(typed.data)) {
+            return { ...typed, data: patchLeadArray(typed.data) };
+          }
+        }
+
+        return oldData;
+      };
+
+      queryClient.setQueriesData(
+        {
+          predicate: (query) =>
+            query.queryKey[0] === "leads" || query.queryKey[0] === "assignedLeads",
+        },
+        patchUnknownShape,
+      );
+    },
+    [leadId, queryClient],
+  );
 
   // Load textarea state from localStorage on mount
   useEffect(() => {
@@ -178,14 +245,17 @@ export const CommentsAndActivitiesCombined: FC<
       return transformComment(newComment);
     },
     onSuccess: (newComment) => {
+      let nextComments: Comment[] = [];
       queryClient.setQueryData(
         ["comments", leadId],
         (oldComments: Comment[] = []) => {
           // Refetch from realtime invalidation may already include this row — avoid duplicate keys.
           const rest = oldComments.filter((c) => c._id !== newComment._id);
-          return [newComment, ...rest];
+          nextComments = [newComment, ...rest];
+          return nextComments;
         },
       );
+      patchLeadCachesFromComments(nextComments, newComment.createdAt);
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       setCommentContent("");
@@ -221,11 +291,18 @@ export const CommentsAndActivitiesCombined: FC<
       return commentId;
     },
     onSuccess: (deletedCommentId) => {
+      let nextComments: Comment[] = [];
       queryClient.setQueryData(
         ["comments", leadId],
         (oldComments: Comment[] = []) =>
-          oldComments.filter((comment) => comment._id !== deletedCommentId),
+          {
+            nextComments = oldComments.filter(
+              (comment) => comment._id !== deletedCommentId,
+            );
+            return nextComments;
+          },
       );
+      patchLeadCachesFromComments(nextComments);
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       toast({
@@ -314,13 +391,17 @@ export const CommentsAndActivitiesCombined: FC<
       return transformComment(updatedComment);
     },
     onSuccess: (updatedComment) => {
+      let nextComments: Comment[] = [];
       queryClient.setQueryData(
         ["comments", leadId],
-        (oldComments: Comment[] = []) =>
-          oldComments.map((comment) =>
+        (oldComments: Comment[] = []) => {
+          nextComments = oldComments.map((comment) =>
             comment._id === updatedComment._id ? updatedComment : comment,
-          ),
+          );
+          return nextComments;
+        },
       );
+      patchLeadCachesFromComments(nextComments);
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       toast({
