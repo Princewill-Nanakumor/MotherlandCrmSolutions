@@ -18,6 +18,10 @@ import {
   getAblyLeadRealtimeClient,
   releaseAblyLeadRealtimeClient,
 } from "@/libs/ablyLeadClient";
+import {
+  assignedToEquals,
+  refetchLeadActivities,
+} from "@/lib/leadActivitiesQuery";
 
 interface LeadDetailsPanelProps {
   lead: Lead | null;
@@ -107,6 +111,11 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     phone: string;
   } | null>(null);
   const lastPanelLeadIdRef = useRef<string | null>(null);
+  const currentLeadRef = useRef<Lead | null>(lead);
+
+  useEffect(() => {
+    currentLeadRef.current = currentLead;
+  }, [currentLead]);
 
   useEffect(() => {
     if (lead) {
@@ -250,16 +259,11 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
             // Invalidate timeline caches immediately — do not wait on GET /leads/[id].
             // Otherwise a failed/slow refetch leaves comments stale after remote deletes.
             if (!isDisposed) {
-              await Promise.all([
-                queryClient.invalidateQueries({
-                  queryKey: ["comments", lead._id],
-                  exact: true,
-                }),
-                queryClient.invalidateQueries({
-                  queryKey: ["activities", lead._id],
-                  exact: true,
-                }),
-              ]);
+              await queryClient.invalidateQueries({
+                queryKey: ["comments", lead._id],
+                exact: true,
+              });
+              await refetchLeadActivities(queryClient, [lead._id]);
             }
 
             const response = await apiCallWithSessionRefresh(
@@ -358,10 +362,19 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         Date.now() - lastManualUpdateRef.current;
       if (timeSinceLastManualUpdate <= 500) return;
 
-      const currentTs = currentLead?.updatedAt
-        ? new Date(currentLead.updatedAt).getTime()
+      const panelLead = currentLeadRef.current;
+      const currentTs = panelLead?.updatedAt
+        ? new Date(panelLead.updatedAt).getTime()
         : 0;
-      if (candidate.status === currentLead?.status && candidateUpdatedAt <= currentTs) {
+      const assignmentUnchanged = assignedToEquals(
+        candidate.assignedTo,
+        panelLead?.assignedTo,
+      );
+      if (
+        candidate.status === panelLead?.status &&
+        candidateUpdatedAt <= currentTs &&
+        assignmentUnchanged
+      ) {
         return;
       }
 

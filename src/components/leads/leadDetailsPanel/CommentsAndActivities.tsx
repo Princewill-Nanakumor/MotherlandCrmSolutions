@@ -64,11 +64,21 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
         </div>
       </div>
 
-      {/* This is the scrollable/fill area */}
+      {/* Keep timeline mounted so assign/unassign refetches update cache before tab switch */}
       <div className="flex flex-col flex-1 min-h-0">
-        {activeTab === "comments" && (
-          <CommentsAndActivitiesCombined leadId={lead._id} leadCreatedAt={lead.createdAt} />
-        )}
+        <div
+          className={
+            activeTab === "comments"
+              ? "flex flex-col flex-1 min-h-0"
+              : "hidden"
+          }
+          aria-hidden={activeTab !== "comments"}
+        >
+          <CommentsAndActivitiesCombined
+            leadId={lead._id}
+            leadCreatedAt={lead.createdAt}
+          />
+        </div>
         {activeTab === "reminders" && <RemindersTab leadId={lead._id} />}
       </div>
     </div>

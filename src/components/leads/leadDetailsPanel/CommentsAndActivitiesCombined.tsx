@@ -185,6 +185,7 @@ export const CommentsAndActivitiesCombined: FC<
     gcTime: 5 * 60 * 1000,
     retry: (failureCount) => failureCount < 2,
     refetchOnWindowFocus: false,
+    refetchOnMount: true,
   });
 
   // Combine and sort comments and activities by timestamp (newest first)

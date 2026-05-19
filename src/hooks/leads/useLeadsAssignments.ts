@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Lead } from "@/types/leads";
 import { User } from "@/types/user.types";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { refetchLeadActivities } from "@/lib/leadActivitiesQuery";
 
 type ToastFn = (opts: {
   title: string;
@@ -66,9 +67,7 @@ export function useLeadsAssignments(params: {
       await queryClient.invalidateQueries({ queryKey: ["leads"], exact: true });
       await queryClient.invalidateQueries({ queryKey: ["leads-stats"], exact: false });
       await queryClient.invalidateQueries({ queryKey: ["assignedLeads"], exact: false });
-      variables.leadIds.forEach((leadId: string) => {
-        queryClient.invalidateQueries({ queryKey: ["activities", leadId], exact: false });
-      });
+      await refetchLeadActivities(queryClient, variables.leadIds);
       const assignedUser = users.find((u) => u.id === variables.userId);
       const leadText = variables.leadIds.length === 1 ? "lead" : "leads";
       toast({
@@ -118,9 +117,7 @@ export function useLeadsAssignments(params: {
       await queryClient.invalidateQueries({ queryKey: ["leads"], exact: true });
       await queryClient.invalidateQueries({ queryKey: ["leads-stats"], exact: false });
       await queryClient.invalidateQueries({ queryKey: ["assignedLeads"], exact: false });
-      variables.leadIds.forEach((leadId: string) => {
-        queryClient.invalidateQueries({ queryKey: ["activities", leadId], exact: false });
-      });
+      await refetchLeadActivities(queryClient, variables.leadIds);
       const leadText = variables.leadIds.length === 1 ? "lead" : "leads";
       toast({
         title: "Leads Unassigned Successfully",

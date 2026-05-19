@@ -4,6 +4,7 @@ import { Lead } from "@/types/leads";
 import { User } from "@/types/user.types";
 import { assignedLeadsKeys } from "@/hooks/useAssignedLeads";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { refetchLeadActivities } from "@/lib/leadActivitiesQuery";
 
 type LeadsResponse = {
   leads: Lead[];
@@ -189,9 +190,7 @@ export function useLeadsMutations({
         predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
       });
       queryClient.invalidateQueries({ queryKey: assignedLeadsKeys.all });
-      variables.leadIds.forEach((leadId) => {
-        queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
-      });
+      await refetchLeadActivities(queryClient, variables.leadIds);
     },
     onSettled: () => {
       if (mutationInProgressRef.current) mutationInProgressRef.current = false;
@@ -272,9 +271,7 @@ export function useLeadsMutations({
         predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
       });
       queryClient.invalidateQueries({ queryKey: assignedLeadsKeys.all });
-      variables.leadIds.forEach((leadId) => {
-        queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
-      });
+      await refetchLeadActivities(queryClient, variables.leadIds);
     },
     onSettled: () => {
       mutationInProgressRef.current = false;
