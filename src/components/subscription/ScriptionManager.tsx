@@ -17,6 +17,12 @@ import {
   SUBSCRIPTION_PLAN_ORDER,
   toDashboardSubscriptionPlan,
 } from "@/lib/subscriptionPlanCatalog";
+import type { SubscriptionStatusData } from "@/lib/subscriptionIndicator";
+import {
+  fetchSubscriptionStatus,
+  subscriptionStatusQueryKey,
+  syncSubscriptionQueries,
+} from "@/lib/subscriptionQueries";
 
 interface SubscriptionPlan {
   id: string;
@@ -27,14 +33,6 @@ interface SubscriptionPlan {
   maxLeads: number;
   maxUsers: number;
   isPopular?: boolean;
-}
-
-interface SubscriptionData {
-  isOnTrial: boolean;
-  trialEndsAt: string | null;
-  currentPlan: string | null;
-  subscriptionStatus: "active" | "inactive" | "trial" | "expired";
-  balance: number;
 }
 
 interface UsageData {
@@ -66,36 +64,20 @@ export default function SubscriptionManager() {
     null,
   );
 
-  // Use React Query to fetch subscription data (same as navbar)
+  const role = session?.user?.role;
+
   const {
     data: subscriptionData,
     isLoading: loading,
     error,
-  } = useQuery<SubscriptionData>({
-    queryKey: ["subscription", "status"],
-    queryFn: async (): Promise<SubscriptionData> => {
-      const response = await apiCallWithSessionRefresh(
-        "/api/subscription/status",
-        { cache: "no-store" },
-      );
-      if (!response.ok) {
-        const err = (await response.json().catch(() => ({}))) as {
-          error?: string;
-          message?: string;
-        };
-        throw new Error(
-          err.error ?? err.message ?? "Failed to fetch subscription data",
-        );
-      }
-      return response.json() as Promise<SubscriptionData>;
-    },
+  } = useQuery<SubscriptionStatusData>({
+    queryKey: subscriptionStatusQueryKey(role),
+    queryFn: () => fetchSubscriptionStatus(role),
     enabled: hasAuthorizedSession(status, session),
-    // H8: shorter stale window + always-refetch on mount keeps caps and
-    // balance fresh after a successful subscribe.
     staleTime: 30 * 1000,
     refetchOnWindowFocus: false,
     retry: 2,
-    refetchOnMount: "always",
+    refetchOnMount: true,
   });
 
   // Fetch usage data for downgrade prevention
@@ -209,18 +191,10 @@ export default function SubscriptionManager() {
     setShowSubscriptionModal(false);
     setSelectedPlan(null);
 
-    // H5: navbar dropdown reads ["user-profile-data"] for balance + plan.
-    // H8: this page reads ["subscription-usage-data"] for caps. Both need
-    // to be invalidated alongside the existing subscription/usage keys.
+    await syncSubscriptionQueries(queryClient);
     await Promise.all([
       queryClient.invalidateQueries({
-        queryKey: ["subscription", "status"],
-      }),
-      queryClient.invalidateQueries({
         queryKey: ["subscription-usage-data"],
-      }),
-      queryClient.invalidateQueries({
-        queryKey: ["user-profile-data"],
       }),
       queryClient.invalidateQueries({
         queryKey: ["import-usage-data"],
@@ -229,24 +203,19 @@ export default function SubscriptionManager() {
         queryKey: ["user-usage-data"],
       }),
       queryClient.invalidateQueries({
-        queryKey: ["subscription-data"],
-      }),
-      queryClient.invalidateQueries({
         predicate: (query) =>
           query.queryKey[0] === "usage" ||
           query.queryKey[0] === "import-usage-data" ||
           query.queryKey[0] === "user-usage-data" ||
-          query.queryKey[0] === "subscription-usage-data" ||
-          query.queryKey[0] === "user-profile-data",
+          query.queryKey[0] === "subscription-usage-data",
       }),
       queryClient.refetchQueries({
         predicate: (query) =>
-          query.queryKey[0] === "subscription" ||
           query.queryKey[0] === "usage" ||
           query.queryKey[0] === "import-usage-data" ||
           query.queryKey[0] === "user-usage-data" ||
-          query.queryKey[0] === "subscription-usage-data" ||
-          query.queryKey[0] === "user-profile-data",
+          query.queryKey[0] === "subscription-usage-data",
+        type: "all",
       }),
     ]);
 

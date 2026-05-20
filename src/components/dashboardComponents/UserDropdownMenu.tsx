@@ -8,6 +8,7 @@ import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 import { BalanceDisplay } from "./BalanceDisplay";
 import { PlanDisplay } from "./PlanDisplay";
 import { ShieldSpinnerGlyph } from "./LeadsLoadingState";
+import { useNavbarPresenceIndicator } from "@/hooks/useNavbarPresenceIndicator";
 
 export interface UserDropdownMenuProps {
   session: {
@@ -51,6 +52,8 @@ export function UserDropdownMenu({
   const router = useRouter();
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [portalReady, setPortalReady] = useState(false);
+  const { dotBgClassName, label: indicatorLabel, isLoading: presenceLoading } =
+    useNavbarPresenceIndicator();
 
   useEffect(() => {
     setPortalReady(true);
@@ -82,6 +85,12 @@ export function UserDropdownMenu({
   const handleAdminManagement = () => {
     setDropdownOpen(false);
     router.push("/dashboard/admin-management");
+  };
+
+  const handleSubscriptionStatusClick = () => {
+    if (!isAdmin) return;
+    setDropdownOpen(false);
+    router.push("/dashboard/subscription");
   };
 
   const handleLogout = async () => {
@@ -118,20 +127,31 @@ export function UserDropdownMenu({
             document.body,
           )
         : null}
-      <button
-        className="p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-50"
-        onClick={() => !logoutLoading && setDropdownOpen(!dropdownOpen)}
-        disabled={logoutLoading}
-        aria-haspopup="true"
-        aria-expanded={dropdownOpen}
-        aria-label="User menu"
-        type="button"
-      >
-        <div className="relative">
-          <UserCircle className="text-white transition-colors h-9 w-9 drop-shadow hover:text-white/80" />
-          <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-400 ring-2 ring-white" />
-        </div>
-      </button>
+      <div className="relative inline-flex shrink-0">
+        <button
+          className="rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-50"
+          onClick={() => !logoutLoading && setDropdownOpen(!dropdownOpen)}
+          disabled={logoutLoading}
+          aria-haspopup="true"
+          aria-expanded={dropdownOpen}
+          aria-label="User menu"
+          type="button"
+        >
+          <UserCircle className="block h-9 w-9 text-white drop-shadow transition-colors hover:text-white/80" />
+        </button>
+        <button
+          type="button"
+          onClick={handleSubscriptionStatusClick}
+          disabled={!isAdmin || logoutLoading}
+          title={indicatorLabel}
+          aria-label={indicatorLabel}
+          className={`absolute bottom-1.5 right-1.5 box-border h-3 w-3 rounded-full border-2 border-white transition-colors ${presenceLoading ? "bg-gray-400" : dotBgClassName} ${
+            isAdmin
+              ? "cursor-pointer hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
+              : "cursor-default pointer-events-none"
+          }`}
+        />
+      </div>
       {dropdownOpen && (
         <div className="absolute right-0 z-60 mt-2 w-[min(100vw-1.5rem,16rem)] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-md bg-white opacity-100 shadow-xl ring-1 ring-black/10 transition-all duration-200 ease-out divide-y divide-gray-100 origin-top-right transform scale-100 dark:divide-gray-700 dark:bg-gray-800 dark:ring-white/10 sm:w-60">
           {/* User Info Section */}

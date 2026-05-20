@@ -2,46 +2,37 @@
 "use client";
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { Crown } from "lucide-react";
 import {
   SUBSCRIPTION_TRIAL_DURATION_DAYS,
   formatTrialPeriodFreeLabel,
 } from "@/lib/subscriptionPlanCatalog";
-
-interface SubscriptionData {
-  isOnTrial: boolean;
-  trialEndsAt: string | null;
-  currentPlan: string | null;
-  subscriptionStatus: "active" | "inactive" | "trial" | "expired";
-  balance: number;
-  subscriptionEndDate?: string | null;
-  subscriptionStartDate?: string | null;
-}
+import type { SubscriptionStatusData } from "@/lib/subscriptionIndicator";
+import {
+  fetchSubscriptionStatus,
+  subscriptionStatusQueryKey,
+} from "@/lib/subscriptionQueries";
 
 interface PlanDisplayProps {
   isAdmin: boolean;
 }
 export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
+  const { data: session } = useSession();
+  const role = session?.user?.role;
+
   const {
     data: subscriptionData,
     isLoading: subscriptionLoading,
     error,
-  } = useQuery<SubscriptionData>({
-    queryKey: ["subscription", "status"],
-    queryFn: async (): Promise<SubscriptionData> => {
-      const response = await fetch("/api/subscription/status", {
-        credentials: "include",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch subscription data");
-      }
-      return response.json();
-    },
-    enabled: isAdmin, // Only fetch if user is admin
-    staleTime: 5 * 60 * 1000, // 5 minutes
+  } = useQuery<SubscriptionStatusData>({
+    queryKey: subscriptionStatusQueryKey(role),
+    queryFn: () => fetchSubscriptionStatus(role),
+    enabled: isAdmin,
+    staleTime: 30 * 1000,
     refetchOnWindowFocus: false,
     retry: 2,
-    refetchOnMount: false,
+    refetchOnMount: true,
   });
 
   // Helper function to calculate remaining days

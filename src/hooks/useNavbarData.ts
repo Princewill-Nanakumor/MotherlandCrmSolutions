@@ -15,15 +15,6 @@ interface UserProfile {
   isSuperAdmin?: boolean;
 }
 
-interface SubscriptionData {
-  isOnTrial: boolean;
-  trialEndsAt: string | null;
-  currentPlan: string | null;
-  subscriptionStatus: "active" | "inactive" | "trial" | "expired";
-  balance: number;
-  subscriptionEndDate?: string | null;
-  subscriptionStartDate?: string | null;
-}
 
 const fetchUserProfile = async (): Promise<UserProfile> => {
   const response = await apiCallWithSessionRefresh("/api/user/profile", {
@@ -43,25 +34,6 @@ const fetchUserProfile = async (): Promise<UserProfile> => {
   const data = await response.json();
   return data.user;
 };
-const fetchSubscriptionData = async (): Promise<SubscriptionData> => {
-  const response = await apiCallWithSessionRefresh("/api/subscription/status", {
-    cache: "no-store",
-  });
-
-  if (response.status === 404) {
-    // // User not found - likely deleted from database
-    // console.log("User not found in database, signing out...");
-    // await signOut({ callbackUrl: "/" });
-    throw new Error("User not found");
-  }
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch subscription data");
-  }
-
-  return response.json();
-};
-
 export const useUserProfileData = () => {
   const {
     data: userProfile,
@@ -88,28 +60,4 @@ export const useUserProfileData = () => {
   };
 };
 
-export const useSubscriptionData = () => {
-  const {
-    data: subscriptionData,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery<SubscriptionData, Error>({
-    queryKey: ["subscription-data"],
-    queryFn: fetchSubscriptionData,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    retry: 1,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    enabled: true,
-  });
-
-  return {
-    subscriptionData,
-    isLoading,
-    error,
-    refreshSubscriptionData: refetch,
-  };
-};
+// Subscription status lives in @/hooks/useSubscriptionData (shared with navbar dot + subscription page).

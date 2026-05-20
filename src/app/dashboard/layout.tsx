@@ -31,6 +31,7 @@ import {
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { isAdminOnlyDashboardPath } from "@/lib/dashboardAdminOnlyPaths";
 import { hasRecentIntentionalSignOut } from "@/lib/sessionUtils";
+import { UserPresenceProvider } from "@/context/UserPresenceContext";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { searchQuery, setSearchQuery, isLoading } = useSearchContext();
@@ -488,7 +489,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ToggleProvider value={showLeadsToggles ? toggleContextValue : null}>
+    <UserPresenceProvider enabled={status === "authenticated"}>
+      <ToggleProvider value={showLeadsToggles ? toggleContextValue : null}>
       <div className="flex h-screen bg-background text-foreground">
         <Sidebar />
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
@@ -513,6 +515,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </div>
       </div>
     </ToggleProvider>
+    </UserPresenceProvider>
   );
 }
 
