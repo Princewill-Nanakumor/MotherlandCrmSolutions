@@ -1,6 +1,6 @@
 "use client";
 
-import { getCsrfToken, signOut } from "next-auth/react";
+import { getCsrfToken } from "next-auth/react";
 import { disconnectAblyRealtimeClient } from "@/libs/ablyClient";
 import { disconnectAblyLeadRealtimeClient } from "@/libs/ablyLeadClient";
 import { markIntentionalSignOut } from "@/lib/sessionUtils";
@@ -25,10 +25,28 @@ function hardNavigateTo(target: string) {
   );
 }
 
+/** Never land on NextAuth's GET /api/auth/signout confirmation page. */
+function sanitizeSignOutRedirectUrl(
+  candidate: string | undefined,
+  fallback: string,
+): string {
+  if (!candidate) return fallback;
+  if (candidate.includes("/api/auth/signout")) return fallback;
+  try {
+    const parsed = new URL(candidate, window.location.origin);
+    if (parsed.pathname.endsWith("/api/auth/signout")) return fallback;
+    if (parsed.origin === window.location.origin) {
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }
+    return candidate;
+  } catch {
+    return fallback;
+  }
+}
+
 /**
- * Clears the session cookie via the same POST NextAuth uses, without calling
- * `signOut()` from `next-auth/react`. That avoids `_getSession()` + broadcast
- * updating the dashboard for one frame (wrong role / missing nav) before navigation.
+ * Clears the session cookie via POST (same as NextAuth) without the GET
+ * confirmation interstitial.
  */
 async function postNextAuthSignOutThenNavigate(callbackUrl: string) {
   const csrfToken = await getCsrfToken();
@@ -46,18 +64,34 @@ async function postNextAuthSignOutThenNavigate(callbackUrl: string) {
     body: body.toString(),
     credentials: "include",
   });
+
   let target = callbackUrl;
-  try {
-    const data = (await res.json()) as { url?: string };
-    if (typeof data?.url === "string" && data.url.length > 0) {
-      target = data.url;
+  if (res.ok) {
+    try {
+      const data = (await res.json()) as { url?: string };
+      target = sanitizeSignOutRedirectUrl(data?.url, callbackUrl);
+    } catch {
+      /* keep callbackUrl */
     }
-  } catch {
-    /* keep callbackUrl */
   }
+
   disconnectAblyRealtimeClient();
   disconnectAblyLeadRealtimeClient();
   hardNavigateTo(target);
+}
+
+function navigateAfterSignOutFailure(
+  callbackUrl: string,
+  router?: AppRouterLike,
+) {
+  disconnectAblyRealtimeClient();
+  disconnectAblyLeadRealtimeClient();
+  if (router) {
+    router.replace(callbackUrl);
+    router.refresh();
+    return;
+  }
+  hardNavigateTo(callbackUrl);
 }
 
 /** Clears the session without showing the NextAuth /api/auth/signout confirmation page. */
@@ -68,19 +102,14 @@ export async function signOutWithoutInterstitial(
 ) {
   if (options?.intentional && typeof window !== "undefined") {
     markIntentionalSignOut();
-    await postNextAuthSignOutThenNavigate(callbackUrl);
-    return;
   }
 
-  const result = await signOut({ redirect: false, callbackUrl });
-  disconnectAblyRealtimeClient();
-  disconnectAblyLeadRealtimeClient();
-  const target = result?.url ?? callbackUrl;
+  if (typeof window === "undefined") return;
 
-  if (router) {
-    router.replace(target);
-    router.refresh();
-  } else if (typeof window !== "undefined") {
-    hardNavigateTo(target);
+  try {
+    await postNextAuthSignOutThenNavigate(callbackUrl);
+  } catch {
+    // Session often already dead after a long absence — still send user to login.
+    navigateAfterSignOutFailure(callbackUrl, router);
   }
 }
