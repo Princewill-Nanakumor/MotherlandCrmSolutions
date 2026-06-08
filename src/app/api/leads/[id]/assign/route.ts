@@ -10,6 +10,11 @@ import {
 } from "@/libs/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
+import {
+  assertAssignmentCapacity,
+  countLeadsAssignedToAgent,
+  getLeadAssigneeId,
+} from "@/lib/leadAssignmentQuery";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -87,6 +92,25 @@ export async function POST(request: Request) {
 
       if (!assignedToUser) {
         throw new Error("Target user not found or not authorized");
+      }
+
+      const existingAssigneeId = getLeadAssigneeId(oldAssignedTo);
+      if (existingAssigneeId !== userId) {
+        const db = mongoose.connection.db;
+        if (!db) {
+          throw new Error("Database connection not available");
+        }
+        const currentCount = await countLeadsAssignedToAgent(
+          db.collection("leads"),
+          new mongoose.Types.ObjectId(adminScope),
+          userId,
+        );
+        assertAssignmentCapacity(
+          assignedToUser.firstName,
+          assignedToUser.lastName,
+          currentCount,
+          1,
+        );
       }
 
       // Update the lead
@@ -173,12 +197,15 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Error assigning lead:", error);
+    const message =
+      error instanceof Error ? error.message : "Error assigning lead";
+    const isClientError =
+      message.includes("not found") ||
+      message.includes("Cannot assign") ||
+      message.includes("maximum");
     return NextResponse.json(
-      {
-        message:
-          error instanceof Error ? error.message : "Error assigning lead",
-      },
-      { status: 500 }
+      { message },
+      { status: isClientError ? 400 : 500 },
     );
   } finally {
     await dbSession.endSession();

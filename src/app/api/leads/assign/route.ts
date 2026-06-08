@@ -8,6 +8,11 @@ import {
   publishAdminLeadsUpdatedEvent,
   publishLeadUpdatedEvent,
 } from "@/libs/ablyServer";
+import {
+  assertAssignmentCapacity,
+  countLeadsAssignedToAgent,
+  getLeadAssigneeId,
+} from "@/lib/leadAssignmentQuery";
 
 interface AssignLeadsRequest {
   leadIds: string[];
@@ -117,6 +122,37 @@ export async function POST(request: Request) {
       throw new Error("Can only assign leads to AGENT users");
     }
 
+    const netNewAssignments = beforeLeads.filter(
+      (lead) => getLeadAssigneeId(lead.assignedTo) !== userId,
+    ).length;
+
+    if (netNewAssignments > 0) {
+      const currentCount = await countLeadsAssignedToAgent(
+        db.collection("leads"),
+        adminObjectId,
+        userId,
+      );
+      try {
+        assertAssignmentCapacity(
+          assignedToUser.firstName,
+          assignedToUser.lastName,
+          currentCount,
+          netNewAssignments,
+        );
+      } catch (capacityError) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              capacityError instanceof Error
+                ? capacityError.message
+                : "Assignment limit exceeded",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
     // Update leads and create activities
     const updatePromises = beforeLeads.map(async (lead) => {
       const now = new Date();
@@ -215,13 +251,18 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Error in assign endpoint:", error);
+    const message =
+      error instanceof Error ? error.message : "Error assigning leads";
+    const isClientError =
+      message.includes("not found") ||
+      message.includes("Can only assign") ||
+      message.includes("Invalid");
     return NextResponse.json(
       {
         success: false,
-        message:
-          error instanceof Error ? error.message : "Error assigning leads",
+        message,
       },
-      { status: 500 }
+      { status: isClientError ? 400 : 500 },
     );
   }
 }

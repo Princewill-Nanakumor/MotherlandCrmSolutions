@@ -25,7 +25,9 @@ export function useLeadsAssignments(params: {
         body: JSON.stringify({ leadIds, userId }),
       });
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = (await response.json().catch(() => ({}))) as {
+          message?: string;
+        };
         throw new Error(errorData.message || "Failed to assign leads");
       }
       return response.json();

@@ -81,7 +81,12 @@ export function useLeadsMutations({
         body: JSON.stringify({ leadIds, userId }),
         cache: "no-store",
       });
-      if (!response.ok) throw new Error("Failed to assign leads");
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => ({}))) as {
+          message?: string;
+        };
+        throw new Error(errorData.message || "Failed to assign leads");
+      }
       return response.json();
     },
     onMutate: async ({ leadIds, userId }) => {

@@ -7,6 +7,7 @@ import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { User } from "@/types/user.types";
 import { Lead } from "@/types/leads";
+import { MAX_ASSIGNED_LEADS_PER_AGENT } from "@/lib/leadAssignmentQuery";
 
 interface AssignLeadsDialogProps {
   isOpen: boolean;
@@ -163,6 +164,11 @@ export function AssignLeadsDialog({
                 </div>
               </div>
             )}
+
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Each agent can have at most {MAX_ASSIGNED_LEADS_PER_AGENT} assigned
+              leads on their leads page.
+            </p>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">

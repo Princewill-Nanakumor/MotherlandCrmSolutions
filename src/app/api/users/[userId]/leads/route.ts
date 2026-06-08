@@ -6,6 +6,10 @@ import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
+import {
+  assertAssignmentCapacity,
+  countLeadsAssignedToAgent,
+} from "@/lib/leadAssignmentQuery";
 
 function extractUserIdFromUrl(urlString: string): string {
   const url = new URL(urlString);
@@ -50,6 +54,54 @@ export async function POST(request: Request) {
         { message: "User not found or inactive" },
         { status: 404 }
       );
+    }
+
+    const leadObjectIds = leadIds.map(
+      (id: string) => new mongoose.Types.ObjectId(id),
+    );
+    const targetLeads = await db
+      .collection("leads")
+      .find({
+        _id: { $in: leadObjectIds },
+        adminId: adminObjectId,
+      })
+      .project({ assignedTo: 1 })
+      .toArray();
+
+    const netNewAssignments = targetLeads.filter((lead) => {
+      const assignee = lead.assignedTo;
+      if (!assignee) return true;
+      const assigneeId =
+        typeof assignee === "object" && assignee !== null && "_id" in assignee
+          ? String((assignee as { _id: unknown })._id)
+          : String(assignee);
+      return assigneeId !== userId;
+    }).length;
+
+    if (netNewAssignments > 0) {
+      const currentCount = await countLeadsAssignedToAgent(
+        db.collection("leads"),
+        adminObjectId,
+        userId,
+      );
+      try {
+        assertAssignmentCapacity(
+          String(user.firstName ?? "Agent"),
+          String(user.lastName ?? ""),
+          currentCount,
+          netNewAssignments,
+        );
+      } catch (capacityError) {
+        return NextResponse.json(
+          {
+            message:
+              capacityError instanceof Error
+                ? capacityError.message
+                : "Assignment limit exceeded",
+          },
+          { status: 400 },
+        );
+      }
     }
 
     // Update leads with multi-tenancy filter
