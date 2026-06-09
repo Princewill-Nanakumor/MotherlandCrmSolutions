@@ -3,7 +3,8 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoadingSpinner } from "@/components/dashboardComponents/LeadsLoadingState";
 import NotificationsList from "@/components/notifications/NotificationsList";
 
@@ -21,7 +22,6 @@ interface Notification {
   read: boolean;
 }
 
-// Raw notification from API that might have inconsistent id/_id
 interface RawNotification {
   id?: string;
   _id?: string;
@@ -38,65 +38,87 @@ interface RawNotification {
   [key: string]: unknown;
 }
 
+function normalizeNotifications(items: RawNotification[]): Notification[] {
+  return (items || []).map((n, idx) => {
+    const safeId =
+      n.id ||
+      n._id ||
+      `${n.type || "unknown"}-${n.paymentId || "na"}-${n.createdAt || idx}`;
+    return { ...n, id: String(safeId) } as Notification;
+  });
+}
+
 export default function NotificationsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const userId = session?.user?.id;
 
-  // Normalize notifications to ensure stable keys
-  const normalizeNotifications = useCallback(
-    (items: RawNotification[]): Notification[] => {
-      return (items || []).map((n, idx) => {
-        const safeId =
-          n.id ||
-          n._id ||
-          `${n.type || "unknown"}-${n.paymentId || "na"}-${n.createdAt || idx}`;
-        return { ...n, id: String(safeId) } as Notification;
-      });
-    },
-    [],
-  );
-
-  // ... (keep all your existing code, just change the fetch URL)
-
-  const fetchNotifications = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const {
+    data: notifications = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<RawNotification[], Error, Notification[]>({
+    queryKey: ["notifications"],
+    queryFn: async () => {
       const response = await fetch("/api/notifications/all", {
-        // Changed from "/api/notifications"
         credentials: "include",
       });
-      if (!response.ok) throw new Error("Failed to fetch notifications");
-      const rawData: RawNotification[] = await response.json();
-      const normalizedData = normalizeNotifications(rawData);
-      setNotifications(normalizedData);
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch notifications",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [normalizeNotifications]);
+      if (!response.ok) {
+        throw new Error("Failed to fetch notifications");
+      }
+      return response.json();
+    },
+    select: normalizeNotifications,
+    enabled: status === "authenticated" && !!userId,
+    staleTime: 60_000,
+    refetchInterval: 5 * 60_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+  });
 
-  const handleDeleteNotification = useCallback(
-    async (notificationId: string) => {
-      try {
-        await fetch(`/api/notifications/${notificationId}`, {
-          method: "DELETE",
-          credentials: "include",
-        });
-        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-      } catch (error) {
-        console.error("Error deleting notification:", error);
+  const deleteMutation = useMutation({
+    mutationFn: async (notificationId: string) => {
+      const response = await fetch(`/api/notifications/${notificationId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete notification");
       }
     },
-    [],
+    onMutate: async (notificationId) => {
+      await queryClient.cancelQueries({ queryKey: ["notifications"] });
+      const previous = queryClient.getQueryData<RawNotification[]>([
+        "notifications",
+      ]);
+      queryClient.setQueryData<RawNotification[]>(["notifications"], (old) =>
+        (old ?? []).filter((n) => {
+          const id =
+            n.id ||
+            n._id ||
+            `${n.type}-${n.paymentId ?? "na"}-${n.createdAt}`;
+          return String(id) !== notificationId;
+        }),
+      );
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["notifications"], context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const handleDeleteNotification = useCallback(
+    (notificationId: string) => {
+      deleteMutation.mutate(notificationId);
+    },
+    [deleteMutation],
   );
 
   useEffect(() => {
@@ -109,13 +131,7 @@ export default function NotificationsPage() {
     } else if (status === "authenticated" && session?.user?.role !== "ADMIN") {
       router.push("/dashboard/leads");
     }
-  }, [status, session, router]);
-
-  useEffect(() => {
-    if (session?.user) {
-      fetchNotifications();
-    }
-  }, [session, fetchNotifications]);
+  }, [status, session?.user?.role, router]);
 
   if (status === "loading") {
     return <LoadingSpinner />;
@@ -131,7 +147,6 @@ export default function NotificationsPage() {
   return (
     <div className="min-h-screen border dark:bg-gray-800 rounded-xl">
       <div className="container px-4 py-8 mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900! dark:text-white! mb-2">
             Notifications
@@ -141,13 +156,12 @@ export default function NotificationsPage() {
           </p>
         </div>
 
-        {/* Notifications List Component */}
         <NotificationsList
           notifications={notifications}
-          loading={loading}
-          error={error}
+          loading={isLoading}
+          error={error?.message ?? null}
           onDeleteNotification={handleDeleteNotification}
-          onRetry={fetchNotifications}
+          onRetry={() => void refetch()}
         />
       </div>
     </div>

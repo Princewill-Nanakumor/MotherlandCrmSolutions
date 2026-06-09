@@ -45,6 +45,7 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
   const [payment, setPayment] = useState<Payment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
 
@@ -63,9 +64,16 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
     try {
       setLoading(true);
       setError(null);
+      setAccessDenied(false);
       const response = await fetch(`/api/payments/${paymentId}`);
 
       if (!response.ok) {
+        if (response.status === 403) {
+          setAccessDenied(true);
+          throw new Error(
+            "You don't have permission to view this payment. It belongs to another account.",
+          );
+        }
         if (response.status === 404) {
           throw new Error("Payment not found");
         }
@@ -229,16 +237,34 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
             <div className="text-center">
               <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
               <h2 className="text-xl font-semibold text-gray-900! dark:text-white! mb-2">
-                Error Loading Payment
+                {accessDenied ? "Access Denied" : "Error Loading Payment"}
               </h2>
               <p className="text-red-500! dark:text-red-400! mb-4">{error}</p>
               <div className="space-x-2">
-                <Button onClick={() => router.push("/dashboard/notifications")}>
-                  View Notifications
-                </Button>
-                <Button variant="outline" onClick={fetchPaymentDetails}>
-                  Retry
-                </Button>
+                {accessDenied ? (
+                  <>
+                    <Button onClick={() => router.push("/dashboard")}>
+                      Back to Dashboard
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push("/dashboard/billing")}
+                    >
+                      View Billing
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      onClick={() => router.push("/dashboard/notifications")}
+                    >
+                      View Notifications
+                    </Button>
+                    <Button variant="outline" onClick={fetchPaymentDetails}>
+                      Retry
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
