@@ -15,6 +15,22 @@ import {
 } from "./commentsAndActivities/utils";
 import { CommentForm } from "./commentsAndActivities/CommentForm";
 import { CombinedTimeline } from "./commentsAndActivities/CombinedTimeline";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+function truncatePreview(text: string, max = 120): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, max)}…`;
+}
 
 interface CommentsAndActivitiesCombinedProps {
   leadId: string;
@@ -34,6 +50,12 @@ export const CommentsAndActivitiesCombined: FC<
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(
     null,
   );
+  const [pendingDeleteCommentId, setPendingDeleteCommentId] = useState<
+    string | null
+  >(null);
+  const [pendingDeleteActivityId, setPendingDeleteActivityId] = useState<
+    string | null
+  >(null);
   const [showTextarea, setShowTextarea] = useState<boolean>(true);
 
   const isAdmin = session?.user?.role === "ADMIN";
@@ -450,20 +472,44 @@ export const CommentsAndActivitiesCombined: FC<
 
   const handleDelete = useCallback(
     (commentId: string) => {
-      if (deletingId) return;
-      setDeletingId(commentId);
-      deleteCommentMutation.mutate(commentId);
+      if (deletingId || deleteCommentMutation.isPending) return;
+      setPendingDeleteCommentId(commentId);
     },
-    [deleteCommentMutation, deletingId],
+    [deletingId, deleteCommentMutation.isPending],
   );
 
   const handleDeleteActivity = useCallback(
     (activityId: string) => {
-      if (deletingActivityId) return;
-      setDeletingActivityId(activityId);
-      deleteActivityMutation.mutate(activityId);
+      if (deletingActivityId || deleteActivityMutation.isPending) return;
+      setPendingDeleteActivityId(activityId);
     },
-    [deleteActivityMutation, deletingActivityId],
+    [deletingActivityId, deleteActivityMutation.isPending],
+  );
+
+  const confirmDeleteComment = useCallback(() => {
+    if (!pendingDeleteCommentId || deleteCommentMutation.isPending) return;
+    const commentId = pendingDeleteCommentId;
+    setPendingDeleteCommentId(null);
+    setDeletingId(commentId);
+    deleteCommentMutation.mutate(commentId);
+  }, [pendingDeleteCommentId, deleteCommentMutation]);
+
+  const confirmDeleteActivity = useCallback(() => {
+    if (!pendingDeleteActivityId || deleteActivityMutation.isPending) return;
+    const activityId = pendingDeleteActivityId;
+    setPendingDeleteActivityId(null);
+    setDeletingActivityId(activityId);
+    deleteActivityMutation.mutate(activityId);
+  }, [pendingDeleteActivityId, deleteActivityMutation]);
+
+  const pendingDeleteComment = useMemo(
+    () => comments.find((c) => c._id === pendingDeleteCommentId),
+    [comments, pendingDeleteCommentId],
+  );
+
+  const pendingDeleteActivity = useMemo(
+    () => activities.find((a) => a._id === pendingDeleteActivityId),
+    [activities, pendingDeleteActivityId],
   );
 
   const isLoading = isLoadingComments || isLoadingActivities;
@@ -524,6 +570,109 @@ export const CommentsAndActivitiesCombined: FC<
           />
         </div>
       </div>
+
+      <AlertDialog
+        open={pendingDeleteCommentId !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteCommentMutation.isPending) {
+            setPendingDeleteCommentId(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this comment?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  This cannot be undone. The comment will be removed from the
+                  timeline.
+                </p>
+                {pendingDeleteComment?.content ? (
+                  <p className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
+                    {truncatePreview(pendingDeleteComment.content)}
+                  </p>
+                ) : null}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteCommentMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700 hover:text-white focus:ring-red-600"
+              disabled={deleteCommentMutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDeleteComment();
+              }}
+            >
+              {deleteCommentMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting…
+                </>
+              ) : (
+                "Delete comment"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={pendingDeleteActivityId !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteActivityMutation.isPending) {
+            setPendingDeleteActivityId(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this activity?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  This cannot be undone. The activity entry will be removed
+                  from the timeline.
+                </p>
+                {pendingDeleteActivity ? (
+                  <p className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
+                    {truncatePreview(
+                      pendingDeleteActivity.description ||
+                        pendingDeleteActivity.type.replace(/_/g, " "),
+                    )}
+                  </p>
+                ) : null}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteActivityMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700 hover:text-white focus:ring-red-600"
+              disabled={deleteActivityMutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDeleteActivity();
+              }}
+            >
+              {deleteActivityMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting…
+                </>
+              ) : (
+                "Delete activity"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
