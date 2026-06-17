@@ -121,3 +121,30 @@ export function clearIntentionalSignOutMarkers(): void {
     /* ignore */
   }
 }
+
+/** Clears client markers that force the login landing / "session expired" UX. */
+export function clearSessionExpiryMarkers(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem("sessionExpired");
+  } catch {
+    /* ignore */
+  }
+  try {
+    sessionStorage.removeItem("auth:navigating");
+  } catch {
+    /* ignore */
+  }
+}
+
+export function isLikelyNetworkError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const msg = error.message.toLowerCase();
+  return (
+    error.name === "TypeError" ||
+    msg.includes("failed to fetch") ||
+    msg.includes("network") ||
+    msg.includes("load failed") ||
+    msg.includes("networkerror")
+  );
+}

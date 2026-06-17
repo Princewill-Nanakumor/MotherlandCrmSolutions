@@ -467,8 +467,34 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       };
     }
 
-    // Real expiry only when the user was actually authenticated in this layout.
-    redirectToLogin(hasSeenAuthenticatedRef.current);
+    // Real session loss: retry in case the dev server was briefly stopped.
+    if (unauthRedirectTimerRef.current) {
+      clearTimeout(unauthRedirectTimerRef.current);
+    }
+    unauthRedirectTimerRef.current = setTimeout(() => {
+      void (async () => {
+        for (let i = 0; i < 4; i += 1) {
+          const confirmed = await getSession();
+          if (confirmed?.user?.id) {
+            redirectingDueToExpiryRef.current = false;
+            return;
+          }
+          await new Promise((r) => setTimeout(r, 400));
+        }
+
+        const markExpired =
+          hasSeenAuthenticatedRef.current &&
+          localStorage.getItem("sessionExpired") === "true";
+        redirectToLogin(markExpired);
+      })();
+    }, 600);
+
+    return () => {
+      if (unauthRedirectTimerRef.current) {
+        clearTimeout(unauthRedirectTimerRef.current);
+        unauthRedirectTimerRef.current = null;
+      }
+    };
   }, [status, pathname, searchParams, router]);
 
   // Avoid full-page "reload" flash after profile save/session updates:

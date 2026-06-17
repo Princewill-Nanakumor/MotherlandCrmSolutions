@@ -1,6 +1,6 @@
 // src/lib/apiUtils.ts
 
-import { hasRecentIntentionalSignOut } from "@/lib/sessionUtils";
+import { hasRecentIntentionalSignOut, isLikelyNetworkError } from "@/lib/sessionUtils";
 
 export type ApiCallOptions = RequestInit & {
   /** Request timeout in ms (default 60000). Retry after 401 uses the same value. */
@@ -91,39 +91,57 @@ export const apiCallWithSessionRefresh = async (
         clearTimeout(refreshTimeoutId);
 
         if (refreshResponse.ok) {
-          // Retry the original request
-          const retryController = new AbortController();
-          const retryTimeoutId = setTimeout(
-            () => retryController.abort(),
-            timeoutMs,
-          );
-
+          let sessionBody: { user?: { id?: string } } | null = null;
           try {
-            const retryResponse = await fetch(url, {
-              ...fetchOptions,
-              credentials: "include",
-              signal: retryController.signal,
-            });
-            clearTimeout(retryTimeoutId);
-            return retryResponse;
-          } catch (retryError) {
-            clearTimeout(retryTimeoutId);
-            throw retryError;
+            sessionBody = (await refreshResponse.json()) as {
+              user?: { id?: string };
+            };
+          } catch {
+            sessionBody = null;
+          }
+
+          if (sessionBody?.user?.id) {
+            // Retry the original request
+            const retryController = new AbortController();
+            const retryTimeoutId = setTimeout(
+              () => retryController.abort(),
+              timeoutMs,
+            );
+
+            try {
+              const retryResponse = await fetch(url, {
+                ...fetchOptions,
+                credentials: "include",
+                signal: retryController.signal,
+              });
+              clearTimeout(retryTimeoutId);
+              return retryResponse;
+            } catch (retryError) {
+              clearTimeout(retryTimeoutId);
+              throw retryError;
+            }
           }
         }
-      } catch {
+      } catch (refreshError) {
         clearTimeout(refreshTimeoutId);
+        if (isLikelyNetworkError(refreshError)) {
+          throw new Error(
+            "Could not reach the server. Check your connection and try again.",
+          );
+        }
       }
 
-      // Session refresh failed - redirect to login and remember current page if possible
+      // Session refresh failed with a live server — return to login without
+      // implying the JWT expired (e.g. dev server was stopped briefly).
       if (typeof window !== "undefined") {
         const { pathname, search } = window.location;
-        const callbackPath = pathname === "/login" ? "/dashboard" : `${pathname}${search}`;
-        window.location.href = `/login?expired=true&callbackUrl=${encodeURIComponent(
+        const callbackPath =
+          pathname === "/login" ? "/dashboard" : `${pathname}${search}`;
+        window.location.href = `/login?callbackUrl=${encodeURIComponent(
           callbackPath,
         )}`;
       }
-      throw new Error("Session expired. Please log in again.");
+      throw new Error("Please sign in again.");
     }
 
     return response;

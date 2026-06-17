@@ -13,6 +13,7 @@ import {
 } from "@/components/dashboardComponents/LeadsLoadingState";
 import {
   clearIntentionalSignOutMarkers,
+  clearSessionExpiryMarkers,
   hasAuthorizedSession,
   shouldBlockLoginAutoRedirect,
   shouldClearStaleSessionOnLoginPage,
@@ -106,31 +107,57 @@ function LoginFormContent() {
 function AuthStateHandler() {
   const { status, data: session } = useSession();
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
-  const staleSignOutStartedRef = useRef(false);
+  const [sessionCleanupDone, setSessionCleanupDone] = useState(false);
   const redirectStartedRef = useRef(false);
 
-  const sessionUserId = session?.user?.id;
+  const forceLoginLanding = shouldForceLoginLanding();
 
-  // Clear stale client session when we landed for expiry but client still shows logged in
+  // Clear stale client session when we landed after expiry / server blip.
   useEffect(() => {
-    if (!shouldClearStaleSessionOnLoginPage(status, session)) {
-      staleSignOutStartedRef.current = false;
+    if (!forceLoginLanding) {
+      setSessionCleanupDone(true);
       return;
     }
-    if (staleSignOutStartedRef.current) return;
-    staleSignOutStartedRef.current = true;
-    void signOut({ redirect: false }).then(() => {
-      disconnectAblyRealtimeClient();
-      disconnectAblyLeadRealtimeClient();
-    });
-  }, [status, session]);
 
-  // If session stays "loading" (e.g. /api/auth/session slow or fails in production), show form after 2.5s so user can sign in
+    let cancelled = false;
+
+    void (async () => {
+      if (status === "loading") return;
+
+      try {
+        if (shouldClearStaleSessionOnLoginPage(status, session)) {
+          await signOut({ redirect: false });
+          disconnectAblyRealtimeClient();
+          disconnectAblyLeadRealtimeClient();
+        }
+      } catch {
+        /* ignore */
+      }
+
+      if (cancelled) return;
+      clearSessionExpiryMarkers();
+      setSessionCleanupDone(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [forceLoginLanding, status, session]);
+
+  // If session stays "loading" (e.g. /api/auth/session slow or fails), show form after 2.5s
   useEffect(() => {
     if (status !== "loading") return;
-    const t = setTimeout(() => setLoadingTimedOut(true), 2500);
+    const t = setTimeout(() => {
+      setLoadingTimedOut(true);
+      if (forceLoginLanding) {
+        clearSessionExpiryMarkers();
+        setSessionCleanupDone(true);
+      }
+    }, 2500);
     return () => clearTimeout(t);
-  }, [status]);
+  }, [status, forceLoginLanding]);
+
+  const sessionUserId = session?.user?.id;
 
   useEffect(() => {
     if (!hasAuthorizedSession(status, session)) {
@@ -151,9 +178,15 @@ function AuthStateHandler() {
   }, [status, sessionUserId, session]);
 
   const forceLoginSpinner =
-    shouldForceLoginLanding() && !shouldBlockLoginAutoRedirect(status, session);
+    forceLoginLanding &&
+    !sessionCleanupDone &&
+    !shouldBlockLoginAutoRedirect(status, session);
+  // After expiry landing, wait for stale-session cleanup before showing the form
+  if (forceLoginSpinner) return <LoadingScreen />;
   // After expiry landing, show form (not spinner) even while session is loading
-  if (status === "loading" && !forceLoginSpinner && !loadingTimedOut) return <LoadingScreen />;
+  if (status === "loading" && !shouldForceLoginLanding() && !loadingTimedOut) {
+    return <LoadingScreen />;
+  }
 
   if (
     hasAuthorizedSession(status, session) &&

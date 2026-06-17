@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn, useSession, getSession } from "next-auth/react";
+import { signIn, useSession, getSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { LoginSchema } from "@/schemas";
@@ -18,6 +18,7 @@ import {
   isCredEmailVerifyCode,
   isCredEmailVerifyExpiredAdmin,
 } from "@/lib/credentialsEmailVerifyErrors";
+import { clearSessionExpiryMarkers } from "@/lib/sessionUtils";
 
 type LoginInput = z.infer<typeof LoginSchema>;
 
@@ -79,6 +80,15 @@ export default function SignInForm() {
     setLoading(true);
 
     try {
+      // Clear any stale session cookie before issuing a new one (common after
+      // dev server restarts or ?expired=true redirects).
+      try {
+        await signOut({ redirect: false });
+      } catch {
+        /* session may already be gone */
+      }
+      clearSessionExpiryMarkers();
+
       // Use redirect: false to handle redirect client-side after cookie is set
       // This is necessary for Vercel where cookies need time to be available
       const result = await signIn("credentials", {
