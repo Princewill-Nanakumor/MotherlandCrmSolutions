@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   Check,
   Copy,
+  FileText,
   Link2,
   Loader2,
   Plug,
@@ -13,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
+import { TaboolaIntegrationGuideModal } from "./TaboolaIntegrationGuideModal";
 
 const TABOOLA_PRODUCTION_ORIGIN = "https://motherlandcrmsolutions.com";
 
@@ -130,6 +132,7 @@ export function IntegrationsSection() {
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [guideModalOpen, setGuideModalOpen] = useState(false);
 
   const loadStatus = useCallback(async () => {
     setLoading(true);
@@ -220,6 +223,7 @@ export function IntegrationsSection() {
   };
 
   return (
+    <>
     <section className="p-6 bg-white border shadow-lg dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl border-border">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 bg-indigo-100 rounded-lg dark:bg-indigo-900/30">
@@ -336,6 +340,14 @@ export function IntegrationsSection() {
             <Button
               type="button"
               variant="outline"
+              onClick={() => setGuideModalOpen(true)}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              View integration guide
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => void loadStatus()}
             >
               Refresh status
@@ -413,13 +425,23 @@ export function IntegrationsSection() {
         </div>
 
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
-          Give your Taboola manager the webhook URL above and ask them to POST
-          JSON with fields: FirstName, LastName, Email, PhoneNumber, Language,
-          IP, ClickID, and Page. Use the auth header{" "}
+          Open <strong>View integration guide</strong> for the full API mapping,
+          example request, and setup notes to share with your Taboola manager.
+          Use the auth header{" "}
           <code className="font-mono">{status.authHeader}</code> with the secret
-          configured on the server.
+          configured on the server (share the secret separately).
         </div>
       </div>
     </section>
+
+    <TaboolaIntegrationGuideModal
+      open={guideModalOpen}
+      onOpenChange={setGuideModalOpen}
+      webhookUrl={webhookUrl}
+      authHeader={status.authHeader}
+      method={status.method}
+      contentType={status.contentType}
+    />
+    </>
   );
 }
