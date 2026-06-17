@@ -18,14 +18,13 @@ export async function GET(request: NextRequest) {
     return forbiddenResponse("Admin access required");
   }
 
-  const origin = new URL(request.url).origin;
   const config = getTaboolaConfigSnapshot();
-  const tenant = getTaboolaTenantStatus(session.user.id, origin);
+  const tenant = getTaboolaTenantStatus(session.user.id);
 
   return NextResponse.json({
     provider: "taboola",
     webhookUrl: tenant.canShareWithTaboola
-      ? (tenant.webhookUrlForAdmin ?? getTaboolaWebhookUrl(origin))
+      ? (tenant.webhookUrlForAdmin ?? getTaboolaWebhookUrl())
       : null,
     authHeader: "x-taboola-webhook-secret",
     method: "POST",

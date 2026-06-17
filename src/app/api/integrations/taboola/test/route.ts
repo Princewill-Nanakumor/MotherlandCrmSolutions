@@ -19,8 +19,7 @@ export async function POST(request: NextRequest) {
     return forbiddenResponse("Admin access required");
   }
 
-  const origin = new URL(request.url).origin;
-  const tenant = getTaboolaTenantStatus(session.user.id, origin);
+  const tenant = getTaboolaTenantStatus(session.user.id);
   if (!tenant.canShareWithTaboola) {
     return forbiddenResponse(
       "Taboola is not configured for your admin account",
@@ -69,7 +68,7 @@ export async function POST(request: NextRequest) {
   const secret = process.env.TABOOLA_WEBHOOK_SECRET?.trim();
   if (secret) {
     try {
-      const healthUrl = `${getTaboolaWebhookUrl(origin)}?secret=${encodeURIComponent(secret)}`;
+      const healthUrl = `${getTaboolaWebhookUrl()}?secret=${encodeURIComponent(secret)}`;
       const response = await fetch(healthUrl, {
         method: "GET",
         cache: "no-store",

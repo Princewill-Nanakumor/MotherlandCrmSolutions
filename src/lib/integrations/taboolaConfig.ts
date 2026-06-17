@@ -1,8 +1,11 @@
 import mongoose from "mongoose";
-import { getPublicAppOrigin } from "@/lib/emailAuthBranding";
+import {
+  getPublicAppOrigin,
+  isProductionDeployment,
+} from "@/lib/emailAuthBranding";
 
 /** Public CRM domain Taboola should always POST to (not Netlify branch URLs). */
-const CANONICAL_PRODUCTION_ORIGIN =
+export const TABOOLA_PRODUCTION_ORIGIN =
   process.env.CANONICAL_APP_URL?.trim()?.replace(/\/$/, "") ||
   "https://motherlandcrmsolutions.com";
 
@@ -26,44 +29,49 @@ export function getTaboolaWebhookPath(): string {
 }
 
 /**
- * Taboola must always receive the public CRM URL (custom domain), not a Netlify
+ * Taboola must always receive the public CRM URL (custom domain), never a Netlify
  * branch hostname from NEXTAUTH_URL or the incoming request.
  */
-export function resolveTaboolaWebhookOrigin(requestOrigin?: string): string {
-  const explicitBase =
-    process.env.TABOOLA_WEBHOOK_BASE_URL?.trim() ||
-    process.env.CANONICAL_APP_URL?.trim();
+export function resolveTaboolaWebhookOrigin(): string {
+  const explicitBase = process.env.TABOOLA_WEBHOOK_BASE_URL?.trim();
   if (explicitBase) {
     return explicitBase.replace(/\/$/, "");
   }
 
   const configured = getPublicAppOrigin().replace(/\/$/, "");
 
-  if (configured && !isLocalOrigin(configured) && !isNetlifyBranchOrigin(configured)) {
+  if (!isProductionDeployment()) {
     return configured;
   }
 
-  if (
-    isNetlifyBranchOrigin(configured) ||
-    (requestOrigin && isNetlifyBranchOrigin(requestOrigin))
-  ) {
-    return CANONICAL_PRODUCTION_ORIGIN;
+  if (isLocalOrigin(configured) || isNetlifyBranchOrigin(configured)) {
+    return TABOOLA_PRODUCTION_ORIGIN;
   }
 
-  if (requestOrigin?.trim() && !isNetlifyBranchOrigin(requestOrigin)) {
-    return requestOrigin.replace(/\/$/, "");
+  const canonicalEnv = process.env.CANONICAL_APP_URL?.trim()?.replace(/\/$/, "");
+  if (canonicalEnv && !isNetlifyBranchOrigin(canonicalEnv)) {
+    return canonicalEnv;
   }
 
-  if (isLocalOrigin(configured)) {
-    return configured;
-  }
-
-  return CANONICAL_PRODUCTION_ORIGIN;
+  return TABOOLA_PRODUCTION_ORIGIN;
 }
 
-export function getTaboolaWebhookUrl(requestOrigin?: string): string {
-  const base = resolveTaboolaWebhookOrigin(requestOrigin);
+export function getTaboolaWebhookUrl(): string {
+  const base = resolveTaboolaWebhookOrigin();
   return `${base}${getTaboolaWebhookPath()}`;
+}
+
+/** Normalize API responses that may still contain a Netlify deploy hostname. */
+export function sanitizeTaboolaWebhookUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.endsWith(".netlify.app")) {
+      return `${TABOOLA_PRODUCTION_ORIGIN}${parsed.pathname}${parsed.search}`;
+    }
+  } catch {
+    // keep original
+  }
+  return url;
 }
 
 export function getTaboolaCampaignAdminMap(): Record<string, string> {
@@ -127,10 +135,9 @@ export interface TaboolaTenantStatus {
 
 export function getTaboolaTenantStatus(
   adminId: string,
-  requestOrigin?: string,
 ): TaboolaTenantStatus {
   const snapshot = getTaboolaConfigSnapshot();
-  const baseUrl = getTaboolaWebhookUrl(requestOrigin);
+  const baseUrl = getTaboolaWebhookUrl();
   const campaignMap = getTaboolaCampaignAdminMap();
   const allowedAdminIds = (
     process.env.TABOOLA_ALLOWED_ADMIN_IDS?.split(",") ?? []

@@ -11,7 +11,22 @@ import {
   XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
+
+const TABOOLA_PRODUCTION_ORIGIN = "https://motherlandcrmsolutions.com";
+
+function sanitizeWebhookUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.endsWith(".netlify.app")) {
+      return `${TABOOLA_PRODUCTION_ORIGIN}${parsed.pathname}${parsed.search}`;
+    }
+  } catch {
+    // keep original
+  }
+  return url;
+}
 
 interface FieldMappingRow {
   taboola: string;
@@ -38,6 +53,57 @@ interface TaboolaTestResponse {
   ok: boolean;
   webhookReachable: boolean;
   checks: Array<{ name: string; ok: boolean; message: string }>;
+}
+
+function IntegrationsSectionSkeleton() {
+  return (
+    <section className="p-6 bg-white border shadow-lg dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl border-border">
+      <div className="flex items-center gap-3 mb-6">
+        <Skeleton className="h-9 w-9 rounded-lg bg-gray-200 dark:bg-gray-700" />
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-32 bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="h-4 w-48 bg-gray-200 dark:bg-gray-700" />
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-20 bg-gray-200 dark:bg-gray-700" />
+            <Skeleton className="h-4 w-64 bg-gray-200 dark:bg-gray-700" />
+          </div>
+          <Skeleton className="h-6 w-16 rounded-full bg-gray-200 dark:bg-gray-700" />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-6 w-28 rounded-full bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="h-6 w-28 rounded-full bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="h-6 w-32 rounded-full bg-gray-200 dark:bg-gray-700" />
+        </div>
+
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-24 bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="h-10 w-full rounded-lg bg-gray-200 dark:bg-gray-700" />
+        </div>
+
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full max-w-xs bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="h-4 w-full max-w-sm bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="h-4 w-full max-w-md bg-gray-200 dark:bg-gray-700" />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-9 w-36 rounded-md bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="h-9 w-32 rounded-md bg-gray-200 dark:bg-gray-700" />
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-3">
+        <Skeleton className="h-4 w-28 bg-gray-200 dark:bg-gray-700" />
+        <Skeleton className="h-32 w-full rounded-xl bg-gray-200 dark:bg-gray-700" />
+      </div>
+    </section>
+  );
 }
 
 function StatusPill({ ok, label }: { ok: boolean; label: string }) {
@@ -96,13 +162,13 @@ export function IntegrationsSection() {
 
   // Hidden for other admins until per-tenant Taboola setup is implemented.
   if (loading) {
-    return null;
+    return <IntegrationsSectionSkeleton />;
   }
   if (!status || !receivesLeads) {
     return null;
   }
 
-  const webhookUrl = status.webhookUrl ?? "";
+  const webhookUrl = sanitizeWebhookUrl(status.webhookUrl ?? "");
 
   const runTest = async () => {
     setTesting(true);
@@ -253,7 +319,7 @@ export function IntegrationsSection() {
               type="button"
               onClick={() => void runTest()}
               disabled={testing}
-              className="text-white"
+              className="bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-700"
             >
               {testing ? (
                 <>
