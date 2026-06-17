@@ -4,6 +4,8 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MultiSelectFilter } from "./MultiSelectFilter";
+import { LEAD_COUNTRIES_QUERY_KEY } from "@/lib/leadFilterQueries";
+import { normalizeCountryInput } from "@/lib/countryNormalize";
 
 interface CountryFilterProps {
   value: string[]; // Changed to array
@@ -60,7 +62,7 @@ export const CountryFilter = ({
   // If availableCountries are provided, use them directly (for user leads page)
   // Otherwise, fetch distinct countries from API (for admin all-leads page)
   const { data: fetchedCountries = [] } = useQuery<string[]>({
-    queryKey: ["leads", "countries"],
+    queryKey: [...LEAD_COUNTRIES_QUERY_KEY],
     queryFn: async () => {
       const response = await fetch("/api/leads/countries", {
         credentials: "include",
@@ -69,21 +71,32 @@ export const CountryFilter = ({
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
-    staleTime: 30 * 60 * 1000,
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     retry: 2,
     enabled: !providedCountries,
   });
 
   const countries = useMemo(() => {
+    const byKey = new Map<string, string>();
+    const add = (raw: string) => {
+      const t = String(raw).trim();
+      if (!t) return;
+      const canonical = normalizeCountryInput(t);
+      const key = canonical.toLowerCase();
+      if (!byKey.has(key)) byKey.set(key, canonical);
+    };
+
     if (providedCountries && providedCountries.length > 0) {
-      return providedCountries.sort((a, b) => a.localeCompare(b));
+      providedCountries.forEach(add);
+    } else {
+      fetchedCountries.forEach(add);
     }
-    return fetchedCountries
-      .filter((c): c is string => Boolean(c))
-      .sort((a, b) => a.localeCompare(b));
-  }, [providedCountries, fetchedCountries]);
+    value.forEach(add);
+
+    return Array.from(byKey.values()).sort((a, b) => a.localeCompare(b));
+  }, [providedCountries, fetchedCountries, value]);
 
   const options = useMemo(
     () =>

@@ -225,6 +225,7 @@ export const TABOOLA_FIELD_MAPPING = [
   { taboola: "LastName", crm: "lastName", shownIn: "All Leads → Name" },
   { taboola: "Email", crm: "email", shownIn: "All Leads → Email" },
   { taboola: "PhoneNumber", crm: "phone", shownIn: "All Leads → Phone" },
+  { taboola: "Country", crm: "country", shownIn: "All Leads → Country (US/United States normalized)" },
   { taboola: "Language", crm: "comments", shownIn: "Stored on lead (details)" },
   { taboola: "IP", crm: "comments", shownIn: "Stored on lead (details)" },
   { taboola: "ClickID", crm: "idempotency + comments", shownIn: "Dedupes retries" },

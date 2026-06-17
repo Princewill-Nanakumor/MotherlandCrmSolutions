@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
+import { normalizeCountryInput } from "@/lib/countryNormalize";
 
 export interface TaboolaLeadPayload {
   firstName: string;
@@ -85,6 +87,23 @@ function buildTaboolaComments(payload: TaboolaLeadPayload): string {
   return lines.join("\n");
 }
 
+/** Use explicit Country from Taboola, else ISO region from E.164 phone when possible. */
+function resolveTaboolaCountry(payload: TaboolaLeadPayload): string {
+  const explicit = payload.country.trim();
+  if (explicit) return normalizeCountryInput(explicit);
+
+  const phone = payload.phone.trim();
+  if (!phone) return "";
+
+  try {
+    const parsed = parsePhoneNumberFromString(phone);
+    const fromPhone = parsed?.country?.trim() ?? "";
+    return fromPhone ? normalizeCountryInput(fromPhone) : "";
+  } catch {
+    return "";
+  }
+}
+
 export function mapTaboolaToLead(payload: TaboolaLeadPayload): MappedTaboolaLead {
   const email = payload.email.trim().toLowerCase();
   const externalId =
@@ -95,7 +114,7 @@ export function mapTaboolaToLead(payload: TaboolaLeadPayload): MappedTaboolaLead
     lastName: payload.lastName.trim(),
     email,
     phone: payload.phone.trim(),
-    country: payload.country.trim(),
+    country: resolveTaboolaCountry(payload),
     source: payload.page ? `Taboola - ${payload.page}` : "Taboola",
     comments: buildTaboolaComments(payload),
     externalId,

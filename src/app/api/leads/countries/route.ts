@@ -4,6 +4,7 @@ import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
 import { ObjectId } from "mongodb";
+import { normalizeCountryInput } from "@/lib/countryNormalize";
 
 export async function GET() {
   try {
@@ -37,10 +38,17 @@ export async function GET() {
       .toArray();
 
     const countries = result
-      .map((r) => r._id)
-      .filter((c): c is string => typeof c === "string" && c.trim() !== "");
-    countries.sort((a, b) => a.localeCompare(b));
-    return NextResponse.json(countries);
+      .map((r) => (r._id != null ? String(r._id).trim() : ""))
+      .filter((c) => c !== "");
+    const byKey = new Map<string, string>();
+    for (const c of countries) {
+      const canonical = normalizeCountryInput(c);
+      const key = canonical.toLowerCase();
+      if (!byKey.has(key)) byKey.set(key, canonical);
+    }
+    return NextResponse.json(
+      Array.from(byKey.values()).sort((a, b) => a.localeCompare(b)),
+    );
   } catch (error) {
     console.error("Error fetching lead countries:", error);
     return NextResponse.json(

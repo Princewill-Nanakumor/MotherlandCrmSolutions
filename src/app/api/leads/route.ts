@@ -11,6 +11,7 @@ import { withAdminScope } from "@/lib/withAdminScope";
 import { agentLeadsInTenantFilter, singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
 import { getAgentContactVisibilityFromDb } from "@/lib/getAgentContactVisibilityFromDb";
+import { normalizeCountryInput } from "@/lib/countryNormalize";
 import {
   checkTenantLeadImportAllowed,
   reconcileLeadQuotaOrRollback,
@@ -232,7 +233,7 @@ export async function POST(request: Request) {
           lastName: leadData.lastName,
           email: leadData.email.toLowerCase(),
           phone: leadData.phone || "",
-          country: leadData.country || "",
+          country: normalizeCountryInput(leadData.country || ""),
           source: leadData.source || "Manual Entry",
           comments: leadData.comments || "No comments yet",
           status: leadData.status || "NEW",
@@ -372,7 +373,7 @@ export async function POST(request: Request) {
               lastName: lead.lastName,
               email: lead._normalizedEmail,
               phone: lead.phone || "",
-              country: lead.country || "",
+              country: normalizeCountryInput(lead.country || ""),
               source: lead.source || "—",
               comments: lead.comments || "No comments yet",
               status: lead.status || "NEW",

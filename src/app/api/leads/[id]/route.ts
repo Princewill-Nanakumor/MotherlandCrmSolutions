@@ -11,6 +11,7 @@ import {
   publishLeadUpdatedEvent,
 } from "@/libs/ablyServer";
 import { unauthorizedResponse } from "@/lib/apiResponses";
+import { normalizeCountryInput } from "@/lib/countryNormalize";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { agentAssignedToUserClause } from "@/lib/leadAssignmentQuery";
 
@@ -166,7 +167,7 @@ export async function GET(
       ),
       source: lead.source && lead.source !== "-" ? lead.source : "—",
       status: lead.status,
-      country: lead.country || "",
+      country: normalizeCountryInput(lead.country || ""),
       assignedTo: assignedToUser, // This will be { id, firstName, lastName, email } or null
       createdAt:
         lead.createdAt instanceof Date
@@ -293,7 +294,9 @@ export async function PUT(
         updatePayload.lastActivityAt = statusChangedAt;
       }
       if (updateData.country !== undefined)
-        updatePayload.country = String(updateData.country || "").trim();
+        updatePayload.country = normalizeCountryInput(
+          String(updateData.country || ""),
+        );
       if (updateData.comments !== undefined)
         updatePayload.comments = updateData.comments;
     }
@@ -384,7 +387,7 @@ export async function PUT(
       ),
       source: updatedLead.source,
       status: updatedLead.status,
-      country: updatedLead.country || "",
+      country: normalizeCountryInput(updatedLead.country || ""),
       assignedTo: assignedToUser,
       createdAt:
         updatedLead.createdAt instanceof Date

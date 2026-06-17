@@ -8,6 +8,7 @@ import {
   reconcileLeadQuotaOrRollback,
 } from "@/lib/tenantLeadImportLimits";
 import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
+import { normalizeCountryInput } from "@/lib/countryNormalize";
 
 type LeadSummary = {
   _id: mongoose.Types.ObjectId;
@@ -143,7 +144,7 @@ export async function createInboundLead(
       lastName: input.lastName.trim(),
       email: normalizedEmail,
       phone: input.phone.trim(),
-      country: input.country.trim(),
+      country: normalizeCountryInput(input.country),
       source: input.source.trim() || "Taboola",
       comments: input.comments.trim() || "Imported from Taboola.",
       status: "NEW",

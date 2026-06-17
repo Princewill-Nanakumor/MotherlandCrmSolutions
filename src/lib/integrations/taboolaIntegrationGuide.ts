@@ -46,6 +46,7 @@ FirstName        | FirstName            | Recommended           | Lead first nam
 LastName         | LastName             | Recommended           | Lead last name
 Email            | Email                | YES                   | Lead email (required)
 PhoneNumber      | PhoneNumber          | Recommended           | Lead phone
+Country          | Country              | Recommended           | Country filter + All Leads (US/usa/United States → United States)
 Language         | Language             | Optional              | Stored in lead notes
 IP               | IP                   | Optional              | Stored in lead notes
 ClickID          | ClickID              | Strongly recommended  | Deduplication on retries
@@ -56,6 +57,7 @@ Alternate key names (also accepted, case-insensitive):
 - Last name: LastName, last_name, lname
 - Email: Email, e-mail
 - Phone: PhoneNumber, phone, phone_number, mobile
+- Country: Country, country, countrycode, country_code
 - Language: Language, lang
 - IP: IP, ipaddress, ip_address
 - Click ID: ClickID, click_id, click-id
@@ -72,6 +74,7 @@ ${authHeader}: [WEBHOOK_SECRET]
   "LastName": "Doe",
   "Email": "john.doe@example.com",
   "PhoneNumber": "+1234567890",
+  "Country": "US",
   "Language": "en",
   "IP": "203.0.113.45",
   "ClickID": "abc123xyz",
@@ -133,12 +136,15 @@ IMPLEMENTATION NOTES
 4. POST each lead in real time as it is captured.
 5. Retries are safe on 5xx; duplicates with the same ClickID are handled.
 6. If FirstName is empty, CRM stores "Unknown".
+7. If Country is omitted, CRM may infer country from PhoneNumber (e.g. +1 → United States).
+8. Country names are normalized: US, usa, and United States all store and filter as United States.
 
 CRM DISPLAY AFTER IMPORT
 - FirstName + LastName → All Leads → Name
 - Email → All Leads → Email
 - PhoneNumber → All Leads → Phone
-- Page → All Leads → Source (Taboola - [Page])
+- Page → All Leads → Source (Taboola - [Page] or Taboola)
+- Country → All Leads → Country + country filter
 - Language, IP, ClickID, Page → Lead details / comments
 `;
 }

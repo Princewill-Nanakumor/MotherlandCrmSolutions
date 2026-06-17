@@ -5,6 +5,10 @@ import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { MultiSelectFilter } from "./MultiSelectFilter";
+import {
+  LEAD_COUNTRIES_QUERY_KEY,
+  LEAD_SOURCES_QUERY_KEY,
+} from "@/lib/leadFilterQueries";
 
 interface SourceFilterProps {
   value: string[]; // Changed to array
@@ -65,7 +69,7 @@ export const SourceFilter = ({
   const { data: fetchedSources = [], isLoading: isLoadingSources } = useQuery<
     string[]
   >({
-    queryKey: ["leads", "sources"],
+    queryKey: [...LEAD_SOURCES_QUERY_KEY],
     queryFn: async () => {
       const response = await fetch("/api/leads/sources", {
         credentials: "include",
@@ -74,9 +78,9 @@ export const SourceFilter = ({
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
-    staleTime: 30 * 60 * 1000,
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     retry: 2,
     enabled: !providedSources && isAuthenticated,
   });
@@ -94,19 +98,24 @@ export const SourceFilter = ({
       const key = t.toLowerCase();
       if (!byKey.has(key)) byKey.set(key, t);
     }
+    for (const selected of value) {
+      const t = String(selected).trim();
+      if (!t) continue;
+      const key = t.toLowerCase();
+      if (!byKey.has(key)) byKey.set(key, t);
+    }
     return Array.from(byKey.values()).sort((a, b) =>
       a.localeCompare(b, undefined, { sensitivity: "base" })
     );
-  }, [providedSources, fetchedSources]);
+  }, [providedSources, fetchedSources, value]);
 
   const options = useMemo(
     () =>
       sources
-        .map((source: string) => {
-          const label =
-            source.charAt(0).toUpperCase() + source.slice(1).toLowerCase();
-          return { value: source, label };
-        })
+        .map((source: string) => ({
+          value: source,
+          label: source,
+        }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     [sources]
   );

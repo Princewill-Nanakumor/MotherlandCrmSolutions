@@ -4,6 +4,10 @@ import mongoose from "mongoose";
 import { Db, ObjectId } from "mongodb";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
 import { getAgentContactVisibilityFromDb } from "@/lib/getAgentContactVisibilityFromDb";
+import {
+  expandCountryFilterValues,
+  normalizeCountryInput,
+} from "@/lib/countryNormalize";
 
 interface SessionUser {
   id: string;
@@ -221,7 +225,15 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
     }
   }
   if (countryFilter.length > 0) {
-    filter.country = countryMode === "exclude" ? { $nin: countryFilter } : { $in: countryFilter };
+    const countryPattern = expandCountryFilterValues(countryFilter)
+      .map((c) => escapeRegex(String(c).trim()))
+      .filter(Boolean)
+      .join("|");
+    if (countryPattern) {
+      const countryRegex = new RegExp(`^(${countryPattern})$`, "i");
+      filter.country =
+        countryMode === "exclude" ? { $not: countryRegex } : countryRegex;
+    }
   }
   if (statusFilter.length > 0) {
     const statusValues = statusFilterValues(statusFilter);
@@ -427,7 +439,7 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
             ? lead.source.trim()
             : "—",
         status: (lead.status as string) || "NEW",
-        country: (lead.country as string) || "",
+        country: normalizeCountryInput((lead.country as string) || ""),
         assignedTo: assignedToUser,
         createdAt:
           lead.createdAt instanceof Date

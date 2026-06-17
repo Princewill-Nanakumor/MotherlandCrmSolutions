@@ -5,6 +5,7 @@ import {
   isPrefixedLeadId,
   normalizeLeadId,
 } from "@/lib/leadId";
+import { countriesMatch } from "@/lib/countryNormalize";
 
 // Constants for filter values
 export const FILTER_VALUES = {
@@ -255,37 +256,25 @@ export const filterLeadsByCountry = (
     if (filterByCountry.length === 0) return leads; // Empty array means "all"
     
     if (mode === "exclude") {
-      // EXCLUSION MODE: selected countries are EXCLUDED
       return leads.filter(
         (lead) =>
-          !filterByCountry.some(
-            (country) =>
-              lead.country?.toLowerCase() === country.toLowerCase()
-          )
-      );
-    } else {
-      // INCLUSION MODE: only show selected countries
-      return leads.filter((lead) =>
-        filterByCountry.some(
-          (country) =>
-            lead.country?.toLowerCase() === country.toLowerCase()
-        )
+          !filterByCountry.some((country) => countriesMatch(lead.country, country))
       );
     }
+
+    return leads.filter((lead) =>
+      filterByCountry.some((country) => countriesMatch(lead.country, country))
+    );
   }
   
   // Handle string (single-select - backward compatibility)
   if (!filterByCountry || filterByCountry === "all") return leads;
   
   if (mode === "exclude") {
-    return leads.filter(
-      (lead) => lead.country?.toLowerCase() !== filterByCountry.toLowerCase()
-    );
-  } else {
-    return leads.filter(
-      (lead) => lead.country?.toLowerCase() === filterByCountry.toLowerCase()
-    );
+    return leads.filter((lead) => !countriesMatch(lead.country, filterByCountry));
   }
+
+  return leads.filter((lead) => countriesMatch(lead.country, filterByCountry));
 };
 
 export const filterLeadsBySource = (

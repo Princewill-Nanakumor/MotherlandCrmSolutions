@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
 import { useToast } from "@/components/ui/use-toast";
 import { useStatuses } from "@/context/StatusContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -141,9 +142,9 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate and refetch leads
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["leads", "all"] });
+      void refetchLeadFilterOptions(queryClient);
 
       toast({
         title: "Success!",

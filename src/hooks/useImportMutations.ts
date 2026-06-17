@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { ImportHistoryItem, ProcessedLead } from "@/types/import";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
 
 /** Thrown when API returns 403 with upgradeRequired (subscription limit). */
 export class ImportUpgradeRequiredError extends Error {
@@ -72,6 +73,7 @@ async function invalidateAfterImport(queryClient: QueryClient) {
     queryClient.refetchQueries({ queryKey: ["leads"] }),
     queryClient.refetchQueries({ queryKey: ["users"] }),
     queryClient.refetchQueries({ queryKey: ["leads-stats"], exact: false }),
+    refetchLeadFilterOptions(queryClient),
   ]);
 }
 

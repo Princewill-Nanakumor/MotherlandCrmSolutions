@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
 import { Lead } from "@/types/leads";
 import { User } from "@/types/user.types";
+import { countriesMatch, normalizeCountryInput } from "@/lib/countryNormalize";
 
 interface LeadsState {
   leads: Lead[];
@@ -81,19 +82,16 @@ const filterLeadsByCountry = (
   filterByCountry: string
 ): Lead[] => {
   if (!filterByCountry || filterByCountry === "all") return leads;
-  return leads.filter(
-    (lead) => lead.country?.toLowerCase() === filterByCountry.toLowerCase()
-  );
+  return leads.filter((lead) => countriesMatch(lead.country, filterByCountry));
 };
 
 const getAvailableCountries = (leads: Lead[]): string[] => {
-  const countrySet = new Set<string>();
+  const countrySet = new Map<string, string>();
   leads.forEach((lead) => {
-    if (lead.country?.trim()) {
-      countrySet.add(lead.country.toLowerCase());
-    }
+    const canonical = normalizeCountryInput(lead.country);
+    if (canonical) countrySet.set(canonical.toLowerCase(), canonical);
   });
-  return Array.from(countrySet).sort();
+  return Array.from(countrySet.values()).sort();
 };
 
 const getFilteredLeads = (

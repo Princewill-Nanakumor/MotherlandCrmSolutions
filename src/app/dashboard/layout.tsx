@@ -28,6 +28,7 @@ import {
   ADMIN_LEADS_UPDATED_EVENT,
   getAdminLeadsChannelName,
 } from "@/libs/realtime";
+import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { isAdminOnlyDashboardPath } from "@/lib/dashboardAdminOnlyPaths";
 import { hasRecentIntentionalSignOut } from "@/lib/sessionUtils";
@@ -135,6 +136,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           );
         },
       });
+
+      void refetchLeadFilterOptions(queryClient);
 
       if (eventData.leadId) {
         void queryClient.invalidateQueries({

@@ -8,6 +8,7 @@ import {
   searchLeads,
   getAvailableSources,
 } from "@/utils/LeadsUtils";
+import { normalizeCountryInput } from "@/lib/countryNormalize";
 
 type SortField =
   | "leadId"
@@ -62,9 +63,13 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
   // Get available countries - filter out undefined values and ensure string type
   const availableCountries = useMemo(() => {
     if (!isDataReady || leads.length === 0) return [];
-    return [...new Set(leads.map((lead) => lead.country))]
-      .filter((country): country is string => Boolean(country))
-      .sort();
+    const byKey = new Map<string, string>();
+    for (const lead of leads) {
+      const canonical = normalizeCountryInput(lead.country);
+      if (!canonical) continue;
+      byKey.set(canonical.toLowerCase(), canonical);
+    }
+    return Array.from(byKey.values()).sort();
   }, [leads, isDataReady]);
 
   // Get available statuses - filter out undefined values and ensure string type
