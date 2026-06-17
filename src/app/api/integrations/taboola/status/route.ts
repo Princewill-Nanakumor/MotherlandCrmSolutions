@@ -4,8 +4,8 @@ import { authOptions } from "@/libs/auth";
 import { forbiddenResponse, unauthorizedResponse } from "@/lib/apiResponses";
 import {
   TABOOLA_FIELD_MAPPING,
-  adminReceivesTaboolaLeads,
   getTaboolaConfigSnapshot,
+  getTaboolaTenantStatus,
   getTaboolaWebhookUrl,
 } from "@/lib/integrations/taboolaConfig";
 
@@ -20,15 +20,17 @@ export async function GET(request: NextRequest) {
 
   const origin = new URL(request.url).origin;
   const config = getTaboolaConfigSnapshot();
+  const tenant = getTaboolaTenantStatus(session.user.id, origin);
 
   return NextResponse.json({
     provider: "taboola",
-    webhookUrl: getTaboolaWebhookUrl(origin),
+    webhookUrl: tenant.webhookUrlForAdmin ?? getTaboolaWebhookUrl(origin),
     authHeader: "x-taboola-webhook-secret",
     method: "POST",
     contentType: "application/json",
     config,
-    receivesLeadsForThisAdmin: adminReceivesTaboolaLeads(session.user.id),
+    receivesLeadsForThisAdmin: tenant.receivesLeadsForThisAdmin,
+    tenant,
     fieldMapping: TABOOLA_FIELD_MAPPING,
   });
 }

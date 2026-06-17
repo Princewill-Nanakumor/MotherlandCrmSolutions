@@ -25,11 +25,22 @@ interface TaboolaStatusResponse {
   method: string;
   contentType: string;
   receivesLeadsForThisAdmin: boolean;
+  tenant: {
+    receivesLeadsForThisAdmin: boolean;
+    isDefaultTaboolaAdmin: boolean;
+    hasCampaignRouting: boolean;
+    hasDedicatedAdminUrl: boolean;
+    routingMode: string | null;
+    webhookUrlForAdmin: string | null;
+    canShareWithTaboola: boolean;
+    multiTenantNote: string;
+  };
   config: {
     secretConfigured: boolean;
     defaultAdminConfigured: boolean;
     campaignMappingsCount: number;
     allowedAdminIdsCount: number;
+    multiTenantEnabled: boolean;
     ready: boolean;
   };
   fieldMapping: FieldMappingRow[];
@@ -129,9 +140,11 @@ export function IntegrationsSection() {
   };
 
   const copyWebhookUrl = async () => {
-    if (!status?.webhookUrl) return;
+    const url =
+      status?.tenant.webhookUrlForAdmin ?? status?.webhookUrl ?? null;
+    if (!url || !status?.tenant.canShareWithTaboola) return;
     try {
-      await navigator.clipboard.writeText(status.webhookUrl);
+      await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       toast({
@@ -187,6 +200,23 @@ export function IntegrationsSection() {
               />
             </div>
 
+            <div
+              className={`rounded-lg border p-4 text-sm ${
+                status.tenant.receivesLeadsForThisAdmin
+                  ? "border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-100"
+                  : "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100"
+              }`}
+            >
+              <p className="font-medium mb-1">Multi-tenant routing</p>
+              <p>{status.tenant.multiTenantNote}</p>
+              {status.config.multiTenantEnabled ? (
+                <p className="mt-2 text-xs opacity-90">
+                  This CRM supports multiple admins. Each tenant only sees leads
+                  routed to their account — not other admins&apos; leads.
+                </p>
+              ) : null}
+            </div>
+
             <div className="flex flex-wrap gap-2">
               <StatusPill
                 ok={status.config.secretConfigured}
@@ -200,38 +230,57 @@ export function IntegrationsSection() {
                 label="Tenant routing"
               />
               <StatusPill
-                ok={status.receivesLeadsForThisAdmin}
+                ok={status.tenant.receivesLeadsForThisAdmin}
                 label={
-                  status.receivesLeadsForThisAdmin
+                  status.tenant.receivesLeadsForThisAdmin
                     ? "Leads route to you"
-                    : "Leads route elsewhere"
+                    : "Not your integration"
                 }
               />
+              {status.tenant.isDefaultTaboolaAdmin ? (
+                <StatusPill ok label="Primary Taboola admin" />
+              ) : null}
+              {status.tenant.hasDedicatedAdminUrl ? (
+                <StatusPill ok label="Personal webhook URL" />
+              ) : null}
+              {status.tenant.hasCampaignRouting ? (
+                <StatusPill ok label="Campaign routing" />
+              ) : null}
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Webhook URL
-              </label>
-              <div className="mt-2 flex items-center gap-2">
-                <div className="flex-1 flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-3 py-2 text-sm text-gray-900 dark:text-white break-all">
-                  <Link2 className="h-4 w-4 shrink-0 text-gray-400" />
-                  {status.webhookUrl}
+            {status.tenant.canShareWithTaboola ? (
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {status.tenant.hasDedicatedAdminUrl
+                    ? "Your webhook URL (do not share with other admins)"
+                    : "Webhook URL"}
+                </label>
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex-1 flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-3 py-2 text-sm text-gray-900 dark:text-white break-all">
+                    <Link2 className="h-4 w-4 shrink-0 text-gray-400" />
+                    {status.tenant.webhookUrlForAdmin ?? status.webhookUrl}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void copyWebhookUrl()}
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void copyWebhookUrl()}
-                >
-                  {copied ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
               </div>
-            </div>
+            ) : (
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-3 py-3 text-sm text-gray-600 dark:text-gray-300">
+                Webhook URL is hidden because Taboola is not routed to your
+                admin account. Using another admin&apos;s URL or secret will not
+                import leads into your workspace.
+              </div>
+            )}
 
             <div className="grid gap-2 text-sm text-gray-600 dark:text-gray-300">
               <p>
@@ -255,24 +304,26 @@ export function IntegrationsSection() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                onClick={() => void runTest()}
-                disabled={testing}
-                className="text-white"
-              >
-                {testing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Testing...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Test connection
-                  </>
-                )}
-              </Button>
+              {status.tenant.canShareWithTaboola ? (
+                <Button
+                  type="button"
+                  onClick={() => void runTest()}
+                  disabled={testing}
+                  className="text-white"
+                >
+                  {testing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Testing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Test connection
+                    </>
+                  )}
+                </Button>
+              ) : null}
               <Button
                 type="button"
                 variant="outline"
@@ -352,13 +403,15 @@ export function IntegrationsSection() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
-            Give your Taboola manager the webhook URL above and ask them to POST
-            JSON with fields: FirstName, LastName, Email, PhoneNumber, Language,
-            IP, ClickID, and Page. Use the auth header{" "}
-            <code className="font-mono">{status.authHeader}</code> with the
-            shared secret configured on the server.
-          </div>
+          {status.tenant.canShareWithTaboola ? (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
+              Give your Taboola manager the webhook URL above and ask them to
+              POST JSON with fields: FirstName, LastName, Email, PhoneNumber,
+              Language, IP, ClickID, and Page. Use the auth header{" "}
+              <code className="font-mono">{status.authHeader}</code> with the
+              secret configured for your account on the server.
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>

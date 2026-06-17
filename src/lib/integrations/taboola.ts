@@ -165,7 +165,11 @@ export function resolveTaboolaAdminId(options: {
 
   const explicit = options.explicitAdminId?.trim();
   if (explicit && mongoose.Types.ObjectId.isValid(explicit)) {
-    if (allowedAdminIds.length === 0 || allowedAdminIds.includes(explicit)) {
+    const defaultAdminId = process.env.TABOOLA_DEFAULT_ADMIN_ID?.trim();
+    if (defaultAdminId && explicit === defaultAdminId) {
+      return explicit;
+    }
+    if (allowedAdminIds.includes(explicit)) {
       return explicit;
     }
     return null;

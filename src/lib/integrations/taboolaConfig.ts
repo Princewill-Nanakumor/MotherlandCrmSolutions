@@ -43,9 +43,100 @@ export function getTaboolaConfigSnapshot() {
     defaultAdminConfigured,
     campaignMappingsCount: Object.keys(campaignMap).length,
     allowedAdminIdsCount: allowedAdminIds.length,
+    multiTenantEnabled:
+      allowedAdminIds.length > 0 || Object.keys(campaignMap).length > 0,
     ready:
       secretConfigured &&
       (defaultAdminConfigured || Object.keys(campaignMap).length > 0),
+  };
+}
+
+export type TaboolaRoutingMode =
+  | "default_admin"
+  | "campaign_map"
+  | "explicit_admin_url";
+
+export interface TaboolaTenantStatus {
+  receivesLeadsForThisAdmin: boolean;
+  isDefaultTaboolaAdmin: boolean;
+  hasCampaignRouting: boolean;
+  hasDedicatedAdminUrl: boolean;
+  routingMode: TaboolaRoutingMode | null;
+  /** URL this admin should give Taboola, or null if not their integration */
+  webhookUrlForAdmin: string | null;
+  canShareWithTaboola: boolean;
+  multiTenantNote: string;
+}
+
+export function getTaboolaTenantStatus(
+  adminId: string,
+  origin: string,
+): TaboolaTenantStatus {
+  const snapshot = getTaboolaConfigSnapshot();
+  const baseUrl = getTaboolaWebhookUrl(origin);
+  const campaignMap = getTaboolaCampaignAdminMap();
+  const allowedAdminIds = (
+    process.env.TABOOLA_ALLOWED_ADMIN_IDS?.split(",") ?? []
+  )
+    .map((id) => id.trim())
+    .filter((id) => mongoose.Types.ObjectId.isValid(id));
+
+  const isDefaultTaboolaAdmin = snapshot.defaultAdminId === adminId;
+  const hasCampaignRouting = Object.values(campaignMap).includes(adminId);
+  const hasDedicatedAdminUrl = allowedAdminIds.includes(adminId);
+
+  const receivesLeadsForThisAdmin =
+    isDefaultTaboolaAdmin || hasCampaignRouting || hasDedicatedAdminUrl;
+
+  let routingMode: TaboolaRoutingMode | null = null;
+  if (isDefaultTaboolaAdmin) {
+    routingMode = "default_admin";
+  } else if (hasCampaignRouting) {
+    routingMode = "campaign_map";
+  } else if (hasDedicatedAdminUrl) {
+    routingMode = "explicit_admin_url";
+  }
+
+  let webhookUrlForAdmin: string | null = null;
+  if (isDefaultTaboolaAdmin) {
+    webhookUrlForAdmin = baseUrl;
+  } else if (hasDedicatedAdminUrl) {
+    webhookUrlForAdmin = `${baseUrl}?adminId=${encodeURIComponent(adminId)}`;
+  } else if (hasCampaignRouting) {
+    webhookUrlForAdmin = baseUrl;
+  }
+
+  const canShareWithTaboola =
+    receivesLeadsForThisAdmin && snapshot.secretConfigured;
+
+  let multiTenantNote: string;
+  if (!snapshot.secretConfigured) {
+    multiTenantNote =
+      "Taboola is not configured on the server yet. Only the platform operator can enable it.";
+  } else if (!receivesLeadsForThisAdmin) {
+    multiTenantNote =
+      "Taboola is configured for a different admin account. Leads sent with the shared endpoint will not appear in your All Leads. Do not reuse another tenant's webhook details.";
+  } else if (isDefaultTaboolaAdmin) {
+    multiTenantNote = snapshot.multiTenantEnabled
+      ? "You are the primary Taboola admin. Other admins may have their own campaign or URL routing configured separately."
+      : "You are the only admin receiving Taboola leads. Other admins on this CRM cannot use your webhook.";
+  } else if (hasDedicatedAdminUrl) {
+    multiTenantNote =
+      "Use your personal webhook URL below (includes your admin ID). Do not share it with other admins.";
+  } else {
+    multiTenantNote =
+      "Leads are routed to you by Taboola campaign ID. Ask your Taboola manager to use the campaign mapping configured for your account.";
+  }
+
+  return {
+    receivesLeadsForThisAdmin,
+    isDefaultTaboolaAdmin,
+    hasCampaignRouting,
+    hasDedicatedAdminUrl,
+    routingMode,
+    webhookUrlForAdmin,
+    canShareWithTaboola,
+    multiTenantNote,
   };
 }
 
