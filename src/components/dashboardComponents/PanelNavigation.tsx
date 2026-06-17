@@ -24,7 +24,10 @@ export const usePanelNavigation = ({
   // Memoized URL update function
   const updateUrl = useCallback(
     (lead: Lead | null) => {
-      const params = new URLSearchParams(searchParams ?? undefined);
+      const params =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search)
+          : new URLSearchParams(searchParams ?? undefined);
 
       if (lead) {
         // Use leadId if available, otherwise fall back to _id
@@ -36,11 +39,15 @@ export const usePanelNavigation = ({
         params.delete("name");
       }
 
-      const newUrl = `${window.location.pathname}?${params.toString()}`;
-
-      router.push(newUrl, {
-        scroll: false,
-      });
+      const query = params.toString();
+      if (typeof window !== "undefined") {
+        const newUrl = query
+          ? `${window.location.pathname}?${query}`
+          : window.location.pathname;
+        window.history.replaceState(null, "", newUrl);
+      } else {
+        router.replace(query ? `?${query}` : "?", { scroll: false });
+      }
     },
     [router, searchParams]
   );
