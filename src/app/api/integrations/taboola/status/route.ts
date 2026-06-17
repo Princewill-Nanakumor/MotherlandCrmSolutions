@@ -24,13 +24,15 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     provider: "taboola",
-    webhookUrl: tenant.webhookUrlForAdmin ?? getTaboolaWebhookUrl(origin),
+    webhookUrl: tenant.canShareWithTaboola
+      ? (tenant.webhookUrlForAdmin ?? getTaboolaWebhookUrl(origin))
+      : null,
     authHeader: "x-taboola-webhook-secret",
     method: "POST",
     contentType: "application/json",
     config,
     receivesLeadsForThisAdmin: tenant.receivesLeadsForThisAdmin,
     tenant,
-    fieldMapping: TABOOLA_FIELD_MAPPING,
+    fieldMapping: tenant.canShareWithTaboola ? TABOOLA_FIELD_MAPPING : [],
   });
 }

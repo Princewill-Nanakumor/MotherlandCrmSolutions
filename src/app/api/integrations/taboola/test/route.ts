@@ -6,6 +6,7 @@ import User from "@/models/User";
 import { forbiddenResponse, unauthorizedResponse } from "@/lib/apiResponses";
 import {
   getTaboolaConfigSnapshot,
+  getTaboolaTenantStatus,
   getTaboolaWebhookUrl,
 } from "@/lib/integrations/taboolaConfig";
 
@@ -19,6 +20,14 @@ export async function POST(request: NextRequest) {
   }
 
   const origin = new URL(request.url).origin;
+  const tenant = getTaboolaTenantStatus(session.user.id, origin);
+  if (!tenant.canShareWithTaboola) {
+    return forbiddenResponse(
+      "Taboola is not configured for your admin account",
+      "TABOOLA_NOT_CONFIGURED_FOR_TENANT",
+    );
+  }
+
   const config = getTaboolaConfigSnapshot();
   const checks: Array<{ name: string; ok: boolean; message: string }> = [];
 

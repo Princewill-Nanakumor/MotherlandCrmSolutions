@@ -140,9 +140,14 @@ export function IntegrationsSection() {
   };
 
   const copyWebhookUrl = async () => {
+    if (!status) return;
+    const receivesLeads =
+      status.tenant?.receivesLeadsForThisAdmin ??
+      status.receivesLeadsForThisAdmin;
+    const canShare = status.tenant?.canShareWithTaboola ?? receivesLeads;
     const url =
-      status?.tenant.webhookUrlForAdmin ?? status?.webhookUrl ?? null;
-    if (!url || !status?.tenant.canShareWithTaboola) return;
+      status.tenant?.webhookUrlForAdmin ?? status.webhookUrl ?? null;
+    if (!url || !canShare) return;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -183,6 +188,21 @@ export function IntegrationsSection() {
           Loading integration status...
         </div>
       ) : status ? (
+        (() => {
+          const receivesLeads =
+            status.tenant?.receivesLeadsForThisAdmin ??
+            status.receivesLeadsForThisAdmin;
+          const canShare =
+            status.tenant?.canShareWithTaboola ?? receivesLeads;
+          const multiTenantNote =
+            status.tenant?.multiTenantNote ??
+            (receivesLeads
+              ? "You can send this webhook URL to your Taboola manager."
+              : "Taboola is configured for a different admin account. Leads sent with the shared endpoint will not appear in your All Leads. Do not reuse another tenant's webhook details.");
+          const displayWebhookUrl =
+            status.tenant?.webhookUrlForAdmin ?? status.webhookUrl;
+
+          return (
         <div className="space-y-6">
           <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-4">
             <div className="flex items-start justify-between gap-4">
@@ -195,20 +215,26 @@ export function IntegrationsSection() {
                 </p>
               </div>
               <StatusPill
-                ok={status.config.ready}
-                label={status.config.ready ? "Ready" : "Needs setup"}
+                ok={status.config.ready && receivesLeads}
+                label={
+                  receivesLeads
+                    ? status.config.ready
+                      ? "Ready"
+                      : "Needs setup"
+                    : "Not available"
+                }
               />
             </div>
 
             <div
               className={`rounded-lg border p-4 text-sm ${
-                status.tenant.receivesLeadsForThisAdmin
+                receivesLeads
                   ? "border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-100"
                   : "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100"
               }`}
             >
               <p className="font-medium mb-1">Multi-tenant routing</p>
-              <p>{status.tenant.multiTenantNote}</p>
+              <p>{multiTenantNote}</p>
               {status.config.multiTenantEnabled ? (
                 <p className="mt-2 text-xs opacity-90">
                   This CRM supports multiple admins. Each tenant only sees leads
@@ -230,35 +256,33 @@ export function IntegrationsSection() {
                 label="Tenant routing"
               />
               <StatusPill
-                ok={status.tenant.receivesLeadsForThisAdmin}
+                ok={receivesLeads}
                 label={
-                  status.tenant.receivesLeadsForThisAdmin
-                    ? "Leads route to you"
-                    : "Not your integration"
+                  receivesLeads ? "Leads route to you" : "Not your integration"
                 }
               />
-              {status.tenant.isDefaultTaboolaAdmin ? (
+              {status.tenant?.isDefaultTaboolaAdmin ? (
                 <StatusPill ok label="Primary Taboola admin" />
               ) : null}
-              {status.tenant.hasDedicatedAdminUrl ? (
+              {status.tenant?.hasDedicatedAdminUrl ? (
                 <StatusPill ok label="Personal webhook URL" />
               ) : null}
-              {status.tenant.hasCampaignRouting ? (
+              {status.tenant?.hasCampaignRouting ? (
                 <StatusPill ok label="Campaign routing" />
               ) : null}
             </div>
 
-            {status.tenant.canShareWithTaboola ? (
+            {canShare && displayWebhookUrl ? (
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {status.tenant.hasDedicatedAdminUrl
+                  {status.tenant?.hasDedicatedAdminUrl
                     ? "Your webhook URL (do not share with other admins)"
                     : "Webhook URL"}
                 </label>
                 <div className="mt-2 flex items-center gap-2">
                   <div className="flex-1 flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-3 py-2 text-sm text-gray-900 dark:text-white break-all">
                     <Link2 className="h-4 w-4 shrink-0 text-gray-400" />
-                    {status.tenant.webhookUrlForAdmin ?? status.webhookUrl}
+                    {displayWebhookUrl}
                   </div>
                   <Button
                     type="button"
@@ -282,7 +306,8 @@ export function IntegrationsSection() {
               </div>
             )}
 
-            <div className="grid gap-2 text-sm text-gray-600 dark:text-gray-300">
+            {canShare ? (
+              <div className="grid gap-2 text-sm text-gray-600 dark:text-gray-300">
               <p>
                 <span className="font-medium text-gray-900 dark:text-white">
                   Method:
@@ -302,9 +327,10 @@ export function IntegrationsSection() {
                 {status.authHeader}
               </p>
             </div>
+            ) : null}
 
             <div className="flex flex-wrap gap-2">
-              {status.tenant.canShareWithTaboola ? (
+              {canShare ? (
                 <Button
                   type="button"
                   onClick={() => void runTest()}
@@ -362,7 +388,8 @@ export function IntegrationsSection() {
             ) : null}
           </div>
 
-          <div>
+          {canShare ? (
+            <div>
             <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
               Field mapping
             </h3>
@@ -402,8 +429,9 @@ export function IntegrationsSection() {
               </table>
             </div>
           </div>
+          ) : null}
 
-          {status.tenant.canShareWithTaboola ? (
+          {canShare ? (
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
               Give your Taboola manager the webhook URL above and ask them to
               POST JSON with fields: FirstName, LastName, Email, PhoneNumber,
@@ -413,6 +441,8 @@ export function IntegrationsSection() {
             </div>
           ) : null}
         </div>
+          );
+        })()
       ) : null}
     </section>
   );
