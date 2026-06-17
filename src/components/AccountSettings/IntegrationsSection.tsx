@@ -20,27 +20,15 @@ interface FieldMappingRow {
 }
 
 interface TaboolaStatusResponse {
-  webhookUrl: string;
+  webhookUrl: string | null;
   authHeader: string;
   method: string;
   contentType: string;
   receivesLeadsForThisAdmin: boolean;
-  tenant: {
-    receivesLeadsForThisAdmin: boolean;
-    isDefaultTaboolaAdmin: boolean;
-    hasCampaignRouting: boolean;
-    hasDedicatedAdminUrl: boolean;
-    routingMode: string | null;
-    webhookUrlForAdmin: string | null;
-    canShareWithTaboola: boolean;
-    multiTenantNote: string;
-  };
   config: {
     secretConfigured: boolean;
     defaultAdminConfigured: boolean;
     campaignMappingsCount: number;
-    allowedAdminIdsCount: number;
-    multiTenantEnabled: boolean;
     ready: boolean;
   };
   fieldMapping: FieldMappingRow[];
@@ -52,13 +40,7 @@ interface TaboolaTestResponse {
   checks: Array<{ name: string; ok: boolean; message: string }>;
 }
 
-function StatusPill({
-  ok,
-  label,
-}: {
-  ok: boolean;
-  label: string;
-}) {
+function StatusPill({ ok, label }: { ok: boolean; label: string }) {
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -110,6 +92,18 @@ export function IntegrationsSection() {
     void loadStatus();
   }, [loadStatus]);
 
+  const receivesLeads = status?.receivesLeadsForThisAdmin === true;
+
+  // Hidden for other admins until per-tenant Taboola setup is implemented.
+  if (loading) {
+    return null;
+  }
+  if (!status || !receivesLeads) {
+    return null;
+  }
+
+  const webhookUrl = status.webhookUrl ?? "";
+
   const runTest = async () => {
     setTesting(true);
     setTestResult(null);
@@ -140,16 +134,9 @@ export function IntegrationsSection() {
   };
 
   const copyWebhookUrl = async () => {
-    if (!status) return;
-    const receivesLeads =
-      status.tenant?.receivesLeadsForThisAdmin ??
-      status.receivesLeadsForThisAdmin;
-    const canShare = status.tenant?.canShareWithTaboola ?? receivesLeads;
-    const url =
-      status.tenant?.webhookUrlForAdmin ?? status.webhookUrl ?? null;
-    if (!url || !canShare) return;
+    if (!webhookUrl) return;
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(webhookUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       toast({
@@ -182,268 +169,191 @@ export function IntegrationsSection() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Loading integration status...
-        </div>
-      ) : status ? (
-        (() => {
-          const receivesLeads =
-            status.tenant?.receivesLeadsForThisAdmin ??
-            status.receivesLeadsForThisAdmin;
-          const canShare =
-            status.tenant?.canShareWithTaboola ?? receivesLeads;
-          const multiTenantNote =
-            status.tenant?.multiTenantNote ??
-            (receivesLeads
-              ? "You can send this webhook URL to your Taboola manager."
-              : "Taboola is configured for a different admin account. Leads sent with the shared endpoint will not appear in your All Leads. Do not reuse another tenant's webhook details.");
-          const displayWebhookUrl =
-            status.tenant?.webhookUrlForAdmin ?? status.webhookUrl;
-
-          return (
-        <div className="space-y-6">
-          <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-semibold text-gray-900! dark:text-white!">
-                  Taboola
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Send leads from Taboola campaigns directly to All Leads.
-                </p>
-              </div>
-              <StatusPill
-                ok={status.config.ready && receivesLeads}
-                label={
-                  receivesLeads
-                    ? status.config.ready
-                      ? "Ready"
-                      : "Needs setup"
-                    : "Not available"
-                }
-              />
+      <div className="space-y-6">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-semibold text-gray-900! dark:text-white!">
+                Taboola
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Send leads from Taboola campaigns directly to All Leads.
+              </p>
             </div>
+            <StatusPill
+              ok={status.config.ready}
+              label={status.config.ready ? "Ready" : "Needs setup"}
+            />
+          </div>
 
-            <div
-              className={`rounded-lg border p-4 text-sm ${
-                receivesLeads
-                  ? "border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-100"
-                  : "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100"
-              }`}
-            >
-              <p className="font-medium mb-1">Multi-tenant routing</p>
-              <p>{multiTenantNote}</p>
-              {status.config.multiTenantEnabled ? (
-                <p className="mt-2 text-xs opacity-90">
-                  This CRM supports multiple admins. Each tenant only sees leads
-                  routed to their account — not other admins&apos; leads.
-                </p>
-              ) : null}
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <StatusPill
+              ok={status.config.secretConfigured}
+              label="Secret configured"
+            />
+            <StatusPill
+              ok={
+                status.config.defaultAdminConfigured ||
+                status.config.campaignMappingsCount > 0
+              }
+              label="Tenant routing"
+            />
+            <StatusPill ok label="Leads route to you" />
+          </div>
 
-            <div className="flex flex-wrap gap-2">
-              <StatusPill
-                ok={status.config.secretConfigured}
-                label="Secret configured"
-              />
-              <StatusPill
-                ok={
-                  status.config.defaultAdminConfigured ||
-                  status.config.campaignMappingsCount > 0
-                }
-                label="Tenant routing"
-              />
-              <StatusPill
-                ok={receivesLeads}
-                label={
-                  receivesLeads ? "Leads route to you" : "Not your integration"
-                }
-              />
-              {status.tenant?.isDefaultTaboolaAdmin ? (
-                <StatusPill ok label="Primary Taboola admin" />
-              ) : null}
-              {status.tenant?.hasDedicatedAdminUrl ? (
-                <StatusPill ok label="Personal webhook URL" />
-              ) : null}
-              {status.tenant?.hasCampaignRouting ? (
-                <StatusPill ok label="Campaign routing" />
-              ) : null}
-            </div>
-
-            {canShare && displayWebhookUrl ? (
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {status.tenant?.hasDedicatedAdminUrl
-                    ? "Your webhook URL (do not share with other admins)"
-                    : "Webhook URL"}
-                </label>
-                <div className="mt-2 flex items-center gap-2">
-                  <div className="flex-1 flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-3 py-2 text-sm text-gray-900 dark:text-white break-all">
-                    <Link2 className="h-4 w-4 shrink-0 text-gray-400" />
-                    {displayWebhookUrl}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void copyWebhookUrl()}
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
+          {webhookUrl ? (
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Webhook URL
+              </label>
+              <div className="mt-2 flex items-center gap-2">
+                <div className="flex-1 flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-3 py-2 text-sm text-gray-900 dark:text-white break-all">
+                  <Link2 className="h-4 w-4 shrink-0 text-gray-400" />
+                  {webhookUrl}
                 </div>
-              </div>
-            ) : (
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-3 py-3 text-sm text-gray-600 dark:text-gray-300">
-                Webhook URL is hidden because Taboola is not routed to your
-                admin account. Using another admin&apos;s URL or secret will not
-                import leads into your workspace.
-              </div>
-            )}
-
-            {canShare ? (
-              <div className="grid gap-2 text-sm text-gray-600 dark:text-gray-300">
-              <p>
-                <span className="font-medium text-gray-900 dark:text-white">
-                  Method:
-                </span>{" "}
-                {status.method}
-              </p>
-              <p>
-                <span className="font-medium text-gray-900 dark:text-white">
-                  Content-Type:
-                </span>{" "}
-                {status.contentType}
-              </p>
-              <p>
-                <span className="font-medium text-gray-900 dark:text-white">
-                  Auth header:
-                </span>{" "}
-                {status.authHeader}
-              </p>
-            </div>
-            ) : null}
-
-            <div className="flex flex-wrap gap-2">
-              {canShare ? (
                 <Button
                   type="button"
-                  onClick={() => void runTest()}
-                  disabled={testing}
-                  className="text-white"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void copyWebhookUrl()}
                 >
-                  {testing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Testing...
-                    </>
+                  {copied ? (
+                    <Check className="h-4 w-4" />
                   ) : (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                      Test connection
-                    </>
+                    <Copy className="h-4 w-4" />
                   )}
                 </Button>
-              ) : null}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => void loadStatus()}
-              >
-                Refresh status
-              </Button>
-            </div>
-
-            {testResult ? (
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-2">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  Test results
-                </p>
-                {testResult.checks.map((check) => (
-                  <div
-                    key={check.name}
-                    className="flex items-start gap-2 text-sm"
-                  >
-                    {check.ok ? (
-                      <Check className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
-                    )}
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {check.name}
-                      </p>
-                      <p className="text-gray-500 dark:text-gray-400">
-                        {check.message}
-                      </p>
-                    </div>
-                  </div>
-                ))}
               </div>
-            ) : null}
-          </div>
-
-          {canShare ? (
-            <div>
-            <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-              Field mapping
-            </h3>
-            <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-900/40">
-                  <tr>
-                    <th className="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
-                      Taboola
-                    </th>
-                    <th className="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
-                      CRM
-                    </th>
-                    <th className="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
-                      Shown in UI
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {status.fieldMapping.map((row) => (
-                    <tr
-                      key={row.taboola}
-                      className="border-t border-gray-200 dark:border-gray-700"
-                    >
-                      <td className="px-3 py-2 text-gray-900 dark:text-white">
-                        {row.taboola}
-                      </td>
-                      <td className="px-3 py-2 text-gray-600 dark:text-gray-300">
-                        {row.crm}
-                      </td>
-                      <td className="px-3 py-2 text-gray-600 dark:text-gray-300">
-                        {row.shownIn}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
-          </div>
           ) : null}
 
-          {canShare ? (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
-              Give your Taboola manager the webhook URL above and ask them to
-              POST JSON with fields: FirstName, LastName, Email, PhoneNumber,
-              Language, IP, ClickID, and Page. Use the auth header{" "}
-              <code className="font-mono">{status.authHeader}</code> with the
-              secret configured for your account on the server.
+          <div className="grid gap-2 text-sm text-gray-600 dark:text-gray-300">
+            <p>
+              <span className="font-medium text-gray-900 dark:text-white">
+                Method:
+              </span>{" "}
+              {status.method}
+            </p>
+            <p>
+              <span className="font-medium text-gray-900 dark:text-white">
+                Content-Type:
+              </span>{" "}
+              {status.contentType}
+            </p>
+            <p>
+              <span className="font-medium text-gray-900 dark:text-white">
+                Auth header:
+              </span>{" "}
+              {status.authHeader}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              onClick={() => void runTest()}
+              disabled={testing}
+              className="text-white"
+            >
+              {testing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Testing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Test connection
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void loadStatus()}
+            >
+              Refresh status
+            </Button>
+          </div>
+
+          {testResult ? (
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-2">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                Test results
+              </p>
+              {testResult.checks.map((check) => (
+                <div
+                  key={check.name}
+                  className="flex items-start gap-2 text-sm"
+                >
+                  {check.ok ? (
+                    <Check className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+                  )}
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {check.name}
+                    </p>
+                    <p className="text-gray-500 dark:text-gray-400">
+                      {check.message}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : null}
         </div>
-          );
-        })()
-      ) : null}
+
+        <div>
+          <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+            Field mapping
+          </h3>
+          <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 dark:bg-gray-900/40">
+                <tr>
+                  <th className="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
+                    Taboola
+                  </th>
+                  <th className="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
+                    CRM
+                  </th>
+                  <th className="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
+                    Shown in UI
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {status.fieldMapping.map((row) => (
+                  <tr
+                    key={row.taboola}
+                    className="border-t border-gray-200 dark:border-gray-700"
+                  >
+                    <td className="px-3 py-2 text-gray-900 dark:text-white">
+                      {row.taboola}
+                    </td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">
+                      {row.crm}
+                    </td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">
+                      {row.shownIn}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
+          Give your Taboola manager the webhook URL above and ask them to POST
+          JSON with fields: FirstName, LastName, Email, PhoneNumber, Language,
+          IP, ClickID, and Page. Use the auth header{" "}
+          <code className="font-mono">{status.authHeader}</code> with the secret
+          configured on the server.
+        </div>
+      </div>
     </section>
   );
 }
