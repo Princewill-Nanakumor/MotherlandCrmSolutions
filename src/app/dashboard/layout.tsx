@@ -31,7 +31,7 @@ import {
 import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { isAdminOnlyDashboardPath } from "@/lib/dashboardAdminOnlyPaths";
-import { hasRecentIntentionalSignOut } from "@/lib/sessionUtils";
+import { hasRecentIntentionalSignOut, clearPostSignInHandoff } from "@/lib/sessionUtils";
 import { UserPresenceProvider } from "@/context/UserPresenceContext";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
@@ -385,7 +385,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (status === "authenticated") {
       try {
-        sessionStorage.removeItem("auth:navigating");
+        clearPostSignInHandoff();
       } catch {
         /* ignore */
       }
@@ -451,11 +451,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             confirmedSession = await getSession();
           }
           if (confirmedSession?.user?.id) {
-            try {
-              sessionStorage.removeItem("auth:navigating");
-            } catch {
-              /* ignore */
-            }
+            clearPostSignInHandoff();
             return;
           }
           // Hand-off failure (cookie never propagated) — NOT an expiry.

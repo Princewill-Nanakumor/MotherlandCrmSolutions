@@ -21,6 +21,16 @@ export function hasAuthorizedSession(
   );
 }
 
+/** SignInForm set this before navigating to the dashboard after credentials login. */
+export function isPostSignInHandoff(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return sessionStorage.getItem("auth:navigating") === "1";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Login page: user arrived after session expiry (?expired=true or sessionExpired in localStorage).
  * NextAuth can still report "authenticated" briefly until signOut/refetch completes — callers
@@ -28,15 +38,6 @@ export function hasAuthorizedSession(
  */
 export function shouldForceLoginLanding(): boolean {
   if (typeof window === "undefined") return false;
-  try {
-    // User just completed sign-in and is navigating to callback route.
-    // Ignore stale `?expired=true` while this handoff is in progress.
-    if (sessionStorage.getItem("auth:navigating") === "1") {
-      return false;
-    }
-  } catch {
-    /* ignore */
-  }
   if (new URLSearchParams(window.location.search).get("expired") === "true") {
     return true;
   }
@@ -56,13 +57,17 @@ export function shouldClearStaleSessionOnLoginPage(
 }
 
 /**
- * Block auto-redirect to dashboard only while clearing stale session (above).
- * After a real sign-in, storage is cleared and/or user is newly authenticated — redirect.
+ * Block AuthStateHandler auto-redirect while:
+ * - clearing a stale session after expiry landing, or
+ * - SignInForm owns the post-login navigation (`auth:navigating`).
+ * Without the handoff guard, a failed dashboard bounce leaves `auth:navigating`
+ * set and the login page immediately sends the user back to /dashboard.
  */
 export function shouldBlockLoginAutoRedirect(
   status: string,
   session: Session | null | undefined,
 ): boolean {
+  if (isPostSignInHandoff()) return true;
   return shouldClearStaleSessionOnLoginPage(status, session);
 }
 
@@ -122,6 +127,15 @@ export function clearIntentionalSignOutMarkers(): void {
   }
 }
 
+export function clearPostSignInHandoff(): void {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem("auth:navigating");
+  } catch {
+    /* ignore */
+  }
+}
+
 /** Clears client markers that force the login landing / "session expired" UX. */
 export function clearSessionExpiryMarkers(): void {
   if (typeof window === "undefined") return;
@@ -130,10 +144,22 @@ export function clearSessionExpiryMarkers(): void {
   } catch {
     /* ignore */
   }
+}
+
+/** Confirms the session cookie is valid on the server (not just React client cache). */
+export async function fetchServerSessionUserId(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
   try {
-    sessionStorage.removeItem("auth:navigating");
+    const res = await fetch("/api/auth/session", {
+      cache: "no-store",
+      credentials: "include",
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { user?: { id?: string } };
+    const id = data?.user?.id;
+    return typeof id === "string" && id.length > 0 ? id : null;
   } catch {
-    /* ignore */
+    return null;
   }
 }
 

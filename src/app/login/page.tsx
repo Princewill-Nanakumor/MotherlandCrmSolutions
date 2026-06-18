@@ -14,10 +14,13 @@ import {
 import {
   clearIntentionalSignOutMarkers,
   clearSessionExpiryMarkers,
+  clearPostSignInHandoff,
+  fetchServerSessionUserId,
   hasAuthorizedSession,
   shouldBlockLoginAutoRedirect,
   shouldClearStaleSessionOnLoginPage,
   shouldForceLoginLanding,
+  isPostSignInHandoff,
 } from "@/lib/sessionUtils";
 import { getAuthHeroGlassFieldsCss } from "@/lib/authHeroGlassFieldsCss";
 import { disconnectAblyRealtimeClient } from "@/libs/ablyClient";
@@ -159,6 +162,23 @@ function AuthStateHandler() {
 
   const sessionUserId = session?.user?.id;
 
+  // Failed dashboard handoff leaves auth:navigating set — clear so the form stays usable.
+  useEffect(() => {
+    if (status === "loading") return;
+    if (hasAuthorizedSession(status, session)) return;
+    if (!isPostSignInHandoff()) return;
+
+    const timeout = setTimeout(() => {
+      void (async () => {
+        const serverId = await fetchServerSessionUserId();
+        if (serverId) return;
+        clearPostSignInHandoff();
+      })();
+    }, 3500);
+
+    return () => clearTimeout(timeout);
+  }, [status, session, sessionUserId]);
+
   useEffect(() => {
     if (!hasAuthorizedSession(status, session)) {
       redirectStartedRef.current = false;
@@ -168,13 +188,30 @@ function AuthStateHandler() {
     if (redirectStartedRef.current) return;
     redirectStartedRef.current = true;
 
-    const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-    const callbackUrl = params?.get("callbackUrl");
-    const path = callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard";
-    const url = `${window.location.origin}${path}`;
+    void (async () => {
+      // Only auto-redirect when the server cookie is valid (middleware agrees).
+      const serverId = await fetchServerSessionUserId();
+      if (!serverId) {
+        redirectStartedRef.current = false;
+        try {
+          await signOut({ redirect: false });
+        } catch {
+          /* ignore */
+        }
+        clearPostSignInHandoff();
+        return;
+      }
 
-    // Full page navigation so the session cookie is always sent (router.replace can race middleware).
-    window.location.replace(url);
+      const params =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search)
+          : null;
+      const callbackUrl = params?.get("callbackUrl");
+      const path =
+        callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard";
+      const url = `${window.location.origin}${path}`;
+      window.location.replace(url);
+    })();
   }, [status, sessionUserId, session]);
 
   const forceLoginSpinner =

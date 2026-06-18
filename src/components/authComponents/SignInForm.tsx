@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn, useSession, getSession, signOut } from "next-auth/react";
+import { signIn, useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { LoginSchema } from "@/schemas";
@@ -18,7 +18,7 @@ import {
   isCredEmailVerifyCode,
   isCredEmailVerifyExpiredAdmin,
 } from "@/lib/credentialsEmailVerifyErrors";
-import { clearSessionExpiryMarkers } from "@/lib/sessionUtils";
+import { clearSessionExpiryMarkers, fetchServerSessionUserId } from "@/lib/sessionUtils";
 
 type LoginInput = z.infer<typeof LoginSchema>;
 
@@ -144,18 +144,26 @@ export default function SignInForm() {
           window.history.replaceState({}, "", nextUrl);
         }
 
-        // Wait for the session endpoint to reflect the new login before navigation.
+        // Wait until the server session cookie is readable (middleware must agree).
         let confirmed = false;
-        for (let i = 0; i < 8; i += 1) {
-          const s = await getSession();
-          if (s?.user?.id) {
+        for (let i = 0; i < 10; i += 1) {
+          const serverId = await fetchServerSessionUserId();
+          if (serverId) {
             confirmed = true;
             break;
           }
-          await new Promise((r) => setTimeout(r, 250));
+          await new Promise((r) => setTimeout(r, 300));
         }
         if (!confirmed) {
-          await new Promise((r) => setTimeout(r, 300));
+          try {
+            sessionStorage.removeItem("auth:navigating");
+          } catch {}
+          setFormError(
+            "Sign in succeeded but the session could not be confirmed. Please try again.",
+          );
+          refreshCaptchaOnError();
+          setLoading(false);
+          return;
         }
         window.location.replace(
           `${window.location.origin}${target}${window.location.hash ?? ""}`,
