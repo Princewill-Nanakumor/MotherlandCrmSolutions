@@ -18,6 +18,7 @@ import {
   isCredEmailVerifyCode,
   isCredEmailVerifyExpiredAdmin,
 } from "@/lib/credentialsEmailVerifyErrors";
+import { authDebug } from "@/lib/authDebug";
 import { clearSessionExpiryMarkers, fetchServerSessionUserId } from "@/lib/sessionUtils";
 
 type LoginInput = z.infer<typeof LoginSchema>;
@@ -78,6 +79,7 @@ export default function SignInForm() {
     }
 
     setLoading(true);
+    authDebug("signIn:submit");
 
     try {
       // Clear any stale session cookie before issuing a new one (common after
@@ -99,6 +101,7 @@ export default function SignInForm() {
       });
 
       if (result?.error) {
+        authDebug("signIn:error", { error: result.error });
         try {
           sessionStorage.removeItem("auth:navigating");
         } catch {}
@@ -113,6 +116,7 @@ export default function SignInForm() {
         refreshCaptchaOnError();
         setLoading(false);
       } else if (result?.ok) {
+        authDebug("signIn:ok");
         setFormSuccess("Signed in successfully.");
 
         // Update session to ensure it's available before redirecting
@@ -155,6 +159,7 @@ export default function SignInForm() {
           await new Promise((r) => setTimeout(r, 300));
         }
         if (!confirmed) {
+          authDebug("signIn:session-not-confirmed");
           try {
             sessionStorage.removeItem("auth:navigating");
           } catch {}
@@ -165,6 +170,7 @@ export default function SignInForm() {
           setLoading(false);
           return;
         }
+        authDebug("signIn:redirect", { target });
         window.location.replace(
           `${window.location.origin}${target}${window.location.hash ?? ""}`,
         );

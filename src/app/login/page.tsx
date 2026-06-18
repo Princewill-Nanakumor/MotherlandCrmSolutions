@@ -23,6 +23,7 @@ import {
   isPostSignInHandoff,
 } from "@/lib/sessionUtils";
 import { getAuthHeroGlassFieldsCss } from "@/lib/authHeroGlassFieldsCss";
+import { authDebug, isAuthDebugEnabled } from "@/lib/authDebug";
 import { disconnectAblyRealtimeClient } from "@/libs/ablyClient";
 import { disconnectAblyLeadRealtimeClient } from "@/libs/ablyLeadClient";
 import { signOut } from "next-auth/react";
@@ -115,6 +116,16 @@ function AuthStateHandler() {
 
   const forceLoginLanding = shouldForceLoginLanding();
 
+  useEffect(() => {
+    if (!isAuthDebugEnabled()) return;
+    authDebug("login:mount", {
+      href: window.location.href,
+      forceLoginLanding: shouldForceLoginLanding(),
+      postSignInHandoff: isPostSignInHandoff(),
+      sessionExpiredStorage: localStorage.getItem("sessionExpired"),
+    });
+  }, []);
+
   // Clear stale client session when we landed after expiry / server blip.
   useEffect(() => {
     if (!forceLoginLanding) {
@@ -193,6 +204,7 @@ function AuthStateHandler() {
       const serverId = await fetchServerSessionUserId();
       if (!serverId) {
         redirectStartedRef.current = false;
+        authDebug("login:autoRedirect:blocked", { reason: "no-server-session" });
         try {
           await signOut({ redirect: false });
         } catch {
@@ -209,6 +221,7 @@ function AuthStateHandler() {
       const callbackUrl = params?.get("callbackUrl");
       const path =
         callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard";
+      authDebug("login:autoRedirect", { path, serverId });
       const url = `${window.location.origin}${path}`;
       window.location.replace(url);
     })();

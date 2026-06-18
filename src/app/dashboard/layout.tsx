@@ -31,6 +31,7 @@ import {
 import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { isAdminOnlyDashboardPath } from "@/lib/dashboardAdminOnlyPaths";
+import { authDebug } from "@/lib/authDebug";
 import { hasRecentIntentionalSignOut, clearPostSignInHandoff } from "@/lib/sessionUtils";
 import { UserPresenceProvider } from "@/context/UserPresenceContext";
 
@@ -408,6 +409,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const redirectToLogin = (markExpired: boolean) => {
       if (redirectingDueToExpiryRef.current) return;
       redirectingDueToExpiryRef.current = true;
+      authDebug("dashboard:redirectToLogin", {
+        markExpired,
+        pathname,
+        hasSeenAuthenticated: hasSeenAuthenticatedRef.current,
+        postSignInHandoff:
+          typeof window !== "undefined" &&
+          sessionStorage.getItem("auth:navigating") === "1",
+      });
       if (markExpired) {
         localStorage.setItem("sessionExpired", "true");
       }

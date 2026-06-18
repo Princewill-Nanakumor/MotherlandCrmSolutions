@@ -1,6 +1,7 @@
 "use client";
 
 import type { Session } from "next-auth";
+import { authDebug } from "@/lib/authDebug";
 
 const INTENTIONAL_SIGN_OUT_SESSION_KEY = "auth:intentionalSignOut";
 const INTENTIONAL_SIGN_OUT_AT_KEY = "auth:intentionalSignOutAt";
@@ -154,11 +155,24 @@ export async function fetchServerSessionUserId(): Promise<string | null> {
       cache: "no-store",
       credentials: "include",
     });
+    authDebug("fetchServerSessionUserId", {
+      ok: res.ok,
+      status: res.status,
+      url: window.location.href,
+    });
     if (!res.ok) return null;
     const data = (await res.json()) as { user?: { id?: string } };
     const id = data?.user?.id;
-    return typeof id === "string" && id.length > 0 ? id : null;
-  } catch {
+    const resolved =
+      typeof id === "string" && id.length > 0 ? id : null;
+    authDebug("fetchServerSessionUserId:result", {
+      hasUserId: Boolean(resolved),
+    });
+    return resolved;
+  } catch (error) {
+    authDebug("fetchServerSessionUserId:error", {
+      message: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
