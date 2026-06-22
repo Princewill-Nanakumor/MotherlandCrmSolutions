@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Lead } from "@/types/leads";
 import { User } from "@/types/user.types";
 import { normalizeLeadId } from "@/lib/leadId";
+import { formatLeadPhoneForTable } from "@/lib/phoneNormalize";
 
 export type SortField =
   | "leadId"
@@ -202,7 +203,11 @@ export function buildCoreColumns(params: {
       id: "phone",
       header: () => <div className="flex items-center justify-start w-full h-8 font-medium cursor-pointer">Phone</div>,
       cell: ({ row }) => (
-        <div className="text-center font-medium text-gray-900! dark:text-white! whitespace-nowrap">{row.original.phone || "—"}</div>
+        <div className="text-center font-medium text-gray-900! dark:text-white! whitespace-nowrap">
+          {formatLeadPhoneForTable(row.original.phone, {
+            countryHint: row.original.country,
+          })}
+        </div>
       ),
       minSize: 140,
     },

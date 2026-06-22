@@ -3,6 +3,7 @@ import { FC } from "react";
 import { Mail, Copy, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { maskEmail } from "@/lib/contactMasking";
+import { formatLeadDetailEmail } from "@/lib/leadDisplayFormat";
 
 interface EmailFieldProps {
   email: string;
@@ -46,10 +47,13 @@ export const EmailField: FC<EmailFieldProps> = ({
 
   const fullEmail = (email ?? "").trim();
   const looksServerMasked = /[•\u2022]/.test(fullEmail);
-  const displayEmail =
+  const displayEmailRaw =
     maskForDisplay && fullEmail && !looksServerMasked
       ? maskEmail(fullEmail, false)
       : fullEmail;
+  const displayEmail = looksServerMasked
+    ? displayEmailRaw
+    : formatLeadDetailEmail(displayEmailRaw);
 
   return (
     <div className="flex items-center gap-3 text-gray-700! dark:text-gray-300!">

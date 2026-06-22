@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import Lead from "@/models/Lead";
-import Activity from "@/models/Activity";
 import IntegrationLeadReceipt from "@/models/IntegrationLeadReceipt";
 import User from "@/models/User";
 import {
@@ -9,6 +8,7 @@ import {
 } from "@/lib/tenantLeadImportLimits";
 import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
+import { normalizePhoneToE164 } from "@/lib/phoneNormalize";
 import { notifyInboundLeadTelegram } from "@/lib/integrations/telegram";
 
 type LeadSummary = {
@@ -144,7 +144,7 @@ export async function createInboundLead(
       firstName: input.firstName.trim() || "Unknown",
       lastName: input.lastName.trim(),
       email: normalizedEmail,
-      phone: input.phone.trim(),
+      phone: normalizePhoneToE164(input.phone, input.country) || input.phone.trim(),
       country: normalizeCountryInput(input.country) || "Unknown",
       source: input.source.trim() || "Taboola",
       comments: input.comments.trim() || "Imported from Taboola.",
@@ -192,24 +192,6 @@ export async function createInboundLead(
     );
 
     try {
-      await Activity.create({
-        type: "LEAD_CREATED",
-        userId: adminObjectId,
-        leadId: newLead._id,
-        adminId: adminObjectId,
-        details: input.activityDetails,
-        timestamp: new Date(),
-        metadata: {
-          source: input.source,
-          email: normalizedEmail,
-          ...(input.activityMetadata ?? {}),
-        },
-      });
-    } catch (activityError) {
-      console.error("Failed to log inbound lead activity:", activityError);
-    }
-
-    try {
       await publishAdminLeadsUpdatedEvent(input.adminId, {
         type: "lead_created",
         leadId: newLead._id.toString(),
@@ -229,10 +211,6 @@ export async function createInboundLead(
         phone: newLead.phone ?? input.phone,
         country: newLead.country ?? input.country,
         source: newLead.source ?? input.source,
-        leadRef: {
-          _id: newLead._id.toString(),
-          leadId: newLead.leadId,
-        },
       });
     } catch (telegramError) {
       console.error("Telegram notification failed after inbound lead creation:", telegramError);

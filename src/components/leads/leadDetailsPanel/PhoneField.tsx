@@ -4,9 +4,11 @@ import { Phone, PhoneCall, Copy, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { maskPhoneNumber } from "@/utils/phoneMask";
+import { formatLeadPhoneForTable } from "@/lib/phoneNormalize";
 
 interface PhoneFieldProps {
   phone: string | null | undefined;
+  countryHint?: string | null;
   isEditing: boolean;
   editedPhone: string;
   onPhoneChange: (value: string) => void;
@@ -19,6 +21,7 @@ interface PhoneFieldProps {
 
 export const PhoneField: FC<PhoneFieldProps> = ({
   phone,
+  countryHint,
   isEditing,
   editedPhone,
   onPhoneChange,
@@ -50,9 +53,13 @@ export const PhoneField: FC<PhoneFieldProps> = ({
 
   // Determine what to display
   const displayPhone = canViewPhoneNumbers
-    ? phone || "Not provided"
+    ? formatLeadPhoneForTable(phone, { countryHint })
     : phone
-      ? maskPhoneNumber(phone)
+      ? formatLeadPhoneForTable(phone, {
+          countryHint,
+          canViewFull: false,
+          mask: maskPhoneNumber,
+        })
       : "Not provided";
 
   return (

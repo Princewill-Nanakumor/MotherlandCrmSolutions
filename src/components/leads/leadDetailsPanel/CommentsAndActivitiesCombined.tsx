@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Activity, Lead, Status } from "@/types/leads";
+import { isTaboolaLeadImportActivity } from "@/lib/leadActivityDisplay";
 import { Comment, CombinedItem } from "./commentsAndActivities/types";
 import {
   transformComment,
@@ -233,6 +234,7 @@ export const CommentsAndActivitiesCombined: FC<
 
     // Add activities (excluding COMMENT type as they're now shown as comments)
     activities.forEach((activity) => {
+      if (isTaboolaLeadImportActivity(activity)) return;
       if (seenActivityIds.has(activity._id)) return;
       seenActivityIds.add(activity._id);
       const timestamp = new Date(activity.createdAt);

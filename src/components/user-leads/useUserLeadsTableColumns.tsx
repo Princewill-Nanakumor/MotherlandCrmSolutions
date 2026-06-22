@@ -11,6 +11,7 @@ import { useSearchParams } from "next/navigation";
 import { useStatuses } from "@/hooks/useStatuses";
 import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
 import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
+import { formatLeadPhoneForTable } from "@/lib/phoneNormalize";
 import { Badge } from "@/components/ui/badge";
 import { TableSortIcon } from "@/components/ui/table-sort-icon";
 import { Loader2 } from "lucide-react";
@@ -224,13 +225,14 @@ export const useUserLeadsTableColumns = ({
           </div>
         ),
         cell: ({ row }) => {
-          const phone = row.original.phone || "";
-          const displayPhone = canViewPhoneNumbers
-            ? phone
-            : maskPhoneNumber(phone);
+          const displayPhone = formatLeadPhoneForTable(row.original.phone, {
+            countryHint: row.original.country,
+            canViewFull: canViewPhoneNumbers,
+            mask: maskPhoneNumber,
+          });
           return (
             <div className="text-center font-medium text-gray-900! dark:text-white! whitespace-nowrap">
-              {displayPhone || "—"}
+              {displayPhone}
             </div>
           );
         },

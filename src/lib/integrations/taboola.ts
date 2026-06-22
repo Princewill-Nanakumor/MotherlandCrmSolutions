@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
+import { normalizePhoneToE164 } from "@/lib/phoneNormalize";
 
 export interface TaboolaLeadPayload {
   firstName: string;
@@ -87,7 +88,7 @@ function buildTaboolaComments(payload: TaboolaLeadPayload): string {
   return lines.join("\n");
 }
 
-/** Use explicit Country from Taboola, else ISO region from E.164 phone when possible. */
+/** Use explicit Country from Taboola, else infer from phone when possible. */
 function resolveTaboolaCountry(payload: TaboolaLeadPayload): string {
   const explicit = payload.country.trim();
   if (explicit) return normalizeCountryInput(explicit);
@@ -95,30 +96,32 @@ function resolveTaboolaCountry(payload: TaboolaLeadPayload): string {
   const phone = payload.phone.trim();
   if (!phone) return "";
 
-  try {
-    let parsed = parsePhoneNumberFromString(phone);
-    // Local numbers without country code (e.g. 052… from Taboola IL traffic)
-    if (!parsed?.country && phone.startsWith("0")) {
-      parsed = parsePhoneNumberFromString(phone, "IL");
-    }
-    const fromPhone = parsed?.country?.trim() ?? "";
-    return fromPhone ? normalizeCountryInput(fromPhone) : "";
-  } catch {
-    return "";
-  }
+  const normalizedPhone = normalizePhoneToE164(phone, explicit || "IL");
+  if (!normalizedPhone.startsWith("+")) return "";
+
+  const parsed = parsePhoneNumberFromString(normalizedPhone);
+  const fromPhone = parsed?.country?.trim() ?? "";
+  return fromPhone ? normalizeCountryInput(fromPhone) : "";
+}
+
+function resolveTaboolaPhone(payload: TaboolaLeadPayload, country: string): string {
+  const raw = payload.phone.trim();
+  if (!raw) return "";
+  return normalizePhoneToE164(raw, payload.country.trim() || country || "IL");
 }
 
 export function mapTaboolaToLead(payload: TaboolaLeadPayload): MappedTaboolaLead {
   const email = payload.email.trim().toLowerCase();
   const externalId =
     payload.clickId.trim() || (email ? `email:${email}` : "");
+  const country = resolveTaboolaCountry(payload);
 
   return {
     firstName: payload.firstName.trim() || "Unknown",
     lastName: payload.lastName.trim(),
     email,
-    phone: payload.phone.trim(),
-    country: resolveTaboolaCountry(payload),
+    phone: resolveTaboolaPhone(payload, country),
+    country,
     source: payload.page ? `Taboola - ${payload.page}` : "Taboola",
     comments: buildTaboolaComments(payload),
     externalId,

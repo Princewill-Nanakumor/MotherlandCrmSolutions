@@ -9,6 +9,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
 import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
+import { formatLeadPhoneForTable } from "@/lib/phoneNormalize";
 
 interface UserLeadRowProps {
   lead: Lead;
@@ -171,11 +172,11 @@ export function UserLeadRow({
       >
         <div className="flex items-center">
           <span>
-            {canViewPhoneNumbers
-              ? lead.phone || "—"
-              : lead.phone
-                ? maskPhoneNumber(lead.phone)
-                : "—"}
+            {formatLeadPhoneForTable(lead.phone, {
+              countryHint: lead.country,
+              canViewFull: canViewPhoneNumbers,
+              mask: maskPhoneNumber,
+            })}
           </span>
         </div>
       </TableCell>

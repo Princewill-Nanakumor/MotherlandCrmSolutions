@@ -11,6 +11,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Lead } from "@/types/leads";
+import { formatLeadDetailName } from "@/lib/leadDisplayFormat";
 
 interface LeadHeaderProps {
   lead: Lead;
@@ -31,14 +32,13 @@ export const LeadHeader: FC<LeadHeaderProps> = ({
   hideNavigation = false,
   hideClose = false,
 }) => {
-  const capitalizeName = (name: string) => {
-    if (!name) return "";
-    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-  };
-  const capitalizedFirstName = capitalizeName(lead.firstName || "");
-  const capitalizedLastName = capitalizeName(lead.lastName || "");
-  // fullName removed — header now shows Lead ID instead
-  const initials = `${capitalizedFirstName.charAt(0)}${capitalizedLastName.charAt(0)}`;
+  const fullName = formatLeadDetailName(lead.firstName, lead.lastName);
+  const initials = fullName
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0))
+    .join("")
+    .slice(0, 2);
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 

@@ -4,6 +4,7 @@ import { Lead } from "@/types/leads";
 import { LeadColumn } from "@/components/leads/LeadsTableColumns.tsx/TableColumns";
 import { useCurrentUserPermission } from "./useCurrentUserPermission";
 import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
+import { formatLeadPhoneForTable } from "@/lib/phoneNormalize";
 import { normalizeLeadId } from "@/lib/leadId";
 
 export function useAdminLeadsTableColumns(): LeadColumn[] {
@@ -92,11 +93,11 @@ export function useAdminLeadsTableColumns(): LeadColumn[] {
       header: "Phone",
       cell: (info) => {
         const phone = info.row.original.phone;
-        const displayPhone = canViewPhoneNumbers
-          ? phone || "—"
-          : phone
-            ? maskPhoneNumber(phone)
-            : "—";
+        const displayPhone = formatLeadPhoneForTable(phone, {
+          countryHint: info.row.original.country,
+          canViewFull: canViewPhoneNumbers,
+          mask: maskPhoneNumber,
+        });
         return (
           <div className="text-center font-medium">
             {displayPhone}

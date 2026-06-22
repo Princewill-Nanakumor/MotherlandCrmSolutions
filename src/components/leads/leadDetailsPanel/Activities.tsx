@@ -21,6 +21,7 @@ import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { Activity, Status } from "@/types/leads";
 import { formatTime24Hour } from "@/lib/utils";
+import { filterVisibleLeadActivities } from "@/lib/leadActivityDisplay";
 import { useQuery } from "@tanstack/react-query";
 import { useStatuses } from "@/context/StatusContext";
 
@@ -68,6 +69,11 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
       });
     }
   }, [error, toast]);
+
+  const visibleActivities = React.useMemo(
+    () => filterVisibleLeadActivities(activities),
+    [activities],
+  );
 
   const getActivityIcon = (type: Activity["type"]) => {
     const iconSizeClass = "w-5 h-5";
@@ -319,7 +325,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
     );
   }
 
-  if (activities.length === 0) {
+  if (visibleActivities.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500! dark:text-gray-400!">
         <ActivityIcon className="w-12 h-12 mx-auto mb-4 text-gray-300! dark:text-gray-600!" />
@@ -340,7 +346,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
     >
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 border border-gray-100 dark:border-gray-700 flex-1 min-h-0 flex flex-col">
         <h3 className="text-lg font-semibold text-gray-800! dark:text-white! mb-4">
-          Activity Log ({activities.length})
+          Activity Log ({visibleActivities.length})
         </h3>
         <div
           className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 space-y-4 border border-gray-200 dark:border-gray-700 shadow-inner"
@@ -374,7 +380,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
               background: #4f46e5;
             }
           `}</style>
-          {activities.map((activity) => (
+          {visibleActivities.map((activity) => (
             <div
               key={activity._id}
               className="p-4 rounded-md bg-gray-100 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700"

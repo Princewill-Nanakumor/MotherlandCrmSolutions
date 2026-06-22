@@ -9,6 +9,7 @@ import { Loader2, Eye } from "lucide-react";
 import Link from "next/link";
 import { UserLeadsColumnId } from "@/hooks/useUserLeadsColumnOrder";
 import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
+import { formatLeadPhoneForTable } from "@/lib/phoneNormalize";
 
 interface Status {
   _id: string;
@@ -163,11 +164,11 @@ export function renderUserLeadCell({
       );
 
     case "phone":
-      const displayPhone = canViewPhoneNumbers
-        ? lead.phone || "—"
-        : lead.phone
-          ? maskPhoneNumber(lead.phone)
-          : "—";
+      const displayPhone = formatLeadPhoneForTable(lead.phone, {
+        countryHint: lead.country,
+        canViewFull: canViewPhoneNumbers,
+        mask: maskPhoneNumber,
+      });
       return (
         <TableCell
           className={`text-center ${isSelected ? "text-gray-900! dark:text-white"! : "text-gray-800! dark:text-gray-300"}!`}

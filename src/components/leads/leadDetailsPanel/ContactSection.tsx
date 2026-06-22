@@ -23,6 +23,8 @@ import { useDialerSettings } from "@/context/DialerSettingsContext";
 import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
 import { useQueryClient } from "@tanstack/react-query";
 import { callLogsKeys } from "@/components/user-management/CallLogsModal";
+import { normalizePhoneForDialer } from "@/lib/phoneNormalize";
+import { formatLeadDetailSource } from "@/lib/leadDisplayFormat";
 import { usePathname } from "next/navigation";
 
 async function writeTextToClipboard(text: string): Promise<boolean> {
@@ -137,10 +139,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
   const handleCall = useCallback(
     async (phoneNumber: string) => {
       try {
-        // Normalize whitespace and common separators; keep leading +
-        let cleanedNumber = phoneNumber
-          .replace(/[\s\u00A0\-\(\)\.]/g, "")
-          .trim();
+        let cleanedNumber = normalizePhoneForDialer(phoneNumber, lead?.country);
 
         // Do not dial server-masked values (would be only partial digits)
         if (/[•\u2022]/.test(cleanedNumber)) {
@@ -325,7 +324,9 @@ export const ContactSection: FC<ContactSectionProps> = ({
         firstName: editedData.firstName.trim(),
         lastName: editedData.lastName.trim(),
         email: editedData.email.trim(),
-        phone: editedData.phone.trim(),
+        phone:
+          normalizePhoneForDialer(editedData.phone, editedData.country) ||
+          editedData.phone.trim(),
         country: editedData.country.trim(),
         source: editedData.source?.trim(),
       };
@@ -425,6 +426,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
 
                 <PhoneField
                   phone={lead.phone}
+                  countryHint={lead.country}
                   isEditing={true}
                   editedPhone={editedData.phone}
                   onPhoneChange={(value) =>
@@ -511,6 +513,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
 
               <PhoneField
                 phone={lead.phone}
+                countryHint={lead.country}
                 isEditing={false}
                 editedPhone=""
                 onPhoneChange={() => {}}
@@ -541,7 +544,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
                     </p>
                     <div className="flex items-center justify-between">
                       <p className="font-medium text-gray-900! dark:text-white!">
-                        {lead.source}
+                        {formatLeadDetailSource(lead.source)}
                       </p>
                       <button
                         onClick={(e) => {

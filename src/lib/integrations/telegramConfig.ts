@@ -72,14 +72,3 @@ export function resolveTelegramChatId(adminId: string): string | null {
 export function adminHasTelegramNotifications(adminId: string): boolean {
   return resolveTelegramChatId(adminId) !== null;
 }
-
-export function getCrmLeadUrl(leadRef: {
-  _id: string;
-  leadId?: string;
-}): string {
-  const origin =
-    process.env.CANONICAL_APP_URL?.trim()?.replace(/\/$/, "") ||
-    TABOOLA_PRODUCTION_ORIGIN;
-  const leadParam = leadRef.leadId?.trim() || leadRef._id;
-  return `${origin}/dashboard/all-leads?lead=${encodeURIComponent(leadParam)}`;
-}

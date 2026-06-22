@@ -1,5 +1,4 @@
 import {
-  getCrmLeadUrl,
   getTelegramConfigSnapshot,
   resolveTelegramChatId,
 } from "@/lib/integrations/telegramConfig";
@@ -19,8 +18,6 @@ export function formatInboundLeadTelegramMessage(input: {
   phone: string;
   country: string;
   source: string;
-  leadId?: string;
-  leadRef?: { _id: string; leadId?: string };
 }): string {
   const name = [input.firstName, input.lastName].filter(Boolean).join(" ").trim();
   const providerLabel =
@@ -35,12 +32,6 @@ export function formatInboundLeadTelegramMessage(input: {
       ? `<b>Source:</b> ${escapeTelegramHtml(input.source)}`
       : null,
   ].filter(Boolean);
-
-  if (input.leadRef) {
-    lines.push(
-      `<a href="${escapeTelegramHtml(getCrmLeadUrl(input.leadRef))}">Open in CRM</a>`,
-    );
-  }
 
   return lines.join("\n");
 }
@@ -102,7 +93,6 @@ export async function notifyInboundLeadTelegram(input: {
   phone: string;
   country: string;
   source: string;
-  leadRef: { _id: string; leadId?: string };
 }): Promise<boolean> {
   const snapshot = getTelegramConfigSnapshot();
   if (!snapshot.ready) return false;
@@ -110,10 +100,7 @@ export async function notifyInboundLeadTelegram(input: {
   const chatId = resolveTelegramChatId(input.adminId);
   if (!chatId) return false;
 
-  const text = formatInboundLeadTelegramMessage({
-    ...input,
-    leadRef: input.leadRef,
-  });
+  const text = formatInboundLeadTelegramMessage(input);
 
   const result = await sendTelegramMessage(chatId, text);
   if (!result.ok) {

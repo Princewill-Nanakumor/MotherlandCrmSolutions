@@ -2,6 +2,7 @@
 import { FC } from "react";
 import { User, Copy, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { formatLeadDetailName } from "@/lib/leadDisplayFormat";
 
 interface NameFieldProps {
   firstName: string;
@@ -26,13 +27,7 @@ export const NameField: FC<NameFieldProps> = ({
   onCopy,
   copied = false,
 }) => {
-  const capitalizeName = (name: string) => {
-    if (!name) return "";
-    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-  };
-  const capitalizedFirstName = capitalizeName(firstName);
-  const capitalizedLastName = capitalizeName(lastName);
-  const fullName = `${capitalizedFirstName} ${capitalizedLastName}`.trim();
+  const fullName = formatLeadDetailName(firstName, lastName);
 
   if (isEditing) {
     return (

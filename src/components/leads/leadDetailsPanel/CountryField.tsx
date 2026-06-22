@@ -2,6 +2,7 @@
 import { FC } from "react";
 import { Globe, Copy, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { formatLeadDetailCountry } from "@/lib/leadDisplayFormat";
 
 interface CountryFieldProps {
   country: string | null | undefined;
@@ -46,7 +47,7 @@ export const CountryField: FC<CountryFieldProps> = ({
         <p className="text-sm text-gray-500! dark:text-gray-400!">Country</p>
         <div className="flex items-center justify-between">
           <p className="text-gray-900! dark:text-white!">
-            {country || "Not provided"}
+            {country ? formatLeadDetailCountry(country) : "Not provided"}
           </p>
           {country && onCopy && (
             <button
