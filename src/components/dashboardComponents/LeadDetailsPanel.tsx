@@ -4,6 +4,7 @@
 import React, { FC, useState, useCallback, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Lead } from "@/types/leads";
+import { User } from "@/types/user.types";
 import { LeadHeader } from "../leads/leadDetailsPanel/LeadHeader";
 import { ContactSection } from "../leads/leadDetailsPanel/ContactSection";
 import { DetailsSection } from "../leads/leadDetailsPanel/DetailsSection";
@@ -31,6 +32,7 @@ interface LeadDetailsPanelProps {
   onNavigate: (direction: "prev" | "next") => void;
   hasPrevious: boolean;
   hasNext: boolean;
+  users?: User[];
 }
 
 /** Look up a single lead inside whatever shape leads-cache happens to be in. */
@@ -87,6 +89,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   onNavigate,
   hasPrevious,
   hasNext,
+  users,
 }) => {
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
@@ -158,7 +161,14 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         );
         setCurrentLead((prev) =>
           prev && prev._id === data._id
-            ? { ...prev, email: data.email, phone: data.phone }
+            ? {
+                ...prev,
+                email: data.email,
+                phone: data.phone,
+                assignedTo: data.assignedTo ?? null,
+                status: data.status ?? prev.status,
+                updatedAt: data.updatedAt ?? prev.updatedAt,
+              }
             : prev,
         );
       } catch {
@@ -520,7 +530,11 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           hasNext={hasNext}
         />
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-          <LeadStatus lead={currentLead} onLeadUpdated={handleLeadUpdated} />
+          <LeadStatus
+            lead={currentLead}
+            users={users}
+            onLeadUpdated={handleLeadUpdated}
+          />
           <ContactSection
             lead={currentLead}
             isExpanded={expandedSections.contact}
@@ -535,6 +549,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
             lead={currentLead}
             isExpanded={expandedSections.details}
             onToggle={() => toggleSection("details")}
+            users={users}
             onLeadUpdated={handleLeadUpdated}
           />
         </div>

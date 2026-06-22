@@ -492,16 +492,22 @@ export async function deleteUserForAdmin(
         const assignedLeads = (await db
           .collection("leads")
           .find({
-            assignedTo: new mongoose.Types.ObjectId(userId),
             adminId: new mongoose.Types.ObjectId(sessionUser.id),
+            $or: [
+              { assignedTo: new mongoose.Types.ObjectId(userId) },
+              { "assignedTo._id": new mongoose.Types.ObjectId(userId) },
+            ],
           })
           .toArray()) as LeadDocument[];
 
         assignedLeadsCount = assignedLeads.length;
         await db.collection("leads").updateMany(
           {
-            assignedTo: new mongoose.Types.ObjectId(userId),
             adminId: new mongoose.Types.ObjectId(sessionUser.id),
+            $or: [
+              { assignedTo: new mongoose.Types.ObjectId(userId) },
+              { "assignedTo._id": new mongoose.Types.ObjectId(userId) },
+            ],
           },
           {
             $unset: { assignedTo: "", assignedAt: "", assignedBy: "" },

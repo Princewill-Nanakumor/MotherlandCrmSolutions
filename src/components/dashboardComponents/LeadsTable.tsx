@@ -540,6 +540,7 @@ export default function LeadsTable({
         <LeadDetailsPanel
           lead={selectedLead}
           isOpen={true}
+          users={users}
           onLeadUpdated={handleLeadUpdatedFromPanel}
           onClose={handlePanelClose}
           onNavigate={handleNavigate}

@@ -1,12 +1,15 @@
 // src/components/leads/leadDetailsPanel/DetailsSection.tsx
 import { FC } from "react";
 import { Lead } from "@/types/leads";
+import { User as UserType } from "@/types/user.types";
 import { User, Clock, ChevronUp, ChevronDown } from "lucide-react";
+import { getLeadAssignedDisplayName } from "@/lib/leadAssignmentDisplay";
 
 interface DetailsSectionProps {
   lead: Lead | null;
   isExpanded: boolean;
   onToggle: () => void;
+  users?: UserType[];
   onLeadUpdated?: (updatedLead: Lead) => Promise<boolean>;
 }
 
@@ -14,30 +17,11 @@ export const DetailsSection: FC<DetailsSectionProps> = ({
   lead,
   isExpanded,
   onToggle,
+  users,
 }) => {
-  // Details section no longer contains editable 'source'; moved to ContactSection
-
   if (!lead) return null;
 
-  // Helper function to get assigned user name
-  const getAssignedUserName = () => {
-    if (!lead.assignedTo) return "Unassigned";
-    if (typeof lead.assignedTo === "string") {
-      return "Unassigned";
-    }
-    if (lead.assignedTo && typeof lead.assignedTo === "object") {
-      const assignedTo = lead.assignedTo as {
-        firstName?: string;
-        lastName?: string;
-      };
-      if (assignedTo.firstName && assignedTo.lastName) {
-        return `${assignedTo.firstName} ${assignedTo.lastName}`;
-      }
-      if (assignedTo.firstName) return assignedTo.firstName;
-      if (assignedTo.lastName) return assignedTo.lastName;
-    }
-    return "Unknown User";
-  };
+  const assignedDisplayName = getLeadAssignedDisplayName(lead.assignedTo, users);
 
   // Helper function to format date as DD/MM/YYYY
   const formatDate = (dateString: string | Date) => {
@@ -76,7 +60,7 @@ export const DetailsSection: FC<DetailsSectionProps> = ({
                 Assigned to
               </p>
               <p className="text-gray-900! dark:text-white!">
-                {getAssignedUserName()}
+                {assignedDisplayName}
               </p>
             </div>
           </div>

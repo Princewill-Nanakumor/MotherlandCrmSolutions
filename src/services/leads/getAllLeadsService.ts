@@ -86,11 +86,19 @@ async function getAssignedToUser(
       "lastName" in assignedTo
     ) {
       const userObj = assignedTo as { _id: unknown; firstName: string; lastName: string };
-      return {
-        id: safeObjectIdToString(userObj._id) || "",
-        firstName: userObj.firstName,
-        lastName: userObj.lastName,
-      };
+      const embeddedId = safeObjectIdToString(userObj._id);
+      if (embeddedId) {
+        const userFromMap = userMap.get(embeddedId);
+        if (userFromMap) {
+          return {
+            id: userFromMap._id.toString(),
+            firstName: userFromMap.firstName,
+            lastName: userFromMap.lastName,
+            email: userFromMap.email,
+          };
+        }
+        return null;
+      }
     }
     const userIdString = safeObjectIdToString(assignedTo);
     if (!userIdString) return null;

@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { Lead } from "@/types/leads";
+import { User as UserType } from "@/types/user.types";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, User } from "lucide-react";
 import {
@@ -14,9 +15,14 @@ import {
 import { useStatuses } from "@/context/StatusContext";
 import { useSession } from "next-auth/react";
 import { useLeadStatusMutation } from "@/hooks/leads/useLeadStatusMutation";
+import {
+  getLeadAssignedDisplayName,
+  isLeadAssignedToActiveUser,
+} from "@/lib/leadAssignmentDisplay";
 
 interface LeadStatusProps {
   lead: Lead;
+  users?: UserType[];
   /** When provided, called after a successful status update so the panel/store can sync the updated lead */
   onLeadUpdated?: (updatedLead: Lead) => Promise<boolean>;
 }
@@ -29,7 +35,7 @@ function hexWithAlpha(hex: string, alpha: string) {
   return hex + alpha;
 }
 
-const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
+const LeadStatus: React.FC<LeadStatusProps> = ({ lead, users, onLeadUpdated }) => {
   const { toast } = useToast();
   const { statuses, isLoading: isLoadingStatuses } = useStatuses();
   const { data: session } = useSession();
@@ -64,15 +70,9 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
 
   const isAdmin = session?.user?.role === "ADMIN";
 
-  const getAssignedToDisplay = useCallback(() => {
-    if (!lead.assignedTo) return "Unassigned";
-    if (typeof lead.assignedTo === "string") return "Assigned";
-    const a = lead.assignedTo as { firstName?: string; lastName?: string };
-    if (a.firstName && a.lastName) return `${a.firstName} ${a.lastName}`;
-    if (a.firstName) return a.firstName;
-    if (a.lastName) return a.lastName;
-    return "Assigned";
-  }, [lead.assignedTo]);
+  const assignedDisplayName = getLeadAssignedDisplayName(lead.assignedTo, users);
+  const showAssignedBadge =
+    isAdmin && isLeadAssignedToActiveUser(lead.assignedTo, users);
 
   const getStatusDisplayName = useCallback(
     (statusId: string) => {
@@ -235,7 +235,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
         )}
       </div>
       {/* Assigned-to badge: show only on shorter viewports (e.g. laptop); hide on tall desktop screens */}
-      {isAdmin && lead.assignedTo && (
+      {showAssignedBadge && (
         <>
           <style>{`.assigned-badge-hide-on-tall { display: flex; } @media (min-height: 1200px) { .assigned-badge-hide-on-tall { display: none !important; } }`}</style>
           <div className="assigned-badge-hide-on-tall items-center gap-1.5 shrink-0 flex">
@@ -244,7 +244,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, onLeadUpdated }) => {
               <span className="text-gray-500 dark:text-gray-400">
                 Assigned to
               </span>{" "}
-              {getAssignedToDisplay()}
+              {assignedDisplayName}
             </span>
           </div>
         </>
