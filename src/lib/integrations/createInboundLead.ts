@@ -296,6 +296,29 @@ export async function createInboundLead(
       };
     }
 
+    const validationMessage = formatLeadValidationError(error);
+    if (validationMessage) {
+      return {
+        ok: false,
+        status: 400,
+        body: { error: "Invalid lead data", details: validationMessage },
+      };
+    }
+
     throw error;
   }
+}
+
+function formatLeadValidationError(error: unknown): string | null {
+  if (
+    error &&
+    typeof error === "object" &&
+    "name" in error &&
+    error.name === "ValidationError" &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+  return null;
 }
