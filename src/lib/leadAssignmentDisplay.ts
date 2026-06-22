@@ -32,7 +32,25 @@ export function isLeadAssignedToActiveUser(
   return activeUsers.some((user) => user.id === userId);
 }
 
-/** Display label for panel/header — never shows deleted users when `activeUsers` is provided. */
+/** Title-case each word for display names (e.g. "john" → "John"). */
+export function formatPersonName(
+  firstName?: string,
+  lastName?: string,
+): string {
+  const capitalize = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+  };
+  return `${capitalize(firstName ?? "")} ${capitalize(lastName ?? "")}`.trim();
+}
+
+/** Lead has an assignment record that can be cleared via unassign. */
+export function canUnassignLead(assignedTo: Lead["assignedTo"]): boolean {
+  return getLeadAssignedUserId(assignedTo) !== null;
+}
+
+/** Display label for assign UI — shows Unassigned when user is missing or deleted. */
 export function getLeadAssignedDisplayName(
   assignedTo: Lead["assignedTo"],
   activeUsers?: AssigneeUser[],
@@ -43,13 +61,12 @@ export function getLeadAssignedDisplayName(
   if (activeUsers && activeUsers.length > 0) {
     const user = activeUsers.find((u) => u.id === userId);
     if (!user) return "Unassigned";
-    const name = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
-    return name || "Unassigned";
+    return formatPersonName(user.firstName, user.lastName) || "Unassigned";
   }
 
   if (typeof assignedTo === "object" && assignedTo !== null) {
     const obj = assignedTo as { firstName?: string; lastName?: string };
-    const name = `${obj.firstName ?? ""} ${obj.lastName ?? ""}`.trim();
+    const name = formatPersonName(obj.firstName, obj.lastName);
     if (name) return name;
   }
 

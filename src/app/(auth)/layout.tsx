@@ -1,4 +1,4 @@
-// /Users/safeconnection/Downloads/motherlandCrmSolution/src/app/(auth)/layout.tsx
+// src/app/(auth)/layout.tsx — shared shell for /login, /signup, password reset, verify-email
 
 "use client";
 
@@ -18,6 +18,7 @@ export default function AuthLayout({
 }) {
   const pathname = usePathname();
   const isHeroAuthPage =
+    pathname === "/login" ||
     pathname === "/signup" ||
     pathname === "/forgot-password" ||
     (pathname?.startsWith("/reset-password/") ?? false) ||

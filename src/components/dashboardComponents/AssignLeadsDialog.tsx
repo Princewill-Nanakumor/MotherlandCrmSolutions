@@ -8,6 +8,12 @@ import { Button } from "@/components/ui/button";
 import { User } from "@/types/user.types";
 import { Lead } from "@/types/leads";
 import { MAX_ASSIGNED_LEADS_PER_AGENT } from "@/lib/leadAssignmentQuery";
+import {
+  formatPersonName,
+  getLeadAssignedDisplayName,
+  getLeadAssignedUserId,
+  isLeadAssignedToActiveUser,
+} from "@/lib/leadAssignmentDisplay";
 
 interface AssignLeadsDialogProps {
   isOpen: boolean;
@@ -19,7 +25,6 @@ interface AssignLeadsDialogProps {
   isAssigning: boolean;
   isUnassigning?: boolean;
   onAssign: () => Promise<void>;
-  onUnassign?: () => Promise<void>;
   selectedLeads: Lead[];
 }
 
@@ -33,30 +38,39 @@ export function AssignLeadsDialog({
   isAssigning,
   isUnassigning = false,
   onAssign,
-  onUnassign,
   selectedLeads,
 }: AssignLeadsDialogProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isUnassignDialogOpen, setIsUnassignDialogOpen] = useState(false);
   const assignableUsers = users.filter((user) => user.role !== "ADMIN");
+  const firstSelectedLead = selectedLeads?.[0];
+  const isSingleLead = selectedLeads.length === 1;
+  const currentAssigneeLabel =
+    isSingleLead && firstSelectedLead
+      ? getLeadAssignedDisplayName(
+          firstSelectedLead.assignedTo,
+          assignableUsers,
+        )
+      : "Unassigned";
+  const showCurrentAssignee =
+    isSingleLead &&
+    isLeadAssignedToActiveUser(
+      firstSelectedLead?.assignedTo,
+      assignableUsers,
+    );
+  const hasActiveAssignment = selectedLeads.some((lead) =>
+    isLeadAssignedToActiveUser(lead.assignedTo, assignableUsers),
+  );
 
   const handleClose = () => {
-    if (isAssigning || isUnassigning) return; // Don't close while operation in progress
-    setSelectedUser(""); // Reset when closing
+    if (isAssigning || isUnassigning) return;
+    setSelectedUser("");
     onClose();
   };
 
   const handleAssignClick = () => {
-    // If no user is selected, this means we want to unassign
-    if (!selectedUser) {
-      if (onUnassign) {
-        setIsUnassignDialogOpen(true);
-      }
-      return;
-    }
+    if (!selectedUser) return;
 
-    // If a user is selected, this is a normal assign/reassign
-    const isReassigning = selectedLeads.some((l) => l.assignedTo);
+    const isReassigning = hasActiveAssignment;
     if (isReassigning) {
       setIsConfirmOpen(true);
     } else {
@@ -68,15 +82,6 @@ export function AssignLeadsDialog({
     onAssign();
     setIsConfirmOpen(false);
   };
-
-  const handleUnassignConfirm = () => {
-    if (onUnassign) {
-      onUnassign();
-    }
-    setIsUnassignDialogOpen(false);
-  };
-
-  const firstSelectedLead = selectedLeads?.[0];
 
   // Don't render anything if not open
   if (!isOpen) return null;
@@ -139,7 +144,7 @@ export function AssignLeadsDialog({
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               {selectedLeads.length > 1
                 ? "Assign Multiple Leads"
-                : firstSelectedLead?.assignedTo
+                : hasActiveAssignment
                   ? "Reassign Lead"
                   : "Assign Lead"}
             </h2>
@@ -152,15 +157,13 @@ export function AssignLeadsDialog({
           </div>
 
           <div className="space-y-4">
-            {firstSelectedLead?.assignedTo && selectedLeads.length === 1 && (
+            {showCurrentAssignee && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">
                   Currently assigned to
                 </label>
                 <div className="px-3 py-2 text-sm rounded-md assigned-user-name bg-gray-50 dark:bg-gray-700">
-                  {typeof firstSelectedLead.assignedTo === "string"
-                    ? firstSelectedLead.assignedTo
-                    : `${firstSelectedLead.assignedTo.firstName} ${firstSelectedLead.assignedTo.lastName}`}
+                  {currentAssigneeLabel}
                 </div>
               </div>
             )}
@@ -172,7 +175,7 @@ export function AssignLeadsDialog({
 
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                {selectedLeads.some((l) => l.assignedTo)
+                {hasActiveAssignment
                   ? "Select new assignee"
                   : "Select User"}
               </label>
@@ -190,7 +193,12 @@ export function AssignLeadsDialog({
                   {assignableUsers.length > 0 ? (
                     assignableUsers.map((user) => {
                       const isCurrentAssignee = selectedLeads.some(
-                        (l) => l.assignedTo?.id === user.id,
+                        (lead) =>
+                          getLeadAssignedUserId(lead.assignedTo) === user.id,
+                      );
+                      const displayName = formatPersonName(
+                        user.firstName,
+                        user.lastName,
                       );
                       return (
                         <option
@@ -198,8 +206,8 @@ export function AssignLeadsDialog({
                           value={user.id}
                           disabled={isCurrentAssignee}
                         >
-                          {user.firstName} {user.lastName}
-                          {isCurrentAssignee && " (Current)"}
+                          {displayName}
+                          {isCurrentAssignee ? " (Current)" : ""}
                         </option>
                       );
                     })
@@ -226,7 +234,7 @@ export function AssignLeadsDialog({
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Assigning...
                   </>
-                ) : selectedLeads.some((l) => l.assignedTo) ? (
+                ) : hasActiveAssignment ? (
                   "Reassign"
                 ) : (
                   "Assign"
@@ -272,47 +280,6 @@ export function AssignLeadsDialog({
                   </>
                 ) : (
                   "Yes, Reassign"
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Unassign Confirmation Dialog */}
-      {isUnassignDialogOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-60">
-          <div
-            className="fixed inset-0 bg-black/50"
-            onClick={() => !isUnassigning && setIsUnassignDialogOpen(false)}
-          />
-          <div className="relative w-full max-w-md p-6 mx-4 bg-white rounded-lg shadow-lg assign-dialog dark:bg-gray-800">
-            <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-              Are you sure you want to unassign?
-            </h3>
-            <p className="mb-4 text-gray-600 dark:text-white">
-              Unassigning will remove the owner from these leads.
-            </p>
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsUnassignDialogOpen(false)}
-                disabled={isUnassigning}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleUnassignConfirm}
-                disabled={isUnassigning}
-                className="text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-              >
-                {isUnassigning ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Unassigning...
-                  </>
-                ) : (
-                  "Yes, Unassign"
                 )}
               </Button>
             </div>

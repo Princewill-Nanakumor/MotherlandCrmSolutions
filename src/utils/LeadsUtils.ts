@@ -398,7 +398,10 @@ export const searchLeads = (leads: Lead[], searchQuery: string): Lead[] => {
 };
 
 export const getAssignedLeadsCount = (leads: Lead[]): number => {
-  return leads.filter((lead) => !!getAssignedUserId(lead.assignedTo)).length;
+  return leads.filter((lead) => {
+    const id = getAssignedUserId(lead.assignedTo);
+    return Boolean(id);
+  }).length;
 };
 
 export const getAvailableSources = (leads: Lead[]): string[] => {

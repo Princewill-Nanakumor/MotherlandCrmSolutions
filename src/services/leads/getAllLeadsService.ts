@@ -423,12 +423,6 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
       let assignedToUser = null;
       if (lead.assignedTo) {
         assignedToUser = await getAssignedToUser(db as unknown as Db, lead.assignedTo, userMap);
-        if (!assignedToUser) {
-          const userIdString = safeObjectIdToString(lead.assignedTo);
-          if (userIdString) {
-            assignedToUser = { id: userIdString, firstName: "Unknown", lastName: "User" };
-          }
-        }
       }
       const leadIdString = safeObjectIdToString(lead._id) || "";
       const lastComment = lastCommentsMap.get(leadIdString);

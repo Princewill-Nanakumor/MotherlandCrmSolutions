@@ -41,6 +41,15 @@ const nextConfig = {
       bodySizeLimit: "2mb",
     },
   },
+  async redirects() {
+    return [
+      {
+        source: "/signin",
+        destination: "/login",
+        permanent: true,
+      },
+    ];
+  },
   webpack: (config, { isServer }) => {
     // Video assets: put files in /public (e.g. /public/videos/...) and reference by URL.
     // Avoid file-loader here — it is not a project dependency and can break Next 15 dev

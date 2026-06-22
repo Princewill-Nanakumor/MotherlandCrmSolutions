@@ -5,11 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useLeadsStore } from "@/stores/leadsStore";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useToast } from "@/components/ui/use-toast";
+import { getAvailableCountries } from "../utils/LeadsUtils";
 import {
-  getAssignedUserId,
-  getAssignedLeadsCount,
-  getAvailableCountries,
-} from "../utils/LeadsUtils";
+  getLeadAssignedUserId,
+  isLeadAssignedToActiveUser,
+} from "@/lib/leadAssignmentDisplay";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { Lead } from "@/types/leads";
@@ -329,14 +329,73 @@ export const useLeadsPage = (
   // Server already filters; filteredLeads is just the current page
   const filteredLeads = leads;
 
+  const activeUsers = useMemo(
+    () => users.filter((user) => user.status === "ACTIVE"),
+    [users],
+  );
+
+  const resolveSelectedLead = useCallback(
+    (selected: Lead): Lead =>
+      leads.find((lead) => lead._id === selected._id) ?? selected,
+    [leads],
+  );
+
+  const isSelectedLeadActivelyAssigned = useCallback(
+    (selected: Lead): boolean =>
+      isLeadAssignedToActiveUser(
+        resolveSelectedLead(selected).assignedTo,
+        activeUsers,
+      ),
+    [resolveSelectedLead, activeUsers],
+  );
+
+  // Keep checkbox selection in sync after user delete / leads refetch (stale assignedTo on selected rows).
+  useEffect(() => {
+    if (selectedLeads.length === 0 || isLoadingUsers) return;
+
+    let changed = false;
+    const next = selectedLeads.map((selected) => {
+      const fresh = resolveSelectedLead(selected);
+      const assignedTo = isLeadAssignedToActiveUser(
+        fresh.assignedTo,
+        activeUsers,
+      )
+        ? fresh.assignedTo
+        : null;
+
+      if (
+        getLeadAssignedUserId(selected.assignedTo) !==
+          getLeadAssignedUserId(assignedTo) ||
+        fresh.updatedAt !== selected.updatedAt
+      ) {
+        changed = true;
+        return { ...fresh, assignedTo };
+      }
+      return selected;
+    });
+
+    if (changed) {
+      setSelectedLeads(next);
+    }
+  }, [
+    activeUsers,
+    leads,
+    resolveSelectedLead,
+    selectedLeads,
+    setSelectedLeads,
+    isLoadingUsers,
+  ]);
+
   const counts = useMemo(
     () => ({
       total: leadsTotalAll,
       filtered: leadsTotal,
-      assigned: getAssignedLeadsCount(selectedLeads),
+      assigned: selectedLeads.filter((lead) =>
+        isSelectedLeadActivelyAssigned(lead),
+      ).length,
       countries: availableCountries.length,
     }),
-    [leadsTotalAll, leadsTotal, selectedLeads, availableCountries.length]
+    [leadsTotalAll, leadsTotal, selectedLeads, availableCountries.length, isSelectedLeadActivelyAssigned]
   );
 
   // Full skeleton only on initial load (no data yet). Filter/search refetches keep table visible + RefetchIndicator.
@@ -374,8 +433,8 @@ export const useLeadsPage = (
   ]);
 
   const handleUnassignLeads = useCallback(async () => {
-    const leadsToUnassign = selectedLeads.filter(
-      (lead) => !!getAssignedUserId(lead.assignedTo)
+    const leadsToUnassign = selectedLeads.filter((lead) =>
+      isSelectedLeadActivelyAssigned(lead),
     );
 
     if (leadsToUnassign.length === 0) {
@@ -397,7 +456,7 @@ export const useLeadsPage = (
     unassignLeadsMutation.mutate({
       leadIds,
     });
-  }, [selectedLeads, unassignLeadsMutation, setUiState, toast]);
+  }, [selectedLeads, unassignLeadsMutation, setUiState, toast, isSelectedLeadActivelyAssigned]);
 
   const handleBulkStatusChange = useCallback(
     async (statusId: string) => {
@@ -454,8 +513,8 @@ export const useLeadsPage = (
     [setSelectedLeads]
   );
 
-  const hasAssignedLeads = selectedLeads.some(
-    (lead) => !!getAssignedUserId(lead.assignedTo)
+  const hasAssignedLeads = selectedLeads.some((lead) =>
+    isSelectedLeadActivelyAssigned(lead),
   );
 
   const refetchAll = useCallback(() => {
