@@ -96,7 +96,11 @@ function resolveTaboolaCountry(payload: TaboolaLeadPayload): string {
   if (!phone) return "";
 
   try {
-    const parsed = parsePhoneNumberFromString(phone);
+    let parsed = parsePhoneNumberFromString(phone);
+    // Local numbers without country code (e.g. 052… from Taboola IL traffic)
+    if (!parsed?.country && phone.startsWith("0")) {
+      parsed = parsePhoneNumberFromString(phone, "IL");
+    }
     const fromPhone = parsed?.country?.trim() ?? "";
     return fromPhone ? normalizeCountryInput(fromPhone) : "";
   } catch {

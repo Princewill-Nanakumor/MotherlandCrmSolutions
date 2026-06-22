@@ -145,7 +145,7 @@ export async function createInboundLead(
       lastName: input.lastName.trim(),
       email: normalizedEmail,
       phone: input.phone.trim(),
-      country: normalizeCountryInput(input.country),
+      country: normalizeCountryInput(input.country) || "Unknown",
       source: input.source.trim() || "Taboola",
       comments: input.comments.trim() || "Imported from Taboola.",
       status: "NEW",
