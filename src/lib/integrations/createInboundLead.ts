@@ -9,6 +9,7 @@ import {
 } from "@/lib/tenantLeadImportLimits";
 import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
+import { notifyInboundLeadTelegram } from "@/lib/integrations/telegram";
 
 type LeadSummary = {
   _id: mongoose.Types.ObjectId;
@@ -216,6 +217,25 @@ export async function createInboundLead(
       });
     } catch (publishError) {
       console.error("Ably publish failed after inbound lead creation:", publishError);
+    }
+
+    try {
+      await notifyInboundLeadTelegram({
+        adminId: input.adminId,
+        provider: input.provider,
+        firstName: newLead.firstName,
+        lastName: newLead.lastName,
+        email: newLead.email,
+        phone: newLead.phone ?? input.phone,
+        country: newLead.country ?? input.country,
+        source: newLead.source ?? input.source,
+        leadRef: {
+          _id: newLead._id.toString(),
+          leadId: newLead.leadId,
+        },
+      });
+    } catch (telegramError) {
+      console.error("Telegram notification failed after inbound lead creation:", telegramError);
     }
 
     return {

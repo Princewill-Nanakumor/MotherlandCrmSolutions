@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  Bell,
   Check,
   Copy,
   FileText,
@@ -54,6 +55,23 @@ interface TaboolaStatusResponse {
 interface TaboolaTestResponse {
   ok: boolean;
   webhookReachable: boolean;
+  checks: Array<{ name: string; ok: boolean; message: string }>;
+}
+
+interface TelegramStatusResponse {
+  receivesNotificationsForThisAdmin: boolean;
+  receivesTaboolaLeads: boolean;
+  setupNote: string;
+  config: {
+    botTokenConfigured: boolean;
+    defaultChatConfigured: boolean;
+    adminChatMappingsCount: number;
+    ready: boolean;
+  };
+}
+
+interface TelegramTestResponse {
+  ok: boolean;
   checks: Array<{ name: string; ok: boolean; message: string }>;
 }
 
@@ -126,25 +144,41 @@ function StatusPill({ ok, label }: { ok: boolean; label: string }) {
 export function IntegrationsSection() {
   const { toast } = useToast();
   const [status, setStatus] = useState<TaboolaStatusResponse | null>(null);
+  const [telegramStatus, setTelegramStatus] =
+    useState<TelegramStatusResponse | null>(null);
   const [testResult, setTestResult] = useState<TaboolaTestResponse | null>(
     null,
   );
+  const [telegramTestResult, setTelegramTestResult] =
+    useState<TelegramTestResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
+  const [testingTelegram, setTestingTelegram] = useState(false);
   const [copied, setCopied] = useState(false);
   const [guideModalOpen, setGuideModalOpen] = useState(false);
 
   const loadStatus = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/integrations/taboola/status", {
-        credentials: "include",
-      });
-      if (!response.ok) {
+      const [taboolaResponse, telegramResponse] = await Promise.all([
+        fetch("/api/integrations/taboola/status", { credentials: "include" }),
+        fetch("/api/integrations/telegram/status", { credentials: "include" }),
+      ]);
+
+      if (!taboolaResponse.ok) {
         throw new Error("Failed to load integration status");
       }
-      const data = (await response.json()) as TaboolaStatusResponse;
-      setStatus(data);
+
+      const taboolaData = (await taboolaResponse.json()) as TaboolaStatusResponse;
+      setStatus(taboolaData);
+
+      if (telegramResponse.ok) {
+        setTelegramStatus(
+          (await telegramResponse.json()) as TelegramStatusResponse,
+        );
+      } else {
+        setTelegramStatus(null);
+      }
     } catch (error) {
       toast({
         title: "Could not load integrations",
@@ -162,12 +196,13 @@ export function IntegrationsSection() {
   }, [loadStatus]);
 
   const receivesLeads = status?.receivesLeadsForThisAdmin === true;
+  const receivesTelegram =
+    telegramStatus?.receivesNotificationsForThisAdmin === true;
 
-  // Hidden for other admins until per-tenant Taboola setup is implemented.
   if (loading) {
     return <IntegrationsSectionSkeleton />;
   }
-  if (!status || !receivesLeads) {
+  if (!status || (!receivesLeads && !receivesTelegram)) {
     return null;
   }
 
@@ -199,6 +234,35 @@ export function IntegrationsSection() {
       });
     } finally {
       setTesting(false);
+    }
+  };
+
+  const runTelegramTest = async () => {
+    setTestingTelegram(true);
+    setTelegramTestResult(null);
+    try {
+      const response = await fetch("/api/integrations/telegram/test", {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = (await response.json()) as TelegramTestResponse;
+      setTelegramTestResult(data);
+      toast({
+        title: data.ok ? "Telegram test passed" : "Telegram test failed",
+        description: data.ok
+          ? "Check your Telegram app for the test message."
+          : "Review the checks below and server environment variables.",
+        variant: data.ok ? "success" : "destructive",
+      });
+    } catch (error) {
+      toast({
+        title: "Telegram test failed",
+        description:
+          error instanceof Error ? error.message : "Could not run test",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingTelegram(false);
     }
   };
 
@@ -240,6 +304,7 @@ export function IntegrationsSection() {
       </div>
 
       <div className="space-y-6">
+        {receivesLeads ? (
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -382,7 +447,108 @@ export function IntegrationsSection() {
             </div>
           ) : null}
         </div>
+        ) : null}
 
+        {telegramStatus ? (
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="font-semibold text-gray-900! dark:text-white!">
+                  Telegram alerts
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Get notified on Telegram when new Taboola leads arrive — even
+                  when you are not logged into the CRM.
+                </p>
+              </div>
+              <StatusPill
+                ok={
+                  telegramStatus.config.ready &&
+                  telegramStatus.receivesNotificationsForThisAdmin
+                }
+                label={
+                  telegramStatus.config.ready &&
+                  telegramStatus.receivesNotificationsForThisAdmin
+                    ? "Ready"
+                    : "Needs setup"
+                }
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <StatusPill
+                ok={telegramStatus.config.botTokenConfigured}
+                label="Bot configured"
+              />
+              <StatusPill
+                ok={
+                  telegramStatus.config.defaultChatConfigured ||
+                  telegramStatus.config.adminChatMappingsCount > 0
+                }
+                label="Chat configured"
+              />
+              <StatusPill
+                ok={telegramStatus.receivesNotificationsForThisAdmin}
+                label="Alerts route to you"
+              />
+            </div>
+
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              {telegramStatus.setupNote}
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                onClick={() => void runTelegramTest()}
+                disabled={testingTelegram}
+                className="bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-700"
+              >
+                {testingTelegram ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Bell className="mr-2 h-4 w-4" />
+                    Send test notification
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {telegramTestResult ? (
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-2">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  Telegram test results
+                </p>
+                {telegramTestResult.checks.map((check) => (
+                  <div
+                    key={check.name}
+                    className="flex items-start gap-2 text-sm"
+                  >
+                    {check.ok ? (
+                      <Check className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+                    )}
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {check.name}
+                      </p>
+                      <p className="text-gray-500 dark:text-gray-400">
+                        {check.message}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {receivesLeads ? (
         <div>
           <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
             Field mapping
@@ -423,7 +589,9 @@ export function IntegrationsSection() {
             </table>
           </div>
         </div>
+        ) : null}
 
+        {receivesLeads ? (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
           Open <strong>View integration guide</strong> for the full API mapping,
           example request, and setup notes to share with your Taboola manager.
@@ -431,6 +599,7 @@ export function IntegrationsSection() {
           <code className="font-mono">{status.authHeader}</code> with the secret
           configured on the server (share the secret separately).
         </div>
+        ) : null}
       </div>
     </section>
 
@@ -438,9 +607,9 @@ export function IntegrationsSection() {
       open={guideModalOpen}
       onOpenChange={setGuideModalOpen}
       webhookUrl={webhookUrl}
-      authHeader={status.authHeader}
-      method={status.method}
-      contentType={status.contentType}
+      authHeader={status?.authHeader ?? "x-taboola-webhook-secret"}
+      method={status?.method ?? "POST"}
+      contentType={status?.contentType ?? "application/json"}
     />
     </>
   );
