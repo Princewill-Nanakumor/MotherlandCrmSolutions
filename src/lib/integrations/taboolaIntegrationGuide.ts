@@ -28,14 +28,21 @@ Also supported: application/x-www-form-urlencoded, multipart/form-data.
 AUTHENTICATION
 Every request must include the shared webhook secret using ONE of these options:
 
-Option 1 (recommended)
+Option 1 (Taboola default — in JSON body)
+Field: ApiKey
+Value: [WEBHOOK_SECRET]
+
+Option 2 (recommended for manual tests)
 Header: ${authHeader}: [WEBHOOK_SECRET]
 
-Option 2
+Option 3
 Header: Authorization: Bearer [WEBHOOK_SECRET]
 
+Option 4 (health check only)
+Query: ?secret=[WEBHOOK_SECRET]
+
 Requests without a valid secret receive 401 Unauthorized.
-(Share the actual secret with your Taboola manager separately — it is configured on the CRM server.)
+(Share the actual secret with your Taboola manager separately — it is configured on the CRM server as TABOOLA_WEBHOOK_SECRET.)
 
 FIELD MAPPING (Taboola → CRM)
 Map Taboola form/export fields to these JSON keys:
@@ -70,6 +77,7 @@ Content-Type: ${contentType}
 ${authHeader}: [WEBHOOK_SECRET]
 
 {
+  "ApiKey": "[WEBHOOK_SECRET]",
   "FirstName": "John",
   "LastName": "Doe",
   "Email": "john.doe@example.com",

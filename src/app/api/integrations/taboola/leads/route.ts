@@ -40,14 +40,20 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const url = new URL(request.url);
 
-  if (!verifyTaboolaWebhookSecret(request, url)) {
+  let rawBody: Record<string, unknown>;
+  try {
+    rawBody = await parseTaboolaRequestBody(request);
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  if (!verifyTaboolaWebhookSecret(request, url, rawBody)) {
     return unauthorized();
   }
 
   try {
     await connectMongoDB();
 
-    const rawBody = await parseTaboolaRequestBody(request);
     const taboolaPayload = parseTaboolaPayload(rawBody);
     const mapped = mapTaboolaToLead(taboolaPayload);
 

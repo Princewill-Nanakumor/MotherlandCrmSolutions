@@ -221,6 +221,7 @@ export function adminReceivesTaboolaLeads(adminId: string): boolean {
 }
 
 export const TABOOLA_FIELD_MAPPING = [
+  { taboola: "ApiKey", crm: "auth", shownIn: "Webhook authentication (body)" },
   { taboola: "FirstName", crm: "firstName", shownIn: "All Leads → Name" },
   { taboola: "LastName", crm: "lastName", shownIn: "All Leads → Name" },
   { taboola: "Email", crm: "email", shownIn: "All Leads → Email" },

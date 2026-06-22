@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
       ? (tenant.webhookUrlForAdmin ?? getTaboolaWebhookUrl())
       : null,
     authHeader: "x-taboola-webhook-secret",
+    authBodyField: "ApiKey",
     method: "POST",
     contentType: "application/json",
     config,

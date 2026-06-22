@@ -131,6 +131,7 @@ export function mapTaboolaToLead(payload: TaboolaLeadPayload): MappedTaboolaLead
 export function verifyTaboolaWebhookSecret(
   request: Request,
   url: URL,
+  body?: Record<string, unknown>,
 ): boolean {
   const expected = process.env.TABOOLA_WEBHOOK_SECRET?.trim();
   if (!expected) {
@@ -144,6 +145,19 @@ export function verifyTaboolaWebhookSecret(
   if (authorization === `Bearer ${expected}`) return true;
 
   if (url.searchParams.get("secret") === expected) return true;
+
+  // Taboola affiliate postbacks often send the shared secret as ApiKey in JSON body.
+  if (body) {
+    const bodyMap = normalizeKeyMap(body);
+    const bodySecret = pick(bodyMap, [
+      "apikey",
+      "api_key",
+      "webhooksecret",
+      "webhook_secret",
+      "secret",
+    ]);
+    if (bodySecret === expected) return true;
+  }
 
   return false;
 }
