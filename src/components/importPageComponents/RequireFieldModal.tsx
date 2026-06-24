@@ -1,4 +1,6 @@
 // src/components/importPageComponents/RequireFieldModal.tsx
+import { Button } from "@/components/ui/button";
+
 interface RequiredFieldsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -48,12 +50,13 @@ export const RequiredFieldsModal = ({
           </p>
         </div>
         <div className="flex justify-end">
-          <button
+          <Button
+            type="button"
             onClick={onClose}
-            className="px-4 py-2 text-white transition-colors bg-blue-600 rounded dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
+            className="text-white border-0 bg-linear-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
           >
             Got it
-          </button>
+          </Button>
         </div>
       </div>
     </div>
