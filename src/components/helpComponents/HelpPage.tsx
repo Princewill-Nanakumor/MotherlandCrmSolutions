@@ -16,10 +16,12 @@ import StatusCreationHelp from "./StatusCreationHelp";
 import UserCreationHelp from "./UserCreationHelp";
 import ImportHelp from "./ImportHelp";
 import BillingSubscriptionHelp from "./BillingSubscriptionHelp";
+import { useAppBranding } from "@/components/AppBrandingProvider";
 
 type HelpSection = "overview" | "status" | "users" | "import" | "billing";
 
 const HelpPage: React.FC = () => {
+  const { shortName } = useAppBranding();
   const [activeSection, setActiveSection] = useState<HelpSection>("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
@@ -86,7 +88,7 @@ const HelpPage: React.FC = () => {
           Help Center
         </h1>
         <p className="text-lg text-gray-600! dark:text-gray-400! max-w-2xl mx-auto">
-          Learn how to use the features Motherland CRM
+          Learn how to use the features of {shortName}
         </p>
       </div>
 

@@ -3,8 +3,10 @@
 
 import { MessageCircle, Coins, Building2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAppBranding } from "@/components/AppBrandingProvider";
 
 export default function ContactSection() {
+  const { displayName, telegramHandle, telegramUrl } = useAppBranding();
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -55,7 +57,7 @@ export default function ContactSection() {
               <p className="max-w-3xl mx-auto text-lg leading-relaxed text-gray-600!">
                 At{" "}
                 <span className="font-semibold text-indigo-600">
-                  Motherland CRM Solutions
+                  {displayName}
                 </span>
                 , we provide comprehensive Customer Relationship Management
                 services designed to help companies streamline their sales
@@ -74,22 +76,24 @@ export default function ContactSection() {
                 Get in Touch
               </h3>
               <div className="flex justify-center mb-6">
-                <div className="flex items-center p-6 space-x-4 transition-shadow bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md">
-                  <div className="p-3 bg-blue-100 rounded-lg">
-                    <MessageCircle className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500!">Telegram</p>
-                    <a
-                      href="https://t.me/Motherlandsolutions"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold text-gray-900 transition-colors hover:text-blue-600"
-                    >
-                      @Motherlandsolutions
-                    </a>
-                  </div>
-                </div>
+                {telegramUrl && telegramHandle ? (
+                  <a
+                    href={telegramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center p-6 space-x-4 transition-shadow bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-blue-200"
+                  >
+                    <div className="p-3 bg-blue-100 rounded-lg">
+                      <MessageCircle className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500!">Telegram</p>
+                      <span className="font-semibold text-gray-900">
+                        {telegramHandle}
+                      </span>
+                    </div>
+                  </a>
+                ) : null}
               </div>
 
               {/* Payment Methods */}

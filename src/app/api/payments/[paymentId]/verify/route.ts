@@ -6,9 +6,11 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
 import type { Session } from "next-auth";
 import {
+  canManagePayments,
   canReadPayment,
   type PaymentTenantFields,
 } from "@/lib/paymentAccess";
+import { forbiddenResponse } from "@/lib/apiResponses";
 
 /** Placeholder verifier for crypto/other flows — extend with gateway checks later. */
 export async function POST(
@@ -43,6 +45,13 @@ export async function POST(
     const payment = paymentDoc;
 
     const sessionTyped = session as Session;
+    if (!canManagePayments(sessionTyped)) {
+      return forbiddenResponse(
+        "Only admins can verify payments",
+        "ADMIN_REQUIRED",
+      );
+    }
+
     if (!canReadPayment(sessionTyped, payment)) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }

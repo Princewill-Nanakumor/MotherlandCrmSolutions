@@ -17,23 +17,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import PaymentPartyInfo from "@/components/billing/PaymentPartyInfo";
+import type { Payment } from "@/types/payment.types";
 
-interface Payment {
-  _id: string;
-  amount: number;
-  currency: string;
-  status: "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED";
-  method: "CREDIT_CARD" | "PAYPAL" | "BANK_TRANSFER" | "CRYPTO";
-  transactionId: string;
-  description?: string;
-  network?: "TRC20" | "ERC20";
-  walletAddress?: string;
-  createdAt: string;
-  approvedAt?: string;
-  approvedBy?: string;
-  rejectedAt?: string;
-  rejectedBy?: string;
-}
+type PaymentDetailsPayment = Payment;
 
 interface PaymentDetailsProps {
   params: Promise<{ id: string }>;
@@ -42,7 +29,7 @@ interface PaymentDetailsProps {
 export default function PaymentDetails({ params }: PaymentDetailsProps) {
   const router = useRouter();
   const [paymentId, setPaymentId] = useState<string>("");
-  const [payment, setPayment] = useState<Payment | null>(null);
+  const [payment, setPayment] = useState<PaymentDetailsPayment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -335,6 +322,12 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
+            <PaymentPartyInfo
+              tenantAccount={payment.tenantAccount}
+              submittedBy={payment.submittedBy}
+              approvedByUser={payment.approvedByUser}
+            />
+
             {/* Payment Status Card */}
             <Card className="backdrop-blur-lg bg-white/70 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl">
               <CardHeader>

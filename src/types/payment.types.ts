@@ -13,8 +13,22 @@ export interface Payment {
   createdAt: string;
   approvedAt?: string;
   approvedBy?: string;
+  rejectedAt?: string;
+  rejectedBy?: string;
   adminId?: string;
   createdBy?: string;
+  submittedBy?: PaymentPartySummary | null;
+  tenantAccount?: PaymentPartySummary | null;
+  approvedByUser?: PaymentPartySummary | null;
+}
+
+export interface PaymentPartySummary {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  displayName: string;
 }
 
 export interface CreatePaymentData {

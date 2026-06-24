@@ -8,9 +8,15 @@ export interface PaymentTenantFields {
   createdBy?: mongoose.Types.ObjectId | { toString: () => string } | null;
 }
 
+/** Only tenant admins (and super admins) may create or list payments. */
+export function canManagePayments(session: Session | null): boolean {
+  if (!session?.user?.id) return false;
+  return session.user.role === "ADMIN";
+}
+
 /**
- * Super admins can read any payment. Admin can only read payments for their
- * tenant (payment.adminId). Other users may only read payments they created.
+ * Super admins can read any payment. Tenant admins can only read payments for
+ * their account (payment.adminId). Agents and other roles cannot read payments.
  */
 export function canReadPayment(
   session: Session | null,
@@ -21,14 +27,10 @@ export function canReadPayment(
 
   if (isSuperAdminSession(sessionTyped)) return true;
 
+  if (session.user.role !== "ADMIN") return false;
+
   const tenantId =
     payment.adminId != null ? String(payment.adminId) : "";
 
-  if (session.user.role === "ADMIN") {
-    return tenantId !== "" && tenantId === session.user.id;
-  }
-
-  const creatorId =
-    payment.createdBy != null ? String(payment.createdBy) : "";
-  return creatorId !== "" && creatorId === session.user.id;
+  return tenantId !== "" && tenantId === session.user.id;
 }

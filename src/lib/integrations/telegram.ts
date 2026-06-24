@@ -2,6 +2,7 @@ import {
   getTelegramConfigSnapshot,
   resolveTelegramChatId,
 } from "@/lib/integrations/telegramConfig";
+import { getServerAppBranding } from "@/lib/appBranding";
 
 function escapeTelegramHtml(value: string): string {
   return value
@@ -125,6 +126,6 @@ export async function sendTelegramTestMessage(
 
   return sendTelegramMessage(
     chatId,
-    "✅ <b>Motherland CRM</b>\nTelegram lead alerts are working. You will receive a message here when new Taboola leads arrive.",
+    `✅ <b>${escapeTelegramHtml(getServerAppBranding().displayName)}</b>\nTelegram lead alerts are working. You will receive a message here when new Taboola leads arrive.`,
   );
 }

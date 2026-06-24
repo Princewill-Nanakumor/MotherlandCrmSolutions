@@ -4,6 +4,7 @@ export interface TaboolaGuideInput {
   method?: string;
   contentType?: string;
   statusesUrl?: string;
+  productName?: string;
 }
 
 export function buildTaboolaIntegrationGuide({
@@ -12,16 +13,17 @@ export function buildTaboolaIntegrationGuide({
   method = "POST",
   contentType = "application/json",
   statusesUrl,
+  productName = "CRM",
 }: TaboolaGuideInput): string {
   const statusEndpointUrl =
     statusesUrl ?? webhookUrl.replace(/\/leads$/, "/statuses");
   const leadListUrl = webhookUrl;
   const healthCheckUrl = `${webhookUrl}?health=1`;
 
-  return `Motherland CRM — Taboola Integration Guide
+  return `${productName} — Taboola Integration Guide
 
 OVERVIEW
-Configure Taboola to send live leads to Motherland CRM and read lead statuses back from the CRM.
+Configure Taboola to send live leads to ${productName} and read lead statuses back from the CRM.
 
 BASE URL
 ${webhookUrl.replace(/\/api\/integrations\/taboola\/leads$/, "")}

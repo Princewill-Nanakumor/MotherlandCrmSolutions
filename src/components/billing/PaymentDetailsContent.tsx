@@ -6,6 +6,7 @@ import { DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import PaymentStatusCard from "./PaymentStatusCard";
+import PaymentPartyInfo from "./PaymentPartyInfo";
 import {
   getStatusColor,
   getMethodColor,
@@ -32,7 +33,13 @@ export default function PaymentDetailsContent({
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       {/* Main Content */}
-      <div className="lg:col-span-2">
+      <div className="lg:col-span-2 space-y-6">
+        <PaymentPartyInfo
+          tenantAccount={payment.tenantAccount}
+          submittedBy={payment.submittedBy}
+          approvedByUser={payment.approvedByUser}
+        />
+
         {/* Payment Status Card */}
         <Card className="bg-white border border-gray-200 shadow-xl dark:bg-gray-900 dark:border-gray-700">
           <CardHeader>

@@ -7,6 +7,7 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import { Types } from "mongoose";
 import mongoose from "mongoose";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
+import { enrichPaymentForResponse } from "@/lib/paymentPresentation";
 
 interface PaymentDocument {
   _id: Types.ObjectId;
@@ -178,20 +179,7 @@ export async function POST(
       { upsert: true }
     );
 
-    // Convert MongoDB ObjectId to string for JSON response
-    const paymentResponse = {
-      ...approvedPayment,
-      _id: String(approvedPayment._id),
-      createdBy: approvedPayment.createdBy
-        ? String(approvedPayment.createdBy)
-        : undefined,
-      approvedBy: approvedPayment.approvedBy
-        ? String(approvedPayment.approvedBy)
-        : undefined,
-      adminId: approvedPayment.adminId
-        ? String(approvedPayment.adminId)
-        : undefined,
-    };
+    const paymentResponse = await enrichPaymentForResponse(approvedPayment);
 
     return NextResponse.json({
       success: true,

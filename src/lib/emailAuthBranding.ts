@@ -9,8 +9,9 @@
  * to addresses you are allowed to test with (see Resend dashboard / docs).
  * Production needs `RESEND_FROM` on a verified domain.
  */
-export const APP_DISPLAY_NAME =
-  process.env.NEXT_PUBLIC_APP_NAME?.trim() || "Motherland CRM Solutions";
+import { getServerAppBranding } from "@/lib/appBranding";
+
+export const APP_DISPLAY_NAME = getServerAppBranding().displayName;
 
 export function isProductionDeployment(): boolean {
   return process.env.NODE_ENV === "production";
@@ -81,12 +82,13 @@ export function getResendFrom(): string {
       "RESEND_FROM must be set in production (verified domain in Resend).",
     );
   }
-  return `Motherland CRM <onboarding@resend.dev>`;
+  return `${getServerAppBranding().shortName} <onboarding@resend.dev>`;
 }
 
 export function getResendReplyTo(): string {
   return (
-    process.env.RESEND_REPLY_TO?.trim() || "support@motherlandcrmsolutions.com"
+    process.env.RESEND_REPLY_TO?.trim() ||
+    getServerAppBranding().supportEmail
   );
 }
 

@@ -9,7 +9,9 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import { Types } from "mongoose";
 import mongoose from "mongoose";
 import type { Session } from "next-auth";
-import { canReadPayment } from "@/lib/paymentAccess";
+import { canManagePayments, canReadPayment } from "@/lib/paymentAccess";
+import { forbiddenResponse } from "@/lib/apiResponses";
+import { enrichPaymentForResponse } from "@/lib/paymentPresentation";
 
 interface PaymentDocument {
   _id: Types.ObjectId;
@@ -68,14 +70,7 @@ export async function GET(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Convert MongoDB ObjectId to string for JSON response
-    const paymentResponse = {
-      ...payment,
-      _id: String(payment._id),
-      createdBy: payment.createdBy ? String(payment.createdBy) : undefined,
-      approvedBy: payment.approvedBy ? String(payment.approvedBy) : undefined,
-      adminId: payment.adminId ? String(payment.adminId) : undefined,
-    };
+    const paymentResponse = await enrichPaymentForResponse(payment);
 
     return NextResponse.json({
       success: true,

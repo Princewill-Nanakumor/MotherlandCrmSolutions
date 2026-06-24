@@ -13,6 +13,7 @@ import { formatTime24Hour } from "@/lib/utils";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { getAblyRealtimeClient } from "@/libs/ablyClient";
+import { useAppBranding } from "@/components/AppBrandingProvider";
 import {
   REMINDER_DUE_EVENT,
   getUserRemindersChannelName,
@@ -23,6 +24,7 @@ const EMPTY_DUE_REMINDERS: Reminder[] = [];
 
 export default function ReminderNotifications() {
   const { status, data: session } = useSession();
+  const { shortName } = useAppBranding();
   const sessionUserId = session?.user?.id;
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -184,7 +186,7 @@ export default function ReminderNotifications() {
             : "Lead";
 
         try {
-          const notification = new Notification("Reminder: " + reminder.title, {
+          const notification = new Notification(`${shortName} reminder: ${reminder.title}`, {
             body: `${reminder.type} - ${leadName}\n${reminder.description || ""}`,
             icon: "/Motherlandfav.png",
             badge: "/Motherlandfav.png",

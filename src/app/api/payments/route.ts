@@ -6,8 +6,9 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import { ObjectId } from "mongodb";
 import Payment from "@/models/Payment";
 import User from "@/models/User";
-import { unauthorizedResponse } from "@/lib/apiResponses";
-import { withAdminScope } from "@/lib/withAdminScope";
+import { forbiddenResponse, unauthorizedResponse } from "@/lib/apiResponses";
+import { canManagePayments } from "@/lib/paymentAccess";
+import type { Session } from "next-auth";
 import {
   getServerPaymentLimits,
   roundCents,
@@ -133,6 +134,13 @@ export async function POST(request: NextRequest) {
       return unauthorizedResponse("Authentication required");
     }
 
+    if (!canManagePayments(session as Session)) {
+      return forbiddenResponse(
+        "Only admins can create payments",
+        "ADMIN_REQUIRED",
+      );
+    }
+
     // Parse and validate request data
     const requestData: PaymentRequestData = await request.json();
     const validationErrors = validatePaymentRequest(requestData);
@@ -153,9 +161,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Admin ID validation
-    const scopedAdminId = await withAdminScope(session, async (adminId) => adminId);
-    const adminId = new ObjectId(scopedAdminId);
+    const adminId = new ObjectId(session.user.id);
 
     // Rate limiting check
     try {
@@ -248,6 +254,13 @@ export async function GET(request: NextRequest) {
       return unauthorizedResponse("Authentication required");
     }
 
+    if (!canManagePayments(session as Session)) {
+      return forbiddenResponse(
+        "Only admins can view payments",
+        "ADMIN_REQUIRED",
+      );
+    }
+
     await connectMongoDB();
     const { searchParams } = new URL(request.url);
 
@@ -259,21 +272,9 @@ export async function GET(request: NextRequest) {
     );
     const skip = (page - 1) * limit;
 
-    const scopedAdminId = await withAdminScope(
-      session,
-      async (adminId) => adminId,
-    );
-    // M7: agents can only see their own payments. Tenant admins (and super
-    // admins implicitly via filterless reads on the detail route) keep the
-    // full ledger; agents previously saw the whole tenant ledger because
-    // this query was scoped only by `adminId`.
-    const role = session.user.role;
-    const query: { adminId: ObjectId; createdBy?: ObjectId } = {
-      adminId: new ObjectId(scopedAdminId),
+    const query = {
+      adminId: new ObjectId(session.user.id),
     };
-    if (role !== "ADMIN") {
-      query.createdBy = new ObjectId(session.user.id);
-    }
 
     const [payments, total] = await Promise.all([
       Payment.find(query)

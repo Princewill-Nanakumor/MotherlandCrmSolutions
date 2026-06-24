@@ -7,9 +7,16 @@ export type AppBranding = {
   shortName: string;
   supportEmail: string;
   logoLetter: string;
+  telegramHandle?: string;
+  telegramUrl?: string;
 };
 
 type BrandPreset = Omit<AppBranding, "host" | "origin">;
+
+const SHARED_SUPPORT_TELEGRAM = {
+  telegramHandle: "@solutioncrm4847",
+  telegramUrl: "https://t.me/solutioncrm4847",
+} as const;
 
 const HOST_PRESETS: Record<string, BrandPreset> = {
   "motherlandcrmsolutions.com": {
@@ -17,12 +24,14 @@ const HOST_PRESETS: Record<string, BrandPreset> = {
     shortName: "Motherland CRM",
     supportEmail: "support@motherlandcrmsolutions.com",
     logoLetter: "M",
+    ...SHARED_SUPPORT_TELEGRAM,
   },
   "vertexcrmsolution.com": {
     displayName: "Vertex CRM Solution",
     shortName: "Vertex CRM",
     supportEmail: "support@vertexcrmsolution.com",
     logoLetter: "V",
+    ...SHARED_SUPPORT_TELEGRAM,
   },
 };
 
@@ -190,7 +199,7 @@ export function buildAppMetadata(branding: AppBranding): Metadata {
       "msapplication-TileColor": "#6366F1",
       "theme-color": "#6366F1",
     },
-    manifest: "/site.webmanifest",
+    manifest: undefined,
     icons: {
       icon: [{ url: "/Motherlandfav.png?v=2", sizes: "any", type: "image/png" }],
       apple: [
@@ -221,6 +230,24 @@ export function buildStructuredData(branding: AppBranding) {
       name: branding.displayName,
     },
   };
+}
+
+export function getServerAppBranding(): AppBranding {
+  const configured =
+    process.env.CANONICAL_APP_URL?.trim() ||
+    process.env.TABOOLA_WEBHOOK_BASE_URL?.trim() ||
+    process.env.NEXTAUTH_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  if (configured) {
+    try {
+      return getBrandingForHost(new URL(configured).hostname);
+    } catch {
+      // fall through
+    }
+  }
+
+  return getBrandingForHost(null);
 }
 
 export function dashboardPageTitle(shortName: string, page: string): string {

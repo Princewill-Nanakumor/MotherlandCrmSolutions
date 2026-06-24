@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { buildTaboolaIntegrationGuide } from "@/lib/integrations/taboolaIntegrationGuide";
+import { useAppBranding } from "@/components/AppBrandingProvider";
 
 interface TaboolaIntegrationGuideModalProps {
   open: boolean;
@@ -32,6 +33,7 @@ export function TaboolaIntegrationGuideModal({
   contentType,
 }: TaboolaIntegrationGuideModalProps) {
   const { toast } = useToast();
+  const { displayName } = useAppBranding();
   const [copied, setCopied] = useState(false);
 
   const guide = useMemo(
@@ -41,8 +43,9 @@ export function TaboolaIntegrationGuideModal({
         authHeader,
         method,
         contentType,
+        productName: displayName,
       }),
-    [webhookUrl, authHeader, method, contentType],
+    [webhookUrl, authHeader, method, contentType, displayName],
   );
 
   const copyGuide = async () => {

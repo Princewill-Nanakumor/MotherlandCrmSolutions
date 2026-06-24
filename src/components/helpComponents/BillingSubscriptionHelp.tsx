@@ -30,6 +30,7 @@ import {
   SUBSCRIPTION_TRIAL_DURATION_DAYS,
   type SubscriptionPlanCatalogKey,
 } from "@/lib/subscriptionPlanCatalog";
+import { useAppBranding } from "@/components/AppBrandingProvider";
 
 const PLAN_CARD_COLORS: Record<SubscriptionPlanCatalogKey, string> = {
   starter: "from-blue-500 to-blue-600",
@@ -38,6 +39,7 @@ const PLAN_CARD_COLORS: Record<SubscriptionPlanCatalogKey, string> = {
 };
 
 const BillingSubscriptionHelp: React.FC = () => {
+  const { supportEmail } = useAppBranding();
   const [expandedSection, setExpandedSection] = useState<string | null>(
     "overview",
   );
@@ -572,7 +574,7 @@ const BillingSubscriptionHelp: React.FC = () => {
                 here to help:
               </p>
               <ul className="ml-4 space-y-1">
-                <li>• Email: support@motherlandcrmsolutions.com</li>
+                <li>• Email: {supportEmail}</li>
                 <li>• Response Time: Usually within 2 hours</li>
               </ul>
               <p className="text-xs text-gray-500! dark:text-gray-400! mt-2">

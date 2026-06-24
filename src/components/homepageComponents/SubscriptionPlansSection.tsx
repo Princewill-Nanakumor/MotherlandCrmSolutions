@@ -1,8 +1,9 @@
 // src/components/homepageComponents/SubscriptionPlansSection.tsx
 "use client";
 
-import { Check, MessageCircle } from "lucide-react";
+import { Check, MessageCircle, Mail } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAppBranding } from "@/components/AppBrandingProvider";
 import {
   SUBSCRIPTION_PLAN_CATALOG,
   SUBSCRIPTION_PLAN_ORDER,
@@ -23,6 +24,7 @@ const SUBSCRIPTION_PLANS = SUBSCRIPTION_PLAN_ORDER.map((key) => {
 });
 
 export default function SubscriptionPlansSection() {
+  const { supportEmail, telegramUrl } = useAppBranding();
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -113,15 +115,24 @@ export default function SubscriptionPlansSection() {
               Ready to transform your business? Contact us today to learn more
               about our CRM solutions.
             </p>
-            <div className="flex justify-center">
+            <div className="flex flex-wrap justify-center gap-3">
+              {telegramUrl ? (
+                <a
+                  href={telegramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center px-8 py-3 font-medium text-white transition-all duration-200 rounded-lg shadow-md bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg"
+                >
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  Message on Telegram
+                </a>
+              ) : null}
               <a
-                href="https://t.me/Motherlandsolutions"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center px-8 py-3 font-medium text-white transition-all duration-200 rounded-lg shadow-md bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg"
+                href={`mailto:${supportEmail}`}
+                className="inline-flex items-center justify-center px-8 py-3 font-medium text-indigo-700 transition-all duration-200 bg-white border border-indigo-200 rounded-lg shadow-sm hover:shadow-md"
               >
-                <MessageCircle className="w-5 h-5 mr-2" />
-                Message on Telegram
+                <Mail className="w-5 h-5 mr-2" />
+                Email us
               </a>
             </div>
           </motion.div>

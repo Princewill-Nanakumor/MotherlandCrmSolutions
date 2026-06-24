@@ -3,7 +3,9 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
+  useState,
   type ReactNode,
 } from "react";
 import {
@@ -20,7 +22,14 @@ export function AppBrandingProvider({
   branding: AppBranding;
   children: ReactNode;
 }) {
-  const value = useMemo(() => branding, [branding]);
+  const [activeBranding, setActiveBranding] = useState(branding);
+
+  useEffect(() => {
+    setActiveBranding(getBrandingForHost(window.location.hostname));
+  }, []);
+
+  const value = useMemo(() => activeBranding, [activeBranding]);
+
   return (
     <AppBrandingContext.Provider value={value}>
       {children}

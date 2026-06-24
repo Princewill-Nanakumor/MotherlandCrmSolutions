@@ -66,7 +66,8 @@ export const usePayments = (limit: number = 10) => {
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     retry: 2,
-    enabled: hasAuthorizedSession(status, session),
+    enabled:
+      hasAuthorizedSession(status, session) && session?.user?.role === "ADMIN",
   });
 };
 
@@ -97,7 +98,8 @@ export const useUserBalance = () => {
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     retry: 2,
-    enabled: hasAuthorizedSession(status, session),
+    enabled:
+      hasAuthorizedSession(status, session) && session?.user?.role === "ADMIN",
   });
 };
 
@@ -139,7 +141,10 @@ export const usePayment = (paymentId: string | null) => {
     gcTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: true,
     retry: 2,
-    enabled: hasAuthorizedSession(status, session) && !!paymentId,
+    enabled:
+      hasAuthorizedSession(status, session) &&
+      session?.user?.role === "ADMIN" &&
+      !!paymentId,
   });
 };
 

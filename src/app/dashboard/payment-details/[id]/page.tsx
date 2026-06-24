@@ -25,7 +25,7 @@ export default function PaymentDetailsPage({ params }: PageProps) {
           : "/dashboard/payment-details";
       router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     } else if (status === "authenticated" && session?.user?.role !== "ADMIN") {
-      router.push("/dashboard");
+      router.push("/dashboard/leads");
     }
   }, [status, session, router]);
 
