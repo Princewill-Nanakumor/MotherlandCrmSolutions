@@ -10,12 +10,14 @@ import { Loader2, LogIn } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
+import { useAppBranding } from "@/components/AppBrandingProvider";
 
 function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse bg-gray-200 rounded ${className}`} />;
 }
 
 export default function Navbar() {
+  const { displayName } = useAppBranding();
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
@@ -114,7 +116,7 @@ export default function Navbar() {
               <div className="relative w-20 h-20 overflow-hidden ">
                 <Image
                   src="/motherlandlogo.png"
-                  alt="Motherland CRM Solutions Logo"
+                  alt={`${displayName} Logo`}
                   fill
                   sizes="80px"
                   className="object-contain"
@@ -126,7 +128,7 @@ export default function Navbar() {
                   isScrolled ? "text-gray-900" : "text-white"
                 }`}
               >
-                Motherland CRM Solutions
+                {displayName}
               </div>
             </div>
           </Link>

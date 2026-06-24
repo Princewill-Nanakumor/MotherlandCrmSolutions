@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import PaymentDetails from "@/components/dashboardComponents/PaymentDetails";
+import { useAppBranding } from "@/components/AppBrandingProvider";
+import { dashboardPageTitle } from "@/lib/appBranding";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -13,6 +15,7 @@ interface PageProps {
 export default function PaymentDetailsPage({ params }: PageProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { shortName } = useAppBranding();
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -28,8 +31,8 @@ export default function PaymentDetailsPage({ params }: PageProps) {
 
   // Set page title
   useEffect(() => {
-    document.title = "Motherland CRM - Payment Details";
-  }, []);
+    document.title = dashboardPageTitle(shortName, "Payment Details");
+  }, [shortName]);
 
   if (status === "loading") {
     return (

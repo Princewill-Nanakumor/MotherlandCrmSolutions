@@ -3,11 +3,18 @@ import {
   getPublicAppOrigin,
   isProductionDeployment,
 } from "@/lib/emailAuthBranding";
+import { isPrimaryProductionHost } from "@/lib/appBranding";
 
-/** Public CRM domain Taboola should always POST to (not Netlify branch URLs). */
+/** Default public CRM domain for integrations (Taboola webhooks, etc.). */
 export const TABOOLA_PRODUCTION_ORIGIN =
   process.env.CANONICAL_APP_URL?.trim()?.replace(/\/$/, "") ||
   "https://motherlandcrmsolutions.com";
+
+/** Additional production hostnames served by the same app. */
+export const APP_PRODUCTION_HOSTS = [
+  "motherlandcrmsolutions.com",
+  "vertexcrmsolution.com",
+] as const;
 
 function isLocalOrigin(origin: string): boolean {
   return (
@@ -24,8 +31,41 @@ function isNetlifyBranchOrigin(origin: string): boolean {
   }
 }
 
+function isKnownProductionOrigin(origin: string): boolean {
+  try {
+    const host = new URL(origin).hostname.toLowerCase();
+    return (
+      isPrimaryProductionHost(host) ||
+      APP_PRODUCTION_HOSTS.some(
+        (known) => host === known || host === `www.${known}`,
+      )
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** Standard Taboola partner API auth header (Option 1). */
+export const TABOOLA_AUTH_HEADER = "x-taboola-webhook-secret";
+
 export function getTaboolaWebhookPath(): string {
   return "/api/integrations/taboola/leads";
+}
+
+export function getTaboolaStatusesPath(): string {
+  return "/api/integrations/taboola/statuses";
+}
+
+export function getTaboolaLeadPath(leadId: string): string {
+  return `/api/integrations/taboola/leads/${encodeURIComponent(leadId)}`;
+}
+
+export function getTaboolaStatusesUrl(): string {
+  return `${resolveTaboolaWebhookOrigin()}${getTaboolaStatusesPath()}`;
+}
+
+export function getTaboolaLeadUrl(leadId: string): string {
+  return `${resolveTaboolaWebhookOrigin()}${getTaboolaLeadPath(leadId)}`;
 }
 
 /**
@@ -46,6 +86,10 @@ export function resolveTaboolaWebhookOrigin(): string {
 
   if (isLocalOrigin(configured) || isNetlifyBranchOrigin(configured)) {
     return TABOOLA_PRODUCTION_ORIGIN;
+  }
+
+  if (isKnownProductionOrigin(configured)) {
+    return configured;
   }
 
   const canonicalEnv = process.env.CANONICAL_APP_URL?.trim()?.replace(/\/$/, "");
@@ -221,7 +265,11 @@ export function adminReceivesTaboolaLeads(adminId: string): boolean {
 }
 
 export const TABOOLA_FIELD_MAPPING = [
-  { taboola: "ApiKey", crm: "auth", shownIn: "Webhook authentication (body)" },
+  {
+    taboola: TABOOLA_AUTH_HEADER,
+    crm: "auth header",
+    shownIn: "All Taboola API requests",
+  },
   { taboola: "FirstName", crm: "firstName", shownIn: "All Leads → Name" },
   { taboola: "LastName", crm: "lastName", shownIn: "All Leads → Name" },
   { taboola: "Email", crm: "email", shownIn: "All Leads → Email" },

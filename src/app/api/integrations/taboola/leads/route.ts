@@ -17,11 +17,26 @@ import {
   resolveTaboolaAdminId,
   verifyTaboolaWebhookSecret,
 } from "@/lib/integrations/taboola";
+import {
+  listTaboolaPartnerLeads,
+  resolveTaboolaPartnerAdminId,
+} from "@/lib/integrations/taboolaPartnerApi";
 
 export const runtime = "nodejs";
 
 function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+
+function isHealthCheckRequest(url: URL): boolean {
+  if (url.searchParams.get("health") === "1") return true;
+
+  return (
+    url.searchParams.has("secret") &&
+    !url.searchParams.has("page") &&
+    !url.searchParams.has("limit") &&
+    !url.searchParams.has("updatedAfter")
+  );
 }
 
 export async function GET(request: NextRequest) {
@@ -30,11 +45,52 @@ export async function GET(request: NextRequest) {
     return unauthorized();
   }
 
-  return NextResponse.json({
-    ok: true,
-    provider: "taboola",
-    message: "Taboola lead webhook is ready",
-  });
+  if (isHealthCheckRequest(url)) {
+    return NextResponse.json({
+      ok: true,
+      provider: "taboola",
+      message: "Taboola lead webhook is ready",
+    });
+  }
+
+  const adminId = resolveTaboolaPartnerAdminId(url);
+  if (!adminId) {
+    return NextResponse.json(
+      {
+        error:
+          "Could not resolve tenant admin. Configure TABOOLA_DEFAULT_ADMIN_ID.",
+      },
+      { status: 400 },
+    );
+  }
+
+  const page = Number(url.searchParams.get("page") ?? "1");
+  const limit = Number(url.searchParams.get("limit") ?? "50");
+  const updatedAfter = url.searchParams.get("updatedAfter");
+
+  try {
+    return await withDatabase(async () => {
+      const result = await listTaboolaPartnerLeads({
+        adminId,
+        page: Number.isFinite(page) ? page : 1,
+        limit: Number.isFinite(limit) ? limit : 50,
+        updatedAfter,
+      });
+
+      return NextResponse.json({
+        success: true,
+        provider: "taboola",
+        leads: result.leads,
+        pagination: result.pagination,
+      });
+    });
+  } catch (error) {
+    console.error("Taboola list leads error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(request: NextRequest) {

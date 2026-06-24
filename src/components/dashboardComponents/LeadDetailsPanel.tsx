@@ -19,6 +19,7 @@ import {
   getAblyLeadRealtimeClient,
   releaseAblyLeadRealtimeClient,
 } from "@/libs/ablyLeadClient";
+import { useAppBranding } from "@/components/AppBrandingProvider";
 import {
   assignedToEquals,
   refetchLeadActivities,
@@ -91,6 +92,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   hasNext,
   users,
 }) => {
+  const { shortName } = useAppBranding();
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({
@@ -485,14 +487,14 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       const fullName =
         `${currentLead.firstName || ""} ${currentLead.lastName || ""}`.trim();
       const leadTitle = fullName || "Lead Details";
-      document.title = `${leadTitle} - Motherland CRM`;
+      document.title = `${leadTitle} - ${shortName}`;
       return;
     }
     if (!isOpen && originalTitleRef.current) {
       document.title = originalTitleRef.current;
       originalTitleRef.current = "";
     }
-  }, [isOpen, currentLead]);
+  }, [isOpen, currentLead, shortName]);
 
   useEffect(() => {
     return () => {

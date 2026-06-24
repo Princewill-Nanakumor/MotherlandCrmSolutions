@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
 import { forbiddenResponse, unauthorizedResponse } from "@/lib/apiResponses";
 import {
+  TABOOLA_AUTH_HEADER,
   TABOOLA_FIELD_MAPPING,
   getTaboolaConfigSnapshot,
   getTaboolaTenantStatus,
@@ -26,8 +27,8 @@ export async function GET(request: NextRequest) {
     webhookUrl: tenant.canShareWithTaboola
       ? (tenant.webhookUrlForAdmin ?? getTaboolaWebhookUrl())
       : null,
-    authHeader: "x-taboola-webhook-secret",
-    authBodyField: "ApiKey",
+    authHeader: TABOOLA_AUTH_HEADER,
+    authMethod: "header",
     method: "POST",
     contentType: "application/json",
     config,

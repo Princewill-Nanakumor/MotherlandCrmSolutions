@@ -18,6 +18,11 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "vertexcrmsolution.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "flagcdn.com",
         pathname: "/**",
       },
@@ -37,7 +42,13 @@ const nextConfig = {
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ["localhost:3000"],
+      allowedOrigins: [
+        "localhost:3000",
+        "motherlandcrmsolutions.com",
+        "www.motherlandcrmsolutions.com",
+        "vertexcrmsolution.com",
+        "www.vertexcrmsolution.com",
+      ],
       bodySizeLimit: "2mb",
     },
   },

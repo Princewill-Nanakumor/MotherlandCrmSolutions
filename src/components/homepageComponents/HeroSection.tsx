@@ -5,8 +5,10 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
+import { useAppBranding } from "@/components/AppBrandingProvider";
 
 export default function HeroSection() {
+  const { displayName } = useAppBranding();
   const { data: session, status } = useSession();
 
   const scrollToContact = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -70,7 +72,7 @@ export default function HeroSection() {
           transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
         >
           Streamline your sales processes, manage leads effectively, and boost
-          team productivity with Motherland CRM Solutions.
+          team productivity with {displayName}.
         </motion.p>
 
         <motion.div

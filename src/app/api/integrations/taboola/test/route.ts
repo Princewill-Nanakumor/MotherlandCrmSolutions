@@ -68,10 +68,13 @@ export async function POST(request: NextRequest) {
   const secret = process.env.TABOOLA_WEBHOOK_SECRET?.trim();
   if (secret) {
     try {
-      const healthUrl = `${getTaboolaWebhookUrl()}?secret=${encodeURIComponent(secret)}`;
+      const healthUrl = `${getTaboolaWebhookUrl()}?health=1`;
       const response = await fetch(healthUrl, {
         method: "GET",
         cache: "no-store",
+        headers: {
+          "x-taboola-webhook-secret": secret,
+        },
       });
       webhookReachable = response.ok;
       const body = (await response.json().catch(() => ({}))) as {

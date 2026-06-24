@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/libs/utils";
 import { hasRecentIntentionalSignOut } from "@/lib/sessionUtils";
+import { useAppBranding } from "@/components/AppBrandingProvider";
 
 interface NavItem {
   href: string;
@@ -74,6 +75,7 @@ const mainNavItems: NavItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { displayName } = useAppBranding();
   const { data: session, status } = useSession();
   const router = useRouter();
   const hasSeenAuthenticatedRef = useRef(false);
@@ -157,7 +159,7 @@ export default function Sidebar() {
           <div className="relative w-20 h-20">
             <Image
               src="/motherlandlogo.png"
-              alt="Motherland CRM Solutions Logo"
+              alt={`${displayName} Logo`}
               fill
               sizes="80px"
               className="object-contain"

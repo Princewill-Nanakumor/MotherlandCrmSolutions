@@ -10,6 +10,7 @@ import bcrypt from "bcryptjs";
 import { connectMongoDB } from "./dbConfig";
 import User from "@/models/User";
 import { APP_DISPLAY_NAME } from "@/lib/emailAuthBranding";
+import { isTrustedAppOrigin } from "@/lib/appBranding";
 import { hasActiveEmailVerificationInvite } from "@/lib/authEmailVerificationWindow";
 import {
   CRED_EMAIL_VERIFY_EXPIRED_ADMIN,
@@ -281,12 +282,16 @@ export const authOptions: NextAuthOptions = {
     process.env.NODE_ENV === "production",
   callbacks: {
     async redirect({ url, baseUrl }) {
-      // Ensure we only allow redirects to the same domain
       if (url.startsWith("/")) {
         return `${baseUrl}${url}`;
       }
-      if (new URL(url).origin === baseUrl) {
-        return url;
+      try {
+        const target = new URL(url);
+        if (target.origin === baseUrl || isTrustedAppOrigin(target.origin)) {
+          return url;
+        }
+      } catch {
+        // ignore invalid URLs
       }
       return baseUrl;
     },

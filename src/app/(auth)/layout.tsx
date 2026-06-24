@@ -8,6 +8,7 @@ import Link from "next/link";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
 import { usePathname } from "next/navigation";
+import { useAppBranding } from "@/components/AppBrandingProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,6 +18,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { displayName } = useAppBranding();
   const isHeroAuthPage =
     pathname === "/login" ||
     pathname === "/signup" ||
@@ -50,8 +52,7 @@ export default function AuthLayout({
                     />
                   </div>
                   <div className="text-xl sm:text-2xl font-bold bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
-                    {process.env.NEXT_PUBLIC_APP_NAME?.trim() ||
-                      "Motherland CRM Solutions"}
+                    {displayName}
                   </div>
                 </Link>
               </div>

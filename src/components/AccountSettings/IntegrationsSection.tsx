@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { TaboolaIntegrationGuideModal } from "./TaboolaIntegrationGuideModal";
 
-const TABOOLA_PRODUCTION_ORIGIN = "https://motherlandcrmsolutions.com";
+import { TABOOLA_PRODUCTION_ORIGIN } from "@/lib/integrations/taboolaConfig";
 
 function sanitizeWebhookUrl(url: string): string {
   try {
@@ -593,11 +593,10 @@ export function IntegrationsSection() {
 
         {receivesLeads ? (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
-          Open <strong>View integration guide</strong> for the full API mapping,
-          example request, and setup notes to share with your Taboola manager.
-          Use the auth header{" "}
-          <code className="font-mono">{status.authHeader}</code> with the secret
-          configured on the server (share the secret separately).
+          Share the integration guide with your Taboola manager. All API calls
+          use the auth header{" "}
+          <code className="font-mono">{status.authHeader}</code> with your
+          webhook secret (send the secret value separately, not in the guide).
         </div>
         ) : null}
       </div>

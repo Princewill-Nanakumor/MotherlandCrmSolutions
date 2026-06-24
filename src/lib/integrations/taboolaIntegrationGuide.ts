@@ -3,6 +3,7 @@ export interface TaboolaGuideInput {
   authHeader: string;
   method?: string;
   contentType?: string;
+  statusesUrl?: string;
 }
 
 export function buildTaboolaIntegrationGuide({
@@ -10,74 +11,44 @@ export function buildTaboolaIntegrationGuide({
   authHeader,
   method = "POST",
   contentType = "application/json",
+  statusesUrl,
 }: TaboolaGuideInput): string {
-  const healthCheckUrl = `${webhookUrl}?secret=[WEBHOOK_SECRET]`;
+  const statusEndpointUrl =
+    statusesUrl ?? webhookUrl.replace(/\/leads$/, "/statuses");
+  const leadListUrl = webhookUrl;
+  const healthCheckUrl = `${webhookUrl}?health=1`;
 
-  return `Motherland CRM — Taboola Lead Webhook Integration Guide
+  return `Motherland CRM — Taboola Integration Guide
 
 OVERVIEW
-Configure Taboola to send live leads to Motherland CRM via a POST webhook. Each lead is created in All Leads in the CRM.
+Configure Taboola to send live leads to Motherland CRM and read lead statuses back from the CRM.
 
-ENDPOINT
-URL: ${webhookUrl}
-Method: ${method}
-Content-Type: ${contentType} (preferred)
+BASE URL
+${webhookUrl.replace(/\/api\/integrations\/taboola\/leads$/, "")}
 
-Also supported: application/x-www-form-urlencoded, multipart/form-data.
+AUTHENTICATION (Option 1 — required)
+Every request must include this header:
 
-AUTHENTICATION
-Every request must include the shared webhook secret using ONE of these options:
-
-Option 1 (Taboola default — in JSON body)
-Field: ApiKey
+Header: ${authHeader}
 Value: [WEBHOOK_SECRET]
 
-Option 2 (recommended for manual tests)
-Header: ${authHeader}: [WEBHOOK_SECRET]
-
-Option 3
-Header: Authorization: Bearer [WEBHOOK_SECRET]
-
-Option 4 (health check only)
-Query: ?secret=[WEBHOOK_SECRET]
+Example:
+${authHeader}: [WEBHOOK_SECRET]
 
 Requests without a valid secret receive 401 Unauthorized.
 (Share the actual secret with your Taboola manager separately — it is configured on the CRM server as TABOOLA_WEBHOOK_SECRET.)
 
-FIELD MAPPING (Taboola → CRM)
-Map Taboola form/export fields to these JSON keys:
+INBOUND POSTBACK — SEND LEADS TO CRM
+URL: ${webhookUrl}
+Method: ${method}
+Content-Type: ${contentType}
 
-Taboola field    | JSON key (preferred) | Required              | CRM usage
------------------|----------------------|-----------------------|---------------------------
-FirstName        | FirstName            | Recommended           | Lead first name
-LastName         | LastName             | Recommended           | Lead last name
-Email            | Email                | YES                   | Lead email (required)
-PhoneNumber      | PhoneNumber          | Recommended           | Lead phone
-Country          | Country              | Recommended           | Country filter + All Leads (US/usa/United States → United States)
-Language         | Language             | Optional              | Stored in lead notes
-IP               | IP                   | Optional              | Stored in lead notes
-ClickID          | ClickID              | Strongly recommended  | Deduplication on retries
-Page             | Page                 | Optional              | Lead source + notes
-
-Alternate key names (also accepted, case-insensitive):
-- First name: FirstName, first_name, fname
-- Last name: LastName, last_name, lname
-- Email: Email, e-mail
-- Phone: PhoneNumber, phone, phone_number, mobile
-- Country: Country, country, countrycode, country_code
-- Language: Language, lang
-- IP: IP, ipaddress, ip_address
-- Click ID: ClickID, click_id, click-id
-- Page: Page, funnel, funnelpage, landingpage, url
-- Campaign: CampaignID, campaign_id, campaign, campaigntoken
-
-EXAMPLE REQUEST
+Example request:
 POST ${webhookUrl}
 Content-Type: ${contentType}
 ${authHeader}: [WEBHOOK_SECRET]
 
 {
-  "ApiKey": "[WEBHOOK_SECRET]",
   "FirstName": "John",
   "LastName": "Doe",
   "Email": "john.doe@example.com",
@@ -89,7 +60,7 @@ ${authHeader}: [WEBHOOK_SECRET]
   "Page": "landing-page-v1"
 }
 
-cURL TEST
+cURL test:
 curl -X POST "${webhookUrl}" \\
   -H "Content-Type: ${contentType}" \\
   -H "${authHeader}: [WEBHOOK_SECRET]" \\
@@ -98,61 +69,94 @@ curl -X POST "${webhookUrl}" \\
     "LastName": "Doe",
     "Email": "john.doe@example.com",
     "PhoneNumber": "+1234567890",
+    "Country": "US",
     "Language": "en",
     "IP": "203.0.113.45",
     "ClickID": "abc123xyz",
     "Page": "landing-page-v1"
   }'
 
-RESPONSES
+FIELD MAPPING (Taboola → CRM)
+Taboola field    | JSON key (preferred) | Required              | CRM usage
+-----------------|----------------------|-----------------------|---------------------------
+FirstName        | FirstName            | Recommended           | Lead first name
+LastName         | LastName             | Recommended           | Lead last name
+Email            | Email                | YES                   | Lead email (required)
+PhoneNumber      | PhoneNumber          | Recommended           | Lead phone
+Country          | Country              | Recommended           | Country filter + All Leads
+Language         | Language             | Optional              | Stored in lead notes
+IP               | IP                   | Optional              | Stored in lead notes
+ClickID          | ClickID              | Strongly recommended  | Deduplication + status sync
+Page             | Page                 | Optional              | Lead source + notes
 
+Alternate key names (also accepted, case-insensitive):
+FirstName, first_name, fname | LastName, last_name, lname | Email, e-mail
+PhoneNumber, phone, phone_number, mobile | Country, country, countrycode
+ClickID, click_id, click-id | Page, funnel, landingpage, url
+CampaignID, campaign_id, campaign
+
+INBOUND RESPONSES
 Success — new lead (200):
-{
-  "success": true,
-  "duplicate": false,
-  "message": "Lead created successfully",
-  "lead": { "_id": "...", "firstName": "John", "lastName": "Doe", "email": "john.doe@example.com" }
-}
+{ "success": true, "duplicate": false, "message": "Lead created successfully", "lead": { ... } }
 
 Success — duplicate (200):
-If the same ClickID is sent again, the CRM returns success without creating a duplicate:
+{ "success": true, "duplicate": true, "message": "Lead already received" }
+
+Errors: 401 invalid auth | 400 missing email | 500 server error (safe to retry)
+
+STATUS ENDPOINT — LIST STATUS VALUES
+GET ${statusEndpointUrl}
+${authHeader}: [WEBHOOK_SECRET]
+
+Response:
 {
-  "success": true,
-  "duplicate": true,
-  "message": "Lead already received"
+  "provider": "taboola",
+  "statusField": "status",
+  "values": [
+    { "id": "NEW", "name": "New" },
+    { "id": "...", "name": "Contacted" }
+  ]
 }
 
-Error responses:
-- 401: Missing or invalid webhook secret
-- 400: Missing email or invalid payload
-- 500: Server error (safe to retry)
+FULL LEAD LIST
+GET ${leadListUrl}?page=1&limit=50
+${authHeader}: [WEBHOOK_SECRET]
 
-HEALTH CHECK (optional)
+Incremental sync (new leads + status changes):
+&updatedAfter=2026-06-17T14:00:00.000Z
+
+Returns Taboola leads whose status changed after that time, or new leads
+imported after that time if their status has not changed yet.
+Sort order: most recently updated status first.
+
+GET SINGLE LEAD
+GET ${leadListUrl}/[LEAD_ID]
+${authHeader}: [WEBHOOK_SECRET]
+
+Lookup by CRM id, leadId, or ClickID.
+
+Lead response fields:
+id, leadId, clickId, firstName, lastName, email, phone, country, source
+status.id, status.name, createdAt, updatedAt, statusChangedAt
+
+STATUS FIELD VALUES
+Field name: status
+Built-in values: NEW, CONTACTED, IN_PROGRESS, QUALIFIED, LOST, WON
+Custom statuses may also exist — use the statuses endpoint for the live list.
+Use status.id when syncing programmatically; status.name is the display label.
+
+HEALTH CHECK
 GET ${healthCheckUrl}
+${authHeader}: [WEBHOOK_SECRET]
 
 Expected response:
-{
-  "ok": true,
-  "provider": "taboola",
-  "message": "Taboola lead webhook is ready"
-}
+{ "ok": true, "provider": "taboola", "message": "Taboola lead webhook is ready" }
 
 IMPLEMENTATION NOTES
-1. Email is required — leads without Email are rejected (400).
-2. Send ClickID on every lead — used to dedupe Taboola retries.
-3. Use the production URL only: ${webhookUrl}
-4. POST each lead in real time as it is captured.
-5. Retries are safe on 5xx; duplicates with the same ClickID are handled.
-6. If FirstName is empty, CRM stores "Unknown".
-7. If Country is omitted, CRM may infer country from PhoneNumber (e.g. +1 → United States).
-8. Country names are normalized: US, usa, and United States all store and filter as United States.
-
-CRM DISPLAY AFTER IMPORT
-- FirstName + LastName → All Leads → Name
-- Email → All Leads → Email
-- PhoneNumber → All Leads → Phone
-- Page → All Leads → Source (Taboola - [Page] or Taboola)
-- Country → All Leads → Country + country filter
-- Language, IP, ClickID, Page → Lead details / comments
+1. Always send ClickID on every lead.
+2. Use the production URL only: ${webhookUrl}
+3. POST each lead in real time as it is captured.
+4. Retries are safe on 5xx; duplicates with the same ClickID are handled.
+5. Email is required — leads without Email are rejected (400).
 `;
 }

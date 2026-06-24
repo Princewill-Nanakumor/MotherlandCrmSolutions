@@ -15,6 +15,7 @@ import AdsImageSlider from "@/components/ads/AdsImageSlider";
 import { LeadDetailsSkeleton } from "@/components/dashboardComponents/LeadDetailsSkeleton";
 import { Lead } from "@/types/leads";
 import { useLeadDetails, useUpdateLead } from "@/hooks/useLeadDetails";
+import { useAppBranding } from "@/components/AppBrandingProvider";
 
 // Lead Details Content Component
 const LeadDetailsPageContent = ({
@@ -26,6 +27,7 @@ const LeadDetailsPageContent = ({
   onLeadUpdated: (updatedLead: Lead) => Promise<boolean>;
   onBack: () => void;
 }) => {
+  const { shortName } = useAppBranding();
   const [currentLead, setCurrentLead] = useState<Lead>(lead);
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
@@ -41,9 +43,9 @@ const LeadDetailsPageContent = ({
     if (lead) {
       const fullName = `${lead.firstName || ""} ${lead.lastName || ""}`.trim();
       const leadTitle = fullName || "Lead Details";
-      document.title = `${leadTitle} - Motherland CRM`;
+      document.title = `${leadTitle} - ${shortName}`;
     }
-  }, [lead]);
+  }, [lead, shortName]);
 
   const toggleSection = useCallback((section: string) => {
     setExpandedSections((prev) => ({
@@ -135,6 +137,7 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { shortName } = useAppBranding();
 
   const { id } = use(params);
 
@@ -195,9 +198,9 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
     if (lead) {
       const fullName = `${lead.firstName || ""} ${lead.lastName || ""}`.trim();
       const leadTitle = fullName || "Lead Details";
-      document.title = `${leadTitle} - Motherland CRM`;
+      document.title = `${leadTitle} - ${shortName}`;
     }
-  }, [lead]);
+  }, [lead, shortName]);
 
   // Loading state - using skeleton
   if (status === "loading" || isLoading) {

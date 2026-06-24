@@ -34,9 +34,12 @@ import { isAdminOnlyDashboardPath } from "@/lib/dashboardAdminOnlyPaths";
 import { authDebug } from "@/lib/authDebug";
 import { hasRecentIntentionalSignOut, clearPostSignInHandoff } from "@/lib/sessionUtils";
 import { UserPresenceProvider } from "@/context/UserPresenceContext";
+import { useAppBranding } from "@/components/AppBrandingProvider";
+import { dashboardPageTitle } from "@/lib/appBranding";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { searchQuery, setSearchQuery, isLoading } = useSearchContext();
+  const { shortName } = useAppBranding();
   const { status, data: session } = useSession();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -285,7 +288,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   // Page title mapping
   const getPageTitle = (path: string | null): string | null => {
-    if (!path) return "Motherland CRM - Dashboard";
+    if (!path) return dashboardPageTitle(shortName, "Dashboard");
 
     // Don't set title for lead detail pages (they handle their own titles)
     if (
@@ -310,22 +313,22 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
 
     const titleMap: Record<string, string> = {
-      "/dashboard": "Motherland CRM - Dashboard",
-      "/dashboard/all-leads": "Motherland CRM - All Leads",
-      "/dashboard/leads": "Motherland CRM - My Leads",
-      "/dashboard/import": "Motherland CRM - Import",
-      "/dashboard/users": "Motherland CRM - Users",
-      "/dashboard/settings": "Motherland CRM - Settings",
-      "/dashboard/profile": "Motherland CRM - Profile",
-      "/dashboard/billing": "Motherland CRM - Billing",
-      "/dashboard/subscription": "Motherland CRM - Subscription",
-      "/dashboard/notifications": "Motherland CRM - Notifications",
-      "/dashboard/help": "Motherland CRM - Help",
-      "/dashboard/admin-management": "Motherland CRM - Admin Management",
-      "/dashboard/adsManager": "Motherland CRM - Ads Manager",
+      "/dashboard": dashboardPageTitle(shortName, "Dashboard"),
+      "/dashboard/all-leads": dashboardPageTitle(shortName, "All Leads"),
+      "/dashboard/leads": dashboardPageTitle(shortName, "My Leads"),
+      "/dashboard/import": dashboardPageTitle(shortName, "Import"),
+      "/dashboard/users": dashboardPageTitle(shortName, "Users"),
+      "/dashboard/settings": dashboardPageTitle(shortName, "Settings"),
+      "/dashboard/profile": dashboardPageTitle(shortName, "Profile"),
+      "/dashboard/billing": dashboardPageTitle(shortName, "Billing"),
+      "/dashboard/subscription": dashboardPageTitle(shortName, "Subscription"),
+      "/dashboard/notifications": dashboardPageTitle(shortName, "Notifications"),
+      "/dashboard/help": dashboardPageTitle(shortName, "Help"),
+      "/dashboard/admin-management": dashboardPageTitle(shortName, "Admin Management"),
+      "/dashboard/adsManager": dashboardPageTitle(shortName, "Ads Manager"),
     };
 
-    return titleMap[path] || "Motherland CRM - Dashboard";
+    return titleMap[path] || dashboardPageTitle(shortName, "Dashboard");
   };
 
   // Set page title based on pathname
@@ -349,23 +352,23 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           const currentTitle = document.title;
 
           // Check if current title is a lead name (not a standard page title)
-          // Lead names will be "[FirstName LastName] - Motherland CRM" format
+          const leadTitleSuffix = ` - ${shortName}`;
           const isLeadNameTitle =
-            currentTitle.endsWith(" - Motherland CRM") &&
-            currentTitle !== "Motherland CRM - All Leads" &&
-            currentTitle !== "Motherland CRM - My Leads" &&
-            currentTitle !== "Motherland CRM - Dashboard" &&
-            currentTitle !== "Motherland CRM - Import" &&
-            currentTitle !== "Motherland CRM - Users" &&
-            currentTitle !== "Motherland CRM - Settings" &&
-            currentTitle !== "Motherland CRM - Profile" &&
-            currentTitle !== "Motherland CRM - Billing" &&
-            currentTitle !== "Motherland CRM - Subscription" &&
-            currentTitle !== "Motherland CRM - Notifications" &&
-            currentTitle !== "Motherland CRM - Help" &&
-            currentTitle !== "Motherland CRM - Admin Management" &&
-            currentTitle !== "Motherland CRM - Ads Manager" &&
-            currentTitle !== "Motherland CRM - Payment Details" &&
+            currentTitle.endsWith(leadTitleSuffix) &&
+            currentTitle !== dashboardPageTitle(shortName, "All Leads") &&
+            currentTitle !== dashboardPageTitle(shortName, "My Leads") &&
+            currentTitle !== dashboardPageTitle(shortName, "Dashboard") &&
+            currentTitle !== dashboardPageTitle(shortName, "Import") &&
+            currentTitle !== dashboardPageTitle(shortName, "Users") &&
+            currentTitle !== dashboardPageTitle(shortName, "Settings") &&
+            currentTitle !== dashboardPageTitle(shortName, "Profile") &&
+            currentTitle !== dashboardPageTitle(shortName, "Billing") &&
+            currentTitle !== dashboardPageTitle(shortName, "Subscription") &&
+            currentTitle !== dashboardPageTitle(shortName, "Notifications") &&
+            currentTitle !== dashboardPageTitle(shortName, "Help") &&
+            currentTitle !== dashboardPageTitle(shortName, "Admin Management") &&
+            currentTitle !== dashboardPageTitle(shortName, "Ads Manager") &&
+            currentTitle !== dashboardPageTitle(shortName, "Payment Details") &&
             !currentTitle.includes("Modern CRM Solution");
 
           // If it's a lead name title, don't overwrite it - panel is managing it
