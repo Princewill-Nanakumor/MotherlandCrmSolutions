@@ -4,6 +4,9 @@ import { useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { Activity, Lead } from "@/types/leads";
+import {
+  normalizeLeadStatusId,
+} from "@/lib/leadClientUpdate";
 
 type LeadsData =
   | Lead[]
@@ -92,20 +95,25 @@ export function useLeadStatusMutation({
 
   const replaceLeadInLists = useCallback(
     (leadId: string, replacement: Lead) => {
+      const normalized: Lead = {
+        ...replacement,
+        status: normalizeLeadStatusId(replacement.status),
+      };
       queryClient.setQueriesData<LeadsData>(
         { predicate: (q) => isLeadsListQueryKey(q.queryKey) },
         (oldData) =>
           patchLeadInData(oldData, leadId, (existingLead) => ({
             ...existingLead,
-            ...replacement,
-            lastComment: replacement.lastComment ?? existingLead.lastComment,
+            ...normalized,
+            lastComment: normalized.lastComment ?? existingLead.lastComment,
             lastCommentDate:
-              replacement.lastCommentDate ?? existingLead.lastCommentDate,
-            commentCount: replacement.commentCount ?? existingLead.commentCount,
+              normalized.lastCommentDate ?? existingLead.lastCommentDate,
+            commentCount:
+              normalized.commentCount ?? existingLead.commentCount,
             lastActivityAt:
-              replacement.lastActivityAt ??
+              normalized.lastActivityAt ??
               existingLead.lastActivityAt ??
-              replacement.statusChangedAt ??
+              normalized.statusChangedAt ??
               existingLead.statusChangedAt,
           })),
       );
@@ -149,7 +157,7 @@ export function useLeadStatusMutation({
       });
 
       const previousStatus = lead.status;
-      applyStatusOptimistic(leadId, newStatusId, true);
+      applyStatusOptimistic(leadId, normalizeLeadStatusId(newStatusId), true);
 
       return { previousStatus, leadId, newStatusId };
     },
@@ -225,12 +233,18 @@ export function useLeadStatusMutation({
         exact: false,
       });
 
-      await queryClient.invalidateQueries({
+      // Lists are already patched from the PATCH /status response. Refetching
+      // here can briefly overwrite with stale assigned-leads data on slow networks.
+      queryClient.invalidateQueries({
         predicate: (query) => isLeadsListQueryKey(query.queryKey),
+        refetchType: "none",
       });
 
       if (onLeadUpdated) {
-        onLeadUpdated(updatedLead).catch((err) =>
+        onLeadUpdated({
+          ...updatedLead,
+          status: normalizeLeadStatusId(updatedLead.status),
+        }).catch((err) =>
           console.error("Error notifying parent of status update:", err),
         );
       }

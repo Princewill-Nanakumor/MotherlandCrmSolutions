@@ -16,6 +16,7 @@ import { LeadDetailsSkeleton } from "@/components/dashboardComponents/LeadDetail
 import { Lead } from "@/types/leads";
 import { useLeadDetails, useUpdateLead } from "@/hooks/useLeadDetails";
 import { useAppBranding } from "@/components/AppBrandingProvider";
+import { isStatusOnlyLeadUpdate } from "@/lib/leadClientUpdate";
 
 // Lead Details Content Component
 const LeadDetailsPageContent = ({
@@ -175,6 +176,9 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
 
   const handleLeadUpdated = useCallback(
     async (updatedLead: Lead) => {
+      if (lead && isStatusOnlyLeadUpdate(lead, updatedLead)) {
+        return true;
+      }
       try {
         await updateLeadAsync(updatedLead);
         return true;
@@ -183,7 +187,7 @@ const LeadDetailsPage: React.FC<LeadDetailsPageProps> = ({ params }) => {
         return false;
       }
     },
-    [updateLeadAsync],
+    [lead, updateLeadAsync],
   );
 
   // Handle back navigation - preserve filters

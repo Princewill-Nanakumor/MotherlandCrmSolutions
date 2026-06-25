@@ -19,7 +19,7 @@ import {
   isCredEmailVerifyExpiredAdmin,
 } from "@/lib/credentialsEmailVerifyErrors";
 import { authDebug } from "@/lib/authDebug";
-import { clearSessionExpiryMarkers, fetchServerSessionUserId } from "@/lib/sessionUtils";
+import { clearSessionExpiryMarkers, waitForServerSessionUserId } from "@/lib/sessionUtils";
 
 type LoginInput = z.infer<typeof LoginSchema>;
 
@@ -149,16 +149,8 @@ export default function SignInForm() {
         }
 
         // Wait until the server session cookie is readable (middleware must agree).
-        let confirmed = false;
-        for (let i = 0; i < 10; i += 1) {
-          const serverId = await fetchServerSessionUserId();
-          if (serverId) {
-            confirmed = true;
-            break;
-          }
-          await new Promise((r) => setTimeout(r, 300));
-        }
-        if (!confirmed) {
+        const serverUserId = await waitForServerSessionUserId(20, 300);
+        if (!serverUserId) {
           authDebug("signIn:session-not-confirmed");
           try {
             sessionStorage.removeItem("auth:navigating");

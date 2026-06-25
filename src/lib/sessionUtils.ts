@@ -147,6 +147,19 @@ export function clearSessionExpiryMarkers(): void {
   }
 }
 
+/** Poll until the session cookie is readable on the server (post-login handoff). */
+export async function waitForServerSessionUserId(
+  maxAttempts = 25,
+  delayMs = 400,
+): Promise<string | null> {
+  for (let i = 0; i < maxAttempts; i += 1) {
+    const id = await fetchServerSessionUserId();
+    if (id) return id;
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+  return null;
+}
+
 /** Confirms the session cookie is valid on the server (not just React client cache). */
 export async function fetchServerSessionUserId(): Promise<string | null> {
   if (typeof window === "undefined") return null;

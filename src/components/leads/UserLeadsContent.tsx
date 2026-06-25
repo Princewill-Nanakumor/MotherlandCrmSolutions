@@ -22,6 +22,7 @@ import {
   isPrefixedLeadId,
   normalizeLeadId,
 } from "@/lib/leadId";
+import { isStatusOnlyLeadUpdate } from "@/lib/leadClientUpdate";
 
 export default function UserLeadsContent() {
   const { status } = useSession();
@@ -148,10 +149,18 @@ export default function UserLeadsContent() {
   // Lead update handler with React Query mutation
   const handleLeadUpdated = useCallback(
     async (updatedLead: Lead) => {
+      const originalLead = leads.find((l) => l._id === updatedLead._id);
+
+      if (originalLead && isStatusOnlyLeadUpdate(originalLead, updatedLead)) {
+        if (selectedLead?._id === updatedLead._id) {
+          setSelectedLead(updatedLead);
+        }
+        return true;
+      }
+
       try {
         await updateLead(updatedLead);
 
-        // Update local selected lead state
         if (selectedLead?._id === updatedLead._id) {
           setSelectedLead(updatedLead);
         }
@@ -162,7 +171,7 @@ export default function UserLeadsContent() {
         return false;
       }
     },
-    [updateLead, selectedLead?._id],
+    [updateLead, selectedLead?._id, leads],
   );
 
   // Sort handler - Fixed to provide all required arguments

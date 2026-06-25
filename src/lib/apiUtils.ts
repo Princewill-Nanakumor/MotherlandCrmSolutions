@@ -1,6 +1,6 @@
 // src/lib/apiUtils.ts
 
-import { hasRecentIntentionalSignOut, isLikelyNetworkError } from "@/lib/sessionUtils";
+import { hasRecentIntentionalSignOut, isLikelyNetworkError, isPostSignInHandoff } from "@/lib/sessionUtils";
 
 export type ApiCallOptions = RequestInit & {
   /** Request timeout in ms (default 60000). Retry after 401 uses the same value. */
@@ -133,7 +133,12 @@ export const apiCallWithSessionRefresh = async (
 
       // Session refresh failed with a live server — return to login without
       // implying the JWT expired (e.g. dev server was stopped briefly).
+      // During post-login handoff the dashboard layout owns navigation; do
+      // not hard-redirect here or we destroy a valid cookie mid-handshake.
       if (typeof window !== "undefined") {
+        if (isPostSignInHandoff()) {
+          throw new Error("Please sign in again.");
+        }
         const { pathname, search } = window.location;
         const callbackPath =
           pathname === "/login" ? "/dashboard" : `${pathname}${search}`;

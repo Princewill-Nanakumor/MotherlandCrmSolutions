@@ -150,6 +150,15 @@ function AuthStateHandler() {
 
       if (cancelled) return;
       clearSessionExpiryMarkers();
+      if (typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("expired") === "true") {
+          urlParams.delete("expired");
+          const qs = urlParams.toString();
+          const nextUrl = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash ?? ""}`;
+          window.history.replaceState({}, "", nextUrl);
+        }
+      }
       setSessionCleanupDone(true);
     })();
 

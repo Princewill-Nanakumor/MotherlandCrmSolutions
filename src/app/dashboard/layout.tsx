@@ -32,7 +32,7 @@ import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { isAdminOnlyDashboardPath } from "@/lib/dashboardAdminOnlyPaths";
 import { authDebug } from "@/lib/authDebug";
-import { hasRecentIntentionalSignOut, clearPostSignInHandoff } from "@/lib/sessionUtils";
+import { hasRecentIntentionalSignOut, clearPostSignInHandoff, isPostSignInHandoff, waitForServerSessionUserId } from "@/lib/sessionUtils";
 import { UserPresenceProvider } from "@/context/UserPresenceContext";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { dashboardPageTitle } from "@/lib/appBranding";
@@ -196,6 +196,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   // Check if session has expired using session.expires (set from token.exp in auth callback)
   useEffect(() => {
     if (status !== "authenticated" || !session?.expires) return;
+    if (isPostSignInHandoff()) return;
 
     const checkExpiration = () => {
       const now = new Date();
@@ -409,16 +410,18 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
      * race the user never had a session here — bouncing them with
      * `?expired=true` would surface a misleading "Session Expired" toast.
      */
-    const redirectToLogin = (markExpired: boolean) => {
+    const redirectToLogin = (
+      markExpired: boolean,
+      options?: { signOut?: boolean },
+    ) => {
       if (redirectingDueToExpiryRef.current) return;
       redirectingDueToExpiryRef.current = true;
       authDebug("dashboard:redirectToLogin", {
         markExpired,
+        signOut: options?.signOut ?? markExpired,
         pathname,
         hasSeenAuthenticated: hasSeenAuthenticatedRef.current,
-        postSignInHandoff:
-          typeof window !== "undefined" &&
-          sessionStorage.getItem("auth:navigating") === "1",
+        postSignInHandoff: isPostSignInHandoff(),
       });
       if (markExpired) {
         localStorage.setItem("sessionExpired", "true");
@@ -432,7 +435,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       if (markExpired) params.set("expired", "true");
       params.set("callbackUrl", callbackPath);
       const loginUrl = `/login?${params.toString()}`;
-      void signOutWithoutInterstitial(loginUrl, router);
+      const shouldSignOut = options?.signOut ?? markExpired;
+      if (shouldSignOut) {
+        void signOutWithoutInterstitial(loginUrl, router);
+        return;
+      }
+      clearPostSignInHandoff();
+      router.replace(loginUrl);
     };
 
     // Manual logout happened in this or another tab:
@@ -452,29 +461,28 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
 
     if (navigatingAfterSignIn) {
-      if (unauthRedirectTimerRef.current) {
-        clearTimeout(unauthRedirectTimerRef.current);
-      }
-      unauthRedirectTimerRef.current = setTimeout(() => {
-        void (async () => {
-          let confirmedSession = await getSession();
-          if (!confirmedSession?.user?.id) {
-            await new Promise((r) => setTimeout(r, 900));
-            confirmedSession = await getSession();
-          }
-          if (confirmedSession?.user?.id) {
-            clearPostSignInHandoff();
-            return;
-          }
-          // Hand-off failure (cookie never propagated) — NOT an expiry.
-          redirectToLogin(false);
-        })();
-      }, 2400);
-      return () => {
-        if (unauthRedirectTimerRef.current) {
-          clearTimeout(unauthRedirectTimerRef.current);
-          unauthRedirectTimerRef.current = null;
+      let cancelled = false;
+
+      void (async () => {
+        const serverUserId = await waitForServerSessionUserId(25, 400);
+        if (cancelled) return;
+
+        if (serverUserId) {
+          clearPostSignInHandoff();
+          redirectingDueToExpiryRef.current = false;
+          const confirmedSession = await getSession();
+          if (confirmedSession?.user?.id) return;
+          await getSession();
+          return;
         }
+
+        // Cookie never appeared — send to login without signOut (would be a no-op
+        // anyway) so we do not race against a slow-but-valid session cookie.
+        redirectToLogin(false, { signOut: false });
+      })();
+
+      return () => {
+        cancelled = true;
       };
     }
 
