@@ -27,6 +27,7 @@ import {
   evaluateCaptchaCookie,
 } from "@/lib/serverCaptcha";
 import { getCookieHeaderFromNextAuthReq } from "@/lib/nextAuthCookieHeader";
+import { extractLoginInfoWithGeo } from "@/lib/loginInfo";
 import { getSuperAdminEmails } from "@/lib/notificationQuery";
 import type { JWT } from "next-auth/jwt";
 
@@ -227,10 +228,18 @@ export const authOptions: NextAuthOptions = {
             throw new Error(captchaUserMessage("replay"));
           }
 
-          // Update last login time
+          // Update last login time and capture login context (device, OS, geo).
+          const loginInfo = await extractLoginInfoWithGeo(
+            (req as { headers?: unknown } | undefined)?.headers,
+          );
           await User.updateOne(
             { _id: user._id },
-            { $set: { lastLogin: new Date() } },
+            {
+              $set: {
+                lastLogin: loginInfo.at ?? new Date(),
+                lastLoginInfo: loginInfo,
+              },
+            },
           );
 
           const rememberMe =

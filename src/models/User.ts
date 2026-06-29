@@ -12,6 +12,8 @@ export interface IUser extends Document {
   lastName: string;
   email: string;
   password: string;
+  /** AES-GCM encrypted copy of an AGENT's password so the owning admin can recover it. Never stored for admins. */
+  recoverablePassword?: string;
   phoneNumber: string;
   country: string;
   role: "ADMIN" | "AGENT";
@@ -20,6 +22,17 @@ export interface IUser extends Document {
   adminId?: mongoose.Types.ObjectId; // For multi-tenancy - AGENT users have adminId, ADMIN users don't
   createdBy?: mongoose.Types.ObjectId; // For AGENT users, this is their admin
   lastLogin?: Date;
+  /** Context captured on the most recent successful login (device, OS, geo). */
+  lastLoginInfo?: {
+    ip?: string;
+    country?: string;
+    countryCode?: string;
+    device?: string;
+    os?: string;
+    browser?: string;
+    userAgent?: string;
+    at?: Date;
+  };
 
   // Email verification fields
   emailVerified?: boolean;
@@ -74,6 +87,10 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: true,
     },
+    recoverablePassword: {
+      type: String,
+      select: false,
+    },
     phoneNumber: {
       type: String,
       trim: true,
@@ -108,6 +125,22 @@ const userSchema = new Schema<IUser>(
     },
     lastLogin: {
       type: Date,
+    },
+    lastLoginInfo: {
+      type: new Schema(
+        {
+          ip: { type: String },
+          country: { type: String },
+          countryCode: { type: String },
+          device: { type: String },
+          os: { type: String },
+          browser: { type: String },
+          userAgent: { type: String },
+          at: { type: Date },
+        },
+        { _id: false },
+      ),
+      default: undefined,
     },
 
     // Email verification fields
@@ -197,6 +230,7 @@ function stripAuthSecretsFromLean(
   ret: Record<string, unknown>,
 ): void {
   delete ret.password;
+  delete ret.recoverablePassword;
   delete ret.verificationToken;
   delete ret.verificationExpires;
   delete ret.consumedVerificationTokenHash;

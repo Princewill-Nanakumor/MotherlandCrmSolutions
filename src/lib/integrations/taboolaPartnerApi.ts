@@ -47,7 +47,7 @@ export async function getTaboolaStatusValues(
   const customStatuses = await Status.find({ adminId: adminObjectId })
     .sort({ createdAt: 1 })
     .select({ name: 1 })
-    .lean();
+    .lean<Array<{ _id: mongoose.Types.ObjectId; name: string }>>();
 
   const values: Array<{ id: string; name: string }> = customStatuses.map(
     (status) => ({
@@ -92,7 +92,7 @@ async function resolveStatusLabel(
       adminId,
     })
       .select({ name: 1 })
-      .lean();
+      .lean<{ name: string } | null>();
 
     if (status) {
       return { id: statusId, name: status.name };

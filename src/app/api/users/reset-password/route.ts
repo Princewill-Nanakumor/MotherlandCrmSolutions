@@ -6,6 +6,7 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import User from "@/models/User";
 import { PasswordUpdateSchema } from "@/schemas";
 import { unauthorizedResponse } from "@/lib/apiResponses";
+import { encryptRecoverablePassword } from "@/lib/passwordRecovery";
 
 export async function PUT(req: NextRequest) {
   try {
@@ -66,6 +67,13 @@ export async function PUT(req: NextRequest) {
 
     const hashed = await bcrypt.hash(newPassword, 10);
     user.password = hashed;
+    // Keep the admin-recoverable copy in sync for agents (no-op for admins).
+    if (user.role === "AGENT") {
+      const recoverable = encryptRecoverablePassword(newPassword);
+      if (recoverable) {
+        user.recoverablePassword = recoverable;
+      }
+    }
     await user.save();
 
     return NextResponse.json({ message: "Password updated successfully" });

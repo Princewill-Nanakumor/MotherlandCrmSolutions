@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import { executeDbOperation, withDatabase } from "@/libs/dbConfig";
+import { encryptRecoverablePassword } from "@/lib/passwordRecovery";
 import {
   SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
 } from "@/lib/subscriptionPlanCatalog";
@@ -162,14 +163,19 @@ export async function createUserForAdmin(
     const db = mongoose.connection.db;
     if (!db) throw new Error("Database connection not available");
     const hashedPassword = await bcrypt.hash(data.password, 10);
+    const role = data.role || "AGENT";
+    // Only agents get a recoverable copy so the owning admin can re-share it.
+    const recoverablePassword =
+      role === "AGENT" ? encryptRecoverablePassword(data.password) : null;
     return db.collection("users").insertOne({
       firstName: data.firstName,
       lastName: data.lastName,
       email: normalizedEmail,
       password: hashedPassword,
+      ...(recoverablePassword ? { recoverablePassword } : {}),
       phoneNumber: data.phoneNumber,
       country: data.country,
-      role: data.role || "AGENT",
+      role,
       status: data.status || "ACTIVE",
       permissions: data.permissions || [],
       adminId,

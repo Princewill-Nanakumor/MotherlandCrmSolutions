@@ -1,10 +1,31 @@
 // src/components/user-management/UserDetailsView.tsx
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { User, Mail, Phone, MapPin, Shield, Calendar, Lock, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Shield,
+  Calendar,
+  Lock,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Copy,
+  Check,
+  Globe,
+  Monitor,
+  MonitorCog,
+  Clock,
+} from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAgentPassword } from "@/hooks/useAgentPassword";
+import { useUserLoginInfo } from "@/hooks/useUserLoginInfo";
 
 interface User {
   id: string;
@@ -72,6 +93,211 @@ const getStatusDisplayName = (status: string) => {
       return status;
   }
 };
+
+function AgentPasswordSection({ userId }: { userId: string }) {
+  const [requested, setRequested] = useState(false);
+  const [reveal, setReveal] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const { data, isLoading, isError, error } = useAgentPassword(
+    userId,
+    requested,
+  );
+
+  const handleShow = () => {
+    setRequested(true);
+    setReveal(true);
+  };
+
+  const handleCopy = async () => {
+    if (!data?.available) return;
+    try {
+      await navigator.clipboard.writeText(data.password);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard may be unavailable */
+    }
+  };
+
+  return (
+    <div className="flex items-start gap-3">
+      <div className="p-2 mt-1 rounded-lg bg-rose-100 dark:bg-rose-900/30">
+        <KeyRound className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+      </div>
+      <div className="flex-1">
+        <p className="text-sm text-gray-500! dark:text-gray-400! mb-2">
+          Login Password
+        </p>
+
+        {!requested && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleShow}
+            className="flex items-center gap-2 dark:text-white dark:border-gray-600"
+          >
+            <Eye className="w-4 h-4" />
+            Show password
+          </Button>
+        )}
+
+        {requested && isLoading && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-20" />
+          </div>
+        )}
+
+        {requested && !isLoading && data?.available && (
+          <div className="flex flex-wrap items-center gap-2">
+            <code className="px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/60 text-sm font-mono text-gray-900! dark:text-white! break-all">
+              {reveal ? data.password : "•".repeat(data.password.length || 8)}
+            </code>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setReveal((p) => !p)}
+              className="flex items-center gap-1.5 dark:text-white dark:border-gray-600"
+            >
+              {reveal ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+              {reveal ? "Hide" : "Show"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 dark:text-white dark:border-gray-600"
+            >
+              {copied ? (
+                <Check className="w-4 h-4 text-green-600" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+              {copied ? "Copied" : "Copy"}
+            </Button>
+          </div>
+        )}
+
+        {requested && !isLoading && data && !data.available && (
+          <p className="text-sm text-amber-600 dark:text-amber-400">
+            {data.message}
+          </p>
+        )}
+
+        {requested && !isLoading && isError && (
+          <p className="text-sm text-red-500 dark:text-red-400">
+            {error?.message || "Failed to load password. Please try again."}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LoginInfoItem({
+  icon,
+  iconWrapClass,
+  label,
+  value,
+  isLoading,
+}: {
+  icon: React.ReactNode;
+  iconWrapClass: string;
+  label: string;
+  value?: string | null;
+  isLoading: boolean;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className={`p-2 mt-1 rounded-lg ${iconWrapClass}`}>{icon}</div>
+      <div className="flex-1">
+        <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+        {isLoading ? (
+          <Skeleton className="h-5 w-32 mt-1" />
+        ) : (
+          <p className="text-base font-medium text-gray-900! dark:text-white!">
+            {value || "Not available"}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LoginInfoSection({
+  userId,
+  fallbackLastLogin,
+}: {
+  userId: string;
+  fallbackLastLogin?: string;
+}) {
+  const { data, isLoading } = useUserLoginInfo(userId, true);
+
+  const info = data?.loginInfo;
+  const lastLoginTime = data?.lastLogin ?? fallbackLastLogin;
+
+  return (
+    <div className="space-y-4">
+      <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b dark:text-white!">
+        Login Information
+      </h3>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <LoginInfoItem
+          icon={<Clock className="w-5 h-5 text-sky-600 dark:text-sky-400" />}
+          iconWrapClass="bg-sky-100 dark:bg-sky-900/30"
+          label="Last Login"
+          value={formatDate(lastLoginTime)}
+          isLoading={isLoading}
+        />
+        <LoginInfoItem
+          icon={<Globe className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
+          iconWrapClass="bg-teal-100 dark:bg-teal-900/30"
+          label="Country"
+          value={info?.country}
+          isLoading={isLoading}
+        />
+        <LoginInfoItem
+          icon={
+            <Monitor className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+          }
+          iconWrapClass="bg-violet-100 dark:bg-violet-900/30"
+          label="Device"
+          value={
+            info
+              ? [info.device, info.browser].filter(Boolean).join(" · ") || null
+              : null
+          }
+          isLoading={isLoading}
+        />
+        <LoginInfoItem
+          icon={
+            <MonitorCog className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+          }
+          iconWrapClass="bg-rose-100 dark:bg-rose-900/30"
+          label="Operating System"
+          value={info?.os}
+          isLoading={isLoading}
+        />
+      </div>
+
+      {!isLoading && !info && (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Detailed login information will appear here after this user&apos;s next
+          sign-in.
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function UserDetailsView({
   user,
@@ -148,6 +374,13 @@ export function UserDetailsView({
               </p>
             </div>
           </div>
+
+          {/* Agent Password - Only visible to admins, only for agents */}
+          {isAdmin && user.role === "AGENT" && (
+            <div className="md:col-span-2">
+              <AgentPasswordSection userId={user.id} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -203,21 +436,6 @@ export function UserDetailsView({
               </p>
               <p className="text-base font-medium text-gray-900! dark:text-white!">
                 {formatDate(user.createdAt)}
-              </p>
-            </div>
-          </div>
-
-          {/* Last Login */}
-          <div className="flex items-start gap-3">
-            <div className="p-2 mt-1 bg-yellow-100 rounded-lg dark:bg-yellow-900/30">
-              <Calendar className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Last Login
-              </p>
-              <p className="text-base font-medium text-gray-900! dark:text-white!">
-                {formatDate(user.lastLogin)}
               </p>
             </div>
           </div>
@@ -293,6 +511,11 @@ export function UserDetailsView({
           )}
         </div>
       </div>
+
+      {/* Login Information - Only visible to admins */}
+      {isAdmin && (
+        <LoginInfoSection userId={user.id} fallbackLastLogin={user.lastLogin} />
+      )}
 
       {/* Permissions */}
       {user.permissions && user.permissions.length > 0 && (

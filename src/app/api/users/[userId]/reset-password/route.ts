@@ -6,6 +6,7 @@ import { authOptions } from "@/libs/auth";
 import bcrypt from "bcryptjs";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { invalidatePasswordChangedAtCache } from "@/lib/authPasswordVersion";
+import { encryptRecoverablePassword } from "@/lib/passwordRecovery";
 
 function extractUserIdFromUrl(urlString: string): string {
   const url = new URL(urlString);
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
     await connectMongoDB();
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const recoverablePassword = encryptRecoverablePassword(password);
 
     // Build query with multi-tenancy filter
     const query: { _id: string; createdBy?: string } = {
@@ -47,15 +49,19 @@ export async function POST(request: Request) {
     query.createdBy = session.user.id;
 
     const now = new Date();
-    const user = await User.findOneAndUpdate(
-      query,
-      {
-        password: hashedPassword,
-        passwordChangedAt: now,
-        updatedAt: now,
-      },
-      { new: true }
-    );
+    const updatePayload: Record<string, unknown> = {
+      password: hashedPassword,
+      passwordChangedAt: now,
+      updatedAt: now,
+    };
+    // Keep the recoverable copy in sync (agents are the only ones created via this flow).
+    if (recoverablePassword) {
+      updatePayload.recoverablePassword = recoverablePassword;
+    }
+
+    const user = await User.findOneAndUpdate(query, updatePayload, {
+      new: true,
+    });
 
     // Fix any email casing mismatch from raw MongoDB inserts
     if (user && user.email !== user.email.toLowerCase()) {
