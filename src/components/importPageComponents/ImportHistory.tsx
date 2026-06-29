@@ -2,15 +2,21 @@
 import { ImportHistoryItem } from "@/types/import";
 import { formatDistanceToNow, format } from "date-fns";
 import { Trash2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ImportHistoryProps {
   imports: ImportHistoryItem[];
   onDelete: (id: string) => void;
+  isLoading?: boolean;
 }
+
+const SKELETON_ROW_COUNT = 5;
+const SKELETON_COLUMN_COUNT = 8;
 
 export const ImportHistory: React.FC<ImportHistoryProps> = ({
   imports,
   onDelete,
+  isLoading = false,
 }) => {
   const getItemId = (item: ImportHistoryItem): string => {
     return item._id?.toString() || item.id || item.timestamp.toString();
@@ -49,7 +55,22 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200 rounded dark:bg-gray-800 dark:divide-gray-700">
-          {imports.length > 0 ? (
+          {isLoading ? (
+            Array.from({ length: SKELETON_ROW_COUNT }).map((_, rowIndex) => (
+              <tr key={`skeleton-${rowIndex}`}>
+                {Array.from({ length: SKELETON_COLUMN_COUNT }).map(
+                  (_, colIndex) => (
+                    <td
+                      key={`skeleton-${rowIndex}-${colIndex}`}
+                      className="px-6 py-4 whitespace-nowrap"
+                    >
+                      <Skeleton className="h-4 w-full" />
+                    </td>
+                  ),
+                )}
+              </tr>
+            ))
+          ) : imports.length > 0 ? (
             imports.map((importItem) => {
               const dateTime = formatDateTime(importItem.timestamp);
               return (

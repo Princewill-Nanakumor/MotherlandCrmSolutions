@@ -23,6 +23,7 @@ export const ImportManager = () => {
     showModal,
     activeTab,
     importHistory,
+    isInitialLoading,
     missingFields,
     importLimitExceeded,
     setError,
@@ -86,6 +87,7 @@ export const ImportManager = () => {
             importHistory={importHistory}
             onDelete={handleDeleteImport}
             activeTab={activeTab}
+            isLoading={isInitialLoading}
           />
 
           {/* Modal */}
