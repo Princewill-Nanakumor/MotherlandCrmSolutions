@@ -5,6 +5,8 @@ import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 
 export interface UserLoginInfo {
   ip: string | null;
+  city: string | null;
+  region: string | null;
   country: string | null;
   countryCode: string | null;
   device: string | null;

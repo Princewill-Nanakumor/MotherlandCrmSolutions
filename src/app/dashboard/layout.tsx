@@ -19,6 +19,7 @@ import { ToggleProvider } from "@/context/ToggleContext";
 import ReminderNotifications from "@/components/notifications/ReminderNotifications";
 import { Toaster } from "@/components/ui/toaster";
 import { SelectedLeadsBanner } from "@/components/dashboardComponents/SelectedLeadsBanner";
+import { UpdateAvailableBanner } from "@/components/UpdateAvailableBanner";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 import {
   disconnectAblyRealtimeClient,
@@ -557,6 +558,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           <Footer />
           <ReminderNotifications />
           <Toaster />
+          <UpdateAvailableBanner />
         </div>
       </div>
     </ToggleProvider>

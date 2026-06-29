@@ -14,6 +14,8 @@ interface LoginInfoUser {
   lastLogin?: Date;
   lastLoginInfo?: {
     ip?: string;
+    city?: string;
+    region?: string;
     country?: string;
     countryCode?: string;
     device?: string;
@@ -79,6 +81,8 @@ export async function GET(
       loginInfo: info
         ? {
             ip: info.ip ?? null,
+            city: info.city ?? null,
+            region: info.region ?? null,
             country: info.country ?? null,
             countryCode: info.countryCode ?? null,
             device: info.device ?? null,

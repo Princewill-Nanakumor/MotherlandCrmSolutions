@@ -25,6 +25,8 @@ export interface IUser extends Document {
   /** Context captured on the most recent successful login (device, OS, geo). */
   lastLoginInfo?: {
     ip?: string;
+    city?: string;
+    region?: string;
     country?: string;
     countryCode?: string;
     device?: string;
@@ -130,6 +132,8 @@ const userSchema = new Schema<IUser>(
       type: new Schema(
         {
           ip: { type: String },
+          city: { type: String },
+          region: { type: String },
           country: { type: String },
           countryCode: { type: String },
           device: { type: String },

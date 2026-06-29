@@ -5,8 +5,22 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// A stable identifier for this build. Prefer the git commit (set by Vercel),
+// fall back to a generic env, then to a timestamp for local builds. Inlined
+// into both the client and server bundles so the running app can detect when a
+// newer deployment is live and prompt the user to reload.
+const buildId =
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.NEXT_PUBLIC_BUILD_ID ||
+  process.env.SOURCE_VERSION ||
+  String(Date.now());
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    NEXT_PUBLIC_BUILD_ID: buildId,
+  },
+  generateBuildId: async () => buildId,
   // Set output file tracing root to silence multiple lockfiles warning
   outputFileTracingRoot: path.join(__dirname),
   images: {

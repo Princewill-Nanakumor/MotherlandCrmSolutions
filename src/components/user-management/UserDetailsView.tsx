@@ -244,6 +244,16 @@ function LoginInfoSection({
   const info = data?.loginInfo;
   const lastLoginTime = data?.lastLogin ?? fallbackLastLogin;
 
+  const location = info
+    ? Array.from(
+        new Set(
+          [info.city, info.region, info.country].filter(
+            (part): part is string => Boolean(part),
+          ),
+        ),
+      ).join(", ") || null
+    : null;
+
   return (
     <div className="space-y-4">
       <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b dark:text-white!">
@@ -261,8 +271,8 @@ function LoginInfoSection({
         <LoginInfoItem
           icon={<Globe className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
           iconWrapClass="bg-teal-100 dark:bg-teal-900/30"
-          label="Country"
-          value={info?.country}
+          label="Location"
+          value={location}
           isLoading={isLoading}
         />
         <LoginInfoItem

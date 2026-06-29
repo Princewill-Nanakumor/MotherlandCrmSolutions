@@ -4,6 +4,8 @@
 
 export interface LoginInfo {
   ip?: string;
+  city?: string; // e.g. "London"
+  region?: string; // State/region, e.g. "England"
   country?: string; // Full country name when resolvable, otherwise the raw code
   countryCode?: string;
   device?: string; // "Desktop" | "Mobile" | "Tablet"
@@ -58,10 +60,27 @@ function regionNameFromCode(code: string): string | undefined {
   }
 }
 
-function parseCountry(headers: unknown): {
+interface GeoInfo {
+  city?: string;
+  region?: string;
   country?: string;
   countryCode?: string;
-} {
+}
+
+/**
+ * Header values are sometimes percent-encoded (e.g. Vercel's
+ * `x-vercel-ip-city` for "New%20York"). Decode defensively.
+ */
+function decodeHeaderValue(value?: string): string | undefined {
+  if (!value) return undefined;
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function parseGeoFromHeaders(headers: unknown): GeoInfo {
   // Vercel, Cloudflare, common proxies.
   const code =
     readHeader(headers, "x-vercel-ip-country") ||
@@ -71,7 +90,20 @@ function parseCountry(headers: unknown): {
 
   if (code && code !== "XX") {
     const upper = code.trim().toUpperCase();
-    return { countryCode: upper, country: regionNameFromCode(upper) || upper };
+    return {
+      city: decodeHeaderValue(
+        readHeader(headers, "x-vercel-ip-city") ||
+          readHeader(headers, "cf-ipcity") ||
+          readHeader(headers, "x-geo-city"),
+      ),
+      region: decodeHeaderValue(
+        readHeader(headers, "x-vercel-ip-country-region") ||
+          readHeader(headers, "cf-region") ||
+          readHeader(headers, "x-geo-region"),
+      ),
+      countryCode: upper,
+      country: regionNameFromCode(upper) || upper,
+    };
   }
 
   // Netlify ships geo as a base64-encoded JSON blob.
@@ -80,11 +112,17 @@ function parseCountry(headers: unknown): {
     try {
       const decoded = JSON.parse(
         Buffer.from(nfGeo, "base64").toString("utf-8"),
-      ) as { country?: { code?: string; name?: string } };
+      ) as {
+        city?: string;
+        subdivision?: { code?: string; name?: string };
+        country?: { code?: string; name?: string };
+      };
       const nfCode = decoded.country?.code;
       const nfName = decoded.country?.name;
-      if (nfCode || nfName) {
+      if (nfCode || nfName || decoded.city) {
         return {
+          city: decoded.city,
+          region: decoded.subdivision?.name || decoded.subdivision?.code,
           countryCode: nfCode?.toUpperCase(),
           country:
             nfName ||
@@ -123,17 +161,16 @@ function isPublicIp(ip?: string): ip is string {
 }
 
 /**
- * Resolves a country from a public IP using a free, key-less geolocation API.
- * Returns undefined on any failure/timeout so login is never blocked.
+ * Resolves city/region/country from a public IP using a free, key-less
+ * geolocation API. Returns undefined on any failure/timeout so login is never
+ * blocked.
  */
-async function resolveCountryFromIp(
-  ip: string,
-): Promise<{ country?: string; countryCode?: string } | undefined> {
+async function resolveGeoFromIp(ip: string): Promise<GeoInfo | undefined> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 2500);
   try {
     const res = await fetch(
-      `https://ipwho.is/${encodeURIComponent(ip)}?fields=success,country,country_code`,
+      `https://ipwho.is/${encodeURIComponent(ip)}?fields=success,country,country_code,region,city`,
       { signal: controller.signal, cache: "no-store" },
     );
     if (!res.ok) return undefined;
@@ -141,13 +178,20 @@ async function resolveCountryFromIp(
       success?: boolean;
       country?: string;
       country_code?: string;
+      region?: string;
+      city?: string;
     };
     if (!data?.success) return undefined;
     const code = data.country_code?.toUpperCase();
     const name =
       data.country || (code ? regionNameFromCode(code) || code : undefined);
-    if (!name && !code) return undefined;
-    return { country: name, countryCode: code };
+    if (!name && !code && !data.city && !data.region) return undefined;
+    return {
+      city: data.city || undefined,
+      region: data.region || undefined,
+      country: name,
+      countryCode: code,
+    };
   } catch {
     return undefined;
   } finally {
@@ -189,12 +233,14 @@ function parseDevice(ua: string): string {
  */
 export function extractLoginInfo(headers: unknown): LoginInfo {
   const userAgent = readHeader(headers, "user-agent") || "";
-  const { country, countryCode } = parseCountry(headers);
+  const geo = parseGeoFromHeaders(headers);
 
   return {
     ip: parseClientIp(headers),
-    country,
-    countryCode,
+    city: geo.city,
+    region: geo.region,
+    country: geo.country,
+    countryCode: geo.countryCode,
     device: parseDevice(userAgent),
     os: parseOs(userAgent),
     browser: parseBrowser(userAgent),
@@ -204,20 +250,26 @@ export function extractLoginInfo(headers: unknown): LoginInfo {
 }
 
 /**
- * Like {@link extractLoginInfo}, but when the host provides no geo header it
- * falls back to an IP-based geolocation lookup (public IPs only). Use this on
- * the server login path where a brief async lookup is acceptable.
+ * Like {@link extractLoginInfo}, but enriches the location with an IP-based
+ * geolocation lookup (public IPs only) so we get city/region in addition to
+ * country. The lookup runs whenever any location field is missing and prefers
+ * its richer values (full region names) over partial header data, while keeping
+ * header values as a fallback if the lookup fails. Use this on the server login
+ * path where a brief async lookup is acceptable.
  */
 export async function extractLoginInfoWithGeo(
   headers: unknown,
 ): Promise<LoginInfo> {
   const info = extractLoginInfo(headers);
 
-  if (!info.country && isPublicIp(info.ip)) {
-    const resolved = await resolveCountryFromIp(info.ip);
-    if (resolved) {
-      info.country = resolved.country;
-      info.countryCode = resolved.countryCode;
+  const needsLookup = !info.city || !info.region || !info.country;
+  if (needsLookup && isPublicIp(info.ip)) {
+    const geo = await resolveGeoFromIp(info.ip);
+    if (geo) {
+      info.city = geo.city ?? info.city;
+      info.region = geo.region ?? info.region;
+      info.country = geo.country ?? info.country;
+      info.countryCode = geo.countryCode ?? info.countryCode;
     }
   }
 
