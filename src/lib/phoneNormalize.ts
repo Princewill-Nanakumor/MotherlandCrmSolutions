@@ -1,5 +1,5 @@
 import type { CountryCode } from "libphonenumber-js";
-import { parsePhoneNumberFromString } from "libphonenumber-js";
+import { getCountryCallingCode, parsePhoneNumberFromString } from "libphonenumber-js";
 import { countryOptions } from "@/components/authComponents/CountryData";
 
 function toRegionCode(input: string | null | undefined): CountryCode | undefined {
@@ -42,6 +42,25 @@ export function normalizePhoneToE164(
   }
 
   const region = toRegionCode(countryHint);
+  const digitsOnly = trimmed.replace(/[^\d]/g, "");
+
+  // Some imports contain international numbers without the "+" prefix
+  // (e.g. "491701234567" for DE). If we parse those as national numbers with
+  // a country hint, libphonenumber can produce duplicated country code
+  // ("+4949..."). Detect and normalize these as international first.
+  if (region && digitsOnly) {
+    try {
+      const callingCode = getCountryCallingCode(region);
+      if (digitsOnly.startsWith(callingCode)) {
+        const parsedAsInternational = parsePhoneNumberFromString(`+${digitsOnly}`);
+        if (parsedAsInternational?.isValid()) {
+          return parsedAsInternational.format("E.164");
+        }
+      }
+    } catch {
+      // Ignore invalid region/calling-code lookups and continue normal flow.
+    }
+  }
 
   let parsed = parsePhoneNumberFromString(trimmed);
   if ((!parsed || !parsed.isValid()) && region) {
@@ -55,8 +74,8 @@ export function normalizePhoneToE164(
     return parsed.format("E.164");
   }
 
-  const digitsOnly = trimmed.replace(/[^\d+]/g, "");
-  if (digitsOnly.startsWith("+")) return digitsOnly;
+  const fallbackClean = trimmed.replace(/[^\d+]/g, "");
+  if (fallbackClean.startsWith("+")) return fallbackClean;
   return trimmed;
 }
 
