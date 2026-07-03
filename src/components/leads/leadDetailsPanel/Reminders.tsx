@@ -6,6 +6,11 @@ import { Plus } from "lucide-react";
 import { stopNotificationSound, alarmSound } from "@/lib/notificationSound";
 import { Button } from "@/components/ui/button";
 import { Reminder } from "@/types/leads";
+import {
+  formatLocalDateYmd,
+  formatLocalTimeHm,
+  isReminderDue,
+} from "@/lib/reminderDueAt";
 import ReminderForm from "./ReminderForm";
 import RemindersList from "./RemindersList";
 
@@ -20,6 +25,7 @@ interface RemindersProps {
     reminderTime: string;
     type: string;
     soundEnabled: boolean;
+    timezone: string;
   }) => void;
   onUpdateReminder: (reminderId: string, updates: Partial<Reminder>) => void;
   onDeleteReminder: (reminderId: string) => void;
@@ -43,9 +49,10 @@ const Reminders: FC<RemindersProps> = ({
   // Helper function to get current date and time in the correct format
   const getCurrentDateTime = () => {
     const now = new Date();
-    const date = now.toISOString().split("T")[0]; // YYYY-MM-DD format
-    const time = now.toTimeString().slice(0, 5); // HH:MM format
-    return { date, time };
+    return {
+      date: formatLocalDateYmd(now),
+      time: formatLocalTimeHm(now),
+    };
   };
 
   const [formData, setFormData] = useState<{
@@ -85,6 +92,7 @@ const Reminders: FC<RemindersProps> = ({
       reminderTime: formData.reminderTime,
       type: formData.type as "CALL" | "EMAIL" | "TASK" | "MEETING",
       soundEnabled: formData.soundEnabled,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
 
     if (editingId) {
@@ -141,15 +149,24 @@ const Reminders: FC<RemindersProps> = ({
     });
   };
 
-  const isReminderDue = (reminder: Reminder) => {
+  const isReminderDueNow = (reminder: Reminder) => {
     const now = new Date();
-    const reminderDate = new Date(reminder.reminderDate);
-    const [hours, minutes] = reminder.reminderTime.split(":");
-
-    const reminderDateTime = new Date(reminderDate);
-    reminderDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-
-    return reminderDateTime <= now && reminder.status === "PENDING";
+    return isReminderDue(
+      {
+        status: reminder.status,
+        dueAt: reminder.dueAt,
+        reminderDate: reminder.reminderDate,
+        reminderTime: reminder.reminderTime,
+        snoozedUntil: reminder.snoozedUntil,
+        timezone: reminder.timezone,
+      },
+      now,
+      {
+        currentDateStr: formatLocalDateYmd(now),
+        currentMinutes: now.getHours() * 60 + now.getMinutes(),
+        currentSeconds: now.getSeconds(),
+      },
+    );
   };
 
   const handleCompleteReminderWithSound = (reminderId: string) => {
@@ -159,14 +176,14 @@ const Reminders: FC<RemindersProps> = ({
     onCompleteReminder(reminderId);
 
     // Check if we should stop the alarm
-    if (reminder && isReminderDue(reminder) && reminder.soundEnabled) {
+    if (reminder && isReminderDueNow(reminder) && reminder.soundEnabled) {
       // Check if any OTHER due reminders still have sound enabled
       const otherDueRemindersWithSound = reminders.filter(
         (r) =>
-          r._id !== reminderId && // Not the current one
-          r.soundEnabled && // Has sound enabled
-          r.status === "PENDING" && // Still pending
-          isReminderDue(r) // Is currently due
+          r._id !== reminderId &&
+          r.soundEnabled &&
+          (r.status === "PENDING" || r.status === "SNOOZED") &&
+          isReminderDueNow(r),
       );
 
       // Only stop alarm if NO other reminders need sound
@@ -190,9 +207,9 @@ const Reminders: FC<RemindersProps> = ({
       // Check if any OTHER due reminders still have sound enabled
       const otherDueRemindersWithSound = reminders.filter(
         (r) =>
-          r._id !== reminderId && // Not the current one
-          r.soundEnabled && // Has sound enabled
-          isReminderDue(r) // Is currently due
+          r._id !== reminderId &&
+          r.soundEnabled &&
+          isReminderDueNow(r),
       );
 
       // Only stop alarm if NO other reminders need sound
@@ -201,7 +218,7 @@ const Reminders: FC<RemindersProps> = ({
       }
     } else {
       // Unmuting this reminder - start alarm if it's due
-      if (reminder && isReminderDue(reminder)) {
+      if (reminder && isReminderDueNow(reminder)) {
         alarmSound.start();
       }
     }

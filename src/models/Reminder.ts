@@ -7,6 +7,10 @@ export interface IReminder extends Document {
   description?: string;
   reminderDate: Date;
   reminderTime: string; // Format: "HH:mm"
+  /** UTC instant when the reminder is due (derived from local date/time + timezone). */
+  dueAt?: Date;
+  /** IANA timezone used when the reminder was scheduled (e.g. Europe/Berlin). */
+  timezone?: string;
   type: "CALL" | "EMAIL" | "TASK" | "MEETING";
   status: "PENDING" | "COMPLETED" | "SNOOZED" | "DISMISSED";
   leadId: mongoose.Types.ObjectId;
@@ -40,6 +44,13 @@ const reminderSchema = new Schema<IReminder>(
       type: String,
       required: true,
       match: /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
+    },
+    dueAt: {
+      type: Date,
+    },
+    timezone: {
+      type: String,
+      trim: true,
     },
     type: {
       type: String,
@@ -105,6 +116,7 @@ reminderSchema.index({
   reminderDate: 1,
   reminderTime: 1,
 });
+reminderSchema.index({ status: 1, notificationSent: 1, dueAt: 1 });
 
 const Reminder =
   mongoose.models.Reminder ||

@@ -14,6 +14,7 @@ import {
 } from "@/libs/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
+import { computeReminderDueAt, reminderDateToYmd } from "@/lib/reminderDueAt";
 
 // PUT - Update reminder (complete, snooze, edit)
 export async function PUT(
@@ -120,12 +121,21 @@ export async function PUT(
       if (body.title) reminder.title = body.title;
       if (body.description !== undefined)
         reminder.description = body.description;
-      if (body.reminderDate)
-        reminder.reminderDate = new Date(body.reminderDate);
+      if (body.reminderDate) {
+        const dateYmd =
+          typeof body.reminderDate === "string" &&
+          /^\d{4}-\d{2}-\d{2}$/.test(body.reminderDate)
+            ? body.reminderDate
+            : new Date(body.reminderDate).toISOString().split("T")[0];
+        reminder.reminderDate = new Date(`${dateYmd}T00:00:00.000Z`);
+      }
       if (body.reminderTime) reminder.reminderTime = body.reminderTime;
       if (body.type) reminder.type = body.type;
       if (body.soundEnabled !== undefined)
         reminder.soundEnabled = body.soundEnabled;
+      if (typeof body.timezone === "string" && body.timezone.trim()) {
+        reminder.timezone = body.timezone.trim();
+      }
 
       // Reset notification and status if time/date changed
       if (timeOrDateChanged) {
@@ -134,6 +144,14 @@ export async function PUT(
         reminder.snoozedUntil = undefined;
         reminder.completedAt = undefined;
       }
+
+      const tz = reminder.timezone || "UTC";
+      const dateYmd = reminderDateToYmd(reminder.reminderDate);
+      reminder.dueAt = computeReminderDueAt(
+        dateYmd,
+        reminder.reminderTime,
+        tz,
+      );
     }
 
     await reminder.save();

@@ -13,6 +13,7 @@ import {
 } from "@/libs/ablyServer";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
+import { computeReminderDueAt } from "@/lib/reminderDueAt";
 
 // GET - Fetch all reminders for a lead
 export async function GET(
@@ -116,6 +117,7 @@ export async function POST(
       reminderTime,
       type,
       soundEnabled,
+      timezone,
     } = body;
 
     // Validation
@@ -146,11 +148,22 @@ export async function POST(
       );
     }
 
+    const tz =
+      typeof timezone === "string" && timezone.trim()
+        ? timezone.trim()
+        : "UTC";
+    const dateYmd =
+      typeof reminderDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(reminderDate)
+        ? reminderDate
+        : new Date(reminderDate).toISOString().split("T")[0];
+
     const reminderData = {
       title,
       description,
-      reminderDate: new Date(reminderDate),
+      reminderDate: new Date(`${dateYmd}T00:00:00.000Z`),
       reminderTime,
+      dueAt: computeReminderDueAt(dateYmd, reminderTime, tz),
+      timezone: tz,
       type: type || "TASK",
       status: "PENDING",
       leadId: new mongoose.Types.ObjectId(id),

@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatLocalDateYmd } from "@/lib/reminderDueAt";
 
 interface ReminderFormData {
   title: string;
@@ -50,7 +51,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
   return (
     <div className="p-4 mb-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700/50 dark:border-gray-600">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="font-semibold text-gray-800 dark:text-gray-200">
+        <h4 className="font-semibold text-gray-800! dark:text-gray-100!">
           {editingId ? "Edit Reminder" : "New Reminder"}
         </h4>
         <Button
@@ -64,7 +65,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
       </div>
       <div className="space-y-3">
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-white!">
+          <label className="block mb-1 text-sm font-medium text-gray-700! dark:text-gray-200!">
             Title *
           </label>
           <Input
@@ -78,7 +79,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
         </div>
 
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-white!">
+          <label className="block mb-1 text-sm font-medium text-gray-700! dark:text-gray-200!">
             Description
           </label>
           <Textarea
@@ -94,7 +95,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-white!">
+            <label className="block mb-1 text-sm font-medium text-gray-700! dark:text-gray-200!">
               Date *
             </label>
             <Input
@@ -103,12 +104,12 @@ export const ReminderForm: FC<ReminderFormProps> = ({
               onChange={(e) =>
                 setFormData({ ...formData, reminderDate: e.target.value })
               }
-              min={new Date().toISOString().split("T")[0]}
+              min={formatLocalDateYmd()}
               className="w-full"
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-white!">
+            <label className="block mb-1 text-sm font-medium text-gray-700! dark:text-gray-200!">
               Time *
             </label>
             <Input
@@ -124,7 +125,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
         </div>
 
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-white!">
+          <label className="block mb-1 text-sm font-medium text-gray-700! dark:text-gray-200!">
             Type
           </label>
           <Select
@@ -136,7 +137,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
               })
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full dark:bg-transparent!">
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
@@ -155,7 +156,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
             ) : (
               <VolumeX className="w-4 h-4 text-gray-400 dark:text-gray-500" />
             )}
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-sm font-medium text-gray-700! dark:text-gray-200!">
               Notification Sound
             </span>
           </div>

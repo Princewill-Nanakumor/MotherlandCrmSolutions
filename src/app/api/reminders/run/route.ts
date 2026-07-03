@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import Reminder from "@/models/Reminder";
 import { publishReminderDueEvent } from "@/libs/ablyServer";
+import { isReminderDue } from "@/lib/reminderDueAt";
 
 type ReminderLean = {
   _id: mongoose.Types.ObjectId;
@@ -10,6 +11,8 @@ type ReminderLean = {
   description?: string;
   reminderDate: Date;
   reminderTime: string;
+  dueAt?: Date;
+  timezone?: string;
   type: "CALL" | "EMAIL" | "TASK" | "MEETING";
   status: "PENDING" | "COMPLETED" | "SNOOZED" | "DISMISSED";
   leadId:
@@ -22,27 +25,6 @@ type ReminderLean = {
   snoozedUntil?: Date;
   soundEnabled: boolean;
 };
-
-function isDue(reminder: ReminderLean, now: Date): boolean {
-  if (reminder.status === "SNOOZED") {
-    return !!reminder.snoozedUntil && reminder.snoozedUntil <= now;
-  }
-
-  if (reminder.status !== "PENDING") return false;
-
-  const currentDateStr = now.toISOString().split("T")[0];
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const currentSeconds = now.getSeconds();
-
-  const reminderDateStr = new Date(reminder.reminderDate).toISOString().split("T")[0];
-  if (reminderDateStr > currentDateStr) return false;
-  if (reminderDateStr < currentDateStr) return true;
-
-  const [h, m] = reminder.reminderTime.split(":").map(Number);
-  const reminderMinutes = (h || 0) * 60 + (m || 0);
-  const adjustedCurrentMinutes = currentMinutes + (currentSeconds >= 30 ? 0.5 : 0);
-  return reminderMinutes <= adjustedCurrentMinutes;
-}
 
 function resolveObjectId(value: unknown): string | null {
   if (!value) return null;
@@ -79,13 +61,26 @@ export async function GET(request: NextRequest) {
       notificationSent: false,
     })
       .select(
-        "_id title description reminderDate reminderTime type status leadId assignedTo adminId snoozedUntil soundEnabled",
+        "_id title description reminderDate reminderTime dueAt timezone type status leadId assignedTo adminId snoozedUntil soundEnabled",
       )
       .populate("leadId", "firstName lastName email")
       .populate("assignedTo", "firstName lastName")
       .lean()) as unknown as ReminderLean[];
 
-    const dueReminders = candidates.filter((r) => isDue(r, now));
+    const dueReminders = candidates.filter((r) =>
+      isReminderDue(
+        {
+          status: r.status,
+          dueAt: r.dueAt,
+          reminderDate: r.reminderDate,
+          reminderTime: r.reminderTime,
+          snoozedUntil: r.snoozedUntil,
+          timezone: r.timezone,
+        },
+        now,
+      ),
+    );
+
     if (dueReminders.length === 0) {
       return NextResponse.json({ ok: true, scanned: candidates.length, sent: 0 });
     }

@@ -107,7 +107,7 @@ export const RemindersList: FC<RemindersListProps> = ({
       {/* Pending Reminders */}
       {pendingReminders.length > 0 && (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+          <h4 className="text-sm font-semibold text-gray-700! dark:text-gray-200! uppercase tracking-wide">
             Upcoming
           </h4>
           {pendingReminders.map((reminder) => (
@@ -127,7 +127,7 @@ export const RemindersList: FC<RemindersListProps> = ({
       {/* Completed Reminders */}
       {completedReminders.length > 0 && (
         <div className="space-y-3 mt-6">
-          <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+          <h4 className="text-sm font-semibold text-gray-700! dark:text-gray-200! uppercase tracking-wide">
             Completed
           </h4>
           {completedReminders.map((reminder) => (
@@ -137,28 +137,27 @@ export const RemindersList: FC<RemindersListProps> = ({
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3 flex-1">
-                  <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                  <div className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700/50 text-green-600 dark:text-green-400">
                     <Check className="w-5 h-5" />
                   </div>
                   <div className="flex-1">
-                    <h5 className="font-medium text-gray-700 dark:text-gray-300 line-through">
+                    <h5 className="font-medium text-gray-700! dark:text-gray-300! line-through">
                       {reminder.title}
                     </h5>
                     {reminder.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-through">
+                      <p className="text-sm text-gray-600! dark:text-gray-400! mt-1 line-through">
                         {reminder.description}
                       </p>
                     )}
-                    <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500! dark:text-gray-400! mt-2">
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 text-blue-700! dark:text-blue-300!">
                         {reminder.type}
                       </span>
-                      <span>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600">
                         Created by {reminder.createdBy.firstName}{" "}
                         {reminder.createdBy.lastName}
                       </span>
-                      <span>•</span>
-                      <span>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600">
                         Completed on{" "}
                         {reminder.completedAt &&
                           formatDate(reminder.completedAt)}

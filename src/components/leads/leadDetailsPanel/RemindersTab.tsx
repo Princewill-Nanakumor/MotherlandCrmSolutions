@@ -41,6 +41,7 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
       reminderTime: string;
       type: string;
       soundEnabled: boolean;
+      timezone: string;
     }) => {
       const response = await apiCallWithSessionRefresh(`/api/leads/${leadId}/reminders`, {
         method: "POST",
@@ -200,10 +201,11 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
       reminderTime: string;
       type: string;
       soundEnabled: boolean;
+      timezone: string;
     }) => {
       addReminderMutation.mutate(reminderData);
     },
-    [addReminderMutation]
+    [addReminderMutation],
   );
 
   const handleCompleteReminder = useCallback(

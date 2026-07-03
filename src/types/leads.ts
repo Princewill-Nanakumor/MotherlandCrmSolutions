@@ -228,6 +228,8 @@ export interface Reminder {
   adminId: string;
   snoozedUntil?: string | Date;
   completedAt?: string | Date;
+  dueAt?: string | Date;
+  timezone?: string;
   notificationSent: boolean;
   soundEnabled: boolean;
   createdAt: string | Date;

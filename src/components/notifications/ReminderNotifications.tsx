@@ -11,6 +11,7 @@ import { Reminder } from "@/types/leads";
 import { alarmSound, stopNotificationSound } from "@/lib/notificationSound";
 import { formatTime24Hour } from "@/lib/utils";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { formatLocalDateYmd } from "@/lib/reminderDueAt";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { getAblyRealtimeClient } from "@/libs/ablyClient";
 import { useAppBranding } from "@/components/AppBrandingProvider";
@@ -55,7 +56,7 @@ export default function ReminderNotifications() {
     queryFn: async () => {
       try {
         const now = new Date();
-        const userDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`; // YYYY-MM-DD in user's local time
+        const userDate = formatLocalDateYmd(now);
         const userTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
         const url = `/api/reminders/check-due?userDate=${encodeURIComponent(userDate)}&userTime=${encodeURIComponent(userTime)}`;
         const response = await apiCallWithSessionRefresh(url);
@@ -69,8 +70,8 @@ export default function ReminderNotifications() {
       }
     },
     enabled: hasAuthorizedSession(status, session),
-    // Push notifications are primary; keep a low-frequency poll as fallback.
-    refetchInterval: 15 * 60 * 1000,
+    refetchInterval: 60 * 1000,
+    refetchOnWindowFocus: true,
     staleTime: 30 * 1000,
   });
 

@@ -76,20 +76,23 @@ export const ReminderCard: FC<ReminderCardProps> = ({
     }
   };
 
-  const getTypeColor = (type: Reminder["type"]) => {
+  const getTypeTextColor = (type: Reminder["type"]) => {
     switch (type) {
       case "CALL":
-        return "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30";
+        return "text-blue-600! dark:text-blue-400!";
       case "EMAIL":
-        return "text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30";
+        return "text-purple-600! dark:text-purple-400!";
       case "TASK":
-        return "text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30";
+        return "text-green-600! dark:text-green-400!";
       case "MEETING":
-        return "text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30";
+        return "text-orange-600! dark:text-orange-400!";
       default:
-        return "text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900/30";
+        return "text-gray-600! dark:text-gray-400!";
     }
   };
+
+  const metadataChipClass =
+    "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600";
 
   return (
     <div
@@ -98,37 +101,39 @@ export const ReminderCard: FC<ReminderCardProps> = ({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start flex-1 gap-3">
-          <div className={`p-2 rounded-lg ${getTypeColor(reminder.type)}`}>
+          <div
+            className={`p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700/50 ${getTypeTextColor(reminder.type)}`}
+          >
             {getReminderIcon(reminder.type)}
           </div>
           <div className="flex-1">
             <div className="mb-1">
-              <h5 className="font-semibold text-gray-900 dark:text-gray-100">
+              <h5 className="font-semibold text-gray-900! dark:text-gray-100!">
                 {reminder.title}
               </h5>
             </div>
             {reminder.description && (
-              <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
+              <p className="mb-2 text-sm text-gray-600! dark:text-gray-400!">
                 {reminder.description}
               </p>
             )}
-            <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-              <span className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full dark:bg-blue-900/30 dark:text-blue-300">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500! dark:text-gray-400!">
+              <span className={`${metadataChipClass} ${getTypeTextColor(reminder.type)}`}>
                 {reminder.type}
               </span>
-              <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                <CalendarIcon className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+              <span className={metadataChipClass}>
+                <CalendarIcon className="w-3 h-3 shrink-0" />
                 {formatDate(reminder.reminderDate)}
-              </div>
-              <div className="flex items-center gap-1 text-gray-500 dark:text-white">
-                <Clock className="w-3 h-3 text-gray-500 dark:text-white!" />
+              </span>
+              <span className={metadataChipClass}>
+                <Clock className="w-3 h-3 shrink-0" />
                 {formatTime24Hour(reminder.reminderTime)}
-              </div>
-              <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                <Users className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+              </span>
+              <span className={metadataChipClass}>
+                <Users className="w-3 h-3 shrink-0" />
                 Created by {reminder.createdBy.firstName}{" "}
                 {reminder.createdBy.lastName}
-              </div>
+              </span>
               {reminder.status === "SNOOZED" && (
                 <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
                   <AlertCircle className="w-3 h-3 text-orange-600 dark:text-orange-400" />
@@ -191,15 +196,15 @@ export const ReminderCard: FC<ReminderCardProps> = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onSnooze(reminder._id, 15)}>
-                <Clock className="w-4 h-4 mr-2 dark:text-white!" />
+                <Clock className="w-4 h-4 mr-2" />
                 Snooze 15 min
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onSnooze(reminder._id, 60)}>
-                <Clock className="w-4 h-4 mr-2 dark:text-white!" />
+                <Clock className="w-4 h-4 mr-2" />
                 Snooze 1 hour
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onSnooze(reminder._id, 1440)}>
-                <Clock className="w-4 h-4 mr-2 dark:text-white!" />
+                <Clock className="w-4 h-4 mr-2" />
                 Snooze 1 day
               </DropdownMenuItem>
               {canDelete && (
