@@ -6,6 +6,10 @@ import { useCurrentUserPermission } from "./useCurrentUserPermission";
 import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
 import { formatLeadPhoneForTable } from "@/lib/phoneNormalize";
 import { normalizeLeadId } from "@/lib/leadId";
+import {
+  formatLeadDisplayName,
+  formatLeadDetailEmail,
+} from "@/lib/leadDisplayFormat";
 
 export function useAdminLeadsTableColumns(): LeadColumn[] {
   const { canViewPhoneNumbers, canViewEmails } = useCurrentUserPermission();
@@ -31,15 +35,7 @@ export function useAdminLeadsTableColumns(): LeadColumn[] {
     },
     {
       id: "name",
-      accessorFn: (row: Lead) => {
-        const capitalizeName = (name: string) => {
-          if (!name) return "";
-          return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-        };
-        const firstName = capitalizeName(row.firstName || "");
-        const lastName = capitalizeName(row.lastName || "");
-        return row.name || `${firstName} ${lastName}`.trim() || "—";
-      },
+      accessorFn: (row: Lead) => formatLeadDisplayName(row) || "—",
       header: "Name",
       cell: (info) => {
         const value = info.getValue() as string;
@@ -50,16 +46,8 @@ export function useAdminLeadsTableColumns(): LeadColumn[] {
         );
       },
       sortingFn: (a, b) => {
-        const capitalizeName = (name: string) => {
-          if (!name) return "";
-          return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-        };
-        const nameA =
-          a.original.name ||
-          `${capitalizeName(a.original.firstName || "")} ${capitalizeName(a.original.lastName || "")}`.trim();
-        const nameB =
-          b.original.name ||
-          `${capitalizeName(b.original.firstName || "")} ${capitalizeName(b.original.lastName || "")}`.trim();
+        const nameA = formatLeadDisplayName(a.original);
+        const nameB = formatLeadDisplayName(b.original);
         return nameA.localeCompare(nameB);
       },
     },
@@ -76,7 +64,7 @@ export function useAdminLeadsTableColumns(): LeadColumn[] {
         }
         // Apply masking based on email visibility permission
         const displayEmail = canViewEmails
-          ? email.charAt(0).toUpperCase() + email.slice(1) // Capitalize first letter if visible
+          ? formatLeadDetailEmail(email)
           : maskEmail(email);
         return (
           <div className="font-medium">

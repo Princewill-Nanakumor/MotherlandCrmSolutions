@@ -69,10 +69,17 @@ async function invalidateAfterImport(queryClient: QueryClient) {
       },
     }),
   ]);
+  // Force refetch of inactive observers too (all-leads list is inactive while on
+  // the import route, and defaults would only refetch active queries — leaving
+  // stale data until staleTime elapses when the user navigates back).
   await Promise.all([
-    queryClient.refetchQueries({ queryKey: ["leads"] }),
-    queryClient.refetchQueries({ queryKey: ["users"] }),
-    queryClient.refetchQueries({ queryKey: ["leads-stats"], exact: false }),
+    queryClient.refetchQueries({ queryKey: ["leads"], type: "all" }),
+    queryClient.refetchQueries({ queryKey: ["users"], type: "all" }),
+    queryClient.refetchQueries({
+      queryKey: ["leads-stats"],
+      exact: false,
+      type: "all",
+    }),
     refetchLeadFilterOptions(queryClient),
   ]);
 }

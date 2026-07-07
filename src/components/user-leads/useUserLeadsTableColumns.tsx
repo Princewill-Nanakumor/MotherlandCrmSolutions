@@ -12,6 +12,10 @@ import { useStatuses } from "@/hooks/useStatuses";
 import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
 import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
 import { formatLeadPhoneForTable } from "@/lib/phoneNormalize";
+import {
+  formatLeadDisplayName,
+  formatLeadDetailEmail,
+} from "@/lib/leadDisplayFormat";
 import { Badge } from "@/components/ui/badge";
 import { TableSortIcon } from "@/components/ui/table-sort-icon";
 import { Loader2 } from "lucide-react";
@@ -35,18 +39,6 @@ export const useUserLeadsTableColumns = ({
   const { timeFormat, dateFormat, timezone } = useDateTimeSettings();
 
   const currentParams = searchParams?.toString() || "";
-
-  // Helper to capitalize names
-  const capitalizeName = (name: string) => {
-    if (!name) return "";
-    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-  };
-
-  // Helper to capitalize email
-  const capitalizeEmail = (email: string) => {
-    if (!email) return "";
-    return email.charAt(0).toUpperCase() + email.slice(1);
-  };
 
   const locale = dateFormat === "MM/DD/YYYY" ? "en-US" : dateFormat === "YYYY-MM-DD" ? "en-CA" : "en-GB";
   const tzOpt = timezone ? { timeZone: timezone } : undefined;
@@ -177,10 +169,7 @@ export const useUserLeadsTableColumns = ({
           </Button>
         ),
         cell: ({ row }) => {
-          const lead = row.original;
-          const firstName = capitalizeName(lead.firstName || "");
-          const lastName = capitalizeName(lead.lastName || "");
-          const fullName = lead.name || `${firstName} ${lastName}`.trim();
+          const fullName = formatLeadDisplayName(row.original);
           return (
             <div className="font-medium text-gray-900! dark:text-white!">
               {fullName || "—"}
@@ -207,7 +196,7 @@ export const useUserLeadsTableColumns = ({
           }
           // Apply masking based on email visibility permission
           const displayEmail = canViewEmails
-            ? capitalizeEmail(email)
+            ? formatLeadDetailEmail(email)
             : maskEmail(email);
           return (
             <div className="text-center font-medium text-gray-900! dark:text-white!">

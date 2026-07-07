@@ -10,6 +10,10 @@ import { Lead } from "@/types/leads";
 import { User } from "@/types/user.types";
 import { normalizeLeadId } from "@/lib/leadId";
 import { formatLeadPhoneForTable } from "@/lib/phoneNormalize";
+import {
+  formatLeadDisplayName,
+  formatLeadDetailEmail,
+} from "@/lib/leadDisplayFormat";
 
 export type SortField =
   | "leadId"
@@ -181,9 +185,7 @@ export function buildCoreColumns(params: {
         </Button>
       ),
       cell: ({ row }) => {
-        const lead = row.original;
-        const capitalize = (name: string) => (name ? name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() : "");
-        const fullName = lead.name || `${capitalize(lead.firstName || "")} ${capitalize(lead.lastName || "")}`.trim();
+        const fullName = formatLeadDisplayName(row.original);
         return <div className="font-medium text-gray-900! dark:text-white!">{fullName || "—"}</div>;
       },
     },
@@ -194,7 +196,7 @@ export function buildCoreColumns(params: {
         const email = row.original.email || "";
         return (
           <div className="font-medium text-gray-900! dark:text-white!">
-            {email.length > 0 ? email.charAt(0).toUpperCase() + email.slice(1) : "—"}
+            {email.length > 0 ? formatLeadDetailEmail(email) : "—"}
           </div>
         );
       },

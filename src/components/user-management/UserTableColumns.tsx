@@ -12,6 +12,10 @@ import {
   Shield,
   User as UserIcon,
 } from "lucide-react";
+import {
+  formatLeadDisplayName,
+  formatLeadDetailEmail,
+} from "@/lib/leadDisplayFormat";
 
 export interface User {
   id: string;
@@ -82,7 +86,7 @@ export function useUserTableColumns({
       ),
       cell: ({ row }) => (
         <div className="text-gray-900! dark:text-white!">
-          {row.original.firstName} {row.original.lastName}
+          {formatLeadDisplayName(row.original) || "—"}
         </div>
       ),
       sortingFn: (rowA, rowB) => {
@@ -104,7 +108,7 @@ export function useUserTableColumns({
       header: "Email",
       cell: ({ row }) => (
         <div className="text-gray-900! dark:text-white!">
-          {row.original.email}
+          {row.original.email ? formatLeadDetailEmail(row.original.email) : "—"}
         </div>
       ),
       enableSorting: true,

@@ -10,6 +10,10 @@ import Link from "next/link";
 import { UserLeadsColumnId } from "@/hooks/useUserLeadsColumnOrder";
 import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
 import { formatLeadPhoneForTable } from "@/lib/phoneNormalize";
+import {
+  formatLeadDisplayName,
+  formatLeadDetailEmail,
+} from "@/lib/leadDisplayFormat";
 
 interface Status {
   _id: string;
@@ -118,18 +122,12 @@ export function renderUserLeadCell({
       );
 
     case "name":
-      const capitalizeName = (name: string) => {
-        if (!name) return "";
-        return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-      };
-      const firstName = capitalizeName(lead.firstName || "");
-      const lastName = capitalizeName(lead.lastName || "");
       return (
         <TableCell
           className={`text-center ${isSelected ? "text-gray-900! dark:text-white"! : "text-gray-800! dark:text-gray-300"}!`}
         >
           <span className="text-gray-900! dark:text-white!">
-            {firstName} {lastName}
+            {formatLeadDisplayName(lead) || "—"}
           </span>
         </TableCell>
       );
@@ -149,7 +147,7 @@ export function renderUserLeadCell({
       }
       // Apply masking based on email visibility permission
       const displayEmail = canViewEmails
-        ? email.charAt(0).toUpperCase() + email.slice(1) // Capitalize first letter if visible
+        ? formatLeadDetailEmail(email)
         : maskEmail(email);
       return (
         <TableCell

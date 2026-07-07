@@ -1,24 +1,49 @@
-import { formatPersonName } from "@/lib/leadAssignmentDisplay";
-
-/** Capitalize the first letter of each word (e.g. "united states" → "United States"). */
+/**
+ * Capitalize the first letter of every word, regardless of the input casing.
+ * Handles all-caps ("JOHN DOE"), all-lowercase ("john doe"), and multi-word
+ * values that include middle names ("john michael doe"). Word boundaries also
+ * cover hyphens and apostrophes so "mary-jane o'brien" → "Mary-Jane O'Brien".
+ */
 export function capitalizeWords(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return "";
 
   return trimmed
-    .split(/\s+/)
-    .map((word) => {
-      if (!word) return word;
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    })
-    .join(" ");
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(
+      /(^|[\s\-/'’])(\p{L})/gu,
+      (_match, boundary: string, char: string) => boundary + char.toUpperCase(),
+    );
 }
 
-/** Display email with a leading capital (e.g. "test@mail.com" → "Test@mail.com"). */
+/**
+ * Display email with a leading capital, normalizing the rest to lowercase so
+ * all-caps sheets ("JOHN@MAIL.COM") and mixed input display consistently as
+ * "John@mail.com". Copy actions still use the raw stored value.
+ */
 export function formatLeadDetailEmail(email: string | null | undefined): string {
   const trimmed = String(email ?? "").trim();
   if (!trimmed) return "";
-  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  const lower = trimmed.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
+/**
+ * Resolve a lead's display name (title-cased) from an optional combined `name`
+ * field or the first/last name fields. Ensures the table and details panel show
+ * capitalized names even when the source sheet is all-caps or lowercase.
+ */
+export function formatLeadDisplayName(lead: {
+  name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+}): string {
+  const combined = `${lead.firstName ?? ""} ${lead.lastName ?? ""}`
+    .replace(/\s+/g, " ")
+    .trim();
+  const base = combined || String(lead.name ?? "").trim();
+  return capitalizeWords(base);
 }
 
 /** Display country with each word capitalized. */
@@ -50,5 +75,5 @@ export function formatLeadDetailName(
   firstName?: string | null,
   lastName?: string | null,
 ): string {
-  return formatPersonName(firstName ?? undefined, lastName ?? undefined);
+  return formatLeadDisplayName({ firstName, lastName });
 }
