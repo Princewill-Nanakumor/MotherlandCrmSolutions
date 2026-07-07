@@ -610,10 +610,10 @@ export const CommentsAndActivitiesCombined: FC<
                   key={tab.key}
                   type="button"
                   onClick={() => setTimelineFilter(tab.key)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 transition-colors ${
                     isActive
-                      ? "bg-blue-50 text-blue-600! dark:bg-blue-500/10 dark:text-white!"
-                      : "text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"
+                      ? "font-bold bg-blue-50 text-blue-600! dark:bg-blue-500/10 dark:text-white!"
+                      : "font-medium text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
