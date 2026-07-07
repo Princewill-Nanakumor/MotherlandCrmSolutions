@@ -4,7 +4,12 @@
 import React, { FC, useState, useMemo, useCallback, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import {
+  Loader2,
+  Activity as ActivityIcon,
+  MessageSquare,
+  ArrowRightLeft,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Activity, Lead, Status } from "@/types/leads";
 import { isTaboolaLeadImportActivity } from "@/lib/leadActivityDisplay";
@@ -58,6 +63,9 @@ export const CommentsAndActivitiesCombined: FC<
     string | null
   >(null);
   const [showTextarea, setShowTextarea] = useState<boolean>(true);
+  const [timelineFilter, setTimelineFilter] = useState<
+    "all" | "comments" | "status"
+  >("all");
 
   const isAdmin = session?.user?.role === "ADMIN";
 
@@ -251,6 +259,29 @@ export const CommentsAndActivitiesCombined: FC<
     // Sort by timestamp (newest first)
     return items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }, [comments, activities]);
+
+  // Subsets for the timeline sub-tabs (Comments only / Status changes only)
+  const commentOnlyItems = useMemo(
+    () => combinedItems.filter((item) => item.type === "comment"),
+    [combinedItems],
+  );
+
+  const statusChangeItems = useMemo(
+    () =>
+      combinedItems.filter(
+        (item) =>
+          item.type === "activity" &&
+          item.activity?.type === "STATUS_CHANGE",
+      ),
+    [combinedItems],
+  );
+
+  const visibleTimelineItems =
+    timelineFilter === "comments"
+      ? commentOnlyItems
+      : timelineFilter === "status"
+        ? statusChangeItems
+        : combinedItems;
 
   // Add comment mutation
   const addCommentMutation = useMutation({
@@ -549,12 +580,60 @@ export const CommentsAndActivitiesCombined: FC<
 
         {/* Combined Timeline */}
         <div className="flex flex-col flex-1 min-h-0">
-          <h3 className="text-lg font-semibold text-gray-800! dark:text-white! mb-3">
-            Timeline ({combinedItems.length})
-          </h3>
+          <div className="flex flex-wrap items-center gap-1 mb-3">
+            {(
+              [
+                {
+                  key: "all",
+                  label: "Timeline",
+                  icon: ActivityIcon,
+                  count: combinedItems.length,
+                },
+                {
+                  key: "comments",
+                  label: "Comments",
+                  icon: MessageSquare,
+                  count: commentOnlyItems.length,
+                },
+                {
+                  key: "status",
+                  label: "Status Changes",
+                  icon: ArrowRightLeft,
+                  count: statusChangeItems.length,
+                },
+              ] as const
+            ).map((tab) => {
+              const isActive = timelineFilter === tab.key;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setTimelineFilter(tab.key)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors ${
+                    isActive
+                      ? "bg-blue-50 text-blue-600! dark:bg-blue-500/10 dark:text-white!"
+                      : "text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {tab.label}
+                  <span
+                    className={`px-1.5 py-0.5 text-xs rounded-full ${
+                      isActive
+                        ? "bg-blue-100 text-blue-700! dark:bg-blue-500/20 dark:text-blue-300!"
+                        : "bg-gray-100 text-gray-600! dark:bg-gray-700 dark:text-gray-300!"
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
           <CombinedTimeline
-            combinedItems={combinedItems}
+            combinedItems={visibleTimelineItems}
             statuses={statuses}
             editingId={editingId}
             editContent={editContent}
@@ -568,7 +647,21 @@ export const CommentsAndActivitiesCombined: FC<
             onCancelEdit={handleCancelEdit}
             onDelete={handleDelete}
             onDeleteActivity={handleDeleteActivity}
-            leadCreatedAt={leadCreatedAt}
+            leadCreatedAt={timelineFilter === "all" ? leadCreatedAt : undefined}
+            emptyTitle={
+              timelineFilter === "comments"
+                ? "No Comments Yet"
+                : timelineFilter === "status"
+                  ? "No Status Changes Yet"
+                  : "No Comments or Activities Yet"
+            }
+            emptyDescription={
+              timelineFilter === "comments"
+                ? "Add a comment to start the conversation on this lead."
+                : timelineFilter === "status"
+                  ? "Status changes for this lead will appear here."
+                  : "Add a comment or make changes to this lead to see activity here."
+            }
           />
         </div>
       </div>

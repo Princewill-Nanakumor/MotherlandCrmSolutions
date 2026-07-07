@@ -27,6 +27,8 @@ interface CombinedTimelineProps {
   onDelete: (commentId: string) => void;
   onDeleteActivity?: (activityId: string) => void;
   leadCreatedAt?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
 }
 
 export const CombinedTimeline: FC<CombinedTimelineProps> = ({
@@ -45,6 +47,8 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
   onDelete,
   onDeleteActivity,
   leadCreatedAt,
+  emptyTitle = "No Comments or Activities Yet",
+  emptyDescription = "Add a comment or make changes to this lead to see activity here.",
 }) => {
   const { timeFormat, dateFormat, timezone } = useDateTimeSettings();
 
@@ -80,10 +84,10 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
           <div className="text-center">
             <ActivityIcon className="w-12 h-12 mx-auto mb-4 text-gray-300! dark:text-gray-600!" />
             <p className="text-lg font-medium text-gray-700 dark:text-gray-300! mb-2">
-              No Comments or Activities Yet
+              {emptyTitle}
             </p>
             <p className="text-sm text-gray-500! dark:text-gray-400!">
-              Add a comment or make changes to this lead to see activity here.
+              {emptyDescription}
             </p>
           </div>
         </div>
