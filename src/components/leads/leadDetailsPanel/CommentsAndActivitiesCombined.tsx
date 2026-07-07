@@ -75,7 +75,8 @@ export const CommentsAndActivitiesCombined: FC<
         nextComments.length > 0
           ? [...nextComments].sort(
               (a, b) =>
-                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
             )[0]
           : undefined;
       const timestamp =
@@ -128,7 +129,8 @@ export const CommentsAndActivitiesCombined: FC<
       queryClient.setQueriesData(
         {
           predicate: (query) =>
-            query.queryKey[0] === "leads" || query.queryKey[0] === "assignedLeads",
+            query.queryKey[0] === "leads" ||
+            query.queryKey[0] === "assignedLeads",
         },
         patchUnknownShape,
       );
@@ -270,8 +272,7 @@ export const CommentsAndActivitiesCombined: FC<
     () =>
       combinedItems.filter(
         (item) =>
-          item.type === "activity" &&
-          item.activity?.type === "STATUS_CHANGE",
+          item.type === "activity" && item.activity?.type === "STATUS_CHANGE",
       ),
     [combinedItems],
   );
@@ -350,13 +351,12 @@ export const CommentsAndActivitiesCombined: FC<
       let nextComments: Comment[] = [];
       queryClient.setQueryData(
         ["comments", leadId],
-        (oldComments: Comment[] = []) =>
-          {
-            nextComments = oldComments.filter(
-              (comment) => comment._id !== deletedCommentId,
-            );
-            return nextComments;
-          },
+        (oldComments: Comment[] = []) => {
+          nextComments = oldComments.filter(
+            (comment) => comment._id !== deletedCommentId,
+          );
+          return nextComments;
+        },
       );
       patchLeadCachesFromComments(nextComments);
       queryClient.invalidateQueries({ queryKey: ["leads"] });
@@ -557,7 +557,7 @@ export const CommentsAndActivitiesCombined: FC<
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full p-6">
+      <div className="flex justify-center items-center p-6 h-full">
         <Loader2 className="w-8 h-8 animate-spin text-purple-500! dark:text-blue-400!" />
       </div>
     );
@@ -565,10 +565,10 @@ export const CommentsAndActivitiesCombined: FC<
 
   return (
     <div
-      className="flex flex-col flex-1 min-h-0 p-6 border border-gray-200 shadow-sm bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700"
+      className="flex flex-col flex-1 p-6 min-h-0 bg-gray-50 border border-gray-200 shadow-sm dark:bg-gray-800/50 dark:border-gray-700"
       style={{ height: "100%" }}
     >
-      <div className="flex flex-col flex-1 min-h-0 p-5 bg-white border border-gray-100 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+      <div className="flex flex-col flex-1 p-5 min-h-0 bg-white rounded-lg border border-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
         <CommentForm
           commentContent={commentContent}
           setCommentContent={setCommentContent}
@@ -580,7 +580,7 @@ export const CommentsAndActivitiesCombined: FC<
 
         {/* Combined Timeline */}
         <div className="flex flex-col flex-1 min-h-0">
-          <div className="flex flex-wrap items-center gap-1 mb-3">
+          <div className="flex flex-wrap gap-1 items-center mb-3">
             {(
               [
                 {
@@ -647,20 +647,20 @@ export const CommentsAndActivitiesCombined: FC<
             onCancelEdit={handleCancelEdit}
             onDelete={handleDelete}
             onDeleteActivity={handleDeleteActivity}
-            leadCreatedAt={timelineFilter === "all" ? leadCreatedAt : undefined}
+            leadCreatedAt={leadCreatedAt}
             emptyTitle={
               timelineFilter === "comments"
                 ? "No Comments Yet"
                 : timelineFilter === "status"
                   ? "No Status Changes Yet"
-                  : "No Comments or Activities Yet"
+                  : "No Activity Yet"
             }
             emptyDescription={
               timelineFilter === "comments"
                 ? "Add a comment to start the conversation on this lead."
                 : timelineFilter === "status"
                   ? "Status changes for this lead will appear here."
-                  : "Add a comment or make changes to this lead to see activity here."
+                  : "Add an activity or make changes to this lead to start the timeline."
             }
           />
         </div>
@@ -684,7 +684,7 @@ export const CommentsAndActivitiesCombined: FC<
                   timeline.
                 </p>
                 {pendingDeleteComment?.content ? (
-                  <p className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
+                  <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-md border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
                     {truncatePreview(pendingDeleteComment.content)}
                   </p>
                 ) : null}
@@ -696,7 +696,7 @@ export const CommentsAndActivitiesCombined: FC<
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 text-white hover:bg-red-700 hover:text-white focus:ring-red-600"
+              className="text-white bg-red-600 hover:bg-red-700 hover:text-white focus:ring-red-600"
               disabled={deleteCommentMutation.isPending}
               onClick={(e) => {
                 e.preventDefault();
@@ -705,7 +705,7 @@ export const CommentsAndActivitiesCombined: FC<
             >
               {deleteCommentMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                   Deleting…
                 </>
               ) : (
@@ -730,11 +730,11 @@ export const CommentsAndActivitiesCombined: FC<
             <AlertDialogDescription asChild>
               <div className="space-y-2">
                 <p>
-                  This cannot be undone. The activity entry will be removed
-                  from the timeline.
+                  This cannot be undone. The activity entry will be removed from
+                  the timeline.
                 </p>
                 {pendingDeleteActivity ? (
-                  <p className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
+                  <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-md border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
                     {truncatePreview(
                       pendingDeleteActivity.description ||
                         pendingDeleteActivity.type.replace(/_/g, " "),
@@ -749,7 +749,7 @@ export const CommentsAndActivitiesCombined: FC<
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 text-white hover:bg-red-700 hover:text-white focus:ring-red-600"
+              className="text-white bg-red-600 hover:bg-red-700 hover:text-white focus:ring-red-600"
               disabled={deleteActivityMutation.isPending}
               onClick={(e) => {
                 e.preventDefault();
@@ -758,7 +758,7 @@ export const CommentsAndActivitiesCombined: FC<
             >
               {deleteActivityMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                   Deleting…
                 </>
               ) : (

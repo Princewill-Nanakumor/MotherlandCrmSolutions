@@ -86,9 +86,11 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
             <p className="text-lg font-medium text-gray-700 dark:text-gray-300! mb-2">
               {emptyTitle}
             </p>
-            <p className="text-sm text-gray-500! dark:text-gray-400!">
-              {emptyDescription}
-            </p>
+            {emptyDescription ? (
+              <p className="text-sm text-gray-500! dark:text-gray-400!">
+                {emptyDescription}
+              </p>
+            ) : null}
           </div>
         </div>
         {leadCreatedEntry}
