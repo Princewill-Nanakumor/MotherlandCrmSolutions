@@ -1,12 +1,14 @@
 // src/components/importPageComponents/ImportHistory.tsx
 import { ImportHistoryItem } from "@/types/import";
 import { formatDistanceToNow, format } from "date-fns";
-import { Trash2 } from "lucide-react";
+import { Download, Loader2, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ImportHistoryProps {
   imports: ImportHistoryItem[];
   onDelete: (id: string) => void;
+  onExport?: (importId: string, fileName?: string) => void;
+  exportingImportId?: string | null;
   isLoading?: boolean;
 }
 
@@ -16,6 +18,8 @@ const SKELETON_COLUMN_COUNT = 8;
 export const ImportHistory: React.FC<ImportHistoryProps> = ({
   imports,
   onDelete,
+  onExport,
+  exportingImportId = null,
   isLoading = false,
 }) => {
   const getItemId = (item: ImportHistoryItem): string => {
@@ -113,12 +117,33 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
                     {importItem.successCount}/{importItem.failureCount}
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
-                    <button
-                      onClick={() => onDelete(getItemId(importItem))}
-                      className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      {onExport && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onExport(getItemId(importItem), importItem.fileName)
+                          }
+                          disabled={exportingImportId === getItemId(importItem)}
+                          className="text-blue-600 hover:text-blue-800 disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
+                          title="Export leads from this import"
+                        >
+                          {exportingImportId === getItemId(importItem) ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => onDelete(getItemId(importItem))}
+                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                        title="Delete import"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

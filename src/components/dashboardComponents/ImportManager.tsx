@@ -8,9 +8,11 @@ import { ImportContent } from "@/components/importPageComponents/ImportContent";
 import { UsageLimitsDisplay } from "@/components/importPageComponents/UsageLimitsDisplay";
 import { UsageLimitsSkeleton } from "@/components/importPageComponents/UsageLimitsSkeleton";
 import { ImportHistorySection } from "@/components/importPageComponents/ImportHistorySection";
+import { ImportExportSection } from "@/components/importPageComponents/ImportExportSection";
 import { ImportModalWrapper } from "@/components/importPageComponents/ImportModalWrapper";
 import { useImportManager } from "@/hooks/useImportManager";
 import { useImportUsageData } from "@/hooks/useUsageData";
+import { useImportExport } from "@/hooks/useImportExport";
 
 export const ImportManager = () => {
   const {
@@ -34,6 +36,13 @@ export const ImportManager = () => {
     handleFileUpload,
     handleDeleteImport,
   } = useImportManager();
+
+  const {
+    exportImport,
+    exportAllLeads,
+    exportingImportId,
+    isExportingAll,
+  } = useImportExport();
 
   // Use the import usage data hook
   const { importUsageData, isLoading: isUsageLoading } = useImportUsageData();
@@ -86,9 +95,18 @@ export const ImportManager = () => {
           <ImportHistorySection
             importHistory={importHistory}
             onDelete={handleDeleteImport}
+            onExport={exportImport}
+            exportingImportId={exportingImportId}
             activeTab={activeTab}
             isLoading={isInitialLoading}
           />
+
+          {activeTab === "export" && (
+            <ImportExportSection
+              onExportAll={exportAllLeads}
+              isExporting={isExportingAll}
+            />
+          )}
 
           {/* Modal */}
           <ImportModalWrapper

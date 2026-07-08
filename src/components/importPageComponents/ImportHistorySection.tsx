@@ -6,6 +6,8 @@ import { ImportHistory } from "./ImportHistory";
 interface ImportHistorySectionProps {
   importHistory: ImportHistoryItem[];
   onDelete: (id: string) => void;
+  onExport?: (importId: string, fileName?: string) => void;
+  exportingImportId?: string | null;
   activeTab: string;
   isLoading?: boolean;
 }
@@ -13,6 +15,8 @@ interface ImportHistorySectionProps {
 export function ImportHistorySection({
   importHistory,
   onDelete,
+  onExport,
+  exportingImportId,
   activeTab,
   isLoading = false,
 }: ImportHistorySectionProps) {
@@ -21,6 +25,8 @@ export function ImportHistorySection({
     <ImportHistory
       imports={importHistory}
       onDelete={onDelete}
+      onExport={onExport}
+      exportingImportId={exportingImportId}
       isLoading={isLoading}
     />
   );

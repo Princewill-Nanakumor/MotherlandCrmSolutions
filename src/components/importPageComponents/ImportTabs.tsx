@@ -2,8 +2,8 @@
 import { FC } from "react";
 
 interface ImportTabsProps {
-  activeTab: "new" | "history";
-  setActiveTab: (tab: "new" | "history") => void;
+  activeTab: "new" | "history" | "export";
+  setActiveTab: (tab: "new" | "history" | "export") => void;
 }
 
 export const ImportTabs: FC<ImportTabsProps> = ({
@@ -24,6 +24,12 @@ export const ImportTabs: FC<ImportTabsProps> = ({
           className={`px-1 py-4 font-medium transition-colors ${activeTab === "history" ? "border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400" : "text-gray-600! hover:text-gray-900! dark:text-gray-400! dark:hover:text-gray-200!" }`}
         >
           Import history
+        </button>
+        <button
+          onClick={() => setActiveTab("export")}
+          className={`px-1 py-4 font-medium transition-colors ${activeTab === "export" ? "border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400" : "text-gray-600! hover:text-gray-900! dark:text-gray-400! dark:hover:text-gray-200!" }`}
+        >
+          Export
         </button>
       </div>
     </div>

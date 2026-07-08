@@ -28,7 +28,9 @@ export const useImportManager = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<"new" | "history">("new");
+  const [activeTab, setActiveTab] = useState<"new" | "history" | "export">(
+    "new",
+  );
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const [importLimitExceeded, setImportLimitExceeded] =
     useState<ImportLimitExceeded | null>(null);
