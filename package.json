@@ -11,8 +11,6 @@
     "clean": "rm -rf .next && rm -rf node_modules && npm install",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck",
-    "check-text-colors": "ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/check-text-colors.ts",
-    "fix-tailwind-classes": "node scripts/fix-tailwind-v4-classes.mjs",
     "add-lead-indexes": "ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/add-lead-indexes.ts",
     "backfill-email-verified": "ts-node --compiler-options '{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' scripts/backfill-legacy-email-verified.ts"
   },
