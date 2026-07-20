@@ -55,7 +55,7 @@ export function formatLeadDetailCountry(
   return capitalizeWords(trimmed);
 }
 
-/** Display source with capitalized segments (e.g. "taboola - dev-send"). */
+/** Display source with capitalized segments (e.g. "facebook - landing"). */
 export function formatLeadDetailSource(source: string | null | undefined): string {
   const trimmed = String(source ?? "").trim();
   if (!trimmed) return "";

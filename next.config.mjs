@@ -111,6 +111,7 @@ const nextConfig = {
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              // Google Fonts not used — brand faces are self-hosted via next/font
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://*.cloudinary.com https://flagcdn.com",
               "media-src 'self' blob:",

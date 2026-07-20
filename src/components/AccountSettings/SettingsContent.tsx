@@ -14,7 +14,6 @@ import { ChangePasswordSection } from "./ChangePasswordSection";
 import { PasswordInput } from "./PasswordInput";
 import { DateTimeSettingsSection } from "./DateTimeSettingsSection";
 import { DialerSettingsSection } from "./DialerSettingsSection";
-import { IntegrationsSection } from "./IntegrationsSection";
 import { AppearanceSettingsSection } from "./AppearanceSettingsSection";
 
 export function SettingsContent() {
@@ -205,7 +204,6 @@ export function SettingsContent() {
               handlePasswordReset={handlePasswordReset}
             />
             <AppearanceSettingsSection />
-            <IntegrationsSection />
             {/* Danger Zone Section */}
             <section className="p-6 bg-white border border-red-200 shadow-lg dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl dark:border dark:border-white/10">
               <div className="flex items-center gap-3 mb-6">

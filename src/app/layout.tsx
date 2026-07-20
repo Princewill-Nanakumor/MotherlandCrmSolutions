@@ -1,7 +1,7 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Space_Grotesk, JetBrains_Mono, Source_Code_Pro, Geist_Mono } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import { AblyTeardownOutsideDashboard } from "@/components/AblyTeardownOutsideDashboard";
 import { AppBrandingProvider } from "@/components/AppBrandingProvider";
@@ -10,28 +10,8 @@ import {
   buildStructuredData,
   getBrandingForHost,
 } from "@/lib/appBranding";
+import { brandFontVariablesClassName } from "@/lib/brandFontLoaders";
 import "./globals.css";
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const sourceCodePro = Source_Code_Pro({
-  variable: "--font-source-code-pro",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -58,15 +38,20 @@ export default async function RootLayout({
   const structuredData = buildStructuredData(branding);
 
   return (
-    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
-      <body
-        className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} ${sourceCodePro.variable} ${geistMono.variable} antialiased`}
-      >
+    <html
+      lang="en"
+      suppressHydrationWarning
+      data-scroll-behavior="smooth"
+      className={`${brandFontVariablesClassName} ${geistMono.variable}`}
+    >
+      <body className="antialiased">
         <Script
           id="tenant-brand-theme-boot"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("motherland-brand-theme");if(t){var th=JSON.parse(t);if(th&&th.buttonStyle)document.documentElement.dataset.brandButtonStyle=th.buttonStyle;}var c=localStorage.getItem("motherland-brand-theme-css");if(!c)return;var v=JSON.parse(c),r=document.documentElement,k;for(k in v){if(Object.prototype.hasOwnProperty.call(v,k))r.style.setProperty(k,v[k]);}var f=localStorage.getItem("motherland-brand-theme-fonts");if(f){var l=document.createElement("link");l.id="tenant-brand-fonts";l.rel="stylesheet";l.href=f;document.head.appendChild(l);}}catch(e){}})();`,
+            // Fonts are self-hosted via next/font CSS variables on <html> —
+            // only restore colors / button style from cache.
+            __html: `(function(){try{var t=localStorage.getItem("motherland-brand-theme");if(t){var th=JSON.parse(t);if(th&&th.buttonStyle)document.documentElement.dataset.brandButtonStyle=th.buttonStyle;}var c=localStorage.getItem("motherland-brand-theme-css");if(!c)return;var v=JSON.parse(c),r=document.documentElement,k;for(k in v){if(Object.prototype.hasOwnProperty.call(v,k))r.style.setProperty(k,v[k]);}}catch(e){}})();`,
           }}
         />
         <Script

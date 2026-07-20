@@ -83,7 +83,6 @@ async function ensureModelsRegistered() {
       import("@/models/User"),
       import("@/models/Activity"),
       import("@/models/Lead"),
-      import("@/models/IntegrationLeadReceipt"),
     ]);
   } catch (error) {
     console.error("Error registering models:", error);

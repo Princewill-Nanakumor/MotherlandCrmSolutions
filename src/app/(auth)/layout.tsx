@@ -38,19 +38,19 @@ export default function AuthLayout({
           </div>
         ) : (
           <div className="auth-routes-shell brand-page-wash min-h-screen flex items-center justify-center dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 [font-family:var(--brand-font-body)]">
-            <div className="w-full max-w-sm sm:max-w-md md:max-w-lg px-3 sm:px-4 py-4 sm:py-6">
-              <div className="text-center mb-6 sm:mb-8">
+            <div className="px-3 py-4 w-full max-w-sm sm:max-w-md md:max-w-lg sm:px-4 sm:py-6">
+              <div className="mb-6 text-center sm:mb-8">
                 <Link
                   href="/"
-                  className="inline-flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4"
+                  className="inline-flex items-center mb-3 space-x-2 sm:space-x-3 sm:mb-4"
                 >
                   <div className="p-1.5 sm:p-2 brand-gradient rounded-lg shadow-md">
                     <Shield
                       size={28}
-                      className="sm:w-[35px] sm:h-[35px] text-white"
+                      className="sm:w-8.75 sm:h-8.75 text-white"
                     />
                   </div>
-                  <div className="text-xl sm:text-2xl font-bold brand-text-gradient">
+                  <div className="text-xl font-bold sm:text-2xl brand-text-gradient">
                     {displayName}
                   </div>
                 </Link>

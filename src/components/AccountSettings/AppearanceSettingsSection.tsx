@@ -199,7 +199,7 @@ function BrandPreview({ draft }: { draft: BrandTheme }) {
             className="mt-1 text-sm text-gray-600 dark:text-gray-300"
             style={{ fontFamily: bodyFont }}
           >
-            Buttons, inputs, icons, and the navbar all use your brand colors.
+            The quick brown fox jumps over the lazy dog — 1234567890
           </p>
         </div>
 

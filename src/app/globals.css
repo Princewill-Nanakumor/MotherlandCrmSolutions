@@ -11,9 +11,10 @@
   --brand-navbar-from: #4f46e5;
   --brand-navbar-to: #9333ea;
   --brand-navbar-text: #ffffff;
-  --brand-font-body: var(--font-source-code-pro), "Source Code Pro",
+  --brand-font-body: var(--font-brand-ibm-plex-mono), "IBM Plex Mono",
     ui-monospace, monospace;
-  --brand-font-heading: var(--brand-font-body);
+  --brand-font-heading: var(--font-jetbrains-mono), "JetBrains Mono",
+    ui-monospace, monospace;
   font-family: var(--brand-font-body);
   color: #0f172a;
 }
@@ -254,6 +255,14 @@ h6 {
   letter-spacing: -0.01em;
   /* Default text color for light mode - dark text */
   color: #0f172a;
+}
+
+/* Non-semantic titles (shadcn Card/Dialog) should still use heading font */
+[data-slot="card-title"],
+[data-slot="dialog-title"],
+[data-slot="alert-dialog-title"],
+.brand-heading {
+  font-family: var(--brand-font-heading);
 }
 
 .dark h1,

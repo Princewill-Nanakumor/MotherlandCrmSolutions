@@ -3,7 +3,6 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -22,6 +21,7 @@ import {
 import { cn } from "@/libs/utils";
 import { hasRecentIntentionalSignOut } from "@/lib/sessionUtils";
 import { useAppBranding } from "@/components/AppBrandingProvider";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 
 interface NavItem {
   href: string;
@@ -153,19 +153,13 @@ export default function Sidebar() {
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center justify-center p-2 mb-8 overflow-hidden"
+          className="flex items-center justify-center p-2 mb-6 overflow-hidden rounded-2xl"
           aria-label="Home"
         >
-          <div className="relative w-20 h-20">
-            <Image
-              src="/motherlandlogo.png"
-              alt={`${displayName} Logo`}
-              fill
-              sizes="80px"
-              className="object-contain"
-              priority
-            />
-          </div>
+          <MotherlandLogo
+            className="w-12 h-12 rounded-2xl"
+            title={`${displayName} Logo`}
+          />
         </Link>
 
         {/* Main Navigation */}

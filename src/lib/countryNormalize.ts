@@ -28,7 +28,7 @@ for (const { value, label } of countryOptions) {
   registerCanonical(label, value);
 }
 
-/** Common Taboola / import spellings beyond ISO list */
+/** Common import spellings beyond ISO list */
 const EXTRA_ALIASES: Array<[string, string[]]> = [
   ["United States", ["USA", "U.S.A.", "U.S.", "US of A", "America"]],
   ["United Kingdom", ["UK", "U.K.", "Great Britain", "Britain", "England"]],

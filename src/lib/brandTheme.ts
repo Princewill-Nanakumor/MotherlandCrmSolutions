@@ -46,13 +46,13 @@ export type BrandFontOption = {
   cssFamily: string;
 };
 
-/** Curated fonts — each option is a distinct face (near-duplicates removed). */
+/** Curated fonts — each option is a distinct face (near-duplicates removed).
+ *  Faces are self-hosted via next/font (`src/lib/brandFontLoaders.ts`). */
 export const BRAND_FONT_OPTIONS: BrandFontOption[] = [
   // Sans — UI / body (different silhouettes)
   {
     id: "space-grotesk",
     label: "Space Grotesk",
-    // Loaded via next/font in root layout (--font-space-grotesk)
     googleFamily: null,
     cssFamily:
       'var(--font-space-grotesk), "Space Grotesk", ui-sans-serif, system-ui, sans-serif',
@@ -60,168 +60,193 @@ export const BRAND_FONT_OPTIONS: BrandFontOption[] = [
   {
     id: "inter",
     label: "Inter",
-    googleFamily: "Inter",
-    cssFamily: '"Inter", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-inter), Inter, ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "dm-sans",
     label: "DM Sans",
-    googleFamily: "DM Sans",
-    cssFamily: '"DM Sans", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-dm-sans), "DM Sans", ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "plus-jakarta",
     label: "Plus Jakarta Sans",
-    googleFamily: "Plus Jakarta Sans",
-    cssFamily: '"Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-plus-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "poppins",
     label: "Poppins",
-    googleFamily: "Poppins",
-    cssFamily: '"Poppins", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-poppins), Poppins, ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "nunito",
     label: "Nunito",
-    googleFamily: "Nunito",
-    cssFamily: '"Nunito", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-nunito), Nunito, ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "rubik",
     label: "Rubik",
-    googleFamily: "Rubik",
-    cssFamily: '"Rubik", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-rubik), Rubik, ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "source-sans",
     label: "Source Sans 3",
-    googleFamily: "Source Sans 3",
-    cssFamily: '"Source Sans 3", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-source-sans), "Source Sans 3", ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "ibm-plex",
     label: "IBM Plex Sans",
-    googleFamily: "IBM Plex Sans",
-    cssFamily: '"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-ibm-plex), "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "outfit",
     label: "Outfit",
-    googleFamily: "Outfit",
-    cssFamily: '"Outfit", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-outfit), Outfit, ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "sora",
     label: "Sora",
-    googleFamily: "Sora",
-    cssFamily: '"Sora", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-sora), Sora, ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "lexend",
     label: "Lexend",
-    googleFamily: "Lexend",
-    cssFamily: '"Lexend", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-lexend), Lexend, ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "lato",
     label: "Lato",
-    googleFamily: "Lato",
-    cssFamily: '"Lato", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-lato), Lato, ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "montserrat",
     label: "Montserrat",
-    googleFamily: "Montserrat",
-    cssFamily: '"Montserrat", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-montserrat), Montserrat, ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "raleway",
     label: "Raleway",
-    googleFamily: "Raleway",
-    cssFamily: '"Raleway", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-raleway), Raleway, ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "barlow",
     label: "Barlow",
-    googleFamily: "Barlow",
-    cssFamily: '"Barlow", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-barlow), Barlow, ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "archivo",
     label: "Archivo",
-    googleFamily: "Archivo",
-    cssFamily: '"Archivo", ui-sans-serif, system-ui, sans-serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-archivo), Archivo, ui-sans-serif, system-ui, sans-serif',
   },
   // Serif — headings / editorial
   {
     id: "playfair",
     label: "Playfair Display",
-    googleFamily: "Playfair Display",
-    cssFamily: '"Playfair Display", ui-serif, Georgia, serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-playfair), "Playfair Display", ui-serif, Georgia, serif',
   },
   {
     id: "merriweather",
     label: "Merriweather",
-    googleFamily: "Merriweather",
-    cssFamily: '"Merriweather", ui-serif, Georgia, serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-merriweather), Merriweather, ui-serif, Georgia, serif',
   },
   {
     id: "lora",
     label: "Lora",
-    googleFamily: "Lora",
-    cssFamily: '"Lora", ui-serif, Georgia, serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-lora), Lora, ui-serif, Georgia, serif',
   },
   {
     id: "librebaskerville",
     label: "Libre Baskerville",
-    googleFamily: "Libre Baskerville",
-    cssFamily: '"Libre Baskerville", ui-serif, Georgia, serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-libre-baskerville), "Libre Baskerville", ui-serif, Georgia, serif',
   },
   {
     id: "source-serif",
     label: "Source Serif 4",
-    googleFamily: "Source Serif 4",
-    cssFamily: '"Source Serif 4", ui-serif, Georgia, serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-source-serif), "Source Serif 4", ui-serif, Georgia, serif',
   },
   {
     id: "cormorant-garamond",
     label: "Cormorant Garamond",
-    googleFamily: "Cormorant Garamond",
-    cssFamily: '"Cormorant Garamond", ui-serif, Georgia, serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-cormorant), "Cormorant Garamond", ui-serif, Georgia, serif',
   },
   {
     id: "fraunces",
     label: "Fraunces",
-    googleFamily: "Fraunces",
-    cssFamily: '"Fraunces", ui-serif, Georgia, serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-fraunces), Fraunces, ui-serif, Georgia, serif',
   },
   {
     id: "instrument-serif",
     label: "Instrument Serif",
-    googleFamily: "Instrument Serif",
-    cssFamily: '"Instrument Serif", ui-serif, Georgia, serif',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-instrument-serif), "Instrument Serif", ui-serif, Georgia, serif',
   },
   // Mono
   {
     id: "source-code-pro",
     label: "Source Code Pro",
-    googleFamily: "Source Code Pro",
+    googleFamily: null,
     cssFamily:
       'var(--font-source-code-pro), "Source Code Pro", ui-monospace, monospace',
   },
   {
     id: "jetbrains",
     label: "JetBrains Mono",
-    googleFamily: "JetBrains Mono",
+    googleFamily: null,
     cssFamily:
       'var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace',
   },
   {
     id: "ibm-plex-mono",
     label: "IBM Plex Mono",
-    googleFamily: "IBM Plex Mono",
-    cssFamily: '"IBM Plex Mono", ui-monospace, monospace',
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-ibm-plex-mono), "IBM Plex Mono", ui-monospace, monospace',
   },
 ];
 
@@ -300,8 +325,8 @@ export const DEFAULT_BRAND_THEME: BrandTheme = syncDerivedBrandColors({
   navbarTo: "#9333EA",
   navbarText: "#FFFFFF",
   buttonStyle: "gradient",
-  bodyFont: "source-code-pro",
-  headingFont: "source-code-pro",
+  bodyFont: "ibm-plex-mono",
+  headingFont: "jetbrains",
 });
 
 const HEX_RE = /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/;
@@ -353,21 +378,19 @@ export function mergeBrandTheme(
   let bodyFont = resolveBrandFontId(p.bodyFont, fallback.bodyFont);
   let headingFont = resolveBrandFontId(p.headingFont, fallback.headingFont);
 
-  // Migrate the brief JetBrains Mono app default → Source Code Pro.
-  // (1) both still on previous default (2) body already new default, heading leftover
-  const previousDefaultFont = "jetbrains";
-  const currentDefaultFont = "source-code-pro";
-  if (
-    bodyFont === previousDefaultFont &&
-    headingFont === previousDefaultFont
-  ) {
-    bodyFont = currentDefaultFont;
-    headingFont = currentDefaultFont;
-  } else if (
-    bodyFont === currentDefaultFont &&
-    headingFont === previousDefaultFont
-  ) {
-    headingFont = currentDefaultFont;
+  // Migrate prior app defaults → IBM Plex Mono (body) + JetBrains Mono (heading).
+  // Only when both sides still match an old paired default (not a custom mix).
+  const oldPairedDefaults: Array<[string, string]> = [
+    ["jetbrains", "jetbrains"],
+    ["source-code-pro", "source-code-pro"],
+    ["ibm-plex-mono", "rubik"],
+  ];
+  for (const [oldBody, oldHeading] of oldPairedDefaults) {
+    if (bodyFont === oldBody && headingFont === oldHeading) {
+      bodyFont = fallback.bodyFont;
+      headingFont = fallback.headingFont;
+      break;
+    }
   }
 
   const core = {
@@ -403,8 +426,8 @@ export function parseBrandThemeInput(input: unknown): BrandTheme | { error: stri
     raw.solidPrimary ?? raw.primary ?? "",
   ).trim();
   const buttonStyle = String(raw.buttonStyle ?? "gradient").trim();
-  const bodyFontRaw = String(raw.bodyFont ?? "source-code-pro").trim();
-  const headingFontRaw = String(raw.headingFont ?? "source-code-pro").trim();
+  const bodyFontRaw = String(raw.bodyFont ?? "ibm-plex-mono").trim();
+  const headingFontRaw = String(raw.headingFont ?? "jetbrains").trim();
   const bodyFont = resolveBrandFontId(bodyFontRaw, "");
   const headingFont = resolveBrandFontId(headingFontRaw, "");
 
@@ -456,22 +479,17 @@ export function brandThemeToCssVars(theme: BrandTheme): Record<string, string> {
   };
 }
 
-export function googleFontsHrefForTheme(theme: BrandTheme): string | null {
-  const families = new Set<string>();
-  for (const id of [theme.bodyFont, theme.headingFont]) {
-    const opt = getBrandFontOption(id);
-    if (opt.googleFamily) families.add(opt.googleFamily);
-  }
-  if (families.size === 0) return null;
-
-  const params = [...families]
-    .map((name) => `family=${encodeURIComponent(name).replace(/%20/g, "+")}:wght@400;500;600;700`)
-    .join("&");
-
-  return `https://fonts.googleapis.com/css2?${params}&display=swap`;
+export function googleFontsHrefForTheme(_theme: BrandTheme): string | null {
+  // Brand faces are self-hosted via next/font — no runtime Google Fonts CSS.
+  return null;
 }
 
-/** Apply CSS vars + button style + Google fonts to <html> (home, auth, dashboard). */
+/** @deprecated Catalog fonts are self-hosted; kept for call-site compatibility. */
+export function ensureBrandFontCatalogLoaded(): void {
+  // no-op
+}
+
+/** Apply CSS vars + button style to <html> (home, auth, dashboard). */
 export function applyBrandThemeToDocument(theme: BrandTheme): void {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
@@ -481,26 +499,17 @@ export function applyBrandThemeToDocument(theme: BrandTheme): void {
   }
   root.dataset.brandButtonStyle = theme.buttonStyle;
 
-  const href = googleFontsHrefForTheme(theme);
-  const existing = document.getElementById(
-    "tenant-brand-fonts",
-  ) as HTMLLinkElement | null;
-
-  if (!href) {
-    existing?.remove();
-    return;
+  // Remove any legacy Google Fonts <link> from older clients / cached boots.
+  document.getElementById("tenant-brand-fonts")?.remove();
+  document.getElementById("tenant-brand-fonts-catalog")?.remove();
+  document.getElementById("preconnect-fonts-googleapis")?.remove();
+  document.getElementById("preconnect-fonts-gstatic")?.remove();
+  // Stale Google Fonts href from before self-hosted fonts.
+  try {
+    window.localStorage.removeItem(BRAND_THEME_FONTS_STORAGE_KEY);
+  } catch {
+    // ignore
   }
-
-  if (existing) {
-    if (existing.href !== href) existing.href = href;
-    return;
-  }
-
-  const link = document.createElement("link");
-  link.id = "tenant-brand-fonts";
-  link.rel = "stylesheet";
-  link.href = href;
-  document.head.appendChild(link);
 }
 
 /** localStorage keys — keep in sync with the boot script in app/layout.tsx */
@@ -532,12 +541,8 @@ export function persistBrandThemeCache(theme: BrandTheme): void {
       BRAND_THEME_CSS_STORAGE_KEY,
       JSON.stringify(brandThemeToCssVars(merged)),
     );
-    const href = googleFontsHrefForTheme(merged);
-    if (href) {
-      window.localStorage.setItem(BRAND_THEME_FONTS_STORAGE_KEY, href);
-    } else {
-      window.localStorage.removeItem(BRAND_THEME_FONTS_STORAGE_KEY);
-    }
+    // Legacy key from Google Fonts era — clear so old boots don't inject links.
+    window.localStorage.removeItem(BRAND_THEME_FONTS_STORAGE_KEY);
   } catch {
     // Ignore quota / private-mode failures
   }

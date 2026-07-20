@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 import { Loader2, LogIn } from "lucide-react";
@@ -11,6 +10,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { useAppBranding } from "@/components/AppBrandingProvider";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 
 function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse bg-gray-200 rounded ${className}`} />;
@@ -96,7 +96,7 @@ export default function Navbar() {
 
   return (
     <motion.nav
-      className={`fixed top-0 left-0 right-0 z-50 px-6 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 px-6 py-2 transition-all duration-300 ${
         isScrolled
           ? "bg-white/95 backdrop-blur-md shadow-md border-b border-gray-200"
           : "bg-transparent border-b border-white/20"
@@ -113,16 +113,10 @@ export default function Navbar() {
         >
           <Link href="/">
             <div className="flex items-center space-x-1">
-              <div className="relative w-20 h-20 overflow-hidden ">
-                <Image
-                  src="/motherlandlogo.png"
-                  alt={`${displayName} Logo`}
-                  fill
-                  sizes="80px"
-                  className="object-contain"
-                  priority={!isLoginPage}
-                />
-              </div>
+              <MotherlandLogo
+                className="w-12 h-12 rounded-2xl"
+                title={`${displayName} Logo`}
+              />
               <div
                 className={`text-lg font-bold md:text-2xl transition-colors duration-300 ${
                   isScrolled ? "text-gray-900" : "text-white"
