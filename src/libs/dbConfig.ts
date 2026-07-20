@@ -52,13 +52,28 @@ function getMongoDBUri(): string {
 
 function getConnectionOptions(): mongoose.ConnectOptions {
   const dbName = getDatabaseName();
+  // M0 free Atlas allows ~500 connections *cluster-wide*. Each Netlify /
+  // serverless / `next dev` process keeps its own pool. The old
+  // maxPoolSize:50 + minPoolSize:10 exhausted the cluster when a few
+  // instances ran at once (prod + preview + local). Keep pools tiny and
+  // release idle sockets so cold instances do not hold connections open.
+  const maxPoolSize = Math.max(
+    1,
+    Number.parseInt(process.env.MONGODB_MAX_POOL_SIZE ?? "5", 10) || 5,
+  );
+  const minPoolSize = Math.max(
+    0,
+    Number.parseInt(process.env.MONGODB_MIN_POOL_SIZE ?? "0", 10) || 0,
+  );
+
   return {
     bufferCommands: true,
     // autoIndex must be off in production: building indexes on every cold
     // start is expensive and can stall the first request.
     autoIndex: process.env.NODE_ENV !== "production",
-    maxPoolSize: 50,
-    minPoolSize: 10,
+    maxPoolSize,
+    minPoolSize: Math.min(minPoolSize, maxPoolSize),
+    maxIdleTimeMS: 10_000,
     serverSelectionTimeoutMS: 30000,
     socketTimeoutMS: 45000,
     family: 4,
