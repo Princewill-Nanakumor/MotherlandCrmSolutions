@@ -282,9 +282,6 @@ const StatusModal = ({
                   Cancel Edit
                 </Button>
               )}
-              <Button type="button" variant="outline" onClick={handleClose}>
-                Close
-              </Button>
               <Button
                 type="submit"
                 disabled={isCreating}

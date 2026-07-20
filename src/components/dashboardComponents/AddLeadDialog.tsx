@@ -355,7 +355,9 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
               <SelectTrigger>
                 <SelectValue
                   placeholder={
-                    isLoadingStatuses ? "Loading statuses..." : "Select status"
+                    isLoadingStatuses
+                      ? "Loading statuses..."
+                      : "Select a status"
                   }
                 />
               </SelectTrigger>

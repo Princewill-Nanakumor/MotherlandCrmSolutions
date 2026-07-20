@@ -863,12 +863,14 @@ select {
   color: #f9fafb !important; /* white */
 }
 
-/* Fix SelectValue text colors */
-[data-slot="select-value"] {
+/* Fix SelectValue text colors (including nested status name spans) */
+[data-slot="select-value"],
+[data-slot="select-value"] span {
   color: #111827 !important; /* gray-900 */
 }
 
-.dark [data-slot="select-value"] {
+.dark [data-slot="select-value"],
+.dark [data-slot="select-value"] span {
   color: #f9fafb !important; /* white */
 }
 
@@ -1641,22 +1643,19 @@ span[class*="text-red"] {
   color: rgb(239 68 68) !important; /* red-500 */
 }
 
-/* Allow Tailwind text-white class to work on button text - use higher specificity */
+/* Allow Tailwind text-white on button labels — avoid [class*="text-white"] so
+   dark:text-* utilities on selects/inputs do not force white text in light mode */
 button span.text-white,
 button.text-white span,
-button span[class*="text-white"],
 [role="button"] span.text-white,
-[role="button"] span[class*="text-white"],
-button[class*="text-white"] span {
+[role="button"].text-white span {
   color: white !important;
 }
 
 .dark button span.text-white,
 .dark button.text-white span,
-.dark button span[class*="text-white"],
 .dark [role="button"] span.text-white,
-.dark [role="button"] span[class*="text-white"],
-.dark button[class*="text-white"] span {
+.dark [role="button"].text-white span {
   color: white !important;
 }
 
