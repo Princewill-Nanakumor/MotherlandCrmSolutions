@@ -59,7 +59,9 @@ function ColorField({
         <p className="text-sm font-medium text-gray-900! dark:text-white!">
           {label}
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {description}
+        </p>
       </div>
       <div className="flex items-center gap-3">
         <input
@@ -71,7 +73,7 @@ function ColorField({
             setHexDraft(next);
             onChange(next);
           }}
-          className="h-10 w-12 cursor-pointer rounded-md border border-gray-300 bg-transparent p-1 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600"
+          className="w-12 h-10 p-1 bg-transparent border border-gray-300 rounded-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600"
           aria-label={label}
         />
         <Input
@@ -154,14 +156,14 @@ function BrandPreview({ draft }: { draft: BrandTheme }) {
   const navbarTextColor = "#ffffff";
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+    <div className="overflow-hidden bg-white border border-gray-200 shadow-sm rounded-xl dark:border-gray-700 dark:bg-gray-900">
       <nav
         className="flex items-center justify-between px-4 py-3 text-sm font-medium"
         style={{ ...navBackground, color: navbarTextColor }}
       >
         <div className="flex items-center gap-2">
           <LayoutDashboard
-            className="h-4 w-4"
+            className="w-4 h-4"
             style={{ color: navbarTextColor }}
           />
           <span
@@ -178,11 +180,14 @@ function BrandPreview({ draft }: { draft: BrandTheme }) {
           >
             {formatAppDateTime(now, { dateFormat, timeFormat, timezone })}
           </span>
-          <Bell className="h-4 w-4 text-white!" style={{ color: navbarTextColor }} />
+          <Bell
+            className="h-4 w-4 text-white!"
+            style={{ color: navbarTextColor }}
+          />
         </div>
       </nav>
 
-      <div className="space-y-4 p-4">
+      <div className="p-4 space-y-4">
         <div>
           <h3
             className="text-lg font-semibold text-gray-900 dark:text-white"
@@ -202,11 +207,8 @@ function BrandPreview({ draft }: { draft: BrandTheme }) {
           <Button type="button" size="sm">
             Save lead
           </Button>
-          <Input
-            placeholder="Focus to see input ring"
-            className="max-w-[200px]"
-          />
-          <Filter className="h-5 w-5 brand-icon" />
+          <Input placeholder="Focus to see input ring" className="max-w-50" />
+          <Filter className="w-5 h-5 brand-icon" />
         </div>
       </div>
     </div>
@@ -300,8 +302,8 @@ export function AppearanceSettingsSection() {
 
   if (isLoading) {
     return (
-      <section className="mt-4 flex items-center gap-2 rounded-2xl border border-border bg-white p-6 shadow-lg dark:bg-white/5">
-        <Loader2 className="h-4 w-4 animate-spin brand-icon" />
+      <section className="flex items-center gap-2 p-6 mt-4 bg-white border shadow-lg rounded-2xl border-border dark:bg-white/5">
+        <Loader2 className="w-4 h-4 animate-spin brand-icon" />
         <span className="text-sm text-gray-500 dark:text-gray-300">
           Loading appearance…
         </span>
@@ -309,17 +311,22 @@ export function AppearanceSettingsSection() {
     );
   }
 
+  // Appearance is admin-only — agents inherit branding and should not see this section.
+  if (!canEdit) {
+    return null;
+  }
+
   return (
-    <section className="mt-4 space-y-6 rounded-2xl border border-border bg-white p-6 shadow-lg dark:bg-white/5">
+    <section className="p-6 mt-4 space-y-6 bg-white border shadow-lg rounded-2xl border-border dark:bg-white/5">
       <div className="flex items-center gap-3">
         <div
-          className="rounded-lg p-2"
+          className="p-2 rounded-lg"
           style={{
             backgroundColor: `${getActiveBrandPrimary(draft)}22`,
           }}
         >
           <Palette
-            className="h-5 w-5"
+            className="w-5 h-5"
             style={{ color: getActiveBrandPrimary(draft) }}
           />
         </div>
@@ -328,9 +335,7 @@ export function AppearanceSettingsSection() {
             Appearance
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-300">
-            {canEdit
-              ? "One brand palette for buttons, inputs, icons, and the navbar."
-              : "Your admin controls the colors and fonts used in this CRM."}
+            One brand palette for buttons, inputs, icons, and the navbar.
           </p>
         </div>
       </div>
@@ -382,7 +387,9 @@ export function AppearanceSettingsSection() {
             <div className="flex gap-2">
               <Button
                 type="button"
-                variant={draft.buttonStyle === "gradient" ? "default" : "outline"}
+                variant={
+                  draft.buttonStyle === "gradient" ? "default" : "outline"
+                }
                 onClick={() => handleButtonStyleChange("gradient")}
                 disabled={!canEdit}
               >
@@ -399,7 +406,7 @@ export function AppearanceSettingsSection() {
             </div>
           </div>
 
-          <div className="grid gap-6 border-t border-border pt-6 sm:grid-cols-2">
+          <div className="grid gap-6 pt-6 border-t border-border sm:grid-cols-2">
             <div className="flex items-start gap-2 sm:col-span-2">
               <Type className="mt-0.5 h-4 w-4 text-gray-500" />
               <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -422,7 +429,7 @@ export function AppearanceSettingsSection() {
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
             Live preview
           </p>
           <BrandPreview draft={draft} />
@@ -430,7 +437,7 @@ export function AppearanceSettingsSection() {
       </div>
 
       {canEdit && (
-        <div className="flex flex-wrap gap-2 border-t border-border pt-6">
+        <div className="flex flex-wrap gap-2 pt-6 border-t border-border">
           <Button
             type="button"
             onClick={handleSave}
@@ -438,9 +445,9 @@ export function AppearanceSettingsSection() {
             className="gap-2 cursor-pointer disabled:cursor-not-allowed"
           >
             {isSaving ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Save className="h-4 w-4" />
+              <Save className="w-4 h-4" />
             )}
             Save appearance
           </Button>
@@ -451,7 +458,7 @@ export function AppearanceSettingsSection() {
             disabled={isSaving}
             className="gap-2"
           >
-            <RotateCcw className="h-4 w-4" />
+            <RotateCcw className="w-4 h-4" />
             Reset to default
           </Button>
         </div>

@@ -2,7 +2,6 @@
 
 "use client";
 
-import { Inter } from "next/font/google";
 import { Shield } from "lucide-react";
 import Link from "next/link";
 import { SessionProvider } from "next-auth/react";
@@ -10,8 +9,6 @@ import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
 import { usePathname } from "next/navigation";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { BrandThemeApplier } from "@/components/BrandThemeApplier";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export default function AuthLayout({
   children,
@@ -36,11 +33,11 @@ export default function AuthLayout({
         <BrandThemeApplier />
         {isHeroAuthPage ? (
           // Full-bleed hero + navbar (same shell as login); pages inject their own <style>
-          <div className={inter.className}>{children}</div>
+          <div className="min-h-screen [font-family:var(--brand-font-body)]">
+            {children}
+          </div>
         ) : (
-          <div
-            className={`auth-routes-shell brand-page-wash min-h-screen flex items-center justify-center dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 ${inter.className}`}
-          >
+          <div className="auth-routes-shell brand-page-wash min-h-screen flex items-center justify-center dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 [font-family:var(--brand-font-body)]">
             <div className="w-full max-w-sm sm:max-w-md md:max-w-lg px-3 sm:px-4 py-4 sm:py-6">
               <div className="text-center mb-6 sm:mb-8">
                 <Link

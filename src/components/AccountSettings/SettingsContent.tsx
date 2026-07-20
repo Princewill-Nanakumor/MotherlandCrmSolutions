@@ -159,7 +159,6 @@ export function SettingsContent() {
     return (
       <div className="min-h-screen">
         <div className="container px-4 py-8 mx-auto border rounded-lg">
-          <AppearanceSettingsSection />
           <DateTimeSettingsSection />
           <DialerSettingsSection />
         </div>

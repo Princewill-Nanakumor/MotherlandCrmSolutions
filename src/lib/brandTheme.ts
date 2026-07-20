@@ -46,14 +46,16 @@ export type BrandFontOption = {
   cssFamily: string;
 };
 
-/** Curated Google / system fonts (any color is free; fonts need a loaded face). */
+/** Curated fonts — each option is a distinct face (near-duplicates removed). */
 export const BRAND_FONT_OPTIONS: BrandFontOption[] = [
+  // Sans — UI / body (different silhouettes)
   {
-    id: "system",
-    label: "Default (Space Grotesk)",
+    id: "space-grotesk",
+    label: "Space Grotesk",
+    // Loaded via next/font in root layout (--font-space-grotesk)
     googleFamily: null,
     cssFamily:
-      'var(--font-space-grotesk), "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      'var(--font-space-grotesk), "Space Grotesk", ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "inter",
@@ -66,12 +68,6 @@ export const BRAND_FONT_OPTIONS: BrandFontOption[] = [
     label: "DM Sans",
     googleFamily: "DM Sans",
     cssFamily: '"DM Sans", ui-sans-serif, system-ui, sans-serif',
-  },
-  {
-    id: "manrope",
-    label: "Manrope",
-    googleFamily: "Manrope",
-    cssFamily: '"Manrope", ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "plus-jakarta",
@@ -110,17 +106,54 @@ export const BRAND_FONT_OPTIONS: BrandFontOption[] = [
     cssFamily: '"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif',
   },
   {
-    id: "space-grotesk",
-    label: "Space Grotesk",
-    googleFamily: "Space Grotesk",
-    cssFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif',
-  },
-  {
     id: "outfit",
     label: "Outfit",
     googleFamily: "Outfit",
     cssFamily: '"Outfit", ui-sans-serif, system-ui, sans-serif',
   },
+  {
+    id: "sora",
+    label: "Sora",
+    googleFamily: "Sora",
+    cssFamily: '"Sora", ui-sans-serif, system-ui, sans-serif',
+  },
+  {
+    id: "lexend",
+    label: "Lexend",
+    googleFamily: "Lexend",
+    cssFamily: '"Lexend", ui-sans-serif, system-ui, sans-serif',
+  },
+  {
+    id: "lato",
+    label: "Lato",
+    googleFamily: "Lato",
+    cssFamily: '"Lato", ui-sans-serif, system-ui, sans-serif',
+  },
+  {
+    id: "montserrat",
+    label: "Montserrat",
+    googleFamily: "Montserrat",
+    cssFamily: '"Montserrat", ui-sans-serif, system-ui, sans-serif',
+  },
+  {
+    id: "raleway",
+    label: "Raleway",
+    googleFamily: "Raleway",
+    cssFamily: '"Raleway", ui-sans-serif, system-ui, sans-serif',
+  },
+  {
+    id: "barlow",
+    label: "Barlow",
+    googleFamily: "Barlow",
+    cssFamily: '"Barlow", ui-sans-serif, system-ui, sans-serif',
+  },
+  {
+    id: "archivo",
+    label: "Archivo",
+    googleFamily: "Archivo",
+    cssFamily: '"Archivo", ui-sans-serif, system-ui, sans-serif',
+  },
+  // Serif — headings / editorial
   {
     id: "playfair",
     label: "Playfair Display",
@@ -146,12 +179,86 @@ export const BRAND_FONT_OPTIONS: BrandFontOption[] = [
     cssFamily: '"Libre Baskerville", ui-serif, Georgia, serif',
   },
   {
+    id: "source-serif",
+    label: "Source Serif 4",
+    googleFamily: "Source Serif 4",
+    cssFamily: '"Source Serif 4", ui-serif, Georgia, serif',
+  },
+  {
+    id: "cormorant-garamond",
+    label: "Cormorant Garamond",
+    googleFamily: "Cormorant Garamond",
+    cssFamily: '"Cormorant Garamond", ui-serif, Georgia, serif',
+  },
+  {
+    id: "fraunces",
+    label: "Fraunces",
+    googleFamily: "Fraunces",
+    cssFamily: '"Fraunces", ui-serif, Georgia, serif',
+  },
+  {
+    id: "instrument-serif",
+    label: "Instrument Serif",
+    googleFamily: "Instrument Serif",
+    cssFamily: '"Instrument Serif", ui-serif, Georgia, serif',
+  },
+  // Mono
+  {
+    id: "source-code-pro",
+    label: "Source Code Pro",
+    googleFamily: "Source Code Pro",
+    cssFamily:
+      'var(--font-source-code-pro), "Source Code Pro", ui-monospace, monospace',
+  },
+  {
     id: "jetbrains",
     label: "JetBrains Mono",
     googleFamily: "JetBrains Mono",
-    cssFamily: '"JetBrains Mono", ui-monospace, monospace',
+    cssFamily:
+      'var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace',
+  },
+  {
+    id: "ibm-plex-mono",
+    label: "IBM Plex Mono",
+    googleFamily: "IBM Plex Mono",
+    cssFamily: '"IBM Plex Mono", ui-monospace, monospace',
   },
 ];
+
+const FONT_IDS = new Set(BRAND_FONT_OPTIONS.map((f) => f.id));
+
+/** Map removed / redundant font ids → closest kept option (saved themes stay valid). */
+const BRAND_FONT_MIGRATIONS: Record<string, string> = {
+  // Old Space Grotesk id before rename
+  system: "space-grotesk",
+  manrope: "plus-jakarta",
+  "nunito-sans": "nunito",
+  "work-sans": "source-sans",
+  figtree: "dm-sans",
+  urbanist: "montserrat",
+  mulish: "nunito",
+  cabin: "lato",
+  karla: "inter",
+  "open-sans": "source-sans",
+  quicksand: "nunito",
+  "public-sans": "source-sans",
+  "schibsted-grotesk": "space-grotesk",
+  "instrument-sans": "inter",
+  onest: "outfit",
+  "albert-sans": "inter",
+  "libre-franklin": "source-sans",
+  "crimson-pro": "lora",
+  "eb-garamond": "cormorant-garamond",
+  "fira-code": "jetbrains",
+};
+
+function resolveBrandFontId(id: string | undefined | null, fallback: string): string {
+  const raw = String(id ?? "").trim();
+  if (!raw) return fallback;
+  const migrated = BRAND_FONT_MIGRATIONS[raw] ?? raw;
+  if (FONT_IDS.has(migrated)) return migrated;
+  return fallback;
+}
 
 export function syncDerivedBrandColors(theme: BrandTheme): BrandTheme {
   const active = getActiveBrandPrimary(theme);
@@ -193,12 +300,11 @@ export const DEFAULT_BRAND_THEME: BrandTheme = syncDerivedBrandColors({
   navbarTo: "#9333EA",
   navbarText: "#FFFFFF",
   buttonStyle: "gradient",
-  bodyFont: "system",
-  headingFont: "system",
+  bodyFont: "source-code-pro",
+  headingFont: "source-code-pro",
 });
 
 const HEX_RE = /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/;
-const FONT_IDS = new Set(BRAND_FONT_OPTIONS.map((f) => f.id));
 
 export function isValidHexColor(value: string): boolean {
   return HEX_RE.test(String(value ?? "").trim());
@@ -217,8 +323,9 @@ export function normalizeHexColor(value: string): string {
 }
 
 export function getBrandFontOption(id: string): BrandFontOption {
+  const resolved = resolveBrandFontId(id, BRAND_FONT_OPTIONS[0]!.id);
   return (
-    BRAND_FONT_OPTIONS.find((f) => f.id === id) ?? BRAND_FONT_OPTIONS[0]!
+    BRAND_FONT_OPTIONS.find((f) => f.id === resolved) ?? BRAND_FONT_OPTIONS[0]!
   );
 }
 
@@ -243,18 +350,34 @@ export function mergeBrandTheme(
     ? normalizeHexColor(String(solidPrimaryRaw))
     : fallback.solidPrimary;
 
+  let bodyFont = resolveBrandFontId(p.bodyFont, fallback.bodyFont);
+  let headingFont = resolveBrandFontId(p.headingFont, fallback.headingFont);
+
+  // Migrate the brief JetBrains Mono app default → Source Code Pro.
+  // (1) both still on previous default (2) body already new default, heading leftover
+  const previousDefaultFont = "jetbrains";
+  const currentDefaultFont = "source-code-pro";
+  if (
+    bodyFont === previousDefaultFont &&
+    headingFont === previousDefaultFont
+  ) {
+    bodyFont = currentDefaultFont;
+    headingFont = currentDefaultFont;
+  } else if (
+    bodyFont === currentDefaultFont &&
+    headingFont === previousDefaultFont
+  ) {
+    headingFont = currentDefaultFont;
+  }
+
   const core = {
     primary,
     primaryEnd,
     solidPrimary,
     buttonStyle:
       p.buttonStyle === "solid" ? ("solid" as const) : ("gradient" as const),
-    bodyFont: FONT_IDS.has(String(p.bodyFont ?? ""))
-      ? String(p.bodyFont)
-      : fallback.bodyFont,
-    headingFont: FONT_IDS.has(String(p.headingFont ?? ""))
-      ? String(p.headingFont)
-      : fallback.headingFont,
+    bodyFont,
+    headingFont,
   };
 
   return syncDerivedBrandColors({
@@ -280,8 +403,10 @@ export function parseBrandThemeInput(input: unknown): BrandTheme | { error: stri
     raw.solidPrimary ?? raw.primary ?? "",
   ).trim();
   const buttonStyle = String(raw.buttonStyle ?? "gradient").trim();
-  const bodyFont = String(raw.bodyFont ?? "system").trim();
-  const headingFont = String(raw.headingFont ?? "system").trim();
+  const bodyFontRaw = String(raw.bodyFont ?? "source-code-pro").trim();
+  const headingFontRaw = String(raw.headingFont ?? "source-code-pro").trim();
+  const bodyFont = resolveBrandFontId(bodyFontRaw, "");
+  const headingFont = resolveBrandFontId(headingFontRaw, "");
 
   if (!isValidHexColor(primary)) {
     return { error: "Primary color must be a valid hex (e.g. #4F46E5)" };
@@ -295,10 +420,10 @@ export function parseBrandThemeInput(input: unknown): BrandTheme | { error: stri
   if (buttonStyle !== "solid" && buttonStyle !== "gradient") {
     return { error: "Button style must be solid or gradient" };
   }
-  if (!FONT_IDS.has(bodyFont)) {
+  if (!bodyFont) {
     return { error: "Invalid body font" };
   }
-  if (!FONT_IDS.has(headingFont)) {
+  if (!headingFont) {
     return { error: "Invalid heading font" };
   }
 

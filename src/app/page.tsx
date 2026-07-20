@@ -11,7 +11,7 @@ import { BrandThemeApplier } from "@/components/BrandThemeApplier";
 function HomePageContent() {
   return (
     <div
-      className="homepage"
+      className="homepage [font-family:var(--brand-font-body)]"
       style={{ backgroundColor: "transparent", background: "transparent" }}
     >
       <Navbar />

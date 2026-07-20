@@ -11,8 +11,8 @@
   --brand-navbar-from: #4f46e5;
   --brand-navbar-to: #9333ea;
   --brand-navbar-text: #ffffff;
-  --brand-font-body: var(--font-space-grotesk), "Inter", system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --brand-font-body: var(--font-source-code-pro), "Source Code Pro",
+    ui-monospace, monospace;
   --brand-font-heading: var(--brand-font-body);
   font-family: var(--brand-font-body);
   color: #0f172a;
@@ -1276,8 +1276,9 @@ button,
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Follow tenant appearance fonts (not a separate Geist stack) */
+  --font-sans: var(--brand-font-body);
+  --font-mono: var(--brand-font-body);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -1388,6 +1389,7 @@ button,
   }
   html {
     background-color: #ffffff; /* white for light mode */
+    font-family: var(--brand-font-body);
   }
   html.dark {
     background-color: #1f2937 !important; /* gray-800 for dark mode */
@@ -1396,6 +1398,7 @@ button,
     @apply text-foreground;
     /* Use background variable for consistent theming */
     background-color: var(--background);
+    font-family: var(--brand-font-body);
   }
   /* Override dark mode body background */
   .dark body {
