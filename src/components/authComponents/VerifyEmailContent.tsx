@@ -167,7 +167,7 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
     "p-4 border shadow-xl rounded-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8";
 
   const primaryBtnClass =
-    "inline-flex min-w-40 items-center justify-center rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
+    "inline-flex min-w-40 items-center justify-center rounded-lg brand-gradient px-6 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-95 focus-visible:ring-2 focus-visible:ring-(--brand-focus) focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
 
   const secondaryBtnClass =
     "inline-flex items-center justify-center rounded-lg border border-white/30 bg-white/5 px-6 py-2.5 text-sm font-medium text-white/90 transition-colors hover:bg-white/10";
@@ -178,9 +178,19 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
         return (
           <div className="flex flex-col items-center gap-4">
             <div className="relative flex h-16 w-16 items-center justify-center">
-              <div className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent border-t-indigo-400 border-r-purple-500" />
-              <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-br from-indigo-600 to-purple-600">
-                <Loader2 size={24} className="animate-spin text-white" />
+              <div
+                className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent"
+                style={{
+                  borderTopColor: "var(--brand-from)",
+                  borderRightColor: "var(--brand-to)",
+                }}
+              />
+              <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full brand-gradient">
+                <Loader2
+                  size={24}
+                  className="animate-spin"
+                  style={{ color: "var(--brand-navbar-text)" }}
+                />
               </div>
             </div>
             <div className="text-center">
@@ -268,7 +278,7 @@ export function VerifyEmailContent({ token }: VerifyEmailContentProps) {
                   className={`mx-auto mb-4 max-w-md rounded-lg border px-3 py-2 text-left text-sm ${
                     reissueLine.includes("already verified")
                       ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-100"
-                      : "border-indigo-400/40 bg-indigo-500/10 text-indigo-100"
+                      : "border-white/30 bg-white/10 text-white/90"
                   }`}
                 >
                   {reissueLine}

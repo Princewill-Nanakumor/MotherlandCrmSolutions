@@ -278,7 +278,7 @@ export const CommentsTab: FC<CommentsTabProps> = ({ leadId }) => {
   if (isLoadingComments) {
     return (
       <div className="flex justify-center items-center p-6 h-full">
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin dark:text-blue-400" />
+        <Loader2 className="w-8 h-8 animate-spin brand-icon" />
       </div>
     );
   }

@@ -63,14 +63,14 @@ export default function SubscriptionPlansSection() {
                 key={plan.id}
                 className={`relative p-8 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${
                   plan.popular
-                    ? "border-indigo-500 ring-2 ring-indigo-200 bg-linear-to-r from-indigo-50 to-purple-50 shadow-lg"
-                    : "border-gray-200 bg-white hover:border-indigo-300"
+                    ? "border-(--brand-from) ring-2 brand-ring-soft brand-soft-bg shadow-lg"
+                    : "border-gray-200 bg-white hover:border-(--brand-from)"
                 }`}
                 variants={cardVariants}
               >
                 {plan.popular && (
                   <div className="absolute transform -translate-x-1/2 -top-4 left-1/2">
-                    <span className="px-4 py-2 text-xs font-semibold text-white rounded-full shadow-md bg-linear-to-r from-indigo-600 to-purple-600">
+                    <span className="px-4 py-2 text-xs font-semibold text-white rounded-full shadow-md brand-gradient">
                       Most Popular
                     </span>
                   </div>
@@ -121,7 +121,7 @@ export default function SubscriptionPlansSection() {
                   href={telegramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center px-8 py-3 font-medium text-white transition-all duration-200 rounded-lg shadow-md bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg"
+                  className="inline-flex items-center justify-center px-8 py-3 font-medium text-white transition-all duration-200 rounded-lg shadow-md brand-gradient hover:brightness-95 hover:shadow-lg"
                 >
                   <MessageCircle className="w-5 h-5 mr-2" />
                   Message on Telegram
@@ -129,7 +129,7 @@ export default function SubscriptionPlansSection() {
               ) : null}
               <a
                 href={`mailto:${supportEmail}`}
-                className="inline-flex items-center justify-center px-8 py-3 font-medium text-indigo-700 transition-all duration-200 bg-white border border-indigo-200 rounded-lg shadow-sm hover:shadow-md"
+                className="inline-flex items-center justify-center px-8 py-3 font-medium text-(--brand-from) transition-all duration-200 bg-white border brand-soft-border rounded-lg shadow-sm hover:shadow-md"
               >
                 <Mail className="w-5 h-5 mr-2" />
                 Email us

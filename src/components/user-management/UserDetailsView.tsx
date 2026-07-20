@@ -403,8 +403,10 @@ export function UserDetailsView({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* Role */}
           <div className="flex items-start gap-3">
-            <div className="p-2 mt-1 bg-indigo-100 rounded-lg dark:bg-indigo-900/30">
-              <Shield className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <div className="p-2 mt-1 rounded-lg bg-[color-mix(in_srgb,var(--brand-from)_14%,white)] dark:bg-[color-mix(in_srgb,var(--brand-from)_22%,#111827)]">
+              <Shield
+                className="w-5 h-5 text-(--brand-from) dark:text-(--brand-focus)"
+              />
             </div>
             <div className="flex-1">
               <p className="text-sm text-gray-500 dark:text-gray-400">Role</p>

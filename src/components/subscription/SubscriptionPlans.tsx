@@ -99,7 +99,7 @@ export default function SubscriptionPlans({
               key={plan.id}
               className={`relative transition-all duration-200 hover:shadow-xl dark:bg-gray-700  ${
                 plan.isPopular
-                  ? "border-purple-500 dark:border-purple-400 shadow-lg"
+                  ? "border-(--brand-from) dark:border-(--brand-focus) shadow-lg"
                   : "border-gray-200 dark:border-gray-700"
               } ${
                 isActiveCurrentPlan
@@ -113,7 +113,7 @@ export default function SubscriptionPlans({
             >
               {plan.isPopular && (
                 <div className="absolute transform -translate-x-1/2 -top-3 left-1/2">
-                  <Badge className="px-3 py-1 text-white bg-purple-600">
+                  <Badge className="px-3 py-1 text-white brand-gradient">
                     <Star className="w-3 h-3 mr-1" />
                     Most Popular
                   </Badge>

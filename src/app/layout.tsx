@@ -49,6 +49,13 @@ export default async function RootLayout({
         className={`${spaceGrotesk.variable} ${geistMono.variable} antialiased`}
       >
         <Script
+          id="tenant-brand-theme-boot"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("motherland-brand-theme");if(t){var th=JSON.parse(t);if(th&&th.buttonStyle)document.documentElement.dataset.brandButtonStyle=th.buttonStyle;}var c=localStorage.getItem("motherland-brand-theme-css");if(!c)return;var v=JSON.parse(c),r=document.documentElement,k;for(k in v){if(Object.prototype.hasOwnProperty.call(v,k))r.style.setProperty(k,v[k]);}var f=localStorage.getItem("motherland-brand-theme-fonts");if(f){var l=document.createElement("link");l.id="tenant-brand-fonts";l.rel="stylesheet";l.href=f;document.head.appendChild(l);}}catch(e){}})();`,
+          }}
+        />
+        <Script
           id="structured-data"
           type="application/ld+json"
           strategy="afterInteractive"

@@ -155,7 +155,7 @@ export function NewPasswordForm({ token }: NewPasswordFormProps) {
           <button
             type="button"
             onClick={() => router.push("/login")}
-            className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white transition-colors rounded-lg shadow-lg bg-linear-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+            className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white transition-colors rounded-lg shadow-lg brand-gradient hover:brightness-95"
           >
             Go to Sign In
           </button>
@@ -318,7 +318,7 @@ export function NewPasswordForm({ token }: NewPasswordFormProps) {
             captchaState !== "ready" ||
             captchaInput.length !== 6
           }
-          className="flex items-center justify-center w-full px-4 py-3 space-x-2 font-medium text-white transition-colors duration-200 rounded-lg bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center justify-center w-full px-4 py-3 space-x-2 font-medium text-white transition-colors duration-200 rounded-lg brand-gradient hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-(--brand-focus) disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <>

@@ -4,14 +4,17 @@
 
 /* Global crypto-inspired professional typography */
 :root {
-  font-family:
-    var(--font-space-grotesk),
-    "Inter",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  --brand-from: #4f46e5;
+  --brand-to: #9333ea;
+  --brand-focus: #4f46e5;
+  --brand-icon: #4f46e5;
+  --brand-navbar-from: #4f46e5;
+  --brand-navbar-to: #9333ea;
+  --brand-navbar-text: #ffffff;
+  --brand-font-body: var(--font-space-grotesk), "Inter", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --brand-font-heading: var(--brand-font-body);
+  font-family: var(--brand-font-body);
   color: #0f172a;
 }
 
@@ -23,14 +26,7 @@
 }
 
 body {
-  font-family:
-    var(--font-space-grotesk),
-    "Inter",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: var(--brand-font-body);
   color: #0f172a;
   background-color: #ffffff; /* Default white, will be overridden by login page */
 }
@@ -38,6 +34,211 @@ body {
 .dark body {
   color: #e2e8f0;
   background-color: #1f2937; /* gray-800 */
+}
+
+/* Tenant brand utilities — follow --brand-* CSS variables */
+.brand-gradient {
+  background-color: var(--brand-from);
+  background-image: linear-gradient(
+    to right,
+    var(--brand-from),
+    var(--brand-to)
+  ) !important;
+  color: #fff !important;
+}
+
+html[data-brand-button-style="solid"] .brand-gradient {
+  background-image: none !important;
+  background-color: var(--brand-from) !important;
+}
+
+.brand-navbar {
+  background-color: var(--brand-navbar-from);
+  background-image: linear-gradient(
+    to right,
+    var(--brand-navbar-from),
+    var(--brand-navbar-to)
+  ) !important;
+  color: var(--brand-navbar-text) !important;
+}
+
+html[data-brand-button-style="solid"] .brand-navbar {
+  background-image: none !important;
+  background-color: var(--brand-navbar-from) !important;
+}
+
+/* Dark mode navbar always uses neutral surface — never tenant brand bg */
+html.dark .brand-navbar,
+html[data-brand-button-style="solid"].dark .brand-navbar {
+  background-image: none !important;
+  background-color: #111827 !important;
+  color: #f3f4f6 !important;
+  border-bottom-color: #374151 !important;
+}
+
+.dark .brand-navbar {
+  background-image: none !important;
+  background-color: #111827 !important;
+  color: #f3f4f6 !important;
+  border-bottom-color: #374151 !important;
+}
+
+.brand-navbar-text {
+  color: var(--brand-navbar-text) !important;
+}
+
+.dark .brand-navbar .brand-navbar-text {
+  color: #f3f4f6 !important;
+}
+
+.brand-icon {
+  color: var(--brand-icon) !important;
+}
+
+.text-brand {
+  color: var(--brand-from) !important;
+}
+
+.text-brand-icon {
+  color: var(--brand-icon) !important;
+}
+
+.brand-soft-bg {
+  background-color: color-mix(in srgb, var(--brand-from) 12%, white);
+}
+
+.dark .brand-soft-bg {
+  background-color: color-mix(in srgb, var(--brand-from) 18%, #111827);
+}
+
+.brand-tab-active {
+  background-color: color-mix(in srgb, var(--brand-from) 12%, white) !important;
+  color: var(--brand-from) !important;
+  font-weight: 700;
+}
+
+.dark .brand-tab-active {
+  background-color: color-mix(in srgb, var(--brand-from) 18%, #111827) !important;
+  color: #fff !important;
+}
+
+.brand-chip {
+  background-color: color-mix(in srgb, var(--brand-from) 12%, white);
+  color: var(--brand-from);
+  border-color: color-mix(in srgb, var(--brand-from) 28%, transparent);
+}
+
+.dark .brand-chip {
+  background-color: color-mix(in srgb, var(--brand-from) 22%, #111827);
+  color: color-mix(in srgb, var(--brand-focus) 70%, white);
+  border-color: color-mix(in srgb, var(--brand-from) 40%, transparent);
+}
+
+/* Text gradient (headings / logos) */
+.brand-text-gradient {
+  background-image: linear-gradient(
+    to right,
+    var(--brand-from),
+    var(--brand-to)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+html[data-brand-button-style="solid"] .brand-text-gradient {
+  background-image: none;
+  background-color: transparent;
+  color: var(--brand-from);
+  -webkit-background-clip: unset;
+  background-clip: unset;
+}
+
+/* Soft page wash (auth fallback shell, featured cards) */
+.brand-page-wash {
+  background-image: linear-gradient(
+    to bottom right,
+    color-mix(in srgb, var(--brand-from) 12%, white),
+    color-mix(in srgb, var(--brand-to) 10%, white),
+    color-mix(in srgb, var(--brand-from) 8%, white)
+  );
+}
+
+.dark .brand-page-wash {
+  background-image: linear-gradient(
+    to bottom right,
+    #111827,
+    #1f2937,
+    #111827
+  );
+}
+
+.brand-soft-border {
+  border-color: color-mix(in srgb, var(--brand-from) 28%, transparent);
+}
+
+.brand-ring-soft {
+  --tw-ring-color: color-mix(in srgb, var(--brand-from) 35%, transparent);
+}
+
+/* Sidebar active indicator — light accent stripe (replaces indigo-300) */
+.brand-sidebar-active-accent {
+  background-color: color-mix(in srgb, var(--brand-from) 38%, white) !important;
+}
+
+.dark .brand-sidebar-active-accent {
+  background-color: color-mix(in srgb, var(--brand-from) 48%, white) !important;
+}
+
+/* App-wide form focus — matches brand button / primary color */
+input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not(
+    [type="range"]
+  ):not([type="file"]):not([type="hidden"]):not([type="submit"]):not(
+    [type="button"]
+  ):not([type="reset"]):not([type="image"]),
+textarea,
+select {
+  transition-property: border-color, box-shadow;
+  transition-duration: 150ms;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not(
+    [type="range"]
+  ):not([type="file"]):not([type="hidden"]):not([type="submit"]):not(
+    [type="button"]
+  ):not([type="reset"]):not([type="image"]):not([readonly]):focus,
+input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not(
+    [type="range"]
+  ):not([type="file"]):not([type="hidden"]):not([type="submit"]):not(
+    [type="button"]
+  ):not([type="reset"]):not([type="image"]):not([readonly]):focus-visible,
+textarea:not([readonly]):focus,
+textarea:not([readonly]):focus-visible,
+select:focus,
+select:focus-visible {
+  outline: none;
+  border-color: var(--brand-focus);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-focus) 30%, transparent);
+}
+
+input[aria-invalid="true"]:focus,
+input[aria-invalid="true"]:focus-visible,
+textarea[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus-visible,
+select[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus-visible {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #ef4444 30%, transparent);
+}
+
+/* Legacy hardcoded indigo/purple CTAs also follow tenant theme */
+.bg-linear-to-r.from-indigo-600.to-purple-600,
+.bg-linear-to-br.from-indigo-600.to-purple-600 {
+  background-image: linear-gradient(
+    to right,
+    var(--brand-from),
+    var(--brand-to)
+  ) !important;
 }
 
 /* Login page backgrounds are handled via inline styles in the component to avoid hydration errors */
@@ -48,7 +249,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-space-grotesk), "Inter", system-ui, sans-serif;
+  font-family: var(--brand-font-heading);
   font-weight: 700;
   letter-spacing: -0.01em;
   /* Default text color for light mode - dark text */
@@ -313,15 +514,22 @@ h6:not([class*="text-gray"]):not([class*="text-blue"]):not(
   color: #f8fafc;
 }
 
-/* Apply font-family and font-weight to all p, span, a, li, label */
+/* Apply tenant body font to common UI text (filters, labels, navbar, etc.) */
 p,
 a,
 li,
 label,
 span {
-  font-family: var(--font-space-grotesk), "Inter", system-ui, sans-serif;
+  font-family: var(--brand-font-body);
   font-weight: 500;
   /* Color is applied only to elements without Tailwind text color classes (see rules below) */
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: var(--brand-font-body);
 }
 
 /* Ensure Tailwind text color classes override global colors */
@@ -1037,11 +1245,11 @@ input[readOnly] {
   border: none !important;
 }
 
-/* Ensure the wrapper div shows the indigo focus ring */
+/* Ensure the wrapper div shows the brand focus ring */
 .phone-input-wrapper:focus-within {
   outline: none !important;
-  box-shadow: 0 0 0 2px #6366f1 !important;
-  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px var(--brand-focus) !important;
+  border-color: var(--brand-focus) !important;
 }
 
 /* When there's an error, show red focus ring */
@@ -1272,8 +1480,8 @@ aside nav a.bg-linear-to-r:visited,
 aside nav a.bg-linear-to-r:hover,
 aside nav a[class*="bg-linear-to-r"],
 aside nav a[class*="bg-linear-to-r!"] {
-  background: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important; /* from-indigo-600 to-purple-600 */
-  background-image: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
+  background: linear-gradient(to right, var(--brand-from), var(--brand-to)) !important; /* from-indigo-600 to-purple-600 */
+  background-image: linear-gradient(to right, var(--brand-from), var(--brand-to)) !important;
   background-color: transparent !important;
   color: white !important;
 }
@@ -1302,10 +1510,23 @@ aside nav a[class*="bg-linear-to-r!"] {
 .dark aside nav a.bg-linear-to-r,
 .dark aside nav a[class*="bg-linear-to-r"],
 .dark aside nav a[class*="bg-linear-to-r!"] {
-  background: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important; /* from-indigo-600 to-purple-600 */
-  background-image: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
+  background: linear-gradient(to right, var(--brand-from), var(--brand-to)) !important; /* from-indigo-600 to-purple-600 */
+  background-image: linear-gradient(to right, var(--brand-from), var(--brand-to)) !important;
   background-color: transparent !important;
   color: white !important;
+}
+
+/* Solid brand mode — active sidebar uses flat primary (no gradient end color) */
+html[data-brand-button-style="solid"] aside nav a[data-active="true"],
+html[data-brand-button-style="solid"] aside nav a.active-nav-link,
+html[data-brand-button-style="solid"] aside nav a[aria-current="page"],
+html[data-brand-button-style="solid"] aside nav a.brand-gradient,
+html[data-brand-button-style="solid"] aside nav a.group[data-active="true"],
+html[data-brand-button-style="solid"] aside nav a.group.active-nav-link,
+html[data-brand-button-style="solid"] aside nav a.group[aria-current="page"] {
+  background: var(--brand-from) !important;
+  background-image: none !important;
+  background-color: var(--brand-from) !important;
 }
 
 
@@ -1316,8 +1537,8 @@ aside nav a.group.active-nav-link,
 aside nav a.group.active-nav-link:hover,
 aside nav a.group[aria-current="page"],
 aside nav a.group[aria-current="page"]:hover {
-  background: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
-  background-image: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
+  background: linear-gradient(to right, var(--brand-from), var(--brand-to)) !important;
+  background-image: linear-gradient(to right, var(--brand-from), var(--brand-to)) !important;
   background-color: transparent !important;
 }
 
@@ -1327,9 +1548,9 @@ aside nav a svg.text-white {
   color: white !important;
 }
 
-aside nav a svg.text-indigo-700 {
-  stroke: rgb(67 56 202) !important; /* indigo-700 */
-  color: rgb(67 56 202) !important;
+aside nav a svg.brand-icon {
+  stroke: var(--brand-icon) !important;
+  color: var(--brand-icon) !important;
 }
 
 aside nav a svg.text-white {
@@ -1342,8 +1563,8 @@ aside nav a span.text-white {
   color: white !important;
 }
 
-aside nav a span.text-indigo-700 {
-  color: rgb(67 56 202) !important; /* indigo-700 */
+aside nav a span.brand-icon {
+  color: var(--brand-icon) !important;
 }
 
 /* Dark mode sidebar links should be white - but exclude active links */
@@ -1384,7 +1605,7 @@ aside nav a[aria-current="page"] span[aria-hidden="true"][class*="opacity-100"] 
 /* Override any conflicting background colors for active links */
 aside nav a.bg-linear-to-r:hover,
 aside nav a[class*="bg-linear-to-r"]:hover {
-  background-image: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
+  background-image: linear-gradient(to right, var(--brand-from), var(--brand-to)) !important;
   background-color: transparent !important;
 }
 

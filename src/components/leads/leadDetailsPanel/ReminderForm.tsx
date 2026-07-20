@@ -152,7 +152,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
         <div className="flex items-center justify-between p-3 bg-gray-100 rounded-lg dark:bg-gray-700/30">
           <div className="flex items-center gap-2">
             {formData.soundEnabled ? (
-              <Volume2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <Volume2 className="w-4 h-4 brand-icon" />
             ) : (
               <VolumeX className="w-4 h-4 text-gray-400 dark:text-gray-500" />
             )}
@@ -170,7 +170,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
             }
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               formData.soundEnabled
-                ? "bg-indigo-600"
+                ? "bg-(--brand-from)"
                 : "bg-gray-300 dark:bg-gray-600"
             }`}
           >
@@ -192,7 +192,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
               !formData.reminderTime ||
               !formData.type
             }
-            className="flex-1 text-white! bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200"
+            className="flex-1 text-white! brand-gradient hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-(--brand-focus) transition-all duration-200"
           >
             {isSaving ? (
               <Loader2 className="w-4 h-4 text-white animate-spin" />
@@ -208,7 +208,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
           <Button
             onClick={onCancel}
             variant="outline"
-            className="flex-1 text-gray-700 border-gray-300 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="flex-1"
           >
             Cancel
           </Button>

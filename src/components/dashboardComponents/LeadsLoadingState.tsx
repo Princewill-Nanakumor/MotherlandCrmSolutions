@@ -33,9 +33,15 @@ export const TableSkeleton = () => (
 /** Same glyph as dashboard layout session gate — reuse for full-page auth waits. */
 export const ShieldSpinnerGlyph = () => (
   <div className="relative flex h-16 w-16 items-center justify-center">
-    <div className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent border-t-blue-400 border-r-purple-500" />
-    <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
-      <Shield size={28} className="text-white" />
+    <div
+      className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent"
+      style={{
+        borderTopColor: "var(--brand-from)",
+        borderRightColor: "var(--brand-to)",
+      }}
+    />
+    <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full brand-gradient">
+      <Shield size={28} style={{ color: "var(--brand-navbar-text)" }} />
     </div>
   </div>
 );
@@ -62,9 +68,15 @@ export const SessionRefreshSpinner = () => (
   <div className="flex h-screen w-full items-center justify-center bg-background text-foreground">
     <div className="text-center">
       <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center">
-        <div className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent border-t-blue-400 border-r-purple-500" />
-        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
-          <RefreshCw size={28} className="text-white" />
+        <div
+          className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent"
+          style={{
+            borderTopColor: "var(--brand-from)",
+            borderRightColor: "var(--brand-to)",
+          }}
+        />
+        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full brand-gradient">
+          <RefreshCw size={28} style={{ color: "var(--brand-navbar-text)" }} />
         </div>
       </div>
       <p className="text-gray-600 dark:text-gray-400">Refreshing session...</p>

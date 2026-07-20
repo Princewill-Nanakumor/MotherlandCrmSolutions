@@ -49,7 +49,7 @@ export const RemindersList: FC<RemindersListProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+        <Loader2 className="w-6 h-6 animate-spin brand-icon" />
       </div>
     );
   }
@@ -91,7 +91,7 @@ export const RemindersList: FC<RemindersListProps> = ({
           border-radius: 4px;
         }
         div::-webkit-scrollbar-thumb:hover {
-          background: #4f46e5;
+          background: var(--brand-from);
         }
         .dark div::-webkit-scrollbar-track {
           background: #374151;
@@ -100,7 +100,7 @@ export const RemindersList: FC<RemindersListProps> = ({
           background: #6366f1;
         }
         .dark div::-webkit-scrollbar-thumb:hover {
-          background: #4f46e5;
+          background: var(--brand-from);
         }
       `}</style>
 

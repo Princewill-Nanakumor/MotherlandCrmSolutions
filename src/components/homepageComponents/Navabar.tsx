@@ -154,9 +154,11 @@ export default function Navbar() {
                   transition={{ duration: 0.4, ease: "easeOut" }}
                 >
                   <div
-                    className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg h-10 ${isScrolled ? "text-gray-900 bg-indigo-50" : "text-white! bg-white/20" }`}
+                    className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg h-10 ${isScrolled ? "text-gray-900 brand-soft-bg" : "text-white! bg-white/20" }`}
                   >
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2
+                      className={`w-5 h-5 animate-spin ${isScrolled ? "brand-icon" : "text-white"}`}
+                    />
                   </div>
                 </motion.div>
               ) : (
@@ -170,8 +172,8 @@ export default function Navbar() {
                     href="/dashboard"
                     className={`items-center hidden h-10 px-4 py-2 font-medium transition-colors duration-300 md:block ${
                       isScrolled
-                        ? "text-gray-900 hover:text-indigo-600"
-                        : "text-white hover:text-indigo-200"
+                        ? "text-gray-900 hover:text-(--brand-from)"
+                        : "text-white hover:text-white/80"
                     }`}
                   >
                     Dashboard
@@ -182,7 +184,7 @@ export default function Navbar() {
               <motion.button
                 type="button"
                 onClick={handleSignOut}
-                className={`${buttonBaseClasses} bg-linear-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700`}
+                className={`${buttonBaseClasses} brand-gradient text-white hover:brightness-95`}
                 variants={buttonVariants}
                 initial="visible"
                 animate="visible"
@@ -204,7 +206,7 @@ export default function Navbar() {
                 >
                   <Link
                     href="/signup"
-                    className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-300 backdrop-blur-md shadow-lg ${isScrolled ? "text-gray-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200" : "text-white! bg-white/20 hover:bg-white/30 border border-white/30" }`}
+                    className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-300 backdrop-blur-md shadow-lg ${isScrolled ? "text-gray-900 brand-soft-bg hover:brightness-95 border brand-soft-border" : "text-white! bg-white/20 hover:bg-white/30 border border-white/30" }`}
                   >
                     Sign Up
                   </Link>
@@ -219,7 +221,7 @@ export default function Navbar() {
                 >
                   <Link
                     href="/login"
-                    className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-300 backdrop-blur-md shadow-lg ${isScrolled ? "text-gray-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200" : "text-white! bg-white/20 hover:bg-white/30 border border-white/30" }`}
+                    className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-300 backdrop-blur-md shadow-lg ${isScrolled ? "text-gray-900 brand-soft-bg hover:brightness-95 border brand-soft-border" : "text-white! bg-white/20 hover:bg-white/30 border border-white/30" }`}
                   >
                     <LogIn className="w-4 h-4" />
                     <span

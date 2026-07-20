@@ -20,7 +20,7 @@ export default function Navbar() {
               className="object-contain"
             />
           </div>
-          <div className="text-lg font-bold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+          <div className="text-lg font-bold text-transparent bg-clip-text bg-linear-to-r from-[var(--brand-from)] to-[var(--brand-to)]">
             {displayName}
           </div>
         </div>

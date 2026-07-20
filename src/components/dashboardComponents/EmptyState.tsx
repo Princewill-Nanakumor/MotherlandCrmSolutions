@@ -136,7 +136,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
         <div className="flex flex-col gap-3 justify-center sm:flex-row">
           <button
             onClick={handleRefresh}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md border border-transparent transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md border border-transparent transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-(--brand-focus)"
           >
             <RefreshCw className="mr-2 w-4 h-4" />
             Refresh
@@ -151,7 +151,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
                   window.location.href = window.location.pathname;
                 }
               }}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 transition-colors dark:border-gray-600 dark:text-gray-300 dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 transition-colors dark:border-gray-600 dark:text-gray-300 dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-(--brand-focus)"
             >
               <Globe className="mr-2 w-4 h-4" />
               Clear Filters

@@ -91,7 +91,7 @@ export default function HeroSection() {
             >
               <Link
                 href="/dashboard"
-                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-all duration-200 rounded-lg shadow-lg bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-xl"
+                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-all duration-200 rounded-lg shadow-lg brand-gradient hover:brightness-95 hover:shadow-xl"
               >
                 Go to Dashboard
               </Link>
@@ -106,7 +106,7 @@ export default function HeroSection() {
               <a
                 href="#contact-us"
                 onClick={scrollToContact}
-                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-all duration-200 rounded-lg shadow-lg cursor-pointer bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-xl"
+                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-all duration-200 rounded-lg shadow-lg cursor-pointer brand-gradient hover:brightness-95 hover:shadow-xl"
               >
                 Get Started
               </a>

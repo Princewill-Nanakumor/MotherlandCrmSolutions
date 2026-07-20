@@ -181,13 +181,13 @@ export function AssignLeadsDialog({
               </label>
               {isLoadingUsers ? (
                 <div className="flex items-center justify-center p-2">
-                  <Loader2 className="w-4 h-4 text-gray-500 animate-spin dark:text-white" />
+                  <Loader2 className="w-4 h-4 animate-spin brand-icon" />
                 </div>
               ) : (
                 <select
                   value={selectedUser}
                   onChange={(e) => setSelectedUser(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-(--brand-focus) focus:border-transparent"
                 >
                   <option value="">Select an agent</option>
                   {assignableUsers.length > 0 ? (

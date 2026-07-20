@@ -167,10 +167,10 @@ const Comments: FC<CommentsProps> = ({
 
   return (
     <div
-      className="flex-1 min-h-0 flex flex-col bg-gray-50 dark:bg-gray-800/50 p-6 border border-gray-200 dark:border-gray-700 shadow-sm"
+      className="flex-1 min-h-0 flex flex-col bg-gray-50 dark:bg-transparent p-6 border border-gray-200 dark:border-gray-700 shadow-sm"
       style={{ height: "100%" }}
     >
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 border border-gray-100 dark:border-gray-700 flex-1 min-h-0 flex flex-col">
+      <div className="bg-white dark:bg-transparent rounded-lg shadow-sm p-5 border border-gray-100 dark:border-gray-700 flex-1 min-h-0 flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-800! dark:text-white!">
             Add a comment
@@ -200,7 +200,7 @@ const Comments: FC<CommentsProps> = ({
             {/* Textarea with explicit border control to fix thickness inconsistency */}
             <textarea
               placeholder="Write your thoughts about this lead... (Press Cmd/Ctrl + Enter to submit)"
-              className="w-full p-3 rounded-md focus:outline-none resize-none min-h-[120px] text-gray-700! dark:text-white! bg-white dark:bg-gray-700/50 transition-all duration-200"
+              className="w-full p-3 rounded-md focus:outline-none resize-none min-h-[120px] text-gray-700! dark:text-white! bg-white dark:bg-transparent transition-all duration-200"
               style={{
                 borderTopWidth: "1px",
                 borderRightWidth: "1px",
@@ -225,12 +225,15 @@ const Comments: FC<CommentsProps> = ({
                 boxShadow: "none", // Remove any shadow that might interfere
               }}
               onFocus={(e) => {
-                const focusColor = "rgb(99 102 241)"; // indigo-500
+                const focusColor =
+                  getComputedStyle(document.documentElement)
+                    .getPropertyValue("--brand-focus")
+                    .trim() || "#4f46e5";
                 e.target.style.borderTopColor = focusColor;
                 e.target.style.borderRightColor = focusColor;
                 e.target.style.borderBottomColor = focusColor;
                 e.target.style.borderLeftColor = focusColor;
-                e.target.style.boxShadow = `0 0 0 2px ${isDarkMode ? "rgb(99 102 241 / 0.2)" : "rgb(99 102 241 / 0.2)"}`;
+                e.target.style.boxShadow = `0 0 0 2px color-mix(in srgb, ${focusColor} 25%, transparent)`;
               }}
               onBlur={(e) => {
                 const defaultColor = isDarkMode
@@ -252,7 +255,7 @@ const Comments: FC<CommentsProps> = ({
               <button
                 onClick={handleAddComment}
                 disabled={isSaving || !commentContent.trim()}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white rounded-md text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 disabled:opacity-50 disabled:pointer-events-none"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 brand-gradient hover:brightness-95 text-white rounded-md text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-(--brand-focus) disabled:opacity-50 disabled:pointer-events-none"
                 style={{ border: "none", boxShadow: "none" }}
               >
                 {isSaving ? (
@@ -281,7 +284,7 @@ const Comments: FC<CommentsProps> = ({
           </h3>
 
           {comments.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+            <div className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-transparent rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
               <div className="text-center">
                 <p className="text-gray-500! dark:text-gray-400!">
                   No comments yet. Be the first to comment!
@@ -290,10 +293,10 @@ const Comments: FC<CommentsProps> = ({
             </div>
           ) : (
             <div
-              className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 space-y-4 border border-gray-200 dark:border-gray-700 shadow-inner"
+              className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-transparent rounded-lg p-4 space-y-4 border border-gray-200 dark:border-gray-700 shadow-inner"
               style={{
                 scrollbarWidth: "thin",
-                scrollbarColor: "#9333ea #f3f4f6",
+                scrollbarColor: "var(--brand-from) #f3f4f6",
               }}
             >
               <style jsx>{`
@@ -305,31 +308,31 @@ const Comments: FC<CommentsProps> = ({
                   border-radius: 4px;
                 }
                 div::-webkit-scrollbar-thumb {
-                  background: #6366f1;
+                  background: var(--brand-from);
                   border-radius: 4px;
                 }
                 div::-webkit-scrollbar-thumb:hover {
-                  background: #4f46e5;
+                  background: var(--brand-from);
                 }
                 .dark div::-webkit-scrollbar-track {
                   background: #374151;
                 }
                 .dark div::-webkit-scrollbar-thumb {
-                  background: #6366f1;
+                  background: var(--brand-from);
                 }
                 .dark div::-webkit-scrollbar-thumb:hover {
-                  background: #4f46e5;
+                  background: var(--brand-from);
                 }
               `}</style>
               {comments.map((comment) => (
                 <div
                   key={comment._id}
-                  className="group p-4 rounded-md bg-gray-100 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700"
+                  className="group p-4 rounded-md bg-gray-100 dark:bg-transparent border border-gray-100 dark:border-gray-700"
                 >
                   <div className="flex gap-3">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={comment.createdBy?.avatar} />
-                      <AvatarFallback className="bg-linear-to-r from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 text-indigo-800 dark:text-indigo-300">
+                      <AvatarFallback className="bg-[color-mix(in_srgb,var(--brand-from)_18%,white)] text-(--brand-from) dark:bg-[color-mix(in_srgb,var(--brand-from)_30%,#111827)] dark:text-(--brand-focus)">
                         {comment.createdBy?.firstName?.[0]}
                         {comment.createdBy?.lastName?.[0]}
                       </AvatarFallback>
@@ -349,7 +352,7 @@ const Comments: FC<CommentsProps> = ({
                       {editingId === comment._id ? (
                         <div className="mt-2 space-y-2">
                           <textarea
-                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-400 dark:focus:ring-indigo-500 dark:bg-gray-800 text-gray-700! dark:text-white!"
+                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-(--brand-focus) dark:bg-transparent text-gray-700! dark:text-white!"
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
                             rows={3}
@@ -360,7 +363,6 @@ const Comments: FC<CommentsProps> = ({
                               size="sm"
                               onClick={() => handleSaveEdit(comment)}
                               disabled={isEditing || !editContent.trim()}
-                              className="bg-indigo-500 hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white"
                             >
                               {isEditing ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -397,7 +399,7 @@ const Comments: FC<CommentsProps> = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-gray-500! hover:text-indigo-600! dark:text-gray-400! dark:hover:text-indigo-400!"
+                          className="text-gray-500! hover:text-(--brand-from)! dark:text-gray-400! dark:hover:text-(--brand-focus)!"
                           onClick={() => handleEdit(comment)}
                           disabled={isEditing}
                         >

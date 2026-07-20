@@ -47,14 +47,14 @@ export const AdsImageSlider: FC<AdsImageSliderProps> = ({
   return (
     <div className="relative overflow-hidden bg-white border border-gray-200 dark:bg-gray-800 rounded-xl dark:border-gray-700">
       {/* Floating Ads Pill - Left side */}
-      <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-purple-500 text-white text-[10px] font-medium rounded-full shadow-lg border">
+      <div className="absolute top-2 left-2 z-10 px-2 py-1 brand-gradient text-[10px] font-medium rounded-full shadow-lg border border-transparent text-(--brand-navbar-text)">
         Ads
       </div>
 
       {/* Toggle Button - Right side (identical styling) */}
       <button
         onClick={onToggle}
-        className="absolute z-10 px-3 py-1 text-xs font-medium text-white transition-colors bg-purple-500 border rounded-full shadow-lg top-2 right-2 hover:bg-purple-600"
+        className="absolute z-10 px-3 py-1 text-xs font-medium transition-colors brand-gradient border border-transparent rounded-full shadow-lg top-2 right-2 hover:brightness-95 text-(--brand-navbar-text)"
       >
         {isExpanded ? (
           <ChevronUp className="w-3 h-3" />
@@ -93,9 +93,8 @@ export const AdsImageSlider: FC<AdsImageSliderProps> = ({
                     index === currentSlide ? "opacity-100" : "opacity-0"
                   }`}
                 >
-                  <div className="relative h-full bg-linear-to-r from-purple-500 to-blue-600">
-                    {/* Placeholder for ad image - replace with actual image */}
-                    <div className="absolute inset-0 bg-linear-to-br from-purple-600/20 to-blue-600/20" />
+                  <div className="relative h-full brand-gradient">
+                    <div className="absolute inset-0 bg-black/10 dark:bg-black/20" />
 
                     {/* Ad Content */}
                     <div className="absolute inset-0 flex flex-col justify-center p-6 text-white">

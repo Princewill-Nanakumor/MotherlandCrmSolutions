@@ -558,17 +558,17 @@ export const CommentsAndActivitiesCombined: FC<
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-6 h-full">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500! dark:text-blue-400!" />
+        <Loader2 className="w-8 h-8 animate-spin brand-icon" />
       </div>
     );
   }
 
   return (
     <div
-      className="flex flex-col flex-1 p-6 min-h-0 bg-gray-50 border border-gray-200 shadow-sm dark:bg-gray-800/50 dark:border-gray-700"
+      className="flex flex-col flex-1 p-6 min-h-0 bg-gray-50 border border-gray-200 shadow-sm dark:bg-transparent dark:border-gray-700"
       style={{ height: "100%" }}
     >
-      <div className="flex flex-col flex-1 p-5 min-h-0 bg-white rounded-lg border border-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+      <div className="flex flex-col flex-1 p-5 min-h-0 bg-white rounded-lg border border-gray-100 shadow-sm dark:bg-transparent dark:border-gray-700">
         <CommentForm
           commentContent={commentContent}
           setCommentContent={setCommentContent}
@@ -612,7 +612,7 @@ export const CommentsAndActivitiesCombined: FC<
                   onClick={() => setTimelineFilter(tab.key)}
                   className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 transition-colors ${
                     isActive
-                      ? "font-bold bg-blue-50 text-blue-600! dark:bg-blue-500/10 dark:text-white!"
+                      ? "brand-tab-active"
                       : "font-medium text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"
                   }`}
                 >
@@ -621,7 +621,7 @@ export const CommentsAndActivitiesCombined: FC<
                   <span
                     className={`px-1.5 py-0.5 text-xs rounded-full ${
                       isActive
-                        ? "bg-blue-100 text-blue-700! dark:bg-blue-500/20 dark:text-blue-300!"
+                        ? "bg-[color-mix(in_srgb,var(--brand-from)_18%,white)] text-(--brand-from)! dark:bg-[color-mix(in_srgb,var(--brand-from)_30%,transparent)] dark:text-(--brand-focus)!"
                         : "bg-gray-100 text-gray-600! dark:bg-gray-700 dark:text-gray-300!"
                     }`}
                   >
@@ -684,7 +684,7 @@ export const CommentsAndActivitiesCombined: FC<
                   timeline.
                 </p>
                 {pendingDeleteComment?.content ? (
-                  <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-md border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
+                  <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-md border border-gray-200 dark:border-gray-600 dark:bg-transparent dark:text-gray-200">
                     {truncatePreview(pendingDeleteComment.content)}
                   </p>
                 ) : null}
@@ -734,7 +734,7 @@ export const CommentsAndActivitiesCombined: FC<
                   the timeline.
                 </p>
                 {pendingDeleteActivity ? (
-                  <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-md border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
+                  <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-md border border-gray-200 dark:border-gray-600 dark:bg-transparent dark:text-gray-200">
                     {truncatePreview(
                       pendingDeleteActivity.description ||
                         pendingDeleteActivity.type.replace(/_/g, " "),

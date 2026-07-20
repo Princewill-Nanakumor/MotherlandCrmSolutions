@@ -71,7 +71,7 @@ export function buildSelectionAndActionColumns(params: {
             ref={selectAllRef}
             checked={allSelected}
             onChange={(e) => handleSelectAll(e.target.checked)}
-            className="text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            className="text-blue-600 border-gray-300 rounded focus:ring-(--brand-focus)"
           />
         </div>
       ),
@@ -87,7 +87,7 @@ export function buildSelectionAndActionColumns(params: {
                 e.stopPropagation();
                 handleRowSelection(lead, e.target.checked);
               }}
-              className="text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="text-blue-600 border-gray-300 rounded focus:ring-(--brand-focus)"
             />
           </div>
         );

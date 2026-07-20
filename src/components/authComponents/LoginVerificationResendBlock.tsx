@@ -86,7 +86,7 @@ export function LoginVerificationResendBlock({
   };
 
   return (
-    <div className="rounded-lg border border-indigo-300/40 bg-white/10 p-3 text-left backdrop-blur-sm">
+    <div className="rounded-lg border border-white/30 bg-white/10 p-3 text-left backdrop-blur-sm">
       <p className="mb-2 text-sm font-semibold text-white!">
         Request a new verification email
       </p>
@@ -124,7 +124,7 @@ export function LoginVerificationResendBlock({
             captchaState !== "ready" ||
             captchaInput.length !== 6
           }
-          className="w-full rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-lg brand-gradient py-2 text-sm font-medium text-white transition-colors hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {resendLoading ? "Sending…" : "Resend verification email"}
         </button>

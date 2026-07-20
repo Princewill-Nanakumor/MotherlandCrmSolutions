@@ -117,7 +117,7 @@ export const ActivityItem: FC<ActivityItemProps> = ({
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
-              <span className="text-xs text-gray-600! dark:text-gray-400! font-sans bg-gray-100 dark:bg-gray-700 px-2 py-2 rounded-md border border-gray-200 dark:border-gray-600 whitespace-nowrap">
+              <span className="text-xs text-gray-600! dark:text-gray-400! bg-gray-100 dark:bg-gray-700 px-2 py-2 rounded-md border border-gray-200 dark:border-gray-600 whitespace-nowrap">
                 {formatDate(activity.createdAt)}
               </span>
               {isAdmin && onDelete && (

@@ -190,7 +190,7 @@ export default function SignUpForm() {
           </div>
           <Link
             href="/login"
-            className="flex w-full items-center justify-center space-x-2 rounded-lg bg-linear-to-br from-indigo-600 to-purple-600 px-4 py-3 font-medium text-white transition-all duration-200 hover:from-indigo-700 hover:to-purple-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+            className="flex w-full items-center justify-center space-x-2 rounded-lg brand-gradient px-4 py-3 font-medium text-white transition-all duration-200 hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-focus) focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
           >
             <span>Sign in</span>
             <ArrowRight className="h-5 w-5" aria-hidden />

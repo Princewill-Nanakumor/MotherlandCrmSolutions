@@ -14,6 +14,7 @@ import Footer from "@/components/dashboardComponents/Footer";
 import { LoadingSpinner } from "@/components/dashboardComponents/LeadsLoadingState";
 import { DateTimeSettingsProvider } from "@/context/DateTimeSettingsContext";
 import { DialerSettingsProvider } from "@/context/DialerSettingsContext";
+import { TenantThemeProvider } from "@/components/TenantThemeProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { ToggleProvider } from "@/context/ToggleContext";
 import ReminderNotifications from "@/components/notifications/ReminderNotifications";
@@ -583,7 +584,9 @@ export default function DashboardLayout({
               <Suspense fallback={<LoadingSpinner />}>
                 <DateTimeSettingsProvider>
                   <DialerSettingsProvider>
-                    <DashboardContent>{children}</DashboardContent>
+                    <TenantThemeProvider>
+                      <DashboardContent>{children}</DashboardContent>
+                    </TenantThemeProvider>
                   </DialerSettingsProvider>
                 </DateTimeSettingsProvider>
               </Suspense>

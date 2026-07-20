@@ -44,14 +44,14 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
         <div className="flex gap-1">
           <button
             onClick={() => setActiveTab("comments")}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 ${activeTab === "comments" ? "bg-blue-50 text-blue-600! dark:bg-blue-500/10 dark:text-white!" : "text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"}`}
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 ${activeTab === "comments" ? "brand-tab-active" : "text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"}`}
           >
             <MessageSquare className="w-5 h-5" />
             Comments & Activities
           </button>
           <button
             onClick={() => setActiveTab("reminders")}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 ${activeTab === "reminders" ? "bg-blue-50 text-blue-600! dark:bg-blue-500/10 dark:text-white!" : "text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"}`}
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 ${activeTab === "reminders" ? "brand-tab-active" : "text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"}`}
           >
             <Bell className="w-5 h-5" />
             Reminders

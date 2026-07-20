@@ -253,23 +253,23 @@ export function NotificationBell() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        className="relative p-2 transition rounded-full hover:bg-purple-400 dark:hover:bg-gray-800"
+        className="relative p-2 transition rounded-full hover:bg-black/10 dark:hover:bg-white/10"
         aria-label="Notifications"
         type="button"
         onClick={handleDropdownToggle}
       >
-        <Bell className="h-6 w-6 text-white! dark:text-purple-300!" />
+        <Bell className="h-6 w-6 brand-navbar-text" />
         {/* Only show badge if there are unread notifications */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full px-1.5 py-0.5">
+          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full px-1.5 py-0.5 [font-family:var(--brand-font-body)]">
             {unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 max-w-xs mt-2 bg-white border border-gray-200 rounded-lg shadow-lg w-80 dark:bg-gray-900 dark:border-gray-700 z-9999">
-          <div className="p-3 border-b border-gray-100 dark:border-gray-800 font-semibold text-gray-800! dark:text-gray-100! flex justify-between items-center">
+        <div className="absolute right-0 max-w-xs mt-2 bg-white border border-gray-200 rounded-lg shadow-lg w-80 dark:bg-gray-900 dark:border-gray-700 z-9999 [font-family:var(--brand-font-body)]">
+          <div className="p-3 border-b border-gray-100 dark:border-gray-800 font-semibold text-gray-800! dark:text-gray-100! flex justify-between items-center [font-family:var(--brand-font-heading)]">
             <span>Notifications</span>
             <div className="flex items-center space-x-2">
               <Button

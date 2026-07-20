@@ -193,7 +193,7 @@ export function UserDropdownMenu({
               disabled={logoutLoading}
               className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out disabled:pointer-events-none disabled:opacity-50"
             >
-              <User className="w-4 h-4 mr-3 text-purple-500 dark:text-purple-400" />
+              <User className="w-4 h-4 mr-3 brand-icon" />
               Profile
             </button>
             <button

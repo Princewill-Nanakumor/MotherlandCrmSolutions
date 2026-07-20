@@ -81,7 +81,7 @@ export const ReminderCard: FC<ReminderCardProps> = ({
       case "CALL":
         return "text-blue-600! dark:text-blue-400!";
       case "EMAIL":
-        return "text-purple-600! dark:text-purple-400!";
+        return "brand-icon";
       case "TASK":
         return "text-green-600! dark:text-green-400!";
       case "MEETING":
@@ -158,7 +158,7 @@ export const ReminderCard: FC<ReminderCardProps> = ({
             size="sm"
             variant="ghost"
             onClick={() => onEdit(reminder)}
-            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+            className="brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)]"
             title="Edit reminder"
           >
             <Edit className="w-4 h-4" />
@@ -173,7 +173,7 @@ export const ReminderCard: FC<ReminderCardProps> = ({
             }}
             className={
               reminder.soundEnabled
-                ? "text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
+                ? "brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)]"
                 : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
             }
             title={reminder.soundEnabled ? "Mute sound" : "Enable sound"}

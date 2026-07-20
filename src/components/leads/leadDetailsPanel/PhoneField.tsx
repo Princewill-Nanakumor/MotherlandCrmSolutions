@@ -83,7 +83,7 @@ export const PhoneField: FC<PhoneFieldProps> = ({
                     e.stopPropagation();
                     onCall(phone);
                   }}
-                  className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors text-blue-600 dark:text-blue-400"
+                  className="p-1.5 rounded transition-colors brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)]"
                   title="Click to call"
                 >
                   <PhoneCall className="w-4 h-4" />
@@ -98,7 +98,7 @@ export const PhoneField: FC<PhoneFieldProps> = ({
                       window.location.href = `tel:${encodeURIComponent(digits)}`;
                     }
                   }}
-                  className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors text-blue-600 dark:text-blue-400"
+                  className="p-1.5 rounded transition-colors brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)]"
                   title="Call phone number"
                 >
                   <PhoneCall className="w-4 h-4" />

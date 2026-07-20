@@ -40,11 +40,11 @@ export const CommentItem: FC<CommentItemProps> = ({
   onDelete,
 }) => {
   return (
-    <div className="p-4 border border-purple-200 rounded-md group bg-purple-50 dark:bg-gray-700/50 dark:border-gray-600">
+    <div className="p-4 border rounded-md group bg-gray-100 dark:bg-gray-700/50 border-gray-100 dark:border-gray-700">
       <div className="flex gap-3">
         <Avatar className="w-10 h-10 shrink-0">
           <AvatarImage src={comment.createdBy?.avatar} />
-          <AvatarFallback className="bg-linear-to-r from-purple-100 to-indigo-100 dark:from-indigo-900 dark:to-blue-900 text-purple-800! dark:text-indigo-300!">
+          <AvatarFallback className="bg-[color-mix(in_srgb,var(--brand-from)_18%,white)] text-(--brand-from)! dark:bg-[color-mix(in_srgb,var(--brand-from)_30%,#111827)] dark:text-(--brand-focus)!">
             {comment.createdBy?.firstName?.[0]}
             {comment.createdBy?.lastName?.[0]}
           </AvatarFallback>
@@ -53,7 +53,7 @@ export const CommentItem: FC<CommentItemProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-baseline gap-2 mb-1">
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-purple-600! dark:text-indigo-400!" />
+              <MessageSquare className="w-4 h-4 brand-icon" />
               <h4 className="text-sm font-semibold text-gray-800! dark:text-white!">
                 {comment.createdBy?.firstName} {comment.createdBy?.lastName}
               </h4>
@@ -66,7 +66,7 @@ export const CommentItem: FC<CommentItemProps> = ({
           {isEditing ? (
             <div className="mt-2 space-y-2">
               <textarea
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-400 dark:focus:ring-indigo-500 dark:bg-gray-700 text-gray-700! dark:text-white!"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-(--brand-focus) dark:bg-transparent text-gray-700! dark:text-white!"
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 rows={3}
@@ -77,7 +77,6 @@ export const CommentItem: FC<CommentItemProps> = ({
                   size="sm"
                   onClick={() => onSaveEdit(comment)}
                   disabled={isEditingMutation || !editContent.trim()}
-                  className="bg-indigo-500 hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white!"
                 >
                   {isEditingMutation ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -114,7 +113,7 @@ export const CommentItem: FC<CommentItemProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              className="text-gray-500! hover:text-indigo-600! dark:text-gray-400! dark:hover:text-indigo-400!"
+              className="text-gray-500! hover:text-(--brand-from)! dark:text-gray-400! dark:hover:text-(--brand-focus)!"
               onClick={() => onEdit(comment)}
               disabled={isEditingMutation}
             >

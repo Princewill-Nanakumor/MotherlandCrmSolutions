@@ -7,7 +7,7 @@ export function LoadingRow() {
     <TableRow>
       <TableCell colSpan={7} className="text-center py-8">
         <div className="flex justify-center items-center">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+          <Loader2 className="h-6 w-6 animate-spin brand-icon" />
         </div>
       </TableCell>
     </TableRow>

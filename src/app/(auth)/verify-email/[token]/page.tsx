@@ -39,7 +39,13 @@ function VerifyEmailFallback() {
   return (
     <div className="flex flex-col items-center gap-4 rounded-xl border border-white/20 bg-white/10 p-8 shadow-xl sm:rounded-2xl">
       <div className="relative flex h-16 w-16 items-center justify-center">
-        <div className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent border-t-indigo-400 border-r-purple-500" />
+        <div
+          className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent"
+          style={{
+            borderTopColor: "var(--brand-from)",
+            borderRightColor: "var(--brand-to)",
+          }}
+        />
       </div>
       <p className="text-sm text-white/90">Loading verification…</p>
     </div>

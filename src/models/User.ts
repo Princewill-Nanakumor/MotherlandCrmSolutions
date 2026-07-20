@@ -62,6 +62,21 @@ export interface IUser extends Document {
   canViewPhoneNumbers?: boolean; // Whether user can view phone numbers in leads
   canViewEmails?: boolean; // Whether user can view email addresses in leads
 
+  /** ADMIN-only tenant appearance (agents inherit via adminId). */
+  brandTheme?: {
+    primary?: string;
+    primaryEnd?: string;
+    solidPrimary?: string;
+    focus?: string;
+    icon?: string;
+    navbarFrom?: string;
+    navbarTo?: string;
+    navbarText?: string;
+    buttonStyle?: "solid" | "gradient";
+    bodyFont?: string;
+    headingFont?: string;
+  };
+
   createdAt: Date;
   updatedAt: Date;
   __v: number;
@@ -222,6 +237,22 @@ const userSchema = new Schema<IUser>(
     canViewEmails: {
       type: Boolean,
       default: false, // Default to false - emails are masked by default
+    },
+    brandTheme: {
+      type: {
+        primary: { type: String },
+        primaryEnd: { type: String },
+        solidPrimary: { type: String },
+        focus: { type: String },
+        icon: { type: String },
+        navbarFrom: { type: String },
+        navbarTo: { type: String },
+        navbarText: { type: String },
+        buttonStyle: { type: String, enum: ["solid", "gradient"] },
+        bodyFont: { type: String },
+        headingFont: { type: String },
+      },
+      default: undefined,
     },
   },
   {

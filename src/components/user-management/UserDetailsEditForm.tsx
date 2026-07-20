@@ -213,7 +213,6 @@ export function UserDetailsEditForm({
             variant="outline"
             onClick={onCancel}
             disabled={isLoading}
-            className="dark:text-white dark:border-gray-600"
           >
             <X className="w-4 h-4 mr-2" />
             Cancel

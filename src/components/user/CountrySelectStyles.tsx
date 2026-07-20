@@ -1,5 +1,6 @@
 // src/components/user/CountrySelectStyles.tsx
 import { StylesConfig } from "react-select";
+import { countrySelectBrand } from "@/lib/brandTheme";
 
 export interface SelectOption {
   value: string;
@@ -27,7 +28,7 @@ export const getCountrySelectStyles = (): StylesConfig<SelectOption, false> => {
       borderWidth: "1px",
       borderStyle: "solid",
       borderColor: state.isFocused
-        ? "#6366F1" // indigo-500
+        ? countrySelectBrand.focus
         : isDarkMode
           ? "#4B5563"
           : "#D1D5DB", // gray-600 for dark, gray-300 for light
@@ -39,12 +40,10 @@ export const getCountrySelectStyles = (): StylesConfig<SelectOption, false> => {
       width: "100%",
       cursor: "pointer",
       transition: "none",
-      boxShadow: state.isFocused
-        ? "0 0 0 1px #6366F1" // indigo focus ring when focused
-        : "none",
+      boxShadow: state.isFocused ? countrySelectBrand.focusRing : "none",
       "&:hover": {
         borderColor: state.isFocused
-          ? "#6366F1"
+          ? countrySelectBrand.focus
           : isDarkMode
             ? "#4B5563"
             : "#D1D5DB",
@@ -99,8 +98,8 @@ export const getCountrySelectStyles = (): StylesConfig<SelectOption, false> => {
       fontFamily: "inherit",
       backgroundColor: state.isSelected
         ? isDarkMode
-          ? "#312E81"
-          : "#EEF2FF" // indigo-900 for dark, indigo-50 for light
+          ? countrySelectBrand.selectedDark
+          : countrySelectBrand.selectedLight
         : state.isFocused
           ? isDarkMode
             ? "#374151"
@@ -112,7 +111,9 @@ export const getCountrySelectStyles = (): StylesConfig<SelectOption, false> => {
       cursor: state.isDisabled ? "not-allowed" : "pointer",
       opacity: state.isDisabled ? 0.5 : 1,
       "&:active": {
-        backgroundColor: isDarkMode ? "#312E81" : "#EEF2FF",
+        backgroundColor: isDarkMode
+          ? countrySelectBrand.selectedDark
+          : countrySelectBrand.selectedLight,
       },
     }),
     menu: (provided) => ({
@@ -142,7 +143,7 @@ export const getCountrySelectStyles = (): StylesConfig<SelectOption, false> => {
         borderRadius: "3px",
       },
       "::-webkit-scrollbar-thumb": {
-        background: isDarkMode ? "#818CF8" : "#9CA3AF",
+        background: isDarkMode ? countrySelectBrand.scrollbarDark : "#9CA3AF",
         borderRadius: "3px",
       },
     }),

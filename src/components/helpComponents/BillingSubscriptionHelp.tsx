@@ -33,8 +33,9 @@ import {
 import { useAppBranding } from "@/components/AppBrandingProvider";
 
 const PLAN_CARD_COLORS: Record<SubscriptionPlanCatalogKey, string> = {
-  starter: "from-blue-500 to-blue-600",
-  professional: "from-purple-500 to-purple-600",
+  starter:
+    "from-(--brand-from) to-[color-mix(in_srgb,var(--brand-from)_75%,black)]",
+  professional: "from-(--brand-from) to-(--brand-to)",
   enterprise: "from-green-500 to-green-600",
 };
 
@@ -78,12 +79,12 @@ const BillingSubscriptionHelp: React.FC = () => {
             for your CRM needs
           </p>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="p-4 text-center border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-              <Calendar className="w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
-              <h4 className="font-medium text-blue-900! dark:text-blue-200!">
+            <div className="p-4 text-center border rounded-lg brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]">
+              <Calendar className="w-8 h-8 mx-auto mb-2 brand-icon" />
+              <h4 className="font-medium text-(--brand-from)! dark:text-(--brand-focus)!">
                 Monthly Billing
               </h4>
-              <p className="text-sm text-blue-800! dark:text-blue-300! mt-1">
+              <p className="text-sm text-(--brand-from)! dark:text-(--brand-focus)! mt-1">
                 Flexible monthly subscriptions
               </p>
             </div>
@@ -96,12 +97,12 @@ const BillingSubscriptionHelp: React.FC = () => {
                 Bank-grade security
               </p>
             </div>
-            <div className="p-4 text-center border border-purple-200 rounded-lg bg-purple-50 dark:bg-purple-900/20 dark:border-purple-800">
-              <Wallet className="w-8 h-8 mx-auto mb-2 text-purple-600 dark:text-purple-400" />
-              <h4 className="font-medium text-purple-900! dark:text-purple-200!">
+            <div className="p-4 text-center border rounded-lg brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]">
+              <Wallet className="w-8 h-8 mx-auto mb-2 brand-icon" />
+              <h4 className="font-medium text-(--brand-from)! dark:text-(--brand-focus)!">
                 Multiple Options
               </h4>
-              <p className="text-sm text-purple-800! dark:text-purple-300! mt-1">
+              <p className="text-sm text-(--brand-from)! dark:text-(--brand-focus)! mt-1">
                 USDT, Bitcoin, and cards
               </p>
             </div>
@@ -223,16 +224,16 @@ const BillingSubscriptionHelp: React.FC = () => {
                 Traditional Payments
               </h4>
               <div className="space-y-3">
-                <div className="flex items-start p-4 space-x-3 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-                  <CreditCard className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <div className="flex items-start p-4 space-x-3 border rounded-lg brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]">
+                  <CreditCard className="w-6 h-6 brand-icon mt-0.5" />
                   <div>
-                    <p className="font-medium text-blue-900! dark:text-blue-200!">
+                    <p className="font-medium text-(--brand-from)! dark:text-(--brand-focus)!">
                       Credit/Debit Cards
                     </p>
-                    <p className="text-sm text-blue-800! dark:text-blue-300!">
+                    <p className="text-sm text-(--brand-from)! dark:text-(--brand-focus)!">
                       Coming soon - traditional card payments
                     </p>
-                    <ul className="text-xs text-blue-700! dark:text-blue-400! mt-1 space-y-1">
+                    <ul className="text-xs text-(--brand-from)! dark:text-(--brand-focus)! mt-1 space-y-1">
                       <li>• Visa, Mastercard, Amex</li>
                       <li>• Automatic recurring billing</li>
                       <li>• Instant activation</li>
@@ -263,7 +264,7 @@ const BillingSubscriptionHelp: React.FC = () => {
             </h4>
             <ol className="space-y-4 text-sm">
               <li className="flex items-start space-x-3">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white brand-gradient rounded-full shrink-0">
                   1
                 </span>
                 <div>
@@ -277,7 +278,7 @@ const BillingSubscriptionHelp: React.FC = () => {
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white brand-gradient rounded-full shrink-0">
                   2
                 </span>
                 <div>
@@ -290,7 +291,7 @@ const BillingSubscriptionHelp: React.FC = () => {
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white brand-gradient rounded-full shrink-0">
                   3
                 </span>
                 <div>
@@ -330,12 +331,12 @@ const BillingSubscriptionHelp: React.FC = () => {
                 <li>• No minimum deposit required</li>
               </ul>
             </div>
-            <div className="p-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-              <h4 className="font-medium text-blue-900! dark:text-blue-200! mb-3 flex items-center">
+            <div className="p-4 border rounded-lg brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]">
+              <h4 className="font-medium text-(--brand-from)! dark:text-(--brand-focus)! mb-3 flex items-center">
                 <Bell className="w-4 h-4 mr-2" />
                 Notifications
               </h4>
-              <ul className="space-y-2 text-sm text-blue-800! dark:text-blue-300!">
+              <ul className="space-y-2 text-sm text-(--brand-from)! dark:text-(--brand-focus)!">
                 <li>• Low balance alerts</li>
                 <li>• Payment confirmations</li>
                 <li>• Billing reminders</li>
@@ -474,11 +475,11 @@ const BillingSubscriptionHelp: React.FC = () => {
                   <span>Upgrade plans anytime</span>
                 </li>
                 <li className="flex items-start space-x-2">
-                  <TrendingUp className="w-4 h-4 text-blue-600 mt-0.5" />
+                  <TrendingUp className="w-4 h-4 brand-icon mt-0.5" />
                   <span>Downgrade at billing cycle</span>
                 </li>
                 <li className="flex items-start space-x-2">
-                  <Calendar className="w-4 h-4 text-purple-600 mt-0.5" />
+                  <Calendar className="w-4 h-4 brand-icon mt-0.5" />
                   <span>View billing history</span>
                 </li>
                 <li className="flex items-start space-x-2">
@@ -497,7 +498,7 @@ const BillingSubscriptionHelp: React.FC = () => {
                   <span>Check current balance</span>
                 </li>
                 <li className="flex items-start space-x-2">
-                  <Wallet className="w-4 h-4 text-blue-600 mt-0.5" />
+                  <Wallet className="w-4 h-4 brand-icon mt-0.5" />
                   <span>Add funds anytime</span>
                 </li>
                 <li className="flex items-start space-x-2">
@@ -505,20 +506,20 @@ const BillingSubscriptionHelp: React.FC = () => {
                   <span>Set low balance alerts</span>
                 </li>
                 <li className="flex items-start space-x-2">
-                  <Receipt className="w-4 h-4 text-purple-600 mt-0.5" />
+                  <Receipt className="w-4 h-4 brand-icon mt-0.5" />
                   <span>View transaction history</span>
                 </li>
               </ul>
             </div>
           </div>
-          <div className="p-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+          <div className="p-4 border rounded-lg brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]">
             <div className="flex items-start space-x-3">
-              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <Info className="w-5 h-5 brand-icon mt-0.5" />
               <div>
-                <h4 className="font-medium text-blue-900! dark:text-blue-200!">
+                <h4 className="font-medium text-(--brand-from)! dark:text-(--brand-focus)!">
                   Account Status Monitoring
                 </h4>
-                <p className="text-sm text-blue-800! dark:text-blue-300! mt-1">
+                <p className="text-sm text-(--brand-from)! dark:text-(--brand-focus)! mt-1">
                   Your account status is continuously monitored. If your balance
                   is insufficient for the next billing cycle, you will receive
                   notifications to add funds. Services may be suspended if
@@ -550,12 +551,12 @@ const BillingSubscriptionHelp: React.FC = () => {
                 <li>• Network fee confusion</li>
               </ul>
             </div>
-            <div className="p-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-              <h4 className="font-medium text-blue-900! dark:text-blue-200! mb-3 flex items-center">
+            <div className="p-4 border rounded-lg brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]">
+              <h4 className="font-medium text-(--brand-from)! dark:text-(--brand-focus)! mb-3 flex items-center">
                 <Info className="w-4 h-4 mr-2" />
                 Getting Help
               </h4>
-              <ul className="space-y-2 text-sm text-blue-800! dark:text-blue-300!">
+              <ul className="space-y-2 text-sm text-(--brand-from)! dark:text-(--brand-focus)!">
                 <li>• Contact billing support</li>
                 <li>• Check transaction status</li>
                 <li>• Review billing FAQ</li>
@@ -592,14 +593,14 @@ const BillingSubscriptionHelp: React.FC = () => {
     <div className="w-full p-6 mx-auto">
       <div className="bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700">
         {/* Header */}
-        <div className="p-6 text-white rounded-t-lg bg-linear-to-r from-green-600 to-purple-600">
+        <div className="p-6 text-white rounded-t-lg brand-gradient">
           <div className="flex items-center space-x-3">
             <CreditCard className="w-8 h-8" />
             <div>
               <h1 className="text-2xl font-bold">
                 Billing & Subscription Guide
               </h1>
-              <p className="mt-1 text-green-100">
+              <p className="mt-1 text-white/80">
                 Everything you need to know about payments and subscriptions
               </p>
             </div>
@@ -620,7 +621,7 @@ const BillingSubscriptionHelp: React.FC = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="text-green-600 dark:text-green-400">
+                      <div className="brand-icon">
                         {section.icon}
                       </div>
                       <h3 className="text-lg font-medium text-gray-900! dark:text-white!">

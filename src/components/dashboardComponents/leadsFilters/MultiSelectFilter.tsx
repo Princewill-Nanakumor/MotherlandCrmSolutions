@@ -142,7 +142,7 @@ export const MultiSelectFilter = ({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-[180px] min-h-[40px] px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-between gap-2 ${
+        className={`w-[180px] min-h-[40px] px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-(--brand-focus) focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-between gap-2 ${
           isActiveFilter
             ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
             : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
@@ -165,7 +165,7 @@ export const MultiSelectFilter = ({
                   handleClearAll(e as unknown as React.MouseEvent);
                 }
               }}
-              className="p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--brand-focus)"
               aria-label="Clear selection"
             >
               <X className="h-3 w-3 text-blue-600 dark:text-blue-400" />

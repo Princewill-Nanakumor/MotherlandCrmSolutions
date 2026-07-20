@@ -79,8 +79,8 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
 
   if (combinedItems.length === 0) {
     return (
-      <div className="flex flex-col flex-1 min-h-0 gap-4 p-4 bg-white border border-gray-200 rounded-lg shadow-inner dark:bg-gray-800 dark:border-gray-700">
-        <div className="flex items-center justify-center flex-1 bg-gray-100 border border-gray-300 border-dashed rounded-lg dark:bg-gray-800 dark:border-gray-700">
+      <div className="flex flex-col flex-1 min-h-0 gap-4 p-4 bg-white border border-gray-200 rounded-lg shadow-inner dark:bg-transparent dark:border-gray-700">
+        <div className="flex items-center justify-center flex-1 bg-gray-100 border border-gray-300 border-dashed rounded-lg dark:bg-transparent dark:border-gray-700">
           <div className="text-center">
             <ActivityIcon className="w-12 h-12 mx-auto mb-4 text-gray-300! dark:text-gray-600!" />
             <p className="text-lg font-medium text-gray-700 dark:text-gray-300! mb-2">
@@ -100,10 +100,10 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
 
   return (
     <div
-      className="flex-1 min-h-0 p-4 space-y-4 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-inner dark:bg-gray-800 dark:border-gray-700"
+      className="flex-1 min-h-0 p-4 space-y-4 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-inner dark:bg-transparent dark:border-gray-700"
       style={{
         scrollbarWidth: "thin",
-        scrollbarColor: "#9333ea #f3f4f6",
+        scrollbarColor: "var(--brand-from) #f3f4f6",
       }}
     >
       <style jsx>{`
@@ -115,20 +115,20 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
           border-radius: 4px;
         }
         div::-webkit-scrollbar-thumb {
-          background: #6366f1;
+          background: var(--brand-from);
           border-radius: 4px;
         }
         div::-webkit-scrollbar-thumb:hover {
-          background: #4f46e5;
+          background: var(--brand-from);
         }
         .dark div::-webkit-scrollbar-track {
           background: #374151;
         }
         .dark div::-webkit-scrollbar-thumb {
-          background: #6366f1;
+          background: var(--brand-from);
         }
         .dark div::-webkit-scrollbar-thumb:hover {
-          background: #4f46e5;
+          background: var(--brand-from);
         }
       `}</style>
 

@@ -127,7 +127,7 @@ export default function ForgotPasswordForm({
           <div>
             <Link
               href="/login"
-              className="inline-flex justify-center items-center px-4 py-2 w-full text-sm font-medium text-white from-indigo-600 to-purple-600 rounded-lg shadow-lg transition-colors bg-linear-to-br hover:from-indigo-700 hover:to-purple-700"
+              className="inline-flex justify-center items-center px-4 py-2 w-full text-sm font-medium text-white brand-gradient rounded-lg shadow-lg transition-all hover:brightness-95"
             >
               Back to Sign In
             </Link>
@@ -198,7 +198,7 @@ export default function ForgotPasswordForm({
               captchaState !== "ready" ||
               captchaInput.length !== 6
             }
-            className="flex justify-center items-center px-4 py-3 space-x-2 w-full font-medium text-white from-indigo-600 to-purple-600 rounded-lg transition-colors duration-200 bg-linear-to-br hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex justify-center items-center px-4 py-3 space-x-2 w-full font-medium text-white brand-gradient rounded-lg transition-all duration-200 hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-(--brand-focus) disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
@@ -216,7 +216,7 @@ export default function ForgotPasswordForm({
           <div className="text-center">
             <Link
               href="/login"
-              className="inline-flex items-center text-sm font-semibold text-white! underline underline-offset-2 transition-colors hover:text-indigo-200"
+              className="inline-flex items-center text-sm font-semibold text-white! underline underline-offset-2 transition-colors hover:text-white/80"
             >
               <ArrowLeft className="mr-1 w-4 h-4" />
               Back to Sign In

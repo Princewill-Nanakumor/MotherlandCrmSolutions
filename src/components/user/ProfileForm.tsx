@@ -50,7 +50,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     [
       "w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg text-base",
       editing
-        ? "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        ? "focus:outline-none focus:ring-2 focus:ring-(--brand-focus) focus:border-(--brand-focus)"
         : "focus:outline-none",
     ].join(" "),
   formErrors = {},
@@ -96,22 +96,27 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             <User className="h-5 w-5 text-purple-400" />
             First Name
           </label>
-          <input
-            type="text"
-            value={
-              isEditing ? editedProfile.firstName || "" : profile.firstName
-            }
-            onChange={(e) => onInputChange("firstName", e.target.value)}
-            className={`${inputClass(isEditing)} ${
-              isEditing && formErrors.firstName
-                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                : ""
-            }`}
-            placeholder="Enter first name"
-            readOnly={!isEditing}
-          />
-          {isEditing && formErrors.firstName && (
-            <p className="mt-1 text-sm text-red-500">{formErrors.firstName}</p>
+          {isEditing ? (
+            <>
+              <input
+                type="text"
+                value={editedProfile.firstName || ""}
+                onChange={(e) => onInputChange("firstName", e.target.value)}
+                className={`${inputClass(true)} ${
+                  formErrors.firstName
+                    ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                    : ""
+                }`}
+                placeholder="Enter first name"
+              />
+              {formErrors.firstName && (
+                <p className="mt-1 text-sm text-red-500">{formErrors.firstName}</p>
+              )}
+            </>
+          ) : (
+            <div className="w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg">
+              {profile.firstName || "Not specified"}
+            </div>
           )}
         </div>
         <div>
@@ -119,20 +124,27 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             <User className="h-5 w-5 text-purple-400" />
             Last Name
           </label>
-          <input
-            type="text"
-            value={isEditing ? editedProfile.lastName || "" : profile.lastName}
-            onChange={(e) => onInputChange("lastName", e.target.value)}
-            className={`${inputClass(isEditing)} ${
-              isEditing && formErrors.lastName
-                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                : ""
-            }`}
-            placeholder="Enter last name"
-            readOnly={!isEditing}
-          />
-          {isEditing && formErrors.lastName && (
-            <p className="mt-1 text-sm text-red-500">{formErrors.lastName}</p>
+          {isEditing ? (
+            <>
+              <input
+                type="text"
+                value={editedProfile.lastName || ""}
+                onChange={(e) => onInputChange("lastName", e.target.value)}
+                className={`${inputClass(true)} ${
+                  formErrors.lastName
+                    ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                    : ""
+                }`}
+                placeholder="Enter last name"
+              />
+              {formErrors.lastName && (
+                <p className="mt-1 text-sm text-red-500">{formErrors.lastName}</p>
+              )}
+            </>
+          ) : (
+            <div className="w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg">
+              {profile.lastName || "Not specified"}
+            </div>
           )}
         </div>
       </div>
@@ -143,12 +155,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           <Mail className="h-5 w-5 text-purple-400" />
           Email Address
         </label>
-        <input
-          type="email"
-          value={profile.email}
-          className={inputClass(false)}
-          readOnly
-        />
+        <div className="w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg">
+          {profile.email || "Not specified"}
+        </div>
       </div>
 
       {/* Country Select */}
@@ -207,7 +216,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       {/* Phone Input */}
       <div>
         <label className="text-sm dark:text-gray-300 text-gray-600 mb-2 flex items-center gap-2">
-          <Phone className="h-5 w-5 text-purple-400" />
+          <Phone className="h-5 w-5 brand-icon" />
           Phone Number
         </label>
         {isEditing ? (
@@ -216,7 +225,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               className={`phone-input-wrapper w-full px-4 py-2 rounded-lg border text-base flex items-center bg-gray-50 dark:bg-white/5 text-gray-900! dark:text-white! focus-within:outline-none focus-within:ring-2 focus-within:border-transparent ${
                 formErrors.phoneNumber
                   ? "border-red-500 focus-within:ring-red-500"
-                  : "border-gray-300 dark:border-gray-600 focus-within:ring-indigo-500"
+                  : "border-gray-300 dark:border-gray-600 focus-within:ring-(--brand-focus)"
               }`}
             >
               <PhoneInput

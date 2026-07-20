@@ -96,14 +96,14 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
   const getPlanStatusColor = (status: string | undefined) => {
     // If no status but user is admin, assume trial
     if (isAdmin && !status) {
-      return "text-blue-600! dark:text-blue-400! bg-blue-100 dark:bg-blue-900/30";
+      return "text-(--brand-from) dark:text-(--brand-focus) bg-[color-mix(in_srgb,var(--brand-from)_12%,white)] dark:bg-[color-mix(in_srgb,var(--brand-from)_22%,#111827)]";
     }
 
     switch (status) {
       case "active":
         return "text-green-600! dark:text-green-400! bg-green-100 dark:bg-green-900/30";
       case "trial":
-        return "text-blue-600! dark:text-blue-400! bg-blue-100 dark:bg-blue-900/30";
+        return "text-(--brand-from) dark:text-(--brand-focus) bg-[color-mix(in_srgb,var(--brand-from)_12%,white)] dark:bg-[color-mix(in_srgb,var(--brand-from)_22%,#111827)]";
       case "expired":
         return "text-red-600! dark:text-red-400! bg-red-100 dark:bg-red-900/30";
       case "inactive":
@@ -171,11 +171,11 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
   }
 
   return (
-    <div className="relative p-3 overflow-hidden transition-all duration-200 border shadow-sm bg-linear-to-r from-purple-50 via-blue-50 to-indigo-50 rounded-xl dark:from-purple-900/30 dark:via-blue-900/30 dark:to-indigo-900/30 border-purple-200/50 dark:border-purple-700/50 hover:shadow-md">
-      <div className="absolute top-0 right-0 w-16 h-16 translate-x-8 -translate-y-8 rounded-full bg-linear-to-br from-purple-400/20 to-blue-400/20"></div>
+    <div className="relative p-3 overflow-hidden transition-all duration-200 border shadow-sm rounded-xl brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)] hover:shadow-md">
+      <div className="absolute top-0 right-0 w-16 h-16 translate-x-8 -translate-y-8 rounded-full bg-[color-mix(in_srgb,var(--brand-from)_20%,transparent)]"></div>
 
       <div className="relative flex items-center space-x-3">
-        <div className="flex items-center justify-center w-10 h-10 shadow-sm bg-linear-to-br from-purple-500 to-blue-600 rounded-xl">
+        <div className="flex items-center justify-center w-10 h-10 shadow-sm rounded-xl brand-gradient">
           <Crown className="w-5 h-5 text-white" />
         </div>
 

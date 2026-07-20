@@ -93,7 +93,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
       case "COMMENT":
         return (
           <MessageSquare
-            className={`${iconSizeClass} text-purple-600 dark:text-purple-400`}
+            className={`${iconSizeClass} brand-icon`}
           />
         );
       case "LEAD_CREATED":
@@ -123,7 +123,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
       case "IMPORT":
         return (
           <ActivityIcon
-            className={`${iconSizeClass} text-purple-600 dark:text-purple-400`}
+            className={`${iconSizeClass} brand-icon`}
           />
         );
       case "REMINDER_CREATED":
@@ -190,7 +190,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
       case "ASSIGNMENT":
         return "bg-green-100 dark:bg-green-900/30";
       case "COMMENT":
-        return "bg-purple-100 dark:bg-purple-900/30";
+        return "bg-[color-mix(in_srgb,var(--brand-from)_14%,white)] dark:bg-[color-mix(in_srgb,var(--brand-from)_22%,#111827)]";
       case "LEAD_CREATED":
         return "bg-orange-100 dark:bg-orange-900/30";
       case "CREATE":
@@ -200,7 +200,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
       case "DELETE":
         return "bg-red-100 dark:bg-red-900/30";
       case "IMPORT":
-        return "bg-purple-100 dark:bg-purple-900/30";
+        return "bg-[color-mix(in_srgb,var(--brand-from)_14%,white)] dark:bg-[color-mix(in_srgb,var(--brand-from)_22%,#111827)]";
       case "REMINDER_CREATED":
         return "bg-blue-100 dark:bg-blue-900/30";
       case "REMINDER_UPDATED":
@@ -320,7 +320,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-purple-500 dark:text-gray-500" />
+        <Loader2 className="w-6 h-6 animate-spin brand-icon" />
       </div>
     );
   }
@@ -352,7 +352,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
           className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 space-y-4 border border-gray-200 dark:border-gray-700 shadow-inner"
           style={{
             scrollbarWidth: "thin",
-            scrollbarColor: "#9333ea #f3f4f6",
+            scrollbarColor: "var(--brand-from) #f3f4f6",
           }}
         >
           <style jsx>{`
@@ -368,7 +368,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
               border-radius: 4px;
             }
             div::-webkit-scrollbar-thumb:hover {
-              background: #4f46e5;
+              background: var(--brand-from);
             }
             .dark div::-webkit-scrollbar-track {
               background: #374151;
@@ -377,7 +377,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
               background: #6366f1;
             }
             .dark div::-webkit-scrollbar-thumb:hover {
-              background: #4f46e5;
+              background: var(--brand-from);
             }
           `}</style>
           {visibleActivities.map((activity) => (
@@ -470,15 +470,15 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
                       </span>
                     </div>
 
-                    <span className="text-xs text-gray-600! dark:text-gray-400! font-sans bg-gray-100 dark:bg-gray-700 px-2 py-2 rounded-md border border-gray-200 dark:border-gray-600 whitespace-nowrap shrink-0">
+                    <span className="text-xs text-gray-600! dark:text-gray-400! bg-gray-100 dark:bg-gray-700 px-2 py-2 rounded-md border border-gray-200 dark:border-gray-600 whitespace-nowrap shrink-0">
                       {formatDateTime(activity.createdAt)}
                     </span>
                   </div>
 
                   {activity.metadata?.commentContent && (
                     <div className="mt-2 text-sm text-gray-600! dark:text-gray-300!">
-                      <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border-l-4 border-purple-300 dark:border-purple-500 shadow-sm">
-                        <span className="font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wide text-xs mr-1">
+                      <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border-l-4 border-(--brand-from) shadow-sm">
+                        <span className="font-semibold text-(--brand-from) dark:text-(--brand-focus) uppercase tracking-wide text-xs mr-1">
                           Comment:
                         </span>{" "}
                         <span className="italic text-gray-800! dark:text-white! leading-relaxed">

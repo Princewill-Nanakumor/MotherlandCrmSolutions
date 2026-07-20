@@ -21,7 +21,7 @@ export default function CardDepositSection({
       </p>
       <Button
         onClick={onSwitchToUsdt}
-        className="px-4 py-2 text-white transition rounded-lg bg-linear-to-r from-indigo-600 to-purple-600 hover:to-blue-700"
+        variant="outline"
       >
         Switch to USDT
       </Button>

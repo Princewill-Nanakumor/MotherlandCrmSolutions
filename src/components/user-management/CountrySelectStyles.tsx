@@ -1,5 +1,6 @@
 // src/components/user-management/CountrySelectStyles.tsx
 import { StylesConfig } from "react-select";
+import { countrySelectBrand } from "@/lib/brandTheme";
 
 export interface SelectOption {
   value: string;
@@ -31,7 +32,7 @@ export const getCountrySelectStyles = (
       borderColor: hasError
         ? "#EF4444"
         : state.isFocused
-          ? "#6366F1" // indigo-500
+          ? countrySelectBrand.focus
           : isDarkMode
             ? "#4B5563"
             : "#D1D5DB", // gray-600 for dark, gray-300 for light
@@ -47,13 +48,13 @@ export const getCountrySelectStyles = (
         hasError && state.isFocused
           ? "0 0 0 1px #EF4444" // red focus ring when error and focused
           : !hasError && state.isFocused
-            ? "0 0 0 1px #6366F1" // indigo focus ring when no error and focused
+            ? countrySelectBrand.focusRing
             : "none",
       "&:hover": {
         borderColor: hasError
           ? "#EF4444"
           : state.isFocused
-            ? "#6366F1"
+            ? countrySelectBrand.focus
             : isDarkMode
               ? "#4B5563"
               : "#D1D5DB",
@@ -107,8 +108,8 @@ export const getCountrySelectStyles = (
       fontFamily: "inherit",
       backgroundColor: state.isSelected
         ? isDarkMode
-          ? "#312E81"
-          : "#EEF2FF" // indigo-900 for dark, indigo-50 for light
+          ? countrySelectBrand.selectedDark
+          : countrySelectBrand.selectedLight
         : state.isFocused
           ? isDarkMode
             ? "#374151"
@@ -120,7 +121,9 @@ export const getCountrySelectStyles = (
       cursor: state.isDisabled ? "not-allowed" : "pointer",
       opacity: state.isDisabled ? 0.5 : 1,
       "&:active": {
-        backgroundColor: isDarkMode ? "#312E81" : "#EEF2FF",
+        backgroundColor: isDarkMode
+          ? countrySelectBrand.selectedDark
+          : countrySelectBrand.selectedLight,
       },
     }),
     menu: (provided) => ({
@@ -150,7 +153,7 @@ export const getCountrySelectStyles = (
         borderRadius: "3px",
       },
       "::-webkit-scrollbar-thumb": {
-        background: isDarkMode ? "#818CF8" : "#9CA3AF",
+        background: isDarkMode ? countrySelectBrand.scrollbarDark : "#9CA3AF",
         borderRadius: "3px",
       },
     }),

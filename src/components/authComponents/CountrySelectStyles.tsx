@@ -1,5 +1,6 @@
 // src/components/authComponents/CountrySelectStyles.tsx
 import { StylesConfig } from "react-select";
+import { countrySelectBrand } from "@/lib/brandTheme";
 
 export interface SelectOption {
   value: string;
@@ -31,7 +32,7 @@ export const getCountrySelectStyles = (
         borderColor: hasError
           ? "#EF4444"
           : state.isFocused
-            ? "#A5B4FC"
+            ? countrySelectBrand.focus
             : "rgba(255, 255, 255, 0.2)",
         backgroundColor: "rgba(255, 255, 255, 0.1)",
         color: "#FFFFFF",
@@ -46,13 +47,13 @@ export const getCountrySelectStyles = (
           hasError && state.isFocused
             ? "0 0 0 3px rgba(239, 68, 68, 0.35)"
             : !hasError && state.isFocused
-              ? "0 0 0 3px rgba(99, 102, 241, 0.4)"
+              ? countrySelectBrand.focusRingHero
               : "none",
         "&:hover": {
           borderColor: hasError
             ? "#EF4444"
             : state.isFocused
-              ? "#A5B4FC"
+              ? countrySelectBrand.focus
               : "rgba(255, 255, 255, 0.32)",
         },
         "@media (min-width: 640px)": {
@@ -124,7 +125,7 @@ export const getCountrySelectStyles = (
         fontWeight: 600,
         fontFamily: "inherit",
         backgroundColor: state.isSelected
-          ? "rgba(99, 102, 241, 0.35)"
+          ? countrySelectBrand.selectedHero
           : state.isFocused
             ? "rgba(255, 255, 255, 0.08)"
             : "rgb(15, 23, 42)",
@@ -132,7 +133,7 @@ export const getCountrySelectStyles = (
         cursor: state.isDisabled ? "not-allowed" : "pointer",
         opacity: state.isDisabled ? 0.5 : 1,
         "&:active": {
-          backgroundColor: "rgba(99, 102, 241, 0.45)",
+          backgroundColor: countrySelectBrand.selectedHeroActive,
         },
         "@media (min-width: 640px)": {
           fontSize: "1rem",
@@ -196,7 +197,7 @@ export const getCountrySelectStyles = (
       borderColor: hasError
         ? "#EF4444" // red-500
         : state.isFocused
-          ? "#6366F1" // indigo-500
+          ? countrySelectBrand.focus
           : "#D1D5DB", // gray-300 for light mode
       backgroundColor: "#FFFFFF", // white for light mode
       color: "#111827", // gray-900 for light mode
@@ -210,13 +211,13 @@ export const getCountrySelectStyles = (
         hasError && state.isFocused
           ? "0 0 0 1px #EF4444" // red focus ring when error and focused
           : !hasError && state.isFocused
-            ? "0 0 0 1px #6366F1" // indigo focus ring when no error and focused
+            ? countrySelectBrand.focusRing
             : "none",
       "&:hover": {
         borderColor: hasError
           ? "#EF4444"
           : state.isFocused
-            ? "#6366F1"
+            ? countrySelectBrand.focus
             : "#D1D5DB",
       },
       // Responsive height
@@ -291,7 +292,7 @@ export const getCountrySelectStyles = (
       fontSize: "0.875rem", // text-sm
       fontFamily: "inherit",
       backgroundColor: state.isSelected
-        ? "#EEF2FF" // indigo-50 for light mode
+        ? countrySelectBrand.selectedLight
         : state.isFocused
           ? "#F3F4F6" // gray-100 for light mode
           : "#FFFFFF", // white for light mode
@@ -299,7 +300,7 @@ export const getCountrySelectStyles = (
       cursor: state.isDisabled ? "not-allowed" : "pointer",
       opacity: state.isDisabled ? 0.5 : 1,
       "&:active": {
-        backgroundColor: "#EEF2FF",
+        backgroundColor: countrySelectBrand.selectedLight,
       },
       // Responsive font size
       "@media (min-width: 640px)": {

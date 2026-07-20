@@ -87,17 +87,17 @@ export default function DashboardNavbar({
   if (!mounted) {
     // SSR fallback
     return (
-      <nav className="flex items-center justify-between px-8 py-4 shadow-lg bg-linear-to-r from-purple-300 to-purple-500 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border">
+      <nav className="brand-navbar flex items-center justify-between px-8 py-4 shadow-lg border-b border-transparent">
         <div className="w-32 shrink-0" />
         {showSearch && (
           <div className="flex justify-center flex-1">
             <div className="relative w-full max-w-md">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <Search className="w-5 h-5 text-purple-300" />
+                <Search className="w-5 h-5 brand-icon opacity-70" />
               </div>
               <input
                 type="text"
-                className="block w-full py-2 pl-10 pr-3 border border-purple-200 rounded-lg bg-white/90"
+                className="block w-full py-2 pl-10 pr-3 border border-white/40 rounded-lg bg-white/90"
                 disabled
               />
             </div>
@@ -119,14 +119,14 @@ export default function DashboardNavbar({
   }
 
   return (
-    <nav className="flex items-center justify-between px-8 py-4 shadow-lg bg-linear-to-r from-purple-300 to-purple-500 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border">
+    <nav className="brand-navbar flex items-center justify-between px-8 py-4 shadow-lg border-b border-transparent">
       {/* Left side - Toggle buttons for leads pages */}
       <div className="flex items-center space-x-2 shrink-0">
         {showLeadsToggles && (
           <>
             <button
               onClick={onToggleHeader}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-purple-700! hover:text-purple-800! bg-white/20 hover:bg-white/30 dark:text-gray-200! dark:hover:text-white! dark:bg-white/10 dark:hover:bg-white/20 rounded-md transition-colors border border-white/20 dark:border-gray-600/50"
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 rounded-md transition-colors border border-white/20 dark:border-gray-600/50 brand-navbar-text"
               title={`${showHeader ? "Hide" : "Show"} Header`}
             >
               <LayoutDashboard className="h-3.5 w-3.5" />
@@ -138,7 +138,7 @@ export default function DashboardNavbar({
             </button>
             <button
               onClick={onToggleControls}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-purple-700! hover:text-purple-800! bg-white/20 hover:bg-white/30 dark:text-gray-200! dark:hover:text-white! dark:bg-white/10 dark:hover:bg-white/20 rounded-md transition-colors border border-white/20 dark:border-gray-600/50"
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 rounded-md transition-colors border border-white/20 dark:border-gray-600/50 brand-navbar-text"
               title={`${showControls ? "Hide" : "Show"} Controls`}
             >
               <Filter className="h-3.5 w-3.5" />

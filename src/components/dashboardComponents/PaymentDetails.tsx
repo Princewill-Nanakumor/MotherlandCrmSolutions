@@ -463,7 +463,7 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
                     >
                       {approving ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
                           Approving...
                         </>
                       ) : (
@@ -482,7 +482,7 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
                     >
                       {rejecting ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
                           Rejecting...
                         </>
                       ) : (

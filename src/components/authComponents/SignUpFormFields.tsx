@@ -68,12 +68,12 @@ const AuthCustomOption = (
     ? "opacity-50 cursor-not-allowed"
     : isDark
       ? isSelected
-        ? "bg-indigo-500/25"
+        ? "brand-soft-bg"
         : isFocused
           ? "bg-white/10"
           : "bg-transparent hover:bg-white/10"
       : isSelected
-        ? "bg-indigo-50"
+        ? "brand-soft-bg"
         : isFocused
           ? "bg-gray-50"
           : "bg-white hover:bg-gray-100";
@@ -202,7 +202,7 @@ export function SignUpFormFields({
                   : `transition-colors placeholder-gray-500 text-gray-900 bg-white focus:ring-2 focus:border-transparent ${
                       errors.firstName
                         ? "border-red-500 focus:ring-red-500"
-                        : "border-gray-300 focus:ring-indigo-500"
+                        : "border-gray-300 focus:ring-(--brand-focus)"
                     }`
               }`}
               placeholder="First Name"
@@ -236,7 +236,7 @@ export function SignUpFormFields({
                   : `transition-colors placeholder-gray-500 text-gray-900 bg-white focus:ring-2 focus:border-transparent ${
                       errors.lastName
                         ? "border-red-500 focus:ring-red-500"
-                        : "border-gray-300 focus:ring-indigo-500"
+                        : "border-gray-300 focus:ring-(--brand-focus)"
                     }`
               }`}
               placeholder="Last Name"
@@ -271,7 +271,7 @@ export function SignUpFormFields({
                 : `transition-colors placeholder-gray-500 text-gray-900 bg-white focus:ring-2 focus:border-transparent ${
                     errors.email
                       ? "border-red-500 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-indigo-500"
+                      : "border-gray-300 focus:ring-(--brand-focus)"
                   }`
             }`}
             placeholder="Email Address"
@@ -410,7 +410,7 @@ export function SignUpFormFields({
                 : `transition-colors placeholder-gray-500 text-gray-900 bg-white focus:ring-2 focus:border-transparent ${
                     errors.password
                       ? "border-red-500 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-indigo-500"
+                      : "border-gray-300 focus:ring-(--brand-focus)"
                   }`
             }`}
             placeholder="Password"
@@ -465,7 +465,7 @@ export function SignUpFormFields({
                 : `transition-colors placeholder-gray-500 text-gray-900 bg-white focus:ring-2 focus:border-transparent ${
                     errors.confirmPassword
                       ? "border-red-500 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-indigo-500"
+                      : "border-gray-300 focus:ring-(--brand-focus)"
                   }`
             }`}
             placeholder="Confirm Password"

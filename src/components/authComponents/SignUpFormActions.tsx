@@ -19,7 +19,7 @@ export function SignUpFormActions({
       <button
         type="submit"
         disabled={loading || disabled}
-        className="w-full bg-linear-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-2.5 sm:py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+        className="w-full brand-gradient hover:brightness-95 text-white font-semibold py-2.5 sm:py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
       >
         {loading ? (
           <>
@@ -34,12 +34,12 @@ export function SignUpFormActions({
         )}
       </button>
 
-      {/* Match SignInForm footer: white copy + indigo hover on link */}
+      {/* Match SignInForm footer: white copy + soft white hover on link */}
       <p className="text-sm text-center text-white!">
         Already have an account?{" "}
         <Link
           href="/login"
-          className="font-semibold underline transition-colors hover:text-indigo-200"
+          className="font-semibold underline transition-colors hover:text-white/80"
         >
           Sign in
         </Link>

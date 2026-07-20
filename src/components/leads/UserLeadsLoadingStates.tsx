@@ -3,6 +3,7 @@
 
 import { Component, ReactNode } from "react";
 import { Shield, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { ShieldSpinnerGlyph } from "@/components/dashboardComponents/LeadsLoadingState";
 
 export const TableSkeleton = () => (
   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -32,23 +33,24 @@ export const TableSkeleton = () => (
 );
 
 export const LoadingSpinner = () => (
-  <div className="flex justify-center items-center h-screen">
-    <div className="relative w-16 h-16 flex items-center justify-center">
-      <div className="absolute inset-0 border-4 border-transparent border-t-blue-400 border-r-purple-500 rounded-full animate-spin w-16 h-16"></div>
-      <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
-        <Shield size={28} className="text-white" />
-      </div>
-    </div>
+  <div className="flex justify-center items-center h-screen bg-background text-foreground">
+    <ShieldSpinnerGlyph />
   </div>
 );
 
 export const SessionRefreshSpinner = () => (
-  <div className="flex justify-center items-center h-screen">
+  <div className="flex justify-center items-center h-screen bg-background text-foreground">
     <div className="text-center">
-      <div className="relative w-16 h-16 flex items-center justify-center mx-auto mb-4">
-        <div className="absolute inset-0 border-4 border-transparent border-t-blue-400 border-r-purple-500 rounded-full animate-spin w-16 h-16"></div>
-        <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
-          <RefreshCw size={28} className="text-white" />
+      <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center">
+        <div
+          className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent"
+          style={{
+            borderTopColor: "var(--brand-from)",
+            borderRightColor: "var(--brand-to)",
+          }}
+        />
+        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full brand-gradient">
+          <RefreshCw size={28} style={{ color: "var(--brand-navbar-text)" }} />
         </div>
       </div>
       <p className="text-gray-600! dark:text-gray-400!">Refreshing session...</p>

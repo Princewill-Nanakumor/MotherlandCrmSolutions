@@ -144,7 +144,7 @@ export default function UsdtDepositSection({
                 step="0.01"
                 value={amount}
                 onChange={(e) => onAmountChange(e.target.value)}
-                className="w-full pl-4 pr-4 py-3 border border-gray-300 dark:border-white/10 rounded-lg dark:bg-white/5 bg-gray-50 text-gray-900! dark:text-white! focus:outline-none focus:ring-1 focus:ring-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full pl-4 pr-4 py-3 border border-gray-300 dark:border-white/10 rounded-lg dark:bg-white/5 bg-gray-50 text-gray-900! dark:text-white! focus:outline-none focus:ring-1 focus:ring-(--brand-focus) [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 placeholder="Enter an amount"
                 required
                 disabled={isSubmitting}

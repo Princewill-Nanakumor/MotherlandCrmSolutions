@@ -309,14 +309,14 @@ export function UserFormModal({
 
             {/* Form Actions */}
             <div className="flex justify-end pt-4 space-x-3">
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700! dark:text-white! hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 disabled={isLoading}
               >
                 Cancel
-              </button>
+              </Button>
               <button
                 type="submit"
                 disabled={
@@ -327,7 +327,7 @@ export function UserFormModal({
                     !usageData.canAddTeamMember
                   )
                 }
-                className="px-4 py-2 font-semibold text-white transition-colors rounded-md bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 font-semibold text-white transition-colors rounded-md bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-(--brand-focus) disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading
                   ? "Creating..."

@@ -34,7 +34,7 @@ export function UserTableHeader({
           onChange={(e) => {
             table.setPageSize(Number(e.target.value));
           }}
-          className="w-20 h-8 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900! dark:text-white! focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+          className="w-20 h-8 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900! dark:text-white! focus:outline-none focus:ring-2 focus:ring-(--brand-focus) focus:border-transparent text-sm"
         >
           {pageSizeOptions.map((size) => (
             <option key={size} value={size.toString()}>

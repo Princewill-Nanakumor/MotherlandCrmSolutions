@@ -15,6 +15,7 @@ import { PasswordInput } from "./PasswordInput";
 import { DateTimeSettingsSection } from "./DateTimeSettingsSection";
 import { DialerSettingsSection } from "./DialerSettingsSection";
 import { IntegrationsSection } from "./IntegrationsSection";
+import { AppearanceSettingsSection } from "./AppearanceSettingsSection";
 
 export function SettingsContent() {
   const { data: session } = useSession();
@@ -158,6 +159,7 @@ export function SettingsContent() {
     return (
       <div className="min-h-screen">
         <div className="container px-4 py-8 mx-auto border rounded-lg">
+          <AppearanceSettingsSection />
           <DateTimeSettingsSection />
           <DialerSettingsSection />
         </div>
@@ -203,6 +205,7 @@ export function SettingsContent() {
               fieldErrors={fieldErrors}
               handlePasswordReset={handlePasswordReset}
             />
+            <AppearanceSettingsSection />
             <IntegrationsSection />
             {/* Danger Zone Section */}
             <section className="p-6 bg-white border border-red-200 shadow-lg dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl dark:border dark:border-white/10">

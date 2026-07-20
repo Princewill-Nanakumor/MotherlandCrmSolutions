@@ -10,6 +10,7 @@ import Image from "next/image";
 import { countryOptions } from "./CountryData";
 import { Inter } from "next/font/google";
 import { Globe } from "lucide-react";
+import { countrySelectBrand } from "@/lib/brandTheme";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -44,9 +45,7 @@ export const customStyles: StylesConfig<SelectOption, false> = {
       borderWidth: state.isFocused ? "1px" : "2px",
       borderStyle: "solid",
       borderColor: state.isFocused
-        ? dark
-          ? "#818CF8"
-          : "#6366F1"
+        ? countrySelectBrand.focus
         : dark
           ? "#4B5563"
           : "#D1D5DB",
@@ -63,9 +62,7 @@ export const customStyles: StylesConfig<SelectOption, false> = {
       },
       "&:hover": {
         borderColor: state.isFocused
-          ? dark
-            ? "#818CF8"
-            : "#6366F1"
+          ? countrySelectBrand.focus
           : dark
             ? "#4B5563"
             : "#D1D5DB",
@@ -129,8 +126,8 @@ export const customStyles: StylesConfig<SelectOption, false> = {
       fontFamily: inter.style.fontFamily,
       backgroundColor: state.isSelected
         ? dark
-          ? "#312E81"
-          : "#EEF2FF"
+          ? countrySelectBrand.selectedDark
+          : countrySelectBrand.selectedLight
         : state.isFocused
           ? dark
             ? "#374151"
@@ -142,7 +139,9 @@ export const customStyles: StylesConfig<SelectOption, false> = {
       cursor: state.isDisabled ? "not-allowed" : "pointer",
       opacity: state.isDisabled ? 0.5 : 1,
       "&:active": {
-        backgroundColor: dark ? "#312E81" : "#EEF2FF",
+        backgroundColor: dark
+          ? countrySelectBrand.selectedDark
+          : countrySelectBrand.selectedLight,
       },
     };
   },
@@ -176,7 +175,7 @@ export const customStyles: StylesConfig<SelectOption, false> = {
       borderRadius: "3px",
     },
     "::-webkit-scrollbar-thumb": {
-      background: isDark() ? "#6366F1" : "#9CA3AF",
+      background: isDark() ? countrySelectBrand.scrollbarDark : "#9CA3AF",
       borderRadius: "3px",
     },
   }),
@@ -206,7 +205,7 @@ export const CustomOption = ({
       isDisabled
         ? "opacity-50 cursor-not-allowed"
         : isSelected
-          ? "bg-indigo-50 dark:bg-indigo-900"
+          ? "brand-soft-bg"
           : isFocused
             ? "bg-gray-50 dark:bg-gray-700"
             : "bg-white dark:bg-gray-800"

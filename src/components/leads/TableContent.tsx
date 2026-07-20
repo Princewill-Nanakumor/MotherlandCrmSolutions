@@ -165,7 +165,7 @@ export function TableContent({
             variant="outline"
             className="flex items-center gap-1.5 dark:border-gray-700 w-full max-w-30 justify-center"
           >
-            <Loader2 className="w-3 h-3 animate-spin dark:text-gray-400 shrink-0" />
+            <Loader2 className="w-3 h-3 animate-spin brand-icon shrink-0" />
             <span className="text-xs truncate dark:text-gray-400">
               Loading...
             </span>
@@ -290,16 +290,16 @@ export function TableContent({
                   cursor-pointer transition-colors duration-150 ease-in-out
                   ${
                     isSelected
-                      ? "bg-blue-50 dark:bg-gray-600"
+                      ? "bg-[color-mix(in_srgb,var(--brand-from)_10%,white)] dark:bg-gray-600"
                       : "bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/80"
                   }
                 `}
                 style={{
                   borderLeft: isSelected
-                    ? "4px solid #9333ea"
+                    ? "4px solid var(--brand-from)"
                     : "4px solid transparent",
                   borderBottom: isSelected
-                    ? "2px solid #9333ea"
+                    ? "2px solid var(--brand-from)"
                     : "1px solid var(--tw-prose-invert-borders, #374151)",
                 }}
               >

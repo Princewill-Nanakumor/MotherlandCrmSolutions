@@ -83,7 +83,7 @@ export function PhoneInputField({
               ? `font-semibold text-white! transition-[border-color,background-color,box-shadow] duration-200 ease-out focus-visible:outline-none placeholder:font-semibold placeholder:text-white/70 bg-white/10 ${
                   error ? "border-red-500" : "border-white"
                 }`
-              : `transition-colors ${error ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-indigo-500"} placeholder-gray-500 text-gray-900! bg-white focus:ring-2 focus:border-transparent`
+              : `transition-colors ${error ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-(--brand-focus)"} placeholder-gray-500 text-gray-900! bg-white focus:ring-2 focus:border-transparent`
           }`}
         />
       </div>

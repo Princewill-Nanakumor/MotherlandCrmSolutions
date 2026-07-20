@@ -137,10 +137,10 @@ export default function Sidebar() {
   // keep sidebar stable during brief session "loading" transitions (e.g. profile save).
   if (status === "loading" && !hasSeenAuthenticatedRef.current) {
     return (
-      <aside className="flex h-screen shadow-lg bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50">
+      <aside className="flex h-screen shadow-lg bg-linear-to-br from-[color-mix(in_srgb,var(--brand-from)_12%,white)] via-[color-mix(in_srgb,var(--brand-to)_10%,white)] to-[color-mix(in_srgb,var(--brand-from)_8%,white)] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <nav className="flex flex-col items-center w-24 h-full py-6 space-y-2">
           <div className="flex flex-col items-center justify-center flex-1 w-full gap-2">
-            <span className="text-indigo-400">Loading...</span>
+            <span className="brand-icon opacity-70">Loading...</span>
           </div>
         </nav>
       </aside>
@@ -148,7 +148,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex h-screen border-r border-indigo-100 shadow-lg bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border-gray-700">
+    <aside className="flex h-screen border-r border-[color-mix(in_srgb,var(--brand-from)_25%,transparent)] shadow-lg bg-linear-to-br from-[color-mix(in_srgb,var(--brand-from)_12%,white)] via-[color-mix(in_srgb,var(--brand-to)_10%,white)] to-[color-mix(in_srgb,var(--brand-from)_8%,white)] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border-gray-700">
       <nav className="flex flex-col items-center w-24 h-full py-6 space-y-2">
         {/* Logo */}
         <Link
@@ -186,16 +186,16 @@ export default function Sidebar() {
                 className={cn(
                   "flex relative flex-col items-center py-3 w-full rounded-xl transition-all group",
                   isActive
-                    ? "text-white shadow-md active-nav-link"
-                    : "text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 dark:1text-white! dark:hover:bg-gray-700 dark:hover:text-white!",
+                    ? "text-white shadow-md active-nav-link brand-gradient"
+                    : "brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)] dark:hover:bg-gray-700 dark:hover:text-white!",
                 )}
                 style={
                   isActive
                     ? {
                         background:
-                          "linear-gradient(to right, rgb(79 70 229), rgb(147 51 234))",
+                          "linear-gradient(to right, var(--brand-from), var(--brand-to))",
                         backgroundImage:
-                          "linear-gradient(to right, rgb(79 70 229), rgb(147 51 234))",
+                          "linear-gradient(to right, var(--brand-from), var(--brand-to))",
                         backgroundColor: "transparent",
                       }
                     : undefined
@@ -207,7 +207,7 @@ export default function Sidebar() {
                 {/* Active indicator bar */}
                 <span
                   className={cn(
-                    "absolute left-0 top-1/2 w-1 h-8 bg-indigo-300 rounded-r transition-all -translate-y-1/2",
+                    "absolute left-0 top-1/2 w-1 h-8 rounded-r transition-all -translate-y-1/2 brand-sidebar-active-accent",
                     isActive ? "opacity-100" : "opacity-0",
                   )}
                   aria-hidden="true"
@@ -215,7 +215,7 @@ export default function Sidebar() {
                 <item.icon
                   size={24}
                   className={
-                    isActive ? "text-white" : "text-indigo-700 dark:text-white!"
+                    isActive ? "text-white" : "brand-icon dark:text-white!"
                   }
                 />
                 <span
@@ -223,7 +223,7 @@ export default function Sidebar() {
                     "mt-1 text-xs font-medium",
                     isActive
                       ? "text-white"
-                      : "text-indigo-700! dark:text-white!",
+                      : "brand-icon dark:text-white!",
                   )}
                 >
                   {item.label}
@@ -234,7 +234,7 @@ export default function Sidebar() {
         </div>
 
         {/* Divider */}
-        <div className="w-10 my-4 border-t border-indigo-200 dark:border-gray-700" />
+        <div className="w-10 my-4 border-t border-[color-mix(in_srgb,var(--brand-from)_25%,transparent)] dark:border-gray-700" />
 
         {/* Footer Actions */}
         <div className="flex flex-col w-full gap-2">
@@ -243,16 +243,16 @@ export default function Sidebar() {
             className={cn(
               "group relative flex flex-col items-center w-full py-3 transition-all rounded-xl",
               pathname === "/dashboard/settings"
-                ? "text-white shadow-md active-nav-link"
-                : "text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 dark:text-white! dark:hover:bg-gray-700 dark:hover:text-white!",
+                ? "text-white shadow-md active-nav-link brand-gradient"
+                : "brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)] dark:text-white! dark:hover:bg-gray-700 dark:hover:text-white!",
             )}
             style={
               pathname === "/dashboard/settings"
                 ? {
                     background:
-                      "linear-gradient(to right, rgb(79 70 229), rgb(147 51 234))",
+                      "linear-gradient(to right, var(--brand-from), var(--brand-to))",
                     backgroundImage:
-                      "linear-gradient(to right, rgb(79 70 229), rgb(147 51 234))",
+                      "linear-gradient(to right, var(--brand-from), var(--brand-to))",
                     backgroundColor: "transparent",
                   }
                 : undefined
@@ -265,7 +265,7 @@ export default function Sidebar() {
             {/* Active indicator bar */}
             <span
               className={cn(
-                "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r bg-indigo-300 transition-all",
+                "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r brand-sidebar-active-accent transition-all",
                 pathname === "/dashboard/settings"
                   ? "opacity-100"
                   : "opacity-0",
@@ -277,7 +277,7 @@ export default function Sidebar() {
               className={
                 pathname === "/dashboard/settings"
                   ? "text-white"
-                  : "text-indigo-700 dark:text-white!"
+                  : "brand-icon dark:text-white!"
               }
             />
             <span
@@ -285,7 +285,7 @@ export default function Sidebar() {
                 "text-xs mt-1 font-medium",
                 pathname === "/dashboard/settings"
                   ? "text-white"
-                  : "text-indigo-700! dark:text-white!",
+                  : "brand-icon dark:text-white!",
               )}
             >
               Settings
@@ -299,16 +299,16 @@ export default function Sidebar() {
               className={cn(
                 "group relative flex flex-col items-center w-full py-3 transition-all rounded-xl",
                 pathname === "/dashboard/help"
-                  ? "text-white shadow-md active-nav-link"
-                  : "text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 dark:text-white! dark:hover:bg-gray-700 dark:hover:text-white!",
+                  ? "text-white shadow-md active-nav-link brand-gradient"
+                  : "brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)] dark:text-white! dark:hover:bg-gray-700 dark:hover:text-white!",
               )}
               style={
                 pathname === "/dashboard/help"
                   ? {
                       background:
-                        "linear-gradient(to right, rgb(79 70 229), rgb(147 51 234))",
+                        "linear-gradient(to right, var(--brand-from), var(--brand-to))",
                       backgroundImage:
-                        "linear-gradient(to right, rgb(79 70 229), rgb(147 51 234))",
+                        "linear-gradient(to right, var(--brand-from), var(--brand-to))",
                       backgroundColor: "transparent",
                     }
                   : undefined
@@ -320,7 +320,7 @@ export default function Sidebar() {
               {/* Active indicator bar */}
               <span
                 className={cn(
-                  "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r bg-indigo-300 transition-all",
+                  "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r brand-sidebar-active-accent transition-all",
                   pathname === "/dashboard/help" ? "opacity-100" : "opacity-0",
                 )}
                 aria-hidden="true"
@@ -330,7 +330,7 @@ export default function Sidebar() {
                 className={
                   pathname === "/dashboard/help"
                     ? "text-white"
-                    : "text-indigo-700 dark:text-white!"
+                    : "brand-icon dark:text-white!"
                 }
               />
               <span
@@ -338,7 +338,7 @@ export default function Sidebar() {
                   "text-xs mt-1 font-medium",
                   pathname === "/dashboard/help"
                     ? "text-white"
-                    : "text-indigo-700! dark:text-white!",
+                    : "brand-icon dark:text-white!",
                 )}
               >
                 Help

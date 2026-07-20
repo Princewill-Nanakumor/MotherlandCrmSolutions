@@ -252,7 +252,7 @@ const Reminders: FC<RemindersProps> = ({
                 setShowForm(!showForm);
               }}
               size="sm"
-              className="gap-2 bg-indigo-500 hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white"
+              className="gap-2"
             >
               <Plus className="w-4 h-4" />
               Add Reminder

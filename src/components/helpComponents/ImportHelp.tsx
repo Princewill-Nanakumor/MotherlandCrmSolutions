@@ -67,12 +67,12 @@ const ImportHelp: React.FC = () => {
             saving time when adding multiple data to your CRM system.
           </p>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="p-4 text-center border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-              <FileText className="w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
-              <h4 className="font-medium text-blue-900! dark:text-blue-200!">
+            <div className="p-4 text-center border rounded-lg brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]">
+              <FileText className="w-8 h-8 mx-auto mb-2 brand-icon" />
+              <h4 className="font-medium text-(--brand-from)! dark:text-(--brand-focus)!">
                 CSV Format
               </h4>
-              <p className="text-sm text-blue-800! dark:text-blue-300! mt-1">
+              <p className="text-sm text-(--brand-from)! dark:text-(--brand-focus)! mt-1">
                 Support for comma-separated values
               </p>
             </div>
@@ -85,12 +85,12 @@ const ImportHelp: React.FC = () => {
                 Import hundreds of leads at once
               </p>
             </div>
-            <div className="p-4 text-center border border-purple-200 rounded-lg bg-purple-50 dark:bg-purple-900/20 dark:border-purple-800">
-              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-purple-600 dark:text-purple-400" />
-              <h4 className="font-medium text-purple-900! dark:text-purple-200!">
+            <div className="p-4 text-center border rounded-lg brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]">
+              <CheckCircle className="w-8 h-8 mx-auto mb-2 brand-icon" />
+              <h4 className="font-medium text-(--brand-from)! dark:text-(--brand-focus)!">
                 Validation
               </h4>
-              <p className="text-sm text-purple-800! dark:text-purple-300! mt-1">
+              <p className="text-sm text-(--brand-from)! dark:text-(--brand-focus)! mt-1">
                 Automatic data validation
               </p>
             </div>
@@ -154,8 +154,8 @@ const ImportHelp: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-            <h4 className="font-medium text-blue-900! dark:text-blue-200! mb-3">
+          <div className="p-4 border rounded-lg brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]">
+            <h4 className="font-medium text-(--brand-from)! dark:text-(--brand-focus)! mb-3">
               CSV Format Example
             </h4>
             <div className="p-3 overflow-x-auto bg-white border border-gray-200 rounded dark:bg-gray-800 dark:border-gray-700">
@@ -181,7 +181,7 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
             </h4>
             <ol className="space-y-4 text-sm">
               <li className="flex items-start space-x-3">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white brand-gradient rounded-full shrink-0">
                   1
                 </span>
                 <div>
@@ -195,7 +195,7 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
               </li>
 
               <li className="flex items-start space-x-3">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white brand-gradient rounded-full shrink-0">
                   2
                 </span>
                 <div>
@@ -208,7 +208,7 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white brand-gradient rounded-full shrink-0">
                   3
                 </span>
                 <div>
@@ -221,7 +221,7 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white brand-gradient rounded-full shrink-0">
                   4
                 </span>
                 <div>
@@ -324,12 +324,12 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
                 <li>• Remove duplicate entries</li>
               </ul>
             </div>
-            <div className="p-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-              <h4 className="font-medium text-blue-900! dark:text-blue-200! mb-3 flex items-center">
+            <div className="p-4 border rounded-lg brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]">
+              <h4 className="font-medium text-(--brand-from)! dark:text-(--brand-focus)! mb-3 flex items-center">
                 <Info className="w-4 h-4 mr-2" />
                 Pro Tips
               </h4>
-              <ul className="space-y-2 text-sm text-blue-800! dark:text-blue-300!">
+              <ul className="space-y-2 text-sm text-(--brand-from)! dark:text-(--brand-focus)!">
                 <li>• Import during off-peak hours</li>
                 <li>• Keep file sizes under 5MB</li>
                 <li>• Use UTF-8 encoding for special characters</li>
@@ -365,14 +365,14 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
     <div className="w-full p-6 mx-auto">
       <div className="bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700">
         {/* Header */}
-        <div className="p-6 text-white rounded-t-lg bg-linear-to-r from-purple-600 to-blue-600">
+        <div className="p-6 text-white rounded-t-lg brand-gradient">
           <div className="flex items-center space-x-3">
             <Upload className="w-8 h-8" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900! dark:text-white!">
+              <h1 className="text-2xl font-bold text-white!">
                 Import Guide
               </h1>
-              <p className="mt-1 text-purple-100">
+              <p className="mt-1 text-white/80">
                 Learn how to bulk import data using CSV files
               </p>
             </div>
@@ -393,7 +393,7 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="text-purple-600 dark:text-purple-400">
+                      <div className="brand-icon">
                         {section.icon}
                       </div>
                       <h3 className="text-lg font-medium text-gray-900! dark:text-white!">

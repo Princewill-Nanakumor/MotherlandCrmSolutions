@@ -34,14 +34,14 @@ const StatusCreationHelp: React.FC = () => {
             Status management allows you to create custom statuses to track the
             progress of your imports
           </p>
-          <div className="p-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+          <div className="p-4 border rounded-lg brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]">
             <div className="flex items-start space-x-3">
-              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <Info className="w-5 h-5 brand-icon mt-0.5" />
               <div>
-                <h4 className="font-medium text-blue-900! dark:text-blue-200!">
+                <h4 className="font-medium text-(--brand-from)! dark:text-(--brand-focus)!">
                   Why Use Custom Statuses?
                 </h4>
-                <p className="text-sm text-blue-800! dark:text-blue-300! mt-1">
+                <p className="text-sm text-(--brand-from)! dark:text-(--brand-focus)! mt-1">
                   Custom statuses help you organize leads, track progress, and
                   ensure nothing falls through the cracks
                 </p>
@@ -63,7 +63,7 @@ const StatusCreationHelp: React.FC = () => {
             </h4>
             <ol className="space-y-3 text-sm">
               <li className="flex items-start space-x-3">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white brand-gradient rounded-full shrink-0">
                   1
                 </span>
                 <div>
@@ -76,7 +76,7 @@ const StatusCreationHelp: React.FC = () => {
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white brand-gradient rounded-full shrink-0">
                   2
                 </span>
                 <div>
@@ -89,7 +89,7 @@ const StatusCreationHelp: React.FC = () => {
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white brand-gradient rounded-full shrink-0">
                   3
                 </span>
                 <div>
@@ -102,7 +102,7 @@ const StatusCreationHelp: React.FC = () => {
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white brand-gradient rounded-full shrink-0">
                   4
                 </span>
                 <div>
@@ -142,11 +142,11 @@ const StatusCreationHelp: React.FC = () => {
             Here are some common status examples used
           </p>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="p-4 border border-blue-200 rounded-lg bg-linear-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 dark:border-blue-800">
-              <h4 className="font-medium text-blue-900! dark:text-blue-200! mb-2">
+            <div className="p-4 border rounded-lg brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]">
+              <h4 className="font-medium text-(--brand-from)! dark:text-(--brand-focus)! mb-2">
                 Initial Contact Statuses
               </h4>
-              <ul className="space-y-1 text-sm text-blue-800! dark:text-blue-300!">
+              <ul className="space-y-1 text-sm text-(--brand-from)! dark:text-(--brand-focus)!">
                 <li>• New Lead</li>
                 <li>• Hot </li>
               </ul>
@@ -197,7 +197,7 @@ const StatusCreationHelp: React.FC = () => {
             </h4>
             <div className="space-y-3">
               <div className="flex items-start p-3 space-x-3 rounded-lg bg-gray-50 dark:bg-gray-700">
-                <Edit3 className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <Edit3 className="w-5 h-5 brand-icon mt-0.5" />
                 <div>
                   <p className="font-medium text-gray-900! dark:text-white!">
                     Edit Status
@@ -277,14 +277,14 @@ const StatusCreationHelp: React.FC = () => {
     <div className="w-full p-6 mx-auto">
       <div className="bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700">
         {/* Header */}
-        <div className="p-6 text-white rounded-t-lg bg-linear-to-r from-blue-600 to-purple-600">
+        <div className="p-6 text-white rounded-t-lg brand-gradient">
           <div className="flex items-center space-x-3">
             <Tag className="w-8 h-8" />
             <div>
               <h1 className="text-2xl font-bold">
                 Status Creation & Management
               </h1>
-              <p className="mt-1 text-blue-100">
+              <p className="mt-1 text-white/80">
                 Learn how to create and manage custom statuses for your leads
               </p>
             </div>
@@ -305,7 +305,7 @@ const StatusCreationHelp: React.FC = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="text-blue-600 dark:text-blue-400">
+                      <div className="brand-icon">
                         {section.icon}
                       </div>
                       <h3 className="text-lg font-medium text-gray-900! dark:text-white!">

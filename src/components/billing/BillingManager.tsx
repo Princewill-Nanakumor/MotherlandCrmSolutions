@@ -217,11 +217,8 @@ export default function BillingManager() {
                   </Button>
                   <Button
                     onClick={() => handleTabChange("card")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                      activeTab === "card"
-                        ? "bg-linear-to-rfrom-indigo-600 to-purple-600 text-white"
-                        : "dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300"
-                    }`}
+                    variant="outline"
+                    className="px-4 py-2 rounded-lg text-sm font-medium"
                   >
                     <CreditCard className="w-4 h-4 mr-2" />
                     Card Deposit

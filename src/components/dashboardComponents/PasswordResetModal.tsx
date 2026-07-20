@@ -67,7 +67,7 @@ export function PasswordResetModal({
     `pl-9 pr-9 h-9 w-full rounded-md border text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 transition-colors ${
       hasError
         ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-        : "border-input focus:border-indigo-500 focus:ring-indigo-500"
+        : "border-input focus:border-(--brand-focus) focus:ring-(--brand-focus)"
     }`;
 
   return (
@@ -90,7 +90,7 @@ export function PasswordResetModal({
                 id="email"
                 value={userEmail}
                 disabled
-                className="w-full text-sm bg-gray-100 border rounded-md pl-9 h-9 border-input dark:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full text-sm bg-gray-100 border rounded-md pl-9 h-9 border-input dark:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:border-(--brand-focus) focus:ring-(--brand-focus)"
               />
             </div>
           </div>

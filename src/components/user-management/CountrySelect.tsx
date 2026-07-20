@@ -3,6 +3,7 @@ import Select, { StylesConfig, OptionProps } from "react-select";
 import Image from "next/image";
 import { Inter } from "next/font/google";
 import { Globe } from "lucide-react";
+import { countrySelectBrand } from "@/lib/brandTheme";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -317,7 +318,7 @@ export const customStyles: StylesConfig<SelectOption, false> = {
     borderWidth: state.isFocused ? "1px" : "1px",
     borderStyle: "solid",
     borderColor: state.isFocused
-      ? "#818CF8" // indigo-400
+      ? countrySelectBrand.focus
       : "#4B5563", // gray-600
     backgroundColor: "rgb(55 65 81)", // dark:bg-gray-700
     color: "#F3F4F6", // gray-100
@@ -328,7 +329,7 @@ export const customStyles: StylesConfig<SelectOption, false> = {
     width: "100%",
     cursor: "pointer",
     "&:hover": {
-      borderColor: state.isFocused ? "#818CF8" : "#6B7280",
+      borderColor: state.isFocused ? countrySelectBrand.focus : "#6B7280",
     },
   }),
   valueContainer: (provided) => ({
@@ -378,7 +379,7 @@ export const customStyles: StylesConfig<SelectOption, false> = {
     fontSize: "1rem",
     fontFamily: inter.style.fontFamily,
     backgroundColor: state.isSelected
-      ? "#312E81" // indigo-900
+      ? countrySelectBrand.selectedDark
       : state.isFocused
         ? "#374151" // gray-700
         : "#1F2937", // gray-800
@@ -386,7 +387,7 @@ export const customStyles: StylesConfig<SelectOption, false> = {
     cursor: state.isDisabled ? "not-allowed" : "pointer",
     opacity: state.isDisabled ? 0.5 : 1,
     "&:active": {
-      backgroundColor: "#312E81", // indigo-900
+      backgroundColor: countrySelectBrand.selectedDark,
     },
   }),
   menu: (provided) => ({
@@ -415,7 +416,7 @@ export const customStyles: StylesConfig<SelectOption, false> = {
       borderRadius: "3px",
     },
     "::-webkit-scrollbar-thumb": {
-      background: "#818CF8", // indigo-400
+      background: countrySelectBrand.scrollbarDark,
       borderRadius: "3px",
     },
   }),
@@ -445,7 +446,7 @@ export const CustomOption = ({
       isDisabled
         ? "opacity-50 cursor-not-allowed"
         : isSelected
-          ? "bg-indigo-50 dark:bg-indigo-900"
+          ? "brand-soft-bg"
           : isFocused
             ? "bg-gray-50 dark:bg-gray-700"
             : "bg-white dark:bg-gray-800"

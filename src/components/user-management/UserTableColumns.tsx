@@ -125,9 +125,17 @@ export function useUserTableColumns({
               variant="outline"
               className={`dark:border-gray-600 dark:text-white! ${
                 isAdmin
-                  ? "bg-indigo-600 text-white border-indigo-600 dark:bg-indigo-500 dark:border-indigo-500"
+                  ? "text-white border-transparent"
                   : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
               }`}
+              style={
+                isAdmin
+                  ? {
+                      backgroundColor: "var(--brand-from)",
+                      borderColor: "var(--brand-from)",
+                    }
+                  : undefined
+              }
             >
               <div className="flex items-center gap-1.5">
                 {isAdmin ? (

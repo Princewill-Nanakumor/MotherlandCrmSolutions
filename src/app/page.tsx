@@ -5,6 +5,7 @@ import Navbar from "@/components/homepageComponents/Navabar";
 import HeroSection from "@/components/homepageComponents/HeroSection";
 import ContactSection from "@/components/homepageComponents/ContactSection";
 import SubscriptionPlansSection from "@/components/homepageComponents/SubscriptionPlansSection";
+import { BrandThemeApplier } from "@/components/BrandThemeApplier";
 
 // Homepage is available to everyone (logged in or not); Navbar can show different links based on session
 function HomePageContent() {
@@ -26,6 +27,7 @@ function HomePageContent() {
 export default function HomePage() {
   return (
     <SessionProvider refetchInterval={5 * 60} refetchOnWindowFocus={true}>
+      <BrandThemeApplier />
       <HomePageContent />
     </SessionProvider>
   );

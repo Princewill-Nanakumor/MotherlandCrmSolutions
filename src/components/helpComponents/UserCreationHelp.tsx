@@ -34,14 +34,14 @@ const UserCreationHelp: React.FC = () => {
             User management allows you to create and manage team members.
           </p>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="p-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+            <div className="p-4 border rounded-lg brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]">
               <div className="flex items-start space-x-3">
-                <Crown className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <Crown className="w-6 h-6 brand-icon mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-blue-900! dark:text-blue-200!">
+                  <h4 className="font-medium text-(--brand-from)! dark:text-(--brand-focus)!">
                     ADMIN Role
                   </h4>
-                  <p className="text-sm text-blue-800! dark:text-blue-300! mt-1">
+                  <p className="text-sm text-(--brand-from)! dark:text-(--brand-focus)! mt-1">
                     Full access to all features, can manage users, leads,
                     billing, and settings
                   </p>
@@ -78,7 +78,7 @@ const UserCreationHelp: React.FC = () => {
             </h4>
             <ol className="space-y-3 text-sm">
               <li className="flex items-start space-x-3">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white brand-gradient rounded-full shrink-0">
                   1
                 </span>
                 <div>
@@ -91,7 +91,7 @@ const UserCreationHelp: React.FC = () => {
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white brand-gradient rounded-full shrink-0">
                   2
                 </span>
                 <div>
@@ -104,7 +104,7 @@ const UserCreationHelp: React.FC = () => {
                 </div>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full shrink-0">
+                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-white brand-gradient rounded-full shrink-0">
                   3
                 </span>
                 <div>
@@ -146,25 +146,25 @@ const UserCreationHelp: React.FC = () => {
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* ADMIN Role */}
-            <div className="p-6 border border-purple-200 rounded-lg bg-linear-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 dark:border-purple-800">
+            <div className="p-6 border rounded-lg brand-soft-bg border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]">
               <div className="flex items-center mb-4 space-x-3">
-                <div className="p-2 text-white bg-purple-600 rounded-lg">
+                <div className="p-2 text-white brand-gradient rounded-lg">
                   <Crown className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-semibold text-purple-900! dark:text-purple-200!">
+                  <h4 className="text-lg font-semibold text-(--brand-from)! dark:text-(--brand-focus)!">
                     ADMIN
                   </h4>
-                  <p className="text-sm text-purple-700! dark:text-purple-300!">
+                  <p className="text-sm text-(--brand-from)! dark:text-(--brand-focus)!">
                     Full system access
                   </p>
                 </div>
               </div>
               <div className="space-y-3">
-                <h5 className="font-medium text-purple-900! dark:text-purple-200!">
+                <h5 className="font-medium text-(--brand-from)! dark:text-(--brand-focus)!">
                   Permissions:
                 </h5>
-                <ul className="space-y-1 text-sm text-purple-800! dark:text-purple-300!">
+                <ul className="space-y-1 text-sm text-(--brand-from)! dark:text-(--brand-focus)!">
                   <li className="flex items-center space-x-2">
                     <CheckCircle className="w-4 h-4 text-green-600" />
                     <span>Create and manage users</span>
@@ -258,14 +258,14 @@ const UserCreationHelp: React.FC = () => {
     <div className="w-full p-6 mx-auto">
       <div className="bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700">
         {/* Header */}
-        <div className="p-6 text-white rounded-t-lg bg-linear-to-r from-green-600 to-blue-600">
+        <div className="p-6 text-white rounded-t-lg brand-gradient">
           <div className="flex items-center space-x-3">
             <Users className="w-8 h-8" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900! dark:text-white!">
+              <h1 className="text-2xl font-bold text-white!">
                 User Creation & Management
               </h1>
-              <p className="mt-1 text-green-100">
+              <p className="mt-1 text-white/80">
                 Learn how to create and manage team members in your CRM
               </p>
             </div>
@@ -286,7 +286,7 @@ const UserCreationHelp: React.FC = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="text-green-600 dark:text-green-400">
+                      <div className="brand-icon">
                         {section.icon}
                       </div>
                       <h3 className="text-lg font-medium text-gray-900! dark:text-white!">

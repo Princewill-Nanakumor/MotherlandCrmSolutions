@@ -18,8 +18,8 @@
     box-shadow 0.2s;
 }
 .phone-input-container .react-tel-input input:focus {
-  border: 2px solid #6366f1 !important; /* Tailwind indigo-500 */
-  box-shadow: 0 0 0 2px #818cf833 !important; /* Tailwind indigo-400/20 */
+  border: 2px solid var(--brand-focus) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-focus) 30%, transparent) !important;
   outline: none !important;
 }
 
@@ -43,8 +43,8 @@
     box-shadow 0.2s;
 }
 .phone-input-container.dark .react-tel-input input:focus {
-  border: 2px solid #818cf8 !important; /* Tailwind indigo-400 for focus */
-  box-shadow: 0 0 0 2px #818cf833 !important;
+  border: 2px solid var(--brand-focus) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-focus) 30%, transparent) !important;
   outline: none !important;
 }
 

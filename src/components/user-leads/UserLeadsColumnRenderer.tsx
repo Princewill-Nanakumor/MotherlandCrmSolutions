@@ -65,7 +65,7 @@ export function renderUserLeadCell({
             variant="outline"
             className="flex items-center gap-1.5 text-gray-900! dark:text-white!"
           >
-            <Loader2 className="h-3 w-3 animate-spin text-gray-900! dark:text-white!" />
+            <Loader2 className="h-3 w-3 animate-spin brand-icon" />
             Loading...
           </Badge>
         </div>

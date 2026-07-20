@@ -149,7 +149,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, users, onLeadUpdated }) =
         </p>
         {isLoadingStatuses ? (
           <div className="flex items-center">
-            <Loader2 className="w-4 h-4 text-gray-500 animate-spin dark:text-gray-400" />
+            <Loader2 className="w-4 h-4 animate-spin brand-icon" />
           </div>
         ) : (
           <Select
@@ -239,7 +239,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, users, onLeadUpdated }) =
         <>
           <style>{`.assigned-badge-hide-on-tall { display: flex; } @media (min-height: 1200px) { .assigned-badge-hide-on-tall { display: none !important; } }`}</style>
           <div className="assigned-badge-hide-on-tall items-center gap-1.5 shrink-0 flex">
-            <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800">
+            <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border brand-chip">
               <User className="h-3.5 w-3.5" />
               <span className="text-gray-500 dark:text-gray-400">
                 Assigned to

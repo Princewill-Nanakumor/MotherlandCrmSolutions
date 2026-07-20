@@ -305,7 +305,7 @@ export default function SignInForm() {
           ) : (
             <Link
               href="/forgot-password"
-              className="text-sm font-semibold text-white! underline underline-offset-2 transition-colors hover:text-indigo-200"
+              className="text-sm font-semibold text-white! underline underline-offset-2 transition-colors hover:text-white/80"
             >
               Forgot password?
             </Link>
@@ -317,15 +317,15 @@ export default function SignInForm() {
           disabled={!canSubmitLogin}
           aria-disabled={!canSubmitLogin}
           className={`
-            w-full bg-linear-to-br from-indigo-600 to-purple-600 text-white font-medium
+            w-full brand-gradient text-white font-medium
             py-3 px-4 rounded-lg flex items-center justify-center space-x-2
             transition-all duration-200
-            ${canSubmitLogin ? "hover:from-indigo-700 hover:to-purple-700" : "opacity-50 cursor-not-allowed pointer-events-none"}
+            ${canSubmitLogin ? "hover:brightness-95" : "opacity-50 cursor-not-allowed pointer-events-none"}
           `}
         >
           {loading ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin text-white" />
               <span>Signing in...</span>
             </>
           ) : (
@@ -348,7 +348,7 @@ export default function SignInForm() {
           ) : (
             <Link
               href="/signup"
-              className="font-semibold underline transition-colors hover:text-indigo-200"
+              className="font-semibold underline transition-colors hover:text-white/80"
             >
               Sign up
             </Link>

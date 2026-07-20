@@ -59,7 +59,7 @@ export function getActivityIcon(type: Activity["type"]): React.ReactElement {
     case "IMPORT":
       return (
         <ActivityIcon
-          className={`${iconSizeClass} text-purple-600! dark:text-purple-400!`}
+          className={`${iconSizeClass} brand-icon`}
         />
       );
     case "REMINDER_CREATED":
@@ -134,7 +134,7 @@ export function getActivityBackground(type: Activity["type"]): string {
     case "DELETE":
       return "bg-red-100 dark:bg-red-900/30";
     case "IMPORT":
-      return "bg-purple-100 dark:bg-purple-900/30";
+      return "bg-[color-mix(in_srgb,var(--brand-from)_14%,white)] dark:bg-[color-mix(in_srgb,var(--brand-from)_22%,#111827)]";
     case "REMINDER_CREATED":
     case "REMINDER_UPDATED":
     case "REMINDER_UNMUTED":

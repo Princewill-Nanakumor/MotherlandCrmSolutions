@@ -181,7 +181,9 @@ export function LoginCaptcha({
         <div
           className={`flex items-center gap-2 p-3 rounded-lg ${isLight ? "bg-gray-50 dark:bg-gray-700/50" : "bg-white/10"}`}
         >
-          <Loader2 className={`w-5 h-5 animate-spin ${isLight ? "text-gray-600" : "text-white"}`} />
+          <Loader2
+            className={`w-5 h-5 animate-spin ${isLight ? "brand-icon" : "text-white"}`}
+          />
           <span className={`text-sm ${isLight ? "text-gray-600" : "text-white/90"}`}>
             Loading security check…
           </span>
@@ -210,7 +212,7 @@ export function LoginCaptcha({
             disabled={disabled}
             className={`w-full py-3 px-3 rounded-lg border text-sm font-semibold transition-[border-color,background-color,box-shadow] duration-200 ease-out focus:outline-none focus-visible:outline-none ${
               isLight
-                ? "bg-white text-gray-900 border-gray-300 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                ? "bg-white text-gray-900 border-gray-300 focus-visible:border-(--brand-focus) focus-visible:ring-2 focus-visible:ring-(--brand-focus)/40 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 : "border-white/20 bg-white/10 placeholder:font-semibold placeholder:text-white/70"
             } ${disabled ? "cursor-not-allowed opacity-75" : ""}`}
           />
@@ -236,14 +238,14 @@ export function RobotVerifyButton({
         flex items-center justify-start gap-3
         ${
           isLight
-            ? "border-2 py-4 px-4 rounded-md border-indigo-600 bg-transparent text-indigo-700 dark:border-indigo-400 dark:text-indigo-300"
+            ? "border-2 py-4 px-4 rounded-md border-(--brand-from) bg-transparent text-(--brand-from) dark:border-(--brand-focus) dark:text-(--brand-focus)"
             : "rounded-full border border-white/20 bg-white/10 py-3 px-5 text-white!"
         }
         ${
           disabled
             ? "opacity-60 cursor-not-allowed"
             : isLight
-              ? "hover:bg-indigo-50 dark:hover:bg-gray-700/50"
+              ? "hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,white)] dark:hover:bg-gray-700/50"
               : "hover:border-white/30 hover:bg-white/15"
         }
       `}
@@ -251,7 +253,7 @@ export function RobotVerifyButton({
       <span
         className={`inline-block shrink-0 bg-transparent ${
           isLight
-            ? "w-6 h-6 border-2 rounded-xs border-indigo-600 dark:border-indigo-400"
+            ? "w-6 h-6 border-2 rounded-xs border-(--brand-from) dark:border-(--brand-focus)"
             : "h-5 w-5 rounded border border-white/35"
         }`}
       />
