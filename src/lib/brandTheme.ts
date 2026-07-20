@@ -2,6 +2,8 @@
  * Tenant brand theme (admin-owned, inherited by agents).
  */
 
+import { applyBrandFavicon } from "@/lib/brandFavicon";
+
 export type BrandButtonStyle = "solid" | "gradient";
 
 export type BrandTheme = {
@@ -316,13 +318,13 @@ export function brandSurfaceBackground(theme: BrandTheme): {
 }
 
 export const DEFAULT_BRAND_THEME: BrandTheme = syncDerivedBrandColors({
-  primary: "#4F46E5",
-  primaryEnd: "#9333EA",
-  solidPrimary: "#4F46E5",
-  focus: "#4F46E5",
-  icon: "#4F46E5",
-  navbarFrom: "#4F46E5",
-  navbarTo: "#9333EA",
+  primary: "#2D6F8B",
+  primaryEnd: "#2E8EB8",
+  solidPrimary: "#2D6F8B",
+  focus: "#2D6F8B",
+  icon: "#2D6F8B",
+  navbarFrom: "#2D6F8B",
+  navbarTo: "#2E8EB8",
   navbarText: "#FFFFFF",
   buttonStyle: "gradient",
   bodyFont: "ibm-plex-mono",
@@ -363,17 +365,31 @@ export function mergeBrandTheme(
   // Only user-editable fields are read from input — derived colors are always
   // recomputed. solidPrimary / primary / primaryEnd stay independent so
   // switching button style never overwrites the other mode's colors.
-  const primary = isValidHexColor(String(p.primary ?? fallback.primary))
+  let primary = isValidHexColor(String(p.primary ?? fallback.primary))
     ? normalizeHexColor(String(p.primary))
     : fallback.primary;
-  const primaryEnd = isValidHexColor(String(p.primaryEnd ?? fallback.primaryEnd))
+  let primaryEnd = isValidHexColor(String(p.primaryEnd ?? fallback.primaryEnd))
     ? normalizeHexColor(String(p.primaryEnd))
     : fallback.primaryEnd;
   // Older saved themes may lack solidPrimary — fall back to primary.
   const solidPrimaryRaw = p.solidPrimary ?? p.primary ?? fallback.solidPrimary;
-  const solidPrimary = isValidHexColor(String(solidPrimaryRaw))
+  let solidPrimary = isValidHexColor(String(solidPrimaryRaw))
     ? normalizeHexColor(String(solidPrimaryRaw))
     : fallback.solidPrimary;
+
+  // Migrate former purple / previous teal-secondary defaults → current brand palette.
+  if (
+    (primary === "#4F46E5" &&
+      primaryEnd === "#9333EA" &&
+      (solidPrimary === "#4F46E5" || solidPrimary === primary)) ||
+    (primary === "#2D6F8B" &&
+      primaryEnd === "#1A556E" &&
+      (solidPrimary === "#2D6F8B" || solidPrimary === primary))
+  ) {
+    primary = fallback.primary;
+    primaryEnd = fallback.primaryEnd;
+    solidPrimary = fallback.solidPrimary;
+  }
 
   let bodyFont = resolveBrandFontId(p.bodyFont, fallback.bodyFont);
   let headingFont = resolveBrandFontId(p.headingFont, fallback.headingFont);
@@ -432,13 +448,13 @@ export function parseBrandThemeInput(input: unknown): BrandTheme | { error: stri
   const headingFont = resolveBrandFontId(headingFontRaw, "");
 
   if (!isValidHexColor(primary)) {
-    return { error: "Primary color must be a valid hex (e.g. #4F46E5)" };
+    return { error: "Primary color must be a valid hex (e.g. #2D6F8B)" };
   }
   if (!isValidHexColor(primaryEnd)) {
-    return { error: "Secondary color must be a valid hex (e.g. #9333EA)" };
+    return { error: "Secondary color must be a valid hex (e.g. #2E8EB8)" };
   }
   if (!isValidHexColor(solidPrimary)) {
-    return { error: "Solid primary color must be a valid hex (e.g. #4F46E5)" };
+    return { error: "Solid primary color must be a valid hex (e.g. #2D6F8B)" };
   }
   if (buttonStyle !== "solid" && buttonStyle !== "gradient") {
     return { error: "Button style must be solid or gradient" };
@@ -510,6 +526,8 @@ export function applyBrandThemeToDocument(theme: BrandTheme): void {
   } catch {
     // ignore
   }
+
+  applyBrandFavicon(getActiveBrandPrimary(theme));
 }
 
 /** localStorage keys — keep in sync with the boot script in app/layout.tsx */

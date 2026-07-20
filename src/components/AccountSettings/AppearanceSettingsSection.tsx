@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import {
   useTenantTheme,
@@ -95,7 +96,7 @@ function ColorField({
               setHexDraft(colorValue);
             }
           }}
-          placeholder="#4F46E5"
+          placeholder="#2D6F8B"
           className="font-mono uppercase"
           maxLength={7}
         />
@@ -302,11 +303,71 @@ export function AppearanceSettingsSection() {
 
   if (isLoading) {
     return (
-      <section className="flex items-center gap-2 p-6 mt-4 bg-white border shadow-lg rounded-2xl border-border dark:bg-white/5">
-        <Loader2 className="w-4 h-4 animate-spin brand-icon" />
-        <span className="text-sm text-gray-500 dark:text-gray-300">
-          Loading appearance…
-        </span>
+      <section className="p-6 mt-4 space-y-6 bg-white border shadow-lg rounded-2xl border-border dark:bg-white/5">
+        <div className="flex items-center gap-3">
+          <Skeleton className="w-9 h-9 rounded-lg bg-gray-200 dark:bg-gray-700" />
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-32 bg-gray-200 dark:bg-gray-700" />
+            <Skeleton className="h-4 w-72 max-w-full bg-gray-200 dark:bg-gray-700" />
+          </div>
+        </div>
+
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div className="space-y-6">
+            <div className="grid gap-6 sm:grid-cols-2">
+              {[0, 1].map((key) => (
+                <div key={key} className="space-y-3">
+                  <Skeleton className="h-4 w-28 bg-gray-200 dark:bg-gray-700" />
+                  <Skeleton className="h-3 w-40 bg-gray-200 dark:bg-gray-700" />
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="w-12 h-10 rounded-md bg-gray-200 dark:bg-gray-700" />
+                    <Skeleton className="h-10 flex-1 rounded-md bg-gray-200 dark:bg-gray-700" />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-24 bg-gray-200 dark:bg-gray-700" />
+              <Skeleton className="h-3 w-48 bg-gray-200 dark:bg-gray-700" />
+              <div className="flex gap-2">
+                <Skeleton className="h-9 w-24 rounded-md bg-gray-200 dark:bg-gray-700" />
+                <Skeleton className="h-9 w-20 rounded-md bg-gray-200 dark:bg-gray-700" />
+              </div>
+            </div>
+
+            <div className="grid gap-6 pt-6 border-t border-border sm:grid-cols-2">
+              <Skeleton className="h-4 w-full sm:col-span-2 max-w-md bg-gray-200 dark:bg-gray-700" />
+              {[0, 1].map((key) => (
+                <div key={key} className="space-y-2">
+                  <Skeleton className="h-4 w-24 bg-gray-200 dark:bg-gray-700" />
+                  <Skeleton className="h-10 w-full rounded-lg bg-gray-200 dark:bg-gray-700" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-24 bg-gray-200 dark:bg-gray-700" />
+            <div className="overflow-hidden border border-gray-200 shadow-sm rounded-xl dark:border-gray-700">
+              <Skeleton className="h-12 w-full rounded-none bg-gray-200 dark:bg-gray-700" />
+              <div className="p-4 space-y-4 bg-white dark:bg-gray-900">
+                <Skeleton className="h-5 w-44 bg-gray-200 dark:bg-gray-700" />
+                <Skeleton className="h-4 w-full max-w-sm bg-gray-200 dark:bg-gray-700" />
+                <div className="flex flex-wrap gap-3">
+                  <Skeleton className="h-8 w-24 rounded-md bg-gray-200 dark:bg-gray-700" />
+                  <Skeleton className="h-8 w-40 rounded-md bg-gray-200 dark:bg-gray-700" />
+                  <Skeleton className="h-5 w-5 rounded bg-gray-200 dark:bg-gray-700" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 pt-6 border-t border-border">
+          <Skeleton className="h-9 w-36 rounded-md bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="h-9 w-32 rounded-md bg-gray-200 dark:bg-gray-700" />
+        </div>
       </section>
     );
   }

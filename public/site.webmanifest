@@ -5,17 +5,19 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#6366F1",
+  "theme_color": "#2D6F8B",
   "icons": [
     {
-      "src": "/Motherlandfav.png",
+      "src": "/motherland-favicon.svg",
       "sizes": "any",
-      "type": "image/png"
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "/Motherlandfav.png",
-      "sizes": "180x180",
-      "type": "image/png"
+      "src": "/motherland-favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ]
 }

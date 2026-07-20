@@ -167,11 +167,11 @@ const Comments: FC<CommentsProps> = ({
 
   return (
     <div
-      className="flex-1 min-h-0 flex flex-col bg-gray-50 dark:bg-transparent p-6 border border-gray-200 dark:border-gray-700 shadow-sm"
+      className="flex flex-col flex-1 p-6 min-h-0 bg-gray-50 border border-gray-200 shadow-sm dark:bg-transparent dark:border-gray-700"
       style={{ height: "100%" }}
     >
-      <div className="bg-white dark:bg-transparent rounded-lg shadow-sm p-5 border border-gray-100 dark:border-gray-700 flex-1 min-h-0 flex flex-col">
-        <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col flex-1 p-5 min-h-0 bg-white rounded-lg border border-gray-100 shadow-sm dark:bg-transparent dark:border-gray-700">
+        <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-800! dark:text-white!">
             Add a comment
           </h3>
@@ -182,7 +182,7 @@ const Comments: FC<CommentsProps> = ({
             className="text-gray-500! hover:text-gray-700! dark:text-gray-400! dark:hover:text-gray-200!"
             title={`${showTextarea ? "Hide" : "Show"} comment textarea`}
           >
-            <Type className="h-4 w-4" />
+            <Type className="w-4 h-4" />
             <ChevronUp
               className={`h-4 w-4 transition-transform duration-300 ease-in-out ${
                 showTextarea ? "rotate-0" : "rotate-180"
@@ -200,7 +200,7 @@ const Comments: FC<CommentsProps> = ({
             {/* Textarea with explicit border control to fix thickness inconsistency */}
             <textarea
               placeholder="Write your thoughts about this lead... (Press Cmd/Ctrl + Enter to submit)"
-              className="w-full p-3 rounded-md focus:outline-none resize-none min-h-[120px] text-gray-700! dark:text-white! bg-white dark:bg-transparent transition-all duration-200"
+              className="w-full p-3 rounded-md focus:outline-none resize-none min-h-30 text-gray-700! dark:text-white! bg-white dark:bg-transparent transition-all duration-200"
               style={{
                 borderTopWidth: "1px",
                 borderRightWidth: "1px",
@@ -228,7 +228,7 @@ const Comments: FC<CommentsProps> = ({
                 const focusColor =
                   getComputedStyle(document.documentElement)
                     .getPropertyValue("--brand-focus")
-                    .trim() || "#4f46e5";
+                    .trim() || "#2d6f8b";
                 e.target.style.borderTopColor = focusColor;
                 e.target.style.borderRightColor = focusColor;
                 e.target.style.borderBottomColor = focusColor;
@@ -284,7 +284,7 @@ const Comments: FC<CommentsProps> = ({
           </h3>
 
           {comments.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-transparent rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+            <div className="flex flex-1 justify-center items-center bg-gray-100 rounded-lg border border-gray-300 border-dashed dark:bg-transparent dark:border-gray-700">
               <div className="text-center">
                 <p className="text-gray-500! dark:text-gray-400!">
                   No comments yet. Be the first to comment!
@@ -293,7 +293,7 @@ const Comments: FC<CommentsProps> = ({
             </div>
           ) : (
             <div
-              className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-transparent rounded-lg p-4 space-y-4 border border-gray-200 dark:border-gray-700 shadow-inner"
+              className="overflow-y-auto flex-1 p-4 space-y-4 min-h-0 bg-white rounded-lg border border-gray-200 shadow-inner dark:bg-transparent dark:border-gray-700"
               style={{
                 scrollbarWidth: "thin",
                 scrollbarColor: "var(--brand-from) #f3f4f6",
@@ -327,10 +327,10 @@ const Comments: FC<CommentsProps> = ({
               {comments.map((comment) => (
                 <div
                   key={comment._id}
-                  className="group p-4 rounded-md bg-gray-100 dark:bg-transparent border border-gray-100 dark:border-gray-700"
+                  className="p-4 bg-gray-100 rounded-md border border-gray-100 group dark:bg-transparent dark:border-gray-700"
                 >
                   <div className="flex gap-3">
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="w-10 h-10">
                       <AvatarImage src={comment.createdBy?.avatar} />
                       <AvatarFallback className="bg-[color-mix(in_srgb,var(--brand-from)_18%,white)] text-(--brand-from) dark:bg-[color-mix(in_srgb,var(--brand-from)_30%,#111827)] dark:text-(--brand-focus)">
                         {comment.createdBy?.firstName?.[0]}
@@ -339,7 +339,7 @@ const Comments: FC<CommentsProps> = ({
                     </Avatar>
 
                     <div className="flex-1">
-                      <div className="flex items-baseline flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2 items-baseline">
                         <h4 className="text-sm font-semibold text-gray-800! dark:text-white!">
                           {comment.createdBy?.firstName}{" "}
                           {comment.createdBy?.lastName}
@@ -384,7 +384,7 @@ const Comments: FC<CommentsProps> = ({
                         </div>
                       ) : (
                         <div className="mt-1">
-                          <p className="text-gray-700! dark:text-white! whitespace-pre-line break-words">
+                          <p className="text-gray-700! dark:text-white! whitespace-pre-line wrap-break-word">
                             {comment.content}
                           </p>
                           <p className="text-xs text-gray-600! dark:text-gray-400! mt-1">
@@ -395,7 +395,7 @@ const Comments: FC<CommentsProps> = ({
                     </div>
 
                     {isAdmin && editingId !== comment._id && (
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="flex gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                         <Button
                           variant="ghost"
                           size="sm"

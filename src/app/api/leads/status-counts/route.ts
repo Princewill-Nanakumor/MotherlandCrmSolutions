@@ -128,7 +128,7 @@ export async function GET() {
     statusCounts.unshift({
       id: "ALL",
       name: "All Leads",
-      color: "#6366F1", // You can pick any color you want for "All Leads"
+      color: "#2D6F8B", // You can pick any color you want for "All Leads"
       count: allLeadsCount,
       isDeleted: false,
     });

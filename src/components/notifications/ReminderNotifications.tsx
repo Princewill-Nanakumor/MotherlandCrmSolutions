@@ -189,8 +189,8 @@ export default function ReminderNotifications() {
         try {
           const notification = new Notification(`${shortName} reminder: ${reminder.title}`, {
             body: `${reminder.type} - ${leadName}\n${reminder.description || ""}`,
-            icon: "/Motherlandfav.png",
-            badge: "/Motherlandfav.png",
+            icon: "/motherland-favicon.svg",
+            badge: "/motherland-favicon.svg",
             tag: reminder._id,
             requireInteraction: true,
             silent: true,

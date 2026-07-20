@@ -4,12 +4,12 @@
 
 /* Global crypto-inspired professional typography */
 :root {
-  --brand-from: #4f46e5;
-  --brand-to: #9333ea;
-  --brand-focus: #4f46e5;
-  --brand-icon: #4f46e5;
-  --brand-navbar-from: #4f46e5;
-  --brand-navbar-to: #9333ea;
+  --brand-from: #2d6f8b;
+  --brand-to: #2e8eb8;
+  --brand-focus: #2d6f8b;
+  --brand-icon: #2d6f8b;
+  --brand-navbar-from: #2d6f8b;
+  --brand-navbar-to: #2e8eb8;
   --brand-navbar-text: #ffffff;
   --brand-font-body: var(--font-brand-ibm-plex-mono), "IBM Plex Mono",
     ui-monospace, monospace;

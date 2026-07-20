@@ -15,17 +15,19 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
-    theme_color: "#6366F1",
+    theme_color: "#2D6F8B",
     icons: [
       {
-        src: "/Motherlandfav.png",
-        sizes: "192x192",
-        type: "image/png",
+        src: "/motherland-favicon.svg",
+        sizes: "any",
+        type: "image/svg+xml",
+        purpose: "any",
       },
       {
-        src: "/Motherlandfav.png",
+        src: "/motherland-favicon.svg",
         sizes: "512x512",
-        type: "image/png",
+        type: "image/svg+xml",
+        purpose: "maskable",
       },
     ],
   };

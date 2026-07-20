@@ -185,10 +185,10 @@ export function UserLeadsTableContent({
                 `}
                 style={{
                   borderLeft: isSelected
-                    ? "4px solid #9333ea"
+                    ? "4px solid #2d6f8b"
                     : "4px solid transparent",
                   borderBottom: isSelected
-                    ? "2px solid #9333ea"
+                    ? "2px solid #2d6f8b"
                     : "1px solid var(--tw-prose-invert-borders, #374151)",
                 }}
               >

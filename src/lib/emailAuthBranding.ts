@@ -104,12 +104,12 @@ const EMAIL_STYLES = {
   wrap: `font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;`,
   card: `border: 1px solid #e5e5e5; border-radius: 16px; padding: 40px; background: white;`,
   logoRow: `text-align: left; margin-bottom: 20px; border: 1px solid #e5e5e5; border-radius: 8px; padding: 14px; display: inline-block;`,
-  brandGradient: `background: linear-gradient(to right, #4f46e5, #059669);`,
-  brandText: `font-size: 24px; font-weight: bold; background: linear-gradient(to right, #4f46e5, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;`,
+  brandGradient: `background: linear-gradient(to right, #2d6f8b, #2e8eb8);`,
+  brandText: `font-size: 24px; font-weight: bold; background: linear-gradient(to right, #2d6f8b, #2e8eb8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;`,
   h1: `color: #1a1a1a; font-size: 28px; font-weight: bold; margin-bottom: 20px;`,
   p: `color: #1a1a1a; font-size: 16px; line-height: 24px; margin-bottom: 16px;`,
   muted: `color: #666666; font-size: 14px; line-height: 20px;`,
-  button: `background: linear-gradient(to right, #4f46e5, #059669); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-size: 16px; font-weight: 500; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.15);`,
+  button: `background: linear-gradient(to right, #2d6f8b, #2e8eb8); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-size: 16px; font-weight: 500; box-shadow: 0 4px 6px rgba(45, 111, 139, 0.15);`,
 };
 
 function emailShell(inner: string): string {
@@ -186,7 +186,7 @@ export function createPasswordResetEmailHtml(
         If you did not request a reset, you can ignore this email.
       </p>
       <p style="${EMAIL_STYLES.muted}">If the button does not work, copy this URL:</p>
-      <p style="color: #4f46e5; font-size: 12px; line-height: 18px; word-break: break-all; margin-top: 8px;">
+      <p style="color: #2d6f8b; font-size: 12px; line-height: 18px; word-break: break-all; margin-top: 8px;">
         ${urlText}
       </p>
     </div>

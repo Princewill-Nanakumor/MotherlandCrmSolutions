@@ -196,16 +196,31 @@ export function buildAppMetadata(branding: AppBranding): Metadata {
       "apple-mobile-web-app-status-bar-style": "default",
       "apple-mobile-web-app-title": branding.shortName,
       "application-name": branding.shortName,
-      "msapplication-TileColor": "#6366F1",
-      "theme-color": "#6366F1",
+      "msapplication-TileColor": "#2D6F8B",
+      "theme-color": "#2D6F8B",
     },
     manifest: undefined,
     icons: {
-      icon: [{ url: "/Motherlandfav.png?v=2", sizes: "any", type: "image/png" }],
-      apple: [
-        { url: "/Motherlandfav.png?v=2", sizes: "180x180", type: "image/png" },
+      icon: [
+        {
+          url: "/motherland-favicon.svg",
+          type: "image/svg+xml",
+          sizes: "any",
+        },
       ],
-      shortcut: [{ url: "/Motherlandfav.png?v=2", type: "image/png" }],
+      apple: [
+        {
+          url: "/motherland-favicon.svg",
+          type: "image/svg+xml",
+          sizes: "180x180",
+        },
+      ],
+      shortcut: [
+        {
+          url: "/motherland-favicon.svg",
+          type: "image/svg+xml",
+        },
+      ],
     },
   };
 }
