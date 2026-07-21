@@ -23,6 +23,7 @@ import {
   BRAND_FONT_OPTIONS,
   DEFAULT_BRAND_THEME,
   brandSurfaceBackground,
+  brandThemeToCssVars,
   getActiveBrandPrimary,
   getBrandFontOption,
   isValidHexColor,
@@ -157,7 +158,12 @@ function BrandPreview({ draft }: { draft: BrandTheme }) {
   const navbarTextColor = "#ffffff";
 
   return (
-    <div className="overflow-hidden bg-white border border-gray-200 shadow-sm rounded-xl dark:border-gray-700 dark:bg-gray-900">
+    <div
+      data-brand-preview
+      data-brand-button-style={draft.buttonStyle}
+      className="overflow-hidden bg-white border border-gray-200 shadow-sm rounded-xl dark:border-gray-700 dark:bg-gray-900"
+      style={brandThemeToCssVars(draft) as React.CSSProperties}
+    >
       <nav
         className="flex items-center justify-between px-4 py-3 text-sm font-medium"
         style={{ ...navBackground, color: navbarTextColor }}
@@ -205,9 +211,22 @@ function BrandPreview({ draft }: { draft: BrandTheme }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="button" size="sm">
+          <button
+            type="button"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md h-8 px-3 text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 shadow-xs focus-visible:ring-(--brand-focus)/40 hover:brightness-95 text-white border border-transparent"
+            style={{
+              backgroundImage:
+                draft.buttonStyle === "gradient"
+                  ? `linear-gradient(to right, ${draft.primary}, ${draft.primaryEnd})`
+                  : "none",
+              backgroundColor:
+                draft.buttonStyle === "gradient" ? "transparent" : draft.solidPrimary,
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "100% 100%",
+            }}
+          >
             Save lead
-          </Button>
+          </button>
           <Input placeholder="Focus to see input ring" className="max-w-50" />
           <Filter className="w-5 h-5 brand-icon" />
         </div>
@@ -217,13 +236,25 @@ function BrandPreview({ draft }: { draft: BrandTheme }) {
 }
 
 export function AppearanceSettingsSection() {
-  const { savedTheme, canEdit, isLoading, setLocalTheme, refreshTheme } =
-    useTenantTheme();
+  const {
+    savedTheme,
+    canEdit,
+    isLoading,
+    clearThemePreview,
+    refreshTheme,
+    setLocalTheme,
+  } = useTenantTheme();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<BrandTheme>(savedTheme);
   const [isSaving, setIsSaving] = useState(false);
   const savedThemeSnapshot = useRef(JSON.stringify(savedTheme));
+
+  useEffect(() => {
+    return () => {
+      clearThemePreview();
+    };
+  }, [clearThemePreview]);
 
   useEffect(() => {
     const nextSnapshot = JSON.stringify(savedTheme);
@@ -248,6 +279,8 @@ export function AppearanceSettingsSection() {
       ...patch,
     });
     setDraft(next);
+    // Apply as a temporary preview to the whole app (reverted on leaving
+    // without saving).
     setLocalTheme(next);
   };
 
@@ -256,7 +289,13 @@ export function AppearanceSettingsSection() {
   };
 
   const handleReset = () => {
-    const next = mergeBrandTheme(DEFAULT_BRAND_THEME);
+    // Gradient / fonts / button style → defaults; keep solid fill for surfaces
+    // (soft backgrounds, solid button mode) since the app runs gradient chrome.
+    const preservedSolid = draft.solidPrimary;
+    const next = mergeBrandTheme({
+      ...DEFAULT_BRAND_THEME,
+      solidPrimary: preservedSolid,
+    });
     setDraft(next);
     setLocalTheme(next);
   };
@@ -277,11 +316,11 @@ export function AppearanceSettingsSection() {
       const saved = mergeBrandTheme(data.theme);
       setDraft(saved);
       savedThemeSnapshot.current = JSON.stringify(saved);
-      setLocalTheme(saved);
       queryClient.setQueryData(BRAND_THEME_QUERY_KEY, {
         theme: saved,
         canEdit: true,
       });
+      setLocalTheme(saved);
       toast({
         title: "Appearance saved",
         description:
@@ -289,6 +328,7 @@ export function AppearanceSettingsSection() {
         variant: "success",
       });
       await refreshTheme();
+      clearThemePreview();
     } catch (error) {
       toast({
         title: "Could not save",
@@ -404,38 +444,32 @@ export function AppearanceSettingsSection() {
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="space-y-6">
           <div className="grid gap-6 sm:grid-cols-2">
-            <ColorField
-              label="Primary color"
-              description={
-                draft.buttonStyle === "solid"
-                  ? "Solid fill for buttons, inputs, icons, and navbar"
-                  : "Gradient start for buttons, inputs, icons, and navbar"
-              }
-              value={
-                draft.buttonStyle === "solid"
-                  ? draft.solidPrimary
-                  : draft.primary
-              }
-              disabled={!canEdit}
-              onChange={(hex) =>
-                updateDraft(
-                  draft.buttonStyle === "solid"
-                    ? { solidPrimary: hex }
-                    : { primary: hex },
-                )
-              }
-            />
-            <ColorField
-              label="Secondary color"
-              description={
-                draft.buttonStyle === "solid"
-                  ? "Not used in solid mode"
-                  : "Gradient end for buttons and navbar"
-              }
-              value={draft.primaryEnd}
-              disabled={!canEdit || draft.buttonStyle === "solid"}
-              onChange={(primaryEnd) => updateDraft({ primaryEnd })}
-            />
+            {draft.buttonStyle === "gradient" ? (
+              <>
+                <ColorField
+                  label="Primary color"
+                  description="Gradient start for buttons, inputs, icons, and navbar"
+                  value={draft.primary}
+                  disabled={!canEdit}
+                  onChange={(primary) => updateDraft({ primary })}
+                />
+                <ColorField
+                  label="Secondary color"
+                  description="Gradient end for buttons and navbar"
+                  value={draft.primaryEnd}
+                  disabled={!canEdit}
+                  onChange={(primaryEnd) => updateDraft({ primaryEnd })}
+                />
+              </>
+            ) : (
+              <ColorField
+                label="Solid color"
+                description="Fill for buttons, inputs, icons, navbar, and soft backgrounds"
+                value={draft.solidPrimary}
+                disabled={!canEdit}
+                onChange={(solidPrimary) => updateDraft({ solidPrimary })}
+              />
+            )}
           </div>
 
           <div className="space-y-2">
@@ -443,7 +477,8 @@ export function AppearanceSettingsSection() {
               Button style
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Solid uses only the primary color
+              Gradient blends primary and secondary; solid uses one color
+              everywhere
             </p>
             <div className="flex gap-2">
               <Button

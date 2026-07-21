@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useRef, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSession, SessionProvider, getSession } from "next-auth/react";
 import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
@@ -289,7 +289,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   }, [searchQuery, showSearch, pathname, searchParams, router]);
 
   // Page title mapping
-  const getPageTitle = (path: string | null): string | null => {
+  const getPageTitle = useCallback((path: string | null): string | null => {
     if (!path) return dashboardPageTitle(shortName, "Dashboard");
 
     // Don't set title for lead detail pages (they handle their own titles)
@@ -331,7 +331,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     };
 
     return titleMap[path] || dashboardPageTitle(shortName, "Dashboard");
-  };
+  }, [shortName]);
 
   // Set page title based on pathname
   // Only set if it's not a dynamic route (those handle their own titles)
@@ -385,7 +385,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         }
       }
     }
-  }, [pathname, status, isAdminLeadsPage, isUserLeadsPage]);
+  }, [pathname, status, isAdminLeadsPage, isUserLeadsPage, getPageTitle, shortName]);
 
   // Client lost session unexpectedly (expired / cleared). Skip when user explicitly signed out.
   useEffect(() => {

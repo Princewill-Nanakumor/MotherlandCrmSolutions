@@ -1,11 +1,11 @@
 // src/components/user-management/CountrySelect.tsx
 import Select, { StylesConfig, OptionProps } from "react-select";
 import Image from "next/image";
-import { Inter } from "next/font/google";
+import { brandFontInter } from "@/lib/brandFontLoaders";
 import { Globe } from "lucide-react";
 import { countrySelectBrand } from "@/lib/brandTheme";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = brandFontInter;
 
 export interface SelectOption {
   value: string;

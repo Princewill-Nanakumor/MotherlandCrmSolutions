@@ -179,16 +179,16 @@ export function UserLeadsTableContent({
                   cursor-pointer transition-colors duration-150 ease-in-out
                   ${
                     isSelected
-                      ? "bg-blue-50 dark:bg-gray-600"
+                      ? "bg-gray-50 dark:bg-gray-600"
                       : "bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/80"
                   }
                 `}
                 style={{
                   borderLeft: isSelected
-                    ? "4px solid #2d6f8b"
+                    ? "4px solid var(--brand-from)"
                     : "4px solid transparent",
                   borderBottom: isSelected
-                    ? "2px solid #2d6f8b"
+                    ? "2px solid var(--brand-from)"
                     : "1px solid var(--tw-prose-invert-borders, #374151)",
                 }}
               >

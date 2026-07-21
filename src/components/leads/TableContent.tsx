@@ -290,7 +290,7 @@ export function TableContent({
                   cursor-pointer transition-colors duration-150 ease-in-out
                   ${
                     isSelected
-                      ? "bg-[color-mix(in_srgb,var(--brand-from)_10%,white)] dark:bg-gray-600"
+                      ? "bg-gray-50 dark:bg-gray-600"
                       : "bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/80"
                   }
                 `}

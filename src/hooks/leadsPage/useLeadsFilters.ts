@@ -387,7 +387,6 @@ export function useLeadsFilters({
     filterJustChangedRef,
     pathname,
     pendingPageFromPaginationRef,
-    router,
     searchParams,
     setFilterByUser,
     setFilterJustChanged,
@@ -463,7 +462,7 @@ export function useLeadsFilters({
       const url = params.toString() ? `${pathname}?${params.toString()}` : pathname;
       window.history.replaceState(null, "", url);
     },
-    [pathname, router, searchParams, setFilterJustChanged, setPageState],
+    [pathname, searchParams, setFilterJustChanged, setPageState],
   );
 
   const handleCountryFilterModeChange = useCallback(
@@ -490,7 +489,7 @@ export function useLeadsFilters({
       const url = params.toString() ? `${pathname}?${params.toString()}` : pathname;
       window.history.replaceState(null, "", url);
     },
-    [pathname, pendingPageFromPaginationRef, router, searchParams, setFilterJustChanged],
+    [pathname, pendingPageFromPaginationRef, searchParams, setFilterJustChanged],
   );
 
   const handleServerPageChange = useCallback(
@@ -503,7 +502,7 @@ export function useLeadsFilters({
       const url = params.toString() ? `${pathname}?${params.toString()}` : pathname;
       window.history.replaceState(null, "", url);
     },
-    [pathname, pendingPageFromPaginationRef, router, searchParams, setFilterJustChanged, setPageState],
+    [pathname, pendingPageFromPaginationRef, searchParams, setFilterJustChanged, setPageState],
   );
 
   const handleClearFilters = useCallback(() => {
@@ -540,7 +539,6 @@ export function useLeadsFilters({
     filterJustChangedRef,
     pathname,
     pendingPageFromPaginationRef,
-    router,
     setFilterByUser,
     setFilterJustChanged,
   ]);

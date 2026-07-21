@@ -6,6 +6,7 @@
 :root {
   --brand-from: #2d6f8b;
   --brand-to: #2e8eb8;
+  --brand-solid: #2d6f8b;
   --brand-focus: #2d6f8b;
   --brand-icon: #2d6f8b;
   --brand-navbar-from: #2d6f8b;
@@ -50,6 +51,20 @@ body {
 
 html[data-brand-button-style="solid"] .brand-gradient {
   background-image: none !important;
+  background-color: var(--brand-from) !important;
+}
+
+[data-brand-preview][data-brand-button-style="solid"] .brand-gradient {
+  background-image: none !important;
+  background-color: var(--brand-from) !important;
+}
+
+[data-brand-preview][data-brand-button-style="gradient"] .brand-gradient {
+  background-image: linear-gradient(
+    to right,
+    var(--brand-from),
+    var(--brand-to)
+  ) !important;
   background-color: var(--brand-from) !important;
 }
 
@@ -105,34 +120,34 @@ html[data-brand-button-style="solid"].dark .brand-navbar {
 }
 
 .brand-soft-bg {
-  background-color: color-mix(in srgb, var(--brand-from) 12%, white);
+  background-color: color-mix(in srgb, var(--brand-solid) 12%, white);
 }
 
 .dark .brand-soft-bg {
-  background-color: color-mix(in srgb, var(--brand-from) 18%, #111827);
+  background-color: color-mix(in srgb, var(--brand-solid) 18%, #111827);
 }
 
 .brand-tab-active {
-  background-color: color-mix(in srgb, var(--brand-from) 12%, white) !important;
+  background-color: color-mix(in srgb, var(--brand-solid) 12%, white) !important;
   color: var(--brand-from) !important;
   font-weight: 700;
 }
 
 .dark .brand-tab-active {
-  background-color: color-mix(in srgb, var(--brand-from) 18%, #111827) !important;
+  background-color: color-mix(in srgb, var(--brand-solid) 18%, #111827) !important;
   color: #fff !important;
 }
 
 .brand-chip {
-  background-color: color-mix(in srgb, var(--brand-from) 12%, white);
+  background-color: color-mix(in srgb, var(--brand-solid) 12%, white);
   color: var(--brand-from);
-  border-color: color-mix(in srgb, var(--brand-from) 28%, transparent);
+  border-color: color-mix(in srgb, var(--brand-solid) 28%, transparent);
 }
 
 .dark .brand-chip {
-  background-color: color-mix(in srgb, var(--brand-from) 22%, #111827);
+  background-color: color-mix(in srgb, var(--brand-solid) 22%, #111827);
   color: color-mix(in srgb, var(--brand-focus) 70%, white);
-  border-color: color-mix(in srgb, var(--brand-from) 40%, transparent);
+  border-color: color-mix(in srgb, var(--brand-solid) 40%, transparent);
 }
 
 /* Text gradient (headings / logos) */
@@ -159,9 +174,9 @@ html[data-brand-button-style="solid"] .brand-text-gradient {
 .brand-page-wash {
   background-image: linear-gradient(
     to bottom right,
-    color-mix(in srgb, var(--brand-from) 12%, white),
-    color-mix(in srgb, var(--brand-to) 10%, white),
-    color-mix(in srgb, var(--brand-from) 8%, white)
+    color-mix(in srgb, var(--brand-solid) 12%, white),
+    color-mix(in srgb, var(--brand-solid) 10%, white),
+    color-mix(in srgb, var(--brand-solid) 8%, white)
   );
 }
 
@@ -175,16 +190,16 @@ html[data-brand-button-style="solid"] .brand-text-gradient {
 }
 
 .brand-soft-border {
-  border-color: color-mix(in srgb, var(--brand-from) 28%, transparent);
+  border-color: color-mix(in srgb, var(--brand-solid) 28%, transparent);
 }
 
 .brand-ring-soft {
-  --tw-ring-color: color-mix(in srgb, var(--brand-from) 35%, transparent);
+  --tw-ring-color: color-mix(in srgb, var(--brand-solid) 35%, transparent);
 }
 
 /* Sidebar active indicator — light accent stripe (replaces indigo-300) */
 .brand-sidebar-active-accent {
-  background-color: color-mix(in srgb, var(--brand-from) 38%, white) !important;
+  background-color: color-mix(in srgb, var(--brand-solid) 38%, white) !important;
 }
 
 .dark .brand-sidebar-active-accent {

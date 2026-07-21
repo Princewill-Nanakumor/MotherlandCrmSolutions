@@ -221,6 +221,7 @@ export default function ReminderNotifications() {
     permissionGranted,
     router,
     session?.user?.role,
+    shortName,
   ]);
 
   const dismissNotification = useCallback(

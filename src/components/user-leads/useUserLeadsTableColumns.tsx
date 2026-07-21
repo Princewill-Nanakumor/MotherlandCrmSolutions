@@ -43,11 +43,6 @@ export const useUserLeadsTableColumns = ({
   const locale = dateFormat === "MM/DD/YYYY" ? "en-US" : dateFormat === "YYYY-MM-DD" ? "en-CA" : "en-GB";
   const tzOpt = timezone ? { timeZone: timezone } : undefined;
 
-  const formatDateDMY = (dateString: string | undefined) => {
-    if (!dateString) return "—";
-    return new Date(dateString).toLocaleDateString(locale, tzOpt);
-  };
-
   const formatDateTime = (dateString: string | undefined) => {
     if (!dateString) return null;
     const date = new Date(dateString);

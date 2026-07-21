@@ -1,7 +1,7 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Geist_Mono } from "next/font/google";
+import { GeistMono } from "geist/font/mono";
 import Script from "next/script";
 import { AblyTeardownOutsideDashboard } from "@/components/AblyTeardownOutsideDashboard";
 import { AppBrandingProvider } from "@/components/AppBrandingProvider";
@@ -12,12 +12,6 @@ import {
 } from "@/lib/appBranding";
 import { brandFontVariablesClassName } from "@/lib/brandFontLoaders";
 import "./globals.css";
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export async function generateMetadata(): Promise<Metadata> {
   const headersList = await headers();
@@ -42,7 +36,7 @@ export default async function RootLayout({
       lang="en"
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={`${brandFontVariablesClassName} ${geistMono.variable}`}
+      className={`${brandFontVariablesClassName} ${GeistMono.variable}`}
     >
       <body className="antialiased">
         <Script

@@ -9,8 +9,7 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import { Types } from "mongoose";
 import mongoose from "mongoose";
 import type { Session } from "next-auth";
-import { canManagePayments, canReadPayment } from "@/lib/paymentAccess";
-import { forbiddenResponse } from "@/lib/apiResponses";
+import { canReadPayment } from "@/lib/paymentAccess";
 import { enrichPaymentForResponse } from "@/lib/paymentPresentation";
 
 interface PaymentDocument {

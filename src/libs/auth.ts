@@ -9,7 +9,6 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectMongoDB } from "./dbConfig";
 import User from "@/models/User";
-import { APP_DISPLAY_NAME } from "@/lib/emailAuthBranding";
 import { isTrustedAppOrigin } from "@/lib/appBranding";
 import { hasActiveEmailVerificationInvite } from "@/lib/authEmailVerificationWindow";
 import {

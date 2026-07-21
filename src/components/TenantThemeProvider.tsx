@@ -21,13 +21,15 @@ import {
 } from "@/lib/brandTheme";
 
 type TenantThemeContextValue = {
-  /** Live theme (includes unsaved preview edits) */
+  /** Theme applied across the app (saved only — no unsaved preview) */
   theme: BrandTheme;
-  /** Last saved theme from API / cache (no preview override) */
+  /** Last saved theme from API / cache */
   savedTheme: BrandTheme;
   canEdit: boolean;
   isLoading: boolean;
+  /** Drop any in-memory preview override (e.g. leaving Appearance without saving) */
   setLocalTheme: (theme: BrandTheme) => void;
+  clearThemePreview: () => void;
   refreshTheme: () => Promise<void>;
 };
 
@@ -69,8 +71,7 @@ export function TenantThemeProvider({ children }: { children: ReactNode }) {
     staleTime: 60_000,
   });
 
-  // Prefer live API data, then in-session preview, then last cached theme —
-  // never flash DEFAULT over a saved tenant theme while loading.
+  // Prefer live API data, then last cached theme — never flash DEFAULT while loading.
   const savedTheme = data?.theme ?? cachedTheme ?? DEFAULT_BRAND_THEME;
   const theme = localOverride ?? savedTheme;
   const canEdit = data?.canEdit ?? false;
@@ -79,7 +80,7 @@ export function TenantThemeProvider({ children }: { children: ReactNode }) {
     applyBrandThemeToDocument(theme);
   }, [theme]);
 
-  // Only persist after a successful save (no unsaved preview in cache).
+  // Persist only when no unsaved preview override is active.
   useEffect(() => {
     if (!localOverride) {
       persistBrandThemeCache(savedTheme);
@@ -90,8 +91,11 @@ export function TenantThemeProvider({ children }: { children: ReactNode }) {
     setLocalOverride(next);
   }, []);
 
-  const refreshTheme = useCallback(async () => {
+  const clearThemePreview = useCallback(() => {
     setLocalOverride(null);
+  }, []);
+
+  const refreshTheme = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: BRAND_THEME_QUERY_KEY });
   }, [queryClient]);
 
@@ -102,6 +106,7 @@ export function TenantThemeProvider({ children }: { children: ReactNode }) {
       canEdit,
       isLoading: status === "loading" || isLoading,
       setLocalTheme,
+      clearThemePreview,
       refreshTheme,
     }),
     [
@@ -111,6 +116,7 @@ export function TenantThemeProvider({ children }: { children: ReactNode }) {
       status,
       isLoading,
       setLocalTheme,
+      clearThemePreview,
       refreshTheme,
     ],
   );

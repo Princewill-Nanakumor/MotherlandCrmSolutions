@@ -8,11 +8,11 @@ import Select, {
 } from "react-select";
 import Image from "next/image";
 import { countryOptions } from "./CountryData";
-import { Inter } from "next/font/google";
+import { brandFontInter } from "@/lib/brandFontLoaders";
 import { Globe } from "lucide-react";
 import { countrySelectBrand } from "@/lib/brandTheme";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = brandFontInter;
 
 export interface SelectOption {
   value: string;

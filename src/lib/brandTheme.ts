@@ -485,6 +485,7 @@ export function brandThemeToCssVars(theme: BrandTheme): Record<string, string> {
   return {
     "--brand-from": from,
     "--brand-to": to,
+    "--brand-solid": theme.solidPrimary,
     "--brand-focus": theme.focus,
     "--brand-icon": theme.icon,
     "--brand-navbar-from": theme.navbarFrom,
@@ -495,7 +496,7 @@ export function brandThemeToCssVars(theme: BrandTheme): Record<string, string> {
   };
 }
 
-export function googleFontsHrefForTheme(_theme: BrandTheme): string | null {
+export function googleFontsHrefForTheme(): string | null {
   // Brand faces are self-hosted via next/font — no runtime Google Fonts CSS.
   return null;
 }

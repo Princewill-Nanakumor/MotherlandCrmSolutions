@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 import {
-  LEAD_COUNTRIES_QUERY_KEY,
   LEAD_SOURCES_QUERY_KEY,
 } from "@/lib/leadFilterQueries";
 

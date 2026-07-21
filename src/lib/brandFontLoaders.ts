@@ -1,290 +1,366 @@
 /**
- * Self-hosted brand fonts via next/font (served from /_next/static).
- * Options must be literal objects — next/font forbids spreads.
- * preload: false so only the active family is downloaded when CSS uses it.
+ * Self-hosted brand fonts via next/font/local (generated — do not edit by hand).
+ * Regenerate: node scripts/generate-brand-font-loaders.mjs
  */
-import {
-  Archivo,
-  Barlow,
-  Cormorant_Garamond,
-  DM_Sans,
-  Fraunces,
-  IBM_Plex_Mono,
-  IBM_Plex_Sans,
-  Instrument_Serif,
-  Inter,
-  JetBrains_Mono,
-  Lato,
-  Lexend,
-  Libre_Baskerville,
-  Lora,
-  Merriweather,
-  Montserrat,
-  Nunito,
-  Outfit,
-  Playfair_Display,
-  Plus_Jakarta_Sans,
-  Poppins,
-  Raleway,
-  Rubik,
-  Sora,
-  Source_Code_Pro,
-  Source_Sans_3,
-  Source_Serif_4,
-  Space_Grotesk,
-} from "next/font/google";
+import localFont from "next/font/local";
 
-export const brandFontSpaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
+export const brandFontSpaceGrotesk = localFont({
+  src: [
+    { path: "../assets/brand-fonts/space-grotesk/space-grotesk-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/space-grotesk/space-grotesk-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/space-grotesk/space-grotesk-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/space-grotesk/space-grotesk-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-space-grotesk",
+  display: "swap",
   preload: false,
 });
 
-export const brandFontInter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  preload: false,
+export const brandFontInter = localFont({
+  src: [
+    { path: "../assets/brand-fonts/inter/inter-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/inter/inter-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/inter/inter-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/inter/inter-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-inter",
-});
-
-export const brandFontDmSans = DM_Sans({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontDmSans = localFont({
+  src: [
+    { path: "../assets/brand-fonts/dm-sans/dm-sans-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/dm-sans/dm-sans-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/dm-sans/dm-sans-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/dm-sans/dm-sans-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-dm-sans",
-});
-
-export const brandFontPlusJakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontPlusJakarta = localFont({
+  src: [
+    { path: "../assets/brand-fonts/plus-jakarta-sans/plus-jakarta-sans-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/plus-jakarta-sans/plus-jakarta-sans-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/plus-jakarta-sans/plus-jakarta-sans-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/plus-jakarta-sans/plus-jakarta-sans-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-plus-jakarta",
-});
-
-export const brandFontPoppins = Poppins({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontPoppins = localFont({
+  src: [
+    { path: "../assets/brand-fonts/poppins/poppins-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/poppins/poppins-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/poppins/poppins-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/poppins/poppins-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-poppins",
-});
-
-export const brandFontNunito = Nunito({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontNunito = localFont({
+  src: [
+    { path: "../assets/brand-fonts/nunito/nunito-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/nunito/nunito-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/nunito/nunito-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/nunito/nunito-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-nunito",
-});
-
-export const brandFontRubik = Rubik({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontRubik = localFont({
+  src: [
+    { path: "../assets/brand-fonts/rubik/rubik-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/rubik/rubik-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/rubik/rubik-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/rubik/rubik-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-rubik",
-});
-
-export const brandFontSourceSans = Source_Sans_3({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontSourceSans = localFont({
+  src: [
+    { path: "../assets/brand-fonts/source-sans-3/source-sans-3-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/source-sans-3/source-sans-3-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/source-sans-3/source-sans-3-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/source-sans-3/source-sans-3-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-source-sans",
-});
-
-export const brandFontIbmPlex = IBM_Plex_Sans({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontIbmPlex = localFont({
+  src: [
+    { path: "../assets/brand-fonts/ibm-plex-sans/ibm-plex-sans-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/ibm-plex-sans/ibm-plex-sans-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/ibm-plex-sans/ibm-plex-sans-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/ibm-plex-sans/ibm-plex-sans-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-ibm-plex",
-});
-
-export const brandFontOutfit = Outfit({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontOutfit = localFont({
+  src: [
+    { path: "../assets/brand-fonts/outfit/outfit-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/outfit/outfit-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/outfit/outfit-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/outfit/outfit-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-outfit",
-});
-
-export const brandFontSora = Sora({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontSora = localFont({
+  src: [
+    { path: "../assets/brand-fonts/sora/sora-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/sora/sora-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/sora/sora-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/sora/sora-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-sora",
-});
-
-export const brandFontLexend = Lexend({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontLexend = localFont({
+  src: [
+    { path: "../assets/brand-fonts/lexend/lexend-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/lexend/lexend-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/lexend/lexend-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/lexend/lexend-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-lexend",
-});
-
-export const brandFontLato = Lato({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "700"],
+});
+
+export const brandFontLato = localFont({
+  src: [
+    { path: "../assets/brand-fonts/lato/lato-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/lato/lato-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-lato",
-});
-
-export const brandFontMontserrat = Montserrat({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontMontserrat = localFont({
+  src: [
+    { path: "../assets/brand-fonts/montserrat/montserrat-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/montserrat/montserrat-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/montserrat/montserrat-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/montserrat/montserrat-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-montserrat",
-});
-
-export const brandFontRaleway = Raleway({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontRaleway = localFont({
+  src: [
+    { path: "../assets/brand-fonts/raleway/raleway-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/raleway/raleway-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/raleway/raleway-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/raleway/raleway-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-raleway",
-});
-
-export const brandFontBarlow = Barlow({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontBarlow = localFont({
+  src: [
+    { path: "../assets/brand-fonts/barlow/barlow-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/barlow/barlow-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/barlow/barlow-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/barlow/barlow-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-barlow",
-});
-
-export const brandFontArchivo = Archivo({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontArchivo = localFont({
+  src: [
+    { path: "../assets/brand-fonts/archivo/archivo-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/archivo/archivo-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/archivo/archivo-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/archivo/archivo-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-archivo",
-});
-
-export const brandFontPlayfair = Playfair_Display({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontPlayfair = localFont({
+  src: [
+    { path: "../assets/brand-fonts/playfair-display/playfair-display-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/playfair-display/playfair-display-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/playfair-display/playfair-display-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/playfair-display/playfair-display-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-playfair",
-});
-
-export const brandFontMerriweather = Merriweather({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "700"],
+});
+
+export const brandFontMerriweather = localFont({
+  src: [
+    { path: "../assets/brand-fonts/merriweather/merriweather-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/merriweather/merriweather-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-merriweather",
-});
-
-export const brandFontLora = Lora({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontLora = localFont({
+  src: [
+    { path: "../assets/brand-fonts/lora/lora-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/lora/lora-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/lora/lora-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/lora/lora-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-lora",
-});
-
-export const brandFontLibreBaskerville = Libre_Baskerville({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "700"],
+});
+
+export const brandFontLibreBaskerville = localFont({
+  src: [
+    { path: "../assets/brand-fonts/libre-baskerville/libre-baskerville-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/libre-baskerville/libre-baskerville-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-libre-baskerville",
-});
-
-export const brandFontSourceSerif = Source_Serif_4({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontSourceSerif = localFont({
+  src: [
+    { path: "../assets/brand-fonts/source-serif-4/source-serif-4-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/source-serif-4/source-serif-4-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/source-serif-4/source-serif-4-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/source-serif-4/source-serif-4-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-source-serif",
-});
-
-export const brandFontCormorant = Cormorant_Garamond({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontCormorant = localFont({
+  src: [
+    { path: "../assets/brand-fonts/cormorant-garamond/cormorant-garamond-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/cormorant-garamond/cormorant-garamond-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/cormorant-garamond/cormorant-garamond-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/cormorant-garamond/cormorant-garamond-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-cormorant",
-});
-
-export const brandFontFraunces = Fraunces({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontFraunces = localFont({
+  src: [
+    { path: "../assets/brand-fonts/fraunces/fraunces-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/fraunces/fraunces-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/fraunces/fraunces-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/fraunces/fraunces-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-brand-fraunces",
-});
-
-export const brandFontInstrumentSerif = Instrument_Serif({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: "400",
+});
+
+export const brandFontInstrumentSerif = localFont({
+  src: [
+    { path: "../assets/brand-fonts/instrument-serif/instrument-serif-latin-400-normal.woff2", weight: "400", style: "normal" },
+  ],
   variable: "--font-brand-instrument-serif",
-});
-
-export const brandFontSourceCodePro = Source_Code_Pro({
-  subsets: ["latin"],
   display: "swap",
   preload: false,
-  weight: ["400", "500", "600", "700"],
+});
+
+export const brandFontSourceCodePro = localFont({
+  src: [
+    { path: "../assets/brand-fonts/source-code-pro/source-code-pro-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/source-code-pro/source-code-pro-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/source-code-pro/source-code-pro-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/source-code-pro/source-code-pro-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-source-code-pro",
+  display: "swap",
+  preload: false,
 });
 
-export const brandFontJetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  display: "swap",
-  preload: true,
-  weight: ["400", "500", "600", "700"],
+export const brandFontJetbrains = localFont({
+  src: [
+    { path: "../assets/brand-fonts/jetbrains-mono/jetbrains-mono-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/jetbrains-mono/jetbrains-mono-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/jetbrains-mono/jetbrains-mono-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/jetbrains-mono/jetbrains-mono-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-jetbrains-mono",
-});
-
-export const brandFontIbmPlexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
   display: "swap",
   preload: true,
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-brand-ibm-plex-mono",
 });
 
-/** Apply on <body> so every brand CSS variable is defined app-wide. */
+export const brandFontIbmPlexMono = localFont({
+  src: [
+    { path: "../assets/brand-fonts/ibm-plex-mono/ibm-plex-mono-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/ibm-plex-mono/ibm-plex-mono-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/ibm-plex-mono/ibm-plex-mono-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/ibm-plex-mono/ibm-plex-mono-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-brand-ibm-plex-mono",
+  display: "swap",
+  preload: true,
+});
+
+/** Apply on <html> so every brand CSS variable is defined app-wide. */
 export const brandFontVariablesClassName = [
-  brandFontSpaceGrotesk.variable,
-  brandFontInter.variable,
-  brandFontDmSans.variable,
-  brandFontPlusJakarta.variable,
-  brandFontPoppins.variable,
-  brandFontNunito.variable,
-  brandFontRubik.variable,
-  brandFontSourceSans.variable,
-  brandFontIbmPlex.variable,
-  brandFontOutfit.variable,
-  brandFontSora.variable,
-  brandFontLexend.variable,
-  brandFontLato.variable,
-  brandFontMontserrat.variable,
-  brandFontRaleway.variable,
-  brandFontBarlow.variable,
-  brandFontArchivo.variable,
-  brandFontPlayfair.variable,
-  brandFontMerriweather.variable,
-  brandFontLora.variable,
-  brandFontLibreBaskerville.variable,
-  brandFontSourceSerif.variable,
-  brandFontCormorant.variable,
-  brandFontFraunces.variable,
-  brandFontInstrumentSerif.variable,
-  brandFontSourceCodePro.variable,
-  brandFontJetbrains.variable,
-  brandFontIbmPlexMono.variable,
-].join(" ");
+  brandFontSpaceGrotesk,
+  brandFontInter,
+  brandFontDmSans,
+  brandFontPlusJakarta,
+  brandFontPoppins,
+  brandFontNunito,
+  brandFontRubik,
+  brandFontSourceSans,
+  brandFontIbmPlex,
+  brandFontOutfit,
+  brandFontSora,
+  brandFontLexend,
+  brandFontLato,
+  brandFontMontserrat,
+  brandFontRaleway,
+  brandFontBarlow,
+  brandFontArchivo,
+  brandFontPlayfair,
+  brandFontMerriweather,
+  brandFontLora,
+  brandFontLibreBaskerville,
+  brandFontSourceSerif,
+  brandFontCormorant,
+  brandFontFraunces,
+  brandFontInstrumentSerif,
+  brandFontSourceCodePro,
+  brandFontJetbrains,
+  brandFontIbmPlexMono,
+]
+  .map((font) => font.variable)
+  .join(" ");
