@@ -106,24 +106,22 @@ const STEPS: StoryStep[] = [
 ];
 
 export default function FeaturedCrmSection() {
+  const heading = (
+    <SectionHeading
+      id="featured-heading"
+      eyebrow={<Eyebrow>Inside the CRM</Eyebrow>}
+      title="Everything your sales team needs to close"
+      subtitle="From first lead to final follow-up — the same tools your team uses every day in the dashboard, shown in one scroll."
+    />
+  );
+
   return (
     <section
       id="featured"
       aria-labelledby="featured-heading"
-      className="py-20 sm:py-28"
+      className="pt-16 pb-0 sm:pt-20"
     >
-      <div className="px-6 mx-auto max-w-7xl">
-        <SectionHeading
-          id="featured-heading"
-          eyebrow={<Eyebrow>Inside the CRM</Eyebrow>}
-          title="Everything your sales team needs to close"
-          subtitle="From first lead to final follow-up — the same tools your team uses every day in the dashboard, shown in one scroll."
-        />
-      </div>
-
-      <div className="mt-12 lg:mt-4">
-        <StickyStory steps={STEPS} />
-      </div>
+      <StickyStory steps={STEPS} header={heading} />
     </section>
   );
 }

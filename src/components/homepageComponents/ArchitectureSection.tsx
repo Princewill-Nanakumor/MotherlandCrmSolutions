@@ -108,7 +108,7 @@ export default function ArchitectureSection() {
   return (
     <section
       aria-labelledby="architecture-heading"
-      className="relative px-6 py-20 overflow-hidden bg-gray-50 sm:py-28"
+      className="relative px-6 pt-8 pb-20 overflow-hidden bg-gray-50 sm:pt-10 sm:pb-28"
     >
       <AnimatedBackground variant="light" />
 
