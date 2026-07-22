@@ -1,119 +1,154 @@
 // src/components/homepageComponents/HeroSection.tsx
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { useAppBranding } from "@/components/AppBrandingProvider";
+import { HeroBoardMockup } from "@/components/homepageComponents/HeroBoardMockup";
+
+const TRUST_POINTS = [
+  "3-day free trial",
+  "No credit card",
+  "Crypto billing",
+];
 
 export default function HeroSection() {
   const { displayName } = useAppBranding();
   const { data: session, status } = useSession();
+  const reduceMotion = useReducedMotion();
+  const isAuthed = hasAuthorizedSession(status, session);
 
-  const scrollToContact = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    const contactSection = document.getElementById("contact-us");
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const textVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0 },
-  };
-
-  const buttonVariants = {
-    hidden: { opacity: 0, scale: 0.9 },
-    visible: { opacity: 1, scale: 1 },
-    hover: { scale: 1.05 },
-    tap: { scale: 0.95 },
-  };
+  const fadeUp = reduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 28 },
+        animate: { opacity: 1, y: 0 },
+      };
 
   return (
     <section
-      className="relative flex items-center justify-center min-h-screen pt-20 bg-fixed bg-center bg-no-repeat bg-cover hero-section"
-      style={{
-        backgroundImage: "url('/homepageHeroimage.jpg')",
-      }}
+      className="relative flex items-center min-h-screen overflow-hidden bg-center bg-no-repeat bg-cover hero-section pt-28 pb-16 sm:pt-32"
+      style={{ backgroundImage: "url('/homepageHeroimage.jpg')" }}
+      aria-labelledby="hero-heading"
     >
-      {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-black/40" />
+      {/* Layered overlays: brand-tinted depth + darkening for legibility */}
+      <div className="absolute inset-0 bg-linear-to-br from-black/80 via-black/60 to-black/70" />
+      <div
+        className="absolute inset-0 opacity-70 mix-blend-multiply"
+        style={{
+          background:
+            "radial-gradient(60% 60% at 15% 20%, color-mix(in srgb, var(--brand-from) 55%, transparent), transparent 70%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 opacity-[0.15]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, rgba(255,255,255,0.25) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.25) 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
+          maskImage:
+            "radial-gradient(circle at 50% 40%, black, transparent 75%)",
+        }}
+      />
 
-      <motion.div
-        className="relative z-10 max-w-4xl px-6 mx-auto text-center"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <motion.h1
-          className="mb-6 text-4xl font-bold leading-tight text-white sm:text-5xl md:text-6xl"
-          variants={textVariants}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        >
-          Transform Your Business with Powerful CRM Solutions
-        </motion.h1>
+      <div className="relative z-10 grid items-center w-full max-w-7xl gap-12 px-6 mx-auto lg:grid-cols-2 lg:gap-10">
+        {/* Copy column */}
+        <div className="text-center lg:text-left">
+          <motion.div
+            {...fadeUp}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="inline-flex items-center gap-2 px-3 py-1 mb-6 text-xs font-semibold tracking-wide text-white border rounded-full border-white/25 bg-white/10 backdrop-blur-md"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Real-time CRM for modern sales teams
+          </motion.div>
 
-        <motion.p
-          className="max-w-2xl mx-auto mb-8 text-lg leading-relaxed sm:text-xl md:text-2xl text-white/90"
-          variants={textVariants}
-          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-        >
-          Streamline your sales processes, manage leads effectively, and boost
-          team productivity with {displayName}.
-        </motion.p>
+          <motion.h1
+            id="hero-heading"
+            {...fadeUp}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.05 }}
+            className="text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl md:text-6xl"
+          >
+            Turn more leads into
+            <span className="block mt-2 text-transparent bg-clip-text bg-linear-to-r from-white to-white/70">
+              closed deals
+            </span>
+          </motion.h1>
 
-        <motion.div
-          className="flex flex-col items-center justify-center gap-4 sm:flex-row"
-          variants={textVariants}
-          transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
-        >
-          {status === "loading" ? (
-            <div className="w-32 h-12 rounded-lg bg-white/20 animate-pulse" />
-          ) : hasAuthorizedSession(status, session) ? (
-            <motion.div
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
+          <motion.p
+            {...fadeUp}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.15 }}
+            className="max-w-xl mx-auto mt-6 text-lg leading-relaxed text-white/85 sm:text-xl lg:mx-0"
+          >
+            {displayName} gives your team one real-time workspace to capture,
+            assign, and track every lead — from first touch to closed deal.
+          </motion.p>
+
+          <motion.div
+            {...fadeUp}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.25 }}
+            className="flex flex-col items-center gap-3 mt-8 sm:flex-row lg:justify-start justify-center"
+          >
+            {status === "loading" ? (
+              <div className="w-44 h-14 rounded-xl bg-white/20 animate-pulse" />
+            ) : isAuthed ? (
               <Link
                 href="/dashboard"
-                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-all duration-200 rounded-lg shadow-lg brand-gradient hover:brightness-95 hover:shadow-xl"
+                className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 text-base font-semibold text-white transition-all duration-200 shadow-lg rounded-xl brand-gradient hover:brightness-95 hover:shadow-xl"
               >
-                Go to Dashboard
+                Go to dashboard
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
               </Link>
-            </motion.div>
-          ) : (
-            <motion.div
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <a
-                href="#contact-us"
-                onClick={scrollToContact}
-                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-all duration-200 rounded-lg shadow-lg cursor-pointer brand-gradient hover:brightness-95 hover:shadow-xl"
+            ) : (
+              <>
+                <Link
+                  href="/signup"
+                  className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 text-base font-semibold text-white transition-all duration-200 shadow-lg rounded-xl brand-gradient hover:brightness-95 hover:shadow-xl"
+                >
+                  Start free trial
+                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+                <a
+                  href="#pricing"
+                  className="inline-flex items-center justify-center px-7 py-3.5 text-base font-semibold text-white transition-all duration-200 border rounded-xl border-white/30 bg-white/10 backdrop-blur-md hover:bg-white/20"
+                >
+                  See pricing
+                </a>
+              </>
+            )}
+          </motion.div>
+
+          <motion.ul
+            {...fadeUp}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.35 }}
+            className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-8 lg:justify-start"
+          >
+            {TRUST_POINTS.map((point) => (
+              <li
+                key={point}
+                className="flex items-center gap-2 text-sm font-medium text-white/80"
               >
-                Get Started
-              </a>
-            </motion.div>
-          )}
+                <CheckCircle2 className="w-4 h-4 text-white" />
+                {point}
+              </li>
+            ))}
+          </motion.ul>
+        </div>
+
+        {/* Product mockup column */}
+        <motion.div
+          initial={reduceMotion ? undefined : { opacity: 0, y: 40, scale: 0.96 }}
+          animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+          className="hidden lg:block"
+        >
+          <HeroBoardMockup />
         </motion.div>
-      </motion.div>
+      </div>
     </section>
   );
 }

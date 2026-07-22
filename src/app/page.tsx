@@ -3,8 +3,14 @@
 import { SessionProvider } from "next-auth/react";
 import Navbar from "@/components/homepageComponents/Navabar";
 import HeroSection from "@/components/homepageComponents/HeroSection";
-import ContactSection from "@/components/homepageComponents/ContactSection";
+import TrustStatsSection from "@/components/homepageComponents/TrustStatsSection";
+import FeaturesSection from "@/components/homepageComponents/FeaturesSection";
+import HowItWorksSection from "@/components/homepageComponents/HowItWorksSection";
+import AudiencesSection from "@/components/homepageComponents/AudiencesSection";
 import SubscriptionPlansSection from "@/components/homepageComponents/SubscriptionPlansSection";
+import FaqSection from "@/components/homepageComponents/FaqSection";
+import CtaBandSection from "@/components/homepageComponents/CtaBandSection";
+import HomeFooter from "@/components/homepageComponents/HomeFooter";
 import { BrandThemeApplier } from "@/components/BrandThemeApplier";
 import { PublicLightTheme } from "@/components/PublicLightTheme";
 
@@ -12,15 +18,21 @@ import { PublicLightTheme } from "@/components/PublicLightTheme";
 function HomePageContent() {
   return (
     <div
-      className="homepage [font-family:var(--brand-font-body)]"
-      style={{ backgroundColor: "transparent", background: "transparent" }}
+      className="homepage bg-white text-gray-900 [font-family:var(--brand-font-body)]"
+      style={{ backgroundColor: "#ffffff" }}
     >
       <Navbar />
-      <HeroSection />
-      <div className="bg-linear-to-br from-gray-50 to-gray-100">
-        <ContactSection />
+      <main>
+        <HeroSection />
+        <TrustStatsSection />
+        <FeaturesSection />
+        <HowItWorksSection />
+        <AudiencesSection />
         <SubscriptionPlansSection />
-      </div>
+        <FaqSection />
+        <CtaBandSection />
+      </main>
+      <HomeFooter />
     </div>
   );
 }
