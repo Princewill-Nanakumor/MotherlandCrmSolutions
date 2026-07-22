@@ -4,7 +4,7 @@ import React from "react";
 export function ProfileSkeleton({ className = "" }: { className?: string }) {
   return (
     <div className={`min-h-screen ${className}`}>
-      <div className="container px-4 py-8 mx-auto border rounded-lg">
+      <div className="w-full px-4 py-6 border rounded-lg">
         {/* Header */}
         <div className="flex flex-col items-start mb-8 md:flex-row md:items-center">
           <div>

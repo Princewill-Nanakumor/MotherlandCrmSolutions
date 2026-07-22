@@ -11,6 +11,8 @@ import {
   getBrandingForHost,
 } from "@/lib/appBranding";
 import { brandFontVariablesClassName } from "@/lib/brandFontLoaders";
+import { UiZoomApplier } from "@/components/UiZoomApplier";
+import { UI_ZOOM_BOOT_SCRIPT } from "@/lib/uiZoom";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -40,6 +42,14 @@ export default async function RootLayout({
     >
       <body className="antialiased">
         <Script
+          id="ui-zoom-boot"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            // Viewport-aware density: denser on laptop windows, eases to 1.0 on large screens.
+            __html: UI_ZOOM_BOOT_SCRIPT,
+          }}
+        />
+        <Script
           id="tenant-brand-theme-boot"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
@@ -56,10 +66,13 @@ export default async function RootLayout({
             __html: JSON.stringify(structuredData),
           }}
         />
-        <AppBrandingProvider branding={branding}>
-          <AblyTeardownOutsideDashboard />
-          {children}
-        </AppBrandingProvider>
+        <div id="app-density-root" className="app-density-root">
+          <AppBrandingProvider branding={branding}>
+            <UiZoomApplier />
+            <AblyTeardownOutsideDashboard />
+            {children}
+          </AppBrandingProvider>
+        </div>
       </body>
     </html>
   );

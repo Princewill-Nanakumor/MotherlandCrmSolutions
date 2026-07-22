@@ -190,7 +190,7 @@ export default function BillingManager() {
 
   return (
     <div className="min-h-screen">
-      <div className="container px-4 py-8 mx-auto border rounded-lg">
+      <div className="w-full px-4 py-6 border rounded-lg">
         {/* Header */}
         <BillingHeader />
 

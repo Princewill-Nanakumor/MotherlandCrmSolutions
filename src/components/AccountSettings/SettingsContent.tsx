@@ -157,7 +157,7 @@ export function SettingsContent() {
   if (userRole !== "ADMIN") {
     return (
       <div className="min-h-screen">
-        <div className="container px-4 py-8 mx-auto border rounded-lg">
+        <div className="w-full px-4 py-6 border rounded-lg">
           <DateTimeSettingsSection />
           <DialerSettingsSection />
         </div>
@@ -167,7 +167,7 @@ export function SettingsContent() {
 
   return (
     <div className="min-h-screen">
-      <div className="container px-4 py-8 mx-auto border rounded-lg">
+      <div className="w-full px-4 py-6 border rounded-lg">
         {/* Header Section */}
         <div className="flex flex-col items-start mb-8 md:flex-row md:items-center">
           <div>

@@ -16,6 +16,8 @@
     ui-monospace, monospace;
   --brand-font-heading: var(--font-jetbrains-mono), "JetBrains Mono",
     ui-monospace, monospace;
+  /* Cross-platform density (boot script / UiZoomApplier overrides this) */
+  --app-ui-scale: 1;
   font-family: var(--brand-font-body);
   color: #0f172a;
 }
@@ -27,10 +29,30 @@
   }
 }
 
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
+  height: 100%;
+  overflow: hidden;
   font-family: var(--brand-font-body);
   color: #0f172a;
   background-color: #ffffff; /* Default white, will be overridden by login page */
+}
+
+/*
+ * App density root: viewport-aware scale via --app-ui-scale
+ * (denser on laptop windows, closer to 1.0 on large desktops).
+ */
+.app-density-root {
+  transform: scale(var(--app-ui-scale, 1));
+  transform-origin: top left;
+  width: calc(100% / var(--app-ui-scale, 1));
+  height: calc(100% / var(--app-ui-scale, 1));
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .dark body {
@@ -1286,10 +1308,12 @@ input[readOnly] {
 
 html {
   overflow-x: hidden;
+  height: 100%;
 }
 
 body {
   overflow-x: hidden;
+  height: 100%;
 }
 
 button,

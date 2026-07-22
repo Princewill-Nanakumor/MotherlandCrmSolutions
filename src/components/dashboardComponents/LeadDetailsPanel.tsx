@@ -513,11 +513,11 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     <motion.div
       className="fixed right-0 z-50 flex bg-white border-l-2 dark:bg-gray-800"
       style={{
-        width: "80vw",
-        maxWidth: "1200px",
-        top: "80px",
-        bottom: "80px",
-        height: "calc(100vh - 160px)",
+        // Use % / top+bottom (not 100vh): under --app-ui-scale, `fixed` is
+        // relative to #app-density-root, so vh-based height looks shortened.
+        width: "min(80%, 1200px)",
+        top: "4.5rem",
+        bottom: "3.25rem",
       }}
       initial={{ x: "100%" }}
       animate={{ x: isClosing ? "100%" : 0 }}

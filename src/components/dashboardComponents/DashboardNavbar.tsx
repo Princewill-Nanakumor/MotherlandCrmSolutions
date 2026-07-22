@@ -87,7 +87,7 @@ export default function DashboardNavbar({
   if (!mounted) {
     // SSR fallback
     return (
-      <nav className="brand-navbar flex items-center justify-between px-8 py-4 shadow-lg border-b border-transparent">
+      <nav className="brand-navbar flex items-center justify-between px-6 py-3 shadow-lg border-b border-transparent">
         <div className="w-32 shrink-0" />
         {showSearch && (
           <div className="flex justify-center flex-1">
@@ -119,7 +119,7 @@ export default function DashboardNavbar({
   }
 
   return (
-    <nav className="brand-navbar flex items-center justify-between px-8 py-4 shadow-lg border-b border-transparent">
+    <nav className="brand-navbar flex items-center justify-between px-6 py-3 shadow-lg border-b border-transparent">
       {/* Left side - Toggle buttons for leads pages */}
       <div className="flex items-center space-x-2 shrink-0">
         {showLeadsToggles && (

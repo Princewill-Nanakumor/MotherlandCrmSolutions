@@ -66,7 +66,7 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
 
   return (
     <div className={`min-h-screen ${className}`}>
-      <div className="container mx-auto px-4 py-8 rounded-lg border">
+      <div className="w-full px-4 py-6 rounded-lg border">
         {/* Header */}
         <ProfileHeader />
 

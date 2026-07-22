@@ -153,7 +153,7 @@ export default function Sidebar() {
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center justify-center p-2 mb-4 overflow-hidden rounded-2xl shrink-0"
+          className="flex items-center justify-center p-2 mb-14 overflow-hidden rounded-2xl shrink-0"
           aria-label="Home"
         >
           <MotherlandLogo
