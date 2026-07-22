@@ -76,6 +76,14 @@ html.public-native-scroll #app-density-root {
   overflow: visible;
 }
 
+/*
+ * Dashboard shell scrolls inside <main>, not #app-density-root. If the density
+ * root scrolls, the top navbar disappears and only the footer stays in view.
+ */
+html.app-density-lock #app-density-root {
+  overflow: hidden;
+}
+
 .dark body {
   color: #e2e8f0;
   background-color: #1f2937; /* gray-800 */

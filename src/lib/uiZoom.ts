@@ -120,6 +120,15 @@ export function resolveUiZoom(
   return getViewportUiZoom(getPlatformUiZoom(userAgent));
 }
 
+/** Marketing homepage uses native window scroll (no density transform). */
+export function isPublicNativeScrollPath(pathname: string): boolean {
+  return pathname === "/" || pathname === "";
+}
+
+export function isDashboardPath(pathname: string): boolean {
+  return pathname === "/dashboard" || pathname.startsWith("/dashboard/");
+}
+
 /** Apply density before/during paint. Safe to call repeatedly. */
 export function applyUiZoom(zoom = resolveUiZoom()): void {
   if (typeof document === "undefined") return;
@@ -137,6 +146,44 @@ export function applyUiZoom(zoom = resolveUiZoom()): void {
   root.dataset.uiZoom = value;
   // Clear any previous CSS zoom experiments so they don't stack.
   root.style.removeProperty("zoom");
+}
+
+/**
+ * Keep html scroll mode in sync with the route. Client navigations from `/`
+ * can leave `public-native-scroll` (or a scrolled density root) behind, which
+ * makes the dashboard navbar scroll out of view until a hard refresh.
+ */
+export function syncAppScrollMode(pathname: string): void {
+  if (typeof document === "undefined") return;
+
+  const root = document.documentElement;
+  const density = document.getElementById("app-density-root");
+  const wasPublic = root.classList.contains("public-native-scroll");
+  const isPublic = isPublicNativeScrollPath(pathname);
+  const isDashboard = isDashboardPath(pathname);
+
+  if (isPublic) {
+    root.classList.add("public-native-scroll");
+    root.classList.remove("app-density-lock");
+    root.style.setProperty("--app-ui-scale", "1");
+    root.dataset.uiZoom = "1";
+    root.style.removeProperty("zoom");
+    return;
+  }
+
+  root.classList.remove("public-native-scroll");
+  root.classList.toggle("app-density-lock", isDashboard);
+  applyUiZoom();
+
+  if (isDashboard && density) {
+    // Clear leftover inline overflow locks (e.g. homepage mobile menu).
+    density.style.removeProperty("overflow");
+  }
+
+  if (wasPublic || isDashboard) {
+    window.scrollTo(0, 0);
+    density?.scrollTo(0, 0);
+  }
 }
 
 /**
