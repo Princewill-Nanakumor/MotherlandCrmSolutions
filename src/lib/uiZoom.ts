@@ -123,13 +123,25 @@ export function resolveUiZoom(
 /** Apply density before/during paint. Safe to call repeatedly. */
 export function applyUiZoom(zoom = resolveUiZoom()): void {
   if (typeof document === "undefined") return;
-  const value = String(zoom);
   const root = document.documentElement;
+  // Homepage (and other public-native-scroll pages) must stay at 1 — never
+  // apply laptop density or the hero/stats strip jump 0.8 → 1 after hydrate.
+  if (root.classList.contains("public-native-scroll")) {
+    root.style.setProperty("--app-ui-scale", "1");
+    root.dataset.uiZoom = "1";
+    root.style.removeProperty("zoom");
+    return;
+  }
+  const value = String(zoom);
   root.style.setProperty("--app-ui-scale", value);
   root.dataset.uiZoom = value;
   // Clear any previous CSS zoom experiments so they don't stack.
   root.style.removeProperty("zoom");
 }
 
-/** Inline boot logic kept in sync with resolveUiZoom (no module imports). */
-export const UI_ZOOM_BOOT_SCRIPT = `(function(){try{var KEY="motherland-ui-zoom";var ua=navigator.userAgent||"";var z;try{var s=localStorage.getItem(KEY);if(s){var p=parseFloat(s);if(isFinite(p)&&p>=0.7&&p<=1.1)z=p;}}catch(e){}if(z==null){var base=/Windows/i.test(ua)?0.8:(/Mac OS X|Macintosh/i.test(ua)?0.9:0.9);var w=window.innerWidth||document.documentElement.clientWidth||1440;var h=window.innerHeight||document.documentElement.clientHeight||820;var clamp=function(n,a,b){return Math.min(b,Math.max(a,n));};var lerp=function(a,b,t){return a+(b-a)*clamp(t,0,1);};var scale;if(w<=1440)scale=base;else if(w>=2560)scale=1;else if(w>=1920){var mid=lerp(base,1,0.75);scale=lerp(mid,1,(w-1920)/(2560-1920));}else{var mid2=lerp(base,1,0.75);scale=lerp(base,mid2,(w-1440)/(1920-1440));}if(h<820)scale=Math.min(scale,base);z=Math.round(clamp(scale,0.75,1.05)*1000)/1000;}var r=document.documentElement;r.style.setProperty("--app-ui-scale",String(z));r.dataset.uiZoom=String(z);r.style.removeProperty("zoom");}catch(e){}})();`;
+/**
+ * Inline boot logic kept in sync with resolveUiZoom (no module imports).
+ * On `/`, force scale 1 + `public-native-scroll` before first paint so the
+ * hero never flashes at the laptop density scale.
+ */
+export const UI_ZOOM_BOOT_SCRIPT = `(function(){try{var KEY="motherland-ui-zoom";var ua=navigator.userAgent||"";var path=location.pathname||"/";var isPublic=path==="/"||path==="";var r=document.documentElement;if(isPublic){r.classList.add("public-native-scroll");r.style.setProperty("--app-ui-scale","1");r.dataset.uiZoom="1";r.style.removeProperty("zoom");return;}var z;try{var s=localStorage.getItem(KEY);if(s){var p=parseFloat(s);if(isFinite(p)&&p>=0.7&&p<=1.1)z=p;}}catch(e){}if(z==null){var base=/Windows/i.test(ua)?0.8:(/Mac OS X|Macintosh/i.test(ua)?0.9:0.9);var w=window.innerWidth||document.documentElement.clientWidth||1440;var h=window.innerHeight||document.documentElement.clientHeight||820;var clamp=function(n,a,b){return Math.min(b,Math.max(a,n));};var lerp=function(a,b,t){return a+(b-a)*clamp(t,0,1);};var scale;if(w<=1440)scale=base;else if(w>=2560)scale=1;else if(w>=1920){var mid=lerp(base,1,0.75);scale=lerp(mid,1,(w-1920)/(2560-1920));}else{var mid2=lerp(base,1,0.75);scale=lerp(base,mid2,(w-1440)/(1920-1440));}if(h<820)scale=Math.min(scale,base);z=Math.round(clamp(scale,0.75,1.05)*1000)/1000;}r.style.setProperty("--app-ui-scale",String(z));r.dataset.uiZoom=String(z);r.style.removeProperty("zoom");}catch(e){}})();`;

@@ -37,7 +37,9 @@ export default function Navbar() {
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const isAuthed = hasAuthorizedSession(status, session);
 
-  const useSolidChrome = isScrolled && !isAuthHeroPage;
+  const isHomePage = pathname === "/";
+  // Light homepage hero needs solid chrome; auth hero pages stay translucent.
+  const useSolidChrome = (isScrolled || isHomePage) && !isAuthHeroPage;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -98,12 +100,18 @@ export default function Navbar() {
       if (e.key === "Escape") setMenuOpen(false);
     };
 
-    const previousOverflow = document.body.style.overflow;
+    // Lock whichever element actually scrolls: the window (body) on the public
+    // homepage, and the custom density scroller elsewhere in the app.
+    const densityRoot = document.getElementById("app-density-root");
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousRootOverflow = densityRoot?.style.overflow ?? "";
     document.body.style.overflow = "hidden";
+    if (densityRoot) densityRoot.style.overflow = "hidden";
     window.addEventListener("keydown", onKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      if (densityRoot) densityRoot.style.overflow = previousRootOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [menuOpen]);
@@ -135,6 +143,7 @@ export default function Navbar() {
 
   return (
     <motion.nav
+      data-chrome={useSolidChrome ? "solid" : "transparent"}
       className={cn(
         "fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-2",
         useSolidChrome

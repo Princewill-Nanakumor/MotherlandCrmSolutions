@@ -9,6 +9,7 @@ import {
   SectionHeading,
 } from "@/components/homepageComponents/primitives";
 import { HOME_FAQS } from "@/components/homepageComponents/homepageContent";
+import { FaqMapBackground } from "@/components/homepageComponents/FaqMapBackground";
 
 export default function FaqSection() {
   const reduceMotion = useReducedMotion();
@@ -18,9 +19,11 @@ export default function FaqSection() {
     <section
       id="faq"
       aria-labelledby="faq-heading"
-      className="px-6 py-20 sm:py-28"
+      className="relative overflow-hidden px-6 py-20 sm:py-28"
     >
-      <div className="max-w-3xl mx-auto">
+      <FaqMapBackground />
+
+      <div className="relative z-10 max-w-3xl mx-auto">
         <SectionHeading
           id="faq-heading"
           eyebrow={<Eyebrow>Questions & answers</Eyebrow>}
@@ -35,7 +38,7 @@ export default function FaqSection() {
             return (
               <div
                 key={faq.question}
-                className="overflow-hidden bg-white border border-gray-200 rounded-xl"
+                className="overflow-hidden bg-white/90 border border-gray-200 rounded-xl backdrop-blur-sm"
               >
                 <h3>
                   <button

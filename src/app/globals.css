@@ -55,6 +55,27 @@ body {
   overflow-y: auto;
 }
 
+/*
+ * Public marketing pages (homepage) opt OUT of the transformed density
+ * scroller and scroll the window natively. This keeps position:fixed anchored
+ * to the viewport (no transformed containing block), and makes window-based
+ * scroll listeners, Framer Motion useScroll, smooth hash navigation, and the
+ * mobile scroll-lock all behave correctly. Toggled by <PublicNativeScroll />.
+ */
+html.public-native-scroll,
+html.public-native-scroll body {
+  height: auto;
+  overflow: visible;
+}
+
+html.public-native-scroll #app-density-root {
+  transform: none;
+  width: 100%;
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+}
+
 .dark body {
   color: #e2e8f0;
   background-color: #1f2937; /* gray-800 */
@@ -313,26 +334,8 @@ h6 {
   color: #f8fafc;
 }
 
-/* Ensure hero section text is always white (light and dark mode) */
-.hero-section h1,
-.hero-section h2,
-.hero-section h3,
-.hero-section h4,
-.hero-section h5,
-.hero-section h6,
-.hero-section p {
-  color: white !important;
-}
-
-.dark .hero-section h1,
-.dark .hero-section h2,
-.dark .hero-section h3,
-.dark .hero-section h4,
-.dark .hero-section h5,
-.dark .hero-section h6,
-.dark .hero-section p {
-  color: white !important;
-}
+/* Homepage hero is light (AnimatedBackground map) — do not force white text.
+   Color comes from Tailwind classes on each element. */
 
 /* Ensure dark mode text colors override gray-900 classes */
 .dark h3[class*="dark:text-white"],
@@ -1708,19 +1711,18 @@ button.text-white span,
   color: #f9fafb !important; /* white */
 }
 
-/* Homepage navbar transparency - ensure navbar is transparent on homepage */
-.homepage nav,
-.homepage [class*="Navbar"],
-.homepage [class*="navbar"],
-nav.fixed {
+/* Homepage navbar: transparent ONLY in its over-hero (pre-scroll) state. The
+   navbar component sets data-chrome="solid" after scrolling past the hero, at
+   which point its own solid background is allowed to show. */
+.homepage nav[data-chrome="transparent"] {
   background-color: transparent !important;
   background: transparent !important;
 }
 
-/* Ensure homepage wrapper divs from providers don't have backgrounds that block hero section */
-.homepage > div:first-child {
-  background-color: transparent !important;
-  background: transparent !important;
+/* Fixed navbar sits over content; offset in-page anchor targets so headings
+   aren't hidden beneath it after smooth hash navigation. */
+.homepage [id] {
+  scroll-margin-top: 5.5rem;
 }
 
 /* Override global text color for login page elements */

@@ -23,7 +23,7 @@ export default function AudiencesSection() {
           id="audiences-heading"
           eyebrow={<Eyebrow>Built for teams like yours</Eyebrow>}
           title="Whoever you sell to, keep every lead moving"
-          subtitle="A flexible workspace that adapts to how your team already works — and scales as you grow."
+          subtitle="Sales teams, call desks, and growing businesses use the same CRM to import, assign, follow up, and close."
         />
 
         <RevealGroup className="grid grid-cols-1 gap-6 mt-14 md:grid-cols-3">

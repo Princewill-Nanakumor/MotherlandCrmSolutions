@@ -6,9 +6,12 @@ import {
   Filter,
   LayoutDashboard,
   Palette,
+  Phone,
   Radio,
+  Rocket,
   ShieldCheck,
   Target,
+  TrendingUp,
   Upload,
   UsersRound,
   Wallet,
@@ -29,57 +32,69 @@ export const HOME_FEATURES: HomeFeature[] = [
     icon: Target,
     title: "Lead management",
     description:
-      "Capture, assign, and move every lead through a pipeline with custom statuses, sources, and owners.",
-    featured: true,
-  },
-  {
-    icon: Radio,
-    title: "Real-time collaboration",
-    description:
-      "Assignments, status changes, and comments sync live across your whole team — no refresh needed.",
+      "Add leads, set custom colored statuses, track source and country, and move every deal through your pipeline.",
     featured: true,
   },
   {
     icon: Upload,
-    title: "Bulk CSV / Excel import",
+    title: "Excel & CSV import",
     description:
-      "Bring in thousands of leads in seconds with smart field mapping and duplicate handling.",
+      "Import thousands of leads from spreadsheets, review import history, and export back out when you need to.",
+    featured: true,
   },
   {
     icon: UsersRound,
     title: "Team roles & assignment",
     description:
-      "Invite agents, route leads, and control who sees what with admin and agent permissions.",
+      "Invite Admins and Agents, then assign or unassign leads in bulk so each rep only sees their queue.",
+  },
+  {
+    icon: Radio,
+    title: "Live team updates",
+    description:
+      "Comments, status changes, and assignments appear for everyone instantly — no refresh, no missed notes.",
   },
   {
     icon: BellRing,
     title: "Reminders & follow-ups",
     description:
-      "Schedule follow-ups and get in-app notifications so no lead ever slips through the cracks.",
+      "Schedule follow-ups on any lead, snooze them, and get alerts so callbacks never slip through.",
   },
   {
     icon: Activity,
-    title: "Activity timeline",
+    title: "Comments & activity",
     description:
-      "Every call, comment, and status change is logged in a complete, auditable history.",
+      "A full timeline of comments, status changes, and assignment history lives on every lead.",
   },
   {
     icon: Filter,
-    title: "Smart filters",
+    title: "Smart filters & search",
     description:
-      "Slice leads by country, status, source, or owner with powerful include / exclude filters.",
+      "Filter by status, source, country, or owner — and search by name, email, or phone in seconds.",
+  },
+  {
+    icon: Phone,
+    title: "One-click softphone",
+    description:
+      "Call with Zoiper or MicroSIP from the lead card and keep call logs with the rest of the history.",
+  },
+  {
+    icon: LayoutDashboard,
+    title: "Dashboard overview",
+    description:
+      "See total leads, active users, and assigned vs unassigned at a glance — built for daily sales ops.",
   },
   {
     icon: Palette,
-    title: "White-label branding",
+    title: "Your brand, your CRM",
     description:
-      "Make it yours — custom colors, logo, and favicon apply instantly across the entire app.",
+      "Customize colors, fonts, and button style so the workspace matches your company identity.",
   },
   {
     icon: Wallet,
-    title: "Secure crypto billing",
+    title: "Crypto billing",
     description:
-      "Pay with USDT and major cryptocurrencies. No credit card required to get started.",
+      "Deposit USDT, subscribe monthly, and start with a free trial — no credit card required.",
   },
 ];
 
@@ -89,6 +104,19 @@ export type HomeStat = {
 };
 
 export const HOME_STATS: HomeStat[] = [
+  { value: "Real-time", label: "Live lead sync across your team" },
+  { value: "3-day", label: "Free trial, no card required" },
+  { value: "Unlimited", label: "Leads & seats on Enterprise" },
+  { value: "White-label", label: "Fully brandable workspace" },
+];
+
+/** Stats strip shown under the hero. */
+export type HomeNumberStat = {
+  value: string;
+  label: string;
+};
+
+export const HOME_NUMBER_STATS: HomeNumberStat[] = [
   { value: "Real-time", label: "Live lead sync across your team" },
   { value: "3-day", label: "Free trial, no card required" },
   { value: "Unlimited", label: "Leads & seats on Enterprise" },
@@ -106,19 +134,19 @@ export const HOME_STEPS: HomeStep[] = [
     icon: Upload,
     title: "Import or capture",
     description:
-      "Upload your existing leads via CSV/Excel or start adding them directly. Setup takes minutes.",
+      "Upload your existing leads via CSV/Excel or add them one by one. Setup takes minutes.",
   },
   {
     icon: LayoutDashboard,
     title: "Assign & track",
     description:
-      "Route leads to the right agents and watch your pipeline update in real time as work happens.",
+      "Route leads to the right agents and watch statuses and comments update live.",
   },
   {
     icon: BellRing,
     title: "Follow up & close",
     description:
-      "Reminders and the activity timeline keep every deal moving until it's won.",
+      "Reminders, call logs, and the activity timeline keep every deal moving until it's won.",
   },
 ];
 
@@ -133,19 +161,65 @@ export const HOME_AUDIENCES: HomeAudience[] = [
     icon: Building2,
     title: "Sales teams",
     description:
-      "Keep every rep aligned with a shared, always-current view of the pipeline.",
+      "Share one live pipeline — assign leads, leave comments, and hit follow-ups together.",
   },
   {
     icon: UsersRound,
-    title: "Agencies",
+    title: "Call centers & agencies",
     description:
-      "Manage leads for multiple clients with white-label branding per workspace.",
+      "Give agents only their assigned leads, dial with Zoiper/MicroSIP, and keep every note on the record.",
   },
   {
     icon: ShieldCheck,
     title: "Growing businesses",
     description:
-      "Scale from your first 10,000 leads to unlimited without switching tools.",
+      "Start small, import your spreadsheet, and scale to tens of thousands of leads without switching tools.",
+  },
+];
+
+export type HomeJourneyMilestone = {
+  icon: LucideIcon;
+  step: string;
+  title: string;
+  description: string;
+};
+
+/** Onboarding journey rendered as an animated vertical timeline. */
+export const HOME_JOURNEY: HomeJourneyMilestone[] = [
+  {
+    icon: Rocket,
+    step: "01",
+    title: "Create your account",
+    description:
+      "Sign up in seconds and start your 3-day free trial — no credit card needed.",
+  },
+  {
+    icon: Upload,
+    step: "02",
+    title: "Import your leads",
+    description:
+      "Bring in contacts from Excel or CSV, or add them manually with status and source.",
+  },
+  {
+    icon: UsersRound,
+    step: "03",
+    title: "Invite your team",
+    description:
+      "Add agents, assign leads, and control who sees what with Admin and Agent roles.",
+  },
+  {
+    icon: BellRing,
+    step: "04",
+    title: "Set follow-ups",
+    description:
+      "Create reminders, leave comments, and dial leads with your preferred softphone.",
+  },
+  {
+    icon: TrendingUp,
+    step: "05",
+    title: "Track and close",
+    description:
+      "Move statuses, watch the dashboard, and keep every deal moving until it's won.",
   },
 ];
 
@@ -158,31 +232,31 @@ export const HOME_FAQS: HomeFaq[] = [
   {
     question: "Do I need a credit card to start?",
     answer:
-      "No. You get a 3-day free trial with no card required. When you're ready, you can subscribe using cryptocurrency.",
+      "No. You get a 3-day free trial with no card required. When you're ready, deposit USDT and subscribe to a monthly plan.",
   },
   {
     question: "How do payments work?",
     answer:
-      "Subscriptions are billed monthly and paid in crypto — USDT (TRC20), Bitcoin, Ethereum, and more are accepted.",
+      "Deposit cryptocurrency (USDT on TRC20 or ERC20) to your balance, then subscribe. Cards are coming soon.",
   },
   {
     question: "Can I import my existing leads?",
     answer:
-      "Yes. Import thousands of leads at once from CSV or Excel with smart field mapping, on any paid plan.",
+      "Yes. Import Excel (.xlsx) or CSV with name, email, phone, and country — plus optional source — then review import history anytime.",
   },
   {
     question: "Can I invite my team?",
     answer:
-      "Absolutely. Add agents, assign leads, and control access with roles — up to unlimited members on Enterprise.",
+      "Yes. Create Administrators, Sub Administrators, and Agents. Agents only see leads assigned to them.",
   },
   {
-    question: "Is my data secure?",
+    question: "What can agents do?",
     answer:
-      "Every workspace is isolated, protected by email verification, security verification on login, and role-based access control.",
+      "Agents work their assigned leads — update status, leave comments, set reminders, and place calls. Admins manage users, import, billing, and the full pipeline.",
   },
   {
     question: "Can I customize the branding?",
     answer:
-      "Yes. Set your own colors, logo, and favicon in Appearance settings and they apply across the whole app.",
+      "Yes. Admins can set colors, fonts, and button style in Appearance settings so the CRM matches your brand.",
   },
 ];

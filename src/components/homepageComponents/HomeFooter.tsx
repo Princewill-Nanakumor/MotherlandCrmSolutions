@@ -34,8 +34,8 @@ export default function HomeFooter() {
               </span>
             </Link>
             <p className="max-w-sm mt-4 text-sm leading-relaxed text-gray-600">
-              The real-time CRM workspace to capture, assign, and close more
-              leads — built for teams that move fast.
+              The CRM to import leads, assign agents, follow up on time, and
+              close more deals — with live updates and crypto billing.
             </p>
             <div className="inline-flex items-center gap-2 px-3 py-2 mt-5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg">
               <Coins className="w-4 h-4 text-amber-500" />

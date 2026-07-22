@@ -46,8 +46,8 @@ export default function SubscriptionPlansSection() {
         <SectionHeading
           id="pricing-heading"
           eyebrow={<Eyebrow>Simple, transparent pricing</Eyebrow>}
-          title="Pick a plan that grows with you"
-          subtitle={`Start with a ${SUBSCRIPTION_TRIAL_DURATION_DAYS}-day free trial — no credit card required. Upgrade anytime, billed monthly in crypto.`}
+          title="Pick a plan that fits your pipeline"
+          subtitle={`Start with a ${SUBSCRIPTION_TRIAL_DURATION_DAYS}-day free trial — no credit card. Upgrade anytime; billed monthly in crypto (USDT).`}
         />
 
         <RevealGroup className="grid gap-6 mt-16 md:grid-cols-3 md:items-stretch">

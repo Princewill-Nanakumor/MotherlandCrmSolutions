@@ -8,6 +8,7 @@ import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { HeroBoardMockup } from "@/components/homepageComponents/HeroBoardMockup";
+import { HeroMapBackground } from "@/components/homepageComponents/HeroMapBackground";
 
 const TRUST_POINTS = [
   "3-day free trial",
@@ -30,30 +31,11 @@ export default function HeroSection() {
 
   return (
     <section
-      className="relative flex items-center min-h-screen overflow-hidden bg-center bg-no-repeat bg-cover hero-section pt-28 pb-16 sm:pt-32"
-      style={{ backgroundImage: "url('/homepageHeroimage.jpg')" }}
+      className="relative flex items-center min-h-screen overflow-hidden bg-gray-50 hero-section pt-28 pb-16 sm:pt-32"
       aria-labelledby="hero-heading"
     >
-      {/* Layered overlays: brand-tinted depth + darkening for legibility */}
-      <div className="absolute inset-0 bg-linear-to-br from-black/80 via-black/60 to-black/70" />
-      <div
-        className="absolute inset-0 opacity-70 mix-blend-multiply"
-        style={{
-          background:
-            "radial-gradient(60% 60% at 15% 20%, color-mix(in srgb, var(--brand-from) 55%, transparent), transparent 70%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-[0.15]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, rgba(255,255,255,0.25) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.25) 1px, transparent 1px)",
-          backgroundSize: "44px 44px",
-          maskImage:
-            "radial-gradient(circle at 50% 40%, black, transparent 75%)",
-        }}
-      />
+      {/* Alternate map backdrop (dot grid + routes + nodes) */}
+      <HeroMapBackground />
 
       <div className="relative z-10 grid items-center w-full max-w-7xl gap-12 px-6 mx-auto lg:grid-cols-2 lg:gap-10">
         {/* Copy column */}
@@ -61,7 +43,7 @@ export default function HeroSection() {
           <motion.div
             {...fadeUp}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="inline-flex items-center gap-2 px-3 py-1 mb-6 text-xs font-semibold tracking-wide text-white border rounded-full border-white/25 bg-white/10 backdrop-blur-md"
+            className="inline-flex items-center gap-2 px-3 py-1 mb-6 text-xs font-semibold tracking-wide border rounded-full border-gray-200 brand-soft-bg text-(--brand-from)"
           >
             <Sparkles className="w-3.5 h-3.5" />
             Real-time CRM for modern sales teams
@@ -71,18 +53,16 @@ export default function HeroSection() {
             id="hero-heading"
             {...fadeUp}
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.05 }}
-            className="text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl md:text-6xl"
+            className="text-4xl font-bold leading-[1.1] tracking-tight text-gray-900 sm:text-5xl md:text-6xl"
           >
             Turn more leads into
-            <span className="block mt-2 text-transparent bg-clip-text bg-linear-to-r from-white to-white/70">
-              closed deals
-            </span>
+            <span className="block mt-2 brand-text-gradient">closed deals</span>
           </motion.h1>
 
           <motion.p
             {...fadeUp}
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.15 }}
-            className="max-w-xl mx-auto mt-6 text-lg leading-relaxed text-white/85 sm:text-xl lg:mx-0"
+            className="max-w-xl mx-auto mt-6 text-lg leading-relaxed text-black! sm:text-xl lg:mx-0"
           >
             {displayName} gives your team one real-time workspace to capture,
             assign, and track every lead — from first touch to closed deal.
@@ -94,7 +74,7 @@ export default function HeroSection() {
             className="flex flex-col items-center gap-3 mt-8 sm:flex-row lg:justify-start justify-center"
           >
             {status === "loading" ? (
-              <div className="w-44 h-14 rounded-xl bg-white/20 animate-pulse" />
+              <div className="w-44 h-14 rounded-xl bg-gray-200 animate-pulse" />
             ) : isAuthed ? (
               <Link
                 href="/dashboard"
@@ -114,7 +94,7 @@ export default function HeroSection() {
                 </Link>
                 <a
                   href="#pricing"
-                  className="inline-flex items-center justify-center px-7 py-3.5 text-base font-semibold text-white transition-all duration-200 border rounded-xl border-white/30 bg-white/10 backdrop-blur-md hover:bg-white/20"
+                  className="inline-flex items-center justify-center px-7 py-3.5 text-base font-semibold text-gray-800 transition-all duration-200 border border-gray-200 rounded-xl bg-white hover:bg-gray-50"
                 >
                   See pricing
                 </a>
@@ -130,9 +110,9 @@ export default function HeroSection() {
             {TRUST_POINTS.map((point) => (
               <li
                 key={point}
-                className="flex items-center gap-2 text-sm font-medium text-white/80"
+                className="flex items-center gap-2 text-sm font-medium text-gray-600"
               >
-                <CheckCircle2 className="w-4 h-4 text-white" />
+                <CheckCircle2 className="w-4 h-4 text-(--brand-from)" />
                 {point}
               </li>
             ))}
