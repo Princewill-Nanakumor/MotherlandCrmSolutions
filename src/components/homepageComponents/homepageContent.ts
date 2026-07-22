@@ -2,14 +2,16 @@
 import {
   Activity,
   BellRing,
-  Building2,
+  Download,
   Filter,
   LayoutDashboard,
+  Megaphone,
   Palette,
   Phone,
   Radio,
   Rocket,
-  ShieldCheck,
+  SunMoon,
+  Tags,
   Target,
   TrendingUp,
   Upload,
@@ -150,32 +152,59 @@ export const HOME_STEPS: HomeStep[] = [
   },
 ];
 
-export type HomeAudience = {
+export type HomeFeatureTab = {
+  id: string;
+  tab: string;
   icon: LucideIcon;
-  title: string;
+  /** Left-column title; use `accent` for the highlighted trailing word. */
+  headline: string;
+  accent: string;
   description: string;
 };
 
-export const HOME_AUDIENCES: HomeAudience[] = [
+/** Tabbed “more features” section (statuses, theme, export, ads). */
+export const HOME_FEATURE_TABS: HomeFeatureTab[] = [
   {
-    icon: Building2,
-    title: "Sales teams",
+    id: "statuses",
+    tab: "Statuses",
+    icon: Tags,
+    headline: "Custom statuses.",
+    accent: "Done.",
     description:
-      "Share one live pipeline — assign leads, leave comments, and hit follow-ups together.",
+      "Add Status with your own colors, move leads through the pipeline, and bulk-change status when the deal moves.",
   },
   {
-    icon: UsersRound,
-    title: "Call centers & agencies",
+    id: "theme",
+    tab: "Dark & light",
+    icon: SunMoon,
+    headline: "Dark & light mode.",
+    accent: "Ready.",
     description:
-      "Give agents only their assigned leads, dial with Zoiper/MicroSIP, and keep every note on the record.",
+      "Toggle the dashboard between dark and light themes so agents and admins can work in the look they prefer.",
   },
   {
-    icon: ShieldCheck,
-    title: "Growing businesses",
+    id: "export",
+    tab: "Export",
+    icon: Download,
+    headline: "Lead export.",
+    accent: "CSV.",
     description:
-      "Start small, import your spreadsheet, and scale to tens of thousands of leads without switching tools.",
+      "Export every lead — or one import batch — as CSV for backups, reports, or handing data off in a spreadsheet.",
+  },
+  {
+    id: "ads",
+    tab: "Ads",
+    icon: Megaphone,
+    headline: "Ads Manager.",
+    accent: "Built-in.",
+    description:
+      "Open Ads from the sidebar to manage campaign tools alongside your leads as the Ads Manager grows.",
   },
 ];
+
+/** @deprecated Prefer HOME_FEATURE_TABS — kept for any leftover imports. */
+export type HomeAudience = HomeFeatureTab;
+export const HOME_AUDIENCES = HOME_FEATURE_TABS;
 
 export type HomeJourneyMilestone = {
   icon: LucideIcon;
