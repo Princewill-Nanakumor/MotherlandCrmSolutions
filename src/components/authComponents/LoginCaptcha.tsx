@@ -149,42 +149,46 @@ export function LoginCaptcha({
   }, [disabled, issuing, loadError, loadIssue]);
 
   const labelClass = isLight
-    ? "text-sm font-medium text-gray-800 dark:text-gray-200"
+    ? "text-sm font-medium text-gray-800"
     : "text-sm font-semibold text-white!";
   const boxClass = isLight
-    ? "flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50 dark:border-gray-600 dark:bg-gray-700/50"
+    ? "flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50"
     : "flex items-center justify-between p-3 border border-white/30 rounded-lg bg-white/20";
   const monoClass = isLight
-    ? "font-mono text-lg tracking-[0.35em] text-gray-900 select-none dark:text-white"
-    : "font-mono text-lg font-semibold tracking-[0.35em] text-white select-none";
+    ? "font-mono text-lg tracking-[0.35em] text-gray-900 select-none"
+    : "font-mono text-lg font-semibold tracking-[0.35em] text-white! select-none";
   const timerClass = isLight
-    ? "text-xs font-medium text-gray-600 dark:text-gray-300"
-    : "text-xs font-semibold text-white/80";
+    ? "text-xs font-medium text-gray-600"
+    : "text-xs font-semibold text-white/80!";
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-auth-captcha="">
       <div className="flex items-center">
         <label
           htmlFor="login-captcha-input"
           className={`flex items-center gap-2 ${labelClass}`}
         >
-          <ShieldCheck className="w-4 h-4" />
+          <ShieldCheck
+            className={`w-4 h-4 ${isLight ? "brand-icon" : "text-white!"}`}
+          />
           Security Verification
         </label>
       </div>
 
       {loadError ? (
-        <p className={`text-sm ${isLight ? "text-red-600" : "text-red-200"}`}>
+        <p className={`text-sm ${isLight ? "text-red-600" : "text-red-200!"}`}>
           {loadError}
         </p>
       ) : issuing ? (
         <div
-          className={`flex items-center gap-2 p-3 rounded-lg ${isLight ? "bg-gray-50 dark:bg-gray-700/50" : "bg-white/10"}`}
+          className={`flex items-center gap-2 p-3 rounded-lg ${isLight ? "bg-gray-50" : "bg-white/10"}`}
         >
           <Loader2
-            className={`w-5 h-5 animate-spin ${isLight ? "brand-icon" : "text-white"}`}
+            className={`w-5 h-5 animate-spin ${isLight ? "brand-icon" : "text-white!"}`}
           />
-          <span className={`text-sm ${isLight ? "text-gray-600" : "text-white/90"}`}>
+          <span
+            className={`text-sm ${isLight ? "text-gray-600" : "text-white/90!"}`}
+          >
             Loading security check…
           </span>
         </div>
@@ -212,8 +216,8 @@ export function LoginCaptcha({
             disabled={disabled}
             className={`w-full py-3 px-3 rounded-lg border text-sm font-semibold transition-[border-color,background-color,box-shadow] duration-200 ease-out focus:outline-none focus-visible:outline-none ${
               isLight
-                ? "bg-white text-gray-900 border-gray-300 focus-visible:border-(--brand-focus) focus-visible:ring-2 focus-visible:ring-(--brand-focus)/40 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                : "border-white/20 bg-white/10 placeholder:font-semibold placeholder:text-white/70"
+                ? "bg-white text-gray-900 border-gray-300 focus-visible:border-(--brand-focus) focus-visible:ring-2 focus-visible:ring-(--brand-focus)/40"
+                : "border-white/20 bg-white/10 text-white! placeholder:font-semibold placeholder:text-white/70"
             } ${disabled ? "cursor-not-allowed opacity-75" : ""}`}
           />
         </>
@@ -231,6 +235,7 @@ export function RobotVerifyButton({
   return (
     <button
       type="button"
+      data-auth-robot-verify=""
       disabled={disabled}
       onClick={onClick}
       className={`
@@ -238,27 +243,32 @@ export function RobotVerifyButton({
         flex items-center justify-start gap-3
         ${
           isLight
-            ? "border-2 py-4 px-4 rounded-md border-(--brand-from) bg-transparent text-(--brand-from) dark:border-(--brand-focus) dark:text-(--brand-focus)"
+            ? "border-2 py-4 px-4 rounded-md border-(--brand-from) bg-transparent text-(--brand-from)!"
             : "rounded-full border border-white/20 bg-white/10 py-3 px-5 text-white!"
         }
         ${
           disabled
             ? "opacity-60 cursor-not-allowed"
             : isLight
-              ? "hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,white)] dark:hover:bg-gray-700/50"
+              ? "hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,white)]"
               : "hover:border-white/30 hover:bg-white/15"
         }
       `}
     >
       <span
+        aria-hidden
         className={`inline-block shrink-0 bg-transparent ${
           isLight
-            ? "w-6 h-6 border-2 rounded-xs border-(--brand-from) dark:border-(--brand-focus)"
-            : "h-5 w-5 rounded border border-white/35"
+            ? "w-6 h-6 border-2 rounded-xs border-(--brand-from)"
+            : "h-5 w-5 rounded border border-white/50"
         }`}
       />
       <span
-        className={`text-sm ${isLight ? "font-normal" : "font-semibold"} text-inherit`}
+        className={`text-sm ${
+          isLight
+            ? "font-normal text-(--brand-from)!"
+            : "font-semibold text-white!"
+        }`}
       >
         I&apos;m not a robot
       </span>

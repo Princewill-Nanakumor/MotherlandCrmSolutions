@@ -80,12 +80,7 @@ export default function ResetPasswordPage({
             animate="visible"
             style={{ backgroundColor: "transparent" }}
           >
-            <motion.div
-              variants={sectionVariants}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-            >
-              <Navbar />
-            </motion.div>
+            <Navbar />
             <motion.div
               variants={sectionVariants}
               transition={{ duration: 0.6, ease: "easeOut" }}

@@ -77,12 +77,7 @@ export default function SignUpPage() {
             animate="visible"
             style={{ backgroundColor: "transparent" }}
           >
-            <motion.div
-              variants={sectionVariants}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-            >
               <Navbar />
-            </motion.div>
             <motion.div
               variants={sectionVariants}
               transition={{ duration: 0.6, ease: "easeOut" }}

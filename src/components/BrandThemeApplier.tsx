@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useSession } from "next-auth/react";
 import {
   DEFAULT_BRAND_THEME,
   applyBrandThemeToDocument,
@@ -11,13 +12,19 @@ import {
 
 /**
  * Applies tenant brand CSS vars on public surfaces (home + auth).
- * Uses localStorage cache immediately; if the user is signed in, refreshes
- * from the API so home/auth match dashboard branding.
+ * Uses localStorage cache immediately; refreshes from the API only when
+ * the visitor is signed in (avoids noisy 401s on public pages).
  */
 export function BrandThemeApplier() {
+  const { status } = useSession();
+
   useEffect(() => {
     const cached = readBrandThemeCache();
     applyBrandThemeToDocument(cached ?? DEFAULT_BRAND_THEME);
+  }, []);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
 
     let cancelled = false;
 
@@ -31,7 +38,7 @@ export function BrandThemeApplier() {
         applyBrandThemeToDocument(theme);
         persistBrandThemeCache(theme);
       } catch {
-        // Unauthenticated / network — keep cache or defaults
+        // Network — keep cache or defaults
       }
     }
 
@@ -39,7 +46,7 @@ export function BrandThemeApplier() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [status]);
 
   return null;
 }

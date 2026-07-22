@@ -145,7 +145,8 @@ html[data-brand-button-style="solid"].dark .brand-navbar {
   background-color: color-mix(in srgb, var(--brand-solid) 12%, white);
 }
 
-.dark .brand-soft-bg {
+/* Dark soft brand surfaces only inside the dashboard shell — never on homepage/auth */
+.dark .dashboard-app .brand-soft-bg {
   background-color: color-mix(in srgb, var(--brand-solid) 18%, #111827);
 }
 
@@ -155,7 +156,7 @@ html[data-brand-button-style="solid"].dark .brand-navbar {
   font-weight: 700;
 }
 
-.dark .brand-tab-active {
+.dark .dashboard-app .brand-tab-active {
   background-color: color-mix(in srgb, var(--brand-solid) 18%, #111827) !important;
   color: #fff !important;
 }
@@ -166,7 +167,7 @@ html[data-brand-button-style="solid"].dark .brand-navbar {
   border-color: color-mix(in srgb, var(--brand-solid) 28%, transparent);
 }
 
-.dark .brand-chip {
+.dark .dashboard-app .brand-chip {
   background-color: color-mix(in srgb, var(--brand-solid) 22%, #111827);
   color: color-mix(in srgb, var(--brand-focus) 70%, white);
   border-color: color-mix(in srgb, var(--brand-solid) 40%, transparent);
@@ -202,7 +203,7 @@ html[data-brand-button-style="solid"] .brand-text-gradient {
   );
 }
 
-.dark .brand-page-wash {
+.dark .dashboard-app .brand-page-wash {
   background-image: linear-gradient(
     to bottom right,
     #111827,

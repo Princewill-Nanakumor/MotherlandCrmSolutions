@@ -537,7 +537,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   return (
     <UserPresenceProvider enabled={status === "authenticated"}>
       <ToggleProvider value={showLeadsToggles ? toggleContextValue : null}>
-      <div className="flex h-full max-h-full bg-background text-foreground overflow-hidden">
+      <div className="dashboard-app flex h-full max-h-full bg-background text-foreground overflow-hidden">
         <Sidebar />
         <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
           <DashboardNavbar

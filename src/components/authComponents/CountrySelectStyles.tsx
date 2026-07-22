@@ -189,19 +189,19 @@ export const getCountrySelectStyles = (
     }),
     control: (base, state) => ({
       ...base,
-      minHeight: "40px", // h-10 for mobile
+      minHeight: "40px",
       height: "40px",
       borderRadius: "0.5rem",
       borderWidth: "1px",
       borderStyle: "solid",
       borderColor: hasError
-        ? "#EF4444" // red-500
+        ? "#EF4444"
         : state.isFocused
           ? countrySelectBrand.focus
-          : "#D1D5DB", // gray-300 for light mode
-      backgroundColor: "#FFFFFF", // white for light mode
-      color: "#111827", // gray-900 for light mode
-      fontSize: "0.875rem", // text-sm
+          : "#D1D5DB",
+      backgroundColor: "#FFFFFF",
+      color: "#111827",
+      fontSize: "0.875rem",
       fontFamily: "inherit",
       outline: "none",
       width: "100%",
@@ -209,7 +209,7 @@ export const getCountrySelectStyles = (
       transition: "none",
       boxShadow:
         hasError && state.isFocused
-          ? "0 0 0 1px #EF4444" // red focus ring when error and focused
+          ? "0 0 0 1px #EF4444"
           : !hasError && state.isFocused
             ? countrySelectBrand.focusRing
             : "none",
@@ -220,41 +220,38 @@ export const getCountrySelectStyles = (
             ? countrySelectBrand.focus
             : "#D1D5DB",
       },
-      // Responsive height
       "@media (min-width: 640px)": {
-        minHeight: "48px", // h-12 for desktop
+        minHeight: "48px",
         height: "48px",
-        fontSize: "1rem", // text-base
+        fontSize: "1rem",
       },
     }),
     valueContainer: (provided, state) => ({
       ...provided,
-      height: "40px", // h-10 for mobile
+      height: "40px",
       padding: state.hasValue
-        ? "0 0.75rem" // No left padding when value is selected
-        : "0 0.75rem 0 2.5rem", // Add left padding for globe icon spacing when no value
+        ? "0 0.75rem"
+        : "0 0.75rem 0 2.5rem",
       display: "flex",
       alignItems: "center",
       minWidth: 0,
-      // Responsive height and padding
       "@media (min-width: 640px)": {
-        height: "48px", // h-12 for desktop
-        padding: state.hasValue ? "0 0.75rem" : "0 0.75rem 0 3rem", // More left padding for larger screens when no value
+        height: "48px",
+        padding: state.hasValue ? "0 0.75rem" : "0 0.75rem 0 3rem",
       },
     }),
     singleValue: (provided) => ({
       ...provided,
       display: "flex",
       alignItems: "center",
-      fontSize: "0.875rem", // text-sm
+      fontSize: "0.875rem",
       fontFamily: "inherit",
-      color: "#111827", // gray-900 for light mode
+      color: "#111827",
       marginLeft: 0,
       minWidth: 0,
       maxWidth: "100%",
-      // Responsive font size
       "@media (min-width: 640px)": {
-        fontSize: "1rem", // text-base
+        fontSize: "1rem",
       },
     }),
     input: (provided) => ({
@@ -262,26 +259,24 @@ export const getCountrySelectStyles = (
       margin: 0,
       padding: 0,
       fontFamily: "inherit",
-      color: "#111827", // gray-900 for light mode
+      color: "#111827",
       minWidth: 0,
-      fontSize: "0.875rem", // text-sm
-      // Responsive font size
+      fontSize: "0.875rem",
       "@media (min-width: 640px)": {
-        fontSize: "1rem", // text-base
+        fontSize: "1rem",
       },
     }),
     placeholder: (provided) => ({
       ...provided,
-      color: "#6B7280", // gray-500 for light mode
+      color: "#6B7280",
       fontFamily: "inherit",
-      marginLeft: 0, // Remove marginLeft since we're using padding on valueContainer
+      marginLeft: 0,
       minWidth: 0,
-      fontSize: "0.875rem", // text-sm
+      fontSize: "0.875rem",
       display: "flex",
       alignItems: "center",
-      // Responsive font size
       "@media (min-width: 640px)": {
-        fontSize: "1rem", // text-base
+        fontSize: "1rem",
       },
     }),
     option: (provided, state) => ({
@@ -289,31 +284,30 @@ export const getCountrySelectStyles = (
       display: "flex",
       alignItems: "center",
       padding: "8px 12px",
-      fontSize: "0.875rem", // text-sm
+      fontSize: "0.875rem",
       fontFamily: "inherit",
       backgroundColor: state.isSelected
         ? countrySelectBrand.selectedLight
         : state.isFocused
-          ? "#F3F4F6" // gray-100 for light mode
-          : "#FFFFFF", // white for light mode
-      color: "#111827", // gray-900 for light mode
+          ? "#F3F4F6"
+          : "#FFFFFF",
+      color: "#111827",
       cursor: state.isDisabled ? "not-allowed" : "pointer",
       opacity: state.isDisabled ? 0.5 : 1,
       "&:active": {
         backgroundColor: countrySelectBrand.selectedLight,
       },
-      // Responsive font size
       "@media (min-width: 640px)": {
-        fontSize: "1rem", // text-base
+        fontSize: "1rem",
       },
     }),
     menu: (provided) => ({
       ...provided,
       fontFamily: "inherit",
-      backgroundColor: "#FFFFFF", // white for light mode
-      color: "#111827", // gray-900 for light mode
+      backgroundColor: "#FFFFFF",
+      color: "#111827",
       borderRadius: "0.5rem",
-      border: "1px solid #E5E7EB", // gray-200 for light mode
+      border: "1px solid #E5E7EB",
       boxShadow:
         "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
       marginTop: "4px",

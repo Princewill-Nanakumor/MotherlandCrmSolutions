@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
 import { usePathname } from "next/navigation";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { BrandThemeApplier } from "@/components/BrandThemeApplier";
+import { PublicLightTheme } from "@/components/PublicLightTheme";
 
 export default function AuthLayout({
   children,
@@ -29,7 +30,8 @@ export default function AuthLayout({
       refetchInterval={5 * 60} // Refetch session every 5 minutes
       refetchOnWindowFocus={true} // Refetch when user returns to window (important for offline → online)
     >
-      <ThemeProvider>
+      <ThemeProvider forcedTheme="light" enableSystem={false}>
+        <PublicLightTheme />
         <BrandThemeApplier />
         {isHeroAuthPage ? (
           // Full-bleed hero + navbar (same shell as login); pages inject their own <style>
@@ -37,7 +39,7 @@ export default function AuthLayout({
             {children}
           </div>
         ) : (
-          <div className="auth-routes-shell brand-page-wash min-h-screen flex items-center justify-center dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 [font-family:var(--brand-font-body)]">
+          <div className="auth-routes-shell brand-page-wash min-h-screen flex items-center justify-center [font-family:var(--brand-font-body)]">
             <div className="px-3 py-4 w-full max-w-sm sm:max-w-md md:max-w-lg sm:px-4 sm:py-6">
               <div className="mb-6 text-center sm:mb-8">
                 <Link

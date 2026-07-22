@@ -11,6 +11,7 @@ const AUTH_HERO_GLASS_PAGE_ROOTS = [
   ":is(html, body).is-signup-page",
   ":is(html, body).is-auth-forgot-page",
   ":is(html, body).is-auth-reset-page",
+  ":is(html, body).is-verify-email-page",
 ] as const;
 
 function scope(selectorTail: string): string {
@@ -132,6 +133,18 @@ ${scope('[data-auth-glass-fields] input.border-red-500:not([type="checkbox"]):-w
   -webkit-text-fill-color: rgb(255, 255, 255) !important;
   caret-color: rgb(255, 255, 255) !important;
   color-scheme: dark !important;
+}
+/* Captcha / "I'm not a robot" — always white on auth hero (ignore dashboard dark mode) */
+${scope("[data-auth-robot-verify]")},
+${scope("[data-auth-robot-verify] span")} {
+  color: rgb(255, 255, 255) !important;
+  -webkit-text-fill-color: rgb(255, 255, 255) !important;
+}
+${scope("[data-auth-captcha] label")},
+${scope("[data-auth-captcha] label svg")},
+${scope("[data-auth-captcha] .font-mono")},
+${scope("[data-auth-captcha] div > span")} {
+  color: rgb(255, 255, 255) !important;
 }
 `.trim();
 }

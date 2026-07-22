@@ -88,12 +88,7 @@ function LoginFormContent() {
         animate="visible"
         style={{ backgroundColor: "transparent" }}
       >
-        <motion.div
-          variants={sectionVariants}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        >
           <Navbar />
-        </motion.div>
         <motion.div
           variants={sectionVariants}
           transition={{ duration: 0.6, ease: "easeOut" }}
@@ -419,13 +414,13 @@ export default function LoginPage() {
             border-style: solid !important;
           }
           body.is-login-page input[type="checkbox"]:checked {
-            background-color: rgb(79, 70, 229) !important;
-            background: rgb(79, 70, 229) !important;
+            background-color: var(--brand-from) !important;
+            background: var(--brand-from) !important;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") !important;
             background-size: contain !important;
             background-position: center !important;
             background-repeat: no-repeat !important;
-            border-color: rgb(79, 70, 229) !important;
+            border-color: var(--brand-from) !important;
           }
         `,
         }}

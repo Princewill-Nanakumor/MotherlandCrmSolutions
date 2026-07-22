@@ -42,7 +42,7 @@ export default function SubscriptionPlansSection() {
   };
 
   return (
-    <section className="py-16 bg-linear-to-r from-gray-50 to-gray-100">
+    <section id="pricing" className="py-16 bg-linear-to-r from-gray-50 to-gray-100">
       <div className="max-w-6xl px-4 mx-auto sm:px-6 lg:px-8">
         <motion.div
           className="p-6 bg-white shadow-2xl rounded-2xl sm:p-8 md:p-12"
