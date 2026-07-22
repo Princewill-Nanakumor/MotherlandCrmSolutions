@@ -394,7 +394,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="flex items-center gap-1 flex-wrap min-w-0 flex-1">
-                      <span className="text-sm font-normal text-gray-700! dark:text-gray-200!">
+                      <span className="text-xs font-normal text-gray-700! dark:text-gray-200!">
                         {getUserDisplayName(activity.createdBy)}
                       </span>
                       <span className="text-sm font-semibold text-gray-900! dark:text-white! leading-relaxed">

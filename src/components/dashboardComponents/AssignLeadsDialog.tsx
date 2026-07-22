@@ -117,22 +117,6 @@ export function AssignLeadsDialog({
               color: rgb(255 255 255) !important; /* white */
               background-color: rgb(55 65 81) !important; /* gray-700 */
             }
-            /* Force gradient buttons to display correctly - override Button component default variant */
-            button[data-slot="button"][class*="bg-linear-to-r"],
-            .assign-dialog button[data-slot="button"][class*="bg-linear-to-r"] {
-              background-image: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
-              background-color: transparent !important;
-              border-color: transparent !important;
-            }
-            button[data-slot="button"][class*="bg-linear-to-r"]:hover,
-            .assign-dialog button[data-slot="button"][class*="bg-linear-to-r"]:hover {
-              background-image: linear-gradient(to right, rgb(67 56 202), rgb(126 34 206)) !important;
-              background-color: transparent !important;
-            }
-            button[data-slot="button"][class*="bg-linear-to-r"]:not(:disabled),
-            .assign-dialog button[data-slot="button"][class*="bg-linear-to-r"]:not(:disabled) {
-              color: white !important;
-            }
           `,
         }}
       />
@@ -227,7 +211,6 @@ export function AssignLeadsDialog({
               <Button
                 onClick={handleAssignClick}
                 disabled={isAssigning || isUnassigning || !selectedUser}
-                className="text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
               >
                 {isAssigning ? (
                   <>
@@ -268,11 +251,7 @@ export function AssignLeadsDialog({
               >
                 Cancel
               </Button>
-              <Button
-                onClick={handleConfirmAssign}
-                disabled={isAssigning}
-                className="text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-              >
+              <Button onClick={handleConfirmAssign} disabled={isAssigning}>
                 {isAssigning ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />

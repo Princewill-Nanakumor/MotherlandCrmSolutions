@@ -21,10 +21,8 @@ export function MotherlandLogo({
     >
       <title>{title}</title>
       <rect
-        x="20"
-        y="20"
-        width="216"
-        height="216"
+        width="256"
+        height="256"
         rx="56"
         fill="var(--brand-from)"
       />

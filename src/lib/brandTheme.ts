@@ -2,7 +2,7 @@
  * Tenant brand theme (admin-owned, inherited by agents).
  */
 
-import { applyBrandFavicon } from "@/lib/brandFavicon";
+import { applyBrandFavicon, persistBrandFaviconCache } from "@/lib/brandFavicon";
 
 export type BrandButtonStyle = "solid" | "gradient";
 
@@ -562,6 +562,8 @@ export function persistBrandThemeCache(theme: BrandTheme): void {
     );
     // Legacy key from Google Fonts era — clear so old boots don't inject links.
     window.localStorage.removeItem(BRAND_THEME_FONTS_STORAGE_KEY);
+    // Favicon data URI for beforeInteractive boot (matches active brand fill).
+    persistBrandFaviconCache(getActiveBrandPrimary(merged));
   } catch {
     // Ignore quota / private-mode failures
   }

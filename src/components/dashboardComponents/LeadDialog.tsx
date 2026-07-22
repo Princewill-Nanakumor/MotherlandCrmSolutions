@@ -71,23 +71,7 @@ export const LeadsDialogs: React.FC<LeadsDialogsProps> = ({
           onUnassignDialogChange(open);
         }}
       >
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `
-              .unassign-confirm-dialog .unassign-confirm-action {
-                background-image: linear-gradient(to right, rgb(79 70 229), rgb(147 51 234)) !important;
-                background-color: transparent !important;
-                border-color: transparent !important;
-                color: white !important;
-              }
-              .unassign-confirm-dialog .unassign-confirm-action:hover:not(:disabled) {
-                background-image: linear-gradient(to right, rgb(67 56 202), rgb(126 34 206)) !important;
-                background-color: transparent !important;
-              }
-            `,
-          }}
-        />
-        <AlertDialogContent className="unassign-confirm-dialog">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
               Unassign {assignedLeadsCount} lead
@@ -110,7 +94,6 @@ export const LeadsDialogs: React.FC<LeadsDialogsProps> = ({
                 onUnassign();
               }}
               disabled={isUnassigning}
-              className="unassign-confirm-action text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
             >
               {isUnassigning ? (
                 <>

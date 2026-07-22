@@ -15,6 +15,50 @@ export type SignOutWithoutInterstitialOptions = {
   intentional?: boolean;
 };
 
+/** Include/exclude Eye-button modes — must not survive logout. */
+const LEAD_FILTER_MODE_STORAGE_KEYS = [
+  "countryFilterMode",
+  "statusFilterMode",
+  "sourceFilterMode",
+  "userFilterMode",
+] as const;
+
+function clearLeadFilterModeStorage() {
+  if (typeof window === "undefined") return;
+  try {
+    for (const key of LEAD_FILTER_MODE_STORAGE_KEYS) {
+      window.localStorage.removeItem(key);
+    }
+  } catch {
+    // ignore quota / private-mode failures
+  }
+}
+
+/** Drop include/exclude query params so a post-login callback can't restore them. */
+function stripLeadFilterModesFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url, window.location.origin);
+    parsed.searchParams.delete("countryMode");
+    parsed.searchParams.delete("statusMode");
+    parsed.searchParams.delete("sourceMode");
+
+    const nestedCallback = parsed.searchParams.get("callbackUrl");
+    if (nestedCallback) {
+      parsed.searchParams.set(
+        "callbackUrl",
+        stripLeadFilterModesFromUrl(nestedCallback),
+      );
+    }
+
+    const isRelative = url.startsWith("/") || !/^https?:\/\//i.test(url);
+    return isRelative
+      ? `${parsed.pathname}${parsed.search}${parsed.hash}`
+      : parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 function hardNavigateTo(target: string) {
   const path =
     target.startsWith("http") || target.startsWith("/")
@@ -53,9 +97,10 @@ async function postNextAuthSignOutThenNavigate(callbackUrl: string) {
   if (!csrfToken) {
     throw new Error("Missing CSRF token for sign-out");
   }
+  const safeCallbackUrl = stripLeadFilterModesFromUrl(callbackUrl);
   const body = new URLSearchParams({
     csrfToken,
-    callbackUrl,
+    callbackUrl: safeCallbackUrl,
     json: "true",
   });
   const res = await fetch(`${window.location.origin}/api/auth/signout`, {
@@ -65,33 +110,36 @@ async function postNextAuthSignOutThenNavigate(callbackUrl: string) {
     credentials: "include",
   });
 
-  let target = callbackUrl;
+  let target = safeCallbackUrl;
   if (res.ok) {
     try {
       const data = (await res.json()) as { url?: string };
-      target = sanitizeSignOutRedirectUrl(data?.url, callbackUrl);
+      target = sanitizeSignOutRedirectUrl(data?.url, safeCallbackUrl);
     } catch {
-      /* keep callbackUrl */
+      /* keep safeCallbackUrl */
     }
   }
 
+  clearLeadFilterModeStorage();
   disconnectAblyRealtimeClient();
   disconnectAblyLeadRealtimeClient();
-  hardNavigateTo(target);
+  hardNavigateTo(stripLeadFilterModesFromUrl(target));
 }
 
 function navigateAfterSignOutFailure(
   callbackUrl: string,
   router?: AppRouterLike,
 ) {
+  const safeCallbackUrl = stripLeadFilterModesFromUrl(callbackUrl);
+  clearLeadFilterModeStorage();
   disconnectAblyRealtimeClient();
   disconnectAblyLeadRealtimeClient();
   if (router) {
-    router.replace(callbackUrl);
+    router.replace(safeCallbackUrl);
     router.refresh();
     return;
   }
-  hardNavigateTo(callbackUrl);
+  hardNavigateTo(safeCallbackUrl);
 }
 
 /** Clears the session without showing the NextAuth /api/auth/signout confirmation page. */
@@ -106,10 +154,14 @@ export async function signOutWithoutInterstitial(
 
   if (typeof window === "undefined") return;
 
+  // Reset Eye include/exclude buttons before navigating away.
+  clearLeadFilterModeStorage();
+  const safeCallbackUrl = stripLeadFilterModesFromUrl(callbackUrl);
+
   try {
-    await postNextAuthSignOutThenNavigate(callbackUrl);
+    await postNextAuthSignOutThenNavigate(safeCallbackUrl);
   } catch {
     // Session often already dead after a long absence — still send user to login.
-    navigateAfterSignOutFailure(callbackUrl, router);
+    navigateAfterSignOutFailure(safeCallbackUrl, router);
   }
 }

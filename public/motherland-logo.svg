@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
-  <!-- Background -->
-  <rect x="20" y="20" width="216" height="216" rx="56" fill="#2D6F8B"/>
+  <!-- Background — full-bleed so brand color fills the mark -->
+  <rect width="256" height="256" rx="56" fill="#2D6F8B"/>
 
   <!-- Liberty -->
   <g fill="#fff">

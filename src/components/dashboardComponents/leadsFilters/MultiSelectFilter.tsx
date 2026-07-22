@@ -130,7 +130,7 @@ export const MultiSelectFilter = ({
   // Show loading skeleton
   if (isLoading) {
     return (
-      <div className="w-[180px] h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse">
+      <div className="h-10 bg-gray-200 rounded-md animate-pulse w-45 dark:bg-gray-700">
         <div className="sr-only">Loading...</div>
       </div>
     );
@@ -142,18 +142,16 @@ export const MultiSelectFilter = ({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-[180px] min-h-[40px] px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-(--brand-focus) focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-between gap-2 ${
+        className={`w-45 min-h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-(--brand-focus) focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-between gap-2 ${
           isActiveFilter
-            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-            : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+            ? "bg-white ring-2 border-(--brand-from) ring-(--brand-focus) dark:bg-gray-800"
+            : "bg-white border-gray-300 dark:border-gray-600 dark:bg-gray-800"
         }`}
       >
-        <span
-          className="flex-1 text-left truncate text-gray-900 dark:text-white"
-        >
+        <span className="flex-1 text-left text-gray-900 truncate dark:text-white">
           {getDisplayText()}
         </span>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex gap-1 items-center shrink-0">
           {isActiveFilter && (
             <div
               role="button"
@@ -165,22 +163,21 @@ export const MultiSelectFilter = ({
                   handleClearAll(e as unknown as React.MouseEvent);
                 }
               }}
-              className="p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--brand-focus)"
+              className="p-0.5 rounded transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--brand-focus) hover:bg-[color-mix(in_srgb,var(--brand-from)_18%,transparent)]"
               aria-label="Clear selection"
             >
-              <X className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+              <X className="h-3 w-3 text-(--brand-from)" />
             </div>
           )}
           <ChevronDown
             className={`h-4 w-4 text-gray-500 transition-transform ${
-              isOpen ? "rotate-180" : ""
-            }`}
+              isOpen ? "rotate-180" : ""}`}
           />
         </div>
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg z-50 min-w-[200px] max-w-[300px] max-h-60 overflow-y-auto">
+        <div className="overflow-y-auto absolute left-0 top-full z-50 mt-1 max-h-60 bg-white rounded-md border border-gray-300 shadow-lg dark:bg-gray-800 dark:border-gray-600 min-w-50 max-w-75">
           {/* Mode Toggle Button (only show if mode and onModeChange are provided) */}
           {mode !== undefined && onModeChange && (
             <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
@@ -195,17 +192,21 @@ export const MultiSelectFilter = ({
                     ? "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                 }`}
-                title={mode === "include" ? "Switch to hide mode (currently showing selected)" : "Switch to show mode (currently hiding selected)"}
+                title={
+                  mode === "include"
+                    ? "Switch to hide mode (currently showing selected)"
+                    : "Switch to show mode (currently hiding selected)"
+                }
               >
                 {mode === "include" ? (
-                  <Eye className="h-4 w-4" />
+                  <Eye className="w-4 h-4" />
                 ) : (
-                  <EyeOff className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  <EyeOff className="w-4 h-4 text-red-600 dark:text-red-400" />
                 )}
               </button>
             </div>
           )}
-          
+
           {/* Select All / Clear All option */}
           <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
             <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 -mx-3 px-3 py-1.5 rounded">
@@ -215,8 +216,8 @@ export const MultiSelectFilter = ({
                 aria-label="Select all"
               />
               <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {placeholder.includes("Exclude") 
-                  ? "Show All Countries" 
+                {placeholder.includes("Exclude")
+                  ? "Show All Countries"
                   : `All ${placeholder.replace("All ", "")}`}
               </span>
             </label>
@@ -231,7 +232,7 @@ export const MultiSelectFilter = ({
                 return (
                   <div
                     key={option.value}
-                    className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 focus-within:bg-gray-100 dark:focus-within:bg-gray-700"
+                    className="flex gap-2 items-center px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 focus-within:bg-gray-100 dark:focus-within:bg-gray-700"
                     onClick={(e) => {
                       e.stopPropagation();
                       // Only toggle if click is not on the checkbox itself
@@ -266,7 +267,7 @@ export const MultiSelectFilter = ({
                     <span
                       className={`text-sm flex-1 ${
                         checked
-                          ? "text-blue-600 dark:text-blue-400 font-medium"
+                          ? "font-medium text-(--brand-from)"
                           : "text-gray-900 dark:text-white"
                       }`}
                     >
@@ -279,7 +280,7 @@ export const MultiSelectFilter = ({
 
           {/* Selected count footer */}
           {isActiveFilter && (
-            <div className="px-3 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+            <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 dark:border-gray-700 dark:bg-gray-900/50">
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {value.length} {value.length === 1 ? "item" : "items"} selected
               </p>
@@ -290,4 +291,3 @@ export const MultiSelectFilter = ({
     </div>
   );
 };
-

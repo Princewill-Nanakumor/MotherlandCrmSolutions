@@ -54,7 +54,7 @@ export const CommentItem: FC<CommentItemProps> = ({
           <div className="flex flex-wrap items-baseline gap-2 mb-1">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4 brand-icon" />
-              <h4 className="text-sm font-semibold text-gray-800! dark:text-white!">
+              <h4 className="text-xs font-semibold text-gray-800! dark:text-white!">
                 {comment.createdBy?.firstName} {comment.createdBy?.lastName}
               </h4>
             </div>
