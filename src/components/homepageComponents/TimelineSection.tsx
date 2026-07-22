@@ -94,7 +94,7 @@ export default function TimelineSection() {
                         <span className="flex items-center justify-center text-white shadow-md h-11 w-11 shrink-0 rounded-xl brand-gradient">
                           <Icon className="w-5 h-5" />
                         </span>
-                        <span className="text-3xl font-bold text-gray-200 tabular-nums">
+                        <span className="text-3xl font-bold tracking-tight text-gray-400 tabular-nums">
                           {milestone.step}
                         </span>
                       </div>
