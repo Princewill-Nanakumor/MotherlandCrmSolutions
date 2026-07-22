@@ -537,9 +537,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   return (
     <UserPresenceProvider enabled={status === "authenticated"}>
       <ToggleProvider value={showLeadsToggles ? toggleContextValue : null}>
-      <div className="flex h-screen bg-background text-foreground">
+      <div className="flex h-dvh max-h-dvh bg-background text-foreground overflow-hidden">
         <Sidebar />
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
           <DashboardNavbar
             onSearch={setSearchQuery}
             searchQuery={searchQuery}
@@ -552,7 +552,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             showSearch={showSearch}
           />
           <SelectedLeadsBanner />
-          <main className="flex-1 p-8 overflow-auto bg-background text-foreground">
+          <main className="flex-1 min-h-0 p-8 overflow-auto bg-background text-foreground">
             {children}
           </main>
           <Footer />

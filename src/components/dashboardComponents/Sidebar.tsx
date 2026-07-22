@@ -137,9 +137,9 @@ export default function Sidebar() {
   // keep sidebar stable during brief session "loading" transitions (e.g. profile save).
   if (status === "loading" && !hasSeenAuthenticatedRef.current) {
     return (
-      <aside className="flex h-screen shadow-lg bg-linear-to-br from-[color-mix(in_srgb,var(--brand-from)_12%,white)] via-[color-mix(in_srgb,var(--brand-to)_10%,white)] to-[color-mix(in_srgb,var(--brand-from)_8%,white)] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        <nav className="flex flex-col items-center w-24 h-full py-6 space-y-2">
-          <div className="flex flex-col items-center justify-center flex-1 w-full gap-2">
+      <aside className="flex h-full shrink-0 shadow-lg bg-linear-to-br from-[color-mix(in_srgb,var(--brand-from)_12%,white)] via-[color-mix(in_srgb,var(--brand-to)_10%,white)] to-[color-mix(in_srgb,var(--brand-from)_8%,white)] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <nav className="flex flex-col items-center w-24 h-full min-h-0 py-4 space-y-2">
+          <div className="flex flex-col items-center justify-center flex-1 w-full min-h-0 gap-2">
             <span className="brand-icon opacity-70">Loading...</span>
           </div>
         </nav>
@@ -148,12 +148,12 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex h-screen border-r border-[color-mix(in_srgb,var(--brand-from)_25%,transparent)] shadow-lg bg-linear-to-br from-[color-mix(in_srgb,var(--brand-from)_12%,white)] via-[color-mix(in_srgb,var(--brand-to)_10%,white)] to-[color-mix(in_srgb,var(--brand-from)_8%,white)] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border-gray-700">
-      <nav className="flex flex-col items-center w-24 h-full py-6 space-y-2">
+    <aside className="flex h-full shrink-0 border-r border-[color-mix(in_srgb,var(--brand-from)_25%,transparent)] shadow-lg bg-linear-to-br from-[color-mix(in_srgb,var(--brand-from)_12%,white)] via-[color-mix(in_srgb,var(--brand-to)_10%,white)] to-[color-mix(in_srgb,var(--brand-from)_8%,white)] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border-gray-700">
+      <nav className="flex flex-col items-center w-24 h-full min-h-0 py-4">
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center justify-center p-2 mb-6 overflow-hidden rounded-2xl"
+          className="flex items-center justify-center p-2 mb-4 overflow-hidden rounded-2xl shrink-0"
           aria-label="Home"
         >
           <MotherlandLogo
@@ -162,8 +162,8 @@ export default function Sidebar() {
           />
         </Link>
 
-        {/* Main Navigation */}
-        <div className="flex flex-col flex-1 w-full gap-2">
+        {/* Main Navigation — scrolls when the viewport is short (e.g. Windows 125–150% scale) */}
+        <div className="flex flex-col flex-1 w-full min-h-0 gap-1 overflow-y-auto overflow-x-hidden">
           {filteredNavItems.map((item) => {
             // Improved active state detection
             // For "/dashboard" route: exact match only
@@ -178,7 +178,7 @@ export default function Sidebar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex relative flex-col items-center py-3 w-full rounded-xl transition-all group",
+                  "flex relative flex-col items-center py-2.5 w-full rounded-xl transition-all group shrink-0",
                   isActive
                     ? "text-white shadow-md active-nav-link brand-gradient"
                     : "brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)] dark:hover:bg-gray-700 dark:hover:text-white!",
@@ -207,14 +207,14 @@ export default function Sidebar() {
                   aria-hidden="true"
                 />
                 <item.icon
-                  size={24}
+                  size={22}
                   className={
                     isActive ? "text-white" : "brand-icon dark:text-white!"
                   }
                 />
                 <span
                   className={cn(
-                    "mt-1 text-xs font-medium",
+                    "mt-1 text-[11px] font-medium leading-tight text-center px-0.5",
                     isActive
                       ? "text-white"
                       : "brand-icon dark:text-white!",
@@ -228,14 +228,14 @@ export default function Sidebar() {
         </div>
 
         {/* Divider */}
-        <div className="w-10 my-4 border-t border-[color-mix(in_srgb,var(--brand-from)_25%,transparent)] dark:border-gray-700" />
+        <div className="w-10 my-3 border-t border-[color-mix(in_srgb,var(--brand-from)_25%,transparent)] dark:border-gray-700 shrink-0" />
 
-        {/* Footer Actions */}
-        <div className="flex flex-col w-full gap-2">
+        {/* Footer Actions — always visible at bottom */}
+        <div className="flex flex-col w-full gap-1 shrink-0">
           <Link
             href="/dashboard/settings"
             className={cn(
-              "group relative flex flex-col items-center w-full py-3 transition-all rounded-xl",
+              "group relative flex flex-col items-center w-full py-2.5 transition-all rounded-xl",
               pathname === "/dashboard/settings"
                 ? "text-white shadow-md active-nav-link brand-gradient"
                 : "brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)] dark:text-white! dark:hover:bg-gray-700 dark:hover:text-white!",
@@ -267,7 +267,7 @@ export default function Sidebar() {
               aria-hidden="true"
             />
             <Settings
-              size={24}
+              size={22}
               className={
                 pathname === "/dashboard/settings"
                   ? "text-white"
@@ -276,7 +276,7 @@ export default function Sidebar() {
             />
             <span
               className={cn(
-                "text-xs mt-1 font-medium",
+                "text-[11px] mt-1 font-medium leading-tight",
                 pathname === "/dashboard/settings"
                   ? "text-white"
                   : "brand-icon dark:text-white!",
@@ -291,7 +291,7 @@ export default function Sidebar() {
             <Link
               href="/dashboard/help"
               className={cn(
-                "group relative flex flex-col items-center w-full py-3 transition-all rounded-xl",
+                "group relative flex flex-col items-center w-full py-2.5 transition-all rounded-xl",
                 pathname === "/dashboard/help"
                   ? "text-white shadow-md active-nav-link brand-gradient"
                   : "brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)] dark:text-white! dark:hover:bg-gray-700 dark:hover:text-white!",
@@ -320,7 +320,7 @@ export default function Sidebar() {
                 aria-hidden="true"
               />
               <HelpCircle
-                size={24}
+                size={22}
                 className={
                   pathname === "/dashboard/help"
                     ? "text-white"
@@ -329,7 +329,7 @@ export default function Sidebar() {
               />
               <span
                 className={cn(
-                  "text-xs mt-1 font-medium",
+                  "text-[11px] mt-1 font-medium leading-tight",
                   pathname === "/dashboard/help"
                     ? "text-white"
                     : "brand-icon dark:text-white!",
