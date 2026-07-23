@@ -193,8 +193,11 @@ export default function AudiencesSection() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [inView, setInView] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
   const tabListRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const didEnterRef = useRef(false);
 
   const active = HOME_FEATURE_TABS[activeIndex] ?? HOME_FEATURE_TABS[0];
   const Visual = VISUALS[active.id] ?? StatusesVisual;
@@ -217,6 +220,29 @@ export default function AudiencesSection() {
   const goNext = useCallback(() => goTo(activeIndex + 1), [activeIndex, goTo]);
   const goPrev = useCallback(() => goTo(activeIndex - 1), [activeIndex, goTo]);
 
+  // Only run the slider while this section is on screen. Auto-advance used to
+  // start on page load (off-screen), so by the time you scrolled here it was
+  // often already on Ads instead of Statuses.
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        const visible = Boolean(entry?.isIntersecting);
+        setInView(visible);
+        if (visible && !didEnterRef.current) {
+          didEnterRef.current = true;
+          setActiveIndex(0);
+          setDirection(0);
+        }
+      },
+      { threshold: 0.2 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   // Horizontally center the active tab inside the pill bar only — never
   // scrollIntoView (that was yanking the whole page down to this section).
   useEffect(() => {
@@ -232,12 +258,12 @@ export default function AudiencesSection() {
     });
   }, [activeIndex, reduceMotion]);
 
-  // Auto-advance like a slider (paused on hover / focus / reduced motion)
+  // Auto-advance like a slider (only while visible; paused on hover / focus)
   useEffect(() => {
-    if (reduceMotion || paused) return;
+    if (reduceMotion || paused || !inView) return;
     const id = window.setInterval(goNext, AUTO_ADVANCE_MS);
     return () => window.clearInterval(id);
-  }, [goNext, paused, reduceMotion]);
+  }, [goNext, paused, reduceMotion, inView]);
 
   const onDragEnd = (_: unknown, info: PanInfo) => {
     if (info.offset.x < -SWIPE_THRESHOLD || info.velocity.x < -400) {
@@ -261,6 +287,7 @@ export default function AudiencesSection() {
 
   return (
     <section
+      ref={sectionRef}
       aria-labelledby="more-features-heading"
       className="relative isolate overflow-hidden px-6 py-20 sm:py-28"
       onMouseEnter={() => setPaused(true)}

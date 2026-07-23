@@ -3,6 +3,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import {
+  EXPLOSION_MS,
+  MapCollisionExplosion,
+  pickExplosionType,
+  type ExplosionType,
+} from "@/components/homepageComponents/MapCollisionExplosion";
 
 const ROUTES = [
   {
@@ -57,7 +63,6 @@ const TRAVELERS: TravelerDef[] = [
 const COLLISION_DIST = 22;
 const BOUNCE_MS = 420;
 const COOLDOWN_MS = 1400;
-const EXPLOSION_MS = 700;
 
 type NodeRender = {
   id: string;
@@ -72,6 +77,7 @@ type Explosion = {
   x: number;
   y: number;
   born: number;
+  type: ExplosionType;
 };
 
 type TravelerRuntime = {
@@ -215,6 +221,7 @@ export function HeroMapBackground() {
             x: (a.x + b.x) / 2,
             y: (a.y + b.y) / 2,
             born: now,
+            type: pickExplosionType(),
           });
         }
       }
@@ -316,44 +323,12 @@ export function HeroMapBackground() {
 
         {/* Collision explosions */}
         {explosions.map((boom) => (
-          <g key={boom.id} transform={`translate(${boom.x} ${boom.y})`}>
-            <motion.circle
-              r="6"
-              fill="none"
-              stroke="var(--brand-from)"
-              strokeWidth="2"
-              initial={{ r: 4, opacity: 0.9 }}
-              animate={{ r: 42, opacity: 0 }}
-              transition={{ duration: 0.65, ease: "easeOut" }}
-            />
-            <motion.circle
-              r="4"
-              fill="none"
-              stroke="var(--brand-to)"
-              strokeWidth="1.5"
-              initial={{ r: 2, opacity: 0.85 }}
-              animate={{ r: 28, opacity: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut", delay: 0.04 }}
-            />
-            {[0, 60, 120, 180, 240, 300].map((angle) => {
-              const rad = (angle * Math.PI) / 180;
-              return (
-                <motion.circle
-                  key={angle}
-                  r="2.2"
-                  fill="var(--brand-from)"
-                  initial={{ cx: 0, cy: 0, opacity: 1, scale: 1 }}
-                  animate={{
-                    cx: Math.cos(rad) * 36,
-                    cy: Math.sin(rad) * 36,
-                    opacity: 0,
-                    scale: 0.3,
-                  }}
-                  transition={{ duration: 0.55, ease: "easeOut" }}
-                />
-              );
-            })}
-          </g>
+          <MapCollisionExplosion
+            key={boom.id}
+            type={boom.type}
+            x={boom.x}
+            y={boom.y}
+          />
         ))}
 
         {/* Traveling nodes */}

@@ -22,9 +22,9 @@ const COLUMNS: {
     accent: "bg-sky-500",
     leads: [
       {
-        name: "Amara O.",
-        country: "🇳🇬 Nigeria",
-        initials: "AO",
+        name: "Ingrid H.",
+        country: "🇳🇴 Norway",
+        initials: "IH",
         tint: "bg-sky-100 text-sky-700",
       },
       {

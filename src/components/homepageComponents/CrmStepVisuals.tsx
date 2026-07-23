@@ -159,7 +159,7 @@ export function FiltersVisual() {
           ))}
         </div>
         <div className="flex-1 space-y-2">
-          {["Amara Okonkwo", "Sofia Rossi", "Liam Carter"].map((n) => (
+          {["Ingrid Hansen", "Sofia Rossi", "Liam Carter"].map((n) => (
             <div
               key={n}
               className="flex items-center justify-between px-3 py-2 border border-gray-100 rounded-lg bg-gray-50/60"
