@@ -7,7 +7,6 @@ import {
   AnimatePresence,
   motion,
   useReducedMotion,
-  type PanInfo,
 } from "framer-motion";
 import {
   ArrowRight,
@@ -104,37 +103,39 @@ function ExportVisual() {
   );
 }
 
+const SLIDE_MS = 6000;
+
+const ADS_SAMPLES = [
+  {
+    title: "Persistence Pays Off",
+    description: "Every 'no' gets you closer to a 'yes' — keep pushing.",
+    cta: "Stay Consistent",
+  },
+  {
+    title: "Don't Back Down",
+    description: "Great deals aren't accepted — they're earned through belief.",
+    cta: "Push Forward",
+  },
+  {
+    title: "Keep Showing Up",
+    description: "Success belongs to those who refuse to quit.",
+    cta: "Try Again",
+  },
+] as const;
+
 function AdsVisual() {
-  const sampleAds = [
-    {
-      title: "Persistence Pays Off",
-      description: "Every 'no' gets you closer to a 'yes' — keep pushing.",
-      cta: "Stay Consistent",
-    },
-    {
-      title: "Don't Back Down",
-      description: "Great deals aren't accepted — they're earned through belief.",
-      cta: "Push Forward",
-    },
-    {
-      title: "Keep Showing Up",
-      description: "Success belongs to those who refuse to quit.",
-      cta: "Try Again",
-    },
-  ];
   const [slide, setSlide] = useState(0);
-  const ad = sampleAds[slide] ?? sampleAds[0];
+  const ad = ADS_SAMPLES[slide] ?? ADS_SAMPLES[0];
 
   useEffect(() => {
     const id = window.setInterval(() => {
-      setSlide((prev) => (prev + 1) % sampleAds.length);
-    }, 4000);
+      setSlide((prev) => (prev + 1) % ADS_SAMPLES.length);
+    }, SLIDE_MS);
     return () => window.clearInterval(id);
-  }, [sampleAds.length]);
+  }, []);
 
   return (
     <div className="relative h-full overflow-hidden bg-white">
-      {/* Mirrors lead-details AdsImageSlider chrome */}
       <div className="absolute z-10 px-2 py-1 text-[10px] font-medium rounded-full shadow-lg top-2 left-2 brand-gradient text-(--brand-navbar-text)">
         Ads
       </div>
@@ -159,7 +160,9 @@ function AdsVisual() {
           type="button"
           aria-label="Previous ad"
           onClick={() =>
-            setSlide((prev) => (prev - 1 + sampleAds.length) % sampleAds.length)
+            setSlide(
+              (prev) => (prev - 1 + ADS_SAMPLES.length) % ADS_SAMPLES.length,
+            )
           }
           className="absolute p-2 text-white transition-opacity -translate-y-1/2 rounded-full opacity-0 left-2 top-1/2 bg-black/50 group-hover:opacity-100"
         >
@@ -168,7 +171,7 @@ function AdsVisual() {
         <button
           type="button"
           aria-label="Next ad"
-          onClick={() => setSlide((prev) => (prev + 1) % sampleAds.length)}
+          onClick={() => setSlide((prev) => (prev + 1) % ADS_SAMPLES.length)}
           className="absolute p-2 text-white transition-opacity -translate-y-1/2 rounded-full opacity-0 right-2 top-1/2 bg-black/50 group-hover:opacity-100"
         >
           <ChevronRight className="w-4 h-4" />
@@ -185,9 +188,6 @@ const VISUALS: Record<string, () => ReactNode> = {
   ads: AdsVisual,
 };
 
-const AUTO_ADVANCE_MS = 6500;
-const SWIPE_THRESHOLD = 60;
-
 export default function AudiencesSection() {
   const reduceMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
@@ -201,28 +201,22 @@ export default function AudiencesSection() {
 
   const active = HOME_FEATURE_TABS[activeIndex] ?? HOME_FEATURE_TABS[0];
   const Visual = VISUALS[active.id] ?? StatusesVisual;
+  const tabCount = HOME_FEATURE_TABS.length;
 
   const goTo = useCallback(
     (nextIndex: number) => {
-      const len = HOME_FEATURE_TABS.length;
-      const clamped = ((nextIndex % len) + len) % len;
+      const clamped = ((nextIndex % tabCount) + tabCount) % tabCount;
       if (clamped === activeIndex) return;
 
-      if (activeIndex === len - 1 && clamped === 0) setDirection(1);
-      else if (activeIndex === 0 && clamped === len - 1) setDirection(-1);
+      if (activeIndex === tabCount - 1 && clamped === 0) setDirection(1);
+      else if (activeIndex === 0 && clamped === tabCount - 1) setDirection(-1);
       else setDirection(clamped > activeIndex ? 1 : -1);
 
       setActiveIndex(clamped);
     },
-    [activeIndex],
+    [activeIndex, tabCount],
   );
 
-  const goNext = useCallback(() => goTo(activeIndex + 1), [activeIndex, goTo]);
-  const goPrev = useCallback(() => goTo(activeIndex - 1), [activeIndex, goTo]);
-
-  // Only run the slider while this section is on screen. Auto-advance used to
-  // start on page load (off-screen), so by the time you scrolled here it was
-  // often already on Ads instead of Statuses.
   useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
@@ -243,8 +237,6 @@ export default function AudiencesSection() {
     return () => io.disconnect();
   }, []);
 
-  // Horizontally center the active tab inside the pill bar only — never
-  // scrollIntoView (that was yanking the whole page down to this section).
   useEffect(() => {
     const list = tabListRef.current;
     const tab = tabRefs.current[activeIndex];
@@ -258,20 +250,18 @@ export default function AudiencesSection() {
     });
   }, [activeIndex, reduceMotion]);
 
-  // Auto-advance like a slider (only while visible; paused on hover / focus)
+  // Equal dwell: one timeout per slide, restarted only when the active slide
+  // (or pause/visibility) changes — not on every callback identity change.
   useEffect(() => {
     if (reduceMotion || paused || !inView) return;
-    const id = window.setInterval(goNext, AUTO_ADVANCE_MS);
-    return () => window.clearInterval(id);
-  }, [goNext, paused, reduceMotion, inView]);
 
-  const onDragEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.x < -SWIPE_THRESHOLD || info.velocity.x < -400) {
-      goNext();
-    } else if (info.offset.x > SWIPE_THRESHOLD || info.velocity.x > 400) {
-      goPrev();
-    }
-  };
+    const id = window.setTimeout(() => {
+      setDirection(1);
+      setActiveIndex((prev) => (prev + 1) % tabCount);
+    }, SLIDE_MS);
+
+    return () => window.clearTimeout(id);
+  }, [activeIndex, paused, reduceMotion, inView, tabCount]);
 
   const slideVariants = {
     enter: (dir: number) =>
@@ -290,14 +280,6 @@ export default function AudiencesSection() {
       ref={sectionRef}
       aria-labelledby="more-features-heading"
       className="relative isolate overflow-hidden px-6 py-20 sm:py-28"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocusCapture={() => setPaused(true)}
-      onBlurCapture={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
-          setPaused(false);
-        }
-      }}
     >
       <MoreFeaturesMapBackground />
 
@@ -308,13 +290,21 @@ export default function AudiencesSection() {
           title="Everything else your team needs day to day"
         />
 
-        {/* Slider tab bar */}
+        {/* Slider tab bar — pause autoplay while interacting with controls */}
         <Reveal className="flex justify-center mt-10">
           <div
             ref={tabListRef}
             role="tablist"
             aria-label="Feature tabs"
             className="relative flex max-w-full items-center gap-1 overflow-x-auto p-1.5 bg-white border border-gray-200 shadow-lg rounded-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            onFocusCapture={() => setPaused(true)}
+            onBlurCapture={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                setPaused(false);
+              }
+            }}
           >
             {HOME_FEATURE_TABS.map((tab, index) => {
               const isActive = index === activeIndex;
@@ -355,16 +345,11 @@ export default function AudiencesSection() {
           </div>
         </Reveal>
 
-        {/* Slider panel — swipe to change */}
         <motion.div
           id="feature-tab-panel"
           role="tabpanel"
           aria-labelledby={`feature-tab-${active.id}`}
-          className="relative mt-12 touch-pan-y"
-          drag={reduceMotion ? false : "x"}
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.18}
-          onDragEnd={onDragEnd}
+          className="relative mt-12"
         >
           <div className="grid items-center gap-10 overflow-hidden lg:grid-cols-2 lg:gap-14">
             <AnimatePresence mode="wait" custom={direction}>
@@ -412,8 +397,11 @@ export default function AudiencesSection() {
           </div>
         </motion.div>
 
-        {/* Dot indicators */}
-        <div className="flex items-center justify-center gap-2 mt-8">
+        <div
+          className="flex items-center justify-center gap-2 mt-8"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
           {HOME_FEATURE_TABS.map((tab, index) => (
             <button
               key={tab.id}

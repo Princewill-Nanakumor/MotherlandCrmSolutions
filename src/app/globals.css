@@ -22,11 +22,17 @@
   color: #0f172a;
 }
 
-/* Smooth scrolling for better UX */
+/* Smooth scrolling for in-app shells only. On the public homepage
+ * (native window scroll), smooth behavior makes wheel/trackpad feel
+ * laggy — first flick often “does nothing”, then the page jumps. */
 @media (prefers-reduced-motion: no-preference) {
-  html {
+  html:not(.public-native-scroll) {
     scroll-behavior: smooth;
   }
+}
+
+html.public-native-scroll {
+  scroll-behavior: auto;
 }
 
 html {

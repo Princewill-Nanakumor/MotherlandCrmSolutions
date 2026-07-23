@@ -4,17 +4,13 @@
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { HeroBoardMockup } from "@/components/homepageComponents/HeroBoardMockup";
 import { HeroMapBackground } from "@/components/homepageComponents/HeroMapBackground";
 
-const TRUST_POINTS = [
-  "3-day free trial",
-  "No credit card",
-  "Crypto billing",
-];
+const TRUST_POINTS = ["3-day free trial", "No credit card", "Crypto billing"];
 
 export default function HeroSection() {
   const { displayName } = useAppBranding();
@@ -31,13 +27,13 @@ export default function HeroSection() {
 
   return (
     <section
-      className="relative flex items-center min-h-screen overflow-hidden bg-gray-50 hero-section pt-28 pb-16 sm:pt-32"
+      className="flex overflow-hidden relative items-center pt-28 pb-16 min-h-screen bg-gray-50 hero-section sm:pt-32"
       aria-labelledby="hero-heading"
     >
       {/* Alternate map backdrop (dot grid + routes + nodes) */}
       <HeroMapBackground />
 
-      <div className="relative z-10 grid items-center w-full max-w-7xl gap-12 px-6 mx-auto lg:grid-cols-2 lg:gap-10">
+      <div className="grid relative z-10 gap-12 items-center px-6 mx-auto w-full max-w-7xl lg:grid-cols-2 lg:gap-10">
         {/* Copy column */}
         <div className="text-center lg:text-left">
           <motion.div
@@ -45,7 +41,6 @@ export default function HeroSection() {
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="inline-flex items-center gap-2 px-3 py-1 mb-6 text-xs font-semibold tracking-wide border rounded-full border-gray-200 brand-soft-bg text-(--brand-from)"
           >
-            <Sparkles className="w-3.5 h-3.5" />
             Real-time CRM for modern sales teams
           </motion.div>
 
@@ -71,10 +66,10 @@ export default function HeroSection() {
           <motion.div
             {...fadeUp}
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.25 }}
-            className="flex flex-col items-center gap-3 mt-8 sm:flex-row lg:justify-start justify-center"
+            className="flex flex-col gap-3 justify-center items-center mt-8 sm:flex-row lg:justify-start"
           >
             {status === "loading" ? (
-              <div className="w-44 h-14 rounded-xl bg-gray-200 animate-pulse" />
+              <div className="w-44 h-14 bg-gray-200 rounded-xl animate-pulse" />
             ) : isAuthed ? (
               <Link
                 href="/dashboard"
@@ -105,12 +100,12 @@ export default function HeroSection() {
           <motion.ul
             {...fadeUp}
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.35 }}
-            className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-8 lg:justify-start"
+            className="flex flex-wrap gap-y-2 gap-x-6 justify-center items-center mt-8 lg:justify-start"
           >
             {TRUST_POINTS.map((point) => (
               <li
                 key={point}
-                className="flex items-center gap-2 text-sm font-medium text-gray-600"
+                className="flex gap-2 items-center text-sm font-medium text-gray-600"
               >
                 <CheckCircle2 className="w-4 h-4 text-(--brand-from)" />
                 {point}
@@ -121,7 +116,9 @@ export default function HeroSection() {
 
         {/* Product mockup column */}
         <motion.div
-          initial={reduceMotion ? undefined : { opacity: 0, y: 40, scale: 0.96 }}
+          initial={
+            reduceMotion ? undefined : { opacity: 0, y: 40, scale: 0.96 }
+          }
           animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
           className="hidden lg:block"

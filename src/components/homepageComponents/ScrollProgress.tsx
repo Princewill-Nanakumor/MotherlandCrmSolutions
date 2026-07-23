@@ -5,14 +5,14 @@ import { motion, useScroll, useSpring } from "framer-motion";
 
 /**
  * Slim, brand-colored progress bar pinned to the very top of the viewport.
- * Uses a spring so the fill glides rather than jumps. Purely decorative.
+ * Light spring so it tracks the page without feeling a beat behind the wheel.
  */
 export function ScrollProgress() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
-    stiffness: 120,
-    damping: 30,
-    mass: 0.3,
+    stiffness: 380,
+    damping: 40,
+    mass: 0.2,
   });
 
   return (
