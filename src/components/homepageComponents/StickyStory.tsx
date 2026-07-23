@@ -33,7 +33,7 @@ export type StoryStep = {
   statLabel?: string;
 };
 
-/** Mobile story card — progress bar, icon row, copy, 16:9 visual */
+/** Mobile story card — icon row, copy, 16:9 visual */
 function MobileStepCard({
   step,
   index,
@@ -62,15 +62,6 @@ function MobileStepCard({
       }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="h-1 w-full bg-gray-100">
-        <motion.div
-          className="h-full brand-gradient"
-          initial={{ width: "0%" }}
-          animate={{ width: isActive ? "100%" : "0%" }}
-          transition={{ duration: 0.55 }}
-        />
-      </div>
-
       <div className="p-5 sm:p-6">
         <div className="flex items-start gap-4">
           <div
@@ -151,7 +142,7 @@ function DotNavigation({
  * Apple-style pinned storytelling section.
  *
  * Desktop (lg+): sticky panel + step rail driven by vertical scroll.
- * Mobile: sticky card (progress bar + icon + copy + 16:9 visual) with dots.
+ * Mobile: sticky card (icon + copy + 16:9 visual) with dots.
  */
 export function StickyStory({
   steps,
@@ -263,14 +254,14 @@ export function StickyStory({
 
   const storyGrid = (
     <div className="grid w-full gap-10 lg:grid-cols-2">
-      <div className="relative h-110 w-full">
-        <AnimatePresence mode="popLayout">
+      <div className="relative h-110 w-full overflow-hidden rounded-2xl border border-(--brand-from)/20 bg-gray-50 shadow-xl shadow-(--brand-from)/5">
+        <AnimatePresence initial={false}>
           <motion.div
             key={steps[active]!.id}
-            initial={{ opacity: 0, scale: 0.96, y: 24 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98, y: -24 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="absolute inset-0"
           >
             {steps[active]!.visual}
