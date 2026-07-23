@@ -9,6 +9,26 @@ import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { Reveal } from "@/components/homepageComponents/primitives";
 
+function CtaMapBackground() {
+  return (
+    <div aria-hidden className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Square map grid */}
+      <div
+        className="absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, rgba(255,255,255,0.55) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.55) 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
+          maskImage:
+            "radial-gradient(ellipse 85% 75% at 50% 50%, black 25%, transparent 80%)",
+          WebkitMaskImage:
+            "radial-gradient(ellipse 85% 75% at 50% 50%, black 25%, transparent 80%)",
+        }}
+      />
+    </div>
+  );
+}
+
 export default function CtaBandSection() {
   const { displayName, telegramUrl } = useAppBranding();
   const { data: session, status } = useSession();
@@ -19,7 +39,7 @@ export default function CtaBandSection() {
     reduce
       ? {}
       : {
-          animate: { scale: [1, 1.15, 1], opacity: [0.5, 0.75, 0.5] },
+          animate: { scale: [1, 1.12, 1], opacity: [0.35, 0.55, 0.35] },
           transition: {
             duration: 8,
             repeat: Infinity,
@@ -32,30 +52,18 @@ export default function CtaBandSection() {
     <section aria-labelledby="cta-heading" className="px-6 py-24 sm:py-32">
       <div className="max-w-6xl mx-auto">
         <Reveal className="relative overflow-hidden text-center shadow-2xl rounded-3xl brand-gradient px-6 py-20 sm:px-12 sm:py-28">
-          {/* Ambient orbs */}
           <motion.span
             aria-hidden
             {...orb(0)}
-            className="absolute rounded-full -top-24 -left-16 h-72 w-72 bg-white/25 blur-3xl"
+            className="absolute rounded-full -top-24 -left-16 h-72 w-72 bg-white/20 blur-3xl"
           />
           <motion.span
             aria-hidden
             {...orb(2)}
-            className="absolute rounded-full -bottom-24 -right-10 h-80 w-80 bg-white/20 blur-3xl"
+            className="absolute rounded-full -bottom-24 -right-10 h-80 w-80 bg-white/15 blur-3xl"
           />
-          <div
-            aria-hidden
-            className="absolute inset-0 opacity-[0.12]"
-            style={{
-              backgroundImage:
-                "linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px)",
-              backgroundSize: "40px 40px",
-              maskImage:
-                "radial-gradient(circle at 50% 50%, black, transparent 75%)",
-              WebkitMaskImage:
-                "radial-gradient(circle at 50% 50%, black, transparent 75%)",
-            }}
-          />
+
+          <CtaMapBackground />
 
           <div className="relative z-10">
             <h2

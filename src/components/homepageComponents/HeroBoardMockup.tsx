@@ -10,14 +10,29 @@ type MockLead = {
   tint: string;
 };
 
-const COLUMNS: { title: string; count: number; accent: string; leads: MockLead[] }[] = [
+const COLUMNS: {
+  title: string;
+  count: number;
+  accent: string;
+  leads: MockLead[];
+}[] = [
   {
     title: "New",
     count: 12,
     accent: "bg-sky-500",
     leads: [
-      { name: "Amara O.", country: "🇳🇬 Nigeria", initials: "AO", tint: "bg-sky-100 text-sky-700" },
-      { name: "Liam Carter", country: "🇬🇧 UK", initials: "LC", tint: "bg-indigo-100 text-indigo-700" },
+      {
+        name: "Amara O.",
+        country: "🇳🇬 Nigeria",
+        initials: "AO",
+        tint: "bg-sky-100 text-sky-700",
+      },
+      {
+        name: "Liam Carter",
+        country: "🇬🇧 UK",
+        initials: "LC",
+        tint: "bg-indigo-100 text-indigo-700",
+      },
     ],
   },
   {
@@ -25,7 +40,12 @@ const COLUMNS: { title: string; count: number; accent: string; leads: MockLead[]
     count: 8,
     accent: "bg-amber-500",
     leads: [
-      { name: "Sofia Rossi", country: "🇮🇹 Italy", initials: "SR", tint: "bg-amber-100 text-amber-700" },
+      {
+        name: "Sofia Rossi",
+        country: "🇮🇹 Italy",
+        initials: "SR",
+        tint: "bg-amber-100 text-amber-700",
+      },
     ],
   },
   {
@@ -33,7 +53,12 @@ const COLUMNS: { title: string; count: number; accent: string; leads: MockLead[]
     count: 5,
     accent: "bg-emerald-500",
     leads: [
-      { name: "Noah Kim", country: "🇰🇷 Korea", initials: "NK", tint: "bg-emerald-100 text-emerald-700" },
+      {
+        name: "Noah Kim",
+        country: "🇰🇷 Korea",
+        initials: "NK",
+        tint: "bg-emerald-100 text-emerald-700",
+      },
     ],
   },
 ];
@@ -46,7 +71,7 @@ export function HeroBoardMockup() {
     >
       {/* Window chrome */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50/80">
-        <span className="w-3 h-3 rounded-full bg-red-400" />
+        <span className="w-3 h-3 bg-red-400 rounded-full" />
         <span className="w-3 h-3 rounded-full bg-amber-400" />
         <span className="w-3 h-3 rounded-full bg-emerald-400" />
         <div className="flex items-center gap-2 px-3 py-1 ml-3 text-xs text-gray-500 bg-white border border-gray-200 rounded-md">
@@ -110,11 +135,11 @@ export function HeroBoardMockup() {
       </div>
 
       {/* Bottom stat strip */}
-      <div className="grid grid-cols-3 gap-px border-t border-gray-100 bg-gray-100 text-center">
+      <div className="grid grid-cols-3 gap-px text-center bg-gray-100 border-t border-gray-100">
         {[
-          { label: "This week", value: "+128" },
-          { label: "Conversion", value: "24%" },
-          { label: "Follow-ups", value: "17" },
+          { label: "New Zealand", value: "600" },
+          { label: "Canada", value: "800" },
+          { label: "France", value: "1000" },
         ].map((s) => (
           <div key={s.label} className="px-2 py-3 bg-white">
             <p className="text-sm font-bold text-gray-900">{s.value}</p>

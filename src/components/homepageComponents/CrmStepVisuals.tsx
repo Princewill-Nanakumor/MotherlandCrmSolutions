@@ -20,16 +20,18 @@ function MockFrame({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col w-full h-full overflow-hidden border shadow-2xl select-none rounded-2xl border-gray-200/70 bg-white">
+    <div className="flex flex-col w-full h-full overflow-hidden bg-white border shadow-2xl select-none rounded-2xl border-gray-200/70">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50/80">
-        <span className="w-3 h-3 rounded-full bg-red-400" />
+        <span className="w-3 h-3 bg-red-400 rounded-full" />
         <span className="w-3 h-3 rounded-full bg-amber-400" />
         <span className="w-3 h-3 rounded-full bg-emerald-400" />
         <span className="px-3 py-1 ml-3 text-xs text-gray-500 bg-white border border-gray-200 rounded-md">
           {label}
         </span>
       </div>
-      <div className="flex-1 min-h-0 p-4 overflow-hidden bg-white">{children}</div>
+      <div className="flex-1 min-h-0 p-4 overflow-hidden bg-white">
+        {children}
+      </div>
     </div>
   );
 }
@@ -39,15 +41,15 @@ export function LeadPipelineVisual() {
     {
       title: "New",
       accent: "bg-sky-500",
-      leads: ["Amara O.", "Liam C."],
+      leads: ["James O.", "Liam C."],
     },
     {
-      title: "Contacted",
+      title: "Invalid Language",
       accent: "bg-amber-500",
       leads: ["Sofia R."],
     },
     {
-      title: "Won",
+      title: "Potential",
       accent: "bg-emerald-500",
       leads: ["Noah K."],
     },
@@ -67,7 +69,7 @@ export function LeadPipelineVisual() {
               {col.leads.map((name) => (
                 <div
                   key={name}
-                  className="rounded-lg border border-gray-100 bg-gray-50/80 px-2 py-2"
+                  className="px-2 py-2 border border-gray-100 rounded-lg bg-gray-50/80"
                 >
                   <p className="text-[11px] font-semibold text-gray-800 truncate">
                     {name}
@@ -85,9 +87,9 @@ export function LeadPipelineVisual() {
 
 export function TeamAssignVisual() {
   const agents = [
-    { name: "You (Admin)", leads: 42, role: "Administrator" },
-    { name: "Sofia · Agent", leads: 28, role: "Agent" },
-    { name: "Noah · Agent", leads: 19, role: "Agent" },
+    { name: "You (Admin)", leads: 2000, role: "Administrator" },
+    { name: "Sofia · Agent", leads: 428, role: "Agent" },
+    { name: "Noah · Agent", leads: 420, role: "Agent" },
   ];
   return (
     <MockFrame label="Users · Assign">
@@ -103,12 +105,14 @@ export function TeamAssignVisual() {
           >
             <span
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                i === 0 ? "text-white brand-gradient" : "brand-soft-bg brand-icon"
+                i === 0
+                  ? "text-white brand-gradient"
+                  : "brand-soft-bg brand-icon"
               }`}
             >
               <UserRound className="w-4 h-4" />
             </span>
-            <div className="min-w-0 flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-gray-800 truncate">
                 {a.name}
               </p>
@@ -126,8 +130,8 @@ export function TeamAssignVisual() {
 
 export function FiltersVisual() {
   const chips = [
-    { label: "Status: Contacted", on: true },
-    { label: "Country: Nigeria", on: true },
+    { label: "Status: Callback", on: true },
+    { label: "Country: Germany", on: true },
     { label: "Source: Facebook", on: false },
     { label: "Assigned: Sofia", on: true },
   ];
@@ -158,7 +162,7 @@ export function FiltersVisual() {
           {["Amara Okonkwo", "Sofia Rossi", "Liam Carter"].map((n) => (
             <div
               key={n}
-              className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2"
+              className="flex items-center justify-between px-3 py-2 border border-gray-100 rounded-lg bg-gray-50/60"
             >
               <span className="text-xs font-semibold text-gray-800">{n}</span>
               <span className="text-[10px] text-emerald-600">Match</span>
@@ -174,7 +178,7 @@ export function SoftphoneVisual() {
   return (
     <MockFrame label="Lead details · Call">
       <div className="flex flex-col items-center justify-center h-full text-center">
-        <span className="flex items-center justify-center w-14 h-14 mb-4 text-white rounded-2xl brand-gradient shadow-md">
+        <span className="flex items-center justify-center mb-4 text-white shadow-md w-14 h-14 rounded-2xl brand-gradient">
           <Phone className="w-6 h-6" />
         </span>
         <p className="text-sm font-bold text-gray-900">Sofia Rossi</p>
@@ -187,7 +191,9 @@ export function SoftphoneVisual() {
             MicroSIP
           </span>
         </div>
-        <p className="mt-4 text-[10px] text-gray-400">Call logs saved on the lead</p>
+        <p className="mt-4 text-[10px] text-gray-400">
+          Call logs saved on the lead
+        </p>
       </div>
     </MockFrame>
   );
@@ -200,7 +206,7 @@ export function RealtimeVisual() {
     { i: "NK", c: "bg-emerald-100 text-emerald-700" },
   ];
   return (
-    <MockFrame label="Leads · Live">
+    <MockFrame label="Leads · New">
       <div className="flex flex-col h-full">
         <div className="flex items-center gap-2 mb-3">
           <div className="flex -space-x-2">
@@ -218,14 +224,15 @@ export function RealtimeVisual() {
               <span className="absolute inline-flex w-full h-full rounded-full opacity-75 bg-emerald-400 animate-ping" />
               <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-500" />
             </span>
-            3 online
+            3 New
           </span>
         </div>
         <div className="flex-1 space-y-2">
           {[
-            { t: "Sofia moved Liam → Contacted", d: "just now" },
-            { t: "Noah assigned a new lead to you", d: "2s ago" },
-            { t: "Amara added a comment", d: "5s ago" },
+            { t: "Admin → Created", d: "just now" },
+            { t: "Admin assigned a new lead to you", d: "2s ago" },
+            { t: "Chris Changed status", d: "5s ago" },
+            { t: "Chris added a comment", d: "1min ago" },
           ].map((e) => (
             <div
               key={e.t}
@@ -277,7 +284,10 @@ export function ImportVisual() {
             <span>78%</span>
           </div>
           <div className="w-full h-2 overflow-hidden bg-gray-100 rounded-full">
-            <div className="h-full rounded-full brand-gradient" style={{ width: "78%" }} />
+            <div
+              className="h-full rounded-full brand-gradient"
+              style={{ width: "78%" }}
+            />
           </div>
         </div>
       </div>
@@ -298,7 +308,9 @@ export function NotificationsVisual() {
           <div
             key={n.t}
             className={`flex items-start gap-3 rounded-xl border p-3 ${
-              n.hot ? "border-(--brand-from) brand-soft-bg" : "border-gray-100 bg-gray-50/60"
+              n.hot
+                ? "border-(--brand-from) brand-soft-bg"
+                : "border-gray-100 bg-gray-50/60"
             }`}
           >
             <span
@@ -322,13 +334,13 @@ export function NotificationsVisual() {
 export function AnalyticsVisual() {
   const bars = [42, 60, 38, 74, 55, 88, 67];
   return (
-    <MockFrame label="Analytics">
+    <MockFrame label="Dashboard">
       <div className="flex flex-col h-full">
         <div className="grid grid-cols-3 gap-2 mb-4">
           {[
-            ["Leads", "1,284"],
-            ["Won", "312"],
-            ["Rate", "24%"],
+            ["Total Leads", "1,284"],
+            ["Active Users", "3"],
+            ["Assigned Leads", "248"],
           ].map(([l, v]) => (
             <div
               key={l}

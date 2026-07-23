@@ -2,13 +2,14 @@
 "use client";
 
 import { motion, useReducedMotion, type Variants } from "framer-motion";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { cn } from "@/libs/utils";
 
 /**
  * Scroll-in reveal wrapper.
  * Respects `prefers-reduced-motion` (renders statically, no transform/opacity
  * animation) so the homepage stays accessible.
+ * Locks after the first enter so layout/scroll jitter cannot replay it.
  */
 export function Reveal({
   children,
@@ -24,6 +25,7 @@ export function Reveal({
   once?: boolean;
 }) {
   const reduceMotion = useReducedMotion();
+  const [hasRevealed, setHasRevealed] = useState(false);
 
   if (reduceMotion) {
     return <div className={className}>{children}</div>;
@@ -32,9 +34,13 @@ export function Reveal({
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once, margin: "-80px" }}
+      initial={hasRevealed ? false : { opacity: 0, y }}
+      animate={hasRevealed ? { opacity: 1, y: 0 } : undefined}
+      whileInView={hasRevealed ? undefined : { opacity: 1, y: 0 }}
+      viewport={{ once, amount: 0.2 }}
+      onViewportEnter={() => {
+        if (once) setHasRevealed(true);
+      }}
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay }}
     >
       {children}
@@ -53,6 +59,7 @@ export function RevealGroup({
   stagger?: number;
 }) {
   const reduceMotion = useReducedMotion();
+  const [hasRevealed, setHasRevealed] = useState(false);
 
   if (reduceMotion) {
     return <div className={className}>{children}</div>;
@@ -67,9 +74,11 @@ export function RevealGroup({
     <motion.div
       className={className}
       variants={container}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-80px" }}
+      initial={hasRevealed ? "visible" : "hidden"}
+      animate={hasRevealed ? "visible" : undefined}
+      whileInView={hasRevealed ? undefined : "visible"}
+      viewport={{ once: true, amount: 0.2 }}
+      onViewportEnter={() => setHasRevealed(true)}
     >
       {children}
     </motion.div>

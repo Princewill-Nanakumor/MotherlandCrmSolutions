@@ -1,25 +1,258 @@
 // src/components/homepageComponents/HeroMapBackground.tsx
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
+const ROUTES = [
+  {
+    id: "hero-route-1",
+    d: "M 120 520 C 280 280, 420 240, 580 360 S 820 520, 980 300",
+    stroke: "var(--brand-from)",
+    strokeOpacity: 0.28,
+    strokeDasharray: "6 10",
+    strokeWidth: 1.5,
+    drawDelay: 0,
+    drawDuration: 2.2,
+  },
+  {
+    id: "hero-route-2",
+    d: "M 180 220 C 340 180, 480 400, 640 280 S 880 160, 1040 420",
+    stroke: "var(--brand-to)",
+    strokeOpacity: 0.22,
+    strokeDasharray: "4 8",
+    strokeWidth: 1.5,
+    drawDelay: 0.2,
+    drawDuration: 2.4,
+  },
+  {
+    id: "hero-route-3",
+    d: "M 80 380 C 260 480, 500 560, 720 480 S 980 360, 1120 520",
+    stroke: "var(--brand-from)",
+    strokeOpacity: 0.18,
+    strokeDasharray: "2 7",
+    strokeWidth: 1.25,
+    drawDelay: 0.35,
+    drawDuration: 2.6,
+  },
+] as const;
+
+type TravelerDef = {
+  id: string;
+  routeIndex: number;
+  durationMs: number;
+  delayMs: number;
+  r: number;
+};
+
+const TRAVELERS: TravelerDef[] = [
+  { id: "t1a", routeIndex: 0, durationMs: 11000, delayMs: 0, r: 5 },
+  { id: "t1b", routeIndex: 0, durationMs: 15000, delayMs: 3500, r: 3.5 },
+  { id: "t2a", routeIndex: 1, durationMs: 13000, delayMs: 1000, r: 4.5 },
+  { id: "t2b", routeIndex: 1, durationMs: 17000, delayMs: 5000, r: 3 },
+  { id: "t3a", routeIndex: 2, durationMs: 12000, delayMs: 800, r: 4 },
+  { id: "t3b", routeIndex: 2, durationMs: 16000, delayMs: 6000, r: 3 },
+];
+
+const COLLISION_DIST = 22;
+const BOUNCE_MS = 420;
+const COOLDOWN_MS = 1400;
+const EXPLOSION_MS = 700;
+
+type NodeRender = {
+  id: string;
+  x: number;
+  y: number;
+  r: number;
+  scale: number;
+};
+
+type Explosion = {
+  id: string;
+  x: number;
+  y: number;
+  born: number;
+};
+
+type TravelerRuntime = {
+  def: TravelerDef;
+  progress: number;
+  dir: number;
+  resumeDir: number;
+  bounceUntil: number;
+  cooldownUntil: number;
+  scale: number;
+  x: number;
+  y: number;
+};
+
+function createPath(d: string) {
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", d);
+  return path;
+}
+
+function pointOnPath(path: SVGPathElement, progress: number) {
+  const len = path.getTotalLength();
+  const t = ((progress % 1) + 1) % 1;
+  return path.getPointAtLength(t * len);
+}
+
 /**
- * Alternate hero map backdrop — denser dot grid, soft “route” arcs, and
- * glowing nodes (map-pin feel). Different from Architecture’s blob+square grid
- * so you can compare the two looks.
+ * Hero map backdrop — route arcs with nodes that travel the paths and
+ * explode/bounce when they collide, then continue.
  */
 export function HeroMapBackground() {
   const reduce = useReducedMotion();
+  const [nodes, setNodes] = useState<NodeRender[]>([]);
+  const [explosions, setExplosions] = useState<Explosion[]>([]);
+  const travelersRef = useRef<TravelerRuntime[]>([]);
+  const pathsRef = useRef<SVGPathElement[]>([]);
+  const startRef = useRef(0);
+  const lastRef = useRef(0);
+
+  useEffect(() => {
+    if (reduce) {
+      const paths = ROUTES.map((r) => createPath(r.d));
+      const staticNodes: NodeRender[] = [];
+      paths.forEach((path, routeIndex) => {
+        [0.28, 0.62].forEach((t, i) => {
+          const p = pointOnPath(path, t);
+          staticNodes.push({
+            id: `static-${routeIndex}-${i}`,
+            x: p.x,
+            y: p.y,
+            r: 4,
+            scale: 1,
+          });
+        });
+      });
+      setNodes(staticNodes);
+      return;
+    }
+
+    pathsRef.current = ROUTES.map((r) => createPath(r.d));
+    travelersRef.current = TRAVELERS.map((def) => {
+      const path = pathsRef.current[def.routeIndex]!;
+      const p = pointOnPath(path, 0);
+      return {
+        def,
+        progress: 0,
+        dir: 1,
+        resumeDir: 1,
+        bounceUntil: 0,
+        cooldownUntil: 0,
+        scale: 1,
+        x: p.x,
+        y: p.y,
+      };
+    });
+
+    startRef.current = performance.now();
+    lastRef.current = startRef.current;
+    let raf = 0;
+    let explosionId = 0;
+
+    const tick = (now: number) => {
+      const dt = Math.min(48, now - lastRef.current);
+      lastRef.current = now;
+      const elapsed = now - startRef.current;
+      const travelers = travelersRef.current;
+      const paths = pathsRef.current;
+
+      for (const t of travelers) {
+        if (elapsed < t.def.delayMs) {
+          const p = pointOnPath(paths[t.def.routeIndex]!, 0);
+          t.x = p.x;
+          t.y = p.y;
+          t.scale += (1 - t.scale) * 0.15;
+          continue;
+        }
+
+        // End bounce window → resume original travel direction
+        if (t.bounceUntil && now >= t.bounceUntil) {
+          t.dir = t.resumeDir;
+          t.bounceUntil = 0;
+        }
+
+        const speed = dt / t.def.durationMs;
+        t.progress = (((t.progress + speed * t.dir) % 1) + 1) % 1;
+
+        const p = pointOnPath(paths[t.def.routeIndex]!, t.progress);
+        t.x = p.x;
+        t.y = p.y;
+        t.scale += (1 - t.scale) * 0.12;
+      }
+
+      // Collisions
+      const newExplosions: Explosion[] = [];
+      for (let i = 0; i < travelers.length; i++) {
+        for (let j = i + 1; j < travelers.length; j++) {
+          const a = travelers[i]!;
+          const b = travelers[j]!;
+          if (elapsed < a.def.delayMs || elapsed < b.def.delayMs) continue;
+          if (now < a.cooldownUntil || now < b.cooldownUntil) continue;
+
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist >= COLLISION_DIST || dist < 0.001) continue;
+
+          // Bounce: reverse briefly, then resume prior direction
+          a.resumeDir = a.dir;
+          b.resumeDir = b.dir;
+          a.dir = -a.dir;
+          b.dir = -b.dir;
+          a.bounceUntil = now + BOUNCE_MS;
+          b.bounceUntil = now + BOUNCE_MS;
+          a.cooldownUntil = now + COOLDOWN_MS;
+          b.cooldownUntil = now + COOLDOWN_MS;
+          a.scale = 1.85;
+          b.scale = 1.85;
+
+          newExplosions.push({
+            id: `boom-${explosionId++}`,
+            x: (a.x + b.x) / 2,
+            y: (a.y + b.y) / 2,
+            born: now,
+          });
+        }
+      }
+
+      setNodes(
+        travelers.map((t) => ({
+          id: t.def.id,
+          x: t.x,
+          y: t.y,
+          r: t.def.r,
+          scale: t.scale,
+        })),
+      );
+
+      if (newExplosions.length) {
+        setExplosions((prev) =>
+          [...prev, ...newExplosions].filter((e) => now - e.born < EXPLOSION_MS),
+        );
+      } else {
+        setExplosions((prev) =>
+          prev.length ? prev.filter((e) => now - e.born < EXPLOSION_MS) : prev,
+        );
+      }
+
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [reduce]);
 
   return (
     <div
       aria-hidden
       className="pointer-events-none absolute inset-0 overflow-hidden"
     >
-      {/* Soft wash */}
       <div className="absolute inset-0 bg-linear-to-br from-white via-gray-50 to-[color-mix(in_srgb,var(--brand-from)_8%,white)]" />
 
-      {/* Dot map grid */}
       <div
         className="absolute inset-0 opacity-[0.45]"
         style={{
@@ -33,7 +266,6 @@ export function HeroMapBackground() {
         }}
       />
 
-      {/* Larger latitude / longitude style lines */}
       <div
         className="absolute inset-0 opacity-[0.2]"
         style={{
@@ -47,76 +279,105 @@ export function HeroMapBackground() {
         }}
       />
 
-      {/* Route arcs (SVG) */}
       <svg
         className="absolute inset-0 h-full w-full"
         viewBox="0 0 1200 800"
         preserveAspectRatio="xMidYMid slice"
         fill="none"
       >
-        <motion.path
-          d="M 120 520 C 280 280, 420 240, 580 360 S 820 520, 980 300"
-          stroke="var(--brand-from)"
-          strokeWidth="1.5"
-          strokeOpacity="0.28"
-          strokeDasharray="6 10"
-          initial={reduce ? undefined : { pathLength: 0, opacity: 0 }}
-          animate={reduce ? undefined : { pathLength: 1, opacity: 1 }}
-          transition={{ duration: 2.2, ease: "easeInOut" }}
-        />
-        <motion.path
-          d="M 180 220 C 340 180, 480 400, 640 280 S 880 160, 1040 420"
-          stroke="var(--brand-to)"
-          strokeWidth="1.5"
-          strokeOpacity="0.22"
-          strokeDasharray="4 8"
-          initial={reduce ? undefined : { pathLength: 0, opacity: 0 }}
-          animate={reduce ? undefined : { pathLength: 1, opacity: 1 }}
-          transition={{ duration: 2.4, ease: "easeInOut", delay: 0.2 }}
-        />
-        <motion.path
-          d="M 80 380 C 260 480, 500 560, 720 480 S 980 360, 1120 520"
-          stroke="var(--brand-from)"
-          strokeWidth="1.25"
-          strokeOpacity="0.18"
-          strokeDasharray="2 7"
-          initial={reduce ? undefined : { pathLength: 0, opacity: 0 }}
-          animate={reduce ? undefined : { pathLength: 1, opacity: 1 }}
-          transition={{ duration: 2.6, ease: "easeInOut", delay: 0.35 }}
-        />
+        <defs>
+          <radialGradient id="hero-node-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="var(--brand-from)" stopOpacity="1" />
+            <stop
+              offset="100%"
+              stopColor="var(--brand-to)"
+              stopOpacity="0.85"
+            />
+          </radialGradient>
+        </defs>
+
+        {ROUTES.map((route) => (
+          <motion.path
+            key={route.id}
+            d={route.d}
+            stroke={route.stroke}
+            strokeWidth={route.strokeWidth}
+            strokeOpacity={route.strokeOpacity}
+            strokeDasharray={route.strokeDasharray}
+            initial={reduce ? undefined : { pathLength: 0, opacity: 0 }}
+            animate={reduce ? undefined : { pathLength: 1, opacity: 1 }}
+            transition={{
+              duration: route.drawDuration,
+              ease: "easeInOut",
+              delay: route.drawDelay,
+            }}
+          />
+        ))}
+
+        {/* Collision explosions */}
+        {explosions.map((boom) => (
+          <g key={boom.id} transform={`translate(${boom.x} ${boom.y})`}>
+            <motion.circle
+              r="6"
+              fill="none"
+              stroke="var(--brand-from)"
+              strokeWidth="2"
+              initial={{ r: 4, opacity: 0.9 }}
+              animate={{ r: 42, opacity: 0 }}
+              transition={{ duration: 0.65, ease: "easeOut" }}
+            />
+            <motion.circle
+              r="4"
+              fill="none"
+              stroke="var(--brand-to)"
+              strokeWidth="1.5"
+              initial={{ r: 2, opacity: 0.85 }}
+              animate={{ r: 28, opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut", delay: 0.04 }}
+            />
+            {[0, 60, 120, 180, 240, 300].map((angle) => {
+              const rad = (angle * Math.PI) / 180;
+              return (
+                <motion.circle
+                  key={angle}
+                  r="2.2"
+                  fill="var(--brand-from)"
+                  initial={{ cx: 0, cy: 0, opacity: 1, scale: 1 }}
+                  animate={{
+                    cx: Math.cos(rad) * 36,
+                    cy: Math.sin(rad) * 36,
+                    opacity: 0,
+                    scale: 0.3,
+                  }}
+                  transition={{ duration: 0.55, ease: "easeOut" }}
+                />
+              );
+            })}
+          </g>
+        ))}
+
+        {/* Traveling nodes */}
+        {nodes.map((node) => (
+          <g
+            key={node.id}
+            transform={`translate(${node.x} ${node.y}) scale(${node.scale})`}
+          >
+            <circle
+              r={node.r + 4}
+              fill="var(--brand-from)"
+              opacity="0.18"
+            />
+            <circle
+              r={node.r}
+              fill="url(#hero-node-glow)"
+              stroke="white"
+              strokeWidth="1.5"
+              opacity="0.95"
+            />
+          </g>
+        ))}
       </svg>
 
-      {/* Glowing map nodes */}
-      {[
-        { x: "12%", y: "62%", delay: 0 },
-        { x: "28%", y: "28%", delay: 0.4 },
-        { x: "48%", y: "44%", delay: 0.8 },
-        { x: "68%", y: "58%", delay: 1.1 },
-        { x: "82%", y: "32%", delay: 1.5 },
-        { x: "90%", y: "55%", delay: 1.8 },
-      ].map((node) => (
-        <motion.span
-          key={`${node.x}-${node.y}`}
-          className="absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full brand-gradient shadow-[0_0_0_4px_color-mix(in_srgb,var(--brand-from)_18%,transparent)]"
-          style={{ left: node.x, top: node.y }}
-          animate={
-            reduce
-              ? undefined
-              : {
-                  scale: [1, 1.35, 1],
-                  opacity: [0.7, 1, 0.7],
-                }
-          }
-          transition={{
-            duration: 3.2,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: node.delay,
-          }}
-        />
-      ))}
-
-      {/* Corner brand glow */}
       <div
         className="absolute -left-24 top-1/4 h-80 w-80 rounded-full opacity-30 blur-3xl"
         style={{ background: "var(--brand-from)" }}

@@ -195,10 +195,10 @@ export const HOME_FEATURE_TABS: HomeFeatureTab[] = [
     id: "ads",
     tab: "Ads",
     icon: Megaphone,
-    headline: "Ads Manager.",
+    headline: "Motivation on every lead.",
     accent: "Built-in.",
     description:
-      "Open Ads from the sidebar to manage campaign tools alongside your leads as the Ads Manager grows.",
+      "View the Ads section in lead details for an auto-rotating feed of sales tips that keep agents focused while they work the deal.",
   },
 ];
 
