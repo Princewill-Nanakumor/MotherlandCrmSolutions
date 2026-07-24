@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   EXPLOSION_MS,
   MapCollisionExplosion,
@@ -16,24 +16,27 @@ const ROUTES = [
     d: "M 80 520 C 260 200, 480 180, 640 340 S 920 560, 1120 280",
     stroke: "var(--brand-from)",
     strokeOpacity: 0.35,
-    strokeDasharray: "8 12",
     strokeWidth: 2,
+    drawDelay: 0,
+    drawDuration: 2.2,
   },
   {
     id: "more-route-2",
     d: "M 140 180 C 360 320, 520 480, 760 360 S 980 200, 1160 420",
     stroke: "var(--brand-to)",
     strokeOpacity: 0.3,
-    strokeDasharray: "5 10",
     strokeWidth: 2,
+    drawDelay: 0.2,
+    drawDuration: 2.4,
   },
   {
     id: "more-route-3",
     d: "M 60 320 C 280 420, 520 120, 780 300 S 1000 520, 1180 360",
     stroke: "var(--brand-from)",
     strokeOpacity: 0.22,
-    strokeDasharray: "3 9",
     strokeWidth: 1.5,
+    drawDelay: 0.35,
+    drawDuration: 2.6,
   },
 ] as const;
 
@@ -301,13 +304,20 @@ export function MoreFeaturesMapBackground() {
         </defs>
 
         {ROUTES.map((route) => (
-          <path
+          <motion.path
             key={route.id}
             d={route.d}
             stroke={route.stroke}
             strokeWidth={route.strokeWidth}
             strokeOpacity={route.strokeOpacity}
-            strokeDasharray={route.strokeDasharray}
+            strokeLinecap="round"
+            initial={reduce ? undefined : { pathLength: 0, opacity: 0 }}
+            animate={reduce ? undefined : { pathLength: 1, opacity: 1 }}
+            transition={{
+              duration: route.drawDuration,
+              ease: "easeInOut",
+              delay: route.drawDelay,
+            }}
           />
         ))}
 

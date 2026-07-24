@@ -56,7 +56,7 @@ export default function SubscriptionPlansSection() {
               key={plan.id}
               variants={reduceMotion ? undefined : revealItem}
               className={cn(
-                "relative flex flex-col p-8 transition-all duration-300 bg-white border rounded-2xl",
+                "relative flex flex-col p-8 bg-white border rounded-2xl transition-[transform,box-shadow,border-color] duration-300",
                 plan.popular
                   ? "border-(--brand-from) shadow-xl ring-2 brand-ring-soft md:-translate-y-3"
                   : "border-gray-200 hover:border-(--brand-from) hover:shadow-lg",
@@ -115,7 +115,7 @@ export default function SubscriptionPlansSection() {
         </RevealGroup>
 
         <motion.div
-          initial={reduceMotion ? undefined : { opacity: 0, y: 20 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
           whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.5 }}

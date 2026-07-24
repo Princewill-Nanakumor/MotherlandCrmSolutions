@@ -2,7 +2,8 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Calendar, Users, Activity } from "lucide-react";
+import { Calendar, Users, Activity } from "lucide-react";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 
 interface Subscription {
   _id: string;
@@ -75,7 +76,7 @@ export default function SubscriptionDetails({
     <Card className="backdrop-blur-lg bg-white/70 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-white">
-          <Shield className="h-5 w-5" />
+          <MotherlandLogo className="h-5 w-5 rounded-[22%]" />
           <span>Subscription Details</span>
         </CardTitle>
       </CardHeader>
@@ -204,7 +205,7 @@ export default function SubscriptionDetails({
           </div>
         ) : (
           <div className="text-center py-8">
-            <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <MotherlandLogo className="mx-auto mb-4 h-12 w-12 rounded-[22%]" />
             <p className="text-gray-500 dark:text-gray-400 mb-2">
               No subscription found
             </p>

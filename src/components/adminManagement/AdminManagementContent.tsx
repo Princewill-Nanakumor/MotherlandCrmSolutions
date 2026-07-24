@@ -4,10 +4,11 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Shield, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import AdminStats from "./AdminStats";
 import AdminList from "./AdminList";
 import { useAdminOverview, useDeleteAdmin } from "@/hooks/useAdminData";
@@ -147,7 +148,7 @@ export default function AdminManagementContent() {
         </div>
         <div className="flex items-center space-x-3">
           <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300 border-green-200 dark:border-green-800">
-            <Shield className="h-3 w-3 mr-1" />
+            <MotherlandLogo className="mr-1 h-3 w-3 rounded-[22%]" />
             Super Admin
           </Badge>
 

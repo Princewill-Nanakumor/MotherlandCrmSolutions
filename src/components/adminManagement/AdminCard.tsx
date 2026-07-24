@@ -2,10 +2,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Eye, Trash2, Clock, UserCheck, Shield } from "lucide-react";
+import { Eye, Trash2, Clock, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { AdminStats } from "@/types/adminManagement";
 
 interface AdminCardProps {
@@ -110,7 +111,7 @@ export function AdminCard({
             )}
             {allowedEmails.includes(admin.email) && (
               <Badge className="text-purple-800 bg-purple-100 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800">
-                <Shield className="w-3 h-3 mr-1" />
+                <MotherlandLogo className="mr-1 h-3 w-3 rounded-[22%]" />
                 Super Admin
               </Badge>
             )}

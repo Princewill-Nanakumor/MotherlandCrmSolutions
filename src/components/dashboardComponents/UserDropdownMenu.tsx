@@ -2,7 +2,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
-import { UserCircle, LogOut, User, Settings, Shield, Bell } from "lucide-react";
+import { UserCircle, LogOut, User, Settings, Bell } from "lucide-react";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { useRouter } from "next/navigation";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 import { BalanceDisplay } from "./BalanceDisplay";
@@ -223,7 +224,7 @@ export function UserDropdownMenu({
                 disabled={logoutLoading}
                 className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out disabled:pointer-events-none disabled:opacity-50"
               >
-                <Shield className="w-4 h-4 mr-3 text-amber-600 dark:text-amber-400" />
+                <MotherlandLogo className="mr-3 h-4 w-4 rounded-[22%]" />
                 Admin management
               </button>
             ) : null}

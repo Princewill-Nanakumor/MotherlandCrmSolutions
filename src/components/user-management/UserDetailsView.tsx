@@ -10,7 +10,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Shield,
   Calendar,
   Lock,
   Eye,
@@ -23,6 +22,7 @@ import {
   MonitorCog,
   Clock,
 } from "lucide-react";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAgentPassword } from "@/hooks/useAgentPassword";
 import { useUserLoginInfo } from "@/hooks/useUserLoginInfo";
@@ -404,9 +404,7 @@ export function UserDetailsView({
           {/* Role */}
           <div className="flex items-start gap-3">
             <div className="p-2 mt-1 rounded-lg bg-[color-mix(in_srgb,var(--brand-from)_14%,white)] dark:bg-[color-mix(in_srgb,var(--brand-from)_22%,#111827)]">
-              <Shield
-                className="w-5 h-5 text-(--brand-from) dark:text-(--brand-focus)"
-              />
+              <MotherlandLogo className="h-5 w-5 rounded-[22%]" />
             </div>
             <div className="flex-1">
               <p className="text-sm text-gray-500 dark:text-gray-400">Role</p>

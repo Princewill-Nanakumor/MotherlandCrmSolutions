@@ -2,10 +2,10 @@
 
 "use client";
 
-import { Shield } from "lucide-react";
 import Link from "next/link";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { usePathname } from "next/navigation";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { BrandThemeApplier } from "@/components/BrandThemeApplier";
@@ -46,12 +46,7 @@ export default function AuthLayout({
                   href="/"
                   className="inline-flex items-center mb-3 space-x-2 sm:space-x-3 sm:mb-4"
                 >
-                  <div className="p-1.5 sm:p-2 brand-gradient rounded-lg shadow-md">
-                    <Shield
-                      size={28}
-                      className="sm:w-8.75 sm:h-8.75 text-white"
-                    />
-                  </div>
+                  <MotherlandLogo className="h-9 w-9 rounded-lg shadow-md sm:h-11 sm:w-11" />
                   <div className="text-xl font-bold sm:text-2xl brand-text-gradient">
                     {displayName}
                   </div>

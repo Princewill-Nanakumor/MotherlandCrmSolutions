@@ -1,7 +1,8 @@
 // src/components/user/ProfileSidebar.tsx
 "use client";
 
-import { User, Lock, Calendar, Shield } from "lucide-react";
+import { User, Lock, Calendar } from "lucide-react";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import React from "react";
 
 interface ProfileSidebarProps {
@@ -100,7 +101,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
           profile.permissions.map((permission, index) => (
             <div key={index} className="flex items-center gap-4">
               <div className="p-3 rounded-lg bg-green-500/10">
-                <Shield className="w-5 h-5 text-green-400" />
+                <MotherlandLogo className="h-5 w-5 rounded-[22%]" />
               </div>
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -115,7 +116,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         ) : (
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-lg bg-gray-500/10">
-              <Shield className="w-5 h-5 text-gray-400" />
+              <MotherlandLogo className="h-5 w-5 rounded-[22%]" />
             </div>
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-300">

@@ -2,8 +2,9 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, Shield } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { LoadingSpinner } from "@/components/leads/UserLeadsLoadingStates";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 
 // Define the proper type for subscription data
 interface SubscriptionData {
@@ -71,7 +72,7 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2 text-red-700 dark:text-red-300">
-              <Shield className="w-4 h-4" />
+              <MotherlandLogo className="h-4 w-4 rounded-[22%]" />
               <p>
                 Admin needs an active subscription for Users to view and manage
                 leads.

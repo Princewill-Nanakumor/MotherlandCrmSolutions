@@ -1,10 +1,11 @@
 // src/components/adminManagement/AdminInfoCard.tsx
 "use client";
 
-import { Mail, Phone, Globe, Clock, Shield } from "lucide-react";
+import { Mail, Phone, Globe, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 
 interface AdminDetails {
   _id: string;
@@ -47,7 +48,7 @@ export default function AdminInfoCard({
     <Card className="border-gray-200 shadow-xl backdrop-blur-lg bg-white/70 dark:bg-gray-800 dark:border-gray-700">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-white">
-          <Shield className="w-5 h-5" />
+          <MotherlandLogo className="h-5 w-5 rounded-[22%]" />
           <span>Admin Information</span>
         </CardTitle>
       </CardHeader>

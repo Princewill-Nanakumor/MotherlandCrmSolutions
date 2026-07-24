@@ -1,15 +1,20 @@
 // src/components/homepageComponents/primitives.tsx
 "use client";
 
-import { motion, useReducedMotion, type Variants } from "framer-motion";
-import { useState, type ReactNode } from "react";
+import {
+  motion,
+  useInView,
+  useReducedMotion,
+  type Variants,
+} from "framer-motion";
+import { useRef, type ReactNode } from "react";
 import { cn } from "@/libs/utils";
 
 /**
  * Scroll-in reveal wrapper.
  * Respects `prefers-reduced-motion` (renders statically, no transform/opacity
  * animation) so the homepage stays accessible.
- * Locks after the first enter so layout/scroll jitter cannot replay it.
+ * Locks after the first enter via useInView({ once: true }) — no replay.
  */
 export function Reveal({
   children,
@@ -25,7 +30,8 @@ export function Reveal({
   once?: boolean;
 }) {
   const reduceMotion = useReducedMotion();
-  const [hasRevealed, setHasRevealed] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once, amount: 0.2 });
 
   if (reduceMotion) {
     return <div className={className}>{children}</div>;
@@ -33,14 +39,10 @@ export function Reveal({
 
   return (
     <motion.div
+      ref={ref}
       className={className}
-      initial={hasRevealed ? false : { opacity: 0, y }}
-      animate={hasRevealed ? { opacity: 1, y: 0 } : undefined}
-      whileInView={hasRevealed ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once, amount: 0.2 }}
-      onViewportEnter={() => {
-        if (once) setHasRevealed(true);
-      }}
+      initial={{ opacity: 0, y }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y }}
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay }}
     >
       {children}
@@ -59,7 +61,8 @@ export function RevealGroup({
   stagger?: number;
 }) {
   const reduceMotion = useReducedMotion();
-  const [hasRevealed, setHasRevealed] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
 
   if (reduceMotion) {
     return <div className={className}>{children}</div>;
@@ -72,13 +75,11 @@ export function RevealGroup({
 
   return (
     <motion.div
+      ref={ref}
       className={className}
       variants={container}
-      initial={hasRevealed ? "visible" : "hidden"}
-      animate={hasRevealed ? "visible" : undefined}
-      whileInView={hasRevealed ? undefined : "visible"}
-      viewport={{ once: true, amount: 0.2 }}
-      onViewportEnter={() => setHasRevealed(true)}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
     >
       {children}
     </motion.div>

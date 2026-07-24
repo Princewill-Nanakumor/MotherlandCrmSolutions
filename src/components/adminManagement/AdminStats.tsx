@@ -7,10 +7,10 @@ import {
   Activity,
   TrendingUp,
   DollarSign,
-  Shield,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { PlatformStats } from "@/types/adminTypes";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 
 interface AdminStatsProps {
   platformStats: PlatformStats | null;
@@ -76,7 +76,7 @@ export default function AdminStats({ platformStats }: AdminStatsProps) {
           </div>
           <div className="grid grid-cols-1 items-start gap-y-4 border-t border-gray-200 pt-3 @sm:grid-cols-2 @sm:gap-x-4 @sm:gap-y-3 dark:border-gray-600">
             <div className="flex min-w-0 items-start gap-2">
-              <Shield className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <MotherlandLogo className="mt-0.5 h-4 w-4 shrink-0 rounded-[22%]" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Super admins

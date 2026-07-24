@@ -3,7 +3,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Shield } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { useSession } from "next-auth/react";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
@@ -69,7 +70,7 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2 text-red-700 dark:text-red-300">
-              <Shield className="w-4 h-4" />
+              <MotherlandLogo className="h-4 w-4 rounded-[22%]" />
               <p>
                 You need an active subscription to view and manage leads.
                 {subscriptionData?.subscriptionStatus === "expired" &&

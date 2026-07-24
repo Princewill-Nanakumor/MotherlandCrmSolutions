@@ -2,8 +2,9 @@
 "use client";
 
 import { Component, ReactNode } from "react";
-import { Shield, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { ShieldSpinnerGlyph } from "@/components/dashboardComponents/LeadsLoadingState";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 
 export const TableSkeleton = () => (
   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -131,7 +132,7 @@ export class ErrorBoundary extends Component<
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="mb-4">
-              <Shield className="h-12 w-12 text-red-500 mx-auto" />
+              <MotherlandLogo className="mx-auto h-12 w-12 rounded-[22%]" />
             </div>
             <h3 className="text-lg font-medium text-gray-900! dark:text-white! mb-2">
               Something went wrong

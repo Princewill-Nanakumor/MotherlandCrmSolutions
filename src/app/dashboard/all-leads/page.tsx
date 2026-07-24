@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import LeadsPageContent from "@/components/dashboardComponents/LeadsPageContent";
 import { useSearchContext } from "@/context/SearchContext";
-import { Shield } from "lucide-react";
+import { ShieldSpinnerGlyph } from "@/components/dashboardComponents/LeadsLoadingState";
 
 const AllLeadsPage: React.FC = () => {
   const { data: session, status } = useSession();
@@ -31,12 +31,7 @@ const AllLeadsPage: React.FC = () => {
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="relative flex items-center justify-center w-16 h-16">
-          <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
-          <div className="relative z-10 flex items-center justify-center w-12 h-12 bg-gray-800 rounded-full">
-            <Shield size={28} className="text-white" />
-          </div>
-        </div>
+        <ShieldSpinnerGlyph />
       </div>
     );
   }

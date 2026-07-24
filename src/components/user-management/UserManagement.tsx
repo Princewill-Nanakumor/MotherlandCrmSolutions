@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, Shield } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { UserFormModal } from "./UserFormModal";
 import { PasswordResetModal } from "../dashboardComponents/PasswordResetModal";
 import { UserCRUDOperations } from "@/components/user-management/UserCRUDOperations";
@@ -16,6 +16,7 @@ import { UserDetailsModal } from "./UserDetailsModal";
 import { CallLogsModal } from "./CallLogsModal";
 import { User } from "./UserTableColumns";
 import type { UserFormCreateData } from "@/schemas/UserFormSchema";
+import { ShieldSpinnerGlyph } from "@/components/dashboardComponents/LeadsLoadingState";
 
 interface UsersManagementProps {
   onUserDeleted?: (userId: string) => void;
@@ -101,12 +102,7 @@ export default function UsersManagement({
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="relative flex items-center justify-center w-16 h-16">
-          <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full border-t-blue-400 border-r-purple-500 animate-spin"></div>
-          <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full bg-linear-to-r from-indigo-600 to-purple-600">
-            <Shield size={28} className="text-white" />
-          </div>
-        </div>
+        <ShieldSpinnerGlyph />
       </div>
     );
   }

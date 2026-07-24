@@ -36,7 +36,7 @@ export default function FeaturesSection() {
                 key={feature.title}
                 variants={reduceMotion ? undefined : revealItem}
                 className={cn(
-                  "group relative flex flex-col overflow-hidden p-6 transition-all duration-300 bg-white border border-gray-100 rounded-2xl hover:-translate-y-1.5 hover:shadow-2xl hover:border-(--brand-from)/30",
+                  "group relative flex flex-col overflow-hidden p-6 bg-white border border-gray-100 rounded-2xl transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-(--brand-from)/30",
                   feature.featured && "sm:col-span-2 lg:col-span-1",
                 )}
               >

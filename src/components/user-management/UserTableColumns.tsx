@@ -9,9 +9,9 @@ import {
   KeyRound,
   Eye,
   PhoneCall,
-  Shield,
   User as UserIcon,
 } from "lucide-react";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import {
   formatLeadDisplayName,
   formatLeadDetailEmail,
@@ -139,7 +139,7 @@ export function useUserTableColumns({
             >
               <div className="flex items-center gap-1.5">
                 {isAdmin ? (
-                  <Shield className="w-3 h-3" />
+                  <MotherlandLogo className="h-3 w-3 rounded-[22%]" />
                 ) : (
                   <UserIcon className="w-3 h-3" />
                 )}

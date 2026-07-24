@@ -2,7 +2,8 @@
 "use client";
 
 import { Component, ReactNode } from "react";
-import { Shield, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 
 export const TableSkeleton = () => (
   <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
@@ -32,7 +33,7 @@ export const TableSkeleton = () => (
 
 /** Same glyph as dashboard layout session gate — reuse for full-page auth waits. */
 export const ShieldSpinnerGlyph = () => (
-  <div className="relative flex h-16 w-16 items-center justify-center">
+  <div className="relative flex h-16 w-16 items-center justify-center p-2.5">
     <div
       className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent"
       style={{
@@ -40,9 +41,7 @@ export const ShieldSpinnerGlyph = () => (
         borderRightColor: "var(--brand-to)",
       }}
     />
-    <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full brand-gradient">
-      <Shield size={28} style={{ color: "var(--brand-navbar-text)" }} />
-    </div>
+    <MotherlandLogo className="relative z-10 h-9 w-9 rounded-[22%]" />
   </div>
 );
 
@@ -160,7 +159,7 @@ export class ErrorBoundary extends Component<
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="mb-4">
-              <Shield className="w-12 h-12 mx-auto text-red-500" />
+              <MotherlandLogo className="mx-auto h-12 w-12 rounded-[22%]" />
             </div>
             <h3 className="mb-2 text-lg font-medium text-gray-900 dark:text-white">
               Something went wrong

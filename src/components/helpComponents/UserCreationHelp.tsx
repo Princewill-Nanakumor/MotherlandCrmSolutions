@@ -5,7 +5,6 @@ import React, { useState } from "react";
 import {
   Users,
   UserPlus,
-  Shield,
   CheckCircle,
   AlertCircle,
   ChevronDown,
@@ -13,6 +12,7 @@ import {
   Crown,
   User,
 } from "lucide-react";
+import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 
 const UserCreationHelp: React.FC = () => {
   const [expandedSection, setExpandedSection] = useState<string | null>(
@@ -141,7 +141,7 @@ const UserCreationHelp: React.FC = () => {
     {
       id: "roles",
       title: "User Roles & Permissions",
-      icon: <Shield className="w-5 h-5" />,
+      icon: <MotherlandLogo className="h-5 w-5 rounded-[22%]" />,
       content: (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
