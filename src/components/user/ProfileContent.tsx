@@ -49,9 +49,9 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
   onInputChange,
   inputClass = (editing) =>
     [
-      "w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white bg-gray-50 border border-gray-300 text-gray-900 rounded-lg text-base",
+      "w-full h-10 px-3 dark:bg-transparent dark:border dark:border-gray-600 dark:text-white bg-white border border-gray-300 text-gray-900 rounded-md text-sm transition-[border-color,background-color]",
       editing
-        ? "focus:outline-none focus:ring-2 focus:ring-(--brand-focus) focus:border-(--brand-focus)"
+        ? "hover:border-gray-400 hover:bg-gray-50 dark:hover:border-gray-500 dark:hover:bg-white/4 focus:outline-none focus:ring-0 focus:border-(--brand-focus) focus:bg-white dark:focus:bg-transparent"
         : "focus:outline-none",
     ].join(" "),
   formErrors = {},

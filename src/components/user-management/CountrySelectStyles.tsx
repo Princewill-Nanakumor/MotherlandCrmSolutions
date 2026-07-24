@@ -24,9 +24,9 @@ export const getCountrySelectStyles = (
     }),
     control: (base, state) => ({
       ...base,
-      minHeight: "38px",
-      height: "38px",
-      borderRadius: "0.5rem",
+      minHeight: "40px",
+      height: "40px",
+      borderRadius: "0.375rem",
       borderWidth: "1px",
       borderStyle: "solid",
       borderColor: hasError
@@ -43,21 +43,23 @@ export const getCountrySelectStyles = (
       outline: "none",
       width: "100%",
       cursor: "pointer",
-      transition: "none",
-      boxShadow:
-        hasError && state.isFocused
-          ? "0 0 0 1px #EF4444" // red focus ring when error and focused
-          : !hasError && state.isFocused
-            ? countrySelectBrand.focusRing
-            : "none",
+      transition: "border-color 150ms, background-color 150ms",
+      boxShadow: "none",
       "&:hover": {
         borderColor: hasError
           ? "#EF4444"
           : state.isFocused
             ? countrySelectBrand.focus
             : isDarkMode
-              ? "#4B5563"
-              : "#D1D5DB",
+              ? "#6B7280" // gray-500
+              : "#9CA3AF", // gray-400
+        backgroundColor: state.isFocused
+          ? isDarkMode
+            ? "rgb(55 65 81)"
+            : "#FFFFFF"
+          : isDarkMode
+            ? "rgb(75 85 99)"
+            : "#F9FAFB",
       },
     }),
     valueContainer: (provided) => ({
@@ -131,11 +133,9 @@ export const getCountrySelectStyles = (
       fontFamily: "inherit",
       backgroundColor: isDarkMode ? "#1F2937" : "#FFFFFF", // gray-800 for dark, white for light
       color: isDarkMode ? "#FFFFFF" : "#111827", // white for dark, gray-900 for light
-      borderRadius: "0.5rem",
+      borderRadius: "0.375rem",
       border: isDarkMode ? "1px solid #374151" : "1px solid #E5E7EB", // gray-700 for dark, gray-200 for light
-      boxShadow: isDarkMode
-        ? "0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)"
-        : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      boxShadow: "none",
       marginTop: "4px",
       zIndex: 9999,
       minWidth: 0,

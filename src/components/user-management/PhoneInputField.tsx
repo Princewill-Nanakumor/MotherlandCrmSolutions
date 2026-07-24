@@ -27,9 +27,9 @@ export const PhoneInputField: React.FC<PhoneInputFieldProps> = ({
       <div className="relative">
         <div
           className={`
-            phone-input-wrapper w-full px-3 py-2 rounded-lg border text-sm flex items-center
+            phone-input-wrapper w-full h-10 px-3 rounded-md border text-sm flex items-center
             ${isLoading ? "opacity-50 cursor-not-allowed" : ""}
-            ${error ? "error border-red-500" : "border-gray-300 dark:border-gray-600 focus-within:ring-(--brand-focus)"} bg-white dark:bg-gray-700 text-gray-900! dark:text-white! focus-within:outline-none focus-within:ring-2 focus-within:border-transparent`}
+            ${error ? "error border-red-500" : "border-gray-300 dark:border-gray-600 "} bg-white dark:bg-gray-700 text-gray-900! dark:text-white! focus-within:outline-none focus-within:ring-0`}
         >
           {/* Phone Icon */}
           <Phone className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500 shrink-0" />

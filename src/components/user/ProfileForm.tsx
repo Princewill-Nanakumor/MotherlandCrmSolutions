@@ -48,9 +48,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   onInputChange,
   inputClass = (editing) =>
     [
-      "w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg text-base",
+      "w-full h-10 px-3 dark:bg-transparent dark:border dark:border-gray-600 dark:text-white! bg-white border border-gray-300 text-gray-900! rounded-md text-sm shadow-none transition-[border-color,background-color]",
       editing
-        ? "focus:outline-none focus:ring-2 focus:ring-(--brand-focus) focus:border-(--brand-focus)"
+        ? "hover:border-gray-400 hover:bg-gray-50 dark:hover:border-gray-500 dark:hover:bg-white/4 focus:outline-none focus:ring-0 focus:border-(--brand-focus) focus:bg-white dark:focus:bg-transparent"
         : "focus:outline-none",
     ].join(" "),
   formErrors = {},
@@ -104,7 +104,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 onChange={(e) => onInputChange("firstName", e.target.value)}
                 className={`${inputClass(true)} ${
                   formErrors.firstName
-                    ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                    ? "border-red-500 focus:border-red-500"
                     : ""
                 }`}
                 placeholder="Enter first name"
@@ -114,7 +114,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               )}
             </>
           ) : (
-            <div className="w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg">
+            <div className="w-full h-10 px-3 flex items-center dark:bg-transparent dark:border dark:border-gray-600 dark:text-white! bg-white border border-gray-300 text-gray-900! rounded-md text-sm">
               {profile.firstName || "Not specified"}
             </div>
           )}
@@ -132,7 +132,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 onChange={(e) => onInputChange("lastName", e.target.value)}
                 className={`${inputClass(true)} ${
                   formErrors.lastName
-                    ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                    ? "border-red-500 focus:border-red-500"
                     : ""
                 }`}
                 placeholder="Enter last name"
@@ -142,7 +142,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               )}
             </>
           ) : (
-            <div className="w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg">
+            <div className="w-full h-10 px-3 flex items-center dark:bg-transparent dark:border dark:border-gray-600 dark:text-white! bg-white border border-gray-300 text-gray-900! rounded-md text-sm">
               {profile.lastName || "Not specified"}
             </div>
           )}
@@ -155,7 +155,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           <Mail className="h-5 w-5 text-purple-400" />
           Email Address
         </label>
-        <div className="w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg">
+        <div className="w-full h-10 px-3 flex items-center dark:bg-transparent dark:border dark:border-gray-600 dark:text-white! bg-white border border-gray-300 text-gray-900! rounded-md text-sm">
           {profile.email || "Not specified"}
         </div>
       </div>
@@ -194,7 +194,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             )}
           </>
         ) : (
-          <div className="w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg flex items-center gap-2">
+          <div className="w-full h-10 px-3 flex items-center dark:bg-transparent dark:border dark:border-gray-600 dark:text-white! bg-white border border-gray-300 text-gray-900! rounded-md text-sm gap-2">
             {selectedCountry ? (
               <>
                 <Image
@@ -204,10 +204,14 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                   height={18}
                   className="shrink-0 object-cover"
                 />
-                <span className="dark:text-white! text-gray-900!">{selectedCountry.label}</span>
+                <span className="dark:text-white! text-gray-900!">
+                  {selectedCountry.label}
+                </span>
               </>
             ) : (
-              <span className="dark:text-white! text-gray-900!">{profile.country || "Not specified"}</span>
+              <span className="dark:text-white! text-gray-900!">
+                {profile.country || "Not specified"}
+              </span>
             )}
           </div>
         )}
@@ -222,10 +226,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         {isEditing ? (
           <div className="relative">
             <div
-              className={`phone-input-wrapper w-full px-4 py-2 rounded-lg border text-base flex items-center bg-gray-50 dark:bg-white/5 text-gray-900! dark:text-white! focus-within:outline-none focus-within:ring-2 focus-within:border-transparent ${
+              className={`phone-input-wrapper w-full h-10 px-3 rounded-md border text-sm flex items-center bg-white dark:bg-transparent text-gray-900! dark:text-white! focus-within:outline-none focus-within:ring-0 ${
                 formErrors.phoneNumber
-                  ? "border-red-500 focus-within:ring-red-500"
-                  : "border-gray-300 dark:border-gray-600 focus-within:ring-(--brand-focus)"
+                  ? "border-red-500 focus-within:border-red-500"
+                  : "border-gray-300 dark:border-gray-600"
               }`}
             >
               <PhoneInput
@@ -236,7 +240,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 onChange={handlePhoneChange}
                 disabled={false}
                 placeholder=""
-                className="border-none! bg-transparent! p-0! m-0! w-full! text-base!"
+                className="border-none! bg-transparent! p-0! m-0! w-full! text-sm!"
               />
             </div>
             {formErrors.phoneNumber && (
@@ -244,8 +248,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             )}
           </div>
         ) : (
-          <div className="w-full px-4 py-2 dark:bg-white/5 dark:border dark:border-white/10 dark:text-white! bg-gray-50 border border-gray-300 text-gray-900! rounded-lg">
-            <span className="dark:text-white! text-gray-900!">{profile.phoneNumber || "Not specified"}</span>
+          <div className="w-full h-10 px-3 flex items-center dark:bg-transparent dark:border dark:border-gray-600 dark:text-white! bg-white border border-gray-300 text-gray-900! rounded-md text-sm">
+            <span className="dark:text-white! text-gray-900!">
+              {profile.phoneNumber || "Not specified"}
+            </span>
           </div>
         )}
       </div>

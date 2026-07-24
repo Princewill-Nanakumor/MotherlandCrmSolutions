@@ -82,7 +82,7 @@ export function DashboardSearchBar({
         type="text"
         value={inputValue}
         onChange={handleInputChange}
-        className="block w-full pl-10 pr-10 py-2 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-purple-200 dark:border-gray-600 text-gray-900! dark:text-gray-100! placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-(--brand-focus) focus:border-transparent"
+        className="block w-full h-10 pl-10 pr-10 rounded-md bg-white dark:bg-transparent border border-gray-300 dark:border-gray-600 text-sm text-gray-900! dark:text-gray-100! placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-0 focus:border-(--brand-focus)"
         placeholder={placeholder}
         disabled={isLoading}
         aria-label="Search leads by name, email, or phone"

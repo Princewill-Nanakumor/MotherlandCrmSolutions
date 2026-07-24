@@ -97,7 +97,7 @@ export default function DashboardNavbar({
               </div>
               <input
                 type="text"
-                className="block w-full py-2 pl-10 pr-3 border border-white/40 rounded-lg bg-white/90"
+                className="block w-full h-10 pl-10 pr-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-transparent"
                 disabled
               />
             </div>

@@ -23,7 +23,7 @@ export default function FaqSection() {
     >
       <FaqMapBackground />
 
-      <div className="relative z-10 max-w-3xl mx-auto">
+      <div className="relative z-10 max-w-4xl mx-auto">
         <SectionHeading
           id="faq-heading"
           eyebrow={<Eyebrow>Questions & answers</Eyebrow>}

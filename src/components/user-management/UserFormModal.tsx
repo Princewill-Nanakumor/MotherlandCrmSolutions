@@ -327,7 +327,7 @@ export function UserFormModal({
                     !usageData.canAddTeamMember
                   )
                 }
-                className="px-4 py-2 font-semibold text-white transition-colors rounded-md bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-(--brand-focus) disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 font-semibold text-white transition-colors rounded-md bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-0 focus:border-(--brand-focus) disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading
                   ? "Creating..."

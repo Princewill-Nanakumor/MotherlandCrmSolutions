@@ -69,7 +69,7 @@ export const CommentForm: FC<CommentFormProps> = ({
         <div className="mb-6 space-y-3">
           <textarea
             placeholder="Write your thoughts about this lead... (Press Cmd/Ctrl + Enter to submit)"
-            className="w-full p-3 rounded-md focus:outline-none resize-none min-h-30 text-gray-700! dark:text-white! bg-white dark:bg-gray-700/50 transition-all duration-200 border border-gray-300 dark:border-gray-600 focus:border-(--brand-focus) focus:ring-2 focus:ring-(--brand-focus)"
+            className="w-full p-3 rounded-md focus:outline-none resize-none min-h-30 text-gray-700! dark:text-white! bg-white dark:bg-gray-700/50 transition-all duration-200 border border-gray-300 dark:border-gray-600 focus:border-(--brand-focus) focus:ring-0 focus:border-(--brand-focus)"
             value={commentContent}
             onChange={(e) => setCommentContent(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -80,7 +80,7 @@ export const CommentForm: FC<CommentFormProps> = ({
             <button
               onClick={onAddComment}
               disabled={isSaving || !commentContent.trim()}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 brand-gradient hover:brightness-95 text-white! rounded-md text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-(--brand-focus) disabled:opacity-50 disabled:pointer-events-none"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 brand-gradient hover:brightness-95 text-white! rounded-md text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-0 focus:border-(--brand-focus) disabled:opacity-50 disabled:pointer-events-none"
             >
               {isSaving ? (
                 <>

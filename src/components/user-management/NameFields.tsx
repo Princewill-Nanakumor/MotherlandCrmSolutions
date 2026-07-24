@@ -26,11 +26,11 @@ export function NameFields({
             type="text"
             value={formData.firstName}
             onChange={(e) => handleInputChange("firstName", e.target.value)}
-            className={`pl-10 h-10 w-full px-3 rounded-lg border text-sm ${
+            className={`pl-10 h-10 w-full px-3 rounded-md border text-sm ${
               getFieldError("firstName")
-                ? "border-red-500 focus:ring-red-500"
+                ? "border-red-500 focus:border-red-500"
                 : "border-gray-300 dark:border-gray-600 focus:ring-(--brand-focus)"
-            } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
+            } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-0 focus:border-(--brand-focus) transition-colors`}
             placeholder="First Name"
             disabled={isLoading}
           />
@@ -50,11 +50,11 @@ export function NameFields({
             type="text"
             value={formData.lastName}
             onChange={(e) => handleInputChange("lastName", e.target.value)}
-            className={`pl-10 h-10 w-full px-3 rounded-lg border text-sm ${
+            className={`pl-10 h-10 w-full px-3 rounded-md border text-sm ${
               getFieldError("lastName")
-                ? "border-red-500 focus:ring-red-500"
+                ? "border-red-500 focus:border-red-500"
                 : "border-gray-300 dark:border-gray-600 focus:ring-(--brand-focus)"
-            } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:border-transparent transition-colors`}
+            } placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-0 focus:border-(--brand-focus) transition-colors`}
             placeholder="Last Name"
             disabled={isLoading}
           />

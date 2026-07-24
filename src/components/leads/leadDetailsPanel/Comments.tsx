@@ -233,7 +233,7 @@ const Comments: FC<CommentsProps> = ({
                 e.target.style.borderRightColor = focusColor;
                 e.target.style.borderBottomColor = focusColor;
                 e.target.style.borderLeftColor = focusColor;
-                e.target.style.boxShadow = `0 0 0 2px color-mix(in srgb, ${focusColor} 25%, transparent)`;
+                e.target.style.boxShadow = "none";
               }}
               onBlur={(e) => {
                 const defaultColor = isDarkMode
@@ -255,7 +255,7 @@ const Comments: FC<CommentsProps> = ({
               <button
                 onClick={handleAddComment}
                 disabled={isSaving || !commentContent.trim()}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 brand-gradient hover:brightness-95 text-white rounded-md text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-(--brand-focus) disabled:opacity-50 disabled:pointer-events-none"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 brand-gradient hover:brightness-95 text-white rounded-md text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-0 focus:border-(--brand-focus) disabled:opacity-50 disabled:pointer-events-none"
                 style={{ border: "none", boxShadow: "none" }}
               >
                 {isSaving ? (
@@ -352,7 +352,7 @@ const Comments: FC<CommentsProps> = ({
                       {editingId === comment._id ? (
                         <div className="mt-2 space-y-2">
                           <textarea
-                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-(--brand-focus) dark:bg-transparent text-gray-700! dark:text-white!"
+                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-0 focus:border-(--brand-focus) dark:bg-transparent text-gray-700! dark:text-white!"
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
                             rows={3}

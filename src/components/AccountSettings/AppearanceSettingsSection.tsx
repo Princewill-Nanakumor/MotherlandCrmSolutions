@@ -126,7 +126,7 @@ function FontSelect({
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900! focus:outline-none focus:ring-2 focus:ring-(--brand-focus) disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-input/30 dark:text-white!"
+        className="w-full appearance-none h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900! focus:outline-none focus:ring-0 focus:border-(--brand-focus) disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-transparent dark:text-white!"
         style={{ fontFamily: getBrandFontOption(value).cssFamily }}
       >
         {BRAND_FONT_OPTIONS.map((font) => (

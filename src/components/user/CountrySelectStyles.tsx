@@ -22,9 +22,9 @@ export const getCountrySelectStyles = (): StylesConfig<SelectOption, false> => {
     }),
     control: (base, state) => ({
       ...base,
-      minHeight: "42px",
-      height: "42px",
-      borderRadius: "0.5rem",
+      minHeight: "40px",
+      height: "40px",
+      borderRadius: "0.375rem",
       borderWidth: "1px",
       borderStyle: "solid",
       borderColor: state.isFocused
@@ -32,26 +32,39 @@ export const getCountrySelectStyles = (): StylesConfig<SelectOption, false> => {
         : isDarkMode
           ? "#4B5563"
           : "#D1D5DB", // gray-600 for dark, gray-300 for light
-      backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9FAFB", // dark:bg-white/5 or gray-50
+      backgroundColor: state.isFocused
+        ? isDarkMode
+          ? "transparent"
+          : "#FFFFFF"
+        : isDarkMode
+          ? "transparent"
+          : "#FFFFFF",
       color: isDarkMode ? "#F3F4F6" : "#111827", // gray-100 for dark, gray-900 for light
-      fontSize: "1rem",
+      fontSize: "0.875rem",
       fontFamily: "inherit",
       outline: "none",
       width: "100%",
       cursor: "pointer",
-      transition: "none",
-      boxShadow: state.isFocused ? countrySelectBrand.focusRing : "none",
+      transition: "border-color 150ms, background-color 150ms",
+      boxShadow: "none",
       "&:hover": {
         borderColor: state.isFocused
           ? countrySelectBrand.focus
           : isDarkMode
-            ? "#4B5563"
-            : "#D1D5DB",
+            ? "#6B7280" // gray-500
+            : "#9CA3AF", // gray-400
+        backgroundColor: state.isFocused
+          ? isDarkMode
+            ? "transparent"
+            : "#FFFFFF"
+          : isDarkMode
+            ? "rgba(255, 255, 255, 0.04)"
+            : "#F9FAFB", // gray-50
       },
     }),
     valueContainer: (provided) => ({
       ...provided,
-      height: "42px",
+      height: "40px",
       padding: "0 0.75rem",
       display: "flex",
       alignItems: "center",
@@ -62,7 +75,7 @@ export const getCountrySelectStyles = (): StylesConfig<SelectOption, false> => {
       display: "flex",
       alignItems: "center",
       gap: "8px",
-      fontSize: "1rem",
+      fontSize: "0.875rem",
       fontFamily: "inherit",
       color: isDarkMode ? "#F3F4F6" : "#111827", // gray-100 for dark, gray-900 for light
       marginLeft: 0,
@@ -76,7 +89,7 @@ export const getCountrySelectStyles = (): StylesConfig<SelectOption, false> => {
       fontFamily: "inherit",
       color: isDarkMode ? "#F3F4F6" : "#111827", // gray-100 for dark, gray-900 for light
       minWidth: 0,
-      fontSize: "1rem",
+      fontSize: "0.875rem",
     }),
     placeholder: (provided) => ({
       ...provided,
@@ -84,7 +97,7 @@ export const getCountrySelectStyles = (): StylesConfig<SelectOption, false> => {
       fontFamily: "inherit",
       marginLeft: 0,
       minWidth: 0,
-      fontSize: "1rem",
+      fontSize: "0.875rem",
       display: "flex",
       alignItems: "center",
       gap: "8px",
@@ -94,7 +107,7 @@ export const getCountrySelectStyles = (): StylesConfig<SelectOption, false> => {
       display: "flex",
       alignItems: "center",
       padding: "8px 12px",
-      fontSize: "1rem",
+      fontSize: "0.875rem",
       fontFamily: "inherit",
       backgroundColor: state.isSelected
         ? isDarkMode
@@ -121,11 +134,9 @@ export const getCountrySelectStyles = (): StylesConfig<SelectOption, false> => {
       fontFamily: "inherit",
       backgroundColor: isDarkMode ? "#1F2937" : "#FFFFFF", // gray-800 for dark, white for light
       color: isDarkMode ? "#F3F4F6" : "#111827", // gray-100 for dark, gray-900 for light
-      borderRadius: "0.5rem",
+      borderRadius: "0.375rem",
       border: isDarkMode ? "1px solid #374151" : "1px solid #E5E7EB", // gray-700 for dark, gray-200 for light
-      boxShadow: isDarkMode
-        ? "0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)"
-        : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      boxShadow: "none",
       marginTop: "4px",
       zIndex: 9999,
       minWidth: 0,

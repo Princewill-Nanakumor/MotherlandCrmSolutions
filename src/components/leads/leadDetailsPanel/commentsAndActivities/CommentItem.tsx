@@ -66,7 +66,7 @@ export const CommentItem: FC<CommentItemProps> = ({
           {isEditing ? (
             <div className="mt-2 space-y-2">
               <textarea
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-(--brand-focus) dark:bg-transparent text-gray-700! dark:text-white!"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-0 focus:border-(--brand-focus) dark:bg-transparent text-gray-700! dark:text-white!"
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 rows={3}

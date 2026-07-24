@@ -16,7 +16,7 @@ function ModernSelect({
       <select
         value={value}
         onChange={onChange}
-        className="appearance-none w-full px-3 py-2 pr-10 rounded-lg bg-white dark:bg-input/30 border border-input text-gray-900! dark:text-white! focus:outline-none focus:ring-2 focus:ring-(--brand-focus) focus:border-(--brand-focus) transition-all"
+        className="appearance-none w-full h-10 px-3 pr-10 rounded-md bg-white dark:bg-transparent border border-gray-300 dark:border-gray-600 text-sm text-gray-900! dark:text-white! focus:outline-none focus:ring-0 focus:border-(--brand-focus) transition-colors"
         {...props}
       >
         {children}

@@ -192,7 +192,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
               !formData.reminderTime ||
               !formData.type
             }
-            className="flex-1 text-white! brand-gradient hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-(--brand-focus) transition-all duration-200"
+            className="flex-1 text-white! brand-gradient hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-0 focus:border-(--brand-focus) transition-all duration-200"
           >
             {isSaving ? (
               <Loader2 className="w-4 h-4 text-white animate-spin" />

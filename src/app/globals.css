@@ -264,7 +264,7 @@ html[data-brand-button-style="solid"] .brand-text-gradient {
   background-color: color-mix(in srgb, var(--brand-from) 48%, white) !important;
 }
 
-/* App-wide form focus — matches brand button / primary color */
+/* App-wide form controls — border only, no box-shadow */
 input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not(
     [type="range"]
   ):not([type="file"]):not([type="hidden"]):not([type="submit"]):not(
@@ -272,10 +272,41 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not(
   ):not([type="reset"]):not([type="image"]),
 textarea,
 select {
-  transition-property: border-color, box-shadow;
+  transition-property: border-color, background-color;
   transition-duration: 150ms;
+  box-shadow: none;
 }
 
+/* Hover: neutral stronger border (not brand) — distinct from focus/active */
+input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not(
+    [type="range"]
+  ):not([type="file"]):not([type="hidden"]):not([type="submit"]):not(
+    [type="button"]
+  ):not([type="reset"]):not([type="image"]):not([readonly]):not([disabled]):hover:not(:focus):not(:focus-visible),
+textarea:not([readonly]):not([disabled]):hover:not(:focus):not(:focus-visible),
+select:not([disabled]):hover:not(:focus):not(:focus-visible) {
+  border-color: #9ca3af; /* gray-400 */
+  background-color: #f9fafb; /* gray-50 */
+}
+
+.dark
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not(
+      [type="range"]
+    ):not([type="file"]):not([type="hidden"]):not([type="submit"]):not(
+      [type="button"]
+    ):not([type="reset"]):not([type="image"]):not([readonly]):not(
+      [disabled]
+    ):hover:not(:focus):not(:focus-visible),
+.dark
+  textarea:not([readonly]):not([disabled]):hover:not(:focus):not(
+    :focus-visible
+  ),
+.dark select:not([disabled]):hover:not(:focus):not(:focus-visible) {
+  border-color: #6b7280; /* gray-500 */
+  background-color: rgb(255 255 255 / 0.04);
+}
+
+/* Focus/active: brand border */
 input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not(
     [type="range"]
   ):not([type="file"]):not([type="hidden"]):not([type="submit"]):not(
@@ -292,7 +323,27 @@ select:focus,
 select:focus-visible {
   outline: none;
   border-color: var(--brand-focus);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-focus) 30%, transparent);
+  box-shadow: none;
+  background-color: #ffffff;
+}
+
+.dark
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not(
+      [type="range"]
+    ):not([type="file"]):not([type="hidden"]):not([type="submit"]):not(
+      [type="button"]
+    ):not([type="reset"]):not([type="image"]):not([readonly]):focus,
+.dark
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not(
+      [type="range"]
+    ):not([type="file"]):not([type="hidden"]):not([type="submit"]):not(
+      [type="button"]
+    ):not([type="reset"]):not([type="image"]):not([readonly]):focus-visible,
+.dark textarea:not([readonly]):focus,
+.dark textarea:not([readonly]):focus-visible,
+.dark select:focus,
+.dark select:focus-visible {
+  background-color: transparent;
 }
 
 input[aria-invalid="true"]:focus,
@@ -302,7 +353,7 @@ textarea[aria-invalid="true"]:focus-visible,
 select[aria-invalid="true"]:focus,
 select[aria-invalid="true"]:focus-visible {
   border-color: #ef4444;
-  box-shadow: 0 0 0 2px color-mix(in srgb, #ef4444 30%, transparent);
+  box-shadow: none;
 }
 
 /* Legacy hardcoded indigo/purple CTAs also follow tenant theme */
@@ -1311,16 +1362,28 @@ input[readOnly] {
   border: none !important;
 }
 
-/* Ensure the wrapper div shows the brand focus ring */
-.phone-input-wrapper:focus-within {
-  outline: none !important;
-  box-shadow: 0 0 0 2px var(--brand-focus) !important;
-  border-color: var(--brand-focus) !important;
+/* Phone wrapper hover vs focus */
+.phone-input-wrapper:hover:not(:focus-within):not(.error) {
+  border-color: #9ca3af;
+  background-color: #f9fafb;
 }
 
-/* When there's an error, show red focus ring */
+.dark .phone-input-wrapper:hover:not(:focus-within):not(.error) {
+  border-color: #6b7280;
+  background-color: rgb(255 255 255 / 0.04);
+}
+
+/* Ensure the wrapper div shows brand focus via border only */
+.phone-input-wrapper:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--brand-focus) !important;
+  background-color: transparent !important;
+}
+
+/* When there's an error, show red focus border */
 .phone-input-wrapper.error:focus-within {
-  box-shadow: 0 0 0 2px #ef4444 !important;
+  box-shadow: none !important;
   border-color: #ef4444 !important;
 }
 

@@ -16,7 +16,7 @@ export const AddStatusButton = ({ disabled }: AddStatusButtonProps) => {
       <button
         onClick={() => setIsStatusModalOpen(true)}
         disabled={disabled}
-        className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700! dark:text-white! bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-(--brand-focus) focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+        className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700! dark:text-white! bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-0 focus:border-(--brand-focus) disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <svg
           className="h-4 w-4 mr-2 text-gray-700! dark:text-white!"

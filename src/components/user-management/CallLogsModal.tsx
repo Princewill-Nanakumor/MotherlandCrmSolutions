@@ -277,7 +277,7 @@ export function CallLogsModal({
         <div className="flex-1 mt-4 overflow-y-auto">
           {isLoadingLogs ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 mb-3 text-gray-400 animate-spin" />
+              <Loader2 className="w-8 h-8 mb-3 animate-spin brand-icon" />
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 Loading call logs...
               </span>

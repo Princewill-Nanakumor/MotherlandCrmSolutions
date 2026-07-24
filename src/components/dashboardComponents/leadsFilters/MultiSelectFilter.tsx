@@ -142,10 +142,10 @@ export const MultiSelectFilter = ({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-45 min-h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-(--brand-focus) focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-between gap-2 ${
+        className={`w-45 min-h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-0 focus:border-(--brand-focus) disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-between gap-2 transition-[border-color,background-color] ${
           isActiveFilter
             ? "bg-white ring-2 border-(--brand-from) ring-(--brand-focus) dark:bg-gray-800"
-            : "bg-white border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+            : "bg-white border-gray-300 dark:border-gray-600 dark:bg-gray-800 hover:border-gray-400 hover:bg-gray-50 dark:hover:border-gray-500 dark:hover:bg-white/4"
         }`}
       >
         <span className="flex-1 text-left text-gray-900 truncate dark:text-white">
@@ -163,7 +163,7 @@ export const MultiSelectFilter = ({
                   handleClearAll(e as unknown as React.MouseEvent);
                 }
               }}
-              className="p-0.5 rounded transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--brand-focus) hover:bg-[color-mix(in_srgb,var(--brand-from)_18%,transparent)]"
+              className="p-0.5 rounded transition-colors cursor-pointer focus:outline-none focus:ring-0 focus:border-(--brand-focus) hover:bg-[color-mix(in_srgb,var(--brand-from)_18%,transparent)]"
               aria-label="Clear selection"
             >
               <X className="h-3 w-3 text-(--brand-from)" />

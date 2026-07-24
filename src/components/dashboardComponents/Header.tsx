@@ -41,7 +41,7 @@ export default function Header({ isSecondaryOpen = true }: HeaderProps) {
               <input
                 type="text"
                 placeholder="Search Pipedrive"
-                className="w-full pl-10 pr-4 py-2 border rounded-lg"
+                className="w-full h-10 pl-10 pr-4 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-0 focus:border-(--brand-focus)"
               />
             </div>
           </div>

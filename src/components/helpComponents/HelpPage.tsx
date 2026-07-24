@@ -97,7 +97,7 @@ const HelpPage: React.FC = () => {
             placeholder="Search help topics..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-(--brand-focus) focus:border-transparent bg-white dark:bg-gray-800 text-gray-900! dark:text-white! placeholder-gray-500 dark:placeholder-gray-400"
+            className="w-full h-10 pl-10 pr-4 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-0 focus:border-(--brand-focus) bg-white dark:bg-transparent text-sm text-gray-900! dark:text-white! placeholder-gray-500 dark:placeholder-gray-400"
           />
         </div>
       </div>
