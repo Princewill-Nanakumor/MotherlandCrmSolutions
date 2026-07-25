@@ -118,7 +118,9 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-2">
-                      {onExport && (
+                      {onExport &&
+                        (importItem.successCount ?? importItem.recordCount) >
+                          0 && (
                         <button
                           type="button"
                           onClick={() =>

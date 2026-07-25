@@ -58,6 +58,13 @@ export async function GET(
 
     const leads = await fetchLeadsForImportExport(adminObjectId, importId);
 
+    if (leads.length === 0) {
+      return NextResponse.json(
+        { error: "No leads found for this import." },
+        { status: 404 },
+      );
+    }
+
     const rawName =
       typeof importRecord.fileName === "string"
         ? importRecord.fileName.replace(/\.[^.]+$/, "")

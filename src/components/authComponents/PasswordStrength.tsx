@@ -93,22 +93,46 @@ export function PasswordStrength({
         className={`mt-2 space-y-1 ${isHero ? "text-sm font-semibold text-white/75!" : "text-xs text-gray-500"}`}
       >
         <li
-          className={`flex items-center ${password.length >= 8 ? "text-green-500" : ""}`}
+          className={`flex items-center ${
+            password.length >= 8
+              ? "text-green-500"
+              : isHero
+                ? "text-white/75!"
+                : ""
+          }`}
         >
           {password.length >= 8 ? "✓" : "•"} At least 8 characters
         </li>
         <li
-          className={`flex items-center ${/[A-Z]/.test(password) ? "text-green-500" : ""}`}
+          className={`flex items-center ${
+            /[A-Z]/.test(password)
+              ? "text-green-500"
+              : isHero
+                ? "text-white/75!"
+                : ""
+          }`}
         >
           {/[A-Z]/.test(password) ? "✓" : "•"} Uppercase letter
         </li>
         <li
-          className={`flex items-center ${/[0-9]/.test(password) ? "text-green-500" : ""}`}
+          className={`flex items-center ${
+            /[0-9]/.test(password)
+              ? "text-green-500"
+              : isHero
+                ? "text-white/75!"
+                : ""
+          }`}
         >
           {/[0-9]/.test(password) ? "✓" : "•"} Number
         </li>
         <li
-          className={`flex items-center ${/[^A-Za-z0-9]/.test(password) ? "text-green-500" : ""}`}
+          className={`flex items-center ${
+            /[^A-Za-z0-9]/.test(password)
+              ? "text-green-500"
+              : isHero
+                ? "text-white/75!"
+                : ""
+          }`}
         >
           {/[^A-Za-z0-9]/.test(password) ? "✓" : "•"} Special character
         </li>

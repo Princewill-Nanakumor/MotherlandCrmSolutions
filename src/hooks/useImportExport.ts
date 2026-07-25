@@ -70,6 +70,14 @@ export function useImportExport() {
           response,
           `${base}-export.csv`,
         );
+        if (count === 0) {
+          toast({
+            title: "Nothing to export",
+            description: "No leads found for this import.",
+            variant: "destructive",
+          });
+          return;
+        }
         toast({
           title: "Export ready",
           description: `Downloaded ${count} lead${count === 1 ? "" : "s"} from this import.`,
@@ -101,6 +109,14 @@ export function useImportExport() {
         response,
         `leads-export-${date}.csv`,
       );
+      if (count === 0) {
+        toast({
+          title: "Nothing to export",
+          description: "No leads to export. Import or add leads first.",
+          variant: "destructive",
+        });
+        return;
+      }
       toast({
         title: "Export ready",
         description: `Downloaded ${count} lead${count === 1 ? "" : "s"}.`,

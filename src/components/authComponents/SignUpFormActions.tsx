@@ -39,7 +39,7 @@ export function SignUpFormActions({
         Already have an account?{" "}
         <Link
           href="/login"
-          className="font-semibold underline transition-colors hover:text-white/80"
+          className="font-semibold text-white! underline transition-colors hover:text-white/80"
         >
           Sign in
         </Link>

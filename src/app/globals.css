@@ -87,7 +87,8 @@ html.public-native-scroll #app-density-root {
  * root scrolls, the top navbar disappears and only the footer stays in view.
  */
 html.app-density-lock #app-density-root {
-  overflow: hidden;
+  overflow: hidden !important;
+  overscroll-behavior: none;
 }
 
 .dark body {
@@ -1763,17 +1764,38 @@ span[class*="text-red"] {
   color: rgb(239 68 68) !important; /* red-500 */
 }
 
-/* Allow Tailwind text-white on button labels — avoid [class*="text-white"] so
-   dark:text-* utilities on selects/inputs do not force white text in light mode */
+/* Allow Tailwind text-white on button labels — avoid matching only the exact
+   `.text-white` class so `text-white!` / opacity variants still win over the
+   global bare-span `#000` rule (auth hero country select, CTAs, etc.). */
+button[class*="text-white"] > span:not([class*="text-red"]):not(
+    [class*="text-green"]
+  ):not([class*="text-amber"]):not([class*="text-orange"]):not(
+    [class*="text-emerald"]
+  ):not([class*="text-yellow"]):not([class*="text-blue"]),
 button span.text-white,
 button.text-white span,
+[role="button"][class*="text-white"] > span:not([class*="text-red"]):not(
+    [class*="text-green"]
+  ):not([class*="text-amber"]):not([class*="text-orange"]):not(
+    [class*="text-emerald"]
+  ):not([class*="text-yellow"]):not([class*="text-blue"]),
 [role="button"] span.text-white,
 [role="button"].text-white span {
   color: white !important;
 }
 
+.dark button[class*="text-white"] > span:not([class*="text-red"]):not(
+    [class*="text-green"]
+  ):not([class*="text-amber"]):not([class*="text-orange"]):not(
+    [class*="text-emerald"]
+  ):not([class*="text-yellow"]):not([class*="text-blue"]),
 .dark button span.text-white,
 .dark button.text-white span,
+.dark [role="button"][class*="text-white"] > span:not([class*="text-red"]):not(
+    [class*="text-green"]
+  ):not([class*="text-amber"]):not([class*="text-orange"]):not(
+    [class*="text-emerald"]
+  ):not([class*="text-yellow"]):not([class*="text-blue"]),
 .dark [role="button"] span.text-white,
 .dark [role="button"].text-white span {
   color: white !important;

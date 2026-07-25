@@ -34,6 +34,13 @@ export async function GET() {
     const adminObjectId = new mongoose.Types.ObjectId(adminScopeId);
     const leads = await fetchLeadsForImportExport(adminObjectId);
 
+    if (leads.length === 0) {
+      return NextResponse.json(
+        { error: "No leads to export. Import or add leads first." },
+        { status: 404 },
+      );
+    }
+
     const date = new Date().toISOString().split("T")[0];
     return buildCsvDownloadResponse(leads, `leads-export-${date}.csv`);
   } catch (error) {

@@ -51,7 +51,7 @@ export function PhoneInputField({
 
   return (
     <div>
-      <div className="relative flex items-center">
+      <div className="flex relative items-center">
         {/* Always show the phone icon */}
         <Phone
           className={`absolute w-4 h-4 -translate-y-1/2 pointer-events-none left-3 top-1/2 sm:h-5 sm:w-5 ${isHero ? "text-white/50" : "text-gray-400"}`}
@@ -60,11 +60,16 @@ export function PhoneInputField({
         {/* Show country code when country is selected */}
         {selectedCountry && (
           <div
-            className={`absolute flex items-center text-sm font-normal -translate-y-1/2 left-10 sm:left-12 top-1/2 sm:text-base ${
-              isHero ? "text-gray-100" : "text-gray-900"
-            }`}
+            data-auth-phone-prefix=""
+            className={`pointer-events-none absolute flex items-center text-sm font-semibold -translate-y-1/2 left-10 sm:left-12 top-1/2 sm:text-base ${
+              isHero ? "text-white!":"text-gray-900"}`}
           >
-            <span>{selectedCountry.phoneCode}</span>
+            <span
+              className={isHero ? "text-white!":"text-gray-900"}
+              style={isHero ? { color: "#ffffff" } : undefined}
+            >
+              {selectedCountry.phoneCode}
+            </span>
           </div>
         )}
 
@@ -77,7 +82,11 @@ export function PhoneInputField({
           placeholder={placeholder}
           disabled={isLoading}
           className={`h-10 sm:h-12 w-full rounded-md border text-sm sm:text-base focus:outline-none ${
-            selectedCountry ? "pl-20 sm:pl-22" : "pl-10 sm:pl-12"
+            selectedCountry
+              ? selectedCountry.phoneCode.length >= 4
+                ? "pl-23 sm:pl-25"
+                : "pl-21 sm:pl-24"
+              : "pl-10 sm:pl-12"
           } ${
             isHero
               ? `font-semibold text-white! transition-[border-color,background-color,box-shadow] duration-200 ease-out focus-visible:outline-none placeholder:font-semibold placeholder:text-white/70 bg-white/10 ${
@@ -89,7 +98,7 @@ export function PhoneInputField({
       </div>
 
       {error && (
-        <p className="flex items-center gap-1 mt-1 text-xs text-red-500">
+        <p className="flex gap-1 items-center mt-1 text-xs text-red-500">
           <AlertCircle className="w-3 h-3 sm:h-4 sm:w-4" />
           {error}
         </p>

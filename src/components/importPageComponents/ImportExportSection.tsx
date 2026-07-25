@@ -12,13 +12,18 @@ const EXPORT_WAIT_DOTS = ["...", " ..", " ."] as const;
 interface ImportExportSectionProps {
   onExportAll: () => void;
   isExporting: boolean;
+  hasLeads: boolean;
+  isCheckingLeads?: boolean;
 }
 
 export const ImportExportSection: FC<ImportExportSectionProps> = ({
   onExportAll,
   isExporting,
+  hasLeads,
+  isCheckingLeads = false,
 }) => {
   const [dotIndex, setDotIndex] = useState(0);
+  const canExport = hasLeads && !isCheckingLeads;
 
   useEffect(() => {
     if (!isExporting) {
@@ -67,7 +72,7 @@ export const ImportExportSection: FC<ImportExportSectionProps> = ({
 
           <Button
             onClick={onExportAll}
-            disabled={isExporting}
+            disabled={isExporting || !canExport}
             className="gap-2"
           >
             {isExporting ? (
@@ -78,6 +83,11 @@ export const ImportExportSection: FC<ImportExportSectionProps> = ({
                   {EXPORT_WAIT_DOTS[dotIndex]}
                 </span>
               </>
+            ) : isCheckingLeads ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Checking leads…
+              </>
             ) : (
               <>
                 <FileSpreadsheet className="w-4 h-4" />
@@ -86,10 +96,16 @@ export const ImportExportSection: FC<ImportExportSectionProps> = ({
             )}
           </Button>
 
-          <p className="text-xs text-gray-500! dark:text-gray-400!">
-            To export a specific upload, open Import history and use the download
-            button on that row.
-          </p>
+          {!isCheckingLeads && !hasLeads ? (
+            <p className="text-xs text-amber-700! dark:text-amber-400!">
+              No leads to export yet. Import or add leads first.
+            </p>
+          ) : (
+            <p className="text-xs text-gray-500! dark:text-gray-400!">
+              To export a specific upload, open Import history and use the
+              download button on that row.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

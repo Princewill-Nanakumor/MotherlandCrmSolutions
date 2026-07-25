@@ -23,12 +23,21 @@ export function UiZoomApplier() {
       frame = requestAnimationFrame(() => applyUiZoom());
     };
 
+    // bfcache / tab restore can revive a scrolled density root.
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        syncAppScrollMode(pathname);
+      }
+    };
+
     window.addEventListener("resize", onResize);
+    window.addEventListener("pageshow", onPageShow);
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("pageshow", onPageShow);
     };
-  }, []);
+  }, [pathname]);
 
   return null;
 }

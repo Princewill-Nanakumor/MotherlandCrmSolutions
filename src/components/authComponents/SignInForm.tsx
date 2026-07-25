@@ -226,7 +226,7 @@ export default function SignInForm() {
                 placeholder="Email address"
                 disabled={isFormDisabled}
                 className={`
-                  pl-10 pr-3 py-3 w-full rounded-md border text-sm font-semibold transition-[border-color,background-color,box-shadow] duration-200 ease-out
+                  pl-10 pr-3 py-3 w-full rounded-md border text-sm font-semibold text-white! transition-[border-color,background-color,box-shadow] duration-200 ease-out
                   ${errors.email ? "border-red-500" : "border-white"} focus:outline-none focus-visible:outline-none bg-white/10 placeholder:font-semibold placeholder:text-white/70 ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
@@ -249,7 +249,7 @@ export default function SignInForm() {
                 autoComplete="current-password"
                 disabled={isFormDisabled}
                 className={`
-                  pl-10 pr-11 py-3 w-full rounded-md border text-sm font-semibold transition-[border-color,background-color,box-shadow] duration-200 ease-out
+                  pl-10 pr-11 py-3 w-full rounded-md border text-sm font-semibold text-white! transition-[border-color,background-color,box-shadow] duration-200 ease-out
                   ${errors.password ? "border-red-500" : "border-white"} focus:outline-none focus-visible:outline-none bg-white/10 placeholder:font-semibold placeholder:text-white/70 ${isFormDisabled ? "cursor-not-allowed opacity-75" : ""}
                 `}
               />
@@ -341,14 +341,14 @@ export default function SignInForm() {
           {isFormDisabled ? (
             <span
               aria-disabled
-              className="font-semibold underline opacity-75 cursor-not-allowed"
+              className="font-semibold text-white! underline opacity-75 cursor-not-allowed"
             >
               Sign up
             </span>
           ) : (
             <Link
               href="/signup"
-              className="font-semibold underline transition-colors hover:text-white/80"
+              className="font-semibold text-white! underline transition-colors hover:text-white/80"
             >
               Sign up
             </Link>

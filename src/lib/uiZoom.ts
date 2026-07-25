@@ -149,6 +149,32 @@ export function applyUiZoom(zoom = resolveUiZoom()): void {
 }
 
 /**
+ * Instantly zero scroll on window + density root. Prefer scrollTop assignment
+ * over scrollTo — CSS `scroll-behavior: smooth` can leave mid-scroll offsets
+ * that clip the dashboard navbar until a hard refresh.
+ */
+function resetAppScrollPositions(density: HTMLElement | null): void {
+  const html = document.documentElement;
+  const previousBehavior = html.style.scrollBehavior;
+  html.style.scrollBehavior = "auto";
+
+  window.scrollTo(0, 0);
+  html.scrollTop = 0;
+  document.body.scrollTop = 0;
+
+  if (density) {
+    const previousDensityBehavior = density.style.scrollBehavior;
+    density.style.scrollBehavior = "auto";
+    density.scrollTop = 0;
+    density.scrollLeft = 0;
+    density.scrollTo(0, 0);
+    density.style.scrollBehavior = previousDensityBehavior;
+  }
+
+  html.style.scrollBehavior = previousBehavior;
+}
+
+/**
  * Keep html scroll mode in sync with the route. Client navigations from `/`
  * can leave `public-native-scroll` (or a scrolled density root) behind, which
  * makes the dashboard navbar scroll out of view until a hard refresh.
@@ -175,14 +201,14 @@ export function syncAppScrollMode(pathname: string): void {
   root.classList.toggle("app-density-lock", isDashboard);
   applyUiZoom();
 
-  if (isDashboard && density) {
-    // Clear leftover inline overflow locks (e.g. homepage mobile menu).
-    density.style.removeProperty("overflow");
-  }
+  // Clear leftover inline overflow locks (e.g. homepage mobile menu).
+  document.body.style.removeProperty("overflow");
+  density?.style.removeProperty("overflow");
 
   if (wasPublic || isDashboard) {
-    window.scrollTo(0, 0);
-    density?.scrollTo(0, 0);
+    resetAppScrollPositions(density);
+    // Layout can settle a frame later (session gate / shell mount).
+    requestAnimationFrame(() => resetAppScrollPositions(density));
   }
 }
 
@@ -190,5 +216,8 @@ export function syncAppScrollMode(pathname: string): void {
  * Inline boot logic kept in sync with resolveUiZoom (no module imports).
  * On `/`, force scale 1 + `public-native-scroll` before first paint so the
  * hero never flashes at the laptop density scale.
+ * On `/dashboard*`, set `app-density-lock` before paint so the density root
+ * cannot scroll the navbar out of view before React hydrates.
  */
-export const UI_ZOOM_BOOT_SCRIPT = `(function(){try{var KEY="motherland-ui-zoom";var ua=navigator.userAgent||"";var path=location.pathname||"/";var isPublic=path==="/"||path==="";var r=document.documentElement;if(isPublic){r.classList.add("public-native-scroll");r.style.setProperty("--app-ui-scale","1");r.dataset.uiZoom="1";r.style.removeProperty("zoom");return;}var z;try{var s=localStorage.getItem(KEY);if(s){var p=parseFloat(s);if(isFinite(p)&&p>=0.7&&p<=1.1)z=p;}}catch(e){}if(z==null){var base=/Windows/i.test(ua)?0.8:(/Mac OS X|Macintosh/i.test(ua)?0.9:0.9);var w=window.innerWidth||document.documentElement.clientWidth||1440;var h=window.innerHeight||document.documentElement.clientHeight||820;var clamp=function(n,a,b){return Math.min(b,Math.max(a,n));};var lerp=function(a,b,t){return a+(b-a)*clamp(t,0,1);};var scale;if(w<=1440)scale=base;else if(w>=2560)scale=1;else if(w>=1920){var mid=lerp(base,1,0.75);scale=lerp(mid,1,(w-1920)/(2560-1920));}else{var mid2=lerp(base,1,0.75);scale=lerp(base,mid2,(w-1440)/(1920-1440));}if(h<820)scale=Math.min(scale,base);z=Math.round(clamp(scale,0.75,1.05)*1000)/1000;}r.style.setProperty("--app-ui-scale",String(z));r.dataset.uiZoom=String(z);r.style.removeProperty("zoom");}catch(e){}})();`;
+export const UI_ZOOM_BOOT_SCRIPT = `(function(){try{var KEY="motherland-ui-zoom";var ua=navigator.userAgent||"";var path=location.pathname||"/";var isPublic=path==="/"||path==="";var r=document.documentElement;if(isPublic){r.classList.add("public-native-scroll");r.classList.remove("app-density-lock");r.style.setProperty("--app-ui-scale","1");r.dataset.uiZoom="1";r.style.removeProperty("zoom");return;}if(path==="/dashboard"||path.indexOf("/dashboard/")===0){r.classList.add("app-density-lock");}var z;try{var s=localStorage.getItem(KEY);if(s){var p=parseFloat(s);if(isFinite(p)&&p>=0.7&&p<=1.1)z=p;}}catch(e){}if(z==null){var base=/Windows/i.test(ua)?0.8:(/Mac OS X|Macintosh/i.test(ua)?0.9:0.9);var w=window.innerWidth||document.documentElement.clientWidth||1440;var h=window.innerHeight||document.documentElement.clientHeight||820;var clamp=function(n,a,b){return Math.min(b,Math.max(a,n));};var lerp=function(a,b,t){return a+(b-a)*clamp(t,0,1);};var scale;if(w<=1440)scale=base;else if(w>=2560)scale=1;else if(w>=1920){var mid=lerp(base,1,0.75);scale=lerp(mid,1,(w-1920)/(2560-1920));}else{var mid2=lerp(base,1,0.75);scale=lerp(base,mid2,(w-1440)/(1920-1440));}if(h<820)scale=Math.min(scale,base);z=Math.round(clamp(scale,0.75,1.05)*1000)/1000;}r.style.setProperty("--app-ui-scale",String(z));r.dataset.uiZoom=String(z);r.style.removeProperty("zoom");}catch(e){}})();`;
+

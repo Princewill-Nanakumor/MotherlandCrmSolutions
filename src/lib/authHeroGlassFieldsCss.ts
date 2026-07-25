@@ -146,5 +146,21 @@ ${scope("[data-auth-captcha] .font-mono")},
 ${scope("[data-auth-captcha] div > span")} {
   color: rgb(255, 255, 255) !important;
 }
+/* Global light-mode CSS forces bare spans/links to #000. Links that only set
+   hover:text-white* contain "text-white" so they skip that rule but still
+   inherit dark body text — force white on auth heroes. */
+${scope('a[class*="hover:text-white"]')},
+${scope('a[class*="text-white/"]')} {
+  color: rgb(255, 255, 255) !important;
+}
+${scope('button[class*="text-white"] > span:not([class*="text-red"]):not([class*="text-green"]):not([class*="text-amber"])')} {
+  color: rgb(255, 255, 255) !important;
+}
+/* Phone country-code prefix (+213 etc.) — bare span was forced black by globals */
+${scope("[data-auth-glass-fields] [data-auth-phone-prefix]")},
+${scope("[data-auth-glass-fields] [data-auth-phone-prefix] span")} {
+  color: rgb(255, 255, 255) !important;
+  -webkit-text-fill-color: rgb(255, 255, 255) !important;
+}
 `.trim();
 }

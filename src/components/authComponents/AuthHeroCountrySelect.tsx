@@ -159,7 +159,7 @@ export function AuthHeroCountrySelect({
             ) : (
               <Globe className="h-4 w-6 shrink-0 text-white/50" aria-hidden />
             )}
-            <span className="min-w-0 flex-1 truncate">{value.label}</span>
+            <span className="min-w-0 flex-1 truncate text-white!">{value.label}</span>
           </>
         ) : (
           <span className="min-w-0 flex-1 truncate text-white/70">{placeholder}</span>
@@ -227,7 +227,7 @@ export function AuthHeroCountrySelect({
                   ) : (
                     <Globe className="h-4 w-6 shrink-0 text-white/50" aria-hidden />
                   )}
-                  <span className="min-w-0 flex-1 truncate text-gray-100">{opt.label}</span>
+                  <span className="min-w-0 flex-1 truncate text-white!">{opt.label}</span>
                 </div>
               );
             })}

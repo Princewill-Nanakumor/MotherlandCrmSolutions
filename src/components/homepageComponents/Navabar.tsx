@@ -164,7 +164,7 @@ export default function Navbar() {
             <div
               className={cn(
                 "text-base sm:text-lg md:text-2xl font-bold truncate max-w-38 sm:max-w-56 md:max-w-72 lg:max-w-none transition-colors duration-300",
-                useSolidChrome ? "text-gray-900" : "text-white",
+                useSolidChrome ? "text-gray-900" : "text-white!",
               )}
             >
               {displayName}

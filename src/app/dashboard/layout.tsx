@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSession, SessionProvider, getSession } from "next-auth/react";
 import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +37,7 @@ import { hasRecentIntentionalSignOut, clearPostSignInHandoff, isPostSignInHandof
 import { UserPresenceProvider } from "@/context/UserPresenceContext";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { dashboardPageTitle } from "@/lib/appBranding";
+import { syncAppScrollMode } from "@/lib/uiZoom";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { searchQuery, setSearchQuery, isLoading } = useSearchContext();
@@ -57,6 +58,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       hasSeenAuthenticatedRef.current = true;
     }
   }, [status]);
+
+  // After the session gate swaps LoadingSpinner → shell, re-lock density scroll.
+  // Pathname alone may not change, so leftover density scroll would clip the navbar.
+  useLayoutEffect(() => {
+    if (status === "loading" && !hasSeenAuthenticatedRef.current) return;
+    syncAppScrollMode(pathname || "/dashboard");
+  }, [status, pathname]);
 
   // Shared Ably client lives in `ablyClient.ts` module scope. Without closing it
   // when this shell unmounts (e.g. navigate to /login or /signup), the SDK

@@ -105,6 +105,8 @@ export const ImportManager = () => {
             <ImportExportSection
               onExportAll={exportAllLeads}
               isExporting={isExportingAll}
+              hasLeads={(importUsageData?.currentLeads ?? 0) > 0}
+              isCheckingLeads={isUsageLoading}
             />
           )}
 
