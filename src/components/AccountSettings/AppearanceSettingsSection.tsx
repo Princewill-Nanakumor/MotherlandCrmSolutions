@@ -34,6 +34,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useDateTimeSettings } from "@/context/DateTimeSettingsContext";
 import { formatAppDateTime } from "@/lib/formatDateTime";
+import { FilterSelect } from "@/components/dashboardComponents/leadsFilters/FilterSelect";
 
 function ColorField({
   label,
@@ -106,6 +107,12 @@ function ColorField({
   );
 }
 
+const FONT_SELECT_OPTIONS = BRAND_FONT_OPTIONS.map((font) => ({
+  value: font.id,
+  label: font.label,
+  style: { fontFamily: font.cssFamily },
+}));
+
 function FontSelect({
   label,
   value,
@@ -122,23 +129,15 @@ function FontSelect({
       <label className="text-sm font-medium text-gray-900! dark:text-white!">
         {label}
       </label>
-      <select
+      <FilterSelect
         value={value}
+        onChange={onChange}
+        options={FONT_SELECT_OPTIONS}
+        placeholder="Select font"
         disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900! focus:outline-none focus:ring-0 focus:border-(--brand-focus) disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-transparent dark:text-white!"
-        style={{ fontFamily: getBrandFontOption(value).cssFamily }}
-      >
-        {BRAND_FONT_OPTIONS.map((font) => (
-          <option
-            key={font.id}
-            value={font.id}
-            style={{ fontFamily: font.cssFamily }}
-          >
-            {font.label}
-          </option>
-        ))}
-      </select>
+        className="w-full"
+        showActiveHighlight={false}
+      />
     </div>
   );
 }

@@ -1,42 +1,26 @@
 // src/components/AccountSettings/DialerSettingsSection.tsx
 "use client";
-import React from "react";
-import { Phone, ChevronDown } from "lucide-react";
+
+import { Phone } from "lucide-react";
 import { useDialerSettings } from "@/context/DialerSettingsContext";
 import { useToast } from "@/components/ui/use-toast";
+import { FilterSelect } from "@/components/dashboardComponents/leadsFilters/FilterSelect";
 
-function ModernSelect({
-  value,
-  onChange,
-  children,
-  ...props
-}: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={onChange}
-        className="appearance-none w-full h-10 px-3 pr-10 rounded-md bg-white dark:bg-transparent border border-gray-300 dark:border-gray-600 text-sm text-gray-900! dark:text-white! focus:outline-none focus:ring-0 focus:border-(--brand-focus) transition-colors"
-        {...props}
-      >
-        {children}
-      </select>
-      <ChevronDown className="absolute w-4 h-4 text-gray-400 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-500" />
-    </div>
-  );
-}
+const DIALER_OPTIONS = [
+  { value: "none", label: "None (Disabled)" },
+  { value: "zoiper", label: "Zoiper" },
+  { value: "microsip", label: "MicroSIP" },
+];
 
 export function DialerSettingsSection() {
   const { dialer, setDialer } = useDialerSettings();
   const { toast } = useToast();
 
-  const handleDialerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
+  const handleDialerChange = (value: string) => {
     const newDialer =
       value === "none" ? null : (value as "zoiper" | "microsip");
     setDialer(newDialer);
 
-    // Show success toast notification
     if (newDialer === null) {
       toast({
         title: "Dialer Disabled",
@@ -75,11 +59,14 @@ export function DialerSettingsSection() {
           <label className="block text-sm mb-2 font-medium text-gray-700! dark:text-white!">
             Default Dialer
           </label>
-          <ModernSelect value={dialer || "none"} onChange={handleDialerChange}>
-            <option value="none">None (Disabled)</option>
-            <option value="zoiper">Zoiper</option>
-            <option value="microsip">MicroSIP</option>
-          </ModernSelect>
+          <FilterSelect
+            value={dialer || "none"}
+            onChange={handleDialerChange}
+            options={DIALER_OPTIONS}
+            placeholder="Select dialer"
+            className="w-full"
+            showActiveHighlight={false}
+          />
           <p className="text-xs text-gray-500 dark:text-white! mt-2">
             {dialer === null
               ? "Call button will be disabled. Please select a dialer to enable calling."

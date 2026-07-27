@@ -177,7 +177,7 @@ export const MultiSelectFilter = ({
       </button>
 
       {isOpen && !disabled && (
-        <div className="overflow-y-auto absolute left-0 top-full z-50 mt-1 max-h-60 bg-white rounded-md border border-gray-300 shadow-lg dark:bg-gray-800 dark:border-gray-600 min-w-50 max-w-75">
+        <div className="overflow-y-auto absolute left-0 top-full z-50 mt-1 max-h-60 bg-white rounded-md border border-gray-300 shadow-lg dark:bg-gray-800 dark:border-gray-600 min-w-50 max-w-75 brand-scrollbar">
           {/* Mode Toggle Button (only show if mode and onModeChange are provided) */}
           {mode !== undefined && onModeChange && (
             <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">

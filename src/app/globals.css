@@ -203,6 +203,47 @@ html[data-brand-button-style="solid"].dark .brand-navbar {
   border-color: color-mix(in srgb, var(--brand-solid) 28%, transparent);
 }
 
+/* Thin scrollbar with brand-colored thumb (select menus, lists) */
+.brand-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-from) #f3f4f6;
+}
+
+.brand-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.brand-scrollbar::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.brand-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--brand-from);
+  border-radius: 3px;
+}
+
+.brand-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-to, var(--brand-from));
+}
+
+.dark .brand-scrollbar {
+  scrollbar-color: var(--brand-from) #374151;
+}
+
+.dark .brand-scrollbar::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark .brand-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--brand-from);
+}
+
+.dark .brand-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-to, var(--brand-from));
+}
+
 .dark .dashboard-app .brand-chip {
   background-color: color-mix(in srgb, var(--brand-solid) 22%, #111827);
   color: color-mix(in srgb, var(--brand-focus) 70%, white);
