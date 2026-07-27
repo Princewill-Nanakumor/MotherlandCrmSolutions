@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { reassertBrandFavicon } from "@/lib/brandFavicon";
 import {
   DEFAULT_BRAND_THEME,
   applyBrandThemeToDocument,
@@ -17,11 +19,18 @@ import {
  */
 export function BrandThemeApplier() {
   const { status } = useSession();
+  const pathname = usePathname();
 
-  useEffect(() => {
+  // Apply before paint so favicon/CSS beat Next metadata hydration.
+  useLayoutEffect(() => {
     const cached = readBrandThemeCache();
     applyBrandThemeToDocument(cached ?? DEFAULT_BRAND_THEME);
   }, []);
+
+  // Client navigations can re-inject static icons — reassert the brand ones.
+  useEffect(() => {
+    reassertBrandFavicon();
+  }, [pathname]);
 
   useEffect(() => {
     if (status !== "authenticated") return;

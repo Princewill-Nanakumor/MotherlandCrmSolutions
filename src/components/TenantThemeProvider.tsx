@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -76,7 +77,7 @@ export function TenantThemeProvider({ children }: { children: ReactNode }) {
   const theme = localOverride ?? savedTheme;
   const canEdit = data?.canEdit ?? false;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     applyBrandThemeToDocument(theme);
   }, [theme]);
 
