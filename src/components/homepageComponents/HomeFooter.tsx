@@ -3,24 +3,48 @@
 
 import Link from "next/link";
 import { Coins, Mail, MessageCircle } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 const PRODUCT_LINKS = [
   { label: "Features", href: "#features" },
   { label: "How it works", href: "#how-it-works" },
   { label: "Pricing", href: "#pricing" },
   { label: "FAQ", href: "#faq" },
-];
+] as const;
+
+function scrollToHomepageSection(hash: string) {
+  const id = hash.replace(/^#/, "");
+  const target = document.getElementById(id);
+  if (!target) return;
+
+  const prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+
+  target.scrollIntoView({
+    behavior: prefersReducedMotion ? "auto" : "smooth",
+    block: "start",
+  });
+
+  // Keep the hash in the URL without a jump (history only).
+  if (window.location.hash !== hash) {
+    window.history.pushState(null, "", hash);
+  }
+}
 
 export default function HomeFooter() {
   const { displayName, supportEmail, telegramHandle, telegramUrl } =
     useAppBranding();
+  const { data: session, status } = useSession();
+  const isAuthed = hasAuthorizedSession(status, session);
   const year = new Date().getFullYear();
 
   return (
     <footer className="border-t border-gray-200 bg-gray-50">
-      <div className="max-w-7xl px-6 py-14 mx-auto">
+      <div className="px-6 mx-auto max-w-7xl py-14">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div className="lg:col-span-2">
@@ -52,6 +76,10 @@ export default function HomeFooter() {
                   <a
                     href={link.href}
                     className="text-sm text-gray-600 transition-colors hover:text-(--brand-from)"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      scrollToHomepageSection(link.href);
+                    }}
                   >
                     {link.label}
                   </a>
@@ -62,7 +90,9 @@ export default function HomeFooter() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">Get in touch</h3>
+            <h3 className="text-sm font-semibold text-gray-900">
+              Get in touch
+            </h3>
             <ul className="mt-4 space-y-3">
               {telegramUrl && telegramHandle ? (
                 <li>
@@ -87,20 +117,19 @@ export default function HomeFooter() {
                 </a>
               </li>
               <li>
-                <Link
-                  href="/login"
-                  className="text-sm text-gray-600 transition-colors hover:text-(--brand-from)"
-                >
-                  Sign in
-                </Link>
+                <p className="text-sm text-gray-600 ">Sign in</p>
               </li>
               <li>
-                <Link
-                  href="/signup"
-                  className="text-sm font-semibold text-(--brand-from) transition-colors hover:brightness-95"
-                >
-                  Start free trial
-                </Link>
+                {status === "loading" ? (
+                  <div className="h-5 w-28 rounded bg-gray-200 animate-pulse" />
+                ) : (
+                  <Link
+                    href={isAuthed ? "/dashboard" : "/signup"}
+                    className="text-sm font-semibold text-gray-600 transition-colors hover:text-(--brand-from)"
+                  >
+                    {isAuthed ? "Go to dashboard" : "Start free trial"}
+                  </Link>
+                )}
               </li>
             </ul>
           </div>

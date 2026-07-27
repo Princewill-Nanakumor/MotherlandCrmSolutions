@@ -4,10 +4,10 @@
 import { useState, useEffect } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ArrowRight, CheckCircle } from "lucide-react";
+import Link from "next/link";
 import { SignUpSchema } from "@/schemas";
 import * as z from "zod";
 import { FormError } from "./FormError";
@@ -158,6 +158,15 @@ export default function SignUpForm() {
     }
   };
 
+  // Don't flash the signup form while session is loading or redirecting.
+  if (status === "loading" || hasAuthorizedSession(status, session)) {
+    return (
+      <div className="flex justify-center items-center p-4 min-h-80 sm:min-h-96">
+        <div className="w-10 h-10 rounded-full border-2 animate-spin border-white/30 border-t-white" />
+      </div>
+    );
+  }
+
   if (postSignup) {
     const body =
       postSignup === "verify_sent"
@@ -167,13 +176,10 @@ export default function SignUpForm() {
           : "Your account is ready. Sign in with your email and password.";
 
     return (
-      <div className="p-4 border shadow-xl rounded-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8">
-        <div className="flex flex-col items-center gap-5 py-4 text-center sm:py-6">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20">
-            <CheckCircle
-              className="h-9 w-9 text-emerald-300"
-              aria-hidden
-            />
+      <div className="p-4 rounded-xl border shadow-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8">
+        <div className="flex flex-col gap-5 items-center py-4 text-center sm:py-6">
+          <div className="flex justify-center items-center w-16 h-16 rounded-full bg-emerald-500/20">
+            <CheckCircle className="w-9 h-9 text-emerald-300" aria-hidden />
           </div>
           <div className="space-y-2">
             <h2 className="text-xl font-bold text-white! sm:text-2xl md:text-3xl">
@@ -183,7 +189,7 @@ export default function SignUpForm() {
               {body}
             </p>
             {postSignup === "verify_failed" && emailSendHint ? (
-              <p className="mx-auto max-w-lg rounded-lg border border-amber-400/50 bg-amber-500/10 px-3 py-2 text-left text-xs leading-snug text-amber-100 sm:text-sm">
+              <p className="px-3 py-2 mx-auto max-w-lg text-xs leading-snug text-left text-amber-100 rounded-lg border border-amber-400/50 bg-amber-500/10 sm:text-sm">
                 {emailSendHint}
               </p>
             ) : null}
@@ -193,7 +199,7 @@ export default function SignUpForm() {
             className="flex w-full items-center justify-center space-x-2 rounded-lg brand-gradient px-4 py-3 font-medium text-white transition-all duration-200 hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-focus) focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
           >
             <span>Sign in</span>
-            <ArrowRight className="h-5 w-5" aria-hidden />
+            <ArrowRight className="w-5 h-5" aria-hidden />
           </Link>
         </div>
       </div>
@@ -201,7 +207,7 @@ export default function SignUpForm() {
   }
 
   return (
-    <div className="p-4 border shadow-xl rounded-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8">
+    <div className="p-4 rounded-xl border shadow-xl bg-white/10 sm:rounded-2xl border-white/20 sm:p-6 md:p-8">
       <div className="mb-6 text-center sm:mb-8">
         <h2 className="text-xl font-bold text-white! sm:text-2xl md:text-3xl">
           Create your account

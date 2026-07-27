@@ -69,6 +69,7 @@ export default withAuth(
 
     const isHomePage = path === "/";
     const isLoginPage = path === "/login";
+    const isSignupPage = path === "/signup";
     const isAdminPage = path.startsWith("/admin");
     const isDashboardPage = path.startsWith("/dashboard");
     const isResetPasswordPage = path.startsWith("/reset-password");
@@ -95,17 +96,17 @@ export default withAuth(
       return NextResponse.next();
     }
 
+    // Authenticated users should never paint login/signup (avoids CTA flash).
+    if (isAuth && (isLoginPage || isSignupPage)) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
     // Public pages (incl. /verify-email/*) and reset-password pages are
     // open; everything else falls through to the auth checks below.
     const isPublicPage =
       (PUBLIC_PAGES as readonly string[]).includes(path) || isVerifyEmailPage;
     if (isPublicPage || isResetPasswordPage) {
       return NextResponse.next();
-    }
-
-    // ✅ Redirect authenticated users away from login page
-    if (isLoginPage && isAuth) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
     // ✅ Protect dashboard routes
@@ -204,8 +205,10 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    // Only protect truly private routes server-side. Let public/static routes
-    // and general navigation be handled client-side to avoid redirect flashes.
+    // Private app routes + auth entry pages (so logged-in users never paint
+    // /login or /signup before a client redirect).
+    "/login",
+    "/signup",
     "/dashboard/:path*",
     "/admin/:path*",
     "/api/protected/:path*",

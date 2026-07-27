@@ -4,6 +4,7 @@
 import { Check, MessageCircle, Mail, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
+import { useSession } from "next-auth/react";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import {
   Eyebrow,
@@ -18,6 +19,7 @@ import {
   formatSubscriptionPriceUsd,
 } from "@/lib/subscriptionPlanCatalog";
 import { cn } from "@/libs/utils";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 const SUBSCRIPTION_PLANS = SUBSCRIPTION_PLAN_ORDER.map((key) => {
   const p = SUBSCRIPTION_PLAN_CATALOG[key];
@@ -34,7 +36,11 @@ const SUBSCRIPTION_PLANS = SUBSCRIPTION_PLAN_ORDER.map((key) => {
 
 export default function SubscriptionPlansSection() {
   const { supportEmail, telegramUrl } = useAppBranding();
+  const { data: session, status } = useSession();
+  const isAuthed = hasAuthorizedSession(status, session);
   const reduceMotion = useReducedMotion();
+  const trialHref = isAuthed ? "/dashboard" : "/signup";
+  const trialLabel = isAuthed ? "Go to dashboard" : "Start free trial";
 
   return (
     <section
@@ -87,18 +93,27 @@ export default function SubscriptionPlansSection() {
                 </div>
               </div>
 
-              <Link
-                href="/signup"
-                className={cn(
-                  "group mt-6 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-all duration-200",
-                  plan.popular
-                    ? "text-white shadow-md brand-gradient hover:brightness-95"
-                    : "text-(--brand-from) border brand-soft-border brand-soft-bg hover:brightness-95",
-                )}
-              >
-                Start free trial
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+              {status === "loading" ? (
+                <div
+                  className={cn(
+                    "mt-6 h-11 w-full rounded-xl animate-pulse",
+                    plan.popular ? "bg-gray-200" : "bg-gray-100",
+                  )}
+                />
+              ) : (
+                <Link
+                  href={trialHref}
+                  className={cn(
+                    "group mt-6 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-all duration-200",
+                    plan.popular
+                      ? "text-white shadow-md brand-gradient hover:brightness-95"
+                      : "text-(--brand-from) border brand-soft-border brand-soft-bg hover:brightness-95",
+                  )}
+                >
+                  {trialLabel}
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              )}
 
               <ul className="mt-8 space-y-3">
                 {plan.features.map((feature, index) => (

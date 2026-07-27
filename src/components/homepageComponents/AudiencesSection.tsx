@@ -8,6 +8,7 @@ import {
   motion,
   useReducedMotion,
 } from "framer-motion";
+import { useSession } from "next-auth/react";
 import {
   ArrowRight,
   ChevronLeft,
@@ -25,6 +26,7 @@ import {
 import { HOME_FEATURE_TABS } from "@/components/homepageComponents/homepageContent";
 import { MoreFeaturesMapBackground } from "@/components/homepageComponents/MoreFeaturesMapBackground";
 import { cn } from "@/libs/utils";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 function StatusesVisual() {
   const statuses = [
@@ -190,6 +192,8 @@ const VISUALS: Record<string, () => ReactNode> = {
 
 export default function AudiencesSection() {
   const reduceMotion = useReducedMotion();
+  const { data: session, status } = useSession();
+  const isAuthed = hasAuthorizedSession(status, session);
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -370,13 +374,17 @@ export default function AudiencesSection() {
                 <p className="max-w-md mx-auto mt-4 text-base leading-relaxed text-gray-600 lg:mx-0 sm:text-lg">
                   {active.description}
                 </p>
-                <Link
-                  href="/signup"
-                  className="group inline-flex items-center justify-center gap-2 px-6 py-3 mt-8 text-sm font-semibold text-white transition-all duration-200 shadow-md rounded-xl brand-gradient hover:brightness-95 hover:shadow-lg"
-                >
-                  Get started
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
+                {status === "loading" ? (
+                  <div className="mt-8 h-11 w-36 rounded-xl bg-gray-200 animate-pulse mx-auto lg:mx-0" />
+                ) : (
+                  <Link
+                    href={isAuthed ? "/dashboard" : "/signup"}
+                    className="group inline-flex items-center justify-center gap-2 px-6 py-3 mt-8 text-sm font-semibold text-white transition-all duration-200 shadow-md rounded-xl brand-gradient hover:brightness-95 hover:shadow-lg"
+                  >
+                    {isAuthed ? "Go to dashboard" : "Get started"}
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                )}
               </motion.div>
             </AnimatePresence>
 
