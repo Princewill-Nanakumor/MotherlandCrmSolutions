@@ -96,7 +96,7 @@ export function UserDetailsEditForm({
       <form onSubmit={onSave} className="mt-4 space-y-6">
         {/* Personal Information */}
         <div className="space-y-4">
-          <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b dark:text-white!">
+          <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b border-gray-200 dark:border-gray-700 dark:text-gray-50!">
             Personal Information
           </h3>
 
@@ -117,7 +117,7 @@ export function UserDetailsEditForm({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Country Select */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label className="block text-sm font-medium text-gray-700! dark:text-gray-200!">
                 Country
               </label>
               <Select
@@ -153,7 +153,7 @@ export function UserDetailsEditForm({
 
             {/* Phone Input */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label className="block text-sm font-medium text-gray-700! dark:text-gray-200!">
                 Phone Number
               </label>
               <PhoneInputField
@@ -169,7 +169,7 @@ export function UserDetailsEditForm({
 
         {/* Account Information */}
         <div className="space-y-4">
-          <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b dark:text-white!">
+          <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b border-gray-200 dark:border-gray-700 dark:text-gray-50!">
             Account Information
           </h3>
           {/* Account information fields can be added here if needed */}
@@ -182,10 +182,10 @@ export function UserDetailsEditForm({
               <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500! dark:text-gray-400!">
                 Member Since
               </p>
-              <p className="text-base font-medium text-gray-900! dark:text-white!">
+              <p className="text-base font-medium text-gray-900! dark:text-gray-50!">
                 {formatDate(user.createdAt)}
               </p>
             </div>
@@ -196,10 +196,10 @@ export function UserDetailsEditForm({
               <Calendar className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500! dark:text-gray-400!">
                 Last Login
               </p>
-              <p className="text-base font-medium text-gray-900! dark:text-white!">
+              <p className="text-base font-medium text-gray-900! dark:text-gray-50!">
                 {formatDate(user.lastLogin)}
               </p>
             </div>

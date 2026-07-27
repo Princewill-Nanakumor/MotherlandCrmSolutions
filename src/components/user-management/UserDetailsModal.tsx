@@ -278,18 +278,17 @@ export function UserDetailsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full sm:max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-h-[90vh] overflow-y-auto sm:max-w-5xl">
         <DialogHeader>
           <div className="flex items-center justify-between pr-10">
-            <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+            <DialogTitle className="text-2xl font-bold text-gray-900! dark:text-gray-50!">
               User Details
             </DialogTitle>
             {!isEditing && (
               <Button
-                variant="outline"
                 size="sm"
                 onClick={handleEdit}
-                className="flex items-center gap-2 dark:text-white dark:border-gray-600"
+                className="flex items-center gap-2 border-transparent brand-gradient text-white! hover:brightness-95"
               >
                 <Edit2 className="w-4 h-4" />
                 Edit

@@ -72,7 +72,7 @@ export function PasswordResetModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-106.25">
+      <DialogContent className="w-full sm:max-w-5xl">
         <DialogHeader className="pb-4">
           <DialogTitle>Reset Password</DialogTitle>
         </DialogHeader>

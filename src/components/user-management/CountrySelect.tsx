@@ -446,7 +446,7 @@ export const CustomOption = ({
       isDisabled
         ? "opacity-50 cursor-not-allowed"
         : isSelected
-          ? "brand-soft-bg"
+          ? "bg-[color-mix(in_srgb,var(--brand-from)_12%,white)] dark:bg-[color-mix(in_srgb,var(--brand-from)_22%,#111827)]"
           : isFocused
             ? "bg-gray-50 dark:bg-gray-700"
             : "bg-white dark:bg-gray-800"
@@ -464,17 +464,17 @@ export const CustomOption = ({
     ) : (
       <Globe className="w-6 h-4 text-gray-400 shrink-0 dark:text-gray-500" />
     )}
-    <span className="flex-1 truncate text-gray-900! dark:text-white!">
+    <span className="flex-1 truncate text-gray-900! dark:text-gray-50!">
       {data.label}
     </span>
-    <span className="text-sm text-gray-500 dark:text-gray-400">
+    <span className="text-sm text-gray-500! dark:text-gray-400!">
       {data.phoneCode}
     </span>
   </div>
 );
 
 export const CustomSingleValue = ({ data }: { data: SelectOption }) => (
-  <div className="flex items-center h-full gap-2">
+  <div className={`flex items-center h-full gap-2 min-w-0 ${inter.className}`}>
     {data.flag ? (
       <Image
         src={`https://flagcdn.com/24x18/${data.flag}.png`}
@@ -487,7 +487,7 @@ export const CustomSingleValue = ({ data }: { data: SelectOption }) => (
     ) : (
       <Globe className="w-6 h-4 text-gray-400 shrink-0 dark:text-gray-500" />
     )}
-    <span className={`truncate text-gray-900! dark:text-white!${inter.className}`}>
+    <span className="truncate text-gray-900! dark:text-gray-50!">
       {data.label}
     </span>
   </div>

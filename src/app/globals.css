@@ -404,23 +404,25 @@ h6 {
    Color comes from Tailwind classes on each element. */
 
 /* Ensure dark mode text colors override gray-900 classes */
-.dark h3[class*="dark:text-white"],
-.dark h4[class*="dark:text-white"],
-.dark h3[class*="text-white!"],
-.dark h4[class*="text-white!"],
+.dark [class*="text-gray-900"][class*="dark:text-gray-50"],
+.dark h3[class*="text-gray-900"][class*="dark:text-gray-50"],
+.dark h4[class*="text-gray-900"][class*="dark:text-gray-50"],
+.dark p[class*="text-gray-900"][class*="dark:text-gray-50"],
+.dark span[class*="text-gray-900"][class*="dark:text-gray-50"],
+html.dark [class*="text-gray-900"][class*="dark:text-gray-50"],
+html.dark h3[class*="text-gray-900"][class*="dark:text-gray-50"],
+html.dark h4[class*="text-gray-900"][class*="dark:text-gray-50"],
+html.dark p[class*="text-gray-900"][class*="dark:text-gray-50"],
+html.dark span[class*="text-gray-900"][class*="dark:text-gray-50"],
+.dark [class*="text-gray-900"][class*="dark:text-white"],
+.dark h3[class*="text-gray-900"][class*="dark:text-white"],
+.dark h4[class*="text-gray-900"][class*="dark:text-white"],
 .dark p[class*="dark:text-white"],
-.dark p[class*="text-white!"],
 .dark span[class*="dark:text-white"],
-.dark span[class*="text-white!"],
-html.dark h3[class*="dark:text-white"],
-html.dark h4[class*="dark:text-white"],
-html.dark h3[class*="text-white!"],
-html.dark h4[class*="text-white!"],
-html.dark p[class*="dark:text-white"],
-html.dark p[class*="text-white!"],
-html.dark span[class*="dark:text-white"],
-html.dark span[class*="text-white!"] {
-  color: rgb(255 255 255) !important;
+html.dark [class*="text-gray-900"][class*="dark:text-white"],
+html.dark h3[class*="text-gray-900"][class*="dark:text-white"],
+html.dark h4[class*="text-gray-900"][class*="dark:text-white"] {
+  color: rgb(249 250 251) !important; /* gray-50 */
 }
 
 .dark h3[class*="dark:text-gray-300"],
@@ -815,27 +817,18 @@ label:not([class*="text-gray"]):not([class*="text-blue"]):not(
 /* Ensure Tailwind text color classes work properly - especially for filter controls */
 /* Force Tailwind classes to apply their colors with higher specificity */
 /* Light mode - ensure gray classes show dark text */
-span.text-gray-900:not(.dark),
-span[class*="text-gray-900"]:not(.dark),
-.text-gray-900:not(.dark),
 html:not(.dark) span.text-gray-900,
 html:not(.dark) span[class*="text-gray-900"],
 html:not(.dark) .text-gray-900 {
   color: rgb(17 24 39) !important; /* gray-900 - dark text */
 }
 
-span.text-gray-500:not(.dark),
-span[class*="text-gray-500"]:not(.dark),
-.text-gray-500:not(.dark),
 html:not(.dark) span.text-gray-500,
 html:not(.dark) span[class*="text-gray-500"],
 html:not(.dark) .text-gray-500 {
   color: rgb(107 114 128) !important; /* gray-500 - medium gray text */
 }
 
-span.text-gray-700:not(.dark),
-span[class*="text-gray-700"]:not(.dark),
-.text-gray-700:not(.dark),
 html:not(.dark) span.text-gray-700,
 html:not(.dark) span[class*="text-gray-700"],
 html:not(.dark) .text-gray-700 {

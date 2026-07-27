@@ -260,7 +260,7 @@ export function CallLogsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw]! sm:max-w-[90vw]! md:max-w-[85vw]! lg:max-w-[80vw]! xl:max-w-[75vw]! 2xl:max-w-[70vw]! max-h-[90vh] overflow-hidden flex flex-col w-full">
+      <DialogContent className="flex w-full max-h-[90vh] flex-col overflow-hidden sm:max-w-5xl">
         <DialogHeader>
           <div className="flex items-center justify-between pr-10">
             <DialogTitle className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">

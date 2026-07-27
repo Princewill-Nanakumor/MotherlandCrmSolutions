@@ -135,8 +135,8 @@ function AgentPasswordSection({ userId }: { userId: string }) {
             variant="outline"
             size="sm"
             onClick={handleShow}
-            className="flex items-center gap-2 dark:text-white dark:border-gray-600"
-          >
+            className="flex items-center gap-2 text-gray-700! dark:text-gray-50! dark:border-gray-600"
+            >
             <Eye className="w-4 h-4" />
             Show password
           </Button>
@@ -152,7 +152,7 @@ function AgentPasswordSection({ userId }: { userId: string }) {
 
         {requested && !isLoading && data?.available && (
           <div className="flex flex-wrap items-center gap-2">
-            <code className="px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/60 text-sm font-mono text-gray-900! dark:text-white! break-all">
+            <code className="px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/60 text-sm font-mono text-gray-900! dark:text-gray-50! break-all">
               {reveal ? data.password : "•".repeat(data.password.length || 8)}
             </code>
             <Button
@@ -160,7 +160,7 @@ function AgentPasswordSection({ userId }: { userId: string }) {
               variant="outline"
               size="sm"
               onClick={() => setReveal((p) => !p)}
-              className="flex items-center gap-1.5 dark:text-white dark:border-gray-600"
+              className="flex items-center gap-1.5 text-gray-700! dark:text-gray-50! dark:border-gray-600"
             >
               {reveal ? (
                 <EyeOff className="w-4 h-4" />
@@ -174,7 +174,7 @@ function AgentPasswordSection({ userId }: { userId: string }) {
               variant="outline"
               size="sm"
               onClick={handleCopy}
-              className="flex items-center gap-1.5 dark:text-white dark:border-gray-600"
+              className="flex items-center gap-1.5 text-gray-700! dark:text-gray-50! dark:border-gray-600"
             >
               {copied ? (
                 <Check className="w-4 h-4 text-green-600" />
@@ -219,11 +219,11 @@ function LoginInfoItem({
     <div className="flex items-start gap-3">
       <div className={`p-2 mt-1 rounded-lg ${iconWrapClass}`}>{icon}</div>
       <div className="flex-1">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+        <p className="text-sm text-gray-500! dark:text-gray-400!">{label}</p>
         {isLoading ? (
           <Skeleton className="h-5 w-32 mt-1" />
         ) : (
-          <p className="text-base font-medium text-gray-900! dark:text-white!">
+          <p className="text-base font-medium text-gray-900! dark:text-gray-50!">
             {value || "Not available"}
           </p>
         )}
@@ -256,7 +256,7 @@ function LoginInfoSection({
 
   return (
     <div className="space-y-4">
-      <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b dark:text-white!">
+      <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b border-gray-200 dark:border-gray-700 dark:text-gray-50!">
         Login Information
       </h3>
 
@@ -300,7 +300,7 @@ function LoginInfoSection({
       </div>
 
       {!isLoading && !info && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-gray-500! dark:text-gray-400!">
           Detailed login information will appear here after this user&apos;s next
           sign-in.
         </p>
@@ -320,7 +320,7 @@ export function UserDetailsView({
     <div className="mt-4 space-y-6">
       {/* Personal Information */}
       <div className="space-y-4">
-        <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b dark:text-white!">
+        <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b border-gray-200 dark:border-gray-700 dark:text-gray-50!">
           Personal Information
         </h3>
 
@@ -331,10 +331,10 @@ export function UserDetailsView({
               <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500! dark:text-gray-400!">
                 Full Name
               </p>
-              <p className="text-base font-medium text-gray-900! dark:text-white!">
+              <p className="text-base font-medium text-gray-900! dark:text-gray-50!">
                 {user.firstName} {user.lastName}
               </p>
             </div>
@@ -346,10 +346,10 @@ export function UserDetailsView({
               <Mail className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500! dark:text-gray-400!">
                 Email Address
               </p>
-              <p className="text-base font-medium text-gray-900! break-all dark:text-white!">
+              <p className="text-base font-medium text-gray-900! break-all dark:text-gray-50!">
                 {user.email}
               </p>
             </div>
@@ -361,10 +361,10 @@ export function UserDetailsView({
               <Phone className="w-5 h-5 text-green-600 dark:text-green-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500! dark:text-gray-400!">
                 Phone Number
               </p>
-              <p className="text-base font-medium text-gray-900! dark:text-white!">
+              <p className="text-base font-medium text-gray-900! dark:text-gray-50!">
                 {user.phoneNumber || "Not provided"}
               </p>
             </div>
@@ -376,10 +376,10 @@ export function UserDetailsView({
               <MapPin className="w-5 h-5 text-orange-600 dark:text-orange-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500! dark:text-gray-400!">
                 Country
               </p>
-              <p className="text-base font-medium text-gray-900! dark:text-white!">
+              <p className="text-base font-medium text-gray-900! dark:text-gray-50!">
                 {user.country || "Not provided"}
               </p>
             </div>
@@ -396,7 +396,7 @@ export function UserDetailsView({
 
       {/* Account Information */}
       <div className="space-y-4">
-        <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b dark:text-white!">
+        <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b border-gray-200 dark:border-gray-700 dark:text-gray-50!">
           Account Information
         </h3>
 
@@ -407,11 +407,8 @@ export function UserDetailsView({
               <MotherlandLogo className="h-5 w-5 rounded-[22%]" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Role</p>
-              <Badge
-                variant={user.role === "ADMIN" ? "default" : "outline"}
-                className="mt-1 dark:border-gray-600 dark:text-white!"
-              >
+              <p className="text-sm text-gray-500! dark:text-gray-400!">Role</p>
+              <Badge className="mt-1 border-transparent brand-gradient text-white!">
                 {getRoleDisplayName(user.role)}
               </Badge>
             </div>
@@ -423,12 +420,12 @@ export function UserDetailsView({
               <Lock className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500! dark:text-gray-400!">
                 Status
               </p>
               <Badge
                 variant={user.status === "ACTIVE" ? "success" : "secondary"}
-                className="mt-1 dark:border-gray-600 dark:text-white!"
+                className="mt-1 text-gray-900! dark:border-gray-600 dark:text-gray-50!"
               >
                 {getStatusDisplayName(user.status)}
               </Badge>
@@ -441,10 +438,10 @@ export function UserDetailsView({
               <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500! dark:text-gray-400!">
                 Member Since
               </p>
-              <p className="text-base font-medium text-gray-900! dark:text-white!">
+              <p className="text-base font-medium text-gray-900! dark:text-gray-50!">
                 {formatDate(user.createdAt)}
               </p>
             </div>
@@ -530,7 +527,7 @@ export function UserDetailsView({
       {/* Permissions */}
       {user.permissions && user.permissions.length > 0 && (
         <div className="space-y-4">
-          <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b dark:text-white!">
+          <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b border-gray-200 dark:border-gray-700 dark:text-gray-50!">
             Permissions
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -538,7 +535,7 @@ export function UserDetailsView({
               <Badge
                 key={index}
                 variant="outline"
-                className="dark:border-gray-600 dark:text-white!"
+                className="text-gray-900! dark:border-gray-600 dark:text-gray-50!"
               >
                 {permission}
               </Badge>
