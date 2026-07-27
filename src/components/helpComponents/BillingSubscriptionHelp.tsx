@@ -14,14 +14,13 @@ import {
   CheckCircle,
   AlertTriangle,
   Info,
-  ChevronDown,
-  ChevronRight,
   Users,
   Database,
   Clock,
   TrendingUp,
   Settings,
 } from "lucide-react";
+import { HelpAccordionSection } from "./HelpAccordionSection";
 import {
   SUBSCRIPTION_PLAN_CATALOG,
   SUBSCRIPTION_PLAN_ORDER,
@@ -611,38 +610,15 @@ const BillingSubscriptionHelp: React.FC = () => {
         <div className="p-6">
           <div className="space-y-4">
             {sections.map((section) => (
-              <div
+              <HelpAccordionSection
                 key={section.id}
-                className="border border-gray-200 rounded-lg dark:border-gray-700"
+                title={section.title}
+                icon={section.icon}
+                isExpanded={expandedSection === section.id}
+                onToggle={() => toggleSection(section.id)}
               >
-                <button
-                  onClick={() => toggleSection(section.id)}
-                  className="w-full p-4 text-left transition-colors duration-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="brand-icon">
-                        {section.icon}
-                      </div>
-                      <h3 className="text-lg font-medium text-gray-900! dark:text-white!">
-                        {section.title}
-                      </h3>
-                    </div>
-                    {expandedSection === section.id ? (
-                      <ChevronDown className="w-5 h-5 text-gray-500" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-500" />
-                    )}
-                  </div>
-                </button>
-                {expandedSection === section.id && (
-                  <div className="px-4 pb-4">
-                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                      {section.content}
-                    </div>
-                  </div>
-                )}
-              </div>
+                {section.content}
+              </HelpAccordionSection>
             ))}
           </div>
         </div>
