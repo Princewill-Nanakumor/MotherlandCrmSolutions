@@ -59,6 +59,7 @@ export const FilterSelect = ({
   const displayValue = currentOption?.label || placeholder;
   const isActiveFilter =
     showActiveHighlight && value !== inactiveValue && value !== "";
+  const showBrandBorder = isOpen || isActiveFilter;
 
   const updateMenuPosition = () => {
     const trigger = triggerRef.current;
@@ -191,10 +192,10 @@ export const FilterSelect = ({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         aria-expanded={isOpen}
-        className={`w-full h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-0 focus:border-(--brand-focus) disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-between gap-2 transition-[border-color,background-color] ${
-          isActiveFilter
-            ? "bg-white ring-2 border-(--brand-from) ring-(--brand-focus) dark:bg-gray-800"
-            : "bg-white border-gray-300 dark:border-gray-600 dark:bg-gray-800 hover:border-gray-400 hover:bg-gray-50 dark:hover:border-gray-500 dark:hover:bg-white/4"
+        className={`w-full h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-between gap-2 transition-[border-color,background-color] ${
+          showBrandBorder
+            ? "bg-white dark:bg-gray-800 border-(--brand-from)!"
+            : "bg-white border-gray-300 dark:border-gray-600 dark:bg-gray-800 hover:border-gray-400 hover:bg-gray-50 dark:hover:border-gray-500 dark:hover:bg-white/4 focus:border-(--brand-focus)!"
         }`}
       >
         <span

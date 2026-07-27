@@ -135,21 +135,17 @@ export function UserDropdownMenu({
           disabled={logoutLoading}
           aria-haspopup="true"
           aria-expanded={dropdownOpen}
-          aria-label="User menu"
+          aria-label={`User menu. ${indicatorLabel}`}
           type="button"
         >
           <UserCircle className="block h-9 w-9 text-white drop-shadow transition-colors hover:text-white/80" />
         </button>
-        <button
-          type="button"
-          onClick={handleSubscriptionStatusClick}
-          disabled={!isAdmin || logoutLoading}
+        {/* Decorative status indicator only — clicks must hit the menu button */}
+        <span
           title={indicatorLabel}
-          aria-label={indicatorLabel}
-          className={`absolute bottom-1.5 right-1.5 box-border h-3 w-3 rounded-full border-2 border-white transition-colors ${presenceLoading ? "bg-gray-400" : dotBgClassName} ${
-            isAdmin
-              ? "cursor-pointer hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
-              : "cursor-default pointer-events-none"
+          aria-hidden="true"
+          className={`pointer-events-none absolute bottom-1.5 right-1.5 box-border h-3 w-3 rounded-full border-2 border-white transition-colors ${
+            presenceLoading ? "bg-gray-400" : dotBgClassName
           }`}
         />
       </div>
@@ -180,8 +176,16 @@ export function UserDropdownMenu({
                     loading={balanceLoading}
                   />
 
-                  {/* Plan Display Component */}
-                  <PlanDisplay isAdmin={isAdmin} />
+                  {/* Plan Display — click opens subscription for admins */}
+                  <button
+                    type="button"
+                    onClick={handleSubscriptionStatusClick}
+                    disabled={logoutLoading}
+                    className="w-full text-left rounded-xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-focus) disabled:pointer-events-none disabled:opacity-50"
+                    aria-label="View subscription"
+                  >
+                    <PlanDisplay isAdmin={isAdmin} />
+                  </button>
                 </div>
               )}
             </div>
