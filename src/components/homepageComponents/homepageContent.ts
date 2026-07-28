@@ -2,6 +2,7 @@
 import {
   Activity,
   BellRing,
+  Columns3,
   Download,
   Filter,
   LayoutDashboard,
@@ -28,6 +29,7 @@ export type HomeFeatureVisual =
   | "reminders"
   | "activity"
   | "filters"
+  | "columns"
   | "phone"
   | "dashboard"
   | "brand"
@@ -103,6 +105,14 @@ export const HOME_FEATURES: HomeFeature[] = [
     description:
       "Filter by status, source, country, or owner — and search by name, email, or phone in seconds.",
     visual: "filters",
+  },
+  {
+    icon: Columns3,
+    label: "Layout",
+    title: "Drag & drop columns",
+    description:
+      "Reorder lead table columns to match how you work — grab the grip, drop it where you want, and your layout stays saved.",
+    visual: "columns",
   },
   {
     icon: Phone,

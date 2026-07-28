@@ -26,7 +26,7 @@ export default function FeaturesSection() {
           id="features-heading"
           eyebrow={<Eyebrow>Product features</Eyebrow>}
           title="Built for how sales teams actually work"
-          subtitle="Leads, import, assignment, reminders, calling, and filters — the same toolkit waiting in your dashboard."
+          subtitle="Leads, import, assignment, reminders, calling, filters, and drag-and-drop columns — the same toolkit waiting in your dashboard."
         />
 
         <RevealGroup className="grid grid-cols-1 gap-5 mt-14 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
