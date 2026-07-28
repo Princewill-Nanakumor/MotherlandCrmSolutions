@@ -10,6 +10,7 @@ import {
   assertAuthEmailConfigured,
   createVerificationEmailHtml,
   getPublicAppOrigin,
+  getRequestHost,
   getResendFrom,
   getResendReplyTo,
 } from "@/lib/emailAuthBranding";
@@ -125,7 +126,7 @@ export async function POST(req: Request) {
       user.verificationExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       await user.save();
 
-      const origin = getPublicAppOrigin();
+      const origin = getPublicAppOrigin(getRequestHost(req));
       const verificationUrl = `${origin}/verify-email/${rawToken}`;
       const resend = new Resend(process.env.RESEND_API_KEY);
 

@@ -12,6 +12,7 @@ import {
   assertAuthEmailConfigured,
   createVerificationEmailHtml,
   getPublicAppOrigin,
+  getRequestHost,
   getResendFrom,
   getResendReplyTo,
   shouldRequireEmailVerification,
@@ -252,7 +253,7 @@ export async function POST(req: Request) {
     let sendException: string | null = null;
     const subjectUsed = `${APP_DISPLAY_NAME} - verify your email`;
     if (mustVerify && rawVerificationToken) {
-      const origin = getPublicAppOrigin();
+      const origin = getPublicAppOrigin(getRequestHost(req));
       const verificationUrl = `${origin}/verify-email/${rawVerificationToken}`;
       const resend = new Resend(process.env.RESEND_API_KEY);
       try {

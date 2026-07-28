@@ -9,7 +9,7 @@
  * to addresses you are allowed to test with (see Resend dashboard / docs).
  * Production needs `RESEND_FROM` on a verified domain.
  */
-import { getServerAppBranding } from "@/lib/appBranding";
+import { getBrandingForHost, getServerAppBranding } from "@/lib/appBranding";
 
 export const APP_DISPLAY_NAME = getServerAppBranding().displayName;
 
@@ -41,12 +41,67 @@ export function assertAuthEmailConfigured(): string | null {
   return null;
 }
 
-export function getPublicAppOrigin(): string {
-  const raw =
-    process.env.NEXTAUTH_URL?.trim() ||
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    "http://localhost:3000";
-  return raw.replace(/\/$/, "");
+function isLocalHostname(hostname: string): boolean {
+  const host = hostname.trim().toLowerCase();
+  return (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "::1" ||
+    host === "0.0.0.0"
+  );
+}
+
+function isUsablePublicOrigin(raw: string): boolean {
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+    if (isProductionDeployment() && isLocalHostname(url.hostname)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Absolute site origin for links inside emails.
+ * Prefer the live request Host (same domain the user is on), then env URLs,
+ * then the brand default. Never returns localhost in production.
+ */
+export function getPublicAppOrigin(requestHost?: string | null): string {
+  const host = requestHost?.split(",")[0]?.trim();
+  if (host && !isLocalHostname(host.split(":")[0] ?? "")) {
+    const protocol = isProductionDeployment() ? "https" : "http";
+    return `${protocol}://${host.split(":")[0]}`;
+  }
+
+  const candidates = [
+    process.env.CANONICAL_APP_URL,
+    process.env.NEXTAUTH_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+  ];
+
+  for (const candidate of candidates) {
+    const raw = candidate?.trim();
+    if (!raw) continue;
+    const origin = raw.replace(/\/$/, "");
+    if (isUsablePublicOrigin(origin)) return origin;
+  }
+
+  if (isProductionDeployment()) {
+    // Branding default host (e.g. motherlandcrmsolutions.com) — never localhost
+    return getBrandingForHost(null).origin;
+  }
+
+  return "http://localhost:3000";
+}
+
+/** Host header from an API request — used for email link origins. */
+export function getRequestHost(req: Request): string | null {
+  return (
+    req.headers.get("x-forwarded-host") ||
+    req.headers.get("host") ||
+    null
+  );
 }
 
 export function escapeHtml(s: string): string {

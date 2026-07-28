@@ -10,6 +10,7 @@ import {
   assertAuthEmailConfigured,
   createPasswordResetEmailHtml,
   getPublicAppOrigin,
+  getRequestHost,
   getResendFrom,
   getResendReplyTo,
 } from "@/lib/emailAuthBranding";
@@ -117,7 +118,7 @@ export async function POST(req: Request) {
         user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
         await user.save();
 
-        const resetUrl = `${getPublicAppOrigin()}/reset-password/${resetToken}`;
+        const resetUrl = `${getPublicAppOrigin(getRequestHost(req))}/reset-password/${resetToken}`;
         const resend = new Resend(process.env.RESEND_API_KEY);
 
         const sendResult = await resend.emails.send({

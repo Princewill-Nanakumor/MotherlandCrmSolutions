@@ -205,6 +205,9 @@ export async function POST(
         currency: updatedPayment.currency,
         transactionId: updatedPayment.transactionId,
         network: updatedPayment.network,
+        requestHost:
+          request.headers.get("x-forwarded-host") ||
+          request.headers.get("host"),
       });
     }
 

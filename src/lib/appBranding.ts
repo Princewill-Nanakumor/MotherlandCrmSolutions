@@ -255,7 +255,15 @@ export function getServerAppBranding(): AppBranding {
 
   if (configured) {
     try {
-      return getBrandingForHost(new URL(configured).hostname);
+      const hostname = new URL(configured).hostname;
+      const isLocal =
+        hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname === "::1";
+      // Ignore localhost URLs mistakenly set in production env
+      if (!(process.env.NODE_ENV === "production" && isLocal)) {
+        return getBrandingForHost(hostname);
+      }
     } catch {
       // fall through
     }

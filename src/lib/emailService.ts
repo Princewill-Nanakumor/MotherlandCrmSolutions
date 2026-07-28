@@ -5,6 +5,7 @@ import {
   createPaymentApprovedEmailHtml,
   createPaymentRejectedEmailHtml,
   getPublicAppOrigin,
+  getRequestHost,
   getResendFrom,
   getResendReplyTo,
   hasResendApiKey,
@@ -32,6 +33,8 @@ export type PaymentDecisionEmailData = {
   currency: string;
   transactionId: string;
   network?: string | null;
+  /** Optional Host / X-Forwarded-Host so links match the live domain. */
+  requestHost?: string | null;
 };
 
 /**
@@ -81,7 +84,7 @@ export async function sendPaymentDecisionEmail(
     return { success: false, skipped: true };
   }
 
-  const detailsUrl = `${getPublicAppOrigin()}/dashboard/payment-details/${data.paymentId}`;
+  const detailsUrl = `${getPublicAppOrigin(data.requestHost)}/dashboard/payment-details/${data.paymentId}`;
   const htmlParams = {
     firstName: data.firstName,
     amount: data.amount,
