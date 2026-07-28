@@ -1,11 +1,16 @@
 // src/hooks/useBillingData.ts
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { Payment, PaymentsResponse, BillingData } from "@/types/payment.types";
+import { notificationKeys } from "@/lib/notificationKeys";
+import {
+  clearNotificationLockForPayment,
+  clearPaymentStorage,
+} from "@/components/billing/PaymentStorageManager";
 
 /** Read `{ error }` first (server convention), then `message`, then a fallback. */
 async function extractApiError(
@@ -33,7 +38,12 @@ interface UserProfile {
 // Query keys for billing
 export const billingKeys = {
   all: ["billing"] as const,
-  payments: (limit?: number) => ["billing", "payments", { limit }] as const,
+  /** Prefix for all payment-list queries. Use with exact:false to match any limit. */
+  paymentsRoot: () => ["billing", "payments"] as const,
+  payments: (limit?: number) =>
+    limit === undefined
+      ? (["billing", "payments"] as const)
+      : (["billing", "payments", { limit }] as const),
   payment: (id: string) => ["billing", "payment", id] as const,
   balance: () => ["billing", "balance"] as const,
   summary: () => ["billing", "summary"] as const,
@@ -61,10 +71,16 @@ export const usePayments = (limit: number = 10) => {
 
       return response.json() as Promise<PaymentsResponse>;
     },
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 15 * 1000, // 15 seconds — status can change when approved elsewhere
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    refetchInterval: (query) => {
+      const hasPending = query.state.data?.payments?.some(
+        (payment) => payment.status === "PENDING",
+      );
+      return hasPending ? 10_000 : false;
+    },
     retry: 2,
     enabled:
       hasAuthorizedSession(status, session) && session?.user?.role === "ADMIN",
@@ -108,6 +124,7 @@ export const useUserBalance = () => {
  */
 export const usePayment = (paymentId: string | null) => {
   const { status, data: session } = useSession();
+  const queryClient = useQueryClient();
 
   return useQuery<Payment, Error>({
     queryKey: billingKeys.payment(paymentId || ""),
@@ -130,14 +147,68 @@ export const usePayment = (paymentId: string | null) => {
       const data = await response.json();
 
       // The API returns { success, payment }, so normalize to Payment
-      if (data && data.payment) {
-        return data.payment as Payment;
+      const payment = (
+        data && data.payment ? data.payment : data
+      ) as Payment;
+      const paymentIdStr = String(payment._id);
+
+      // Keep Recent Transactions in sync when detail status changed
+      // (e.g. approved by a super admin while this list was still PENDING).
+      let statusChanged = false;
+      queryClient.setQueriesData<PaymentsResponse>(
+        { queryKey: billingKeys.paymentsRoot() },
+        (old) => {
+          if (!old?.payments?.length) return old;
+          let changed = false;
+          const payments = old.payments.map((item) => {
+            if (String(item._id) !== paymentIdStr) return item;
+            if (
+              item.status === payment.status &&
+              String(item.approvedAt ?? "") === String(payment.approvedAt ?? "")
+            ) {
+              return item;
+            }
+            changed = true;
+            statusChanged = true;
+            return { ...item, ...payment, _id: item._id };
+          });
+          return changed ? { ...old, payments } : old;
+        },
+      );
+
+      // Only refresh balance/notifications when the list status actually changed.
+      // Avoids thrashing the bell every time an already-completed payment is opened.
+      if (
+        statusChanged &&
+        (payment.status === "COMPLETED" || payment.status === "FAILED")
+      ) {
+        void queryClient.invalidateQueries({
+          queryKey: billingKeys.balance(),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: notificationKeys.all,
+        });
+
+        // Drop stale in-progress deposit UI if this was the stored payment
+        if (typeof window !== "undefined") {
+          try {
+            const stored = window.localStorage.getItem("current_payment");
+            if (stored) {
+              const storedPayment = JSON.parse(stored) as { _id?: string };
+              if (String(storedPayment._id) === paymentIdStr) {
+                clearPaymentStorage();
+                clearNotificationLockForPayment(paymentIdStr);
+              }
+            }
+          } catch {
+            // best effort
+          }
+        }
       }
 
-      // Fallback in case the API shape changes
-      return data as Payment;
+      return payment;
     },
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 0, // always fetch fresh status when opening details
     gcTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: true,
     retry: 2,

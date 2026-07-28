@@ -1,7 +1,13 @@
 // src/components/billing/PaymentRequestDetails.tsx
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Copy,
   Check,
@@ -10,10 +16,18 @@ import {
   CheckCircle,
   ArrowLeft,
   Clock,
+  AlertTriangle,
 } from "lucide-react";
 import QRCode from "react-qr-code";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Payment } from "@/types/payment.types";
+import { notificationKeys } from "@/lib/notificationKeys";
+import { billingKeys } from "@/hooks/useBillingData";
+import {
+  formatCountdown,
+  resolvePaymentExpiresAt,
+} from "@/lib/paymentConfirmWindow";
 import {
   clearNotificationLockForPayment,
   clearPaymentStorage,
@@ -26,6 +40,7 @@ interface PaymentRequestDetailsProps {
   onConfirmPayment: () => void;
   onShowPaymentDetails: () => void;
   onBackToDeposit: () => void;
+  onPaymentExpired?: (payment: Payment) => void;
 }
 
 export default function PaymentRequestDetails({
@@ -35,11 +50,102 @@ export default function PaymentRequestDetails({
   onConfirmPayment,
   onShowPaymentDetails,
   onBackToDeposit,
+  onPaymentExpired,
 }: PaymentRequestDetailsProps) {
+  const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notificationSent, setNotificationSent] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [isExpiring, setIsExpiring] = useState(false);
+  const [expiredLocally, setExpiredLocally] = useState(
+    currentPayment.status === "FAILED",
+  );
   const processingRef = useRef(false);
+  const expireStartedRef = useRef(false);
+
+  const expiresAt = useMemo(
+    () => resolvePaymentExpiresAt(currentPayment),
+    [currentPayment],
+  );
+
+  const msRemaining = expiresAt ? Math.max(0, expiresAt.getTime() - nowMs) : 0;
+  const isWindowActive =
+    !paymentConfirmed &&
+    !currentPayment.userConfirmedAt &&
+    !expiredLocally &&
+    currentPayment.status === "PENDING" &&
+    msRemaining > 0;
+
+  useEffect(() => {
+    if (paymentConfirmed || currentPayment.userConfirmedAt || expiredLocally) {
+      return;
+    }
+    const id = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [paymentConfirmed, currentPayment.userConfirmedAt, expiredLocally]);
+
+  const expirePayment = useCallback(async () => {
+    if (
+      expireStartedRef.current ||
+      paymentConfirmed ||
+      currentPayment.userConfirmedAt
+    ) {
+      return;
+    }
+    expireStartedRef.current = true;
+    setIsExpiring(true);
+
+    try {
+      const response = await fetch(
+        `/api/payments/${currentPayment._id}/expire`,
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      );
+      const data = await response.json().catch(() => ({}));
+      const failedPayment =
+        (data.payment as Payment | undefined) ??
+        ({ ...currentPayment, status: "FAILED" } as Payment);
+
+      setExpiredLocally(true);
+      clearPaymentStorage();
+      clearNotificationLockForPayment(currentPayment._id);
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: billingKeys.paymentsRoot() }),
+        queryClient.refetchQueries({ queryKey: billingKeys.payments(10) }),
+      ]);
+
+      onPaymentExpired?.(failedPayment);
+    } catch (error) {
+      console.error("Failed to expire payment:", error);
+      expireStartedRef.current = false;
+    } finally {
+      setIsExpiring(false);
+    }
+  }, [currentPayment, onPaymentExpired, paymentConfirmed, queryClient]);
+
+  useEffect(() => {
+    if (
+      !paymentConfirmed &&
+      !currentPayment.userConfirmedAt &&
+      currentPayment.status === "PENDING" &&
+      expiresAt &&
+      msRemaining <= 0 &&
+      !expireStartedRef.current
+    ) {
+      void expirePayment();
+    }
+  }, [
+    currentPayment.status,
+    currentPayment.userConfirmedAt,
+    expiresAt,
+    expirePayment,
+    msRemaining,
+    paymentConfirmed,
+  ]);
 
   const handleCopy = (address: string) => {
     navigator.clipboard.writeText(address);
@@ -48,8 +154,6 @@ export default function PaymentRequestDetails({
   };
 
   const handleBackToDeposit = () => {
-    // M9: route through the centralized helpers so the keys can never drift
-    // from `PaymentStorageManager`'s storage writer.
     clearPaymentStorage();
     clearNotificationLockForPayment(currentPayment._id);
     onBackToDeposit();
@@ -58,10 +162,12 @@ export default function PaymentRequestDetails({
   const handleConfirmPayment = async () => {
     const notificationKey = `notification_sent_${currentPayment._id}`;
 
-    // Prevent double submission and re-entrancy
     if (processingRef.current || isSubmitting || notificationSent) return;
+    if (!isWindowActive) {
+      void expirePayment();
+      return;
+    }
 
-    // Idempotent guard
     const alreadySent = localStorage.getItem(notificationKey);
     if (alreadySent === "true") {
       onConfirmPayment();
@@ -72,7 +178,6 @@ export default function PaymentRequestDetails({
       processingRef.current = true;
       setIsSubmitting(true);
       setNotificationSent(true);
-      // Lock immediately to avoid rapid double-clicks
       localStorage.setItem(notificationKey, "true");
 
       const notificationResponse = await fetch("/api/notifications", {
@@ -87,30 +192,60 @@ export default function PaymentRequestDetails({
       });
 
       if (!notificationResponse.ok) {
-        const errorText = await notificationResponse.text();
-        console.error("❌ Failed to create notification:", errorText);
-        throw new Error(errorText || "Failed to create notification");
-      } else {
-        // L4: don't dump the raw notification payload to user consoles.
-        if (process.env.NODE_ENV !== "production") {
-          await notificationResponse.json().catch(() => null);
-          console.log("Notification created successfully");
+        const errorData = await notificationResponse.json().catch(() => ({}));
+        if (
+          notificationResponse.status === 410 ||
+          (errorData as { code?: string }).code === "PAYMENT_EXPIRED"
+        ) {
+          setExpiredLocally(true);
+          clearPaymentStorage();
+          clearNotificationLockForPayment(currentPayment._id);
+          onPaymentExpired?.({ ...currentPayment, status: "FAILED" });
+          return;
         }
+        throw new Error(
+          (errorData as { error?: string }).error ||
+            "Failed to create notification",
+        );
       }
 
+      await queryClient.invalidateQueries({
+        queryKey: notificationKeys.all,
+      });
       onConfirmPayment();
     } catch (error) {
-      // Roll back the local lock if server failed
       localStorage.removeItem(notificationKey);
       setNotificationSent(false);
-      console.error("❌ Error creating notification:", error);
-      // Optionally still proceed:
-      // onConfirmPayment();
+      console.error("Error creating notification:", error);
     } finally {
       setIsSubmitting(false);
       processingRef.current = false;
     }
   };
+
+  if (expiredLocally || currentPayment.status === "FAILED") {
+    return (
+      <div className="space-y-6">
+        <div className="p-6 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+          <div className="flex items-center mb-4">
+            <AlertTriangle className="w-6 h-6 mr-3 text-red-600 dark:text-red-400" />
+            <h3 className="text-lg font-semibold text-red-800! dark:text-red-300!">
+              Deposit Request Expired
+            </h3>
+          </div>
+          <p className="mb-4 text-sm text-red-700! dark:text-red-200!">
+            You did not confirm this deposit within 1 hour. The payment request
+            has been marked as failed. Please create a new deposit if you still
+            want to add funds.
+          </p>
+          <Button onClick={handleBackToDeposit} className="w-full sm:w-auto">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Deposit
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (paymentConfirmed) {
     return (
@@ -182,8 +317,8 @@ export default function PaymentRequestDetails({
                         : "5–10 minutes after the transaction confirms"}
                     </li>
                     <li>
-                      • You&apos;ll receive a notification when your deposit
-                      has been confirmed
+                      • You&apos;ll receive a notification when your deposit has
+                      been confirmed
                     </li>
                     <li>• Funds will be available on your account balance</li>
                   </ul>
@@ -212,23 +347,41 @@ export default function PaymentRequestDetails({
     );
   }
 
-  // Original payment request view
+  const countdownUrgent = msRemaining > 0 && msRemaining < 5 * 60 * 1000;
+
   return (
     <div className="space-y-6">
       <div className="p-4 border border-green-200 rounded-lg bg-green-50 dark:bg-green-900/20 dark:border-green-700">
-        <div className="flex items-center mb-3">
-          <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
-          <h3 className="font-semibold text-green-800! dark:text-white!">
-            Payment Request Created
-          </h3>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div className="flex items-center">
+            <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
+            <h3 className="font-semibold text-green-800! dark:text-white!">
+              Payment Request Created
+            </h3>
+          </div>
+          <div
+            className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-semibold tabular-nums ${
+              countdownUrgent
+                ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
+                : "bg-white text-gray-900 dark:bg-gray-800 dark:text-white"
+            }`}
+            aria-live="polite"
+          >
+            <Clock className="w-4 h-4" />
+            {isExpiring ? "Expiring…" : formatCountdown(msRemaining)}
+          </div>
         </div>
+
         <p className="text-gray-900! dark:text-white! text-sm mb-4">
           Please send exactly{" "}
           <span className="font-bold text-gray-900! dark:text-white!">
             {currentPayment.amount} USDT
           </span>{" "}
-          to the wallet address below. After making payment, click on&quot; I
-          have made the payment&quot;
+          to the wallet address below. You have{" "}
+          <span className="font-semibold">1 hour</span> to click{" "}
+          <span className="font-semibold">
+            &quot;I Have Made the Payment&quot;
+          </span>
         </p>
 
         {currentPayment.walletAddress ? (
@@ -291,8 +444,13 @@ export default function PaymentRequestDetails({
                   </h4>
                   <p className="text-gray-900! dark:text-white! text-xs">
                     {network === "TRC20"
-                      ? "TRC20 deposits are faster and have lower fees (~1 USDT) compared to ERC20"
-                      : "ERC20 deposits may take longer and have higher gas fees (varies)"}
+                      ? "TRC20 deposits are faster and have lower fees (~1 USDT) compared to ERC20."
+                      : "ERC20 deposits may take longer and have higher gas fees (varies)."}
+                  </p>
+                  <p className="text-gray-900! dark:text-white! text-xs mt-1">
+                    Confirm within 1 hour or this request will fail
+                    automatically. Avoid creating a second deposit while this
+                    one is active.
                   </p>
                 </div>
               </div>
@@ -301,7 +459,7 @@ export default function PaymentRequestDetails({
         ) : (
           <div className="p-4 mb-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
             <div className="flex items-start">
-              <Info className="h-4 w-4 mt-0.5 mr-2 text-blue-600 dark:text-blue-400 hrink-0" />
+              <Info className="h-4 w-4 mt-0.5 mr-2 text-blue-600 dark:text-blue-400 shrink-0" />
               <div>
                 <h4 className="font-medium text-blue-800! dark:text-white! text-sm">
                   Payment Created Successfully
@@ -329,7 +487,9 @@ export default function PaymentRequestDetails({
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button
             onClick={handleConfirmPayment}
-            disabled={isSubmitting || notificationSent}
+            disabled={
+              isSubmitting || notificationSent || isExpiring || !isWindowActive
+            }
             className="flex-1 mt-2 text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (

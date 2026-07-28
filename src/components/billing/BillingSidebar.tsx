@@ -41,7 +41,7 @@ export default function BillingSidebar({
           <h3 className="text-lg font-semibold dark:text-white! text-gray-900!">
             Account Balance
           </h3>
-          <CircleDollarSign className="w-5 h-5 text-gray-500 transition-colors duration-200 cursor-pointer dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300" />
+          <CircleDollarSign className="w-5 h-5 text-gray-500 dark:text-gray-400 " />
         </div>
 
         {isLoading ? (

@@ -7,6 +7,7 @@ import { useCallback, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoadingSpinner } from "@/components/dashboardComponents/LeadsLoadingState";
 import NotificationsList from "@/components/notifications/NotificationsList";
+import { notificationKeys } from "@/lib/notificationKeys";
 
 interface Notification {
   id: string;
@@ -60,7 +61,7 @@ export default function NotificationsPage() {
     error,
     refetch,
   } = useQuery<RawNotification[], Error, Notification[]>({
-    queryKey: ["notifications"],
+    queryKey: notificationKeys.all,
     queryFn: async () => {
       const response = await fetch("/api/notifications/all", {
         credentials: "include",
@@ -72,10 +73,10 @@ export default function NotificationsPage() {
     },
     select: normalizeNotifications,
     enabled: status === "authenticated" && !!userId,
-    staleTime: 60_000,
-    refetchInterval: 5 * 60_000,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
     refetchIntervalInBackground: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 
   const deleteMutation = useMutation({
@@ -89,11 +90,11 @@ export default function NotificationsPage() {
       }
     },
     onMutate: async (notificationId) => {
-      await queryClient.cancelQueries({ queryKey: ["notifications"] });
-      const previous = queryClient.getQueryData<RawNotification[]>([
-        "notifications",
-      ]);
-      queryClient.setQueryData<RawNotification[]>(["notifications"], (old) =>
+      await queryClient.cancelQueries({ queryKey: notificationKeys.all });
+      const previous = queryClient.getQueryData<RawNotification[]>(
+        notificationKeys.all,
+      );
+      queryClient.setQueryData<RawNotification[]>(notificationKeys.all, (old) =>
         (old ?? []).filter((n) => {
           const id =
             n.id ||
@@ -106,11 +107,11 @@ export default function NotificationsPage() {
     },
     onError: (_err, _id, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(["notifications"], context.previous);
+        queryClient.setQueryData(notificationKeys.all, context.previous);
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 

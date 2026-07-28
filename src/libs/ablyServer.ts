@@ -3,10 +3,13 @@ import {
   ADMIN_LEADS_UPDATED_EVENT,
   CALL_LOG_CREATED_EVENT,
   LEAD_UPDATED_EVENT,
+  PAYMENT_NOTIFICATION_EVENT,
   REMINDER_DUE_EVENT,
   getAdminLeadsChannelName,
   getLeadChannelName,
+  getSuperAdminNotificationsChannelName,
   getUserCallLogsChannelName,
+  getUserNotificationsChannelName,
   getUserRemindersChannelName,
 } from "@/libs/realtime";
 
@@ -68,4 +71,40 @@ export async function publishAdminLeadsUpdatedEvent(
 
   const channel = client.channels.get(getAdminLeadsChannelName(adminId));
   await channel.publish(ADMIN_LEADS_UPDATED_EVENT, payload);
+}
+
+export type PaymentNotificationAblyPayload = {
+  type:
+    | "PAYMENT_APPROVED"
+    | "PAYMENT_REJECTED"
+    | "PAYMENT_PENDING_APPROVAL";
+  paymentId: string;
+  amount?: number;
+  currency?: string;
+};
+
+/** Push payment notification to a specific user (tenant admin depositor). */
+export async function publishUserPaymentNotificationEvent(
+  adminId: string,
+  userId: string,
+  payload: PaymentNotificationAblyPayload,
+): Promise<void> {
+  const client = getAblyRestClient();
+  if (!client) return;
+
+  const channel = client.channels.get(
+    getUserNotificationsChannelName(adminId, userId),
+  );
+  await channel.publish(PAYMENT_NOTIFICATION_EVENT, payload);
+}
+
+/** Push pending-approval alerts to all connected super admins. */
+export async function publishSuperAdminPaymentNotificationEvent(
+  payload: PaymentNotificationAblyPayload,
+): Promise<void> {
+  const client = getAblyRestClient();
+  if (!client) return;
+
+  const channel = client.channels.get(getSuperAdminNotificationsChannelName());
+  await channel.publish(PAYMENT_NOTIFICATION_EVENT, payload);
 }

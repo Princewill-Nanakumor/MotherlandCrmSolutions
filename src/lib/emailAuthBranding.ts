@@ -193,3 +193,75 @@ export function createPasswordResetEmailHtml(
   `;
   return emailShell(body);
 }
+
+export type PaymentDecisionEmailParams = {
+  firstName: string;
+  amount: number;
+  currency: string;
+  transactionId: string;
+  network?: string | null;
+  detailsUrl: string;
+};
+
+function paymentDecisionDetailsBlock(params: PaymentDecisionEmailParams): string {
+  const amountLabel = escapeHtml(
+    `${params.amount} ${String(params.currency || "USDT").toUpperCase()}`,
+  );
+  const txn = escapeHtml(params.transactionId || "—");
+  const network = params.network
+    ? `<p style="${EMAIL_STYLES.muted} margin-bottom: 8px;">Network: <strong style="color:#1a1a1a;">${escapeHtml(params.network)}</strong></p>`
+    : "";
+  return `
+    <div style="background:#f8fafc; border:1px solid #e5e5e5; border-radius:12px; padding:16px; margin:20px 0;">
+      <p style="${EMAIL_STYLES.muted} margin-bottom: 8px;">Amount: <strong style="color:#1a1a1a;">${amountLabel}</strong></p>
+      <p style="${EMAIL_STYLES.muted} margin-bottom: 8px;">Transaction ID: <strong style="color:#1a1a1a;">${txn}</strong></p>
+      ${network}
+    </div>
+  `;
+}
+
+export function createPaymentApprovedEmailHtml(
+  params: PaymentDecisionEmailParams,
+): string {
+  const safeFirst = escapeHtml(String(params.firstName ?? "").trim() || "there");
+  const href = safeEmailHttpUrl(params.detailsUrl);
+  const body = `
+    <h1 style="${EMAIL_STYLES.h1}">Payment approved</h1>
+    <p style="${EMAIL_STYLES.p}">Hello ${safeFirst},</p>
+    <p style="${EMAIL_STYLES.p}">
+      Good news — your deposit has been reviewed and <strong>approved</strong>.
+      The funds have been credited to your ${brandNameHtml()} account balance.
+    </p>
+    ${paymentDecisionDetailsBlock(params)}
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${href}" style="${EMAIL_STYLES.button}">View payment details</a>
+    </div>
+    <p style="${EMAIL_STYLES.muted}">
+      If you have questions about this deposit, reply to this email or contact support.
+    </p>
+  `;
+  return emailShell(body);
+}
+
+export function createPaymentRejectedEmailHtml(
+  params: PaymentDecisionEmailParams,
+): string {
+  const safeFirst = escapeHtml(String(params.firstName ?? "").trim() || "there");
+  const href = safeEmailHttpUrl(params.detailsUrl);
+  const body = `
+    <h1 style="${EMAIL_STYLES.h1}">Payment not approved</h1>
+    <p style="${EMAIL_STYLES.p}">Hello ${safeFirst},</p>
+    <p style="${EMAIL_STYLES.p}">
+      Your deposit request was reviewed and <strong>could not be approved</strong>.
+      No funds were credited for this transaction.
+    </p>
+    ${paymentDecisionDetailsBlock(params)}
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${href}" style="${EMAIL_STYLES.button}">View payment details</a>
+    </div>
+    <p style="${EMAIL_STYLES.muted}">
+      If you believe this is a mistake or already sent funds, contact support with your transaction ID.
+    </p>
+  `;
+  return emailShell(body);
+}

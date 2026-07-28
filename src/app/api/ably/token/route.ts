@@ -4,14 +4,17 @@ import Ably from "ably";
 import { authOptions } from "@/libs/auth";
 import {
   getAdminLeadsChannelName,
+  getSuperAdminNotificationsChannelName,
   getUserCallLogsChannelName,
   getUserRemindersChannelName,
 } from "@/libs/realtime";
+import { getSuperAdminEmails } from "@/lib/notificationQuery";
 
 interface SessionUser {
   id: string;
   role: "ADMIN" | "AGENT";
   adminId?: string;
+  email?: string | null;
 }
 
 interface SessionShape {
@@ -22,6 +25,13 @@ function getAdminScope(user: SessionUser): string {
   if (user.role === "ADMIN") return user.id;
   if (user.role === "AGENT" && user.adminId) return user.adminId;
   throw new Error("Invalid user scope");
+}
+
+function isSuperAdminUser(user: SessionUser): boolean {
+  if (user.role !== "ADMIN") return false;
+  const email = user.email?.trim();
+  if (!email) return false;
+  return getSuperAdminEmails().includes(email);
 }
 
 export async function POST() {
@@ -63,6 +73,10 @@ async function handleTokenRequest() {
             ],
           };
 
+    if (isSuperAdminUser(session.user)) {
+      capabilityMap[getSuperAdminNotificationsChannelName()] = ["subscribe"];
+    }
+
     const capability = JSON.stringify(capabilityMap);
 
     // Return TokenDetails directly to the browser SDK to avoid
@@ -78,7 +92,7 @@ async function handleTokenRequest() {
     console.error("Error creating Ably token request:", error);
     return NextResponse.json(
       { message: "Failed to create Ably token" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

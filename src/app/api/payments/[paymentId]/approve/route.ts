@@ -8,6 +8,12 @@ import { Types } from "mongoose";
 import mongoose from "mongoose";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { enrichPaymentForResponse } from "@/lib/paymentPresentation";
+import { sendPaymentDecisionEmail } from "@/lib/emailService";
+import { resolvePendingApprovalNotifications } from "@/lib/resolvePendingApprovalNotifications";
+import {
+  publishSuperAdminPaymentNotificationEvent,
+  publishUserPaymentNotificationEvent,
+} from "@/libs/ablyServer";
 
 interface PaymentDocument {
   _id: Types.ObjectId;
@@ -31,6 +37,8 @@ interface UserDocument {
   email: string;
   role: string;
   name?: string;
+  firstName?: string;
+  lastName?: string;
   balance?: number;
 }
 
@@ -157,6 +165,14 @@ export async function POST(
     const notificationsCol = mongoose.connection.db.collection("notifications");
     const now = new Date();
 
+    // Clear pending-approval alerts for this payment (super-admin list/bell)
+    await resolvePendingApprovalNotifications({
+      paymentId,
+      status: "APPROVED",
+      amount: approvedPayment.amount,
+      currency: approvedPayment.currency,
+    });
+
     const notificationDoc = {
       type: "PAYMENT_APPROVED",
       message: `Your payment of ${approvedPayment.amount} ${approvedPayment.currency} has been approved successfully`,
@@ -178,6 +194,55 @@ export async function POST(
       { $setOnInsert: notificationDoc },
       { upsert: true }
     );
+
+    const recipientUserId = approvedPayment.adminId?.toString();
+    try {
+      if (recipientUserId) {
+        await publishUserPaymentNotificationEvent(
+          recipientUserId,
+          recipientUserId,
+          {
+            type: "PAYMENT_APPROVED",
+            paymentId,
+            amount: approvedPayment.amount,
+            currency: approvedPayment.currency,
+          },
+        );
+      }
+      // Super-admin list also changed (pending → approved)
+      await publishSuperAdminPaymentNotificationEvent({
+        type: "PAYMENT_APPROVED",
+        paymentId,
+        amount: approvedPayment.amount,
+        currency: approvedPayment.currency,
+      });
+    } catch (publishError) {
+      console.error("Ably publish failed after payment approval:", publishError);
+    }
+
+    // Email the account that owns this deposit (non-blocking)
+    const recipient =
+      creditedAdmin.email
+        ? creditedAdmin
+        : ((await User.findById(approvedPayment.adminId)
+            .select("email firstName lastName")
+            .lean()) as UserDocument | null);
+
+    if (recipient?.email) {
+      await sendPaymentDecisionEmail({
+        decision: "APPROVED",
+        toEmail: recipient.email,
+        firstName:
+          recipient.firstName?.trim() ||
+          recipient.name?.trim() ||
+          "there",
+        paymentId,
+        amount: approvedPayment.amount,
+        currency: approvedPayment.currency,
+        transactionId: approvedPayment.transactionId,
+        network: approvedPayment.network,
+      });
+    }
 
     const paymentResponse = await enrichPaymentForResponse(approvedPayment);
 

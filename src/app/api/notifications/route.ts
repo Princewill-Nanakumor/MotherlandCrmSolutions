@@ -10,6 +10,8 @@ import {
   isSuperAdminSession,
   notificationOwnerSelectors,
 } from "@/lib/notificationQuery";
+import { reconcileStalePendingApprovalNotifications } from "@/lib/resolvePendingApprovalNotifications";
+import { publishSuperAdminPaymentNotificationEvent } from "@/libs/ablyServer";
 
 export async function GET() {
   try {
@@ -22,6 +24,9 @@ export async function GET() {
     if (!mongoose.connection.db) {
       throw new Error("Database connection not established");
     }
+
+    // Keep bell in sync with payments that were already decided
+    await reconcileStalePendingApprovalNotifications();
 
     const userRole = session.user.role;
     const userId = session.user.id;
@@ -125,9 +130,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Confirm window expired without confirmation
+    const expiresAt = payment.expiresAt
+      ? new Date(payment.expiresAt as string | Date)
+      : null;
+    if (expiresAt && Date.now() >= expiresAt.getTime() && !payment.userConfirmedAt) {
+      await paymentsCol.updateOne(
+        { _id: payment._id, status: "PENDING" },
+        {
+          $set: {
+            status: "FAILED",
+            approvedAt: new Date(),
+            description: "Expired — deposit not confirmed within 1 hour",
+          },
+        },
+      );
+      return NextResponse.json(
+        {
+          error:
+            "This deposit request expired. Please create a new payment request.",
+          code: "PAYMENT_EXPIRED",
+        },
+        { status: 410 },
+      );
+    }
+
     if (!paymentActorMatchesSession(payment.createdBy, session.user.id)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    // Mark that the depositor confirmed they sent funds (stops auto-expire)
+    await paymentsCol.updateOne(
+      {
+        _id: payment._id,
+        status: "PENDING",
+        $or: [
+          { userConfirmedAt: { $exists: false } },
+          { userConfirmedAt: null },
+        ],
+      },
+      { $set: { userConfirmedAt: new Date() } },
+    );
 
     const dedupKey = `payment_confirmation_${paymentIdRaw}`;
     const notificationsCol = mongoose.connection.db.collection("notifications");
@@ -171,6 +214,20 @@ export async function POST(request: NextRequest) {
         userEmail: session.user.email || "unknown@email.com",
         transactionId: String(payment.transactionId ?? ""),
       });
+
+      try {
+        await publishSuperAdminPaymentNotificationEvent({
+          type: "PAYMENT_PENDING_APPROVAL",
+          paymentId: paymentIdRaw,
+          amount,
+          currency,
+        });
+      } catch (publishError) {
+        console.error(
+          "Ably publish failed after payment confirmation:",
+          publishError,
+        );
+      }
     }
 
     const notification = await notificationsCol.findOne({

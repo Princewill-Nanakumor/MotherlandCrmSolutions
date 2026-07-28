@@ -13,6 +13,10 @@ export interface IPayment {
   createdBy: mongoose.Types.ObjectId;
   approvedBy?: mongoose.Types.ObjectId;
   approvedAt?: Date;
+  /** When the admin confirmed they sent crypto (clicked "I Have Made the Payment"). */
+  userConfirmedAt?: Date;
+  /** Deadline to confirm the deposit; unpaid requests fail after this. */
+  expiresAt?: Date;
   network?: "TRC20" | "ERC20";
   walletAddress?: string;
   createdAt: Date;
@@ -72,6 +76,13 @@ const paymentSchema = new Schema(
     approvedAt: {
       type: Date,
     },
+    userConfirmedAt: {
+      type: Date,
+    },
+    expiresAt: {
+      type: Date,
+      index: true,
+    },
     network: {
       type: String,
       enum: ["TRC20", "ERC20"],
@@ -90,6 +101,7 @@ const paymentSchema = new Schema(
 paymentSchema.index({ adminId: 1, createdAt: -1 });
 paymentSchema.index({ status: 1 });
 paymentSchema.index({ createdBy: 1 });
+paymentSchema.index({ status: 1, expiresAt: 1, userConfirmedAt: 1 });
 
 // Generate unique transaction ID
 paymentSchema.pre("save", function (next) {

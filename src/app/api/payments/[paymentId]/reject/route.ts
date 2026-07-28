@@ -8,6 +8,12 @@ import { Types } from "mongoose";
 import mongoose from "mongoose";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { enrichPaymentForResponse } from "@/lib/paymentPresentation";
+import { sendPaymentDecisionEmail } from "@/lib/emailService";
+import { resolvePendingApprovalNotifications } from "@/lib/resolvePendingApprovalNotifications";
+import {
+  publishSuperAdminPaymentNotificationEvent,
+  publishUserPaymentNotificationEvent,
+} from "@/libs/ablyServer";
 
 interface PaymentDocument {
   _id: Types.ObjectId;
@@ -31,6 +37,8 @@ interface UserDocument {
   email: string;
   role: string;
   name?: string;
+  firstName?: string;
+  lastName?: string;
   balance?: number;
 }
 
@@ -123,6 +131,14 @@ export async function POST(
     const notificationsCol = mongoose.connection.db.collection("notifications");
     const now = new Date();
 
+    // Clear pending-approval alerts for this payment (super-admin list/bell)
+    await resolvePendingApprovalNotifications({
+      paymentId,
+      status: "REJECTED",
+      amount: payment.amount,
+      currency: payment.currency,
+    });
+
     const notificationDoc = {
       type: "PAYMENT_REJECTED",
       message: `Your payment of ${payment.amount} ${payment.currency} has been rejected`,
@@ -144,6 +160,53 @@ export async function POST(
       { $setOnInsert: notificationDoc },
       { upsert: true }
     );
+
+    const recipientUserId =
+      updatedPayment.adminId?.toString() ||
+      updatedPayment.createdBy?.toString();
+    try {
+      if (recipientUserId) {
+        await publishUserPaymentNotificationEvent(
+          recipientUserId,
+          recipientUserId,
+          {
+            type: "PAYMENT_REJECTED",
+            paymentId,
+            amount: updatedPayment.amount,
+            currency: updatedPayment.currency,
+          },
+        );
+      }
+      await publishSuperAdminPaymentNotificationEvent({
+        type: "PAYMENT_REJECTED",
+        paymentId,
+        amount: updatedPayment.amount,
+        currency: updatedPayment.currency,
+      });
+    } catch (publishError) {
+      console.error("Ably publish failed after payment rejection:", publishError);
+    }
+
+    // Email the depositor (non-blocking on mail failure)
+    const recipientId = updatedPayment.adminId || updatedPayment.createdBy;
+    const recipient = recipientId
+      ? ((await User.findById(recipientId)
+          .select("email firstName lastName")
+          .lean()) as UserDocument | null)
+      : null;
+
+    if (recipient?.email) {
+      await sendPaymentDecisionEmail({
+        decision: "REJECTED",
+        toEmail: recipient.email,
+        firstName: recipient.firstName?.trim() || "there",
+        paymentId,
+        amount: updatedPayment.amount,
+        currency: updatedPayment.currency,
+        transactionId: updatedPayment.transactionId,
+        network: updatedPayment.network,
+      });
+    }
 
     const paymentResponse = await enrichPaymentForResponse(updatedPayment);
 

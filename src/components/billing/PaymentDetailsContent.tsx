@@ -37,7 +37,6 @@ export default function PaymentDetailsContent({
         <PaymentPartyInfo
           tenantAccount={payment.tenantAccount}
           submittedBy={payment.submittedBy}
-          approvedByUser={payment.approvedByUser}
         />
 
         {/* Payment Status Card */}

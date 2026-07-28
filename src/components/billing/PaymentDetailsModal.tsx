@@ -2,11 +2,18 @@
 "use client";
 
 import React from "react";
-import { X as CloseIcon } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import PaymentDetailsContent from "./PaymentDetailsContent";
 import { usePayment } from "@/hooks/useBillingData";
 import { clearPaymentStorage } from "./PaymentStorageManager";
+import type { Payment } from "@/types/payment.types";
 
 interface PaymentDetailsModalProps {
   paymentId: string;
@@ -17,6 +24,68 @@ interface PaymentDetailsModalProps {
   onClearPayment?: () => void;
 }
 
+function PaymentDetailsSkeleton() {
+  return (
+    <div
+      className="grid grid-cols-1 gap-6 min-h-112 lg:grid-cols-3"
+      aria-busy="true"
+      aria-label="Loading payment details"
+    >
+      {/* Main column — mirrors Account + Payment Information */}
+      <div className="space-y-6 lg:col-span-2">
+        <div className="p-6 rounded-xl border border-gray-200 shadow-xl bg-white/70 dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex gap-2 items-center mb-4">
+            <Skeleton className="w-5 h-5 bg-gray-200 rounded dark:bg-gray-700" />
+            <Skeleton className="w-24 h-5 bg-gray-200 dark:bg-gray-700" />
+          </div>
+          <Skeleton className="mb-2 w-40 h-4 bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="w-56 h-4 bg-gray-200 dark:bg-gray-700" />
+        </div>
+
+        <div className="p-6 bg-white rounded-xl border border-gray-200 shadow-xl dark:border-gray-700 dark:bg-gray-900">
+          <div className="flex gap-2 items-center mb-6">
+            <Skeleton className="w-5 h-5 bg-gray-200 rounded dark:bg-gray-700" />
+            <Skeleton className="w-44 h-5 bg-gray-200 dark:bg-gray-700" />
+          </div>
+          <div className="space-y-5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex gap-4 justify-between items-center">
+                <Skeleton className="w-20 h-4 bg-gray-200 dark:bg-gray-700" />
+                <Skeleton
+                  className={`h-5 bg-gray-200 dark:bg-gray-700 ${
+                    i === 0 ? "w-28" : i === 1 || i === 2 ? "w-24" : "w-36"
+                  }`}
+                />
+              </div>
+            ))}
+            <div className="pt-4 space-y-2 border-t border-gray-200 dark:border-gray-700">
+              <Skeleton className="w-24 h-4 bg-gray-200 dark:bg-gray-700" />
+              <Skeleton className="w-full max-w-md h-4 bg-gray-200 dark:bg-gray-700" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar — mirrors Status + Quick Actions */}
+      <div className="space-y-6">
+        <div className="p-6 rounded-xl border border-gray-200 shadow-xl bg-white/70 dark:border-gray-700 dark:bg-gray-800">
+          <Skeleton className="mb-4 w-20 h-5 bg-gray-200 dark:bg-gray-700" />
+          <div className="flex gap-2 items-center">
+            <Skeleton className="w-5 h-5 bg-gray-200 rounded-full dark:bg-gray-700" />
+            <Skeleton className="w-24 h-4 bg-gray-200 dark:bg-gray-700" />
+          </div>
+          <Skeleton className="mt-3 w-40 h-3 bg-gray-200 dark:bg-gray-700" />
+        </div>
+
+        <div className="p-6 rounded-xl border border-gray-200 shadow-xl bg-white/70 dark:border-gray-700 dark:bg-gray-800">
+          <Skeleton className="mb-4 w-32 h-5 bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="w-full h-10 bg-gray-200 rounded-md dark:bg-gray-700" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PaymentDetailsModal({
   paymentId,
   isOpen,
@@ -24,7 +93,6 @@ export default function PaymentDetailsModal({
   onNewPayment = () => {},
   onClearPayment = () => {},
 }: PaymentDetailsModalProps) {
-  // Use React Query to fetch payment details
   const {
     data: payment,
     isLoading: loading,
@@ -32,80 +100,63 @@ export default function PaymentDetailsModal({
   } = usePayment(isOpen ? paymentId : null);
 
   const handleClose = () => {
-    // M9: use the same storage keys as PaymentStorageManager (the previous
-    // ad-hoc `currentPayment`/`paymentNetwork`/`paymentConfirmed` keys never
-    // existed, so this never actually cleared anything).
     clearPaymentStorage();
     onClearPayment();
     onClose();
   };
 
-  if (!isOpen) return null;
+  const typedPayment = payment as Payment | undefined;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 dark:bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-t-2xl">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900! dark:text-white!">
-              Payment Details
-            </h2>
-            {payment && (
-              <p className="text-gray-600! dark:text-white! text-sm">
-                Transaction ID:{" "}
-                {
-                  (
-                    payment as unknown as import("@/types/payment.types").Payment
-                  ).transactionId
-                }
-              </p>
-            )}
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClose}
-            className="w-8 h-8 p-0"
-          >
-            <CloseIcon className="w-4 h-4" />
-          </Button>
-        </div>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+    >
+      <DialogContent className="flex w-full max-h-[90vh] flex-col overflow-y-auto sm:max-w-5xl">
+        <DialogHeader className="shrink-0">
+          <DialogTitle className="text-2xl font-bold text-gray-900! dark:text-gray-50!">
+            Payment Details
+          </DialogTitle>
+          {typedPayment?.transactionId ? (
+            <p className="text-sm text-gray-600! dark:text-gray-300!">
+              Transaction ID: {typedPayment.transactionId}
+            </p>
+          ) : loading ? (
+            <Skeleton className="mt-1 w-64 h-4 bg-gray-200 dark:bg-gray-700" />
+          ) : null}
+        </DialogHeader>
 
-        {/* Content */}
-        <div className="p-6 bg-white dark:bg-gray-900 rounded-b-2xl">
+        <div className="w-full min-h-112">
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="w-8 h-8 border-b-2 border-gray-900 rounded-full dark:border-white animate-spin"></div>
-            </div>
+            <PaymentDetailsSkeleton />
           ) : error ? (
-            <div className="py-8 text-center">
+            <div className="flex flex-col justify-center items-center py-8 text-center min-h-112">
               <p className="mb-4 text-red-600 dark:text-red-400">
                 {error instanceof Error
                   ? error.message
                   : "Failed to fetch payment details"}
               </p>
-              <Button onClick={onClose} variant="outline">
+              <Button onClick={handleClose} variant="outline">
                 Close
               </Button>
             </div>
-          ) : payment ? (
+          ) : typedPayment ? (
             <PaymentDetailsContent
-              payment={
-                payment as unknown as import("@/types/payment.types").Payment
-              }
+              payment={typedPayment}
               onNewPayment={onNewPayment}
               onClose={handleClose}
             />
           ) : (
-            <div className="py-8 text-center">
-              <p className="text-gray-600! dark:text-white!">
+            <div className="flex justify-center items-center py-8 text-center min-h-112">
+              <p className="text-gray-600! dark:text-gray-300!">
                 No payment details available
               </p>
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -15,6 +15,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Notification } from "@/types/notifications";
 import { Button } from "@/components/ui/button";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { notificationKeys } from "@/lib/notificationKeys";
+import { billingKeys } from "@/hooks/useBillingData";
+import { getAblyRealtimeClient } from "@/libs/ablyClient";
+import {
+  PAYMENT_NOTIFICATION_EVENT,
+  getSuperAdminNotificationsChannelName,
+  getUserNotificationsChannelName,
+} from "@/libs/realtime";
 
 // Raw notification type from API (may have inconsistent id/_id)
 interface RawNotification {
@@ -54,6 +62,8 @@ export function NotificationBell() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [adminScope, setAdminScope] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   // Normalize notifications to ensure stable keys and API compatibility
@@ -91,7 +101,7 @@ export function NotificationBell() {
     refetch,
     isFetching,
   } = useQuery<RawNotification[], Error, Notification[]>({
-    queryKey: ["notifications"],
+    queryKey: notificationKeys.all,
     queryFn: async (): Promise<RawNotification[]> => {
       const response = await fetch("/api/notifications/all", {
         credentials: "include",
@@ -108,13 +118,156 @@ export function NotificationBell() {
     },
     select: (data) => normalizeNotifications(data),
     enabled: !!session?.user,
-    staleTime: 60000, // 1 minute
-    refetchInterval: 300000, // 5 minutes
+    staleTime: 15 * 1000,
+    // Ably is primary; keep a slow poll as fallback if realtime is unavailable
+    refetchInterval: 60_000,
     refetchIntervalInBackground: false,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
     retry: 2,
   });
+
+  // Resolve Ably scope (super-admin flag also comes from session when present)
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    let cancelled = false;
+
+    const sessionSuperAdmin = Boolean(
+      (session.user as { isSuperAdmin?: boolean }).isSuperAdmin,
+    );
+    if (sessionSuperAdmin) {
+      setIsSuperAdmin(true);
+    }
+
+    void (async () => {
+      try {
+        const scopeResponse = await fetch("/api/ably/scope", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!scopeResponse.ok) return;
+        const scopeData = (await scopeResponse.json()) as {
+          adminScope?: string;
+          isSuperAdmin?: boolean;
+        };
+        if (cancelled) return;
+        if (scopeData.adminScope) setAdminScope(scopeData.adminScope);
+        setIsSuperAdmin(
+          Boolean(scopeData.isSuperAdmin) || sessionSuperAdmin,
+        );
+      } catch {
+        // Fallback polling continues
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    session?.user?.id,
+    (session?.user as { isSuperAdmin?: boolean } | undefined)?.isSuperAdmin,
+  ]);
+
+  // Realtime payment notification updates (approve / reject / pending)
+  useEffect(() => {
+    if (!session?.user?.id || !adminScope) return;
+
+    let cancelled = false;
+    const realtime = getAblyRealtimeClient(session.user.id);
+    const channels: Array<{
+      name: string;
+      channel: ReturnType<typeof realtime.channels.get>;
+    }> = [];
+
+    const refreshNotifications = () => {
+      void queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+    };
+
+    const refreshBilling = (paymentId?: string) => {
+      void queryClient.invalidateQueries({
+        queryKey: billingKeys.paymentsRoot(),
+      });
+      void queryClient.invalidateQueries({ queryKey: billingKeys.balance() });
+      if (paymentId) {
+        void queryClient.invalidateQueries({
+          queryKey: billingKeys.payment(paymentId),
+        });
+      }
+    };
+
+    const onUserPaymentNotification = (message: { data?: unknown }) => {
+      const payload = (message.data ?? {}) as {
+        type?: string;
+        paymentId?: string;
+      };
+      refreshNotifications();
+      if (
+        payload.type === "PAYMENT_APPROVED" ||
+        payload.type === "PAYMENT_REJECTED"
+      ) {
+        refreshBilling(payload.paymentId);
+      }
+    };
+
+    // Super-admin channel: notifications only (billing belongs to another tenant)
+    const onSuperAdminPaymentNotification = () => {
+      refreshNotifications();
+    };
+
+    const userChannelName = getUserNotificationsChannelName(
+      adminScope,
+      session.user.id,
+    );
+    channels.push({
+      name: userChannelName,
+      channel: realtime.channels.get(userChannelName),
+    });
+
+    if (isSuperAdmin) {
+      const superName = getSuperAdminNotificationsChannelName();
+      channels.push({
+        name: superName,
+        channel: realtime.channels.get(superName),
+      });
+    }
+
+    void (async () => {
+      for (const entry of channels) {
+        if (cancelled) return;
+        try {
+          await entry.channel.attach();
+          if (cancelled) {
+            void entry.channel.detach().catch(() => undefined);
+            return;
+          }
+          const listener =
+            entry.name === getSuperAdminNotificationsChannelName()
+              ? onSuperAdminPaymentNotification
+              : onUserPaymentNotification;
+          entry.channel.subscribe(PAYMENT_NOTIFICATION_EVENT, listener);
+        } catch {
+          // Keep polling fallback
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      for (const entry of channels) {
+        try {
+          entry.channel.unsubscribe(PAYMENT_NOTIFICATION_EVENT);
+        } catch {
+          // ignore
+        }
+        void entry.channel.detach().catch(() => undefined);
+        try {
+          realtime.channels.release(entry.name);
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, [session?.user?.id, adminScope, isSuperAdmin, queryClient]);
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
@@ -132,23 +285,32 @@ export function NotificationBell() {
       return notificationId;
     },
     onMutate: async (notificationId: string) => {
-      await queryClient.cancelQueries({ queryKey: ["notifications"] });
+      await queryClient.cancelQueries({ queryKey: notificationKeys.all });
       const previousNotifications =
-        queryClient.getQueryData<Notification[]>(["notifications"]);
+        queryClient.getQueryData<RawNotification[]>(notificationKeys.all);
 
-      queryClient.setQueryData<Notification[]>(["notifications"], (old = []) =>
-        old.map((n) => (n.id === notificationId ? { ...n, read: true } : n)),
+      // Cache stores API docs (`_id`); UI uses normalized `id` — match both.
+      queryClient.setQueryData<RawNotification[]>(
+        notificationKeys.all,
+        (old = []) =>
+          old.map((n) => {
+            const id = String(n.id || n._id || "");
+            return id === notificationId ? { ...n, read: true } : n;
+          }),
       );
 
       return { previousNotifications };
     },
     onError: (_error, _notificationId, context) => {
       if (context?.previousNotifications) {
-        queryClient.setQueryData(["notifications"], context.previousNotifications);
+        queryClient.setQueryData(
+          notificationKeys.all,
+          context.previousNotifications,
+        );
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 

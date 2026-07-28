@@ -21,6 +21,7 @@ interface Notification {
   userId?: string;
   createdAt: string;
   read: boolean;
+  resolvedStatus?: "APPROVED" | "REJECTED" | string;
 }
 
 interface NotificationsListProps {
@@ -29,6 +30,18 @@ interface NotificationsListProps {
   error: string | null;
   onDeleteNotification: (notificationId: string) => void;
   onRetry: () => void;
+}
+
+function displayNotificationType(notification: Notification): string {
+  if (notification.type === "PAYMENT_PENDING_APPROVAL") {
+    if (notification.resolvedStatus === "APPROVED") return "PAYMENT_APPROVED";
+    if (notification.resolvedStatus === "REJECTED") return "PAYMENT_REJECTED";
+  }
+  return notification.type;
+}
+
+function displayNotificationLabel(type: string): string {
+  return type.replace(/_/g, " ");
 }
 
 // Loading skeleton component for notifications - matches actual card structure
@@ -159,7 +172,9 @@ export default function NotificationsList({
 
   return (
     <div className="space-y-4">
-      {notifications.map((notification) => (
+      {notifications.map((notification) => {
+        const displayType = displayNotificationType(notification);
+        return (
         <Card
           key={notification.id}
           className={`transition-all bg-gray-50 dark:bg-gray-800 ${
@@ -171,13 +186,13 @@ export default function NotificationsList({
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div className="flex items-start flex-1 space-x-4">
-                {getNotificationIcon(notification.type)}
+                {getNotificationIcon(displayType)}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center mb-2 space-x-2">
                     <Badge
-                      className={getNotificationTypeColor(notification.type)}
+                      className={getNotificationTypeColor(displayType)}
                     >
-                      {notification.type.replace(/_/g, " ")}
+                      {displayNotificationLabel(displayType)}
                     </Badge>
                     {!notification.read && (
                       <Badge className="text-blue-800 bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300">
@@ -213,7 +228,8 @@ export default function NotificationsList({
             </div>
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 }

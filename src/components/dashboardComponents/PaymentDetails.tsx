@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   CheckCircle,
@@ -19,6 +20,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import PaymentPartyInfo from "@/components/billing/PaymentPartyInfo";
 import type { Payment } from "@/types/payment.types";
+import { billingKeys } from "@/hooks/useBillingData";
+import { notificationKeys } from "@/lib/notificationKeys";
 
 type PaymentDetailsPayment = Payment;
 
@@ -28,6 +31,7 @@ interface PaymentDetailsProps {
 
 export default function PaymentDetails({ params }: PaymentDetailsProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [paymentId, setPaymentId] = useState<string>("");
   const [payment, setPayment] = useState<PaymentDetailsPayment | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,6 +111,17 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
 
       if (data.success) {
         setPayment(data.payment);
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: billingKeys.paymentsRoot() }),
+          queryClient.invalidateQueries({ queryKey: billingKeys.balance() }),
+          queryClient.invalidateQueries({
+            queryKey: billingKeys.payment(data.payment._id),
+          }),
+          queryClient.invalidateQueries({ queryKey: notificationKeys.all }),
+          queryClient.refetchQueries({ queryKey: billingKeys.payments(10) }),
+          queryClient.refetchQueries({ queryKey: billingKeys.balance() }),
+          queryClient.refetchQueries({ queryKey: notificationKeys.all }),
+        ]);
         alert("Payment approved successfully! Balance has been updated.");
       }
     } catch (error) {
@@ -139,6 +154,15 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
 
       if (data.success) {
         setPayment(data.payment);
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: billingKeys.paymentsRoot() }),
+          queryClient.invalidateQueries({
+            queryKey: billingKeys.payment(data.payment._id),
+          }),
+          queryClient.invalidateQueries({ queryKey: notificationKeys.all }),
+          queryClient.refetchQueries({ queryKey: billingKeys.payments(10) }),
+          queryClient.refetchQueries({ queryKey: notificationKeys.all }),
+        ]);
         alert("Payment rejected successfully.");
       }
     } catch (error) {
@@ -325,7 +349,6 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
             <PaymentPartyInfo
               tenantAccount={payment.tenantAccount}
               submittedBy={payment.submittedBy}
-              approvedByUser={payment.approvedByUser}
             />
 
             {/* Payment Status Card */}

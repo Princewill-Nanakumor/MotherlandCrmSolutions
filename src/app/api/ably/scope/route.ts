@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
+import { getSuperAdminEmails } from "@/lib/notificationQuery";
 
 interface SessionUser {
   id: string;
   role: "ADMIN" | "AGENT";
   adminId?: string;
+  email?: string | null;
 }
 
 interface SessionShape {
@@ -18,6 +20,13 @@ function getAdminScope(user: SessionUser): string {
   throw new Error("Invalid user scope");
 }
 
+function isSuperAdminUser(user: SessionUser): boolean {
+  if (user.role !== "ADMIN") return false;
+  const email = user.email?.trim();
+  if (!email) return false;
+  return getSuperAdminEmails().includes(email);
+}
+
 export async function GET() {
   try {
     const session = (await getServerSession(authOptions)) as SessionShape | null;
@@ -26,12 +35,15 @@ export async function GET() {
     }
 
     const adminScope = getAdminScope(session.user);
-    return NextResponse.json({ adminScope });
+    return NextResponse.json({
+      adminScope,
+      isSuperAdmin: isSuperAdminUser(session.user),
+    });
   } catch (error) {
     console.error("Error resolving realtime scope:", error);
     return NextResponse.json(
       { message: "Failed to resolve realtime scope" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

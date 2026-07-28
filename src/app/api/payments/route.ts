@@ -13,6 +13,8 @@ import {
   getServerPaymentLimits,
   roundCents,
 } from "@/lib/paymentLimits";
+import { getPaymentExpiresAt } from "@/lib/paymentConfirmWindow";
+import { expireUnconfirmedPaymentsForAdmin } from "@/lib/expireUnconfirmedPayments";
 
 const WALLET_ADDRESSES = {
   TRC20: process.env.TRC20_WALLET_ADDRESS,
@@ -197,6 +199,7 @@ export async function POST(request: NextRequest) {
 
     // M4: round to two decimals at the boundary so subsequent arithmetic is
     // free of accumulated float drift.
+    const now = new Date();
     const payment = new Payment({
       amount: roundCents(Number(requestData.amount)),
       currency: requestData.currency || "USDT",
@@ -208,8 +211,9 @@ export async function POST(request: NextRequest) {
       createdBy: session.user.id,
       network: network,
       walletAddress: walletAddress,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
+      expiresAt: getPaymentExpiresAt(now),
     });
 
     // Save payment
@@ -263,6 +267,9 @@ export async function GET(request: NextRequest) {
 
     await connectMongoDB();
     const { searchParams } = new URL(request.url);
+
+    // Fail any deposits past the 1h confirm window before listing
+    await expireUnconfirmedPaymentsForAdmin(session.user.id);
 
     // Validate pagination parameters
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));

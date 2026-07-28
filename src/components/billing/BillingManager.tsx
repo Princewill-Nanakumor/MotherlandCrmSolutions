@@ -51,18 +51,41 @@ export default function BillingManager() {
     [currentPayment, network],
   );
 
-  // Load persisted payment on component mount
+  // Load persisted payment on component mount (network + payment survive refresh)
   useEffect(() => {
-    paymentStorageManager.loadPaymentFromStorage();
+    const result = paymentStorageManager.loadPaymentFromStorage();
+    if (result.expiredUnconfirmed && result.paymentId) {
+      void (async () => {
+        try {
+          await fetch(`/api/payments/${result.paymentId}/expire`, {
+            method: "POST",
+            credentials: "include",
+          });
+          await refetchBillingData();
+        } catch (error) {
+          console.error("Failed to expire restored payment:", error);
+        }
+      })();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Save payment to localStorage when it changes
+  // Save payment + network to localStorage when it changes
   useEffect(() => {
     if (currentPayment) {
       paymentStorageManager.savePaymentToStorage(paymentConfirmed);
     }
   }, [currentPayment, network, paymentConfirmed, paymentStorageManager]);
+
+  const handlePaymentExpired = useCallback(
+    async (payment: Payment) => {
+      setCurrentPayment({ ...payment, status: "FAILED" });
+      setPaymentConfirmed(false);
+      paymentStorageManager.clearPaymentFromStorage();
+      await refetchBillingData();
+    },
+    [paymentStorageManager, refetchBillingData],
+  );
 
   // Handle payment creation
   const handleCreatePayment = useCallback(
@@ -243,6 +266,7 @@ export default function BillingManager() {
                   onShowPaymentDetails={handleShowPaymentDetails}
                   onToggleInstructions={handleToggleInstructions}
                   onBackToDeposit={handleBackToDeposit}
+                  onPaymentExpired={handlePaymentExpired}
                 />
               ) : (
                 <CardDepositSection onSwitchToUsdt={handleSwitchToUsdt} />

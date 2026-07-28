@@ -11,6 +11,8 @@ export interface Payment {
   network?: "TRC20" | "ERC20";
   walletAddress?: string;
   createdAt: string;
+  expiresAt?: string;
+  userConfirmedAt?: string;
   approvedAt?: string;
   approvedBy?: string;
   rejectedAt?: string;

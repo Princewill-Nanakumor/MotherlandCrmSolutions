@@ -5,10 +5,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { billingKeys } from "./useBillingData";
+import { notificationKeys } from "@/lib/notificationKeys";
 import {
   Payment,
   CreatePaymentData,
   CreatePaymentResponse,
+  PaymentsResponse,
 } from "@/types/payment.types";
 
 /**
@@ -42,7 +44,7 @@ export const useCreatePayment = () => {
     },
     onMutate: async () => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: billingKeys.payments() });
+      await queryClient.cancelQueries({ queryKey: billingKeys.paymentsRoot() });
 
       // Snapshot the previous value
       const previousPayments = queryClient.getQueryData(
@@ -54,10 +56,9 @@ export const useCreatePayment = () => {
       return { previousPayments };
     },
     onSuccess: async (data) => {
-      // Invalidate all payment queries first (marks as stale)
+      // Invalidate all payment-list queries (any limit)
       queryClient.invalidateQueries({
-        queryKey: billingKeys.payments(),
-        exact: false,
+        queryKey: billingKeys.paymentsRoot(),
       });
 
       // Invalidate balance query
@@ -66,7 +67,6 @@ export const useCreatePayment = () => {
       });
 
       // Force immediate refetch of the payments query used by useBillingSummary (limit: 10)
-      // This ensures recent transactions are updated immediately
       await queryClient.refetchQueries({
         queryKey: billingKeys.payments(10),
       });
@@ -135,7 +135,7 @@ export const useApprovePayment = () => {
       await queryClient.cancelQueries({
         queryKey: billingKeys.payment(paymentId),
       });
-      await queryClient.cancelQueries({ queryKey: billingKeys.payments() });
+      await queryClient.cancelQueries({ queryKey: billingKeys.paymentsRoot() });
 
       // Snapshot the previous values
       const previousPayment = queryClient.getQueryData(
@@ -158,22 +158,55 @@ export const useApprovePayment = () => {
         }
       );
 
+      // Keep Recent Transactions in sync immediately
+      queryClient.setQueriesData<PaymentsResponse>(
+        { queryKey: billingKeys.paymentsRoot() },
+        (old) => {
+          if (!old?.payments?.length) return old;
+          return {
+            ...old,
+            payments: old.payments.map((item) =>
+              String(item._id) === String(paymentId)
+                ? {
+                    ...item,
+                    status: "COMPLETED",
+                    approvedAt: new Date().toISOString(),
+                  }
+                : item,
+            ),
+          };
+        },
+      );
+
       return { previousPayment, previousPayments };
     },
-    onSuccess: (data) => {
-      // Invalidate all related queries
-      queryClient.invalidateQueries({
-        queryKey: billingKeys.payments(),
-        exact: false,
-      });
+    onSuccess: async (data) => {
+      if (data.payment) {
+        queryClient.setQueryData(billingKeys.payment(data.payment._id), data.payment);
+        queryClient.setQueriesData<PaymentsResponse>(
+          { queryKey: billingKeys.paymentsRoot() },
+          (old) => {
+            if (!old?.payments?.length) return old;
+            return {
+              ...old,
+              payments: old.payments.map((item) =>
+                String(item._id) === String(data.payment._id)
+                  ? { ...item, ...data.payment, _id: item._id }
+                  : item,
+              ),
+            };
+          },
+        );
+      }
 
-      queryClient.invalidateQueries({
-        queryKey: billingKeys.balance(),
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: billingKeys.summary(),
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: billingKeys.paymentsRoot() }),
+        queryClient.invalidateQueries({ queryKey: billingKeys.balance() }),
+        queryClient.invalidateQueries({ queryKey: notificationKeys.all }),
+        queryClient.refetchQueries({ queryKey: billingKeys.payments(10) }),
+        queryClient.refetchQueries({ queryKey: billingKeys.balance() }),
+        queryClient.refetchQueries({ queryKey: notificationKeys.all }),
+      ]);
 
       toast({
         title: "Payment Approved!",
@@ -236,16 +269,82 @@ export const useRejectPayment = () => {
 
       return response.json() as Promise<CreatePaymentResponse>;
     },
-    onSuccess: () => {
-      // Invalidate all related queries
-      queryClient.invalidateQueries({
-        queryKey: billingKeys.payments(),
-        exact: false,
+    onMutate: async (paymentId) => {
+      await queryClient.cancelQueries({
+        queryKey: billingKeys.payment(paymentId),
+      });
+      await queryClient.cancelQueries({ queryKey: billingKeys.paymentsRoot() });
+
+      const previousPayment = queryClient.getQueryData(
+        billingKeys.payment(paymentId),
+      );
+      const previousPayments = queryClient.getQueryData(
+        billingKeys.payments(10),
+      );
+
+      queryClient.setQueryData<Payment>(billingKeys.payment(paymentId), (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          status: "FAILED",
+          approvedAt: new Date().toISOString(),
+        };
       });
 
-      queryClient.invalidateQueries({
-        queryKey: billingKeys.summary(),
-      });
+      queryClient.setQueriesData<PaymentsResponse>(
+        { queryKey: billingKeys.paymentsRoot() },
+        (old) => {
+          if (!old?.payments?.length) return old;
+          return {
+            ...old,
+            payments: old.payments.map((item) =>
+              String(item._id) === String(paymentId)
+                ? {
+                    ...item,
+                    status: "FAILED",
+                    approvedAt: new Date().toISOString(),
+                  }
+                : item,
+            ),
+          };
+        },
+      );
+
+      return { previousPayment, previousPayments };
+    },
+    onSuccess: async (data) => {
+      if (data.payment) {
+        queryClient.setQueryData(
+          billingKeys.payment(data.payment._id),
+          data.payment,
+        );
+        queryClient.setQueriesData<PaymentsResponse>(
+          { queryKey: billingKeys.paymentsRoot() },
+          (old) => {
+            if (!old?.payments?.length) return old;
+            return {
+              ...old,
+              payments: old.payments.map((item) =>
+                String(item._id) === String(data.payment._id)
+                  ? { ...item, ...data.payment, _id: item._id }
+                  : item,
+              ),
+            };
+          },
+        );
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: billingKeys.paymentsRoot(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: billingKeys.balance(),
+        }),
+        queryClient.invalidateQueries({ queryKey: notificationKeys.all }),
+        queryClient.refetchQueries({ queryKey: billingKeys.payments(10) }),
+        queryClient.refetchQueries({ queryKey: notificationKeys.all }),
+      ]);
 
       toast({
         title: "Payment Rejected",
@@ -253,7 +352,20 @@ export const useRejectPayment = () => {
         variant: "success",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: Error, paymentId, context) => {
+      if (context?.previousPayment) {
+        queryClient.setQueryData(
+          billingKeys.payment(paymentId),
+          context.previousPayment,
+        );
+      }
+      if (context?.previousPayments) {
+        queryClient.setQueryData(
+          billingKeys.payments(10),
+          context.previousPayments,
+        );
+      }
+
       toast({
         title: "Rejection Failed",
         description: error.message || "Failed to reject payment",

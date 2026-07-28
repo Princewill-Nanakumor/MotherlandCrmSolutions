@@ -22,6 +22,7 @@ interface UsdtDepositSectionProps {
   onShowPaymentDetails: () => void;
   onToggleInstructions: () => void;
   onBackToDeposit: () => void;
+  onPaymentExpired?: (payment: Payment) => void;
 }
 
 export default function UsdtDepositSection({
@@ -39,6 +40,7 @@ export default function UsdtDepositSection({
   onShowPaymentDetails,
   onToggleInstructions,
   onBackToDeposit,
+  onPaymentExpired,
 }: UsdtDepositSectionProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +57,7 @@ export default function UsdtDepositSection({
         onConfirmPayment={onConfirmPayment}
         onShowPaymentDetails={onShowPaymentDetails}
         onBackToDeposit={onBackToDeposit}
+        onPaymentExpired={onPaymentExpired}
       />
     );
   }
@@ -103,8 +106,8 @@ export default function UsdtDepositSection({
               </h4>
               <p className="text-gray-900! dark:text-white! text-xs">
                 {network === "TRC20"
-                  ? "TRC20 deposits are faster and have lower fees "
-                  : "ERC20 deposits may take longer and have higher gas fees (varies)"}
+                  ? "TRC20 deposits are faster and have lower fees (~1 USDT) compared to ERC20. After generating an address you have 1 hour to confirm the deposit."
+                  : "ERC20 deposits may take longer and have higher gas fees (varies). After generating an address you have 1 hour to confirm the deposit."}
               </p>
             </div>
           </div>

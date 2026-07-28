@@ -76,7 +76,7 @@ export default function RecentTransactions({
         Recent Transactions
       </h3>
 
-      <div className="overflow-y-auto max-h-80 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
+      <div className="overflow-y-auto max-h-80 brand-scrollbar">
         <div className="pr-2 space-y-3">
           {isLoading ? (
             // Loading skeleton

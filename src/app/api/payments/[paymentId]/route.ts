@@ -11,6 +11,7 @@ import mongoose from "mongoose";
 import type { Session } from "next-auth";
 import { canReadPayment } from "@/lib/paymentAccess";
 import { enrichPaymentForResponse } from "@/lib/paymentPresentation";
+import { expireUnconfirmedPaymentIfNeeded } from "@/lib/expireUnconfirmedPayments";
 
 interface PaymentDocument {
   _id: Types.ObjectId;
@@ -69,7 +70,10 @@ export async function GET(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    const paymentResponse = await enrichPaymentForResponse(payment);
+    const maybeExpired = await expireUnconfirmedPaymentIfNeeded(payment);
+    const paymentResponse = await enrichPaymentForResponse(
+      maybeExpired as PaymentDocument,
+    );
 
     return NextResponse.json({
       success: true,
