@@ -63,6 +63,11 @@ export function getAblyRealtimeClient(userId: string): Ably.Realtime {
   return realtimeClient;
 }
 
+/** True when the shared Ably client exists and is connected. */
+export function isAblyRealtimeConnected(): boolean {
+  return realtimeClient?.connection.state === "connected";
+}
+
 /** Close the shared dashboard connection (e.g. after sign-out) so token refresh stops. */
 export function disconnectAblyRealtimeClient(): void {
   if (realtimeClient) {

@@ -20,6 +20,10 @@ export interface IReminder extends Document {
   snoozedUntil?: Date;
   completedAt?: Date;
   notificationSent: boolean;
+  /** When a dispatcher run claimed this reminder for publish (lease). */
+  dispatchClaimedAt?: Date;
+  /** Opaque id for the claiming dispatcher run (lease). */
+  dispatchClaimId?: string;
   soundEnabled: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -93,6 +97,13 @@ const reminderSchema = new Schema<IReminder>(
       type: Boolean,
       default: false,
     },
+    dispatchClaimedAt: {
+      type: Date,
+    },
+    dispatchClaimId: {
+      type: String,
+      trim: true,
+    },
     soundEnabled: {
       type: Boolean,
       default: true,
@@ -117,6 +128,8 @@ reminderSchema.index({
   reminderTime: 1,
 });
 reminderSchema.index({ status: 1, notificationSent: 1, dueAt: 1 });
+reminderSchema.index({ status: 1, notificationSent: 1, snoozedUntil: 1 });
+reminderSchema.index({ notificationSent: 1, dispatchClaimedAt: 1 });
 
 const Reminder =
   mongoose.models.Reminder ||

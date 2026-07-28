@@ -5,11 +5,13 @@ import { useQuery } from "@tanstack/react-query";
 import { WifiOff } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect, useState } from "react";
+import { useAblyAwareRefetchInterval } from "@/hooks/useAblyAwareRefetchInterval";
 
 export const ConnectionStatus = () => {
   const { toast } = useToast();
   const [hasShownError, setHasShownError] = useState(false);
   const [lastErrorTime, setLastErrorTime] = useState<number | null>(null);
+  const healthPollMs = useAblyAwareRefetchInterval(120_000);
 
   const { isError, isSuccess } = useQuery({
     queryKey: ["connection-status"],
@@ -27,7 +29,7 @@ export const ConnectionStatus = () => {
     },
     retry: 1,
     retryDelay: 2000,
-    refetchInterval: 120000, // Check every 2 minutes (increased from 30s to lower Netlify usage)
+    refetchInterval: healthPollMs,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     staleTime: 5000,

@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoadingSpinner } from "@/components/dashboardComponents/LeadsLoadingState";
 import NotificationsList from "@/components/notifications/NotificationsList";
 import { notificationKeys } from "@/lib/notificationKeys";
+import { useAblyAwareRefetchInterval } from "@/hooks/useAblyAwareRefetchInterval";
 
 interface Notification {
   id: string;
@@ -54,6 +55,7 @@ export default function NotificationsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const userId = session?.user?.id;
+  const notificationsPollMs = useAblyAwareRefetchInterval(60_000);
 
   const {
     data: notifications = [],
@@ -74,7 +76,7 @@ export default function NotificationsPage() {
     select: normalizeNotifications,
     enabled: status === "authenticated" && !!userId,
     staleTime: 15_000,
-    refetchInterval: 30_000,
+    refetchInterval: notificationsPollMs,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   });

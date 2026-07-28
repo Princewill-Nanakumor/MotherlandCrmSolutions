@@ -15,10 +15,13 @@ import { formatLocalDateYmd } from "@/lib/reminderDueAt";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { getAblyRealtimeClient } from "@/libs/ablyClient";
 import { useAppBranding } from "@/components/AppBrandingProvider";
+import { useAblyAwareRefetchInterval } from "@/hooks/useAblyAwareRefetchInterval";
+import { useAblyChannelAttached } from "@/hooks/useAblyChannelAttached";
 import {
   REMINDER_DUE_EVENT,
   getUserRemindersChannelName,
 } from "@/libs/realtime";
+import type { Connection, RealtimeChannel } from "ably";
 
 /** Stable fallback so “no data” is not a fresh [] every render (that retriggered useEffect → setState loop). */
 const EMPTY_DUE_REMINDERS: Reminder[] = [];
@@ -32,8 +35,19 @@ export default function ReminderNotifications() {
   const [notifications, setNotifications] = useState<Reminder[]>([]);
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [adminScope, setAdminScope] = useState<string | null>(null);
+  const [remindersChannel, setRemindersChannel] =
+    useState<RealtimeChannel | null>(null);
+  const [ablyConnection, setAblyConnection] = useState<Connection | null>(null);
   const soundPlayingRef = useRef<boolean>(false);
   const lastReminderIdsRef = useRef<string>("");
+
+  const remindersChannelReady = useAblyChannelAttached(
+    remindersChannel,
+    ablyConnection,
+  );
+  const dueRemindersPollMs = useAblyAwareRefetchInterval(60_000, {
+    channelReady: remindersChannelReady,
+  });
 
   // Request browser notification permission
   useEffect(() => {
@@ -50,29 +64,27 @@ export default function ReminderNotifications() {
     }
   }, [status, session, sessionUserId]);
 
-  // Poll for due reminders - pass user's local date/time for correct timezone comparison
+  // Poll for due reminders - pass user's local date/time for correct timezone comparison.
+  // Failures must throw (not return []) so previous due IDs stay cached and
+  // "newly appeared only" dedupe does not re-alert after a transient error.
   const { data, refetch } = useQuery<Reminder[]>({
     queryKey: ["dueReminders"],
     queryFn: async () => {
-      try {
-        const now = new Date();
-        const userDate = formatLocalDateYmd(now);
-        const userTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
-        const url = `/api/reminders/check-due?userDate=${encodeURIComponent(userDate)}&userTime=${encodeURIComponent(userTime)}`;
-        const response = await apiCallWithSessionRefresh(url);
-        if (!response.ok) {
-          return [];
-        }
-        return await response.json();
-      } catch (error) {
-        console.error("Error fetching due reminders:", error);
-        return [];
+      const now = new Date();
+      const userDate = formatLocalDateYmd(now);
+      const userTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+      const url = `/api/reminders/check-due?userDate=${encodeURIComponent(userDate)}&userTime=${encodeURIComponent(userTime)}`;
+      const response = await apiCallWithSessionRefresh(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch due reminders: ${response.status}`);
       }
+      return (await response.json()) as Reminder[];
     },
     enabled: hasAuthorizedSession(status, session),
-    refetchInterval: 60 * 1000,
+    refetchInterval: dueRemindersPollMs,
     refetchOnWindowFocus: true,
     staleTime: 30 * 1000,
+    retry: 1,
   });
 
   const dueReminders = data ?? EMPTY_DUE_REMINDERS;
@@ -105,8 +117,13 @@ export default function ReminderNotifications() {
 
   // Subscribe to server-pushed due reminder events (primary delivery path)
   useEffect(() => {
-    if (!session?.user?.id || !adminScope) return;
+    if (!session?.user?.id || !adminScope) {
+      setRemindersChannel(null);
+      setAblyConnection(null);
+      return;
+    }
 
+    let cancelled = false;
     const realtime = getAblyRealtimeClient(session.user.id);
     const channelName = getUserRemindersChannelName(adminScope, session.user.id);
     const channel = realtime.channels.get(channelName);
@@ -115,20 +132,30 @@ export default function ReminderNotifications() {
       void refetch();
     };
 
-    let subscribed = false;
+    setAblyConnection(realtime.connection);
+    setRemindersChannel(channel);
+
     void (async () => {
       try {
         await channel.attach();
+        if (cancelled) {
+          void channel.detach().catch(() => undefined);
+          return;
+        }
         channel.subscribe(REMINDER_DUE_EVENT, onReminderDue);
-        subscribed = true;
       } catch {
-        // Fallback polling continues if realtime attach fails.
+        // Fallback polling continues; channel attached hook stays false
       }
     })();
 
     return () => {
-      if (subscribed) {
+      cancelled = true;
+      setRemindersChannel(null);
+      setAblyConnection(null);
+      try {
         channel.unsubscribe(REMINDER_DUE_EVENT, onReminderDue);
+      } catch {
+        // ignore
       }
       void channel.detach().catch(() => undefined);
       try {
@@ -148,7 +175,8 @@ export default function ReminderNotifications() {
       .join(",");
   }, [dueReminders]);
 
-  // Handle notification updates - only when dueReminders actually changes
+  // Handle notification updates - only when dueReminders actually changes.
+  // At-least-once Ably delivery is fine: we only alert on newly appeared IDs.
   useEffect(() => {
     if (!dueReminders || dueReminders.length === 0) {
       lastReminderIdsRef.current = "";
@@ -165,22 +193,25 @@ export default function ReminderNotifications() {
       return;
     }
 
+    const previousIds = new Set(
+      lastReminderIdsRef.current.split(",").filter(Boolean),
+    );
+    const newlyDue = dueReminders.filter((r) => !previousIds.has(r._id));
     lastReminderIdsRef.current = reminderIdsString;
 
     // Update notifications with a stable reference
     setNotifications([...dueReminders]);
 
-    // Handle sound
-    const soundEnabledReminders = dueReminders.filter((r) => r.soundEnabled);
-
-    if (soundEnabledReminders.length > 0 && !soundPlayingRef.current) {
+    // Handle sound only when a new due reminder appears
+    const newSoundEnabled = newlyDue.filter((r) => r.soundEnabled);
+    if (newSoundEnabled.length > 0 && !soundPlayingRef.current) {
       alarmSound.start();
       soundPlayingRef.current = true;
     }
 
-    // Show browser notifications
+    // Browser notifications: tag=reminderId dedupes OS-side; only create for new IDs
     if (permissionGranted && "Notification" in window) {
-      dueReminders.forEach((reminder) => {
+      newlyDue.forEach((reminder) => {
         const leadName =
           typeof reminder.leadId === "object"
             ? `${reminder.leadId.firstName} ${reminder.leadId.lastName}`
@@ -213,8 +244,6 @@ export default function ReminderNotifications() {
         }
       });
     }
-    // reminderIdsString + lastReminderIdsRef skip duplicate work when only the array ref changes
-    // but IDs are unchanged. dueReminders is listed for exhaustive-deps; empty uses EMPTY_DUE_REMINDERS.
   }, [
     dueReminders,
     reminderIdsString,

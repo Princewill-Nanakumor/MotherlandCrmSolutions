@@ -18,11 +18,14 @@ import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { notificationKeys } from "@/lib/notificationKeys";
 import { billingKeys } from "@/hooks/useBillingData";
 import { getAblyRealtimeClient } from "@/libs/ablyClient";
+import { useAblyAwareRefetchInterval } from "@/hooks/useAblyAwareRefetchInterval";
+import { useAblyChannelAttached } from "@/hooks/useAblyChannelAttached";
 import {
   PAYMENT_NOTIFICATION_EVENT,
   getSuperAdminNotificationsChannelName,
   getUserNotificationsChannelName,
 } from "@/libs/realtime";
+import type { Connection, RealtimeChannel } from "ably";
 
 // Raw notification type from API (may have inconsistent id/_id)
 interface RawNotification {
@@ -64,7 +67,18 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [adminScope, setAdminScope] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [notificationsChannel, setNotificationsChannel] =
+    useState<RealtimeChannel | null>(null);
+  const [ablyConnection, setAblyConnection] = useState<Connection | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  const notificationsChannelReady = useAblyChannelAttached(
+    notificationsChannel,
+    ablyConnection,
+  );
+  const notificationsPollMs = useAblyAwareRefetchInterval(60_000, {
+    channelReady: notificationsChannelReady,
+  });
 
   // Normalize notifications to ensure stable keys and API compatibility
   const normalizeNotifications = useCallback(
@@ -119,8 +133,8 @@ export function NotificationBell() {
     select: (data) => normalizeNotifications(data),
     enabled: !!session?.user,
     staleTime: 15 * 1000,
-    // Ably is primary; keep a slow poll as fallback if realtime is unavailable
-    refetchInterval: 60_000,
+    // Ably is primary; slow poll when connected, faster when not
+    refetchInterval: notificationsPollMs,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
@@ -170,10 +184,15 @@ export function NotificationBell() {
 
   // Realtime payment notification updates (approve / reject / pending)
   useEffect(() => {
-    if (!session?.user?.id || !adminScope) return;
+    if (!session?.user?.id || !adminScope) {
+      setNotificationsChannel(null);
+      setAblyConnection(null);
+      return;
+    }
 
     let cancelled = false;
     const realtime = getAblyRealtimeClient(session.user.id);
+    setAblyConnection(realtime.connection);
     const channels: Array<{
       name: string;
       channel: ReturnType<typeof realtime.channels.get>;
@@ -218,9 +237,11 @@ export function NotificationBell() {
       adminScope,
       session.user.id,
     );
+    const userChannel = realtime.channels.get(userChannelName);
+    setNotificationsChannel(userChannel);
     channels.push({
       name: userChannelName,
-      channel: realtime.channels.get(userChannelName),
+      channel: userChannel,
     });
 
     if (isSuperAdmin) {
@@ -253,6 +274,8 @@ export function NotificationBell() {
 
     return () => {
       cancelled = true;
+      setNotificationsChannel(null);
+      setAblyConnection(null);
       for (const entry of channels) {
         try {
           entry.channel.unsubscribe(PAYMENT_NOTIFICATION_EVENT);

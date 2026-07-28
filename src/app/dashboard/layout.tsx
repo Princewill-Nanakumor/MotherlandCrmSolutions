@@ -2,6 +2,7 @@
 
 import React, { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSession, SessionProvider, getSession } from "next-auth/react";
+import { AblyAwareSessionKeepAlive } from "@/components/AblyAwareSessionKeepAlive";
 import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { createQueryClient } from "@/lib/queryClient";
@@ -582,11 +583,12 @@ export default function DashboardLayout({
 
   return (
     <SessionProvider
-      refetchInterval={5 * 60} // Refetch session every 5 minutes to check for expiry
-      refetchOnWindowFocus={true} // Refetch when user returns to window
+      refetchInterval={0}
+      refetchOnWindowFocus={true}
     >
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
+          <AblyAwareSessionKeepAlive />
           <StatusProvider>
             <SearchProvider>
               <Suspense fallback={<LoadingSpinner />}>
