@@ -20,10 +20,26 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+export type HomeFeatureVisual =
+  | "leads"
+  | "import"
+  | "team"
+  | "live"
+  | "reminders"
+  | "activity"
+  | "filters"
+  | "phone"
+  | "dashboard"
+  | "brand"
+  | "billing";
+
 export type HomeFeature = {
   icon: LucideIcon;
+  /** Small uppercase product/category label above the title. */
+  label: string;
   title: string;
   description: string;
+  visual: HomeFeatureVisual;
   /** Optional: mark as a wide/featured card in the bento grid. */
   featured?: boolean;
 };
@@ -32,71 +48,93 @@ export type HomeFeature = {
 export const HOME_FEATURES: HomeFeature[] = [
   {
     icon: Target,
+    label: "Pipeline",
     title: "Lead management",
     description:
       "Add leads, set custom colored statuses, track source and country, and move every deal through your pipeline.",
+    visual: "leads",
     featured: true,
   },
   {
     icon: Upload,
+    label: "Import",
     title: "Excel & CSV import",
     description:
       "Import thousands of leads from spreadsheets, review import history, and export back out when you need to.",
+    visual: "import",
     featured: true,
   },
   {
     icon: UsersRound,
+    label: "Team",
     title: "Team roles & assignment",
     description:
       "Invite Admins and Agents, then assign or unassign leads in bulk so each rep only sees their queue.",
+    visual: "team",
   },
   {
     icon: Radio,
+    label: "Realtime",
     title: "Live team updates",
     description:
       "Comments, status changes, and assignments appear for everyone instantly — no refresh, no missed notes.",
+    visual: "live",
   },
   {
     icon: BellRing,
+    label: "Follow-ups",
     title: "Reminders & follow-ups",
     description:
       "Schedule follow-ups on any lead, snooze them, and get alerts so callbacks never slip through.",
+    visual: "reminders",
   },
   {
     icon: Activity,
+    label: "Timeline",
     title: "Comments & activity",
     description:
       "A full timeline of comments, status changes, and assignment history lives on every lead.",
+    visual: "activity",
   },
   {
     icon: Filter,
+    label: "Search",
     title: "Smart filters & search",
     description:
       "Filter by status, source, country, or owner — and search by name, email, or phone in seconds.",
+    visual: "filters",
   },
   {
     icon: Phone,
+    label: "Calling",
     title: "One-click softphone",
     description:
       "Call with Zoiper or MicroSIP from the lead card and keep call logs with the rest of the history.",
+    visual: "phone",
   },
   {
     icon: LayoutDashboard,
+    label: "Overview",
     title: "Dashboard overview",
     description:
       "See total leads, active users, and assigned vs unassigned at a glance — built for daily sales ops.",
+    visual: "dashboard",
   },
   {
     icon: Palette,
+    label: "Branding",
     title: "Your brand, your CRM",
     description:
       "Customize colors, fonts, and button style so the workspace matches your company identity.",
+    visual: "brand",
   },
   {
     icon: Wallet,
+    label: "Billing",
     title: "Crypto billing",
     description:
       "Deposit USDT, subscribe monthly, and start with a free trial — no credit card required.",
+    visual: "billing",
   },
 ];
 
