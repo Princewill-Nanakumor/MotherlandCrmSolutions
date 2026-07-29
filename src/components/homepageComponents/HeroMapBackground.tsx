@@ -9,6 +9,7 @@ import {
   pickExplosionType,
   type ExplosionType,
 } from "@/components/homepageComponents/MapCollisionExplosion";
+import { createMapAnimationGate } from "@/components/homepageComponents/mapAnimationLoop";
 
 const ROUTES = [
   {
@@ -110,6 +111,7 @@ function pointOnPath(path: SVGPathElement, progress: number) {
  */
 export function HeroMapBackground() {
   const reduce = useReducedMotion();
+  const rootRef = useRef<HTMLDivElement>(null);
   const [nodes, setNodes] = useState<NodeRender[]>([]);
   const [explosions, setExplosions] = useState<Explosion[]>([]);
   const travelersRef = useRef<TravelerRuntime[]>([]);
@@ -156,8 +158,10 @@ export function HeroMapBackground() {
 
     startRef.current = performance.now();
     lastRef.current = startRef.current;
-    let raf = 0;
     let explosionId = 0;
+    const gateRef: {
+      current: ReturnType<typeof createMapAnimationGate> | null;
+    } = { current: null };
 
     const tick = (now: number) => {
       const dt = Math.min(48, now - lastRef.current);
@@ -246,15 +250,21 @@ export function HeroMapBackground() {
         );
       }
 
-      raf = requestAnimationFrame(tick);
+      gateRef.current?.continueLoop();
     };
 
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    const gate = createMapAnimationGate(rootRef.current, tick, {
+      rootMargin: "40px",
+    });
+    gateRef.current = gate;
+    gate.startLoop();
+
+    return () => gate.dispose();
   }, [reduce]);
 
   return (
     <div
+      ref={rootRef}
       aria-hidden
       className="pointer-events-none absolute inset-0 overflow-hidden"
     >

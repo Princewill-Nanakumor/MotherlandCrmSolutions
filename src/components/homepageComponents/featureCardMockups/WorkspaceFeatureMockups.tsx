@@ -1,8 +1,8 @@
 // src/components/homepageComponents/featureCardMockups/WorkspaceFeatureMockups.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useInView, useReducedMotion } from "framer-motion";
 import { Filter, GripVertical, Palette, Phone, Wallet } from "lucide-react";
 import {
   Panel,
@@ -90,12 +90,14 @@ export function FiltersFeatureMockup() {
 
 export function ColumnsFeatureMockup() {
   const reduceMotion = useReducedMotion();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(rootRef, { amount: "some", margin: "80px" });
   const [orderIndex, setOrderIndex] = useState(0);
   const [draggingId, setDraggingId] = useState<ColumnId | null>("name");
   const [shiftedIds, setShiftedIds] = useState<Set<ColumnId>>(() => new Set());
 
   useEffect(() => {
-    if (reduceMotion) return;
+    if (reduceMotion || !inView) return;
 
     const id = window.setInterval(() => {
       setOrderIndex((prev) => {
@@ -126,12 +128,12 @@ export function ColumnsFeatureMockup() {
     }, 1500);
 
     return () => window.clearInterval(id);
-  }, [reduceMotion]);
+  }, [reduceMotion, inView]);
 
   const order = COLUMN_ORDERS[orderIndex];
 
   return (
-    <div className="relative h-full">
+    <div ref={rootRef} className="relative h-full">
       <Panel className="absolute inset-x-0 top-1 overflow-hidden p-2.5">
         <div className="flex justify-between items-center mb-2">
           <span className="text-[10px] font-semibold text-gray-700">

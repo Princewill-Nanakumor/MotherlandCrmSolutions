@@ -1,23 +1,60 @@
 // src/components/homepageComponents/HomePageClient.tsx
 "use client";
 
+import dynamic from "next/dynamic";
 import { SessionProvider } from "next-auth/react";
 import Navbar from "@/components/homepageComponents/Navabar";
 import { ScrollProgress } from "@/components/homepageComponents/ScrollProgress";
 import HeroSection from "@/components/homepageComponents/HeroSection";
 import StatsSection from "@/components/homepageComponents/StatsSection";
-import FeaturedCrmSection from "@/components/homepageComponents/FeaturedCrmSection";
-import ArchitectureSection from "@/components/homepageComponents/ArchitectureSection";
-import FeaturesSection from "@/components/homepageComponents/FeaturesSection";
-import TimelineSection from "@/components/homepageComponents/TimelineSection";
-import AudiencesSection from "@/components/homepageComponents/AudiencesSection";
-import SubscriptionPlansSection from "@/components/homepageComponents/SubscriptionPlansSection";
-import FaqSection from "@/components/homepageComponents/FaqSection";
-import CtaBandSection from "@/components/homepageComponents/CtaBandSection";
-import HomeFooter from "@/components/homepageComponents/HomeFooter";
 import { BrandThemeApplier } from "@/components/BrandThemeApplier";
 import { PublicLightTheme } from "@/components/PublicLightTheme";
 import { PublicNativeScroll } from "@/components/homepageComponents/PublicNativeScroll";
+import HomeFooter from "@/components/homepageComponents/HomeFooter";
+import { InViewSwap } from "@/components/homepageComponents/InViewSwap";
+import {
+  FeaturesSectionSeo,
+  FaqSectionSeo,
+  PricingSectionSeo,
+  TimelineSectionSeo,
+} from "@/components/homepageComponents/HomepageSeoSections";
+
+/**
+ * Code-split below-fold sections into separate chunks.
+ * Default `ssr: true` keeps marketing HTML (FAQ, features, pricing, etc.)
+ * in the initial document for SEO / no-JS crawlers. Map animations pause
+ * themselves when off-screen via createMapAnimationGate.
+ */
+const FeaturedCrmSection = dynamic(
+  () => import("@/components/homepageComponents/FeaturedCrmSection"),
+);
+const ArchitectureSection = dynamic(
+  () => import("@/components/homepageComponents/ArchitectureSection"),
+);
+const FeaturesSection = dynamic(
+  () => import("@/components/homepageComponents/FeaturesSection"),
+  { ssr: false, loading: () => <FeaturesSectionSeo /> },
+);
+const TimelineSection = dynamic(
+  () => import("@/components/homepageComponents/TimelineSection"),
+  { ssr: false, loading: () => <TimelineSectionSeo /> },
+);
+const AudiencesSection = dynamic(
+  () => import("@/components/homepageComponents/AudiencesSection"),
+  { ssr: false },
+);
+const SubscriptionPlansSection = dynamic(
+  () => import("@/components/homepageComponents/SubscriptionPlansSection"),
+  { ssr: false, loading: () => <PricingSectionSeo /> },
+);
+const FaqSection = dynamic(
+  () => import("@/components/homepageComponents/FaqSection"),
+  { ssr: false, loading: () => <FaqSectionSeo /> },
+);
+const CtaBandSection = dynamic(
+  () => import("@/components/homepageComponents/CtaBandSection"),
+  { ssr: false },
+);
 
 function HomePageContent() {
   return (
@@ -32,12 +69,30 @@ function HomePageContent() {
         <StatsSection />
         <FeaturedCrmSection />
         <ArchitectureSection />
-        <FeaturesSection />
-        <TimelineSection />
-        <AudiencesSection />
-        <SubscriptionPlansSection />
-        <FaqSection />
-        <CtaBandSection />
+        <InViewSwap fallback={<FeaturesSectionSeo />}>
+          <FeaturesSection />
+        </InViewSwap>
+        <InViewSwap fallback={<TimelineSectionSeo />}>
+          <TimelineSection />
+        </InViewSwap>
+        <InViewSwap
+          fallback={<div className="px-6 py-20 sm:py-28" />}
+          rootMargin="400px 0px"
+        >
+          <AudiencesSection />
+        </InViewSwap>
+        <InViewSwap fallback={<PricingSectionSeo />}>
+          <SubscriptionPlansSection />
+        </InViewSwap>
+        <InViewSwap fallback={<FaqSectionSeo />}>
+          <FaqSection />
+        </InViewSwap>
+        <InViewSwap
+          fallback={<div className="px-6 py-10 sm:py-12" />}
+          rootMargin="400px 0px"
+        >
+          <CtaBandSection />
+        </InViewSwap>
       </main>
       <HomeFooter />
     </div>
@@ -46,7 +101,11 @@ function HomePageContent() {
 
 export default function HomePageClient() {
   return (
-    <SessionProvider refetchInterval={5 * 60} refetchOnWindowFocus={true}>
+    <SessionProvider
+      // Homepage only needs session for nav CTAs — avoid aggressive polling.
+      refetchInterval={0}
+      refetchOnWindowFocus={false}
+    >
       <PublicNativeScroll />
       <PublicLightTheme />
       <BrandThemeApplier />

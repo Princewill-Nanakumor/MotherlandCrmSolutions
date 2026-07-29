@@ -9,6 +9,7 @@ import {
   pickExplosionType,
   type ExplosionType,
 } from "@/components/homepageComponents/MapCollisionExplosion";
+import { createMapAnimationGate } from "@/components/homepageComponents/mapAnimationLoop";
 
 export type MapRoute = {
   id: string;
@@ -141,13 +142,15 @@ export function TravelingMapRoutes({
 
     startRef.current = performance.now();
     lastRef.current = startRef.current;
-    let raf = 0;
     let explosionId = 0;
+    const gateRef: {
+      current: ReturnType<typeof createMapAnimationGate> | null;
+    } = { current: null };
 
     const tick = (now: number) => {
       const livePaths = getPaths();
       if (livePaths.length !== routes.length) {
-        raf = requestAnimationFrame(tick);
+        gateRef.current?.continueLoop();
         return;
       }
 
@@ -234,11 +237,16 @@ export function TravelingMapRoutes({
         );
       }
 
-      raf = requestAnimationFrame(tick);
+      gateRef.current?.continueLoop();
     };
 
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    const gate = createMapAnimationGate(svgRef.current, tick, {
+      rootMargin: "80px",
+    });
+    gateRef.current = gate;
+    gate.startLoop();
+
+    return () => gate.dispose();
   }, [reduce, routes, travelerDefs]);
 
   return (
