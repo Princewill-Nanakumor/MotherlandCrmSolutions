@@ -123,15 +123,43 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   }, [currentLead]);
 
   useEffect(() => {
-    if (lead) {
-      if (lastPanelLeadIdRef.current !== lead._id) {
-        unmaskedForPanelRef.current = null;
-        lastPanelLeadIdRef.current = lead._id;
-      }
-      previousStatusRef.current = lead.status;
-      previousLeadRef.current = lead;
-      setCurrentLead(lead);
+    if (!lead) return;
+
+    const panelLead = currentLeadRef.current;
+    const isNewLead = lastPanelLeadIdRef.current !== lead._id;
+
+    // Prevent stale list-prop responses from overwriting the realtime detail
+    // (which can cause the “status flash” before the realtime fetch restores it).
+    if (panelLead && !isNewLead) {
+      const parseTs = (v?: string) => {
+        if (!v) return 0;
+        const t = new Date(v).getTime();
+        return Number.isFinite(t) ? t : 0;
+      };
+
+      // Prefer `updatedAt`, but fall back to other lead timestamps so we can
+      // still compare even if the payload is missing/invalid `updatedAt`.
+      const leadTs =
+        parseTs(lead.updatedAt) ||
+        parseTs(lead.statusChangedAt) ||
+        parseTs(lead.lastActivityAt) ||
+        parseTs(lead.createdAt);
+      const panelTs =
+        parseTs(panelLead.updatedAt) ||
+        parseTs(panelLead.statusChangedAt) ||
+        parseTs(panelLead.lastActivityAt) ||
+        parseTs(panelLead.createdAt);
+      if (leadTs > 0 && panelTs > 0 && leadTs <= panelTs) return;
     }
+
+    if (isNewLead) {
+      unmaskedForPanelRef.current = null;
+      lastPanelLeadIdRef.current = lead._id;
+    }
+
+    previousStatusRef.current = lead.status;
+    previousLeadRef.current = lead;
+    setCurrentLead(lead);
   }, [lead]);
 
   // List APIs (e.g. /api/leads/assigned) may return masked contact fields; load
@@ -378,17 +406,10 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       const currentTs = panelLead?.updatedAt
         ? new Date(panelLead.updatedAt).getTime()
         : 0;
-      const assignmentUnchanged = assignedToEquals(
-        candidate.assignedTo,
-        panelLead?.assignedTo,
-      );
-      if (
-        candidate.status === panelLead?.status &&
-        candidateUpdatedAt <= currentTs &&
-        assignmentUnchanged
-      ) {
-        return;
-      }
+      // Only apply list-cache data when it is strictly newer than what the
+      // panel already has. This prevents a late/older list response from
+      // overwriting realtime state.
+      if (candidateUpdatedAt <= currentTs) return;
 
       const merged =
         unmaskedForPanelRef.current?.leadId === candidate._id

@@ -70,7 +70,7 @@ export const CommentsAndActivitiesCombined: FC<
   const isAdmin = session?.user?.role === "ADMIN";
 
   const patchLeadCachesFromComments = useCallback(
-    (nextComments: Comment[], fallbackTimestamp?: string) => {
+    (nextComments: Comment[]) => {
       const latestComment =
         nextComments.length > 0
           ? [...nextComments].sort(
@@ -79,10 +79,6 @@ export const CommentsAndActivitiesCombined: FC<
                 new Date(a.createdAt).getTime(),
             )[0]
           : undefined;
-      const timestamp =
-        fallbackTimestamp ||
-        latestComment?.createdAt ||
-        new Date().toISOString();
 
       const patchLeadArray = (rows: Lead[] = []): Lead[] =>
         rows.map((lead) => {
@@ -98,7 +94,6 @@ export const CommentsAndActivitiesCombined: FC<
             lastComment: nextLastComment,
             lastCommentDate: nextLastCommentDate,
             lastActivityAt: nextLastCommentDate || fallbackActivityAt,
-            updatedAt: timestamp,
             commentCount: Math.max(0, nextComments.length),
           };
         });
@@ -312,7 +307,7 @@ export const CommentsAndActivitiesCombined: FC<
           return nextComments;
         },
       );
-      patchLeadCachesFromComments(nextComments, newComment.createdAt);
+      patchLeadCachesFromComments(nextComments);
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       setCommentContent("");
