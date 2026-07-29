@@ -191,6 +191,10 @@ export function syncAppScrollMode(pathname: string): void {
   if (isPublic) {
     root.classList.add("public-native-scroll");
     root.classList.remove("app-density-lock");
+    // Homepage must never inherit dashboard `html.dark` — translucent feature
+    // cards would paint dark until PublicLightTheme's effect runs.
+    root.classList.remove("dark");
+    root.style.colorScheme = "light";
     root.style.setProperty("--app-ui-scale", "1");
     root.dataset.uiZoom = "1";
     root.style.removeProperty("zoom");
@@ -215,9 +219,10 @@ export function syncAppScrollMode(pathname: string): void {
 /**
  * Inline boot logic kept in sync with resolveUiZoom (no module imports).
  * On `/`, force scale 1 + `public-native-scroll` before first paint so the
- * hero never flashes at the laptop density scale.
+ * hero never flashes at the laptop density scale. Also strip `html.dark` and
+ * lock `color-scheme: light` so glass feature cards don't flash dark.
  * On `/dashboard*`, set `app-density-lock` before paint so the density root
  * cannot scroll the navbar out of view before React hydrates.
  */
-export const UI_ZOOM_BOOT_SCRIPT = `(function(){try{var KEY="motherland-ui-zoom";var ua=navigator.userAgent||"";var path=location.pathname||"/";var isPublic=path==="/"||path==="";var r=document.documentElement;if(isPublic){r.classList.add("public-native-scroll");r.classList.remove("app-density-lock");r.style.setProperty("--app-ui-scale","1");r.dataset.uiZoom="1";r.style.removeProperty("zoom");return;}if(path==="/dashboard"||path.indexOf("/dashboard/")===0){r.classList.add("app-density-lock");}var z;try{var s=localStorage.getItem(KEY);if(s){var p=parseFloat(s);if(isFinite(p)&&p>=0.7&&p<=1.1)z=p;}}catch(e){}if(z==null){var base=/Windows/i.test(ua)?0.8:(/Mac OS X|Macintosh/i.test(ua)?0.9:0.9);var w=window.innerWidth||document.documentElement.clientWidth||1440;var h=window.innerHeight||document.documentElement.clientHeight||820;var clamp=function(n,a,b){return Math.min(b,Math.max(a,n));};var lerp=function(a,b,t){return a+(b-a)*clamp(t,0,1);};var scale;if(w<=1440)scale=base;else if(w>=2560)scale=1;else if(w>=1920){var mid=lerp(base,1,0.75);scale=lerp(mid,1,(w-1920)/(2560-1920));}else{var mid2=lerp(base,1,0.75);scale=lerp(base,mid2,(w-1440)/(1920-1440));}if(h<820)scale=Math.min(scale,base);z=Math.round(clamp(scale,0.75,1.05)*1000)/1000;}r.style.setProperty("--app-ui-scale",String(z));r.dataset.uiZoom=String(z);r.style.removeProperty("zoom");}catch(e){}})();`;
+export const UI_ZOOM_BOOT_SCRIPT = `(function(){try{var KEY="motherland-ui-zoom";var ua=navigator.userAgent||"";var path=location.pathname||"/";var isPublic=path==="/"||path==="";var r=document.documentElement;if(isPublic){r.classList.add("public-native-scroll");r.classList.remove("app-density-lock");r.classList.remove("dark");r.style.colorScheme="light";r.style.setProperty("--app-ui-scale","1");r.dataset.uiZoom="1";r.style.removeProperty("zoom");return;}if(path==="/dashboard"||path.indexOf("/dashboard/")===0){r.classList.add("app-density-lock");}var z;try{var s=localStorage.getItem(KEY);if(s){var p=parseFloat(s);if(isFinite(p)&&p>=0.7&&p<=1.1)z=p;}}catch(e){}if(z==null){var base=/Windows/i.test(ua)?0.8:(/Mac OS X|Macintosh/i.test(ua)?0.9:0.9);var w=window.innerWidth||document.documentElement.clientWidth||1440;var h=window.innerHeight||document.documentElement.clientHeight||820;var clamp=function(n,a,b){return Math.min(b,Math.max(a,n));};var lerp=function(a,b,t){return a+(b-a)*clamp(t,0,1);};var scale;if(w<=1440)scale=base;else if(w>=2560)scale=1;else if(w>=1920){var mid=lerp(base,1,0.75);scale=lerp(mid,1,(w-1920)/(2560-1920));}else{var mid2=lerp(base,1,0.75);scale=lerp(base,mid2,(w-1440)/(1920-1440));}if(h<820)scale=Math.min(scale,base);z=Math.round(clamp(scale,0.75,1.05)*1000)/1000;}r.style.setProperty("--app-ui-scale",String(z));r.dataset.uiZoom=String(z);r.style.removeProperty("zoom");}catch(e){}})();`;
 

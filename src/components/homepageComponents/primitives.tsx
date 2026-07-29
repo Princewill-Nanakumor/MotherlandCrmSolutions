@@ -15,7 +15,19 @@ import { cn } from "@/libs/utils";
  * Respects `prefers-reduced-motion` (renders statically, no transform/opacity
  * animation) so the homepage stays accessible.
  * Locks after the first enter via useInView({ once: true }) — no replay.
+ *
+ * Use a tiny `amount` + rootMargin so tall mobile grids (e.g. feature cards
+ * stacked in one column) still trigger — `amount: 0.2` never fires when the
+ * target is taller than ~5× the viewport.
  */
+const REVEAL_IN_VIEW = {
+  once: true,
+  // Any intersection — tall one-column feature grids on mobile never reach
+  // amount: 0.2 of their full height inside the viewport.
+  amount: "some" as const,
+  margin: "0px 0px -5% 0px" as const,
+};
+
 export function Reveal({
   children,
   className,
@@ -31,7 +43,7 @@ export function Reveal({
 }) {
   const reduceMotion = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once, amount: 0.2 });
+  const isInView = useInView(ref, { ...REVEAL_IN_VIEW, once });
 
   if (reduceMotion) {
     return <div className={className}>{children}</div>;
@@ -62,7 +74,7 @@ export function RevealGroup({
 }) {
   const reduceMotion = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.2 });
+  const isInView = useInView(ref, REVEAL_IN_VIEW);
 
   if (reduceMotion) {
     return <div className={className}>{children}</div>;

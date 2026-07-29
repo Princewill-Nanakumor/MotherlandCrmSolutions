@@ -13,8 +13,34 @@ import { useAppBranding } from "@/components/AppBrandingProvider";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { cn } from "@/libs/utils";
 
+const HOME_SECTION_LINKS = [
+  { label: "Features", href: "#features" },
+  { label: "How it works", href: "#how-it-works" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "FAQ", href: "#faq" },
+] as const;
+
 function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse bg-gray-200 rounded ${className}`} />;
+}
+
+function scrollToHomepageSection(hash: string) {
+  const id = hash.replace(/^#/, "");
+  const target = document.getElementById(id);
+  if (!target) return;
+
+  const prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+
+  target.scrollIntoView({
+    behavior: prefersReducedMotion ? "auto" : "smooth",
+    block: "start",
+  });
+
+  if (window.location.hash !== hash) {
+    window.history.pushState(null, "", hash);
+  }
 }
 
 export default function Navbar() {
@@ -267,7 +293,7 @@ export default function Navbar() {
           >
             <div className="px-4 pt-4 pb-3 border-b border-gray-100">
               <p className="text-xs font-semibold tracking-wide uppercase text-(--brand-from)">
-                Account
+                {isHomePage ? "Menu" : "Account"}
               </p>
               <p className="mt-1 text-sm font-semibold text-gray-900 truncate">
                 {displayName}
@@ -275,6 +301,27 @@ export default function Navbar() {
             </div>
 
             <div className="p-3 space-y-2">
+              {isHomePage && (
+                <div className="pb-2 mb-1 space-y-1 border-b border-gray-100">
+                  {HOME_SECTION_LINKS.map((link) => (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      className="flex items-center h-10 px-3 text-sm font-medium text-gray-800 transition-colors rounded-xl hover:brand-soft-bg hover:text-(--brand-from)"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        setMenuOpen(false);
+                        // Let the menu close / unlock body scroll first.
+                        window.requestAnimationFrame(() => {
+                          scrollToHomepageSection(link.href);
+                        });
+                      }}
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              )}
               {status === "loading" ? (
                 <div className="px-1 py-1 space-y-2">
                   <Skeleton className="w-full h-11" />

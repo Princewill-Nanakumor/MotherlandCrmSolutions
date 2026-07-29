@@ -307,6 +307,11 @@ export type HomeFaq = {
 
 export const HOME_FAQS: HomeFaq[] = [
   {
+    question: "What is Motherland CRM / Motherland CRM Solutions?",
+    answer:
+      "gives your team one real-time workspace to capture, assign, and track every lead — from first touch to closed deal.",
+  },
+  {
     question: "Do I need a credit card to start?",
     answer:
       "No. You get a 3-day free trial with no card required. When you're ready, deposit USDT and subscribe to a monthly plan.",

@@ -92,9 +92,7 @@ export function ColumnsFeatureMockup() {
   const reduceMotion = useReducedMotion();
   const [orderIndex, setOrderIndex] = useState(0);
   const [draggingId, setDraggingId] = useState<ColumnId | null>("name");
-  const [shiftedIds, setShiftedIds] = useState<Set<ColumnId>>(
-    () => new Set(),
-  );
+  const [shiftedIds, setShiftedIds] = useState<Set<ColumnId>>(() => new Set());
 
   useEffect(() => {
     if (reduceMotion) return;
@@ -135,7 +133,7 @@ export function ColumnsFeatureMockup() {
   return (
     <div className="relative h-full">
       <Panel className="absolute inset-x-0 top-1 overflow-hidden p-2.5">
-        <div className="mb-2 flex items-center justify-between">
+        <div className="flex justify-between items-center mb-2">
           <span className="text-[10px] font-semibold text-gray-700">
             All Leads
           </span>
@@ -217,9 +215,9 @@ export function ColumnsFeatureMockup() {
                     transition={LAYOUT_SPRING}
                     className={`min-w-0 flex-1 truncate rounded px-1 py-1 text-[8px] ${
                       isDragging
-                        ? "bg-white font-semibold text-gray-800 shadow-sm"
+                        ? "font-semibold text-gray-800 bg-white shadow-sm"
                         : isShifted
-                          ? "bg-white/80 font-medium text-gray-700"
+                          ? "font-medium text-gray-700 bg-white/80"
                           : "font-medium text-gray-500"
                     }`}
                     animate={
@@ -249,14 +247,14 @@ export function PhoneFeatureMockup() {
   return (
     <div className="relative h-full">
       <Panel className="absolute top-1 right-2 left-2 p-3 text-center">
-        <span className="relative mx-auto mb-2 flex h-10 w-10 items-center justify-center">
+        <span className="flex relative justify-center items-center mx-auto mb-2 w-10 h-10">
           {!reduceMotion && (
             <>
               <span className="absolute inset-0 animate-ping rounded-xl bg-[color-mix(in_srgb,var(--brand-from)_35%,transparent)] opacity-40" />
               <span className="absolute -inset-1 rounded-xl border border-[color-mix(in_srgb,var(--brand-from)_30%,transparent)] opacity-60" />
             </>
           )}
-          <span className="relative flex h-10 w-10 items-center justify-center rounded-xl text-white brand-gradient">
+          <span className="flex relative justify-center items-center w-10 h-10 text-white rounded-xl brand-gradient">
             <Phone className="w-4 h-4" />
           </span>
         </span>
@@ -377,7 +375,7 @@ export function BillingFeatureMockup() {
           </div>
         </div>
         <div className="flex justify-between items-end mt-2">
-          <span className="text-lg font-bold text-gray-900">$49</span>
+          <span className="text-lg font-bold text-gray-900">$10.99</span>
           <motion.span
             className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700"
             animate={reduceMotion ? undefined : { scale: [1, 1.06, 1] }}

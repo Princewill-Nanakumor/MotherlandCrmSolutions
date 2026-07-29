@@ -1,0 +1,23 @@
+# Motherland CRM Solutions
+
+> Motherland CRM (also known as Motherlands CRM / Motherland CRM Solutions) is a real-time CRM software platform for sales teams.
+
+## Product
+- Lead management CRM with custom statuses and pipelines
+- Excel & CSV lead import / export
+- Team roles: Administrators, Sub Admins, and Agents
+- Real-time collaboration (comments, assignments, status updates)
+- Reminders, softphone calling (Zoiper / MicroSIP), smart filters
+- Drag-and-drop column layouts, branding, crypto billing (USDT)
+
+## Site
+- Homepage: https://motherlandcrmsolutions.com/
+- Sign up: https://motherlandcrmsolutions.com/signup
+- Login: https://motherlandcrmsolutions.com/login
+
+## Keywords
+Motherland CRM, Motherlands CRM, Motherland CRM Solutions, Motherlands CRM Solutions, CRM, CRM software, lead management CRM, Excel CRM import, CSV lead import
+
+## Contact
+- Email: support@motherlandcrmsolutions.com
+- Telegram: https://t.me/solutioncrm4847

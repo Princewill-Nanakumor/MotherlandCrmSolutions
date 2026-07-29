@@ -140,19 +140,48 @@ export function isPrimaryProductionHost(host: string): boolean {
   );
 }
 
+/** Search / AI discovery phrases for Motherland + white-label hosts. */
+export function buildBrandKeywords(branding: AppBranding): string[] {
+  const base = [
+    branding.displayName,
+    branding.shortName,
+    "Motherland CRM",
+    "Motherlands CRM",
+    "Motherland CRM Solutions",
+    "Motherlands CRM Solutions",
+    "CRM",
+    "CRM software",
+    "CRM solution",
+    "CRM platform",
+    "lead management CRM",
+    "sales CRM",
+    "Excel CRM import",
+    "CSV lead import",
+    "real-time CRM",
+    "multi-tenant CRM",
+    "crypto billing CRM",
+  ];
+
+  return [...new Set(base.filter(Boolean))];
+}
+
 export function buildAppMetadata(branding: AppBranding): Metadata {
-  const tagline = "Modern CRM Solution for Excel & CSV Import";
-  const description = `Transform your Excel & CSV data into actionable leads with ${branding.displayName}. Streamline data processing, import files seamlessly, and manage customer relationships efficiently.`;
+  const tagline = "CRM Software for Lead Management, Excel & CSV Import";
+  const description = `${branding.displayName} (also known as ${branding.shortName} / Motherlands CRM) is a modern CRM platform for sales teams. Import Excel & CSV leads, assign agents, track pipelines in real time, and close more deals with Motherland CRM Solutions.`;
+  const keywords = buildBrandKeywords(branding);
+  const titleDefault = `${branding.displayName} | Motherland CRM – Modern CRM Solutions`;
 
   return {
     title: {
-      default: `${branding.displayName} - ${tagline}`,
+      default: titleDefault,
       template: `%s | ${branding.displayName}`,
     },
     description,
+    keywords,
     authors: [{ name: `${branding.displayName} Team` }],
     creator: branding.displayName,
     publisher: branding.displayName,
+    applicationName: branding.shortName,
     formatDetection: {
       email: false,
       address: false,
@@ -166,7 +195,7 @@ export function buildAppMetadata(branding: AppBranding): Metadata {
       type: "website",
       locale: "en_US",
       url: branding.origin,
-      title: `${branding.displayName} - ${tagline}`,
+      title: titleDefault,
       description,
       siteName: branding.displayName,
       images: [
@@ -174,9 +203,15 @@ export function buildAppMetadata(branding: AppBranding): Metadata {
           url: "/Motherlandfav.png",
           width: 1200,
           height: 630,
-          alt: `${branding.shortName} - Modern CRM Solution`,
+          alt: `${branding.shortName} – Motherland CRM Solutions`,
         },
       ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: titleDefault,
+      description,
+      images: ["/Motherlandfav.png"],
     },
     robots: {
       index: true,
@@ -226,24 +261,64 @@ export function buildAppMetadata(branding: AppBranding): Metadata {
 }
 
 export function buildStructuredData(branding: AppBranding) {
+  const keywords = buildBrandKeywords(branding);
+  const description = `${branding.displayName} is a CRM software platform for lead management, Excel & CSV import, team assignment, and real-time sales pipelines. Also known as Motherland CRM and Motherlands CRM Solutions.`;
+
   return {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: branding.shortName,
-    description:
-      "Modern CRM Solution for Excel & CSV file import and lead management",
-    url: branding.origin,
-    applicationCategory: "BusinessApplication",
-    operatingSystem: "Web Browser",
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "USD",
-    },
-    author: {
-      "@type": "Organization",
-      name: branding.displayName,
-    },
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${branding.origin}/#organization`,
+        name: branding.displayName,
+        alternateName: [
+          branding.shortName,
+          "Motherland CRM",
+          "Motherlands CRM",
+          "Motherland CRM Solutions",
+          "Motherlands CRM Solutions",
+        ],
+        url: branding.origin,
+        email: branding.supportEmail,
+        logo: `${branding.origin}/Motherlandfav.png`,
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${branding.origin}/#website`,
+        name: branding.displayName,
+        alternateName: ["Motherland CRM", "Motherlands CRM Solutions", "CRM"],
+        url: branding.origin,
+        description,
+        publisher: { "@id": `${branding.origin}/#organization` },
+        inLanguage: "en-US",
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": `${branding.origin}/#app`,
+        name: branding.shortName,
+        alternateName: [
+          branding.displayName,
+          "Motherland CRM",
+          "Motherlands CRM",
+          "Motherland CRM Solutions",
+          "Motherlands CRM Solutions",
+        ],
+        description,
+        url: branding.origin,
+        applicationCategory: "BusinessApplication",
+        applicationSubCategory: "CRM Software",
+        operatingSystem: "Web Browser",
+        keywords: keywords.join(", "),
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+          description: "3-day free trial — no credit card required",
+        },
+        author: { "@id": `${branding.origin}/#organization` },
+        provider: { "@id": `${branding.origin}/#organization` },
+      },
+    ],
   };
 }
 

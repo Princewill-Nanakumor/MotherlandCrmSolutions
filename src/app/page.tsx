@@ -1,56 +1,34 @@
-"use client";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import HomePageClient from "@/components/homepageComponents/HomePageClient";
+import {
+  buildBrandKeywords,
+  getBrandingForHost,
+} from "@/lib/appBranding";
 
-import { SessionProvider } from "next-auth/react";
-import Navbar from "@/components/homepageComponents/Navabar";
-import { ScrollProgress } from "@/components/homepageComponents/ScrollProgress";
-import HeroSection from "@/components/homepageComponents/HeroSection";
-import StatsSection from "@/components/homepageComponents/StatsSection";
-import FeaturedCrmSection from "@/components/homepageComponents/FeaturedCrmSection";
-import ArchitectureSection from "@/components/homepageComponents/ArchitectureSection";
-import FeaturesSection from "@/components/homepageComponents/FeaturesSection";
-import TimelineSection from "@/components/homepageComponents/TimelineSection";
-import AudiencesSection from "@/components/homepageComponents/AudiencesSection";
-import SubscriptionPlansSection from "@/components/homepageComponents/SubscriptionPlansSection";
-import FaqSection from "@/components/homepageComponents/FaqSection";
-import CtaBandSection from "@/components/homepageComponents/CtaBandSection";
-import HomeFooter from "@/components/homepageComponents/HomeFooter";
-import { BrandThemeApplier } from "@/components/BrandThemeApplier";
-import { PublicLightTheme } from "@/components/PublicLightTheme";
-import { PublicNativeScroll } from "@/components/homepageComponents/PublicNativeScroll";
+export async function generateMetadata(): Promise<Metadata> {
+  const headersList = await headers();
+  const host =
+    headersList.get("x-forwarded-host") || headersList.get("host") || "";
+  const branding = getBrandingForHost(host);
+  const keywords = buildBrandKeywords(branding);
 
-// Homepage is available to everyone (logged in or not); Navbar can show different links based on session
-function HomePageContent() {
-  return (
-    <div
-      className="homepage bg-white text-gray-900 [font-family:var(--brand-font-body)]"
-      style={{ backgroundColor: "#ffffff" }}
-    >
-      <ScrollProgress />
-      <Navbar />
-      <main className="overflow-x-clip">
-        <HeroSection />
-        <StatsSection />
-        <FeaturedCrmSection />
-        <ArchitectureSection />
-        <FeaturesSection />
-        <TimelineSection />
-        <AudiencesSection />
-        <SubscriptionPlansSection />
-        <FaqSection />
-        <CtaBandSection />
-      </main>
-      <HomeFooter />
-    </div>
-  );
+  return {
+    title: `${branding.displayName} | Motherland CRM – CRM Software & Lead Management`,
+    description: `${branding.displayName} (Motherland CRM / Motherlands CRM Solutions) is a real-time CRM for sales teams. Import Excel & CSV leads, assign agents, manage pipelines, and close deals faster.`,
+    keywords,
+    alternates: {
+      canonical: "/",
+    },
+    openGraph: {
+      title: `${branding.displayName} | Motherland CRM Solutions`,
+      description: `Motherland CRM — modern CRM software for lead import, team assignment, and real-time sales pipelines.`,
+      url: branding.origin,
+      type: "website",
+    },
+  };
 }
 
 export default function HomePage() {
-  return (
-    <SessionProvider refetchInterval={5 * 60} refetchOnWindowFocus={true}>
-      <PublicNativeScroll />
-      <PublicLightTheme />
-      <BrandThemeApplier />
-      <HomePageContent />
-    </SessionProvider>
-  );
+  return <HomePageClient />;
 }

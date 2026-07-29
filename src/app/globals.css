@@ -74,6 +74,18 @@ html.public-native-scroll body {
   overflow: visible;
 }
 
+/* Lock light surfaces on the marketing homepage so dashboard `html.dark`
+ * (or a late theme hydrate) cannot darken translucent glass cards. */
+html.public-native-scroll {
+  color-scheme: light;
+}
+
+html.public-native-scroll body,
+html.public-native-scroll.dark body {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+}
+
 html.public-native-scroll #app-density-root {
   transform: none;
   width: 100%;

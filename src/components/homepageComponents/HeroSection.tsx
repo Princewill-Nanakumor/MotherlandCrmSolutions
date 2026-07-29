@@ -41,7 +41,7 @@ export default function HeroSection() {
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="inline-flex items-center gap-2 px-3 py-1 mb-6 text-xs font-semibold tracking-wide border rounded-full border-gray-200 brand-soft-bg text-(--brand-from)"
           >
-            Real-time CRM for modern sales teams
+            Real-time CRM · Motherland CRM Solutions
           </motion.div>
 
           <motion.h1
@@ -59,8 +59,9 @@ export default function HeroSection() {
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.15 }}
             className="max-w-xl mx-auto mt-6 text-lg leading-relaxed text-black! sm:text-xl lg:mx-0"
           >
-            {displayName} gives your team one real-time workspace to capture,
-            assign, and track every lead — from first touch to closed deal.
+            {displayName} gives your team one real-time CRM workspace to
+            capture, assign, and track every lead from first touch to closed
+            deal.
           </motion.p>
 
           <motion.div

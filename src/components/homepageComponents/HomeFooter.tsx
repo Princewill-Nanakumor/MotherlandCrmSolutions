@@ -43,12 +43,12 @@ export default function HomeFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-gray-200 bg-gray-50">
-      <div className="px-6 mx-auto max-w-7xl py-14">
+    <footer className="bg-gray-50 border-t border-gray-200">
+      <div className="px-6 py-14 mx-auto max-w-7xl">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex gap-2 items-center">
               <MotherlandLogo
                 className="w-10 h-10 rounded-xl shrink-0"
                 title={`${displayName} Logo`}
@@ -57,11 +57,11 @@ export default function HomeFooter() {
                 {displayName}
               </span>
             </Link>
-            <p className="max-w-sm mt-4 text-sm leading-relaxed text-gray-600">
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-gray-600">
               The CRM to import leads, assign agents, follow up on time, and
               close more deals — with live updates and crypto billing.
             </p>
-            <div className="inline-flex items-center gap-2 px-3 py-2 mt-5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg">
+            <div className="inline-flex gap-2 items-center px-3 py-2 mt-5 text-xs font-medium text-gray-600 bg-white rounded-lg border border-gray-200">
               <Coins className="w-4 h-4 text-amber-500" />
               Crypto payments: USDT, Bitcoin, Ethereum & more
             </div>
@@ -117,11 +117,11 @@ export default function HomeFooter() {
                 </a>
               </li>
               <li>
-                <p className="text-sm text-gray-600 ">Sign in</p>
+                <p className="text-sm text-gray-600">Sign in</p>
               </li>
               <li>
                 {status === "loading" ? (
-                  <div className="h-5 w-28 rounded bg-gray-200 animate-pulse" />
+                  <div className="w-28 h-5 bg-gray-200 rounded animate-pulse" />
                 ) : (
                   <Link
                     href={isAuthed ? "/dashboard" : "/signup"}
@@ -135,7 +135,7 @@ export default function HomeFooter() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-between gap-3 pt-8 mt-10 text-sm text-gray-500 border-t border-gray-200 sm:flex-row">
+        <div className="flex flex-col gap-3 justify-between items-center pt-8 mt-10 text-sm text-gray-500 border-t border-gray-200 sm:flex-row">
           <p>
             &copy; {year} {displayName}. All rights reserved.
           </p>

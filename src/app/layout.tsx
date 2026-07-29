@@ -60,10 +60,10 @@ export default async function RootLayout({
             __html: BRAND_THEME_BOOT_SCRIPT,
           }}
         />
-        <Script
+        {/* Inline JSON-LD so search/AI crawlers see schema in the initial HTML. */}
+        <script
           id="structured-data"
           type="application/ld+json"
-          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(structuredData),
           }}
