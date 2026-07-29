@@ -21,7 +21,7 @@ export default function FeaturesSection() {
       aria-labelledby="features-heading"
       className="px-6 py-20 sm:py-28"
     >
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-5xl">
         <SectionHeading
           id="features-heading"
           eyebrow={<Eyebrow>Product features</Eyebrow>}
@@ -29,7 +29,7 @@ export default function FeaturesSection() {
           subtitle="Motherland CRM for leads, import, assignment, reminders, calling, filters, and drag-and-drop columns — the same toolkit waiting in your dashboard."
         />
 
-        <RevealGroup className="grid grid-cols-1 gap-5 mt-14 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
+        <RevealGroup className="grid grid-cols-1 gap-5 mx-auto mt-14 max-w-4xl sm:grid-cols-2 sm:max-w-none lg:grid-cols-3 lg:gap-4">
           {HOME_FEATURES.map((feature) => {
             const Icon = feature.icon;
             return (
