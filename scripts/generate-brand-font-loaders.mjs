@@ -42,7 +42,29 @@ const FONTS = [
   { exportName: "brandFontInstrumentSerif", packageName: "instrument-serif", filePrefix: "instrument-serif", variable: "--font-brand-instrument-serif", weights: ["400"] },
   { exportName: "brandFontSourceCodePro", packageName: "source-code-pro", filePrefix: "source-code-pro", variable: "--font-source-code-pro", weights: ["400", "500", "600", "700"] },
   { exportName: "brandFontJetbrains", packageName: "jetbrains-mono", filePrefix: "jetbrains-mono", variable: "--font-jetbrains-mono", weights: ["400", "500", "600", "700"], preload: true },
-  { exportName: "brandFontIbmPlexMono", packageName: "ibm-plex-mono", filePrefix: "ibm-plex-mono", variable: "--font-brand-ibm-plex-mono", weights: ["400", "500", "600", "700"], preload: true },
+  { exportName: "brandFontIbmPlexMono", packageName: "ibm-plex-mono", filePrefix: "ibm-plex-mono", variable: "--font-brand-ibm-plex-mono", weights: ["400", "500", "600", "700"] },
+  // Artistic — scripts / display
+  { exportName: "brandFontPacifico", packageName: "pacifico", filePrefix: "pacifico", variable: "--font-brand-pacifico", weights: ["400"] },
+  { exportName: "brandFontLobster", packageName: "lobster", filePrefix: "lobster", variable: "--font-brand-lobster", weights: ["400"] },
+  { exportName: "brandFontDancingScript", packageName: "dancing-script", filePrefix: "dancing-script", variable: "--font-brand-dancing-script", weights: ["400", "500", "600", "700"] },
+  { exportName: "brandFontGreatVibes", packageName: "great-vibes", filePrefix: "great-vibes", variable: "--font-brand-great-vibes", weights: ["400"] },
+  { exportName: "brandFontSatisfy", packageName: "satisfy", filePrefix: "satisfy", variable: "--font-brand-satisfy", weights: ["400"] },
+  { exportName: "brandFontCaveat", packageName: "caveat", filePrefix: "caveat", variable: "--font-brand-caveat", weights: ["400", "500", "600", "700"] },
+  { exportName: "brandFontShadowsIntoLight", packageName: "shadows-into-light", filePrefix: "shadows-into-light", variable: "--font-brand-shadows-into-light", weights: ["400"] },
+  { exportName: "brandFontAmaticSc", packageName: "amatic-sc", filePrefix: "amatic-sc", variable: "--font-brand-amatic-sc", weights: ["400", "700"] },
+  { exportName: "brandFontAbrilFatface", packageName: "abril-fatface", filePrefix: "abril-fatface", variable: "--font-brand-abril-fatface", weights: ["400"] },
+  { exportName: "brandFontRighteous", packageName: "righteous", filePrefix: "righteous", variable: "--font-brand-righteous", weights: ["400"] },
+  { exportName: "brandFontBungee", packageName: "bungee", filePrefix: "bungee", variable: "--font-brand-bungee", weights: ["400"] },
+  // Cartoon / playful
+  { exportName: "brandFontFredoka", packageName: "fredoka", filePrefix: "fredoka", variable: "--font-brand-fredoka", weights: ["400", "500", "600", "700"] },
+  { exportName: "brandFontBaloo2", packageName: "baloo-2", filePrefix: "baloo-2", variable: "--font-brand-baloo-2", weights: ["400", "500", "600", "700"] },
+  { exportName: "brandFontComfortaa", packageName: "comfortaa", filePrefix: "comfortaa", variable: "--font-brand-comfortaa", weights: ["400", "500", "600", "700"], preload: true },
+  { exportName: "brandFontComicNeue", packageName: "comic-neue", filePrefix: "comic-neue", variable: "--font-brand-comic-neue", weights: ["400", "700"] },
+  { exportName: "brandFontLuckiestGuy", packageName: "luckiest-guy", filePrefix: "luckiest-guy", variable: "--font-brand-luckiest-guy", weights: ["400"] },
+  { exportName: "brandFontPermanentMarker", packageName: "permanent-marker", filePrefix: "permanent-marker", variable: "--font-brand-permanent-marker", weights: ["400"] },
+  { exportName: "brandFontRockSalt", packageName: "rock-salt", filePrefix: "rock-salt", variable: "--font-brand-rock-salt", weights: ["400"] },
+  { exportName: "brandFontIndieFlower", packageName: "indie-flower", filePrefix: "indie-flower", variable: "--font-brand-indie-flower", weights: ["400"] },
+  { exportName: "brandFontPressStart2p", packageName: "press-start-2p", filePrefix: "press-start-2p", variable: "--font-brand-press-start-2p", weights: ["400"] },
 ];
 
 fs.mkdirSync(assetsDir, { recursive: true });

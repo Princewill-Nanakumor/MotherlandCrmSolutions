@@ -12,8 +12,8 @@
   --brand-navbar-from: #2d6f8b;
   --brand-navbar-to: #2e8eb8;
   --brand-navbar-text: #ffffff;
-  --brand-font-body: var(--font-brand-ibm-plex-mono), "IBM Plex Mono",
-    ui-monospace, monospace;
+  --brand-font-body: var(--font-brand-comfortaa), Comfortaa,
+    ui-sans-serif, system-ui, sans-serif;
   --brand-font-heading: var(--font-jetbrains-mono), "JetBrains Mono",
     ui-monospace, monospace;
   /* Cross-platform density (boot script / UiZoomApplier overrides this) */

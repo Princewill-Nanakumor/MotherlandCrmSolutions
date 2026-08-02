@@ -328,7 +328,204 @@ export const brandFontIbmPlexMono = localFont({
   ],
   variable: "--font-brand-ibm-plex-mono",
   display: "swap",
+  preload: false,
+});
+
+export const brandFontPacifico = localFont({
+  src: [
+    { path: "../assets/brand-fonts/pacifico/pacifico-latin-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-brand-pacifico",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontLobster = localFont({
+  src: [
+    { path: "../assets/brand-fonts/lobster/lobster-latin-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-brand-lobster",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontDancingScript = localFont({
+  src: [
+    { path: "../assets/brand-fonts/dancing-script/dancing-script-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/dancing-script/dancing-script-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/dancing-script/dancing-script-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/dancing-script/dancing-script-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-brand-dancing-script",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontGreatVibes = localFont({
+  src: [
+    { path: "../assets/brand-fonts/great-vibes/great-vibes-latin-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-brand-great-vibes",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontSatisfy = localFont({
+  src: [
+    { path: "../assets/brand-fonts/satisfy/satisfy-latin-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-brand-satisfy",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontCaveat = localFont({
+  src: [
+    { path: "../assets/brand-fonts/caveat/caveat-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/caveat/caveat-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/caveat/caveat-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/caveat/caveat-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-brand-caveat",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontShadowsIntoLight = localFont({
+  src: [
+    { path: "../assets/brand-fonts/shadows-into-light/shadows-into-light-latin-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-brand-shadows-into-light",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontAmaticSc = localFont({
+  src: [
+    { path: "../assets/brand-fonts/amatic-sc/amatic-sc-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/amatic-sc/amatic-sc-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-brand-amatic-sc",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontAbrilFatface = localFont({
+  src: [
+    { path: "../assets/brand-fonts/abril-fatface/abril-fatface-latin-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-brand-abril-fatface",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontRighteous = localFont({
+  src: [
+    { path: "../assets/brand-fonts/righteous/righteous-latin-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-brand-righteous",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontBungee = localFont({
+  src: [
+    { path: "../assets/brand-fonts/bungee/bungee-latin-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-brand-bungee",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontFredoka = localFont({
+  src: [
+    { path: "../assets/brand-fonts/fredoka/fredoka-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/fredoka/fredoka-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/fredoka/fredoka-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/fredoka/fredoka-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-brand-fredoka",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontBaloo2 = localFont({
+  src: [
+    { path: "../assets/brand-fonts/baloo-2/baloo-2-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/baloo-2/baloo-2-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/baloo-2/baloo-2-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/baloo-2/baloo-2-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-brand-baloo-2",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontComfortaa = localFont({
+  src: [
+    { path: "../assets/brand-fonts/comfortaa/comfortaa-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/comfortaa/comfortaa-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/brand-fonts/comfortaa/comfortaa-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/brand-fonts/comfortaa/comfortaa-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-brand-comfortaa",
+  display: "swap",
   preload: true,
+});
+
+export const brandFontComicNeue = localFont({
+  src: [
+    { path: "../assets/brand-fonts/comic-neue/comic-neue-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/brand-fonts/comic-neue/comic-neue-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-brand-comic-neue",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontLuckiestGuy = localFont({
+  src: [
+    { path: "../assets/brand-fonts/luckiest-guy/luckiest-guy-latin-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-brand-luckiest-guy",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontPermanentMarker = localFont({
+  src: [
+    { path: "../assets/brand-fonts/permanent-marker/permanent-marker-latin-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-brand-permanent-marker",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontRockSalt = localFont({
+  src: [
+    { path: "../assets/brand-fonts/rock-salt/rock-salt-latin-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-brand-rock-salt",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontIndieFlower = localFont({
+  src: [
+    { path: "../assets/brand-fonts/indie-flower/indie-flower-latin-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-brand-indie-flower",
+  display: "swap",
+  preload: false,
+});
+
+export const brandFontPressStart2p = localFont({
+  src: [
+    { path: "../assets/brand-fonts/press-start-2p/press-start-2p-latin-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-brand-press-start-2p",
+  display: "swap",
+  preload: false,
 });
 
 /** Apply on <html> so every brand CSS variable is defined app-wide. */
@@ -361,6 +558,26 @@ export const brandFontVariablesClassName = [
   brandFontSourceCodePro,
   brandFontJetbrains,
   brandFontIbmPlexMono,
+  brandFontPacifico,
+  brandFontLobster,
+  brandFontDancingScript,
+  brandFontGreatVibes,
+  brandFontSatisfy,
+  brandFontCaveat,
+  brandFontShadowsIntoLight,
+  brandFontAmaticSc,
+  brandFontAbrilFatface,
+  brandFontRighteous,
+  brandFontBungee,
+  brandFontFredoka,
+  brandFontBaloo2,
+  brandFontComfortaa,
+  brandFontComicNeue,
+  brandFontLuckiestGuy,
+  brandFontPermanentMarker,
+  brandFontRockSalt,
+  brandFontIndieFlower,
+  brandFontPressStart2p,
 ]
   .map((font) => font.variable)
   .join(" ");

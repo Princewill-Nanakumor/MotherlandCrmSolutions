@@ -250,6 +250,148 @@ export const BRAND_FONT_OPTIONS: BrandFontOption[] = [
     cssFamily:
       'var(--font-brand-ibm-plex-mono), "IBM Plex Mono", ui-monospace, monospace',
   },
+  // Artistic — scripts / display
+  {
+    id: "pacifico",
+    label: "Pacifico",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-pacifico), Pacifico, cursive',
+  },
+  {
+    id: "lobster",
+    label: "Lobster",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-lobster), Lobster, cursive',
+  },
+  {
+    id: "dancing-script",
+    label: "Dancing Script",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-dancing-script), "Dancing Script", cursive',
+  },
+  {
+    id: "great-vibes",
+    label: "Great Vibes",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-great-vibes), "Great Vibes", cursive',
+  },
+  {
+    id: "satisfy",
+    label: "Satisfy",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-satisfy), Satisfy, cursive',
+  },
+  {
+    id: "caveat",
+    label: "Caveat",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-caveat), Caveat, cursive',
+  },
+  {
+    id: "shadows-into-light",
+    label: "Shadows Into Light",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-shadows-into-light), "Shadows Into Light", cursive',
+  },
+  {
+    id: "amatic-sc",
+    label: "Amatic SC",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-amatic-sc), "Amatic SC", cursive',
+  },
+  {
+    id: "abril-fatface",
+    label: "Abril Fatface",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-abril-fatface), "Abril Fatface", ui-serif, Georgia, serif',
+  },
+  {
+    id: "righteous",
+    label: "Righteous",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-righteous), Righteous, ui-sans-serif, system-ui, sans-serif',
+  },
+  {
+    id: "bungee",
+    label: "Bungee",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-bungee), Bungee, ui-sans-serif, system-ui, sans-serif',
+  },
+  // Cartoon / playful
+  {
+    id: "fredoka",
+    label: "Fredoka",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-fredoka), Fredoka, ui-sans-serif, system-ui, sans-serif',
+  },
+  {
+    id: "baloo-2",
+    label: "Baloo 2",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-baloo-2), "Baloo 2", ui-sans-serif, system-ui, sans-serif',
+  },
+  {
+    id: "comfortaa",
+    label: "Comfortaa",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-comfortaa), Comfortaa, ui-sans-serif, system-ui, sans-serif',
+  },
+  {
+    id: "comic-neue",
+    label: "Comic Neue",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-comic-neue), "Comic Neue", cursive',
+  },
+  {
+    id: "luckiest-guy",
+    label: "Luckiest Guy",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-luckiest-guy), "Luckiest Guy", cursive',
+  },
+  {
+    id: "permanent-marker",
+    label: "Permanent Marker",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-permanent-marker), "Permanent Marker", cursive',
+  },
+  {
+    id: "rock-salt",
+    label: "Rock Salt",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-rock-salt), "Rock Salt", cursive',
+  },
+  {
+    id: "indie-flower",
+    label: "Indie Flower",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-indie-flower), "Indie Flower", cursive',
+  },
+  {
+    id: "press-start-2p",
+    label: "Press Start 2P",
+    googleFamily: null,
+    cssFamily:
+      'var(--font-brand-press-start-2p), "Press Start 2P", ui-monospace, monospace',
+  },
 ];
 
 const FONT_IDS = new Set(BRAND_FONT_OPTIONS.map((f) => f.id));
@@ -327,7 +469,7 @@ export const DEFAULT_BRAND_THEME: BrandTheme = syncDerivedBrandColors({
   navbarTo: "#2E8EB8",
   navbarText: "#FFFFFF",
   buttonStyle: "gradient",
-  bodyFont: "ibm-plex-mono",
+  bodyFont: "comfortaa",
   headingFont: "jetbrains",
 });
 
@@ -394,12 +536,14 @@ export function mergeBrandTheme(
   let bodyFont = resolveBrandFontId(p.bodyFont, fallback.bodyFont);
   let headingFont = resolveBrandFontId(p.headingFont, fallback.headingFont);
 
-  // Migrate prior app defaults → IBM Plex Mono (body) + JetBrains Mono (heading).
+  // Migrate prior app defaults → Comfortaa (body) + JetBrains Mono (heading).
   // Only when both sides still match an old paired default (not a custom mix).
   const oldPairedDefaults: Array<[string, string]> = [
     ["jetbrains", "jetbrains"],
     ["source-code-pro", "source-code-pro"],
     ["ibm-plex-mono", "rubik"],
+    ["ibm-plex-mono", "jetbrains"],
+    ["righteous", "jetbrains"],
   ];
   for (const [oldBody, oldHeading] of oldPairedDefaults) {
     if (bodyFont === oldBody && headingFont === oldHeading) {
@@ -442,7 +586,7 @@ export function parseBrandThemeInput(input: unknown): BrandTheme | { error: stri
     raw.solidPrimary ?? raw.primary ?? "",
   ).trim();
   const buttonStyle = String(raw.buttonStyle ?? "gradient").trim();
-  const bodyFontRaw = String(raw.bodyFont ?? "ibm-plex-mono").trim();
+  const bodyFontRaw = String(raw.bodyFont ?? "comfortaa").trim();
   const headingFontRaw = String(raw.headingFont ?? "jetbrains").trim();
   const bodyFont = resolveBrandFontId(bodyFontRaw, "");
   const headingFont = resolveBrandFontId(headingFontRaw, "");
