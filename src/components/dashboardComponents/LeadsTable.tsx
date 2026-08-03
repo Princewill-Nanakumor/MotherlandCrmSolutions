@@ -388,7 +388,7 @@ export default function LeadsTable({
   const {
     rowSelection,
     allSelected,
-    selectAllRef,
+    someSelected,
     handleSelectAll,
     handleRowSelection,
   } = useRowSelection({
@@ -426,11 +426,11 @@ export default function LeadsTable({
     sortOrder: stableSorting[0]?.desc ? "desc" : "asc",
     handleSort,
     allSelected,
+    someSelected,
     selectedLeads: displaySelectedLeads,
     handleSelectAll,
     handleRowSelection,
     users,
-    selectAllRef,
     statuses,
   });
 

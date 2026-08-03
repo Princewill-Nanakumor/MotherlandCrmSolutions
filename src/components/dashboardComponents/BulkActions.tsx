@@ -58,6 +58,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState(false);
 
   // Fetch statuses if not provided via props
   const { data: fetchedStatuses = [], isLoading: isFetchingStatuses } =
@@ -118,17 +119,16 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
     statuses.find((status) => (status._id || status.id) === pendingStatus)?.name ||
     pendingStatus;
 
-  const handleDelete = async () => {
-    if (
-      !confirm(
-        `Are you sure you want to delete ${selectedLeads.length} lead(s)? This action cannot be undone.`,
-      )
-    ) {
-      return;
-    }
+  const handleDelete = () => {
+    if (selectedLeads.length === 0 || isDeleting) return;
+    setPendingDelete(true);
+  };
+
+  const confirmDelete = async () => {
     setIsDeleting(true);
     try {
       await onDelete();
+      setPendingDelete(false);
     } finally {
       setIsDeleting(false);
     }
@@ -263,7 +263,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
       <AlertDialog
         open={!!pendingStatus}
         onOpenChange={(open) => {
-          if (!open) {
+          if (!open && !isChangingStatus) {
             setPendingStatus(null);
             setSelectedStatus("");
           }
@@ -283,11 +283,72 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConfirmStatusChange}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleConfirmStatusChange();
+              }}
               disabled={isChangingStatus}
               className="bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
             >
-              {isChangingStatus ? "Applying..." : "OK"}
+              {isChangingStatus ? (
+                <>
+                  <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                  Applying…
+                </>
+              ) : (
+                "OK"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={pendingDelete}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setPendingDelete(false);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {selectedLeads.length} selected lead
+              {selectedLeads.length > 1 ? "s" : ""}?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  This cannot be undone. The selected lead
+                  {selectedLeads.length > 1 ? "s" : ""} will be permanently
+                  removed from your CRM.
+                </p>
+                <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-md border border-gray-200 dark:border-gray-600 dark:bg-transparent dark:text-gray-200">
+                  {selectedLeads.length} lead
+                  {selectedLeads.length > 1 ? "s" : ""} selected
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="text-white bg-red-600 hover:bg-red-700 hover:text-white focus:ring-red-600"
+              disabled={isDeleting}
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmDelete();
+              }}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                  Deleting…
+                </>
+              ) : (
+                "Delete leads"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

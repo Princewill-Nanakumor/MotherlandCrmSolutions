@@ -27,10 +27,11 @@ interface UserTableDisplayProps {
   loading: boolean;
   filterActiveOnly: boolean;
   showActions: boolean;
-  onDeleteUser: (userId: string) => void;
+  onDeleteUser: (user: User) => void;
   onResetPassword: (userId: string) => void;
   onViewDetails?: (user: User) => void;
   onViewCallLogs?: (user: User) => void;
+  deletingUserId?: string | null;
 }
 
 export function UserTableDisplay({
@@ -42,6 +43,7 @@ export function UserTableDisplay({
   onResetPassword,
   onViewDetails,
   onViewCallLogs,
+  deletingUserId = null,
 }: UserTableDisplayProps) {
   // Filter users based on filterActiveOnly
   const filteredUsers = useMemo(() => {
@@ -98,6 +100,7 @@ export function UserTableDisplay({
     onViewCallLogs,
     onResetPassword,
     onDeleteUser,
+    deletingUserId,
   });
 
   // Configure TanStack Table

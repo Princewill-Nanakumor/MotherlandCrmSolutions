@@ -236,7 +236,7 @@ export function TableContent({
                 return (
                   <TableHead
                     key={generateUniqueKey("header", header.id)}
-                    className={`text-gray-700! dark:text-gray-300! font-semibold${
+                    className={`text-gray-700! dark:text-gray-300! font-semibold ${
                       isSelectColumn || isActionsColumn
                         ? "text-center"
                         : isCommentCountColumn
@@ -245,7 +245,7 @@ export function TableContent({
                     }
                       ${
                         isSelectColumn
-                          ? "w-12 px-3 border-r border-gray-200 dark:border-gray-700"
+                          ? "w-10 min-w-10 px-0 border-r border-gray-200 dark:border-gray-700"
                           : isStatusColumn
                             ? "w-32 min-w-30 px-4"
                             : isLastCommentColumn
@@ -339,7 +339,7 @@ export function TableContent({
                         }
                         ${
                           isSelectCell
-                            ? "px-3 border-r border-gray-200 dark:border-gray-700"
+                            ? "w-10 min-w-10 px-0 border-r border-gray-200 dark:border-gray-700"
                             : isStatusCell
                               ? "w-32 min-w-30 px-4"
                               : isLastCommentCell

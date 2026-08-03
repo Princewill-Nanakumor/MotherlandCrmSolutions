@@ -1,7 +1,7 @@
 // src/components/dashboardComponents/SelectedLeadsBanner.tsx
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
@@ -11,6 +11,7 @@ import { useSelectedLeads, useClearSelection } from "@/stores/leadsStore";
 /**
  * Shows a sticky banner on the all-leads page when leads are checkbox-selected.
  * Displays the count only; Cancel selection clears the selection.
+ * Selection is also cleared when leaving the all-leads list page.
  */
 export function SelectedLeadsBanner() {
   const { data: session } = useSession();
@@ -21,6 +22,14 @@ export function SelectedLeadsBanner() {
   const isAdmin = session?.user?.role === "ADMIN";
   const count = selectedLeads.length;
   const isAllLeadsPage = pathname === "/dashboard/all-leads";
+
+  // Lead selection lives in a global store; clear it when leaving the list
+  // so the banner/checkboxes don't come back on the next visit.
+  useEffect(() => {
+    if (!isAllLeadsPage && count > 0) {
+      clearSelection();
+    }
+  }, [isAllLeadsPage, count, clearSelection]);
 
   if (!isAdmin || count === 0 || !isAllLeadsPage) return null;
 

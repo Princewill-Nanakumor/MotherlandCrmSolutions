@@ -9,6 +9,7 @@ import {
   type LeadStatusCount,
 } from "@/hooks/useDashboardData";
 import type { StatusChartRow } from "@/components/dashboardComponents/LeadStatusCharts";
+import { LeadStatusChartsSkeleton } from "@/components/dashboardComponents/LeadStatusChartsSkeleton";
 
 // Recharts is heavy and purely presentational — keep it out of the dashboard's
 // initial bundle and off the server render.
@@ -16,9 +17,7 @@ const LeadStatusCharts = dynamic(
   () => import("@/components/dashboardComponents/LeadStatusCharts"),
   {
     ssr: false,
-    loading: () => (
-      <div className="bg-gray-100 rounded-lg h-65 animate-pulse dark:bg-gray-700/50" />
-    ),
+    loading: () => <LeadStatusChartsSkeleton />,
   },
 );
 
@@ -119,7 +118,7 @@ export default function LeadStatusStats({
         </p>
       ) : showSkeleton ? (
         <div className="mt-6">
-          <div className="bg-gray-100 rounded-lg h-65 animate-pulse dark:bg-gray-700/50" />
+          <LeadStatusChartsSkeleton />
         </div>
       ) : rows.length === 0 ? (
         <div className="py-10 mt-6 text-center border border-gray-200 border-dashed rounded-lg dark:border-gray-700">

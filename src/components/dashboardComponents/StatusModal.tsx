@@ -11,6 +11,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
@@ -40,12 +50,18 @@ const StatusModal = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingDeleteStatus, setPendingDeleteStatus] = useState<Status | null>(
+    null,
+  );
+  const [deletingStatusId, setDeletingStatusId] = useState<string | null>(null);
 
   const isProtectedStatus = (status: Status) => {
     const statusId = status.id || status._id || "";
     const statusName = (status.name || "").trim().toUpperCase();
     return statusId === "NEW" || statusName === "NEW";
   };
+
+  const getStatusId = (status: Status) => status.id || status._id || "";
 
   const fetchStatuses = useCallback(async () => {
     try {
@@ -171,53 +187,66 @@ const StatusModal = ({
     setIsEditing(true);
   };
 
-  const handleDelete = async (statusId: string) => {
-    if (window.confirm("Are you sure you want to delete this status?")) {
-      try {
-        const response = await fetch(`/api/statuses/${statusId}`, {
-          method: "DELETE",
-        });
+  const requestDelete = (status: Status) => {
+    if (isProtectedStatus(status) || deletingStatusId) return;
+    setPendingDeleteStatus(status);
+  };
 
-        if (!response.ok) {
-          throw new Error("Failed to delete status");
-        }
+  const confirmDeleteStatus = async () => {
+    if (!pendingDeleteStatus || deletingStatusId) return;
 
-        // ✅ OPTIMIZATION: Update local state immediately
-        setStatuses((prev) => prev.filter((status) => status._id !== statusId));
+    const statusId = getStatusId(pendingDeleteStatus);
+    if (!statusId) return;
 
-        toast({
-          title: "Success!",
-          description: "Status deleted successfully",
-          variant: "success",
-        });
+    setDeletingStatusId(statusId);
+    try {
+      const response = await fetch(`/api/statuses/${statusId}`, {
+        method: "DELETE",
+      });
 
-        // ✅ OPTIMIZATION: Run cache invalidations in parallel in the background
-        Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: ["statuses"],
-            exact: false,
-          }),
-          queryClient.invalidateQueries({
-            queryKey: ["leads"],
-            exact: false,
-          }),
-          queryClient.invalidateQueries({
-            queryKey: ["leads-stats"],
-            exact: false,
-          }),
-          refreshStatuses(),
-        ]).catch((error) => {
-          console.error("Error refreshing caches:", error);
-        });
-      } catch (err: unknown) {
-        console.error("Error deleting status:", err);
-        toast({
-          title: "Error",
-          description:
-            err instanceof Error ? err.message : "Failed to delete status",
-          variant: "destructive",
-        });
+      if (!response.ok) {
+        throw new Error("Failed to delete status");
       }
+
+      setStatuses((prev) =>
+        prev.filter((status) => getStatusId(status) !== statusId),
+      );
+
+      toast({
+        title: "Success!",
+        description: "Status deleted successfully",
+        variant: "success",
+      });
+
+      setPendingDeleteStatus(null);
+
+      Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["statuses"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["leads"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["leads-stats"],
+          exact: false,
+        }),
+        refreshStatuses(),
+      ]).catch((error) => {
+        console.error("Error refreshing caches:", error);
+      });
+    } catch (err: unknown) {
+      console.error("Error deleting status:", err);
+      toast({
+        title: "Error",
+        description:
+          err instanceof Error ? err.message : "Failed to delete status",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingStatusId(null);
     }
   };
 
@@ -228,169 +257,249 @@ const StatusModal = ({
   };
 
   const handleClose = () => {
+    if (deletingStatusId) return;
+    setPendingDeleteStatus(null);
     resetForm();
     onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-gray-900! dark:text-white!">
-            {isEditing ? "Edit Status" : "Create New Status"}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="grid grid-cols-1 gap-6">
-          {/* Create/Edit Status Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700! dark:text-white!">
-                Status Name
-              </label>
-              <Input
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder="Enter status name"
-                required
-                className="mt-1"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700! dark:text-white!">
-                Select Color
-              </label>
-              <div className="flex gap-2">
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-gray-900! dark:text-white!">
+              {isEditing ? "Edit Status" : "Create New Status"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-6">
+            {/* Create/Edit Status Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700! dark:text-white!">
+                  Status Name
+                </label>
                 <Input
-                  type="color"
-                  value={formData.color}
+                  value={formData.name}
                   onChange={(e) =>
-                    setFormData({ ...formData, color: e.target.value })
+                    setFormData({ ...formData, name: e.target.value })
                   }
+                  placeholder="Enter status name"
                   required
-                  className="w-20 p-1 mt-1"
+                  className="mt-1"
                 />
-                <div className="flex-1 p-2 border border-gray-200 rounded dark:border-gray-700">
-                  <div
-                    className="w-full h-full rounded"
-                    style={{ backgroundColor: formData.color }}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700! dark:text-white!">
+                  Select Color
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    type="color"
+                    value={formData.color}
+                    onChange={(e) =>
+                      setFormData({ ...formData, color: e.target.value })
+                    }
+                    required
+                    className="w-20 p-1 mt-1"
                   />
+                  <div className="flex-1 p-2 border border-gray-200 rounded dark:border-gray-700">
+                    <div
+                      className="w-full h-full rounded"
+                      style={{ backgroundColor: formData.color }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-            <DialogFooter>
-              {isEditing && (
+              <DialogFooter>
+                {isEditing && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={resetForm}
+                    className="mr-2"
+                  >
+                    Cancel Edit
+                  </Button>
+                )}
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={resetForm}
-                  className="mr-2"
+                  type="submit"
+                  disabled={isCreating || !!deletingStatusId}
+                  className="text-white border-0 bg-linear-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                 >
-                  Cancel Edit
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {isEditing ? "Updating..." : "Creating..."}
+                    </>
+                  ) : isEditing ? (
+                    "Update Status"
+                  ) : (
+                    "Create Status"
+                  )}
                 </Button>
-              )}
-              <Button
-                type="submit"
-                disabled={isCreating}
-                className="text-white border-0 bg-linear-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-              >
-                {isCreating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {isEditing ? "Updating..." : "Creating..."}
-                  </>
-                ) : isEditing ? (
-                  "Update Status"
+              </DialogFooter>
+            </form>
+            {/* Existing Statuses */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-sm text-gray-900! dark:text-white!">
+                  Existing Statuses
+                </h3>
+                {loading ? (
+                  <span
+                    className="inline-block w-20 h-5 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse"
+                    aria-hidden="true"
+                  />
                 ) : (
-                  "Create Status"
+                  <span className="text-xs text-gray-900! dark:text-white! font-medium bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                    {statuses.length}{" "}
+                    {statuses.length === 1 ? "status" : "statuses"}
+                  </span>
                 )}
-              </Button>
-            </DialogFooter>
-          </form>
-          {/* Existing Statuses */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm text-gray-900! dark:text-white!">
-                Existing Statuses
-              </h3>
-              <span className="text-xs text-gray-900! dark:text-white! font-medium bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                {statuses.length}{" "}
-                {statuses.length === 1 ? "status" : "statuses"}
-              </span>
-            </div>
-            {loading ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-6 w-6 animate-spin brand-icon" />
               </div>
-            ) : (
-              <div
-                className={`grid gap-2 ${
-                  statuses.length > 5 ? "max-h-64 overflow-y-auto pr-2" : ""
-                }`}
-                style={{
-                  scrollbarWidth: "thin",
-                  scrollbarColor: "#9CA3AF #F3F4F6",
-                }}
-              >
-                {statuses.length === 0 ? (
-                  <div className="text-center py-4 text-gray-500! dark:text-gray-400! text-sm">
-                    No statuses found. Create your first status above.
-                  </div>
-                ) : (
-                  statuses.map((status) => (
-                    <div
-                      key={status._id}
-                      className="flex items-center justify-between p-2 border border-gray-200 rounded-md dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-4 h-4 rounded"
-                          style={{ backgroundColor: status.color }}
-                        />
-                        <span className="text-gray-800! dark:text-white!">
-                          {status.name}
-                        </span>
-                        <code className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm text-gray-600! dark:text-white!">
-                          {status.color}
-                        </code>
-                      </div>
-                      <div className="flex gap-2">
-                        {!isProtectedStatus(status) ? (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(status)}
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                handleDelete(status.id || status._id || "")
-                              }
-                            >
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </Button>
-                          </>
-                        ) : (
-                          <span className="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
-                            Default
-                          </span>
-                        )}
-                      </div>
+              {loading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin brand-icon" />
+                </div>
+              ) : (
+                <div
+                  className={`grid gap-2 ${
+                    statuses.length > 5 ? "max-h-64 overflow-y-auto pr-2" : ""
+                  }`}
+                  style={{
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "#9CA3AF #F3F4F6",
+                  }}
+                >
+                  {statuses.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500! dark:text-gray-400! text-sm">
+                      No statuses found. Create your first status above.
                     </div>
-                  ))
-                )}
-              </div>
-            )}
+                  ) : (
+                    statuses.map((status) => {
+                      const statusId = getStatusId(status);
+                      const isDeletingThis = deletingStatusId === statusId;
+
+                      return (
+                        <div
+                          key={status._id}
+                          className="flex items-center justify-between p-2 border border-gray-200 rounded-md dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-4 h-4 rounded"
+                              style={{ backgroundColor: status.color }}
+                            />
+                            <span className="text-gray-800! dark:text-white!">
+                              {status.name}
+                            </span>
+                            <code className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm text-gray-600! dark:text-white!">
+                              {status.color}
+                            </code>
+                          </div>
+                          <div className="flex gap-2">
+                            {!isProtectedStatus(status) ? (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={!!deletingStatusId}
+                                  onClick={() => handleEdit(status)}
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={!!deletingStatusId}
+                                  onClick={() => requestDelete(status)}
+                                  aria-label={`Delete ${status.name}`}
+                                >
+                                  {isDeletingThis ? (
+                                    <Loader2 className="w-4 h-4 text-red-500 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="w-4 h-4 text-red-500" />
+                                  )}
+                                </Button>
+                              </>
+                            ) : (
+                              <span className="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+                                Default
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={pendingDeleteStatus !== null}
+        onOpenChange={(open) => {
+          if (!open && !deletingStatusId) {
+            setPendingDeleteStatus(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this status?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  This cannot be undone. Leads currently using this status will
+                  keep their value, but the status will no longer appear in
+                  filters and selectors.
+                </p>
+                {pendingDeleteStatus ? (
+                  <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-md border border-gray-200 dark:border-gray-600 dark:bg-transparent dark:text-gray-200">
+                    <span
+                      className="w-3 h-3 rounded shrink-0"
+                      style={{
+                        backgroundColor: pendingDeleteStatus.color || "#6B7280",
+                      }}
+                    />
+                    <span className="font-medium">
+                      {pendingDeleteStatus.name}
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!deletingStatusId}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="text-white bg-red-600 hover:bg-red-700 hover:text-white focus:ring-red-600"
+              disabled={!!deletingStatusId}
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmDeleteStatus();
+              }}
+            >
+              {deletingStatusId ? (
+                <>
+                  <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                  Deleting…
+                </>
+              ) : (
+                "Delete status"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

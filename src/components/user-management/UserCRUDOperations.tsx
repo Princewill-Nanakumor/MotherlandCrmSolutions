@@ -62,13 +62,6 @@ export function UserCRUDOperations({
 
   const handleDeleteUser = useCallback(
     async (userId: string): Promise<void> => {
-      if (
-        !confirm(
-          "Are you sure you want to PERMANENTLY delete this user? This action cannot be undone and will unassign all leads from this user.",
-        )
-      ) {
-        return;
-      }
       await deleteUser.mutateAsync(userId);
     },
     [deleteUser],

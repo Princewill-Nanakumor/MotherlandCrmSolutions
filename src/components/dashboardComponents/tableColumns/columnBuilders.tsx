@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TableSortIcon } from "@/components/ui/table-sort-icon";
 import Link from "next/link";
 import { Lead } from "@/types/leads";
@@ -54,45 +55,54 @@ const getStatusStyle = (
 
 export function buildSelectionAndActionColumns(params: {
   allSelected: boolean;
+  someSelected: boolean;
   selectedLeads: Lead[];
   handleSelectAll: (checked: boolean) => void;
   handleRowSelection: (lead: Lead, checked: boolean) => void;
-  selectAllRef: React.RefObject<HTMLInputElement | null>;
   currentParams: string;
 }): ColumnDef<Lead>[] {
-  const { allSelected, selectedLeads, handleSelectAll, handleRowSelection, selectAllRef, currentParams } = params;
+  const {
+    allSelected,
+    someSelected,
+    selectedLeads,
+    handleSelectAll,
+    handleRowSelection,
+    currentParams,
+  } = params;
   return [
     {
       id: "select",
       header: () => (
-        <div className="flex items-center justify-center">
-          <input
-            type="checkbox"
-            ref={selectAllRef}
-            checked={allSelected}
-            onChange={(e) => handleSelectAll(e.target.checked)}
-            className="text-blue-600 border-gray-300 rounded focus:ring-(--brand-focus)"
+        <div className="flex items-center justify-center w-full">
+          <Checkbox
+            checked={
+              allSelected ? true : someSelected ? "indeterminate" : false
+            }
+            onCheckedChange={(value) => handleSelectAll(value === true)}
+            aria-label="Select all"
           />
         </div>
       ),
       cell: ({ row }) => {
         const lead = row.original;
-        const isSelected = lead._id ? selectedLeads.some((l) => l._id === lead._id) : false;
+        const isSelected = lead._id
+          ? selectedLeads.some((l) => l._id === lead._id)
+          : false;
         return (
-          <div className="flex items-center justify-center">
-            <input
-              type="checkbox"
+          <div className="flex items-center justify-center w-full">
+            <Checkbox
               checked={isSelected}
-              onChange={(e) => {
-                e.stopPropagation();
-                handleRowSelection(lead, e.target.checked);
+              onCheckedChange={(value) => {
+                handleRowSelection(lead, value === true);
               }}
-              className="text-blue-600 border-gray-300 rounded focus:ring-(--brand-focus)"
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Select row"
             />
           </div>
         );
       },
       enableSorting: false,
+      size: 40,
     },
     {
       id: "actions",

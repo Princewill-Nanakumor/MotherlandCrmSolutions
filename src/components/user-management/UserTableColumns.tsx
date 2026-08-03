@@ -10,6 +10,7 @@ import {
   Eye,
   PhoneCall,
   User as UserIcon,
+  Loader2,
 } from "lucide-react";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import {
@@ -39,7 +40,8 @@ interface UserTableColumnsProps {
   onViewDetails?: (user: User) => void;
   onViewCallLogs?: (user: User) => void;
   onResetPassword: (userId: string) => void;
-  onDeleteUser: (userId: string) => void;
+  onDeleteUser: (user: User) => void;
+  deletingUserId?: string | null;
 }
 
 export function useUserTableColumns({
@@ -48,6 +50,7 @@ export function useUserTableColumns({
   onViewCallLogs,
   onResetPassword,
   onDeleteUser,
+  deletingUserId = null,
 }: UserTableColumnsProps): { columns: ColumnDef<User>[] } {
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Never";
@@ -273,14 +276,19 @@ export function useUserTableColumns({
               <Button
                 variant="outline"
                 size="sm"
+                disabled={!!deletingUserId}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDeleteUser(row.original.id);
+                  onDeleteUser(row.original);
                 }}
                 className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-gray-600"
                 title="Delete User"
               >
-                <Trash className="w-4 h-4" />
+                {deletingUserId === row.original.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash className="w-4 h-4" />
+                )}
               </Button>
             )}
           </div>

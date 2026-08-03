@@ -19,11 +19,11 @@ interface TableColumnsProps {
   sortOrder: "asc" | "desc";
   handleSort: (field: SortField) => void;
   allSelected: boolean;
+  someSelected: boolean;
   selectedLeads: Lead[];
   handleSelectAll: (checked: boolean) => void;
   handleRowSelection: (lead: Lead, checked: boolean) => void;
   users: User[];
-  selectAllRef: React.RefObject<HTMLInputElement | null>;
   statuses?: Array<{ id: string; name: string; color?: string }>;
 }
 
@@ -32,11 +32,11 @@ export const useTableColumns = ({
   sortOrder,
   handleSort,
   allSelected,
+  someSelected,
   selectedLeads,
   handleSelectAll,
   handleRowSelection,
   users,
-  selectAllRef,
   statuses = [],
 }: TableColumnsProps) => {
   const searchParams = useSearchParams();
@@ -47,10 +47,10 @@ export const useTableColumns = ({
     () => [
       ...buildSelectionAndActionColumns({
         allSelected,
+        someSelected,
         selectedLeads,
         handleSelectAll,
         handleRowSelection,
-        selectAllRef,
         currentParams,
       }),
       ...buildCoreColumns({
@@ -77,11 +77,11 @@ export const useTableColumns = ({
       sortOrder,
       handleSort,
       allSelected,
+      someSelected,
       selectedLeads,
       handleSelectAll,
       handleRowSelection,
       users,
-      selectAllRef,
       statuses,
       currentParams,
       timeFormat,
