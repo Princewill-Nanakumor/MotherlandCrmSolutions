@@ -2,24 +2,15 @@
 "use client";
 
 import React, { useMemo } from "react";
-import dynamic from "next/dynamic";
 import { Tags } from "lucide-react";
 import {
   useLeadStatusCounts,
   type LeadStatusCount,
 } from "@/hooks/useDashboardData";
-import type { StatusChartRow } from "@/components/dashboardComponents/LeadStatusCharts";
+import LeadStatusCharts, {
+  type StatusChartRow,
+} from "@/components/dashboardComponents/LeadStatusCharts";
 import { LeadStatusChartsSkeleton } from "@/components/dashboardComponents/LeadStatusChartsSkeleton";
-
-// Recharts is heavy and purely presentational — keep it out of the dashboard's
-// initial bundle and off the server render.
-const LeadStatusCharts = dynamic(
-  () => import("@/components/dashboardComponents/LeadStatusCharts"),
-  {
-    ssr: false,
-    loading: () => <LeadStatusChartsSkeleton />,
-  },
-);
 
 const FALLBACK_COLOR = "#6B7280";
 
@@ -50,7 +41,7 @@ export default function LeadStatusStats({
     statusCounts,
     totalLeads,
     unresolvedCount,
-    isLoading,
+    isPending,
     hasData,
     error,
   } = useLeadStatusCounts();
@@ -77,7 +68,9 @@ export default function LeadStatusStats({
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   }, [statusCounts, unresolvedCount]);
 
-  const showSkeleton = isLoading && !hasData;
+  // Only skeleton on the true first load — cached data must paint immediately
+  // when returning to the dashboard so the charts do not blink.
+  const showSkeleton = isPending && !hasData;
   const heading = isAdmin ? "Leads by Status" : "My Leads by Status";
   const subheading = isAdmin
     ? "How every lead in your CRM is distributed across your statuses"

@@ -83,7 +83,12 @@ export default function LeadStatusCharts({
   totalLeads,
 }: LeadStatusChartsProps) {
   const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  // Avoid a one-frame light→dark color flip when next-themes resolves after mount.
+  const isDark =
+    resolvedTheme === "dark" ||
+    (resolvedTheme == null &&
+      typeof document !== "undefined" &&
+      document.documentElement.classList.contains("dark"));
 
   const axisColor = isDark ? "#9CA3AF" : "#6B7280";
   const gridColor = isDark ? "#374151" : "#E5E7EB";

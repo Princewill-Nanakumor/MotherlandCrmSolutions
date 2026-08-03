@@ -218,7 +218,7 @@ export const useLeadStatusCounts = () => {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "ADMIN";
 
-  const { data, isLoading, isFetched, error, refetch } = useQuery<
+  const { data, isPending, isFetched, error, refetch } = useQuery<
     LeadStatusCountsResponse,
     Error
   >({
@@ -238,15 +238,15 @@ export const useLeadStatusCounts = () => {
       }
       return (await res.json()) as LeadStatusCountsResponse;
     },
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: 1,
-    refetchOnMount: true,
+    // Returning to the dashboard should reuse cache without a loading flash.
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     enabled: !!session?.user?.id,
-    // Keep the last distribution on screen while refetching so the chart
-    // does not collapse to empty bars on every realtime invalidation.
+    // Keep the last distribution on screen while background invalidations refetch.
     placeholderData: (previous) => previous,
   });
 
@@ -260,8 +260,9 @@ export const useLeadStatusCounts = () => {
     totalLeads: data?.totalLeads ?? 0,
     unresolvedCount: data?.unresolvedCount ?? 0,
     scope: data?.scope ?? (isAdmin ? "tenant" : "assigned"),
-    isLoading,
-    hasData: isFetched && !!data,
+    isPending,
+    hasData: !!data,
+    isFetched,
     error,
     refreshStatusCounts: refetch,
   };
