@@ -5,6 +5,7 @@ import React from "react";
 import { BarChart3, Users, Search } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useUsersData, useLeadsStats } from "@/hooks/useDashboardData";
+import LeadStatusStats from "@/components/dashboardComponents/LeadStatusStats";
 
 // Loading skeleton for stat cards
 const StatCardSkeleton = () => (
@@ -182,6 +183,9 @@ export default function DashboardOverview({
           )}
         </div>
       )}
+
+      {/* Per-status lead counts + distribution chart */}
+      <LeadStatusStats isAdmin={isAdmin} />
     </div>
   );
 }

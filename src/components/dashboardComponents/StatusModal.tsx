@@ -134,6 +134,10 @@ const StatusModal = ({
           queryKey: ["leads"],
           exact: false,
         }),
+        queryClient.invalidateQueries({
+          queryKey: ["leads-stats"],
+          exact: false,
+        }),
         refreshStatuses(),
       ]).catch((error) => {
         console.error("Error refreshing caches:", error);
@@ -195,6 +199,10 @@ const StatusModal = ({
           }),
           queryClient.invalidateQueries({
             queryKey: ["leads"],
+            exact: false,
+          }),
+          queryClient.invalidateQueries({
+            queryKey: ["leads-stats"],
             exact: false,
           }),
           refreshStatuses(),

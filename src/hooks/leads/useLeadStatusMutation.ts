@@ -240,6 +240,12 @@ export function useLeadStatusMutation({
         refetchType: "none",
       });
 
+      // The dashboard status distribution shifted by one lead.
+      void queryClient.invalidateQueries({
+        queryKey: ["leads-stats"],
+        exact: false,
+      });
+
       if (onLeadUpdated) {
         onLeadUpdated({
           ...updatedLead,

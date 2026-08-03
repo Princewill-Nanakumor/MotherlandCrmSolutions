@@ -20,10 +20,7 @@ import {
   releaseAblyLeadRealtimeClient,
 } from "@/libs/ablyLeadClient";
 import { useAppBranding } from "@/components/AppBrandingProvider";
-import {
-  assignedToEquals,
-  refetchLeadActivities,
-} from "@/lib/leadActivitiesQuery";
+import { refetchLeadActivities } from "@/lib/leadActivitiesQuery";
 
 interface LeadDetailsPanelProps {
   lead: Lead | null;

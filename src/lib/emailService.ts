@@ -5,7 +5,6 @@ import {
   createPaymentApprovedEmailHtml,
   createPaymentRejectedEmailHtml,
   getPublicAppOrigin,
-  getRequestHost,
   getResendFrom,
   getResendReplyTo,
   hasResendApiKey,

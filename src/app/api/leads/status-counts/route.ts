@@ -1,9 +1,40 @@
-// src/app/api/status-counts/route.ts
+// src/app/api/leads/status-counts/route.ts
 import { NextResponse } from "next/server";
-import { connectMongoDB } from "@/libs/dbConfig";
-import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
+import mongoose from "mongoose";
+import { ObjectId } from "mongodb";
+import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
+import Status from "@/models/Status";
+import { getAdminScopeId } from "@/lib/withAdminScope";
+import { agentLeadsInTenantFilter } from "@/lib/leadAssignmentQuery";
+
+const SYNTHETIC_NEW_ID = "NEW";
+const SYNTHETIC_NEW_COLOR = "#3B82F6";
+const FALLBACK_COLOR = "#6B7280";
+
+// Mongoose maps the `Status` model to the singular `status` collection, which
+// is where this app's statuses actually live — reading a hardcoded "statuses"
+// finds nothing and dumps every lead into the unresolved bucket. Some
+// deployments also carry a `statuses` collection, and the status-update route
+// validates against both, so counting reads both too.
+const STATUS_COLLECTIONS = Array.from(
+  new Set([Status.collection.name, "status", "statuses"]),
+);
+
+interface StatusDoc {
+  _id: ObjectId;
+  name: string;
+  color?: string;
+  createdAt?: Date;
+}
+
+export interface StatusCountRow {
+  id: string;
+  name: string;
+  color: string;
+  count: number;
+}
 
 export async function GET() {
   try {
@@ -12,141 +43,136 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    await connectMongoDB();
+    let adminScopeId: string;
+    try {
+      adminScopeId = getAdminScopeId(session);
+    } catch {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
 
-    // Check if database connection is available
-    if (!mongoose.connection.db) {
+    await connectMongoDB();
+    const db = mongoose.connection.db;
+    if (!db) {
       throw new Error("Database connection not available");
     }
 
-    const db = mongoose.connection.db;
+    const isAdmin = session.user.role === "ADMIN";
+    const adminObjectId = new mongoose.Types.ObjectId(adminScopeId);
 
-    // Build query based on user role for multi-tenancy
-    const leadsQuery: { adminId?: mongoose.Types.ObjectId } = {};
-    const statusesQuery: { adminId?: mongoose.Types.ObjectId } = {};
+    // Admins see the whole tenant; agents only see leads assigned to them,
+    // including legacy string-id assignees (same helper as the leads list).
+    const leadsMatch: Record<string, unknown> = isAdmin
+      ? { adminId: adminObjectId }
+      : agentLeadsInTenantFilter(adminObjectId, session.user.id);
 
-    if (session.user.role === "ADMIN") {
-      // Admin sees only their own data
-      const adminObjectId = new mongoose.Types.ObjectId(session.user.id);
-      leadsQuery.adminId = adminObjectId;
-      statusesQuery.adminId = adminObjectId;
-    } else if (session.user.role === "AGENT" && session.user.adminId) {
-      // Agent sees data from their admin
-      const adminObjectId = new mongoose.Types.ObjectId(session.user.adminId);
-      leadsQuery.adminId = adminObjectId;
-      statusesQuery.adminId = adminObjectId;
-    }
+    const statusMatch = { adminId: adminObjectId };
 
-    // Get all statuses for this admin
-    const statuses = await db
-      .collection("statuses")
-      .find(statusesQuery)
-      .toArray();
-
-    // Get total leads count for this admin
-    const allLeadsCount = await db
-      .collection("leads")
-      .countDocuments(leadsQuery);
-
-    // Check if status is stored as ObjectId or string
-    const sampleLead = await db.collection("leads").findOne(leadsQuery);
-    const isObjectId =
-      sampleLead &&
-      sampleLead.status &&
-      mongoose.isValidObjectId(sampleLead.status);
-
-    let statusCounts: {
-      id: string;
-      name: string;
-      color: string;
-      count: number;
-      isDeleted: boolean;
-    }[] = [];
-
-    if (isObjectId) {
-      // If status is ObjectId, use $lookup to get status name with multi-tenancy
-      const results = await db
+    const [statusDocLists, grouped] = await Promise.all([
+      Promise.all(
+        STATUS_COLLECTIONS.map((name) =>
+          db.collection<StatusDoc>(name).find(statusMatch).toArray(),
+        ),
+      ),
+      // `lead.status` may hold an ObjectId, its hex string, a legacy literal
+      // like "NEW", or a plain status name. `$toString` flattens the first two
+      // so a single pass covers every shape.
+      db
         .collection("leads")
-        .aggregate([
-          {
-            $match: leadsQuery, // Multi-tenancy filter
-          },
-          {
-            $lookup: {
-              from: "statuses",
-              localField: "status",
-              foreignField: "_id",
-              as: "statusObj",
-            },
-          },
-          { $unwind: { path: "$statusObj", preserveNullAndEmptyArrays: true } },
+        .aggregate<{ _id: string | null; count: number }>([
+          { $match: leadsMatch },
           {
             $group: {
-              _id: "$statusObj.name",
+              _id: { $ifNull: [{ $toString: "$status" }, ""] },
               count: { $sum: 1 },
             },
           },
         ])
-        .toArray();
+        .toArray(),
+    ]);
 
-      statusCounts = statuses.map((status) => {
-        const found = results.find(
-          (item) =>
-            typeof item._id === "string" &&
-            item._id.localeCompare(status.name, undefined, {
-              sensitivity: "accent",
-            }) === 0
-        );
-        return {
-          id: status.name,
-          name: status.name,
-          color: status.color,
-          count: found ? found.count : 0,
-          isDeleted: false,
-        };
-      });
-    } else {
-      // If status is string, do a case-insensitive count for each status with multi-tenancy
-      statusCounts = await Promise.all(
-        statuses.map(async (status) => {
-          const count = await db.collection("leads").countDocuments({
-            ...leadsQuery, // Multi-tenancy filter
-            status: { $regex: new RegExp(`^${status.name}$`, "i") },
-          });
-          return {
-            id: status.name,
-            name: status.name,
-            color: status.color,
-            count,
-            isDeleted: false,
-          };
-        })
+    const statusDocs = statusDocLists
+      .flat()
+      .sort(
+        (a, b) =>
+          (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0),
       );
+
+    const rows: StatusCountRow[] = [];
+    // Statuses are grouped by name so the same status defined in both
+    // collections renders as one card with its counts summed, while every
+    // underlying id still resolves to that card.
+    const rowByName = new Map<string, StatusCountRow>();
+    const rowByStatusId = new Map<string, StatusCountRow>();
+
+    for (const doc of statusDocs) {
+      const nameKey = (doc.name || "").trim().toLowerCase();
+      if (!nameKey) continue;
+
+      let row = rowByName.get(nameKey);
+      if (!row) {
+        row = {
+          id: doc._id.toString(),
+          name: doc.name,
+          color: doc.color || FALLBACK_COLOR,
+          count: 0,
+        };
+        rowByName.set(nameKey, row);
+        rows.push(row);
+      }
+      rowByStatusId.set(doc._id.toString(), row);
     }
 
-    // Add "All Leads" as the first item
-    statusCounts.unshift({
-      id: "ALL",
-      name: "All Leads",
-      color: "#2D6F8B", // You can pick any color you want for "All Leads"
-      count: allLeadsCount,
-      isDeleted: false,
-    });
+    // "New" is synthetic unless the tenant happens to have created a real one.
+    let newRow = rowByName.get("new");
+    if (!newRow) {
+      newRow = {
+        id: SYNTHETIC_NEW_ID,
+        name: "New",
+        color: SYNTHETIC_NEW_COLOR,
+        count: 0,
+      };
+      rows.unshift(newRow);
+      rowByName.set("new", newRow);
+    }
 
-    // Totals
-    const totalStatuses = statuses.length;
-    const totalLeads = allLeadsCount;
+    let totalLeads = 0;
+    let unresolvedCount = 0;
+
+    for (const group of grouped) {
+      const count = group.count || 0;
+      totalLeads += count;
+
+      const raw = (group._id ?? "").trim();
+      if (!raw) {
+        unresolvedCount += count;
+        continue;
+      }
+
+      const matched =
+        rowByStatusId.get(raw) ||
+        (raw.toUpperCase() === SYNTHETIC_NEW_ID ? newRow : undefined) ||
+        rowByName.get(raw.toLowerCase());
+
+      if (matched) {
+        matched.count += count;
+        continue;
+      }
+
+      unresolvedCount += count;
+    }
 
     return NextResponse.json({
-      statusCounts,
-      totalStatuses,
+      scope: isAdmin ? "tenant" : "assigned",
+      statusCounts: rows,
+      totalStatuses: rows.length,
       totalLeads,
+      unresolvedCount,
     });
   } catch (error) {
     console.error("Error in status-counts route:", error);
     return NextResponse.json(
       { error: "Failed to fetch status counts" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

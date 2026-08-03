@@ -166,7 +166,6 @@ export function buildBrandKeywords(branding: AppBranding): string[] {
 }
 
 export function buildAppMetadata(branding: AppBranding): Metadata {
-  const tagline = "CRM Software for Lead Management, Excel & CSV Import";
   const description = `${branding.displayName} (also known as ${branding.shortName} / Motherlands CRM) is a modern CRM platform for sales teams. Import Excel & CSV leads, assign agents, track pipelines in real time, and close more deals with Motherland CRM Solutions.`;
   const keywords = buildBrandKeywords(branding);
   const titleDefault = `${branding.displayName} | Motherland CRM – Modern CRM Solutions`;

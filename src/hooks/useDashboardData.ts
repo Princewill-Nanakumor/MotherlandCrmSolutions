@@ -26,6 +26,21 @@ interface DashboardStats {
   myLeads: number;
 }
 
+export interface LeadStatusCount {
+  id: string;
+  name: string;
+  color: string;
+  count: number;
+}
+
+interface LeadStatusCountsResponse {
+  scope: "tenant" | "assigned";
+  statusCounts: LeadStatusCount[];
+  totalStatuses: number;
+  totalLeads: number;
+  unresolvedCount: number;
+}
+
 // (previous helper removed — lightweight stats endpoint used instead)
 
 // Fetch functions outside hooks to prevent recreation
@@ -196,5 +211,58 @@ export const useLeadsStats = (isAdmin: boolean) => {
     error,
     hasData,
     refreshLeadsStats: refetch,
+  };
+};
+
+export const useLeadStatusCounts = () => {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "ADMIN";
+
+  const { data, isLoading, isFetched, error, refetch } = useQuery<
+    LeadStatusCountsResponse,
+    Error
+  >({
+    // Nested under the "leads-stats" root so every existing invalidation of
+    // lead counts (imports, deletes, assignments, realtime) refreshes this too.
+    queryKey: [
+      "leads-stats",
+      "status-counts",
+      isAdmin ? "admin" : session?.user?.id || "guest",
+    ],
+    queryFn: async () => {
+      const res = await apiCallWithSessionRefresh("/api/leads/status-counts", {
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        throw new Error("Failed to fetch lead status counts");
+      }
+      return (await res.json()) as LeadStatusCountsResponse;
+    },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    enabled: !!session?.user?.id,
+    // Keep the last distribution on screen while refetching so the chart
+    // does not collapse to empty bars on every realtime invalidation.
+    placeholderData: (previous) => previous,
+  });
+
+  const statusCounts = useMemo(
+    () => data?.statusCounts ?? [],
+    [data?.statusCounts],
+  );
+
+  return {
+    statusCounts,
+    totalLeads: data?.totalLeads ?? 0,
+    unresolvedCount: data?.unresolvedCount ?? 0,
+    scope: data?.scope ?? (isAdmin ? "tenant" : "assigned"),
+    isLoading,
+    hasData: isFetched && !!data,
+    error,
+    refreshStatusCounts: refetch,
   };
 };
