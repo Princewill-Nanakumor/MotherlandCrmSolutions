@@ -1,7 +1,13 @@
 // src/components/dashboardComponents/LeadStatusCharts.tsx
 "use client";
 
-import React, { useMemo } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTheme } from "next-themes";
 import {
   Bar,
@@ -27,7 +33,11 @@ export interface StatusChartRow {
 interface LeadStatusChartsProps {
   rows: StatusChartRow[];
   totalLeads: number;
+  /** Enter animation on first paint (cold load). Off for cached return visits. */
+  animateOnMount?: boolean;
 }
+
+const CHART_ANIMATION_MS = 800;
 
 function formatPercent(count: number, total: number): string {
   if (total <= 0 || count === 0) return "0%";
@@ -38,6 +48,10 @@ function formatPercent(count: number, total: number): string {
 
 function truncate(value: string, max = 16): string {
   return value.length > max ? `${value.slice(0, max - 1)}…` : value;
+}
+
+function chartDataKey(rows: StatusChartRow[], totalLeads: number): string {
+  return `${totalLeads}:${rows.map((row) => `${row.id}:${row.count}`).join("|")}`;
 }
 
 interface TooltipEntry {
@@ -81,13 +95,15 @@ function StatusTooltip({
 export default function LeadStatusCharts({
   rows,
   totalLeads,
+  animateOnMount = true,
 }: LeadStatusChartsProps) {
   const { resolvedTheme } = useTheme();
-  // Avoid a one-frame light→dark color flip when next-themes resolves after mount.
+  // This module is only loaded client-side (`ssr: false`), so reading the
+  // document class is safe and avoids a one-frame light→dark axis flip before
+  // next-themes resolves.
   const isDark =
     resolvedTheme === "dark" ||
-    (resolvedTheme == null &&
-      typeof document !== "undefined" &&
+    (resolvedTheme !== "light" &&
       document.documentElement.classList.contains("dark"));
 
   const axisColor = isDark ? "#9CA3AF" : "#6B7280";
@@ -98,6 +114,41 @@ export default function LeadStatusCharts({
   // Zero-count statuses stay in the bar chart so admins see their full
   // pipeline, but they would render as invisible slices in the donut.
   const pieRows = useMemo(() => rows.filter((row) => row.count > 0), [rows]);
+
+  const dataKey = useMemo(
+    () => chartDataKey(rows, totalLeads),
+    [rows, totalLeads],
+  );
+  const previousDataKeyRef = useRef<string | null>(null);
+  // Cold load: animate from first paint. Return visits pass animateOnMount=false.
+  // Live updates: bump seriesKey so Recharts remounts with animation in sync.
+  // Never flip isAnimationActive true→false while the chart is on screen — that
+  // is a Recharts bug that leaves LabelList counts invisible. Instead, disable
+  // animation when the tab is hidden so focus remounts paint instantly.
+  const [animate, setAnimate] = useState(animateOnMount);
+  const [seriesKey, setSeriesKey] = useState(0);
+
+  useLayoutEffect(() => {
+    if (previousDataKeyRef.current === null) {
+      previousDataKeyRef.current = dataKey;
+      return;
+    }
+    if (previousDataKeyRef.current !== dataKey) {
+      previousDataKeyRef.current = dataKey;
+      setAnimate(true);
+      setSeriesKey((key) => key + 1);
+    }
+  }, [dataKey]);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        setAnimate(false);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
 
   const barHeight = Math.max(220, rows.length * 40 + 40);
 
@@ -140,7 +191,15 @@ export default function LeadStatusCharts({
                 cursor={{ fill: cursorColor }}
                 content={<StatusTooltip totalLeads={totalLeads} />}
               />
-              <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={26}>
+              <Bar
+                key={seriesKey}
+                dataKey="count"
+                radius={[0, 4, 4, 0]}
+                maxBarSize={26}
+                isAnimationActive={animate}
+                animationDuration={CHART_ANIMATION_MS}
+                animationBegin={0}
+              >
                 {rows.map((row) => (
                   <Cell key={row.id} fill={row.color} />
                 ))}
@@ -149,6 +208,9 @@ export default function LeadStatusCharts({
                   position="right"
                   fill={labelColor}
                   fontSize={12}
+                  // Keep labels out of the bar animation — otherwise flipping
+                  // animation off (or remounting mid-tween) can hide the counts.
+                  isAnimationActive={false}
                   formatter={(value: unknown) =>
                     typeof value === "number"
                       ? value.toLocaleString()
@@ -176,6 +238,7 @@ export default function LeadStatusCharts({
               <PieChart>
                 <Tooltip content={<StatusTooltip totalLeads={totalLeads} />} />
                 <Pie
+                  key={seriesKey}
                   data={pieRows}
                   dataKey="count"
                   nameKey="name"
@@ -183,6 +246,9 @@ export default function LeadStatusCharts({
                   outerRadius="85%"
                   paddingAngle={1}
                   stroke="none"
+                  isAnimationActive={animate}
+                  animationDuration={CHART_ANIMATION_MS}
+                  animationBegin={0}
                 >
                   {pieRows.map((row) => (
                     <Cell key={row.id} fill={row.color} />

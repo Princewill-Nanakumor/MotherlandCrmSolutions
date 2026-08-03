@@ -218,17 +218,21 @@ export const useLeadStatusCounts = () => {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "ADMIN";
 
+  // Keep the last known scope across brief session refetches on tab focus.
+  // Flipping the key to "guest" would drop cached counts and flash a skeleton.
+  const scopeKeyRef = useRef<string | null>(null);
+  if (session?.user?.id) {
+    scopeKeyRef.current = isAdmin ? "admin" : session.user.id;
+  }
+  const scopeKey = scopeKeyRef.current;
+
   const { data, isPending, isFetched, error, refetch } = useQuery<
     LeadStatusCountsResponse,
     Error
   >({
     // Nested under the "leads-stats" root so every existing invalidation of
     // lead counts (imports, deletes, assignments, realtime) refreshes this too.
-    queryKey: [
-      "leads-stats",
-      "status-counts",
-      isAdmin ? "admin" : session?.user?.id || "guest",
-    ],
+    queryKey: ["leads-stats", "status-counts", scopeKey ?? "guest"],
     queryFn: async () => {
       const res = await apiCallWithSessionRefresh("/api/leads/status-counts", {
         cache: "no-store",
@@ -245,7 +249,7 @@ export const useLeadStatusCounts = () => {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    enabled: !!session?.user?.id,
+    enabled: !!scopeKey,
     // Keep the last distribution on screen while background invalidations refetch.
     placeholderData: (previous) => previous,
   });

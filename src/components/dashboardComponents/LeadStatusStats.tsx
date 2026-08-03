@@ -1,16 +1,64 @@
 // src/components/dashboardComponents/LeadStatusStats.tsx
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { Tags } from "lucide-react";
 import {
   useLeadStatusCounts,
   type LeadStatusCount,
 } from "@/hooks/useDashboardData";
-import LeadStatusCharts, {
-  type StatusChartRow,
-} from "@/components/dashboardComponents/LeadStatusCharts";
+import type { StatusChartRow } from "@/components/dashboardComponents/LeadStatusCharts";
 import { LeadStatusChartsSkeleton } from "@/components/dashboardComponents/LeadStatusChartsSkeleton";
+
+type ChartsProps = {
+  rows: StatusChartRow[];
+  totalLeads: number;
+  animateOnMount?: boolean;
+};
+
+// Survives route unmounts so return visits can paint the chart on first render
+// without going through a loading placeholder.
+let chartsModule: ComponentType<ChartsProps> | null = null;
+let chartsModulePromise: Promise<ComponentType<ChartsProps>> | null = null;
+
+function loadLeadStatusCharts() {
+  if (chartsModule) return Promise.resolve(chartsModule);
+  chartsModulePromise ??= import(
+    "@/components/dashboardComponents/LeadStatusCharts"
+  ).then((mod) => {
+    chartsModule = mod.default;
+    return mod.default;
+  });
+  return chartsModulePromise;
+}
+
+/**
+ * Stable lazy chart host: one component identity for the lifetime of the page.
+ * First visit shows the skeleton until the chunk lands; later visits reuse the
+ * module cache and render the chart immediately (no dynamic→cached type swap).
+ */
+function LeadStatusChartsLazy(props: ChartsProps) {
+  // Capture whether the chunk was already warm when this host mounted so return
+  // visits skip enter animation (avoids flash) while cold loads still animate.
+  const [Charts, setCharts] = useState<ComponentType<ChartsProps> | null>(
+    () => chartsModule,
+  );
+  const [animateOnMount] = useState(() => chartsModule === null);
+
+  useEffect(() => {
+    if (Charts) return;
+    let cancelled = false;
+    void loadLeadStatusCharts().then((mod) => {
+      if (!cancelled) setCharts(() => mod);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [Charts]);
+
+  if (!Charts) return <LeadStatusChartsSkeleton />;
+  return <Charts {...props} animateOnMount={animateOnMount} />;
+}
 
 const FALLBACK_COLOR = "#6B7280";
 
@@ -68,9 +116,17 @@ export default function LeadStatusStats({
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   }, [statusCounts, unresolvedCount]);
 
-  // Only skeleton on the true first load — cached data must paint immediately
-  // when returning to the dashboard so the charts do not blink.
+  // Only skeleton on the true first fetch — cached counts paint immediately.
   const showSkeleton = isPending && !hasData;
+  // Hold the last painted status count so a brief pending blip never shows "—".
+  const statusCountDisplayRef = useRef<number | null>(null);
+  if (!showSkeleton) {
+    statusCountDisplayRef.current = rows.length;
+  }
+  const statusCountDisplay =
+    statusCountDisplayRef.current !== null
+      ? statusCountDisplayRef.current.toLocaleString()
+      : "—";
   const heading = isAdmin ? "Leads by Status" : "My Leads by Status";
   const subheading = isAdmin
     ? "How every lead in your CRM is distributed across your statuses"
@@ -100,7 +156,7 @@ export default function LeadStatusStats({
             Statuses
           </p>
           <p className="text-xl font-bold text-gray-900 dark:text-white">
-            {showSkeleton ? "—" : rows.length.toLocaleString()}
+            {statusCountDisplay}
           </p>
         </div>
       </div>
@@ -124,7 +180,7 @@ export default function LeadStatusStats({
         </div>
       ) : (
         <div className="mt-6">
-          <LeadStatusCharts rows={rows} totalLeads={totalLeads} />
+          <LeadStatusChartsLazy rows={rows} totalLeads={totalLeads} />
         </div>
       )}
     </div>
