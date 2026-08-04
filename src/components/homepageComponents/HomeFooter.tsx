@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
+import { scrollToHomepageSection } from "@/components/homepageComponents/scrollToHomepageSection";
 
 const PRODUCT_LINKS = [
   { label: "Features", href: "#features" },
@@ -14,26 +15,6 @@ const PRODUCT_LINKS = [
   { label: "Pricing", href: "#pricing" },
   { label: "FAQ", href: "#faq" },
 ] as const;
-
-function scrollToHomepageSection(hash: string) {
-  const id = hash.replace(/^#/, "");
-  const target = document.getElementById(id);
-  if (!target) return;
-
-  const prefersReducedMotion = window.matchMedia(
-    "(prefers-reduced-motion: reduce)",
-  ).matches;
-
-  target.scrollIntoView({
-    behavior: prefersReducedMotion ? "auto" : "smooth",
-    block: "start",
-  });
-
-  // Keep the hash in the URL without a jump (history only).
-  if (window.location.hash !== hash) {
-    window.history.pushState(null, "", hash);
-  }
-}
 
 export default function HomeFooter() {
   const { displayName, supportEmail, telegramHandle, telegramUrl } =

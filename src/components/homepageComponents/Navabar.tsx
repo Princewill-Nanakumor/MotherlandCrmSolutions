@@ -12,6 +12,7 @@ import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { cn } from "@/libs/utils";
+import { scrollToHomepageSection } from "@/components/homepageComponents/scrollToHomepageSection";
 
 const HOME_SECTION_LINKS = [
   { label: "Features", href: "#features" },
@@ -22,25 +23,6 @@ const HOME_SECTION_LINKS = [
 
 function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse bg-gray-200 rounded ${className}`} />;
-}
-
-function scrollToHomepageSection(hash: string) {
-  const id = hash.replace(/^#/, "");
-  const target = document.getElementById(id);
-  if (!target) return;
-
-  const prefersReducedMotion = window.matchMedia(
-    "(prefers-reduced-motion: reduce)",
-  ).matches;
-
-  target.scrollIntoView({
-    behavior: prefersReducedMotion ? "auto" : "smooth",
-    block: "start",
-  });
-
-  if (window.location.hash !== hash) {
-    window.history.pushState(null, "", hash);
-  }
 }
 
 export default function Navbar() {

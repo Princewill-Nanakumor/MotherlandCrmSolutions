@@ -64,7 +64,7 @@ function HomePageContent() {
     >
       <ScrollProgress />
       <Navbar />
-      <main className="overflow-x-clip">
+      <main>
         <HeroSection />
         <StatsSection />
         <FeaturedCrmSection />

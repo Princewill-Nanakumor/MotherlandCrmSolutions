@@ -9,6 +9,7 @@ import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { HeroBoardMockup } from "@/components/homepageComponents/HeroBoardMockup";
 import { HeroMapBackground } from "@/components/homepageComponents/HeroMapBackground";
+import { scrollToHomepageSection } from "@/components/homepageComponents/scrollToHomepageSection";
 
 const TRUST_POINTS = ["3-day free trial", "No credit card", "Crypto billing"];
 
@@ -89,8 +90,13 @@ export default function HeroSection() {
                   <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <a
-                  href="#pricing"
+                  href="#pricing-heading"
                   className="inline-flex items-center justify-center px-7 py-3.5 text-base font-semibold text-gray-800 transition-all duration-200 border border-gray-200 rounded-xl bg-white hover:bg-gray-50"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    // Land on the plan heading, not just the section padding box.
+                    scrollToHomepageSection("#pricing-heading");
+                  }}
                 >
                   See pricing
                 </a>

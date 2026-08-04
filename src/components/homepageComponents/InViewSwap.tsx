@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { HOMEPAGE_REVEAL_BELOW_FOLD } from "@/components/homepageComponents/scrollToHomepageSection";
 
 export function InViewSwap({
   fallback,
@@ -17,6 +18,12 @@ export function InViewSwap({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [swapped, setSwapped] = useState(false);
+
+  useEffect(() => {
+    const reveal = () => setSwapped(true);
+    window.addEventListener(HOMEPAGE_REVEAL_BELOW_FOLD, reveal);
+    return () => window.removeEventListener(HOMEPAGE_REVEAL_BELOW_FOLD, reveal);
+  }, []);
 
   useEffect(() => {
     const node = ref.current;
@@ -43,4 +50,3 @@ export function InViewSwap({
 
   return <div ref={ref}>{swapped ? children : fallback}</div>;
 }
-
