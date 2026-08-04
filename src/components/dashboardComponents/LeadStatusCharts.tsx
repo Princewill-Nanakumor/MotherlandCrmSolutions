@@ -208,9 +208,6 @@ export default function LeadStatusCharts({
                   position="right"
                   fill={labelColor}
                   fontSize={12}
-                  // Keep labels out of the bar animation — otherwise flipping
-                  // animation off (or remounting mid-tween) can hide the counts.
-                  isAnimationActive={false}
                   formatter={(value: unknown) =>
                     typeof value === "number"
                       ? value.toLocaleString()

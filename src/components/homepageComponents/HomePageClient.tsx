@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { SessionProvider } from "next-auth/react";
 import Navbar from "@/components/homepageComponents/Navabar";
 import { ScrollProgress } from "@/components/homepageComponents/ScrollProgress";
+import { ScrollToTopButton } from "@/components/homepageComponents/ScrollToTopButton";
 import HeroSection from "@/components/homepageComponents/HeroSection";
 import StatsSection from "@/components/homepageComponents/StatsSection";
 import { BrandThemeApplier } from "@/components/BrandThemeApplier";
@@ -63,6 +64,7 @@ function HomePageContent() {
       style={{ backgroundColor: "#ffffff" }}
     >
       <ScrollProgress />
+      <ScrollToTopButton />
       <Navbar />
       <main>
         <HeroSection />
