@@ -10,6 +10,7 @@ import {
   mergeBrandTheme,
   persistBrandThemeCache,
   readBrandThemeCache,
+  subscribeBrandThemeCrossTabSync,
 } from "@/lib/brandTheme";
 
 /**
@@ -31,6 +32,15 @@ export function BrandThemeApplier() {
   useEffect(() => {
     reassertBrandFavicon();
   }, [pathname]);
+
+  // Keep favicon/theme aligned when Appearance is saved in another CRM tab.
+  useEffect(() => {
+    return subscribeBrandThemeCrossTabSync({
+      onThemeFromOtherTab: (theme) => {
+        applyBrandThemeToDocument(theme);
+      },
+    });
+  }, []);
 
   useEffect(() => {
     if (status !== "authenticated") return;

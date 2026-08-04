@@ -1172,16 +1172,6 @@ input[readOnly] {
   color: #f9fafb !important; /* white */
 }
 
-/* Ensure react-phone-input-2 library inputs have proper text colors */
-.react-tel-input input {
-  color: #111827 !important; /* gray-900 */
-}
-
-.dark .react-tel-input input,
-.phone-input-container.dark .react-tel-input input {
-  color: #f9fafb !important; /* white */
-}
-
 /* Add to your global CSS file */
 /* Add these performance optimizations to your existing globals.css */
 

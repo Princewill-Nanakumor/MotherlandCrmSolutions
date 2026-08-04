@@ -2,7 +2,13 @@
  * Tenant brand theme (admin-owned, inherited by agents).
  */
 
-import { applyBrandFavicon, persistBrandFaviconCache } from "@/lib/brandFavicon";
+import {
+  applyBrandFavicon,
+  persistBrandFaviconCache,
+  reassertBrandFavicon,
+  BRAND_THEME_FAVICON_COLOR_KEY,
+  BRAND_THEME_FAVICON_STORAGE_KEY,
+} from "@/lib/brandFavicon";
 
 export type BrandButtonStyle = "solid" | "gradient";
 
@@ -711,6 +717,66 @@ export function persistBrandThemeCache(theme: BrandTheme): void {
   } catch {
     // Ignore quota / private-mode failures
   }
+}
+
+const BRAND_THEME_STORAGE_KEYS = new Set([
+  BRAND_THEME_STORAGE_KEY,
+  BRAND_THEME_CSS_STORAGE_KEY,
+  BRAND_THEME_FAVICON_COLOR_KEY,
+  BRAND_THEME_FAVICON_STORAGE_KEY,
+]);
+
+/**
+ * Keep brand CSS + favicon in sync across open CRM tabs.
+ * - `storage` fires in *other* tabs when appearance is saved
+ * - visibility/focus re-asserts the favicon (Chromium often keeps a stale tab icon)
+ */
+export function subscribeBrandThemeCrossTabSync(options?: {
+  /** Return false to skip (e.g. while an unsaved Appearance preview is active). */
+  shouldApply?: () => boolean;
+  /** Called when another tab wrote a new theme to localStorage. */
+  onThemeFromOtherTab?: (theme: BrandTheme) => void;
+}): () => void {
+  if (typeof window === "undefined") return () => {};
+
+  const maybeApply = (fromOtherTab: boolean) => {
+    if (options?.shouldApply && !options.shouldApply()) return;
+    const cached = readBrandThemeCache();
+    if (fromOtherTab && cached) {
+      if (options?.onThemeFromOtherTab) {
+        options.onThemeFromOtherTab(cached);
+      } else {
+        applyBrandThemeToDocument(cached);
+      }
+      return;
+    }
+    // Same-tab focus/visibility: re-assert favicon without resetting preview CSS.
+    if (cached) {
+      applyBrandFavicon(getActiveBrandPrimary(cached));
+    } else {
+      reassertBrandFavicon();
+    }
+  };
+
+  const onStorage = (event: StorageEvent) => {
+    if (!event.key || !BRAND_THEME_STORAGE_KEYS.has(event.key)) return;
+    maybeApply(true);
+  };
+
+  const onVisible = () => {
+    if (document.visibilityState !== "visible") return;
+    maybeApply(false);
+  };
+
+  window.addEventListener("storage", onStorage);
+  document.addEventListener("visibilitychange", onVisible);
+  window.addEventListener("focus", onVisible);
+
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    document.removeEventListener("visibilitychange", onVisible);
+    window.removeEventListener("focus", onVisible);
+  };
 }
 
 /** Shared react-select tokens — use CSS vars so tenant theme applies in inline styles. */

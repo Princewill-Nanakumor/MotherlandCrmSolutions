@@ -21,6 +21,8 @@ import {
 } from "@/libs/ablyLeadClient";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { refetchLeadActivities } from "@/lib/leadActivitiesQuery";
+import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
+import { normalizeLeadStatusId } from "@/lib/leadClientUpdate";
 
 interface LeadDetailsPanelProps {
   lead: Lead | null;
@@ -319,6 +321,14 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
               email: freshLead.email,
               phone: freshLead.phone ?? "",
             };
+            // Keep all-leads / assigned tables in sync with the fresh status so
+            // closing the panel does not show a stale Callback row again.
+            applyRemoteLeadStatusToListCaches(
+              queryClient,
+              freshLead._id,
+              normalizeLeadStatusId(freshLead.status),
+              { touchActivity: true },
+            );
             mergeContactIntoListCaches(
               queryClient,
               freshLead._id,

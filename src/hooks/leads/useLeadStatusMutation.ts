@@ -7,6 +7,7 @@ import { Activity, Lead } from "@/types/leads";
 import {
   normalizeLeadStatusId,
 } from "@/lib/leadClientUpdate";
+import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
 
 type LeadsData =
   | Lead[]
@@ -77,18 +78,9 @@ export function useLeadStatusMutation({
   const { data: session } = useSession();
   const applyStatusOptimistic = useCallback(
     (leadId: string, status: string, touchActivity = false) => {
-      const now = touchActivity ? new Date().toISOString() : null;
-      queryClient.setQueriesData<LeadsData>(
-        { predicate: (q) => isLeadsListQueryKey(q.queryKey) },
-        (oldData) =>
-          patchLeadInData(oldData, leadId, (l) => ({
-            ...l,
-            status,
-            ...(now
-              ? { statusChangedAt: now, lastActivityAt: now, updatedAt: now }
-              : {}),
-          })),
-      );
+      applyRemoteLeadStatusToListCaches(queryClient, leadId, status, {
+        touchActivity,
+      });
     },
     [queryClient],
   );
@@ -99,6 +91,11 @@ export function useLeadStatusMutation({
         ...replacement,
         status: normalizeLeadStatusId(replacement.status),
       };
+      // Drop from status-filtered pages that no longer match, then merge the
+      // full server lead into any caches that still contain the row.
+      applyRemoteLeadStatusToListCaches(queryClient, leadId, normalized.status, {
+        touchActivity: true,
+      });
       queryClient.setQueriesData<LeadsData>(
         { predicate: (q) => isLeadsListQueryKey(q.queryKey) },
         (oldData) =>
@@ -156,14 +153,22 @@ export function useLeadStatusMutation({
         predicate: (q) => isLeadsListQueryKey(q.queryKey),
       });
 
+      // Snapshot before optimistic remove/update so onError can restore rows
+      // that were dropped from status-filtered caches.
+      const previousLists = queryClient.getQueriesData<LeadsData>({
+        predicate: (q) => isLeadsListQueryKey(q.queryKey),
+      });
+
       const previousStatus = lead.status;
       applyStatusOptimistic(leadId, normalizeLeadStatusId(newStatusId), true);
 
-      return { previousStatus, leadId, newStatusId };
+      return { previousStatus, leadId, newStatusId, previousLists };
     },
     onError: (error, _vars, context) => {
-      if (context) {
-        applyStatusOptimistic(context.leadId, context.previousStatus);
+      if (context?.previousLists) {
+        for (const [queryKey, data] of context.previousLists) {
+          queryClient.setQueryData(queryKey, data);
+        }
       }
 
       const errorMessage =

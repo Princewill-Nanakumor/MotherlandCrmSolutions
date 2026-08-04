@@ -7,6 +7,7 @@ import {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -18,6 +19,7 @@ import {
   mergeBrandTheme,
   persistBrandThemeCache,
   readBrandThemeCache,
+  subscribeBrandThemeCrossTabSync,
   type BrandTheme,
 } from "@/lib/brandTheme";
 
@@ -61,6 +63,8 @@ export function TenantThemeProvider({ children }: { children: ReactNode }) {
   const { status } = useSession();
   const queryClient = useQueryClient();
   const [localOverride, setLocalOverride] = useState<BrandTheme | null>(null);
+  const localOverrideRef = useRef<BrandTheme | null>(null);
+  localOverrideRef.current = localOverride;
   const [cachedTheme] = useState<BrandTheme | null>(() =>
     readBrandThemeCache(),
   );
@@ -87,6 +91,24 @@ export function TenantThemeProvider({ children }: { children: ReactNode }) {
       persistBrandThemeCache(savedTheme);
     }
   }, [savedTheme, localOverride]);
+
+  // Other open CRM tabs must pick up Appearance saves (favicon + CSS vars).
+  useEffect(() => {
+    return subscribeBrandThemeCrossTabSync({
+      shouldApply: () => !localOverrideRef.current,
+      onThemeFromOtherTab: (next) => {
+        applyBrandThemeToDocument(next);
+        queryClient.setQueryData(
+          BRAND_THEME_QUERY_KEY,
+          (old: { theme: BrandTheme; canEdit: boolean } | undefined) =>
+            old
+              ? { ...old, theme: next }
+              : { theme: next, canEdit: false },
+        );
+        void queryClient.invalidateQueries({ queryKey: BRAND_THEME_QUERY_KEY });
+      },
+    });
+  }, [queryClient]);
 
   const setLocalTheme = useCallback((next: BrandTheme) => {
     setLocalOverride(next);

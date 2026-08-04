@@ -223,7 +223,9 @@ export const useLeadsPage = (
     },
     enabled: isAuthenticated,
     staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    // Always refetch when the tab becomes visible again so missed Ably
+    // status events cannot leave a filtered table stale indefinitely.
+    refetchOnWindowFocus: "always",
     retry: 2,
     refetchOnMount: false,
     placeholderData: (previousData) => previousData ?? lastLeadsDataRef.current,

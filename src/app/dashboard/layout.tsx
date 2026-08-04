@@ -31,6 +31,9 @@ import {
   getAdminLeadsChannelName,
 } from "@/libs/realtime";
 import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
+import {
+  applyRemoteLeadStatusToListCaches,
+} from "@/lib/leadsListCache";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { isAdminOnlyDashboardPath } from "@/lib/dashboardAdminOnlyPaths";
 import { authDebug } from "@/lib/authDebug";
@@ -100,6 +103,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       const eventData = (message.data ?? {}) as {
         type?: string;
         leadId?: string;
+        status?: string;
         deletedLeads?: number;
       };
       const eventType = eventData.type ?? "";
@@ -134,6 +138,21 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           },
         });
         return;
+      }
+
+      // Immediate list patch so filtered all-leads rows update (or disappear)
+      // before the invalidate-driven refetch finishes.
+      if (
+        eventType === "status_changed" &&
+        eventData.leadId &&
+        eventData.status
+      ) {
+        applyRemoteLeadStatusToListCaches(
+          queryClient,
+          eventData.leadId,
+          eventData.status,
+          { touchActivity: true },
+        );
       }
 
       void queryClient.invalidateQueries({
