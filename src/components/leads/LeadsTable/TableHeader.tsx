@@ -75,8 +75,8 @@ export function TableHeader({
       </div>
       <div className="flex items-center gap-2 text-sm text-gray-700! dark:text-white!">
         {isRefetching ? (
-          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-            <Loader className="w-3.5 h-3.5 animate-spin shrink-0" />
+          <span className="inline-flex items-center gap-1.5 text-brand">
+            <Loader className="w-5 h-5 animate-spin shrink-0 brand-icon" />
             <span>Updating</span>
           </span>
         ) : (
