@@ -2,6 +2,11 @@ import { NextRequest } from "next/server";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
 import { Db, ObjectId } from "mongodb";
+import {
+  buildTenantLeadBaseQuery,
+  buildLeadSearchConditions,
+  parseLeadListPagination,
+} from "@/lib/leadListQuery";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
 import { getAgentContactVisibilityFromDb } from "@/lib/getAgentContactVisibilityFromDb";
 import {
@@ -162,8 +167,7 @@ function statusFilterValues(statusFilter: string[]): (string | ObjectId)[] {
 export async function getAllLeadsForSession(request: NextRequest, sessionUser: SessionUser) {
   const url = new URL(request.url);
   const searchParams = url.searchParams;
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const pageSize = Math.min(500, Math.max(1, parseInt(searchParams.get("pageSize") || "15", 10)));
+  const { page, pageSize } = parseLeadListPagination(searchParams);
   const userFilter = parseStringArray(searchParams.get("user"));
   const countryFilter = parseStringArray(searchParams.get("country"));
   const statusFilter = parseStringArray(searchParams.get("status"));
@@ -172,9 +176,6 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
   const statusMode = searchParams.get("statusMode") === "exclude" ? "exclude" : "include";
   const sourceMode = searchParams.get("sourceMode") === "exclude" ? "exclude" : "include";
   const rawSearch = searchParams.get("search") || "";
-  let search = rawSearch.trim();
-  if (/^\s+\d+$/.test(rawSearch)) search = "+" + rawSearch.replace(/\s/g, "");
-  const digitsOnlyFromRaw = rawSearch.replace(/\D/g, "");
 
   await connectMongoDB();
   const db = mongoose.connection.db;
@@ -198,13 +199,7 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
     canViewPhoneNumbers = flags.canViewPhoneNumbers;
   }
 
-  const baseQuery: LeadFilter = {};
-  if (sessionUser.role === "ADMIN") {
-    baseQuery.adminId = new ObjectId(sessionUser.id);
-  } else if (sessionUser.role === "AGENT") {
-    const agentId = new ObjectId(sessionUser.id);
-    baseQuery.$or = [{ assignedTo: agentId }, { "assignedTo._id": agentId }];
-  }
+  const baseQuery: LeadFilter = buildTenantLeadBaseQuery(sessionUser);
 
   const filter: LeadFilter = { ...baseQuery };
   if (sessionUser.role === "ADMIN" && userFilter.length > 0) {
@@ -257,52 +252,8 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
       filter.source = sourceMode === "exclude" ? { $not: sourceRegex } : sourceRegex;
     }
   }
-  if (search.length > 0 || digitsOnlyFromRaw.length >= 5) {
-    const effectiveSearch = search.length > 0 ? search : digitsOnlyFromRaw;
-    const regex = new RegExp(escapeRegex(effectiveSearch), "i");
-    const searchConditions: LeadFilter[] = [
-      { firstName: regex },
-      { lastName: regex },
-      { email: regex },
-      { phone: regex },
-      { country: regex },
-      {
-        $expr: {
-          $regexMatch: {
-            input: {
-              $concat: [{ $ifNull: ["$firstName", ""] }, " ", { $ifNull: ["$lastName", ""] }],
-            },
-            regex: escapeRegex(effectiveSearch),
-            options: "i",
-          },
-        },
-      },
-    ];
-    const numericSearch = /^\d+$/.test(effectiveSearch) ? parseInt(effectiveSearch, 10) : null;
-    if (numericSearch !== null && !Number.isNaN(numericSearch)) {
-      searchConditions.push({ leadId: numericSearch }, { leadId: effectiveSearch });
-    }
-    if (/^LD-[A-Za-z0-9_-]+$/i.test(effectiveSearch)) {
-      searchConditions.push({ leadId: effectiveSearch.toUpperCase() });
-    }
-    if (digitsOnlyFromRaw.length >= 5) {
-      searchConditions.push({ phone: digitsOnlyFromRaw });
-      searchConditions.push({
-        phone: { $regex: "^\\s*\\+?\\s*" + digitsOnlyFromRaw + "\\s*$", $options: "i" },
-      });
-      searchConditions.push({
-        phone: { $regex: "\\D*" + digitsOnlyFromRaw.split("").join("\\D*"), $options: "i" },
-      });
-      searchConditions.push({
-        $expr: {
-          $regexMatch: {
-            input: { $ifNull: [{ $toString: "$phone" }, ""] },
-            regex: digitsOnlyFromRaw,
-            options: "i",
-          },
-        },
-      });
-    }
+  const searchConditions = buildLeadSearchConditions(rawSearch);
+  if (searchConditions) {
     const searchOr = { $or: searchConditions };
     filter.$and = filter.$and ? [...filter.$and, searchOr] : [searchOr];
   }

@@ -39,10 +39,12 @@ export async function POST(request: Request) {
     await dbSession.withTransaction(async () => {
       await connectMongoDB();
 
-      // Extract the id from the URL
+      // Extract the id from the URL: /api/leads/:id/assign
       const url = new URL(request.url);
-      const pathParts = url.pathname.split("/");
-      const id = pathParts[pathParts.length - 1];
+      const pathParts = url.pathname.split("/").filter(Boolean);
+      const assignIdx = pathParts.lastIndexOf("assign");
+      const id =
+        assignIdx > 0 ? pathParts[assignIdx - 1] : pathParts[pathParts.length - 1];
 
       // Get the Lead model from mongoose
       const Lead = mongoose.models.Lead;
@@ -175,8 +177,10 @@ export async function POST(request: Request) {
     // Publish after transaction succeeds so other clients refresh lead details/activity.
     try {
       const url = new URL(request.url);
-      const pathParts = url.pathname.split("/");
-      const id = pathParts[pathParts.length - 1];
+      const pathParts = url.pathname.split("/").filter(Boolean);
+      const assignIdx = pathParts.lastIndexOf("assign");
+      const id =
+        assignIdx > 0 ? pathParts[assignIdx - 1] : pathParts[pathParts.length - 1];
       const adminScope = await withAdminScope(session, async (adminId) => adminId);
       if (adminScope) {
         await publishLeadUpdatedEvent(String(adminScope), id, {

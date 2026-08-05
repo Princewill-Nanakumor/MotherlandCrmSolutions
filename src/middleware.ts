@@ -2,7 +2,14 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import { SESSION_MAX_AGE_SECONDS } from "@/lib/sessionMaxAge";
-import { isAdminOnlyDashboardPath } from "@/lib/dashboardAdminOnlyPaths";
+import {
+  isSessionTokenExpired,
+  isAuthenticatedSessionToken,
+} from "@/lib/sessionToken";
+import {
+  getDashboardRoleRedirect,
+  canAccessAdminManagement,
+} from "@/lib/dashboardAccess";
 
 // NOTE: Middleware only runs for paths in `config.matcher` below
 // (`/dashboard/*`, `/admin/*`, `/api/protected/*`). Most entries here are not
@@ -19,52 +26,14 @@ const PUBLIC_PAGES = [
   "/verify-email",
 ] as const;
 
-/**
- * Match libs/auth.ts jwt/session callbacks: exp, iat, and loginTimestamp vs
- * the per-token `maxAgeSec` (chosen at login: default vs "Remember me"),
- * falling back to SESSION_MAX_AGE_SECONDS for legacy tokens.
- */
-function isSessionTokenExpired(
-  token:
-    | {
-        loginTimestamp?: number;
-        exp?: number;
-        iat?: number;
-        maxAgeSec?: number;
-      }
-    | undefined
-    | null,
-  nowSec: number,
-  defaultMaxAgeSeconds: number,
-): boolean {
-  const effective =
-    typeof token?.maxAgeSec === "number" && token.maxAgeSec > 0
-      ? token.maxAgeSec
-      : defaultMaxAgeSeconds;
-  const exp = token?.exp;
-  if (typeof exp === "number" && exp > 0 && exp < nowSec) return true;
-  const iat = token?.iat;
-  if (typeof iat === "number" && nowSec - iat > effective) return true;
-  if (
-    typeof token?.loginTimestamp === "number" &&
-    nowSec - token.loginTimestamp > effective
-  ) {
-    return true;
-  }
-  return false;
-}
-
 export default withAuth(
   async function middleware(request) {
     // If token is missing or invalid (e.g. expired), nextauth.token can be undefined; treat as unauthenticated instead of throwing
     const token = request.nextauth?.token;
-    
+
     const currentTime = Math.floor(Date.now() / 1000);
     const maxAge = SESSION_MAX_AGE_SECONDS;
-    const isExpired = isSessionTokenExpired(token, currentTime, maxAge);
-      
-    // A token is only valid if it has an id and it's not expired
-    const isAuth = !!token?.id && !isExpired;
+    const isAuth = isAuthenticatedSessionToken(token, currentTime, maxAge);
     const path = request.nextUrl.pathname;
 
     const isHomePage = path === "/";
@@ -75,7 +44,7 @@ export default withAuth(
     const isResetPasswordPage = path.startsWith("/reset-password");
     const isVerifyEmailPage = path.startsWith("/verify-email");
     const isAdminManagementPage = path.startsWith(
-      "/dashboard/admin-management"
+      "/dashboard/admin-management",
     );
     const isApiRoute = path.startsWith("/api");
     const buildLoginUrl = (callbackUrl: string) => {
@@ -84,7 +53,8 @@ export default withAuth(
       // Only tag `expired=true` when we KNOW the previous token expired.
       // A missing/never-issued token (fresh visitor, post-signin race) must
       // not surface as "Session Expired" — it's a different user story.
-      const tokenIsPresentButExpired = !!token && isExpired;
+      const tokenIsPresentButExpired =
+        !!token && isSessionTokenExpired(token, currentTime, maxAge);
       if (tokenIsPresentButExpired) {
         loginUrl.searchParams.set("expired", "true");
       }
@@ -118,24 +88,15 @@ export default withAuth(
       return NextResponse.redirect(buildLoginUrl(callbackUrl));
     }
 
-    // ✅ Dashboard routes that are ADMIN-only (agents may not open by URL)
-    if (
-      isDashboardPage &&
-      isAuth &&
-      token?.role !== "ADMIN" &&
-      isAdminOnlyDashboardPath(path)
-    ) {
-      return NextResponse.redirect(new URL("/dashboard/leads", request.url));
-    }
-
-    // ✅ Dashboard routes that are AGENT-only (admins may not open by URL)
-    if (
-      isDashboardPage &&
-      isAuth &&
-      token?.role === "ADMIN" &&
-      (path === "/dashboard/leads" || path.startsWith("/dashboard/leads/"))
-    ) {
-      return NextResponse.redirect(new URL("/dashboard/all-leads", request.url));
+    // ✅ ADMIN ↔ AGENT dashboard route matrix
+    if (isDashboardPage && isAuth) {
+      const roleRedirect = getDashboardRoleRedirect(
+        path,
+        token?.role as string | undefined,
+      );
+      if (roleRedirect) {
+        return NextResponse.redirect(new URL(roleRedirect, request.url));
+      }
     }
 
     // ✅ Protect admin routes by role
@@ -144,12 +105,17 @@ export default withAuth(
     }
 
     // ✅ Protect admin management routes by specific emails (token.id ensures valid session)
-    if (isAdminManagementPage && token?.id && token?.role === "ADMIN" && token?.email) {
+    if (
+      isAdminManagementPage &&
+      token?.id &&
+      token?.role === "ADMIN" &&
+      token?.email
+    ) {
       const allowedEmails =
         process.env.SUPER_ADMIN_EMAILS?.split(",").map((email) =>
-          email.trim()
+          email.trim(),
         ) || [];
-      if (allowedEmails.length > 0 && !allowedEmails.includes(token.email)) {
+      if (!canAccessAdminManagement(token.email, allowedEmails)) {
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }
     }
@@ -191,16 +157,17 @@ export default withAuth(
         }
 
         const currentTime = Math.floor(Date.now() / 1000);
-        const maxAge = SESSION_MAX_AGE_SECONDS;
-        const isExpired = isSessionTokenExpired(token, currentTime, maxAge);
-
-        return !!token?.id && !isExpired;
+        return isAuthenticatedSessionToken(
+          token,
+          currentTime,
+          SESSION_MAX_AGE_SECONDS,
+        );
       },
     },
     pages: {
       signIn: "/login",
     },
-  }
+  },
 );
 
 export const config = {
