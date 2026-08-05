@@ -42,7 +42,7 @@ export default function HeroSection() {
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="inline-flex items-center gap-2 px-3 py-1 mb-6 text-xs font-semibold tracking-wide border rounded-full border-gray-200 brand-soft-bg text-(--brand-from)"
           >
-            Real-time CRM · Motherland CRM Solutions
+            Real-time CRM · Motherland CRM
           </motion.div>
 
           <motion.h1

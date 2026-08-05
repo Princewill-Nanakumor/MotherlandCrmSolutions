@@ -15,6 +15,7 @@ import { SignUpFormFields } from "./SignUpFormFields";
 import { SignUpFormActions } from "./SignUpFormActions";
 import { LoginCaptcha, RobotVerifyButton } from "./LoginCaptcha";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
+import { ShieldSpinnerGlyph } from "@/components/dashboardComponents/LeadsLoadingState";
 
 type SignUpFormData = z.infer<typeof SignUpSchema>;
 
@@ -162,7 +163,7 @@ export default function SignUpForm() {
   if (status === "loading" || hasAuthorizedSession(status, session)) {
     return (
       <div className="flex justify-center items-center p-4 min-h-80 sm:min-h-96">
-        <div className="w-10 h-10 rounded-full border-2 animate-spin border-white/30 border-t-white" />
+        <ShieldSpinnerGlyph />
       </div>
     );
   }
