@@ -35,6 +35,7 @@ export const ImportManager = () => {
     setImportLimitExceeded,
     handleFileUpload,
     handleDeleteImport,
+    isDeletingImport,
   } = useImportManager();
 
   const {
@@ -99,6 +100,7 @@ export const ImportManager = () => {
             exportingImportId={exportingImportId}
             activeTab={activeTab}
             isLoading={isInitialLoading}
+            isDeleting={isDeletingImport}
           />
 
           {activeTab === "export" && (

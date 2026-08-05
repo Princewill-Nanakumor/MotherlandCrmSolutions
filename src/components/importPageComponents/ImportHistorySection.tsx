@@ -10,6 +10,7 @@ interface ImportHistorySectionProps {
   exportingImportId?: string | null;
   activeTab: string;
   isLoading?: boolean;
+  isDeleting?: boolean;
 }
 
 export function ImportHistorySection({
@@ -19,6 +20,7 @@ export function ImportHistorySection({
   exportingImportId,
   activeTab,
   isLoading = false,
+  isDeleting = false,
 }: ImportHistorySectionProps) {
   if (activeTab !== "history") return null;
   return (
@@ -28,6 +30,7 @@ export function ImportHistorySection({
       onExport={onExport}
       exportingImportId={exportingImportId}
       isLoading={isLoading}
+      isDeleting={isDeleting}
     />
   );
 }

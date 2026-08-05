@@ -39,6 +39,7 @@ export const useImportManager = () => {
     importHistory,
     isLoading: historyLoading,
     deleteImport,
+    isDeleting,
     refreshImportHistory,
   } = useImportHistory();
 
@@ -50,16 +51,10 @@ export const useImportManager = () => {
 
   const handleDeleteImport = useCallback(
     async (id: string) => {
-      if (
-        window.confirm(
-          "Are you sure you want to delete this import history records with all leads that were imported? This action cannot be undone.",
-        )
-      ) {
-        try {
-          await deleteImport(id);
-        } catch (error) {
-          console.error("Error deleting import:", error);
-        }
+      try {
+        await deleteImport(id);
+      } catch (error) {
+        console.error("Error deleting import:", error);
       }
     },
     [deleteImport],
@@ -211,5 +206,6 @@ export const useImportManager = () => {
 
     handleFileUpload,
     handleDeleteImport,
+    isDeletingImport: isDeleting,
   };
 };

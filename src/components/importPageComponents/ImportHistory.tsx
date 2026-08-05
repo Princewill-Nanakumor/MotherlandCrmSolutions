@@ -1,8 +1,21 @@
 // src/components/importPageComponents/ImportHistory.tsx
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ImportHistoryItem } from "@/types/import";
 import { formatDistanceToNow, format } from "date-fns";
 import { Download, Loader2, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ImportHistoryProps {
   imports: ImportHistoryItem[];
@@ -10,10 +23,15 @@ interface ImportHistoryProps {
   onExport?: (importId: string, fileName?: string) => void;
   exportingImportId?: string | null;
   isLoading?: boolean;
+  isDeleting?: boolean;
 }
 
 const SKELETON_ROW_COUNT = 5;
 const SKELETON_COLUMN_COUNT = 8;
+
+const getItemId = (item: ImportHistoryItem): string => {
+  return item._id?.toString() || item.id || item.timestamp.toString();
+};
 
 export const ImportHistory: React.FC<ImportHistoryProps> = ({
   imports,
@@ -21,10 +39,14 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
   onExport,
   exportingImportId = null,
   isLoading = false,
+  isDeleting = false,
 }) => {
-  const getItemId = (item: ImportHistoryItem): string => {
-    return item._id?.toString() || item.id || item.timestamp.toString();
-  };
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isDeleting) setDeletingId(null);
+  }, [isDeleting]);
 
   const formatDateTime = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -33,6 +55,27 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
       exact: format(date, "MMM d, yyyy 'at' h:mm a"),
     };
   };
+
+  const pendingDeleteItem = useMemo(
+    () => imports.find((item) => getItemId(item) === pendingDeleteId),
+    [imports, pendingDeleteId],
+  );
+
+  const handleDeleteClick = useCallback(
+    (id: string) => {
+      if (isDeleting || deletingId) return;
+      setPendingDeleteId(id);
+    },
+    [isDeleting, deletingId],
+  );
+
+  const confirmDelete = useCallback(() => {
+    if (!pendingDeleteId || isDeleting) return;
+    const id = pendingDeleteId;
+    setPendingDeleteId(null);
+    setDeletingId(id);
+    onDelete(id);
+  }, [pendingDeleteId, isDeleting, onDelete]);
 
   return (
     <div className="mt-4 overflow-x-auto">
@@ -68,7 +111,7 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
                       key={`skeleton-${rowIndex}-${colIndex}`}
                       className="px-6 py-4 whitespace-nowrap"
                     >
-                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="w-full h-4" />
                     </td>
                   ),
                 )}
@@ -77,8 +120,9 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
           ) : imports.length > 0 ? (
             imports.map((importItem) => {
               const dateTime = formatDateTime(importItem.timestamp);
+              const itemId = getItemId(importItem);
               return (
-                <tr key={getItemId(importItem)}>
+                <tr key={itemId}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900! dark:text-gray-100!">
                     Manual Import
                   </td>
@@ -121,29 +165,34 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
                       {onExport &&
                         (importItem.successCount ?? importItem.recordCount) >
                           0 && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onExport(getItemId(importItem), importItem.fileName)
-                          }
-                          disabled={exportingImportId === getItemId(importItem)}
-                          className="text-blue-600 hover:text-blue-800 disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
-                          title="Export leads from this import"
-                        >
-                          {exportingImportId === getItemId(importItem) ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Download className="w-4 h-4" />
-                          )}
-                        </button>
-                      )}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onExport(itemId, importItem.fileName)
+                            }
+                            disabled={exportingImportId === itemId}
+                            className="text-blue-600 hover:text-blue-800 disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
+                            title="Export leads from this import"
+                          >
+                            {exportingImportId === itemId ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Download className="w-4 h-4" />
+                            )}
+                          </button>
+                        )}
                       <button
                         type="button"
-                        onClick={() => onDelete(getItemId(importItem))}
-                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                        onClick={() => handleDeleteClick(itemId)}
+                        disabled={isDeleting || !!deletingId}
+                        className="text-red-600 hover:text-red-900 disabled:opacity-50 dark:text-red-400 dark:hover:text-red-300"
                         title="Delete import"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {deletingId === itemId ? (
+                          <Loader2 className="w-4 h-4 mx-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4 mx-3" />
+                        )}
                       </button>
                     </div>
                   </td>
@@ -162,6 +211,54 @@ export const ImportHistory: React.FC<ImportHistoryProps> = ({
           )}
         </tbody>
       </table>
+
+      <AlertDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setPendingDeleteId(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this import?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  This cannot be undone. The import record and all leads from
+                  this import will be permanently deleted.
+                </p>
+                {pendingDeleteItem?.fileName ? (
+                  <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-md border border-gray-200 dark:border-gray-600 dark:bg-transparent dark:text-gray-200">
+                    {pendingDeleteItem.fileName}
+                  </p>
+                ) : null}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="text-white bg-red-600 hover:bg-red-700 hover:text-white focus:ring-red-600"
+              disabled={isDeleting}
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDelete();
+              }}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                  Deleting…
+                </>
+              ) : (
+                "Delete import"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
