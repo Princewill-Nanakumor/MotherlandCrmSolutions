@@ -81,17 +81,20 @@ function retargetCompetingIconLinks(href: string) {
 /**
  * Upsert a branded favicon <link>. Recreates the node when href changes so
  * Chromium actually refreshes the tab icon (setting href alone is often ignored).
+ * Pass `force` to recreate even when href is unchanged — needed when switching
+ * browser tabs after Next re-injected `/motherland-favicon.svg`.
  */
 function upsertBrandIconLink(
   rel: "icon" | "apple-touch-icon",
   href: string,
   attrs?: { type?: string; sizes?: string },
+  force = false,
 ) {
   const selector = `link[data-brand-favicon="1"][data-brand-rel="${rel}"]`;
   let link = document.querySelector(selector) as HTMLLinkElement | null;
   const sameHref = link?.getAttribute("href") === href;
 
-  if (link && sameHref) {
+  if (link && sameHref && !force) {
     // Keep ours last so we win over Next metadata static icons.
     document.head.appendChild(link);
     return;
@@ -128,9 +131,19 @@ export function persistBrandFaviconCache(primaryHex: string): void {
   }
 }
 
+export function readPersistedFaviconColor(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const color = window.localStorage.getItem(BRAND_THEME_FAVICON_COLOR_KEY);
+    return color ? normalizeFaviconColor(color) : null;
+  } catch {
+    return null;
+  }
+}
+
 let faviconObserver: MutationObserver | null = null;
-let faviconObserverTimer: ReturnType<typeof setTimeout> | null = null;
 let lastAppliedFaviconHref: string | null = null;
+let watchedFaviconHref: string | null = null;
 
 function isIconLinkRel(rel: string | null): boolean {
   if (!rel) return false;
@@ -154,45 +167,40 @@ function retargetIconLinkNode(node: Element, href: string): void {
 }
 
 /**
- * Watch for Next/metadata injecting new icon links. Only retarget those newly
- * added non-branded nodes — never move branded links here (appendChild would
- * re-fire this observer and loop forever with icon + apple-touch-icon).
+ * Watch for Next/metadata injecting new icon links for the life of the page.
+ * Only retarget newly added non-branded nodes — never move branded links here
+ * (appendChild would re-fire this observer and loop forever).
  */
-function scheduleFaviconHeadWatch(href: string) {
+function ensureFaviconHeadWatch(href: string) {
   if (typeof MutationObserver === "undefined" || typeof document === "undefined") {
     return;
   }
 
-  faviconObserver?.disconnect();
-  if (faviconObserverTimer) {
-    clearTimeout(faviconObserverTimer);
-    faviconObserverTimer = null;
+  watchedFaviconHref = href;
+
+  if (faviconObserver) {
+    return;
   }
 
   faviconObserver = new MutationObserver((mutations) => {
+    const currentHref = watchedFaviconHref;
+    if (!currentHref) return;
     for (const mutation of mutations) {
       mutation.addedNodes.forEach((added) => {
         if (!(added instanceof Element)) return;
         if (added instanceof HTMLLinkElement) {
-          retargetIconLinkNode(added, href);
+          retargetIconLinkNode(added, currentHref);
           return;
         }
         added
           .querySelectorAll?.(
             'link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]',
           )
-          .forEach((link) => retargetIconLinkNode(link, href));
+          .forEach((link) => retargetIconLinkNode(link, currentHref));
       });
     }
   });
   faviconObserver.observe(document.head, { childList: true, subtree: true });
-
-  // Next metadata / client navigations can inject icons shortly after hydrate.
-  faviconObserverTimer = setTimeout(() => {
-    faviconObserver?.disconnect();
-    faviconObserver = null;
-    faviconObserverTimer = null;
-  }, 4000);
 }
 
 /**
@@ -201,22 +209,36 @@ function scheduleFaviconHeadWatch(href: string) {
  * Next/React metadata icon *elements* in a way that crashes reconciliation;
  * we only retarget their href to the brand data URI.
  */
-export function applyBrandFavicon(primaryHex: string): void {
+export function applyBrandFavicon(
+  primaryHex: string,
+  options?: { force?: boolean },
+): void {
   if (typeof document === "undefined") return;
 
   const color = normalizeFaviconColor(primaryHex);
   const href = brandFaviconDataUri(color);
+  const force = Boolean(options?.force);
   lastAppliedFaviconHref = href;
 
   retargetCompetingIconLinks(href);
 
-  upsertBrandIconLink("icon", href, {
-    type: "image/svg+xml",
-    sizes: "any",
-  });
-  upsertBrandIconLink("apple-touch-icon", href, {
-    sizes: "180x180",
-  });
+  upsertBrandIconLink(
+    "icon",
+    href,
+    {
+      type: "image/svg+xml",
+      sizes: "any",
+    },
+    force,
+  );
+  upsertBrandIconLink(
+    "apple-touch-icon",
+    href,
+    {
+      sizes: "180x180",
+    },
+    force,
+  );
 
   // Remove obsolete "shortcut icon" branded links from earlier revisions.
   document
@@ -234,18 +256,56 @@ export function applyBrandFavicon(primaryHex: string): void {
       .forEach((node) => document.head.appendChild(node));
   });
 
-  scheduleFaviconHeadWatch(href);
+  ensureFaviconHeadWatch(href);
+}
+
+/**
+ * Re-apply the persisted brand favicon, forcing Chromium to refresh the tab
+ * icon after backgrounding / bfcache / metadata reinjection.
+ */
+export function refreshBrandFaviconFromCache(): void {
+  if (typeof document === "undefined") return;
+  const color = readPersistedFaviconColor();
+  if (color) {
+    applyBrandFavicon(color, { force: true });
+    return;
+  }
+  if (lastAppliedFaviconHref) {
+    retargetCompetingIconLinks(lastAppliedFaviconHref);
+    upsertBrandIconLink(
+      "icon",
+      lastAppliedFaviconHref,
+      { type: "image/svg+xml", sizes: "any" },
+      true,
+    );
+    upsertBrandIconLink(
+      "apple-touch-icon",
+      lastAppliedFaviconHref,
+      { sizes: "180x180" },
+      true,
+    );
+    ensureFaviconHeadWatch(lastAppliedFaviconHref);
+    return;
+  }
+  reassertBrandFavicon();
 }
 
 /** Re-assert the last applied favicon (e.g. after client route changes). */
 export function reassertBrandFavicon(): void {
-  if (!lastAppliedFaviconHref || typeof document === "undefined") return;
+  if (!lastAppliedFaviconHref || typeof document === "undefined") {
+    // Module state lost (or never applied) — restore from localStorage.
+    const color = readPersistedFaviconColor();
+    if (color) {
+      applyBrandFavicon(color, { force: true });
+    }
+    return;
+  }
   retargetCompetingIconLinks(lastAppliedFaviconHref);
   document
     .querySelectorAll("link[data-brand-favicon='1']")
     .forEach((node) => document.head.appendChild(node));
+  ensureFaviconHeadWatch(lastAppliedFaviconHref);
 }
-
 /**
  * Inline boot logic (no imports) — keep in sync with applyBrandFavicon.
  * Restores theme CSS vars + branded favicon before first paint.

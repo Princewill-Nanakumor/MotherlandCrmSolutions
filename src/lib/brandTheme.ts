@@ -5,7 +5,7 @@
 import {
   applyBrandFavicon,
   persistBrandFaviconCache,
-  reassertBrandFavicon,
+  refreshBrandFaviconFromCache,
   BRAND_THEME_FAVICON_COLOR_KEY,
   BRAND_THEME_FAVICON_STORAGE_KEY,
 } from "@/lib/brandFavicon";
@@ -750,12 +750,9 @@ export function subscribeBrandThemeCrossTabSync(options?: {
       }
       return;
     }
-    // Same-tab focus/visibility: re-assert favicon without resetting preview CSS.
-    if (cached) {
-      applyBrandFavicon(getActiveBrandPrimary(cached));
-    } else {
-      reassertBrandFavicon();
-    }
+    // Same-tab focus/visibility: force-recreate favicon so Chromium does not
+    // keep showing the default Next metadata icon after backgrounding.
+    refreshBrandFaviconFromCache();
   };
 
   const onStorage = (event: StorageEvent) => {
@@ -768,14 +765,23 @@ export function subscribeBrandThemeCrossTabSync(options?: {
     maybeApply(false);
   };
 
+  const onPageShow = (event: PageTransitionEvent) => {
+    // bfcache restore often brings back stale default favicon links.
+    if (event.persisted || document.visibilityState === "visible") {
+      maybeApply(false);
+    }
+  };
+
   window.addEventListener("storage", onStorage);
   document.addEventListener("visibilitychange", onVisible);
   window.addEventListener("focus", onVisible);
+  window.addEventListener("pageshow", onPageShow);
 
   return () => {
     window.removeEventListener("storage", onStorage);
     document.removeEventListener("visibilitychange", onVisible);
     window.removeEventListener("focus", onVisible);
+    window.removeEventListener("pageshow", onPageShow);
   };
 }
 
