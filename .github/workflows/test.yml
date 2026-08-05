@@ -16,10 +16,12 @@ jobs:
     name: Vitest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          # jsdom 30 (ImportHistory component tests) needs Node 22+;
+          # Node 20 fails worker startup with undici webidl errors.
+          node-version: "22"
           cache: npm
       - run: npm ci
       - run: npm run test:run
@@ -28,10 +30,10 @@ jobs:
     name: Playwright smoke
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium

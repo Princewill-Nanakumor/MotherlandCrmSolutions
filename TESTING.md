@@ -23,9 +23,9 @@ Business rules are tested close to their implementation, while end-to-end tests 
 
 ## CI
 
-Every pull request (and pushes to `main`) runs GitHub Actions (`.github/workflows/test.yml`):
+Every pull request (and pushes to `main`) runs GitHub Actions (`.github/workflows/test.yml`) on **Node 22**:
 
-- Vitest (`npm run test:run`)
+- Vitest (`npm run test:run`) — needs Node 22+ for jsdom component tests
 - Playwright smoke (`e2e/smoke.spec.ts`)
 
 Full lifecycle E2E requires MongoDB credentials and seeded test data, so it currently runs locally. It can be enabled in CI once repository secrets are configured.
@@ -76,7 +76,7 @@ Override with `E2E_ADMIN_EMAIL`, `E2E_AGENT_EMAIL`, `E2E_PASSWORD` if needed. Pl
 
 ## Layout
 
-- `vitest.config.ts` — unit/integration runner
+- `vitest.config.mts` — unit/integration runner
 - `playwright.config.ts` — E2E runner
 - `src/test/setup.ts` — Testing Library setup
 - `e2e/helpers/auth.ts` — login + `apiJson` helpers
