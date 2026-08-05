@@ -4,7 +4,7 @@ How to run and maintain tests for Motherland CRM.
 
 ## Current suite (approximate)
 
-- **146** Vitest tests (unit, API mocks, components)
+- **146** Vitest tests (unit, API mocks, components).
 - **6** Playwright tests that run (smoke + seeded lifecycle)
 - **1** Playwright realtime test **skipped** (`test.fixme`) — pending stabilization of Ably attach timing in headless browser environments
 
@@ -53,16 +53,16 @@ Requires a working `.env` (`MONGODB_URI`, `NEXTAUTH_SECRET`, etc.) for lifecycle
 
 ## What’s covered
 
-| Layer | Location | What is tested |
-|-------|----------|----------------|
-| Domain helpers | `src/lib/**/*.test.ts`, `src/libs/**/*.test.ts` | Phone/country normalization, tenant scoping, search, billing rules, Ably channel names |
-| Schemas | `src/schemas/*.test.ts` | Signup/login Zod validation |
-| API routes | `src/app/api/**/*.test.ts` | Auth, tenant isolation, role checks with mocked session/DB |
-| Components | `src/**/*.test.tsx` | Interactive UI (e.g. Import History delete modal) |
-| CSV import | `src/utils/csvImport.test.ts` | Missing headers + valid CSV parsing |
-| E2E smoke | `e2e/smoke.spec.ts` | Homepage, login fields, dashboard → login redirect |
-| E2E lifecycle | `e2e/lead-lifecycle.spec.ts` | Seeded admin/agent: import → assign → comment → admin sees update → export |
-| E2E realtime | `e2e/realtime-sync.spec.ts` | Browser↔browser Ably sync — skipped pending stabilization of Ably attach timing in headless environments |
+| Layer          | Location                                        | What is tested                                                                                           |
+| -------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Domain helpers | `src/lib/**/*.test.ts`, `src/libs/**/*.test.ts` | Phone/country normalization, tenant scoping, search, billing rules, Ably channel names                   |
+| Schemas        | `src/schemas/*.test.ts`                         | Signup/login Zod validation                                                                              |
+| API routes     | `src/app/api/**/*.test.ts`                      | Auth, tenant isolation, role checks with mocked session/DB                                               |
+| Components     | `src/**/*.test.tsx`                             | Interactive UI (e.g. Import History delete modal)                                                        |
+| CSV import     | `src/utils/csvImport.test.ts`                   | Missing headers + valid CSV parsing                                                                      |
+| E2E smoke      | `e2e/smoke.spec.ts`                             | Homepage, login fields, dashboard → login redirect                                                       |
+| E2E lifecycle  | `e2e/lead-lifecycle.spec.ts`                    | Seeded admin/agent: import → assign → comment → admin sees update → export                               |
+| E2E realtime   | `e2e/realtime-sync.spec.ts`                     | Browser↔browser Ably sync — skipped pending stabilization of Ably attach timing in headless environments |
 
 ## E2E users
 
