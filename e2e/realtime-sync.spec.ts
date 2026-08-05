@@ -11,10 +11,9 @@ import {
  * True browser-to-browser realtime via Ably admin leads channel:
  * Admin changes status in Browser A → Agent list UI updates in Browser B.
  *
- * Currently fixme'd: headless runs confirm import/assign/status APIs, but the
- * agent assigned-leads table does not reliably reflect Ably `status_changed`
- * within 45s (attach/token timing). Re-enable when Ably client readiness is
- * observable in the UI (e.g. data-testid="ably-attached").
+ * Skipped pending stabilization of Ably attach timing in headless browser
+ * environments. Re-enable when Ably client readiness is observable in the UI
+ * (e.g. data-testid="ably-attached").
  */
 test.fixme(
   "admin status change updates agent browser via Ably",

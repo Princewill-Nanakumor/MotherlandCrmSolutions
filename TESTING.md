@@ -2,6 +2,34 @@
 
 How to run and maintain tests for Motherland CRM.
 
+## Current suite (approximate)
+
+- **146** Vitest tests (unit, API mocks, components)
+- **6** Playwright tests that run (smoke + seeded lifecycle)
+- **1** Playwright realtime test **skipped** (`test.fixme`) — pending stabilization of Ably attach timing in headless browser environments
+
+Counts drift as tests are added; re-run `npm run test:run` / `npm run test:e2e` for exact numbers.
+
+## Testing strategy
+
+Motherland CRM follows a layered testing approach:
+
+- Unit tests verify business logic and utility functions.
+- API tests verify authentication, authorization, tenant isolation, and request validation.
+- Component tests verify interactive UI behavior.
+- Playwright E2E verifies critical user workflows across the application.
+
+Business rules are tested close to their implementation, while end-to-end tests focus on high-value workflows rather than exhaustive UI coverage. Multi-tenancy (admin scope isolation and agent assignment boundaries) is treated as a first-class concern across unit and API tests.
+
+## CI
+
+Every pull request (and pushes to `main`) runs GitHub Actions (`.github/workflows/test.yml`):
+
+- Vitest (`npm run test:run`)
+- Playwright smoke (`e2e/smoke.spec.ts`)
+
+Full lifecycle E2E requires MongoDB credentials and seeded test data, so it currently runs locally. It can be enabled in CI once repository secrets are configured.
+
 ## Commands
 
 ```bash
@@ -16,22 +44,25 @@ npm run test:e2e:seed
 
 # Playwright (smoke + lifecycle; starts/reuses local Next on :3000)
 npm run test:e2e
+
+# Smoke only (same as CI E2E job)
+npx playwright test e2e/smoke.spec.ts
 ```
 
-Requires a working `.env` (`MONGODB_URI`, `NEXTAUTH_SECRET`, etc.) for E2E. Unit tests do not need the database.
+Requires a working `.env` (`MONGODB_URI`, `NEXTAUTH_SECRET`, etc.) for lifecycle E2E. Unit tests and Playwright smoke do not need the database. Seed is skipped automatically when `MONGODB_URI` is unset.
 
 ## What’s covered
 
-| Layer | Location | Notes |
-|-------|----------|--------|
-| Domain helpers | `src/lib/**/*.test.ts`, `src/libs/**/*.test.ts` | Phone/country, tenancy, search, billing rules, Ably channel names |
-| Schemas | `src/schemas/*.test.ts` | Signup/login Zod |
-| API routes | `src/app/api/**/*.test.ts` | Auth/role checks with mocked session/DB |
-| Components | `src/**/*.test.tsx` | e.g. Import History delete modal |
-| CSV import | `src/utils/csvImport.test.ts` | Missing headers + valid CSV |
-| E2E smoke | `e2e/smoke.spec.ts` | Homepage, login fields, dashboard → login |
+| Layer | Location | What is tested |
+|-------|----------|----------------|
+| Domain helpers | `src/lib/**/*.test.ts`, `src/libs/**/*.test.ts` | Phone/country normalization, tenant scoping, search, billing rules, Ably channel names |
+| Schemas | `src/schemas/*.test.ts` | Signup/login Zod validation |
+| API routes | `src/app/api/**/*.test.ts` | Auth, tenant isolation, role checks with mocked session/DB |
+| Components | `src/**/*.test.tsx` | Interactive UI (e.g. Import History delete modal) |
+| CSV import | `src/utils/csvImport.test.ts` | Missing headers + valid CSV parsing |
+| E2E smoke | `e2e/smoke.spec.ts` | Homepage, login fields, dashboard → login redirect |
 | E2E lifecycle | `e2e/lead-lifecycle.spec.ts` | Seeded admin/agent: import → assign → comment → admin sees update → export |
-| E2E realtime | `e2e/realtime-sync.spec.ts` | Browser↔browser Ably sync — currently **skipped** (`test.fixme`) |
+| E2E realtime | `e2e/realtime-sync.spec.ts` | Browser↔browser Ably sync — skipped pending stabilization of Ably attach timing in headless environments |
 
 ## E2E users
 
@@ -41,7 +72,7 @@ Requires a working `.env` (`MONGODB_URI`, `NEXTAUTH_SECRET`, etc.) for E2E. Unit
 - Agent: `e2e-agent@motherland.test`
 - Password: `E2eTest1!`
 
-Override with `E2E_ADMIN_EMAIL`, `E2E_AGENT_EMAIL`, `E2E_PASSWORD` if needed. Playwright `globalSetup` runs the seed automatically before `test:e2e`.
+Override with `E2E_ADMIN_EMAIL`, `E2E_AGENT_EMAIL`, `E2E_PASSWORD` if needed. Playwright `globalSetup` runs the seed automatically before `test:e2e` when `MONGODB_URI` is set.
 
 ## Layout
 
@@ -50,14 +81,16 @@ Override with `E2E_ADMIN_EMAIL`, `E2E_AGENT_EMAIL`, `E2E_PASSWORD` if needed. Pl
 - `src/test/setup.ts` — Testing Library setup
 - `e2e/helpers/auth.ts` — login + `apiJson` helpers
 - `e2e/global-setup.mjs` — seeds Mongo before E2E
+- `.github/workflows/test.yml` — PR CI
 
 ## Not in git
 
 Playwright output (`test-results/`, `playwright-report/`) is gitignored. Don’t commit pass/fail dumps; re-run the commands above for current results.
 
-## Known gaps
+## Planned
 
-- Full Ably UI sync across two browsers (see `realtime-sync.spec.ts`)
-- Pure UI CSV file-picker / assign-dialog flows (lifecycle uses authenticated APIs for those steps)
-- Live Mongo load tests at 10k–50k rows (in-memory perf checks exist in `largeDatasetPerf.test.ts`)
-- Payment webhooks / upgrade-downgrade payment APIs
+- Re-enable realtime browser sync (Ably attach observability in headless)
+- UI-only CSV upload E2E
+- UI-only assign-dialog E2E
+- Payment webhook / upgrade-downgrade tests
+- Mongo large-dataset benchmarks (beyond in-memory `largeDatasetPerf.test.ts`)
