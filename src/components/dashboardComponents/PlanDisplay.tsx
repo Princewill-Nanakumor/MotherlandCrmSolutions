@@ -72,7 +72,9 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
     if (diffTime <= 0) {
       return null;
     }
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // Use floor so this matches the subscription-page countdown (DD:HH:MM:SS).
+    // ceil() made ~2d 3h remaining display as "3 days".
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
   };
 
   // Helper function to format plan name
@@ -145,12 +147,8 @@ export function PlanDisplay({ isAdmin }: PlanDisplayProps) {
   ) => {
     if (days === null) return "";
 
-    if (status === "trial") {
-      if (days === 0) return "Time left: 0 days";
-      if (days === 1) return "Time left: 1 day";
-      return `Time left: ${days} days`;
-    } else if (status === "active") {
-      if (days === 0) return "Time left: 0 days";
+    if (status === "trial" || status === "active") {
+      if (days === 0) return "Time left: less than 1 day";
       if (days === 1) return "Time left: 1 day";
       return `Time left: ${days} days`;
     } else if (status === "expired") {
