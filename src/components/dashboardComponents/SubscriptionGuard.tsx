@@ -4,7 +4,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
-import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { useSession } from "next-auth/react";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
@@ -32,8 +31,8 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
   // Avoid "subscribe" messaging when the subscription API failed (e.g. stale session / 401)
   if (hasAuthorizedSession(status, session) && error && !isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8 border rounded-lg bg-background dark:bg-gray-800">
-        <Card className="max-w-md mx-auto">
+      <div className="flex flex-col justify-center items-center p-8 h-full rounded-lg border bg-background dark:bg-gray-800">
+        <Card className="mx-auto max-w-md">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-amber-800 dark:text-amber-200">
               <AlertTriangle className="w-5 h-5" />
@@ -42,7 +41,8 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              Your session may be out of date. Refresh the page or sign out and sign in again.
+              Your session may be out of date. Refresh the page or sign out and
+              sign in again.
             </p>
             <Button
               type="button"
@@ -60,8 +60,8 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
   // Show subscription required message if no active subscription
   if (!hasActiveSubscription) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8 border rounded-lg bg-background dark:bg-gray-800">
-        <Card className="max-w-md mx-auto">
+      <div className="flex flex-col justify-center items-center p-8 h-full rounded-lg border bg-background dark:bg-gray-800">
+        <Card className="mx-auto max-w-md">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-red-800 dark:text-red-200">
               <AlertTriangle className="w-5 h-5" />
@@ -70,7 +70,6 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2 text-red-700 dark:text-red-300">
-              <MotherlandLogo className="h-4 w-4 rounded-[22%]" />
               <p>
                 You need an active subscription to view and manage leads.
                 {subscriptionData?.subscriptionStatus === "expired" &&
