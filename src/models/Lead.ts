@@ -9,7 +9,8 @@ export interface ILead {
   email: string;
   phone: string;
   country: string;
-  status: "NEW" | "CONTACTED" | "IN_PROGRESS" | "QUALIFIED" | "LOST" | "WON";
+  /** Legacy codes (e.g. NEW) or tenant Status document ObjectId string */
+  status: string;
   source: string;
   comments: string;
   importId?: mongoose.Types.ObjectId;
@@ -58,8 +59,9 @@ const leadSchema = new Schema(
       default: "",
     },
     status: {
+      // Free string: legacy codes (NEW, …) or custom Status ObjectId strings.
+      // Enum removed so create matches status-update (which already stores ObjectIds).
       type: String,
-      enum: ["NEW", "CONTACTED", "IN_PROGRESS", "QUALIFIED", "LOST", "WON"],
       default: "NEW",
     },
     source: {
