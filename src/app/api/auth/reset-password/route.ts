@@ -5,6 +5,8 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import User from "@/models/User";
 import { hashAuthTokenForStorage } from "@/lib/authEmailTokens";
 import { invalidatePasswordChangedAtCache } from "@/lib/authPasswordVersion";
+import { getRequestHost } from "@/lib/emailAuthBranding";
+import { sendPasswordChangedEmail } from "@/lib/emailService";
 import { rateLimitEnhanced } from "@/lib/rateLimit";
 import {
   buildClearCaptchaCookieHeader,
@@ -121,7 +123,11 @@ export async function POST(req: Request) {
         $set: { password: hashedPassword, passwordChangedAt: now },
         $unset: { resetPasswordToken: "", resetPasswordExpires: "" },
       },
-      { new: true, projection: { _id: 1 }, lean: true },
+      {
+        new: true,
+        projection: { _id: 1, email: 1, firstName: 1 },
+        lean: true,
+      },
     );
 
     if (!updated) {
@@ -134,6 +140,13 @@ export async function POST(req: Request) {
     }
 
     invalidatePasswordChangedAtCache(updated._id.toString());
+
+    // Best-effort confirmation; do not fail the reset if mail delivery fails.
+    void sendPasswordChangedEmail({
+      toEmail: updated.email,
+      firstName: updated.firstName,
+      requestHost: getRequestHost(req),
+    });
 
     return withClearCaptcha(
       NextResponse.json({

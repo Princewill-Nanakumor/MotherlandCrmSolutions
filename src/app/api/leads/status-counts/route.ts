@@ -122,9 +122,14 @@ export async function GET() {
       rowByStatusId.set(doc._id.toString(), row);
     }
 
-    // "New" is synthetic unless the tenant happens to have created a real one.
-    let newRow = rowByName.get("new");
-    if (!newRow) {
+    // Synthetic "New" is added when:
+    // - the tenant already created statuses (keep New in the pipeline list), or
+    // - leads exist with the default "NEW"/"New" value (imports / new leads).
+    // Brand-new accounts with no statuses and no leads still report 0.
+    let newRow = rowByName.get("new") ?? null;
+
+    const ensureNewRow = (): StatusCountRow => {
+      if (newRow) return newRow;
       newRow = {
         id: SYNTHETIC_NEW_ID,
         name: "New",
@@ -133,7 +138,18 @@ export async function GET() {
       };
       rows.unshift(newRow);
       rowByName.set("new", newRow);
+      return newRow;
+    };
+
+    if (statusDocs.length > 0) {
+      ensureNewRow();
     }
+
+    const isDefaultNewStatus = (raw: string): boolean => {
+      const key = raw.trim();
+      if (!key) return true; // blank status is treated as default New
+      return key.toUpperCase() === SYNTHETIC_NEW_ID || key.toLowerCase() === "new";
+    };
 
     let totalLeads = 0;
     let unresolvedCount = 0;
@@ -143,15 +159,14 @@ export async function GET() {
       totalLeads += count;
 
       const raw = (group._id ?? "").trim();
-      if (!raw) {
-        unresolvedCount += count;
+
+      if (isDefaultNewStatus(raw)) {
+        ensureNewRow().count += count;
         continue;
       }
 
       const matched =
-        rowByStatusId.get(raw) ||
-        (raw.toUpperCase() === SYNTHETIC_NEW_ID ? newRow : undefined) ||
-        rowByName.get(raw.toLowerCase());
+        rowByStatusId.get(raw) || rowByName.get(raw.toLowerCase());
 
       if (matched) {
         matched.count += count;

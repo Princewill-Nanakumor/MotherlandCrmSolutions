@@ -185,12 +185,19 @@ export const CommentsAndActivitiesCombined: FC<
   const { data: statuses = [] } = useQuery<Status[], Error>({
     queryKey: ["statuses"],
     queryFn: async (): Promise<Status[]> => {
-      const response = await fetch("/api/statuses");
+      const response = await fetch("/api/statuses", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+      });
       if (!response.ok) throw new Error("Failed to fetch statuses");
       return response.json();
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: 30 * 1000,
     gcTime: 30 * 60 * 1000,
+    refetchOnMount: true,
   });
 
   // Fetch activities (excluding COMMENT type)

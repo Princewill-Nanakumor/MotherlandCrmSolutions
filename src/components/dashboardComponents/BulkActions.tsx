@@ -67,13 +67,19 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
       queryFn: async () => {
         const response = await fetch("/api/statuses", {
           credentials: "include",
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
         });
         if (!response.ok) throw new Error("Failed to fetch statuses");
         return response.json();
       },
       enabled: !propStatuses, // Only fetch if not provided via props
-      staleTime: 10 * 60 * 1000,
+      staleTime: 30 * 1000,
       refetchOnWindowFocus: false,
+      refetchOnMount: true,
     });
 
   const statuses: StatusOption[] = propStatuses || fetchedStatuses;

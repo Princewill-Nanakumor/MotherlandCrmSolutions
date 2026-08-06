@@ -163,3 +163,76 @@ export function applyRemoteLeadStatusToListCaches(
     );
   }
 }
+
+function patchListDataForDeletedStatus(
+  old: unknown,
+  deletedStatusKeys: Set<string>,
+  replacementStatus: string,
+  timestamps: TimestampPatch,
+): unknown {
+  const applyLead = (lead: Lead): Lead => {
+    const current = normalizeLeadStatusId(lead.status);
+    if (!deletedStatusKeys.has(current)) return lead;
+    return {
+      ...lead,
+      status: replacementStatus,
+      ...timestamps,
+    };
+  };
+
+  if (Array.isArray(old)) {
+    return (old as Lead[]).map(applyLead);
+  }
+
+  if (old && typeof old === "object") {
+    const withLeads = old as {
+      leads?: Lead[];
+      data?: Lead[];
+      [key: string]: unknown;
+    };
+    if (Array.isArray(withLeads.leads)) {
+      return { ...withLeads, leads: withLeads.leads.map(applyLead) };
+    }
+    if (Array.isArray(withLeads.data)) {
+      return { ...withLeads, data: withLeads.data.map(applyLead) };
+    }
+  }
+
+  return old;
+}
+
+/**
+ * After a custom status is deleted, rewrite every cached lead that still
+ * points at that status id/name to the default replacement (usually "NEW").
+ */
+export function reassignDeletedStatusInListCaches(
+  queryClient: QueryClient,
+  deletedStatusKeys: string[],
+  replacementStatus = "NEW",
+): void {
+  const keys = new Set(
+    deletedStatusKeys.map((k) => normalizeLeadStatusId(k)).filter(Boolean),
+  );
+  if (keys.size === 0) return;
+
+  const now = new Date().toISOString();
+  const timestamps: TimestampPatch = {
+    statusChangedAt: now,
+    updatedAt: now,
+  };
+
+  const queries = queryClient.getQueryCache().findAll({
+    predicate: (query) => isLeadsListRoot(query.queryKey),
+  });
+
+  for (const query of queries) {
+    queryClient.setQueryData(query.queryKey, (old: unknown) =>
+      patchListDataForDeletedStatus(
+        old,
+        keys,
+        replacementStatus,
+        timestamps,
+      ),
+    );
+  }
+}

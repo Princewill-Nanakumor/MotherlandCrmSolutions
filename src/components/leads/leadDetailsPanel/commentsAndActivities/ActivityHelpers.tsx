@@ -172,6 +172,12 @@ export function getStatusColor(statuses: Status[], statusName: string): string {
 export function getActivityDescription(activity: Activity): string {
   switch (activity.type) {
     case "STATUS_CHANGE":
+      if (
+        activity.metadata?.reason === "status_deleted" ||
+        activity.metadata?.previousStatusDeleted
+      ) {
+        return "reset status — previous status deleted";
+      }
       return "changed status";
     case "ASSIGNMENT":
       const hasAssignedTo =

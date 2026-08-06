@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { Status } from "@/types/leads";
 import { useStatuses } from "@/context/StatusContext";
+import { reassignDeletedStatusInListCaches } from "@/lib/leadsListCache";
 
 interface StatusModalProps {
   isOpen: boolean;
@@ -66,7 +67,13 @@ const StatusModal = ({
   const fetchStatuses = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/statuses");
+      const response = await fetch("/api/statuses", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch statuses");
       }
@@ -86,10 +93,13 @@ const StatusModal = ({
     }
   }, [toast]);
 
-  // Fetch statuses when modal opens
+  // Fetch statuses when modal opens; clear stale list when it closes.
   useEffect(() => {
     if (isOpen) {
       fetchStatuses();
+    } else {
+      setStatuses([]);
+      setLoading(true);
     }
   }, [isOpen, fetchStatuses]);
 
@@ -139,12 +149,14 @@ const StatusModal = ({
       resetForm();
       onStatusCreated?.();
 
-      // ✅ OPTIMIZATION: Run cache invalidations in parallel in the background
-      // This doesn't block the UI or the button
+      // Refetch inactive dashboard queries too — status-counts stays mounted
+      // in cache with refetchOnMount:false, so active-only invalidation left
+      // the chart stale until a hard refresh.
       Promise.all([
         queryClient.invalidateQueries({
           queryKey: ["statuses"],
           exact: false,
+          refetchType: "all",
         }),
         queryClient.invalidateQueries({
           queryKey: ["leads"],
@@ -153,6 +165,7 @@ const StatusModal = ({
         queryClient.invalidateQueries({
           queryKey: ["leads-stats"],
           exact: false,
+          refetchType: "all",
         }),
         refreshStatuses(),
       ]).catch((error) => {
@@ -208,9 +221,19 @@ const StatusModal = ({
         throw new Error("Failed to delete status");
       }
 
+      const deleteResult = (await response.json().catch(() => null)) as {
+        leadIds?: string[];
+      } | null;
+
       setStatuses((prev) =>
         prev.filter((status) => getStatusId(status) !== statusId),
       );
+
+      // Instantly rewrite cached leads that still point at the deleted status.
+      reassignDeletedStatusInListCaches(queryClient, [
+        statusId,
+        pendingDeleteStatus.name || "",
+      ]);
 
       toast({
         title: "Success!",
@@ -220,19 +243,41 @@ const StatusModal = ({
 
       setPendingDeleteStatus(null);
 
+      const activityInvalidations = (deleteResult?.leadIds ?? []).map((leadId) =>
+        queryClient.invalidateQueries({
+          queryKey: ["activities", leadId],
+          exact: false,
+          refetchType: "all",
+        }),
+      );
+
       Promise.all([
         queryClient.invalidateQueries({
           queryKey: ["statuses"],
           exact: false,
+          refetchType: "all",
         }),
         queryClient.invalidateQueries({
           queryKey: ["leads"],
           exact: false,
+          refetchType: "all",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["assignedLeads"],
+          exact: false,
+          refetchType: "all",
         }),
         queryClient.invalidateQueries({
           queryKey: ["leads-stats"],
           exact: false,
+          refetchType: "all",
         }),
+        queryClient.invalidateQueries({
+          queryKey: ["activities"],
+          exact: false,
+          refetchType: "all",
+        }),
+        ...activityInvalidations,
         refreshStatuses(),
       ]).catch((error) => {
         console.error("Error refreshing caches:", error);

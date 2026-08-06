@@ -67,6 +67,8 @@ export interface Activity {
     newStatus?: string;
     oldStatusId?: string;
     newStatusId?: string;
+    reason?: string;
+    previousStatusDeleted?: boolean;
 
     // Assignment related - FIXED: Allow both object and string types
     assignedTo?:

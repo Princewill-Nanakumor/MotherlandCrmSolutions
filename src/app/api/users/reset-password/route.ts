@@ -6,6 +6,8 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import User from "@/models/User";
 import { PasswordUpdateSchema } from "@/schemas";
 import { unauthorizedResponse } from "@/lib/apiResponses";
+import { getRequestHost } from "@/lib/emailAuthBranding";
+import { sendPasswordChangedEmail } from "@/lib/emailService";
 import { encryptRecoverablePassword } from "@/lib/passwordRecovery";
 
 export async function PUT(req: NextRequest) {
@@ -75,6 +77,13 @@ export async function PUT(req: NextRequest) {
       }
     }
     await user.save();
+
+    // Best-effort confirmation; do not fail the update if mail delivery fails.
+    void sendPasswordChangedEmail({
+      toEmail: user.email,
+      firstName: user.firstName,
+      requestHost: getRequestHost(req),
+    });
 
     return NextResponse.json({ message: "Password updated successfully" });
   } catch {

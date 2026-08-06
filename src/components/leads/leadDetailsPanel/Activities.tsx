@@ -281,6 +281,12 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
           return "deleted a comment";
         return activity.description;
       case "STATUS_CHANGE":
+        if (
+          activity.metadata?.reason === "status_deleted" ||
+          activity.metadata?.previousStatusDeleted
+        ) {
+          return "reset status — previous status deleted";
+        }
         return "changed status";
       case "ASSIGNMENT":
         // Check if this is an assignment or unassignment

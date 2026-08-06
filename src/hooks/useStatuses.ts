@@ -16,7 +16,13 @@ export const statusesKeys = {
 
 // Fetch function
 const fetchStatuses = async (): Promise<Status[]> => {
-  const response = await fetch("/api/statuses");
+  const response = await fetch("/api/statuses", {
+    cache: "no-store",
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
+  });
   if (!response.ok) throw new Error("Failed to fetch statuses");
 
   let data = await response.json();
@@ -54,9 +60,9 @@ export const useStatuses = () => {
   } = useQuery<Status[], Error>({
     queryKey: statusesKeys.all,
     queryFn: fetchStatuses,
-    staleTime: 10 * 60 * 1000, // 10 minutes - statuses don't change often
+    staleTime: 30 * 1000,
     gcTime: 30 * 60 * 1000, // 30 minutes
-    refetchOnMount: false, // Don't refetch if we have cached data
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
     retry: 2,
   });

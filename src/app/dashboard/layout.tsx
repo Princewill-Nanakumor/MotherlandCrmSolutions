@@ -103,6 +103,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       const eventData = (message.data ?? {}) as {
         type?: string;
         leadId?: string;
+        leadIds?: string[];
         status?: string;
         deletedLeads?: number;
       };
@@ -142,17 +143,20 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
       // Immediate list patch so filtered all-leads rows update (or disappear)
       // before the invalidate-driven refetch finishes.
-      if (
-        eventType === "status_changed" &&
-        eventData.leadId &&
-        eventData.status
-      ) {
-        applyRemoteLeadStatusToListCaches(
-          queryClient,
-          eventData.leadId,
-          eventData.status,
-          { touchActivity: true },
-        );
+      if (eventType === "status_changed" && eventData.status) {
+        const statusLeadIds = [
+          ...(eventData.leadId ? [eventData.leadId] : []),
+          ...(Array.isArray(eventData.leadIds) ? eventData.leadIds : []),
+        ].filter((id, index, arr) => id && arr.indexOf(id) === index);
+
+        for (const leadId of statusLeadIds) {
+          applyRemoteLeadStatusToListCaches(
+            queryClient,
+            leadId,
+            eventData.status,
+            { touchActivity: true },
+          );
+        }
       }
 
       void queryClient.invalidateQueries({
@@ -177,6 +181,15 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           queryKey: ["activities", eventData.leadId],
           exact: false,
         });
+      }
+      if (Array.isArray(eventData.leadIds)) {
+        for (const leadId of eventData.leadIds) {
+          if (typeof leadId !== "string" || !leadId) continue;
+          void queryClient.invalidateQueries({
+            queryKey: ["activities", leadId],
+            exact: false,
+          });
+        }
       }
     };
 

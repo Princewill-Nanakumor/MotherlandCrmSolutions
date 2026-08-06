@@ -126,6 +126,51 @@ export async function GET(
       );
     }
 
+    // Heal orphaned custom status values (status document was deleted).
+    // Without this, the details panel shows the raw Mongo id.
+    const rawStatus = String(lead.status ?? "").trim();
+    const knownDefaults = new Set([
+      "NEW",
+      "CONTACTED",
+      "IN_PROGRESS",
+      "QUALIFIED",
+      "LOST",
+      "WON",
+    ]);
+    if (
+      rawStatus &&
+      !knownDefaults.has(rawStatus.toUpperCase()) &&
+      mongoose.Types.ObjectId.isValid(rawStatus)
+    ) {
+      const statusOid = new ObjectId(rawStatus);
+      const adminOid = new ObjectId(adminScopeId);
+      const statusExists =
+        (await db.collection("status").findOne({
+          _id: statusOid,
+          adminId: adminOid,
+        })) ||
+        (await db.collection("statuses").findOne({
+          _id: statusOid,
+          adminId: adminOid,
+        }));
+      if (!statusExists) {
+        const now = new Date();
+        await db.collection("leads").updateOne(
+          { _id: lead._id },
+          {
+            $set: {
+              status: "NEW",
+              statusChangedAt: now,
+              updatedAt: now,
+            },
+          },
+        );
+        lead.status = "NEW";
+        lead.statusChangedAt = now;
+        lead.updatedAt = now;
+      }
+    }
+
     // Normalize assignedTo: in DB it can be ObjectId, string, or object { _id, firstName, lastName }
     let assignedToUserId: ObjectId | string | null = null;
     if (lead.assignedTo) {

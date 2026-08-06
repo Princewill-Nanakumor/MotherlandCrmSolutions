@@ -2,6 +2,7 @@
 import { Resend } from "resend";
 import {
   APP_DISPLAY_NAME,
+  createPasswordChangedEmailHtml,
   createPaymentApprovedEmailHtml,
   createPaymentRejectedEmailHtml,
   getPublicAppOrigin,
@@ -36,6 +37,13 @@ export type PaymentDecisionEmailData = {
   requestHost?: string | null;
 };
 
+export type PasswordChangedEmailData = {
+  toEmail: string;
+  firstName?: string | null;
+  /** Optional Host / X-Forwarded-Host so links match the live domain. */
+  requestHost?: string | null;
+};
+
 /**
  * Legacy pending-confirmation mail (super-admin alert path).
  * Kept as a no-op so callers stay safe; decision mail is sent via
@@ -58,6 +66,52 @@ export async function sendPaymentConfirmationEmail(
     success: true,
     skipped: true,
   };
+}
+
+/**
+ * Notify the account owner after a successful password change.
+ * Failures are logged and do not throw — the password update must still succeed.
+ */
+export async function sendPasswordChangedEmail(
+  data: PasswordChangedEmailData,
+): Promise<{ success: boolean; skipped?: boolean }> {
+  const to = data.toEmail?.trim();
+  if (!to || !to.includes("@")) {
+    console.warn("sendPasswordChangedEmail: missing recipient email");
+    return { success: false, skipped: true };
+  }
+
+  if (!hasResendApiKey()) {
+    console.warn(
+      "sendPasswordChangedEmail: RESEND_API_KEY not configured; skipping",
+      { to },
+    );
+    return { success: false, skipped: true };
+  }
+
+  const loginUrl = `${getPublicAppOrigin(data.requestHost)}/login`;
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const sendResult = await resend.emails.send({
+      from: getResendFrom(),
+      to: [to],
+      subject: `${APP_DISPLAY_NAME} — password changed`,
+      html: createPasswordChangedEmailHtml(data.firstName || "there", loginUrl),
+      replyTo: getResendReplyTo(),
+      tags: [{ name: "category", value: "password_changed" }],
+    });
+
+    if (!resendEmailOk(sendResult)) {
+      logResendFailure("password-changed-email", sendResult);
+      return { success: false };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("sendPasswordChangedEmail failed:", error, { to });
+    return { success: false };
+  }
 }
 
 /**

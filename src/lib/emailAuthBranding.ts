@@ -249,6 +249,34 @@ export function createPasswordResetEmailHtml(
   return emailShell(body);
 }
 
+export function createPasswordChangedEmailHtml(
+  firstName: string,
+  loginUrl: string,
+): string {
+  const safeFirst = escapeHtml(
+    String(firstName ?? "")
+      .trim() || "there",
+  );
+  const href = safeEmailHttpUrl(loginUrl);
+  const body = `
+    <h1 style="${EMAIL_STYLES.h1}">Password changed successfully</h1>
+    <p style="${EMAIL_STYLES.p}">Hello ${safeFirst},</p>
+    <p style="${EMAIL_STYLES.p}">
+      Your ${brandNameHtml()} account password was changed successfully.
+      You can sign in with your new password using the button below.
+    </p>
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${href}" style="${EMAIL_STYLES.button}">Sign in</a>
+    </div>
+    <div style="border-top: 1px solid #e5e5e5; margin-top: 24px; padding-top: 16px;">
+      <p style="${EMAIL_STYLES.muted}">
+        If you did not make this change, reset your password immediately and contact support.
+      </p>
+    </div>
+  `;
+  return emailShell(body);
+}
+
 export type PaymentDecisionEmailParams = {
   firstName: string;
   amount: number;

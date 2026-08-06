@@ -110,7 +110,7 @@ export default function ForgotPasswordForm({
             <CheckCircle className="w-8 h-8 text-green-300" />
           </div>
           <div>
-            <h3 className="mb-2 text-lg font-semibold text-green-300">
+            <h3 className="mb-2 text-lg font-semibold text-green-300!">
               Check your email!
             </h3>
             <p className="mb-4 text-sm text-white/80">

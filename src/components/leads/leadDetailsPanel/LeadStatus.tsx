@@ -67,6 +67,11 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, users, onLeadUpdated }) =
   );
 
   const currentStatusObj = findStatusByIdOrName(lead.status);
+  const selectStatusValue = currentStatusObj
+    ? currentStatusObj._id || currentStatusObj.id || lead.status
+    : /^[a-f0-9]{24}$/i.test(lead.status || "")
+      ? "NEW"
+      : lead.status || "NEW";
 
   const isAdmin = session?.user?.role === "ADMIN";
 
@@ -79,6 +84,10 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, users, onLeadUpdated }) =
       const status = findStatusByIdOrName(statusId);
       if (status) {
         return status.name;
+      }
+      // Orphaned custom status id (status was deleted) — show default New.
+      if (/^[a-f0-9]{24}$/i.test(statusId)) {
+        return "New";
       }
       // Capitalize fallback status name (e.g., "NEW" -> "New")
       if (statusId) {
@@ -153,7 +162,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, users, onLeadUpdated }) =
           </div>
         ) : (
           <Select
-            value={lead.status}
+            value={selectStatusValue}
             onValueChange={handleStatusChange}
             disabled={isUpdating}
           >
@@ -179,7 +188,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, users, onLeadUpdated }) =
                     color: triggerTextColor,
                   }}
                 >
-                  {getStatusDisplayName(lead.status)}
+                  {getStatusDisplayName(selectStatusValue)}
                 </span>
                 {isUpdating && (
                   <Loader2

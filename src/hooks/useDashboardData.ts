@@ -245,8 +245,9 @@ export const useLeadStatusCounts = () => {
     staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
     retry: 1,
-    // Returning to the dashboard should reuse cache without a loading flash.
-    refetchOnMount: false,
+    // Refetch when remounting if CRUD elsewhere marked this query stale
+    // (e.g. creating a status on all-leads). placeholderData avoids a flash.
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     enabled: !!scopeKey,

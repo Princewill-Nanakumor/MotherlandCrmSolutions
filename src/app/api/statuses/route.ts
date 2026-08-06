@@ -83,9 +83,10 @@ export async function GET() {
       });
     }
 
-    // Set cache headers
+    // Never let the browser serve a stale status list after create/delete —
+    // StatusModal and filters refetch this endpoint often.
     const headers = new Headers();
-    headers.set("Cache-Control", "private, max-age=300"); // 5 minutes
+    headers.set("Cache-Control", "private, no-store, max-age=0");
     headers.set("Vary", "Cookie");
 
     return NextResponse.json(transformedStatuses, {

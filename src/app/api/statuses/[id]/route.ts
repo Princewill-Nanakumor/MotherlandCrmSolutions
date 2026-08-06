@@ -5,6 +5,7 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import Status from "@/models/Status";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
+import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 
 // Helper to retry DB operation if connection fails
 async function withDbRetry<T>(
@@ -190,7 +191,122 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ message: "Status deleted successfully" });
+    // Leads may store custom status as the ObjectId hex string, ObjectId, or
+    // the display name. Use the native collection so Mongoose enum casting
+    // cannot skip documents that already hold a custom status value.
+    const statusName = (existingStatus.name || "").trim() || "Deleted status";
+    const leadStatusOr: Record<string, unknown>[] = [
+      { status: id },
+      { status: query._id },
+    ];
+    if (statusName && statusName !== "Deleted status") {
+      leadStatusOr.push({ status: statusName });
+    }
+
+    const now = new Date();
+    const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error("Database connection not available");
+    }
+
+    const affectedLeads = await db
+      .collection("leads")
+      .find(
+        {
+          adminId: query.adminId,
+          $or: leadStatusOr,
+        },
+        { projection: { _id: 1 } },
+      )
+      .toArray();
+
+    const reassigned = await db.collection("leads").updateMany(
+      {
+        adminId: query.adminId,
+        $or: leadStatusOr,
+      },
+      {
+        $set: {
+          status: "NEW",
+          statusChangedAt: now,
+          updatedAt: now,
+        },
+      },
+    );
+
+    // Timeline entry so the details panel shows: previous status → New.
+    if (affectedLeads.length > 0) {
+      const actorId = new mongoose.Types.ObjectId(session.user.id);
+      const activityDocs = affectedLeads.map((lead) => ({
+        type: "STATUS_CHANGE",
+        userId: actorId,
+        adminId: query.adminId,
+        leadId: lead._id,
+        details: `Status changed from ${statusName} to New (previous status deleted)`,
+        timestamp: now,
+        metadata: {
+          reason: "status_deleted",
+          previousStatusDeleted: true,
+          oldStatus: statusName,
+          newStatus: "New",
+          oldStatusName: statusName,
+          newStatusName: "New",
+          oldStatusId: id,
+          newStatusId: "NEW",
+          performedBy: {
+            id: session.user.id,
+            firstName: session.user.firstName ?? "",
+            lastName: session.user.lastName ?? "",
+          },
+        },
+      }));
+
+      try {
+        await db.collection("activities").insertMany(activityDocs, {
+          ordered: false,
+        });
+      } catch (activityError) {
+        console.error(
+          "Failed to write status-deleted timeline activities:",
+          activityError,
+        );
+      }
+    }
+
+    // Status-counts also reads a legacy `statuses` collection — remove there too.
+    try {
+      await db.collection("statuses").deleteOne({
+        _id: query._id,
+        adminId: query.adminId,
+      });
+    } catch (cleanupError) {
+      console.error("Failed to clean legacy statuses collection:", cleanupError);
+    }
+
+    const affectedLeadIds = affectedLeads.map((lead) => lead._id.toString());
+
+    try {
+      await publishAdminLeadsUpdatedEvent(session.user.id, {
+        type: "status_changed",
+        statusId: id,
+        status: "NEW",
+        reassignedTo: "NEW",
+        leadIds: affectedLeadIds,
+        // Keep leadId for single-lead listeners when only one lead was affected.
+        ...(affectedLeadIds.length === 1
+          ? { leadId: affectedLeadIds[0] }
+          : {}),
+        modifiedCount: reassigned.modifiedCount,
+      });
+    } catch (publishError) {
+      console.error("Failed to publish status-deleted event:", publishError);
+    }
+
+    return NextResponse.json({
+      message: "Status deleted successfully",
+      reassignedLeads: reassigned.modifiedCount,
+      leadIds: affectedLeadIds,
+    });
   } catch (error) {
     console.error("Error deleting status:", error);
     return NextResponse.json(
