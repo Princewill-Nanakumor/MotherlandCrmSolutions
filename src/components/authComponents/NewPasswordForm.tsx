@@ -139,7 +139,7 @@ export function NewPasswordForm({ token }: NewPasswordFormProps) {
             <CheckCircle className="w-8 h-8 text-green-300" />
           </div>
           <div>
-            <h2 className="mb-2 text-xl font-bold text-green-300 sm:text-2xl">
+            <h2 className="mb-2 text-xl font-bold text-green-300! sm:text-2xl">
               Password reset successfully
             </h2>
             <p className="mb-4 text-sm text-white/80 sm:text-base">

@@ -93,7 +93,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="text-sm dark:text-gray-300 text-gray-600 mb-2 flex items-center gap-2">
-            <User className="h-5 w-5 text-purple-400" />
+            <User className="h-5 w-5 brand-icon" />
             First Name
           </label>
           {isEditing ? (
@@ -121,7 +121,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         </div>
         <div>
           <label className="text-sm dark:text-gray-300 text-gray-600 mb-2 flex items-center gap-2">
-            <User className="h-5 w-5 text-purple-400" />
+            <User className="h-5 w-5 brand-icon" />
             Last Name
           </label>
           {isEditing ? (
@@ -152,7 +152,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       {/* Email */}
       <div>
         <label className="text-sm dark:text-gray-300 text-gray-600 mb-2 flex items-center gap-2">
-          <Mail className="h-5 w-5 text-purple-400" />
+          <Mail className="h-5 w-5 brand-icon" />
           Email Address
         </label>
         <div className="w-full h-10 px-3 flex items-center dark:bg-transparent dark:border dark:border-gray-600 dark:text-white! bg-white border border-gray-300 text-gray-900! rounded-md text-sm">
@@ -163,7 +163,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       {/* Country Select */}
       <div>
         <label className="text-sm dark:text-gray-300 text-gray-600 mb-2 flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-purple-400" />
+          <MapPin className="h-5 w-5 brand-icon" />
           Country
         </label>
         {isEditing ? (
