@@ -95,6 +95,7 @@ export const useLeadsPage = (
     handleCountryFilterModeChange,
     handleStatusFilterModeChange,
     handleSourceFilterModeChange,
+    handleUserFilterModeChange,
     handleStatusFilterChange,
     handleSourceFilterChange,
     handleFilterChange,
@@ -143,6 +144,7 @@ export const useLeadsPage = (
     uiState.countryFilterMode,
     uiState.statusFilterMode,
     uiState.sourceFilterMode,
+    uiState.userFilterMode,
     searchQuery,
   ] as const;
 
@@ -192,6 +194,7 @@ export const useLeadsPage = (
       params.set("countryMode", uiState.countryFilterMode);
       params.set("statusMode", uiState.statusFilterMode);
       params.set("sourceMode", uiState.sourceFilterMode);
+      params.set("userMode", uiState.userFilterMode);
       const searchTrimmed = (searchQuery ?? "").trim();
       if (searchTrimmed) {
         // Encode so "+15195660267" is sent as %2B15195660267 (not decoded as space)
@@ -563,6 +566,7 @@ export const useLeadsPage = (
     handleCountryFilterModeChange,
     handleStatusFilterModeChange,
     handleSourceFilterModeChange,
+    handleUserFilterModeChange,
     handleStatusFilterChange,
     handleSourceFilterChange,
     handleFilterChange,

@@ -17,27 +17,27 @@ import { AddLeadDialog } from "@/components/dashboardComponents/AddLeadDialog";
 // ✅ Enhanced Filter Skeleton Component
 const FilterSkeleton = () => (
   <div
-    className="flex items-center gap-3"
+    className="flex gap-3 items-center"
     role="status"
     aria-label="Loading filters"
   >
     {/* Add Lead Button Skeleton */}
-    <div className="w-[120px] h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
+    <div className="h-10 bg-gray-200 rounded-md animate-pulse w-30 dark:bg-gray-700" />
 
     {/* Add Status Button Skeleton */}
-    <div className="w-[120px] h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
+    <div className="h-10 bg-gray-200 rounded-md animate-pulse w-30 dark:bg-gray-700" />
 
     {/* User Filter Skeleton */}
-    <div className="w-[180px] h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
+    <div className="h-10 bg-gray-200 rounded-md animate-pulse w-45 dark:bg-gray-700" />
 
     {/* Status Filter Skeleton */}
-    <div className="w-[180px] h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
+    <div className="h-10 bg-gray-200 rounded-md animate-pulse w-45 dark:bg-gray-700" />
 
     {/* Source Filter Skeleton */}
-    <div className="w-[180px] h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
+    <div className="h-10 bg-gray-200 rounded-md animate-pulse w-45 dark:bg-gray-700" />
 
     {/* Country Filter Skeleton */}
-    <div className="w-[180px] h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
+    <div className="h-10 bg-gray-200 rounded-md animate-pulse w-45 dark:bg-gray-700" />
   </div>
 );
 
@@ -81,6 +81,8 @@ interface LeadsFilterControlsProps {
   onSourceFilterChange: (sources: string[]) => void; // Changed to array
   sourceFilterMode?: "include" | "exclude"; // Filter mode
   onSourceFilterModeChange?: (mode: "include" | "exclude") => void; // Mode change handler
+  userFilterMode?: "include" | "exclude";
+  onUserFilterModeChange?: (mode: "include" | "exclude") => void;
   isLoading: boolean;
   filterByUser: string[]; // Changed to array
   onFilterChange: (values: string[]) => void; // Changed to array
@@ -111,6 +113,8 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
   onSourceFilterChange,
   sourceFilterMode,
   onSourceFilterModeChange,
+  userFilterMode,
+  onUserFilterModeChange,
   isLoading,
   filterByUser,
   onFilterChange,
@@ -124,9 +128,9 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
 
   return (
     <>
-      <div className="sticky top-0 z-10 px-4 sm:px-6 lg:px-8 pb-5 mt-8 bg-white dark:bg-gray-800">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-3 py-4 sm:px-4 border rounded-xl">
-          <div className="flex flex-wrap items-center gap-2 min-w-0 w-full md:w-auto order-2 md:order-1">
+      <div className="sticky top-0 z-10 px-4 pb-5 mt-8 bg-white sm:px-6 lg:px-8 dark:bg-gray-800">
+        <div className="flex flex-col gap-4 px-3 py-4 rounded-xl border md:flex-row md:items-center md:justify-between sm:px-4">
+          <div className="flex flex-wrap order-2 gap-2 items-center w-full min-w-0 md:w-auto md:order-1">
             <ErrorBoundary
               fallback={
                 <div className="text-red-500">Bulk actions failed to load</div>
@@ -147,25 +151,25 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
             </ErrorBoundary>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0 w-full md:w-auto order-1 md:order-2">
+          <div className="flex flex-wrap order-1 gap-2 items-center w-full min-w-0 sm:gap-3 md:w-auto md:order-2">
             <ErrorBoundary fallback={<FilterSkeleton />}>
               {/* Add Lead Button - with loading skeleton */}
               {showFilterSkeletons ? (
-                <div className="w-[120px] h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
+                <div className="h-10 bg-gray-200 rounded-md animate-pulse w-30 dark:bg-gray-700" />
               ) : (
                 <Button
                   onClick={() => setIsAddLeadDialogOpen(true)}
                   disabled={isLoading}
-                  className="text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                  className="text-white from-indigo-600 to-purple-600 bg-linear-to-r hover:from-indigo-700 hover:to-purple-700"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="mr-2 w-4 h-4" />
                   Add Lead
                 </Button>
               )}
 
               {/* Add Status Button - with loading skeleton */}
               {showFilterSkeletons ? (
-                <div className="w-[120px] h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
+                <div className="h-10 bg-gray-200 rounded-md animate-pulse w-30 dark:bg-gray-700" />
               ) : (
                 <AddStatusButton disabled={isLoading} />
               )}
@@ -176,6 +180,8 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
                 onChange={onFilterChange}
                 disabled={isLoading}
                 isLoading={showFilterSkeletons}
+                mode={userFilterMode}
+                onModeChange={onUserFilterModeChange}
               />
 
               {/* Status Filter - reads from cache */}

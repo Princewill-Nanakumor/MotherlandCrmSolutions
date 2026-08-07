@@ -41,6 +41,7 @@ function stripLeadFilterModesFromUrl(url: string): string {
     parsed.searchParams.delete("countryMode");
     parsed.searchParams.delete("statusMode");
     parsed.searchParams.delete("sourceMode");
+    parsed.searchParams.delete("userMode");
 
     const nestedCallback = parsed.searchParams.get("callbackUrl");
     if (nestedCallback) {

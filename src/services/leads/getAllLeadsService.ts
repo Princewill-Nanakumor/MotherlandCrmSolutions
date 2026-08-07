@@ -175,6 +175,7 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
   const countryMode = searchParams.get("countryMode") === "exclude" ? "exclude" : "include";
   const statusMode = searchParams.get("statusMode") === "exclude" ? "exclude" : "include";
   const sourceMode = searchParams.get("sourceMode") === "exclude" ? "exclude" : "include";
+  const userMode = searchParams.get("userMode") === "exclude" ? "exclude" : "include";
   const rawSearch = searchParams.get("search") || "";
 
   await connectMongoDB();
@@ -214,7 +215,31 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
         }
       })
       .filter((id): id is ObjectId => id !== null);
-    if (hasUnassigned && userIds.length === 0) {
+
+    if (userMode === "exclude") {
+      const excludeClauses: LeadFilter[] = [];
+      if (hasUnassigned) {
+        // Hide unassigned → keep only leads that have an assignee
+        excludeClauses.push({
+          assignedTo: { $exists: true, $ne: null },
+        } as LeadFilter);
+      }
+      if (userIds.length > 0) {
+        excludeClauses.push({
+          $nor: [
+            { assignedTo: { $in: userIds } },
+            { "assignedTo._id": { $in: userIds } },
+          ],
+        } as LeadFilter);
+      }
+      if (excludeClauses.length === 1) {
+        Object.assign(filter, excludeClauses[0]);
+      } else if (excludeClauses.length > 1) {
+        filter.$and = filter.$and
+          ? [...filter.$and, ...excludeClauses]
+          : excludeClauses;
+      }
+    } else if (hasUnassigned && userIds.length === 0) {
       filter.$or = [{ assignedTo: null }, { assignedTo: { $exists: false } }];
     } else if (hasUnassigned && userIds.length > 0) {
       filter.$or = [

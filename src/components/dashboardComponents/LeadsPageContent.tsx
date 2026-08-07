@@ -75,6 +75,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
     handleStatusFilterModeChange,
     handleSourceFilterChange,
     handleSourceFilterModeChange,
+    handleUserFilterModeChange,
     handleFilterChange,
     handlePageSizeChange,
     handleServerPageChange,
@@ -229,6 +230,8 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
             onSourceFilterChange={handleSourceFilterChange}
             sourceFilterMode={uiState.sourceFilterMode}
             onSourceFilterModeChange={handleSourceFilterModeChange}
+            userFilterMode={uiState.userFilterMode}
+            onUserFilterModeChange={handleUserFilterModeChange}
             isLoading={shouldShowLoading}
             filterByUser={
               displayFilterByUser === "all" || !displayFilterByUser

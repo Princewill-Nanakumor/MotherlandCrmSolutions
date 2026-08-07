@@ -31,6 +31,7 @@ export const useLeadsURLManagement = () => {
     const preferredOrder = [
       "page",
       "user",
+      "userMode",
       "countryMode",
       "statusMode",
       "sourceMode",
@@ -82,6 +83,7 @@ export const useLeadsURLManagement = () => {
     if (!params.has("countryMode")) params.set("countryMode", "include");
     if (!params.has("statusMode")) params.set("statusMode", "include");
     if (!params.has("sourceMode")) params.set("sourceMode", "include");
+    if (!params.has("userMode")) params.set("userMode", "include");
   }, []);
 
   const handleSort = useCallback(

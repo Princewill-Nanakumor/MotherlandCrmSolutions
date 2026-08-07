@@ -38,7 +38,7 @@ describe("applyRemoteLeadStatusToListCaches", () => {
   it("removes lead from include status-filtered all-leads page", () => {
     const queryClient = new QueryClient();
     // ["leads", page, pageSize, user, country[], status[], source[],
-    //  countryMode, statusMode, sourceMode, search]
+    //  countryMode, statusMode, sourceMode, userMode, search]
     const key = [
       "leads",
       1,
@@ -47,6 +47,7 @@ describe("applyRemoteLeadStatusToListCaches", () => {
       [],
       ["NEW"],
       [],
+      "include",
       "include",
       "include",
       "include",

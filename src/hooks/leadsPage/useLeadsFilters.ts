@@ -9,16 +9,19 @@ const STORAGE_KEYS = {
 
 const FILTER_DEBOUNCE_MS = 300;
 
+type FilterMode = "include" | "exclude";
+
 type UIState = {
   isDialogOpen: boolean;
   isUnassignDialogOpen: boolean;
   selectedUser: string;
   filterByCountry: string[];
-  countryFilterMode: "include" | "exclude";
+  countryFilterMode: FilterMode;
   filterByStatus: string[];
-  statusFilterMode: "include" | "exclude";
+  statusFilterMode: FilterMode;
   filterBySource: string[];
-  sourceFilterMode: "include" | "exclude";
+  sourceFilterMode: FilterMode;
+  userFilterMode: FilterMode;
   searchQuery: string;
 };
 
@@ -83,8 +86,8 @@ export function useLeadsFilters({
   const getInitialFilterMode = (
     urlMode: string | null,
     localStorageKey: string,
-    defaultValue: "include" | "exclude" = "include",
-  ): "include" | "exclude" => {
+    defaultValue: FilterMode = "include",
+  ): FilterMode => {
     if (urlMode === "include" || urlMode === "exclude") return urlMode;
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(localStorageKey);
@@ -99,6 +102,7 @@ export function useLeadsFilters({
   const initialCountryMode = searchParams.get("countryMode");
   const initialStatusMode = searchParams.get("statusMode");
   const initialSourceMode = searchParams.get("sourceMode");
+  const initialUserMode = searchParams.get("userMode");
 
   const [uiState, setUiState] = useState<UIState>({
     isDialogOpen: false,
@@ -134,6 +138,11 @@ export function useLeadsFilters({
       "sourceFilterMode",
       "include",
     ),
+    userFilterMode: getInitialFilterMode(
+      initialUserMode,
+      "userFilterMode",
+      "include",
+    ),
     searchQuery: searchQuery,
   });
 
@@ -157,6 +166,7 @@ export function useLeadsFilters({
   );
   const filterModeChangeInProgressRef = useRef(false);
   const prevSearchQueryRef = useRef(searchQuery);
+  const prevSearchParamsStringRef = useRef(searchParams.toString());
 
   useEffect(() => {
     setUiState((prev) => ({ ...prev, searchQuery }));
@@ -225,9 +235,11 @@ export function useLeadsFilters({
       localStorage.setItem("countryFilterMode", uiState.countryFilterMode);
       localStorage.setItem("statusFilterMode", uiState.statusFilterMode);
       localStorage.setItem("sourceFilterMode", uiState.sourceFilterMode);
+      localStorage.setItem("userFilterMode", uiState.userFilterMode);
       window.dispatchEvent(new CustomEvent("countryFilterModeChanged"));
       window.dispatchEvent(new CustomEvent("statusFilterModeChanged"));
       window.dispatchEvent(new CustomEvent("sourceFilterModeChanged"));
+      window.dispatchEvent(new CustomEvent("userFilterModeChanged"));
     }
   }, [
     isInitialized,
@@ -237,6 +249,7 @@ export function useLeadsFilters({
     uiState.countryFilterMode,
     uiState.statusFilterMode,
     uiState.sourceFilterMode,
+    uiState.userFilterMode,
   ]);
 
   useEffect(() => {
@@ -247,6 +260,7 @@ export function useLeadsFilters({
     const urlCountryMode = searchParams.get("countryMode");
     const urlStatusMode = searchParams.get("statusMode");
     const urlSourceMode = searchParams.get("sourceMode");
+    const urlUserMode = searchParams.get("userMode");
 
     const parseUrlParam = (param: string | null): string[] => {
       if (!param) return [];
@@ -317,31 +331,44 @@ export function useLeadsFilters({
       pendingFilterByUserRef.current = "all";
     }
 
-    if (!filterModeChangeInProgressRef.current) {
-      if (
-        urlCountryMode &&
-        (urlCountryMode === "include" || urlCountryMode === "exclude") &&
-        uiState.countryFilterMode !== urlCountryMode
-      ) {
-        setUiState((prev) => ({ ...prev, countryFilterMode: urlCountryMode }));
-      }
-      if (
-        urlStatusMode &&
-        (urlStatusMode === "include" || urlStatusMode === "exclude") &&
-        uiState.statusFilterMode !== urlStatusMode
-      ) {
-        setUiState((prev) => ({ ...prev, statusFilterMode: urlStatusMode }));
-      }
-      if (
-        urlSourceMode &&
-        (urlSourceMode === "include" || urlSourceMode === "exclude") &&
-        uiState.sourceFilterMode !== urlSourceMode
-      ) {
-        setUiState((prev) => ({ ...prev, sourceFilterMode: urlSourceMode }));
-      }
-    } else {
+    // Only adopt modes from the URL when Next's searchParams actually changed
+    // (back/forward or router navigation). Mode toggles use history.replaceState,
+    // which leaves searchParams stale — syncing then would snap modes back.
+    const searchParamsString = searchParams.toString();
+    const searchParamsChanged =
+      searchParamsString !== prevSearchParamsStringRef.current;
+    prevSearchParamsStringRef.current = searchParamsString;
+
+    if (filterModeChangeInProgressRef.current) {
       filterModeChangeInProgressRef.current = false;
+      return;
     }
+
+    if (!searchParamsChanged) return;
+
+    const syncMode = (
+      urlMode: string | null,
+      stateMode: FilterMode,
+      key: keyof Pick<
+        UIState,
+        | "countryFilterMode"
+        | "statusFilterMode"
+        | "sourceFilterMode"
+        | "userFilterMode"
+      >,
+    ) => {
+      if (
+        (urlMode === "include" || urlMode === "exclude") &&
+        stateMode !== urlMode
+      ) {
+        setUiState((prev) => ({ ...prev, [key]: urlMode }));
+      }
+    };
+
+    syncMode(urlCountryMode, uiState.countryFilterMode, "countryFilterMode");
+    syncMode(urlStatusMode, uiState.statusFilterMode, "statusFilterMode");
+    syncMode(urlSourceMode, uiState.sourceFilterMode, "sourceFilterMode");
+    syncMode(urlUserMode, uiState.userFilterMode, "userFilterMode");
   }, [filterByUser, filterJustChangedRef, searchParams, setFilterByUser, uiState]);
 
   const commitFilters = useCallback(() => {
@@ -372,11 +399,13 @@ export function useLeadsFilters({
     else params.set("source", JSON.stringify(sources));
     if (user === "all") params.delete("user");
     else params.set("user", JSON.stringify(user.split(",")));
-    if (!params.has("countryMode")) params.set("countryMode", uiState.countryFilterMode);
-    if (!params.has("statusMode")) params.set("statusMode", uiState.statusFilterMode);
-    if (!params.has("sourceMode")) params.set("sourceMode", uiState.sourceFilterMode);
+    params.set("countryMode", uiState.countryFilterMode);
+    params.set("statusMode", uiState.statusFilterMode);
+    params.set("sourceMode", uiState.sourceFilterMode);
+    params.set("userMode", uiState.userFilterMode);
     const url = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     window.history.replaceState(null, "", url);
+    prevSearchParamsStringRef.current = params.toString();
 
     pendingFilterByStatusRef.current = null;
     pendingFilterByCountryRef.current = null;
@@ -396,6 +425,7 @@ export function useLeadsFilters({
     uiState.filterByStatus,
     uiState.sourceFilterMode,
     uiState.statusFilterMode,
+    uiState.userFilterMode,
   ]);
 
   const scheduleFilterCommit = useCallback(() => {
@@ -451,7 +481,15 @@ export function useLeadsFilters({
   );
 
   const setMode = useCallback(
-    (modeKey: "countryFilterMode" | "statusFilterMode" | "sourceFilterMode", mode: "include" | "exclude", param: string) => {
+    (
+      modeKey:
+        | "countryFilterMode"
+        | "statusFilterMode"
+        | "sourceFilterMode"
+        | "userFilterMode",
+      mode: FilterMode,
+      param: string,
+    ) => {
       filterModeChangeInProgressRef.current = true;
       setFilterJustChanged(true);
       setPageState(1);
@@ -459,22 +497,49 @@ export function useLeadsFilters({
       const params = new URLSearchParams(Array.from(searchParams.entries()));
       params.set("page", "1");
       params.set(param, mode);
+      // Keep other mode params aligned with current UI state
+      if (modeKey !== "countryFilterMode") {
+        params.set("countryMode", uiState.countryFilterMode);
+      }
+      if (modeKey !== "statusFilterMode") {
+        params.set("statusMode", uiState.statusFilterMode);
+      }
+      if (modeKey !== "sourceFilterMode") {
+        params.set("sourceMode", uiState.sourceFilterMode);
+      }
+      if (modeKey !== "userFilterMode") {
+        params.set("userMode", uiState.userFilterMode);
+      }
       const url = params.toString() ? `${pathname}?${params.toString()}` : pathname;
       window.history.replaceState(null, "", url);
+      prevSearchParamsStringRef.current = params.toString();
     },
-    [pathname, searchParams, setFilterJustChanged, setPageState],
+    [
+      pathname,
+      searchParams,
+      setFilterJustChanged,
+      setPageState,
+      uiState.countryFilterMode,
+      uiState.sourceFilterMode,
+      uiState.statusFilterMode,
+      uiState.userFilterMode,
+    ],
   );
 
   const handleCountryFilterModeChange = useCallback(
-    (mode: "include" | "exclude") => setMode("countryFilterMode", mode, "countryMode"),
+    (mode: FilterMode) => setMode("countryFilterMode", mode, "countryMode"),
     [setMode],
   );
   const handleStatusFilterModeChange = useCallback(
-    (mode: "include" | "exclude") => setMode("statusFilterMode", mode, "statusMode"),
+    (mode: FilterMode) => setMode("statusFilterMode", mode, "statusMode"),
     [setMode],
   );
   const handleSourceFilterModeChange = useCallback(
-    (mode: "include" | "exclude") => setMode("sourceFilterMode", mode, "sourceMode"),
+    (mode: FilterMode) => setMode("sourceFilterMode", mode, "sourceMode"),
+    [setMode],
+  );
+  const handleUserFilterModeChange = useCallback(
+    (mode: FilterMode) => setMode("userFilterMode", mode, "userMode"),
     [setMode],
   );
 
@@ -519,9 +584,11 @@ export function useLeadsFilters({
       localStorage.removeItem("countryFilterMode");
       localStorage.removeItem("statusFilterMode");
       localStorage.removeItem("sourceFilterMode");
+      localStorage.removeItem("userFilterMode");
     }
     setFilterJustChanged(true);
     filterJustChangedRef.current = true;
+    filterModeChangeInProgressRef.current = true;
     pendingPageFromPaginationRef.current = null;
     setDisplayFilterByStatus([]);
     setDisplayFilterByCountry([]);
@@ -532,9 +599,14 @@ export function useLeadsFilters({
       filterByCountry: [],
       filterByStatus: [],
       filterBySource: [],
+      countryFilterMode: "include",
+      statusFilterMode: "include",
+      sourceFilterMode: "include",
+      userFilterMode: "include",
     }));
     setFilterByUser("all");
     window.history.replaceState(null, "", pathname);
+    prevSearchParamsStringRef.current = "";
   }, [
     filterJustChangedRef,
     pathname,
@@ -554,6 +626,7 @@ export function useLeadsFilters({
     handleCountryFilterModeChange,
     handleStatusFilterModeChange,
     handleSourceFilterModeChange,
+    handleUserFilterModeChange,
     handleStatusFilterChange,
     handleSourceFilterChange,
     handleFilterChange,

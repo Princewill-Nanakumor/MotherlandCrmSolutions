@@ -18,7 +18,7 @@ function isLeadsListRoot(key: QueryKey): boolean {
 /**
  * Paginated all-leads keys from `useLeadsPage`:
  * ["leads", page, pageSize, user, country[], status[], source[],
- *  countryMode, statusMode, sourceMode, search]
+ *  countryMode, statusMode, sourceMode, userMode, search]
  */
 function getStatusFilterFromQueryKey(key: QueryKey): {
   ids: string[];
