@@ -8,7 +8,7 @@ type MotherlandLogoProps = {
 /** Brand mark — square fill uses --brand-from (not currentColor, so dark mode text rules can't wash it out). */
 export function MotherlandLogo({
   className,
-  title = "Motherland CRM Solutions",
+  title = "Motherland CRM",
 }: MotherlandLogoProps) {
   return (
     <svg

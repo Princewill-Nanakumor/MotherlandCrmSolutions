@@ -20,7 +20,7 @@ const SHARED_SUPPORT_TELEGRAM = {
 
 const HOST_PRESETS: Record<string, BrandPreset> = {
   "motherlandcrmsolutions.com": {
-    displayName: "Motherland CRM Solutions",
+    displayName: "Motherland CRM",
     shortName: "Motherland CRM",
     supportEmail: "support@motherlandcrmsolutions.com",
     logoLetter: "M",
