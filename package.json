@@ -85,6 +85,7 @@
     "@tanstack/react-query": "^5.81.5",
     "@tanstack/react-query-devtools": "^5.85.5",
     "@tanstack/react-table": "^8.21.3",
+    "@vercel/speed-insights": "^2.0.0",
     "ably": "^2.21.0",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { GeistMono } from "geist/font/mono";
 import Script from "next/script";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AblyTeardownOutsideDashboard } from "@/components/AblyTeardownOutsideDashboard";
 import { AppBrandingProvider } from "@/components/AppBrandingProvider";
 import {
@@ -75,6 +76,8 @@ export default async function RootLayout({
             {children}
           </AppBrandingProvider>
         </div>
+        {/* Only mount on Vercel so Netlify deploys stay unaffected. */}
+        {process.env.VERCEL === "1" ? <SpeedInsights /> : null}
       </body>
     </html>
   );
