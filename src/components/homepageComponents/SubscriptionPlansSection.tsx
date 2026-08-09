@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import {
   Eyebrow,
+  Reveal,
   RevealGroup,
   SectionHeading,
   revealItem,
@@ -129,11 +130,8 @@ export default function SubscriptionPlansSection() {
           ))}
         </RevealGroup>
 
-        <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
-          whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.5 }}
+        <Reveal
+          y={12}
           className="flex flex-col items-center gap-4 mt-14 text-center"
         >
           <p className="text-gray-600">
@@ -159,7 +157,7 @@ export default function SubscriptionPlansSection() {
               Email us
             </a>
           </div>
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   );

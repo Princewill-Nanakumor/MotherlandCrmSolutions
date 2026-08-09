@@ -7,26 +7,60 @@ import {
   useReducedMotion,
   type Variants,
 } from "framer-motion";
-import { useRef, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { cn } from "@/libs/utils";
 
 /**
  * Scroll-in reveal wrapper.
- * Respects `prefers-reduced-motion` (renders statically, no transform/opacity
- * animation) so the homepage stays accessible.
- * Locks after the first enter via useInView({ once: true }) — no replay.
+ * Respects `prefers-reduced-motion`.
  *
- * Use a tiny `amount` + rootMargin so tall mobile grids (e.g. feature cards
- * stacked in one column) still trigger — `amount: 0.2` never fires when the
- * target is taller than ~5× the viewport.
+ * Content stays visible by default. Entrance animation only runs when the
+ * node mounts below the fold — never leave opacity at 0 if intersection
+ * fails (sticky / overflow / display:none edge cases).
  */
 const REVEAL_IN_VIEW = {
   once: true,
-  // Any intersection — tall one-column feature grids on mobile never reach
-  // amount: 0.2 of their full height inside the viewport.
-  amount: "some" as const,
-  margin: "0px 0px -5% 0px" as const,
+  amount: 0.15,
+  margin: "0px 0px -40px 0px" as const,
 };
+
+function useShouldAnimateEntrance(ref: RefObject<HTMLElement | null>) {
+  const [phase, setPhase] = useState<"pending" | "animate" | "skip">("pending");
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) {
+      setPhase("skip");
+      return;
+    }
+
+    // display:none / zero-box → don't opacity-hide (StickyStory dual layout)
+    const style = window.getComputedStyle(el);
+    if (style.display === "none" || style.visibility === "hidden") {
+      setPhase("skip");
+      return;
+    }
+
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) {
+      setPhase("skip");
+      return;
+    }
+
+    const vh = window.innerHeight;
+    const alreadyOnScreen = rect.top < vh - 40 && rect.bottom > 40;
+    setPhase(alreadyOnScreen ? "skip" : "animate");
+  }, [ref]);
+
+  return phase;
+}
 
 export function Reveal({
   children,
@@ -43,18 +77,33 @@ export function Reveal({
 }) {
   const reduceMotion = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
+  const phase = useShouldAnimateEntrance(ref);
   const isInView = useInView(ref, { ...REVEAL_IN_VIEW, once });
+  const [forcedVisible, setForcedVisible] = useState(false);
 
-  if (reduceMotion) {
-    return <div className={className}>{children}</div>;
+  // Safety net: never stay invisible if IO never fires
+  useEffect(() => {
+    if (phase !== "animate") return;
+    const id = window.setTimeout(() => setForcedVisible(true), 1200);
+    return () => window.clearTimeout(id);
+  }, [phase]);
+
+  if (reduceMotion || phase === "pending" || phase === "skip") {
+    return (
+      <div ref={ref} className={className}>
+        {children}
+      </div>
+    );
   }
+
+  const visible = isInView || forcedVisible;
 
   return (
     <motion.div
       ref={ref}
       className={className}
       initial={{ opacity: 0, y }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y }}
+      animate={visible ? { opacity: 1, y: 0 } : { opacity: 0, y }}
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay }}
     >
       {children}
@@ -74,11 +123,25 @@ export function RevealGroup({
 }) {
   const reduceMotion = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
+  const phase = useShouldAnimateEntrance(ref);
   const isInView = useInView(ref, REVEAL_IN_VIEW);
+  const [forcedVisible, setForcedVisible] = useState(false);
 
-  if (reduceMotion) {
-    return <div className={className}>{children}</div>;
+  useEffect(() => {
+    if (phase !== "animate") return;
+    const id = window.setTimeout(() => setForcedVisible(true), 1200);
+    return () => window.clearTimeout(id);
+  }, [phase]);
+
+  if (reduceMotion || phase === "pending" || phase === "skip") {
+    return (
+      <div ref={ref} className={className}>
+        {children}
+      </div>
+    );
   }
+
+  const visible = isInView || forcedVisible;
 
   const container: Variants = {
     hidden: {},
@@ -91,7 +154,7 @@ export function RevealGroup({
       className={className}
       variants={container}
       initial="hidden"
-      animate={isInView ? "visible" : "hidden"}
+      animate={visible ? "visible" : "hidden"}
     >
       {children}
     </motion.div>
@@ -135,6 +198,7 @@ export function SectionHeading({
   align = "center",
   className,
   id,
+  animate = true,
 }: {
   eyebrow?: ReactNode;
   title: ReactNode;
@@ -142,31 +206,35 @@ export function SectionHeading({
   align?: "center" | "left";
   className?: string;
   id?: string;
+  /** Set false when the heading must always paint (e.g. sticky story). */
+  animate?: boolean;
 }) {
-  return (
-    <div
-      className={cn(
-        "max-w-2xl",
-        align === "center" ? "mx-auto text-center" : "text-left",
-        className,
-      )}
-    >
-      {eyebrow ? <Reveal className="mb-4">{eyebrow}</Reveal> : null}
-      <Reveal delay={0.05}>
-        <h2
-          id={id}
-          className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl md:text-[2.75rem] md:leading-[1.1]"
-        >
-          {title}
-        </h2>
-      </Reveal>
+  const body = (
+    <>
+      {eyebrow ? <div className="mb-4">{eyebrow}</div> : null}
+      <h2
+        id={id}
+        className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl md:text-[2.75rem] md:leading-[1.1]"
+      >
+        {title}
+      </h2>
       {subtitle ? (
-        <Reveal delay={0.1}>
-          <p className="mt-4 text-base leading-relaxed text-gray-600 sm:text-lg">
-            {subtitle}
-          </p>
-        </Reveal>
+        <p className="mt-4 text-base leading-relaxed text-gray-600 sm:text-lg">
+          {subtitle}
+        </p>
       ) : null}
-    </div>
+    </>
   );
+
+  const layoutClass = cn(
+    "max-w-2xl",
+    align === "center" ? "mx-auto text-center" : "text-left",
+    className,
+  );
+
+  if (!animate) {
+    return <div className={layoutClass}>{body}</div>;
+  }
+
+  return <Reveal className={layoutClass}>{body}</Reveal>;
 }

@@ -12,6 +12,7 @@ import {
 import { ArrowRight } from "lucide-react";
 import {
   Eyebrow,
+  Reveal,
   SectionHeading,
 } from "@/components/homepageComponents/primitives";
 import { HOME_JOURNEY } from "@/components/homepageComponents/homepageContent";
@@ -71,12 +72,9 @@ export default function TimelineSection() {
                     <span className="w-2 h-2 bg-white rounded-full" />
                   </span>
 
-                  {/* Card */}
-                  <motion.div
-                    initial={reduce ? undefined : { opacity: 0, y: 32 }}
-                    whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-80px" }}
-                    transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                  {/* Card — Reveal skips opacity-0 when already in view after InViewSwap */}
+                  <Reveal
+                    y={20}
                     className={cn(
                       "group ml-16 md:ml-0",
                       isRight
@@ -115,7 +113,7 @@ export default function TimelineSection() {
                         <ArrowRight className="w-3.5 h-3.5" />
                       </span>
                     </div>
-                  </motion.div>
+                  </Reveal>
                 </li>
               );
             })}

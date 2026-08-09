@@ -109,6 +109,7 @@ export default function FeaturedCrmSection() {
   const heading = (
     <SectionHeading
       id="featured-heading"
+      animate={false}
       eyebrow={<Eyebrow>Inside the CRM</Eyebrow>}
       title="Everything your sales team needs to close"
       subtitle="From first lead to final follow-up — the same tools your team uses every day in the dashboard, shown in one scroll."

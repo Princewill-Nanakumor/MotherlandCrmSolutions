@@ -19,10 +19,11 @@ export default function HeroSection() {
   const reduceMotion = useReducedMotion();
   const isAuthed = hasAuthorizedSession(status, session);
 
-  const fadeUp = reduceMotion
+  // LCP is the hero headline — never start it at opacity 0 (delays paint ~0.5–1s+).
+  const softFade = reduceMotion
     ? {}
     : {
-        initial: { opacity: 0, y: 28 },
+        initial: { opacity: 0, y: 16 },
         animate: { opacity: 1, y: 0 },
       };
 
@@ -38,40 +39,33 @@ export default function HeroSection() {
         {/* Copy column */}
         <div className="text-center lg:text-left">
           <motion.div
-            {...fadeUp}
-            transition={{ duration: 0.5, ease: "easeOut" }}
+            {...softFade}
+            transition={{ duration: 0.45, ease: "easeOut" }}
             className="inline-flex items-center gap-2 px-3 py-1 mb-6 text-xs font-semibold tracking-wide border rounded-full border-gray-200 brand-soft-bg text-(--brand-from)"
           >
             Real-time CRM · Motherland CRM
           </motion.div>
 
-          <motion.h1
+          <h1
             id="hero-heading"
-            {...fadeUp}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.05 }}
             className="text-4xl font-bold leading-[1.1] tracking-tight text-gray-900 sm:text-5xl md:text-6xl"
           >
             Turn more leads into
             <span className="block mt-2 brand-text-gradient">closed deals</span>
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            {...fadeUp}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.15 }}
-            className="max-w-xl mx-auto mt-6 text-lg leading-relaxed text-black! sm:text-xl lg:mx-0"
-          >
+          <p className="max-w-xl mx-auto mt-6 text-lg leading-relaxed text-black! sm:text-xl lg:mx-0">
             {displayName} gives your team one real-time CRM workspace to
             capture, assign, and track every lead from first touch to closed
             deal.
-          </motion.p>
+          </p>
 
-          <motion.div
-            {...fadeUp}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.25 }}
-            className="flex flex-col gap-3 justify-center items-center mt-8 sm:flex-row lg:justify-start"
-          >
+          <div className="flex flex-col gap-3 justify-center items-center mt-8 sm:flex-row lg:justify-start min-h-14">
             {status === "loading" ? (
-              <div className="w-44 h-14 bg-gray-200 rounded-xl animate-pulse" />
+              <div className="flex gap-3 w-full max-w-md sm:w-auto">
+                <div className="h-14 flex-1 sm:w-44 bg-gray-200 rounded-xl animate-pulse" />
+                <div className="hidden sm:block h-14 w-36 bg-gray-200 rounded-xl animate-pulse" />
+              </div>
             ) : isAuthed ? (
               <Link
                 href="/dashboard"
@@ -102,13 +96,9 @@ export default function HeroSection() {
                 </a>
               </>
             )}
-          </motion.div>
+          </div>
 
-          <motion.ul
-            {...fadeUp}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.35 }}
-            className="flex flex-wrap gap-y-2 gap-x-6 justify-center items-center mt-8 lg:justify-start"
-          >
+          <ul className="flex flex-wrap gap-y-2 gap-x-6 justify-center items-center mt-8 lg:justify-start">
             {TRUST_POINTS.map((point) => (
               <li
                 key={point}
@@ -118,16 +108,16 @@ export default function HeroSection() {
                 {point}
               </li>
             ))}
-          </motion.ul>
+          </ul>
         </div>
 
-        {/* Product mockup column */}
+        {/* Product mockup column — decorative; OK to fade in after LCP */}
         <motion.div
           initial={
-            reduceMotion ? undefined : { opacity: 0, y: 40, scale: 0.96 }
+            reduceMotion ? undefined : { opacity: 0, y: 24 }
           }
-          animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+          animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
           className="hidden lg:block"
         >
           <HeroBoardMockup />

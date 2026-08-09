@@ -28,9 +28,12 @@ import {
  */
 const FeaturedCrmSection = dynamic(
   () => import("@/components/homepageComponents/FeaturedCrmSection"),
+  // Sticky story is tall; reserve a viewport so late chunk mount doesn't shove CLS.
+  { loading: () => <div className="min-h-screen" aria-hidden /> },
 );
 const ArchitectureSection = dynamic(
   () => import("@/components/homepageComponents/ArchitectureSection"),
+  { loading: () => <div className="min-h-112" aria-hidden /> },
 );
 const FeaturesSection = dynamic(
   () => import("@/components/homepageComponents/FeaturesSection"),
@@ -78,7 +81,14 @@ function HomePageContent() {
           <TimelineSection />
         </InViewSwap>
         <InViewSwap
-          fallback={<div className="px-6 py-20 sm:py-28" />}
+          // Reserve roughly the live section height so swap doesn't spike CLS.
+          fallback={
+            <div
+              className="px-6 py-20 sm:py-28"
+              style={{ minHeight: "42rem" }}
+              aria-hidden
+            />
+          }
           rootMargin="400px 0px"
         >
           <AudiencesSection />
@@ -90,7 +100,13 @@ function HomePageContent() {
           <FaqSection />
         </InViewSwap>
         <InViewSwap
-          fallback={<div className="px-6 py-10 sm:py-12" />}
+          fallback={
+            <div
+              className="px-6 py-10 sm:py-12"
+              style={{ minHeight: "28rem" }}
+              aria-hidden
+            />
+          }
           rootMargin="400px 0px"
         >
           <CtaBandSection />

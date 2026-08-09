@@ -356,7 +356,7 @@ export default function AudiencesSection() {
           className="relative mt-12"
         >
           <div className="grid items-center gap-10 overflow-hidden lg:grid-cols-2 lg:gap-14">
-            <AnimatePresence mode="wait" custom={direction}>
+            <AnimatePresence mode="wait" custom={direction} initial={false}>
               <motion.div
                 key={active.id + "-copy"}
                 custom={direction}
@@ -388,7 +388,7 @@ export default function AudiencesSection() {
               </motion.div>
             </AnimatePresence>
 
-            <AnimatePresence mode="wait" custom={direction}>
+            <AnimatePresence mode="wait" custom={direction} initial={false}>
               <motion.div
                 key={active.id + "-visual"}
                 custom={direction}
