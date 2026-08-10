@@ -151,10 +151,10 @@ export default function UsersManagement({
           };
 
           return (
-          <div className="p-6 space-y-6 border rounded bg-background dark:bg-gray-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900! dark:text-white!">
+          <div className="p-4 space-y-6 border rounded min-w-0 max-w-full overflow-x-hidden bg-background sm:p-6 dark:bg-gray-800">
+            <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-2xl font-bold text-gray-900! wrap-break-word dark:text-white!">
                   User Management
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -162,16 +162,16 @@ export default function UsersManagement({
                 </p>
               </div>
               {showCreateButton && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
                   {usageDataLoading ? (
                     // Loading skeleton for the button
-                    <div className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-md dark:bg-gray-700 animate-pulse">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-md dark:bg-gray-700 animate-pulse w-full sm:w-auto">
                       <div className="w-4 h-4 bg-gray-300 rounded dark:bg-gray-600"></div>
                       <div className="w-20 h-4 bg-gray-300 rounded dark:bg-gray-600"></div>
                     </div>
                   ) : (
                     <Button
-                      className="bg-linear-to-r from-indigo-600 to-purple-600 text-white!"
+                      className="w-full bg-linear-to-r from-indigo-600 to-purple-600 text-white! sm:w-auto"
                       onClick={handleCreateUserClick}
                       disabled={
                         !!(userUsageData && !userUsageData.canAddTeamMember)

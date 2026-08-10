@@ -130,19 +130,19 @@ export const MultiSelectFilter = ({
   // Show loading skeleton
   if (isLoading) {
     return (
-      <div className="h-10 bg-gray-200 rounded-md animate-pulse w-45 dark:bg-gray-700">
+      <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700">
         <div className="sr-only">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative w-full min-w-0 sm:w-45" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-45 min-h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-0 focus:border-(--brand-focus)! disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-between gap-2 transition-[border-color,background-color] ${
+        className={`w-full min-h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-0 focus:border-(--brand-focus)! disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-between gap-2 transition-[border-color,background-color] ${
           isActiveFilter || isOpen
             ? "bg-white dark:bg-gray-800 border-(--brand-from)!"
             : "bg-white border-gray-300 dark:border-gray-600 dark:bg-gray-800 hover:border-gray-400 hover:bg-gray-50 dark:hover:border-gray-500 dark:hover:bg-white/4"
@@ -177,7 +177,7 @@ export const MultiSelectFilter = ({
       </button>
 
       {isOpen && !disabled && (
-        <div className="overflow-y-auto absolute left-0 top-full z-50 mt-1 max-h-60 bg-white rounded-md border border-gray-300 shadow-lg dark:bg-gray-800 dark:border-gray-600 min-w-50 max-w-75 brand-scrollbar">
+        <div className="overflow-y-auto absolute left-0 right-0 top-full z-50 mt-1 max-h-60 bg-white rounded-md border border-gray-300 shadow-lg dark:bg-gray-800 dark:border-gray-600 sm:right-auto sm:min-w-50 sm:max-w-75 brand-scrollbar">
           {/* Mode Toggle Button (only show if mode and onModeChange are provided) */}
           {mode !== undefined && onModeChange && (
             <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">

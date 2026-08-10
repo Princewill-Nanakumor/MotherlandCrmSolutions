@@ -136,17 +136,17 @@ export default function AdminManagementContent() {
   }
 
   return (
-    <div className="space-y-6 p-6 border rounded-lg">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+    <div className="space-y-6 p-4 border rounded-lg min-w-0 max-w-full overflow-x-hidden sm:p-6">
+      <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-gray-900 wrap-break-word sm:text-3xl dark:text-white">
             Admin Management
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
             Manage all administrators and monitor their activities
           </p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 sm:gap-3">
           <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300 border-green-200 dark:border-green-800">
             <MotherlandLogo className="mr-1 h-3 w-3 rounded-[22%]" />
             Super Admin

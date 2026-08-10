@@ -212,39 +212,43 @@ export default function BillingManager() {
   }, [handleClearPayment]);
 
   return (
-    <div className="min-h-screen">
-      <div className="w-full px-4 py-6 border rounded-lg">
+    <div className="min-h-screen min-w-0 max-w-full overflow-x-hidden">
+      <div className="w-full min-w-0 max-w-full px-3 py-4 border rounded-lg sm:px-4 sm:py-6">
         {/* Header */}
         <BillingHeader />
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 min-w-0 lg:grid-cols-3">
           {/* Left Column - Main Content */}
-          <div className="lg:col-span-2">
-            <div className="p-6 bg-white border border-gray-200 shadow-lg dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl dark:border dark:border-white/10">
-              {/* Tab Navigation */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900! dark:text-white!">
+          <div className="min-w-0 lg:col-span-2">
+            <div className="p-4 sm:p-6 min-w-0 max-w-full overflow-hidden bg-white border border-gray-200 shadow-lg dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl dark:border dark:border-white/10">
+              {/* Tab Navigation — stack on narrow phones so Card Deposit stays inside */}
+              <div className="flex flex-col gap-3 mb-6 min-w-0 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="text-xl font-semibold text-gray-900! dark:text-white! shrink-0">
                   Deposit Funds
                 </h2>
-                <div className="flex space-x-1">
+                <div className="flex w-full min-w-0 gap-2 sm:w-auto">
                   <Button
                     onClick={() => handleTabChange("usdt")}
-                    className={`px-4 py-2 mr-4 rounded-lg text-sm font-medium ${
+                    className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-sm font-medium ${
                       activeTab === "usdt"
                         ? "bg-linear-to-r from-indigo-600 to-purple-600 text-white"
                         : "dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300"
                     }`}
                   >
-                    <Wallet className="w-4 h-4 mr-2" />
-                    Crypto
+                    <Wallet className="w-4 h-4 mr-1.5 sm:mr-2 shrink-0" />
+                    <span className="truncate">Crypto</span>
                   </Button>
                   <Button
                     onClick={() => handleTabChange("card")}
                     variant="outline"
-                    className="px-4 py-2 rounded-lg text-sm font-medium"
+                    className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-sm font-medium ${
+                      activeTab === "card"
+                        ? "bg-linear-to-r from-indigo-600 to-purple-600 text-white border-transparent"
+                        : ""
+                    }`}
                   >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Card Deposit
+                    <CreditCard className="w-4 h-4 mr-1.5 sm:mr-2 shrink-0" />
+                    <span className="truncate">Card Deposit</span>
                   </Button>
                 </div>
               </div>

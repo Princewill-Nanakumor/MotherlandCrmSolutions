@@ -35,8 +35,8 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
   onCancel,
 }) => {
   return (
-    <div className="flex items-center justify-between mb-6">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+    <div className="flex flex-col gap-3 mb-6 min-w-0 sm:flex-row sm:items-center sm:justify-between">
+      <h2 className="text-xl font-semibold text-gray-900 wrap-break-word dark:text-white">
         Personal Information
       </h2>
       {!isEditing ? (
@@ -45,18 +45,18 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
           <Button
             type="button"
             onClick={onEdit}
-            className="text-gray-800 bg-gray-100 border border-gray-300 dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white hover:bg-gray-200"
+            className="w-full text-gray-800 bg-gray-100 border border-gray-300 dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white hover:bg-gray-200 sm:w-auto"
           >
             <Edit className="w-4 h-4 mr-2" />
             Edit Profile
           </Button>
         )
       ) : (
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row">
           <Button
             type="button"
             onClick={onSave}
-            className="text-white bg-linear-to-r from-blue-500 to-purple-600"
+            className="w-full text-white bg-linear-to-r from-blue-500 to-purple-600 sm:w-auto"
           >
             <Save className="w-4 h-4 mr-2" />
             Save
@@ -65,6 +65,7 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
             type="button"
             onClick={onCancel}
             variant="outline"
+            className="w-full sm:w-auto"
           >
             <X className="w-4 h-4 mr-2" />
             Cancel

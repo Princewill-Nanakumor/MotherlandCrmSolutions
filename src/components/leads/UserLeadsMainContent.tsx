@@ -213,7 +213,7 @@ export function UserLeadsMainContent({
       };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 h-full border rounded-lg bg-background dark:bg-gray-800">
+    <div className="flex flex-col flex-1 min-h-0 h-full min-w-0 max-w-full overflow-x-hidden border rounded-lg bg-background dark:bg-gray-800">
       <div
         className={`shrink-0 transition-opacity duration-300 ease-in-out ${showHeader ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         style={{ marginBottom: showHeader ? "0" : "-100px", transition: "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out" }}
@@ -246,7 +246,7 @@ export function UserLeadsMainContent({
         />
       </div>
 
-      <div className="flex-1 min-h-0 px-8 pb-4 overflow-auto">
+      <div className="flex-1 min-h-0 min-w-0 px-4 pb-4 overflow-auto sm:px-8">
         {shouldShowLoading ? (
           <TableSkeleton />
         ) : filteredLeads.length === 0 ? (

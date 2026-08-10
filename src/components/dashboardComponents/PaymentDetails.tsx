@@ -299,7 +299,7 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
                 The payment you are looking for does not exist or has been
                 removed.
               </p>
-              <div className="space-x-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:space-x-2">
                 <Button onClick={() => router.push("/dashboard/notifications")}>
                   Back to Notifications
                 </Button>
@@ -321,22 +321,22 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-800 border rounded-xl">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col gap-3 mb-8 min-w-0 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 min-w-0 sm:flex-row sm:items-center sm:gap-4">
             <Button
               variant="outline"
               size="sm"
               onClick={() => router.push("/dashboard/notifications")}
-              className="backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700 hover:bg-white/90 dark:hover:bg-gray-900/90"
+              className="w-fit backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700 hover:bg-white/90 dark:hover:bg-gray-900/90"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900! dark:text-white!">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold text-gray-900! wrap-break-word sm:text-3xl dark:text-white!">
                 Payment Details
               </h1>
-              <p className="text-gray-600! dark:text-white!">
+              <p className="text-sm text-gray-600! break-all dark:text-white!">
                 Transaction ID: {payment.transactionId}
               </p>
             </div>

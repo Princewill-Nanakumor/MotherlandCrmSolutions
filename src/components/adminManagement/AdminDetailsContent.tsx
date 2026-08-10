@@ -179,20 +179,20 @@ export default function AdminDetailsContent() {
   }
 
   return (
-    <div className="space-y-6 p-6 rounded-lg border">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+    <div className="space-y-6 p-4 rounded-lg border min-w-0 max-w-full overflow-x-hidden sm:p-6">
+      <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-3 min-w-0 sm:flex-row sm:items-center sm:gap-4">
           <Button
             variant="outline"
             size="sm"
             onClick={() => router.push("/dashboard/admin-management")}
-            className="backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700 hover:bg-white/90 dark:hover:bg-gray-900/90"
+            className="w-fit backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700 hover:bg-white/90 dark:hover:bg-gray-900/90"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold text-gray-900 wrap-break-word sm:text-3xl dark:text-white">
               {admin.firstName} {admin.lastName}
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
@@ -207,7 +207,7 @@ export default function AdminDetailsContent() {
           size="sm"
           onClick={() => refetch()}
           disabled={isFetching}
-          className="backdrop-blur-lg bg-white/70 dark:bg-gray-900/70"
+          className="w-fit shrink-0 backdrop-blur-lg bg-white/70 dark:bg-gray-900/70"
         >
           <RefreshCw
             className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`}

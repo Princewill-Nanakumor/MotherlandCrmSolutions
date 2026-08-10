@@ -34,9 +34,9 @@ export default function BillingSidebar({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 max-w-full">
       {/* Account Balance */}
-      <div className="p-6 transition-all duration-300 bg-white border border-gray-200 shadow-lg dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl dark:border dark:border-white/10 hover:shadow-xl">
+      <div className="p-4 transition-all duration-300 bg-white border border-gray-200 shadow-lg sm:p-6 dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl dark:border dark:border-white/10 hover:shadow-xl min-w-0 overflow-hidden">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold dark:text-white! text-gray-900!">
             Account Balance

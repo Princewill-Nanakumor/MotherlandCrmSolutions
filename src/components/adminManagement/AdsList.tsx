@@ -90,10 +90,10 @@ export default function AdsList({ ads }: AdsListProps) {
             ads.map((ad) => (
               <div
                 key={ad._id}
-                className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg backdrop-blur-lg bg-white/50 dark:bg-gray-800/50 hover:bg-white/70 dark:hover:bg-gray-800/70 transition-all duration-200"
+                className="flex flex-col gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg backdrop-blur-lg bg-white/50 dark:bg-gray-800/50 hover:bg-white/70 dark:hover:bg-gray-800/70 transition-all duration-200 min-w-0 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+                <div className="flex items-start gap-3 min-w-0 sm:items-center sm:gap-4">
+                  <div className="w-16 h-16 shrink-0 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
                     {ad.imageUrl ? (
                       <Image
                         src={ad.imageUrl}
@@ -108,26 +108,26 @@ export default function AdsList({ ads }: AdsListProps) {
                       <FileImage className="h-8 w-8 text-gray-400" />
                     )}
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="mb-1 font-semibold text-gray-900 wrap-break-word dark:text-white">
                       {ad.title}
                     </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
+                    <p className="mb-2 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
                       {ad.description}
                     </p>
-                    <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
-                      <div className="flex items-center space-x-1">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         <span>{formatDate(ad.createdAt)}</span>
                       </div>
                       {ad.views !== undefined && (
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center gap-1">
                           <Eye className="h-3 w-3" />
                           <span>{formatNumber(ad.views)} views</span>
                         </div>
                       )}
                       {ad.clicks !== undefined && (
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center gap-1">
                           <TrendingUp className="h-3 w-3" />
                           <span>{formatNumber(ad.clicks)} clicks</span>
                         </div>
@@ -141,11 +141,11 @@ export default function AdsList({ ads }: AdsListProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap items-center gap-2 shrink-0 self-end sm:self-center">
                   <Badge className={getStatusColor(ad.status)}>
                     {ad.status}
                   </Badge>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="sm"

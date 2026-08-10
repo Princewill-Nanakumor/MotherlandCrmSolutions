@@ -176,7 +176,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
 
   return (
     <SubscriptionGuard>
-      <div className="flex flex-col h-full border rounded-lg bg-background dark:bg-gray-800">
+      <div className="flex flex-col h-full min-w-0 max-w-full overflow-x-hidden border rounded-lg bg-background dark:bg-gray-800">
         {/* ⚡ Refetch indicator with transition */}
         {isRefetchingLeads && (
           <div className="duration-200 animate-in slide-in-from-top-2">
@@ -247,7 +247,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
           />
         </div>
 
-        <div className="flex-1 px-8 pb-4 overflow-auto ">
+        <div className="flex-1 min-w-0 px-4 pb-4 overflow-auto sm:px-8">
           <ErrorBoundary
             fallback={
               <div className="p-4 text-center text-red-500">

@@ -63,48 +63,42 @@ export default function UsdtDepositSection({
   }
 
   return (
-    <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-900! dark:text-white!">
+    <div className="overflow-hidden p-4 w-full min-w-0 max-w-full bg-white rounded-lg border border-gray-200 shadow-sm sm:p-6 dark:bg-gray-800 dark:border-gray-700">
+      <div className="flex flex-col gap-2 mb-6 min-w-0 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-lg font-semibold text-gray-900! wrap-break-word sm:text-xl dark:text-white!">
           Cryptocurrency (USDT)
         </h2>
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className="p-4 mb-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-800">
-          <div className="flex items-center">
-            <Info className="w-4 h-4 mr-2 text-red-600 dark:text-red-400" />
-            <span className="text-red-700! dark:text-white! text-sm">
+        <div className="p-3 mb-4 bg-red-50 rounded-lg border border-red-200 sm:p-4 dark:bg-red-900/20 dark:border-red-800">
+          <div className="flex items-start min-w-0">
+            <Info className="w-4 h-4 mt-0.5 mr-2 text-red-600 shrink-0 dark:text-red-400" />
+            <span className="min-w-0 text-sm text-red-700! wrap-break-word dark:text-white!">
               {error}
             </span>
           </div>
         </div>
       )}
 
-      <div className="space-y-6">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-gray-600! dark:text-white!">
+      <div className="space-y-6 min-w-0">
+        <div className="mb-4 min-w-0">
+          <p className="text-sm text-gray-600! wrap-break-word dark:text-white! sm:text-base">
             Deposit USDT (Tether) to your account. Please ensure you are sending
             funds through the <span className="font-semibold">{network}</span>{" "}
             network.
           </p>
-          {/* <Button
-            onClick={onNetworkToggle}
-            className="px-6 py-1 text-xs text-gray-800 bg-gray-100 border border-gray-300 dark:bg-transparent dark:hover:bg-white/10 dark:border dark:border-white/20 dark:text-white hover:bg-gray-200"
-          >
-            Switch to {network === "TRC20" ? "ERC20" : "TRC20"}
-          </Button> */}
         </div>
 
-        <div className="p-3 mb-4 border border-yellow-200 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800">
-          <div className="flex items-start">
+        <div className="p-3 mb-4 bg-yellow-50 rounded-lg border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
+          <div className="flex items-start min-w-0">
             <Info className="h-4 w-4 mt-0.5 mr-2 text-yellow-600 dark:text-yellow-400 shrink-0" />
-            <div>
+            <div className="min-w-0">
               <h4 className="font-medium text-yellow-800! dark:text-white! text-sm">
                 Important Notice
               </h4>
-              <p className="text-gray-900! dark:text-white! text-xs">
+              <p className="text-xs text-gray-900! wrap-break-word dark:text-white!">
                 {network === "TRC20"
                   ? "TRC20 deposits are faster and have lower fees (~1 USDT) compared to ERC20. After generating an address you have 1 hour to confirm the deposit."
                   : "ERC20 deposits may take longer and have higher gas fees (varies). After generating an address you have 1 hour to confirm the deposit."}
@@ -158,7 +152,7 @@ export default function UsdtDepositSection({
           <Button
             type="submit"
             disabled={isSubmitting || !amount || parseFloat(amount) <= 0}
-            className="w-full py-3 font-semibold text-white transition rounded-lg shadow-md bg-linear-to-r from-indigo-600 to-purple-600 hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="py-3 w-full font-semibold text-white from-indigo-600 to-purple-600 rounded-lg shadow-md transition bg-linear-to-r hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting
               ? "Creating a wallet address..."

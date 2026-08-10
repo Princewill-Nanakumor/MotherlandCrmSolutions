@@ -19,11 +19,11 @@ export function TablePagination({
   onPageChange,
 }: TablePaginationProps) {
   return (
-    <div className="flex w-full items-center justify-between px-2 mt-4">
+    <div className="flex w-full flex-col gap-3 px-2 mt-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
         Page {pageIndex + 1} of {pageCount}
       </div>
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center gap-2">
         <Button
           type="button"
           variant="outline"

@@ -71,8 +71,8 @@ export default function RecentTransactions({
   };
 
   return (
-    <div className="p-6 bg-white border border-gray-200 shadow-lg dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl dark:border dark:border-white/10">
-      <h3 className="text-lg font-semibold dark:text-white! text-gray-900! mb-4">
+    <div className="p-4 bg-white border border-gray-200 shadow-lg sm:p-6 dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl dark:border dark:border-white/10 min-w-0 overflow-hidden">
+      <h3 className="mb-4 text-lg font-semibold text-gray-900! dark:text-white!">
         Recent Transactions
       </h3>
 

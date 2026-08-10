@@ -183,12 +183,12 @@ export default function NotificationsList({
               : ""
           }`}
         >
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start flex-1 space-x-4">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col gap-3 min-w-0 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-start flex-1 min-w-0 gap-3 sm:gap-4">
                 {getNotificationIcon(displayType)}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center mb-2 space-x-2">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
                     <Badge
                       className={getNotificationTypeColor(displayType)}
                     >
@@ -200,11 +200,11 @@ export default function NotificationsList({
                       </Badge>
                     )}
                   </div>
-                  <p className="text-gray-900! dark:text-white! mb-2">
+                  <p className="mb-2 text-gray-900! wrap-break-word dark:text-white!">
                     {notification.message}
                   </p>
                   {notification.amount && (
-                    <p className="text-sm text-gray-600! dark:text-white! mb-2">
+                    <p className="mb-2 text-sm text-gray-600! dark:text-white!">
                       Amount: {notification.amount} {notification.currency}
                     </p>
                   )}
@@ -213,7 +213,7 @@ export default function NotificationsList({
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-start">
                 {notification.link && (
                   <Button
                     variant="outline"

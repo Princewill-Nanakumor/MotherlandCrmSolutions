@@ -269,8 +269,8 @@ export default function TrialStatus({
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+          <div className="flex flex-col gap-3 min-w-0 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
               <Badge
                 variant="outline"
                 className={`${
@@ -296,7 +296,7 @@ export default function TrialStatus({
             {hasZeroBalance ? (
               <Button
                 onClick={() => (window.location.href = "/dashboard/billing")}
-                className="bg-amber-600 hover:bg-amber-700 text-white"
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white sm:w-auto"
               >
                 <CreditCard className="h-4 w-4 mr-2" />
                 Fund Account
@@ -306,11 +306,11 @@ export default function TrialStatus({
                 onClick={() =>
                   onSubscribe(toDashboardSubscriptionPlan("professional"))
                 }
-                className={`${
+                className={`w-full sm:w-auto text-white ${
                   isLastDay
                     ? "bg-red-600 hover:bg-red-700"
                     : "bg-blue-600 hover:bg-blue-700"
-                } text-white`}
+                }`}
               >
                 {isLastDay ? "⚠️ Subscribe Now" : "Subscribe Now"}
               </Button>

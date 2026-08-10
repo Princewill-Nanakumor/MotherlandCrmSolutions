@@ -14,7 +14,7 @@ export function DateTimeDisplay() {
   }, []);
 
   return (
-    <span className="text-xs brand-navbar-text px-3 font-bold border rounded-xl p-1 dark:border-gray-600 [font-family:var(--brand-font-body)]">
+    <span className="hidden text-xs brand-navbar-text px-3 font-bold border rounded-xl p-1 dark:border-gray-600 [font-family:var(--brand-font-body)] sm:inline-flex">
       {formatAppDateTime(now, { dateFormat, timeFormat, timezone })}
     </span>
   );

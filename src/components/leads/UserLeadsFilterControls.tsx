@@ -29,9 +29,10 @@ interface UserLeadsFilterControlsProps {
 }
 
 const FilterSkeleton = () => (
-  <div className="flex gap-3 items-center">
-    <div className="h-10 bg-gray-200 rounded-md animate-pulse w-45 dark:bg-gray-700" />
-    <div className="h-10 bg-gray-200 rounded-md animate-pulse w-45 dark:bg-gray-700" />
+  <div className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center">
+    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
+    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
+    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
   </div>
 );
 
@@ -67,9 +68,8 @@ export const UserLeadsFilterControls: React.FC<
   if (shouldShowLoading) {
     return (
       <div className="sticky top-0 z-10 px-4 pb-5 mt-8 bg-white sm:px-6 lg:px-8 dark:bg-gray-800">
-        <div className="flex justify-between items-center px-3 py-4 rounded-xl border sm:px-4">
+        <div className="flex flex-col gap-3 px-3 py-4 rounded-xl border min-w-0 sm:px-4">
           <FilterSkeleton />
-          <div className="w-48 h-4 bg-gray-200 rounded animate-pulse dark:bg-gray-700"></div>
         </div>
       </div>
     );
@@ -77,8 +77,8 @@ export const UserLeadsFilterControls: React.FC<
 
   return (
     <div className="sticky top-0 z-10 px-4 pb-5 mt-10 bg-white sm:px-6 lg:px-8 dark:bg-gray-800">
-      <div className="flex justify-between items-center px-3 py-4 rounded-xl border sm:px-4">
-        <div className="flex gap-3 items-center">
+      <div className="flex flex-col gap-3 px-3 py-4 rounded-xl border min-w-0 sm:px-4">
+        <div className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
           {/* Country Filter */}
           <CountryFilter
             value={countryFilter}

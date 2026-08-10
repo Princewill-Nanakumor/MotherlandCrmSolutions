@@ -183,13 +183,13 @@ export default function UsageLimitsDisplay({
                   </Badge>
                 )}
               </div>
-              <div className="flex space-x-2">
+              <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row">
                 <Button
                   onClick={() => {
                     onShowUsageLimit(false);
                     router.push("/dashboard/subscription");
                   }}
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  className="w-full bg-red-600 hover:bg-red-700 text-white sm:w-auto"
                 >
                   {userUsageData.isOverLimit ? "Upgrade Plan" : "Upgrade Plan"}
                 </Button>
@@ -200,7 +200,7 @@ export default function UsageLimitsDisplay({
                     router.push("/dashboard/users");
                   }}
                   variant="outline"
-                  className="border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  className="w-full border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 sm:w-auto"
                 >
                   Manage Team
                 </Button>

@@ -29,8 +29,8 @@ export default function UserLeadTableControls({
   table,
 }: UserLeadTableControlsProps) {
   return (
-    <div className="flex items-center justify-between p-4">
-      <div className="flex items-center space-x-2">
+    <div className="flex flex-col gap-3 p-4 min-w-0 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap gap-2 items-center min-w-0">
         <span className="text-sm text-gray-600! dark:text-white!">Show</span>
         <Select value={pageSize.toString()} onValueChange={onPageSizeChange}>
           <SelectTrigger className="w-25 bg-white dark:bg-gray-800! border-gray-300 dark:border-gray-600">
@@ -51,7 +51,7 @@ export default function UserLeadTableControls({
         <span className="text-sm text-gray-600! dark:text-white!">entries</span>
         <ColumnVisibilityToggle table={table} tableId="userLeadsTable" />
       </div>
-      <div className="text-sm text-gray-600! dark:text-white!">
+      <div className="text-sm text-gray-600! wrap-break-word dark:text-white!">
         Showing {pageIndex * pageSize + 1} to{" "}
         {Math.min((pageIndex + 1) * pageSize, totalEntries)} of {totalEntries}{" "}
         entries

@@ -24,8 +24,8 @@ export function UserTableHeader({
   const currentPageEnd = Math.min((pageIndex + 1) * pageSize, totalRows);
 
   return (
-    <div className="flex items-center justify-between my-3 mb-4">
-      <div className="flex items-center space-x-2">
+    <div className="flex flex-col gap-3 my-3 mb-4 min-w-0 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center gap-2 min-w-0">
         <label className="text-sm font-medium text-gray-700! dark:text-white!">
           Show
         </label>
@@ -47,7 +47,7 @@ export function UserTableHeader({
         </span>
         <UserColumnVisibilityToggle table={table} />
       </div>
-      <div className="text-sm text-gray-700! dark:text-white!">
+      <div className="text-sm text-gray-700! wrap-break-word dark:text-white!">
         Showing {currentPageStart} to {currentPageEnd} of {totalRows} entries
       </div>
     </div>

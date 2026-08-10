@@ -97,18 +97,14 @@ export default function SubscriptionPlans({
           return (
             <Card
               key={plan.id}
-              className={`relative transition-all duration-200 hover:shadow-xl dark:bg-gray-700  ${
-                plan.isPopular
-                  ? "border-(--brand-from) dark:border-(--brand-focus) shadow-lg"
-                  : "border-gray-200 dark:border-gray-700"
-              } ${
+              className={`relative transition-all duration-200 hover:shadow-xl dark:bg-gray-700 ${
                 isActiveCurrentPlan
-                  ? "ring-2 ring-green-500 dark:ring-green-400"
-                  : ""
-              } ${
-                isExpiredCurrentPlan
-                  ? "ring-2 ring-red-500 dark:ring-red-400"
-                  : ""
+                  ? "border-green-500 ring-2 ring-green-500 shadow-lg dark:border-green-400 dark:ring-green-400"
+                  : isExpiredCurrentPlan
+                    ? "border-red-500 ring-2 ring-red-500 shadow-lg dark:border-red-400 dark:ring-red-400"
+                    : plan.isPopular
+                      ? "border-(--brand-from) shadow-lg dark:border-(--brand-focus)"
+                      : "border-gray-200 dark:border-gray-700"
               }`}
             >
               {plan.isPopular && (

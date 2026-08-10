@@ -17,27 +17,16 @@ import { AddLeadDialog } from "@/components/dashboardComponents/AddLeadDialog";
 // ✅ Enhanced Filter Skeleton Component
 const FilterSkeleton = () => (
   <div
-    className="flex gap-3 items-center"
+    className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3"
     role="status"
     aria-label="Loading filters"
   >
-    {/* Add Lead Button Skeleton */}
-    <div className="h-10 bg-gray-200 rounded-md animate-pulse w-30 dark:bg-gray-700" />
-
-    {/* Add Status Button Skeleton */}
-    <div className="h-10 bg-gray-200 rounded-md animate-pulse w-30 dark:bg-gray-700" />
-
-    {/* User Filter Skeleton */}
-    <div className="h-10 bg-gray-200 rounded-md animate-pulse w-45 dark:bg-gray-700" />
-
-    {/* Status Filter Skeleton */}
-    <div className="h-10 bg-gray-200 rounded-md animate-pulse w-45 dark:bg-gray-700" />
-
-    {/* Source Filter Skeleton */}
-    <div className="h-10 bg-gray-200 rounded-md animate-pulse w-45 dark:bg-gray-700" />
-
-    {/* Country Filter Skeleton */}
-    <div className="h-10 bg-gray-200 rounded-md animate-pulse w-45 dark:bg-gray-700" />
+    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-30 dark:bg-gray-700" />
+    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-30 dark:bg-gray-700" />
+    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
+    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
+    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
+    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
   </div>
 );
 
@@ -129,7 +118,7 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
   return (
     <>
       <div className="sticky top-0 z-10 px-4 pb-5 mt-8 bg-white sm:px-6 lg:px-8 dark:bg-gray-800">
-        <div className="flex flex-col gap-4 px-3 py-4 rounded-xl border md:flex-row md:items-center md:justify-between sm:px-4">
+        <div className="flex flex-col gap-4 px-3 py-4 rounded-xl border min-w-0 md:flex-row md:items-center md:justify-between sm:px-4">
           <div className="flex flex-wrap order-2 gap-2 items-center w-full min-w-0 md:w-auto md:order-1">
             <ErrorBoundary
               fallback={
@@ -151,16 +140,16 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
             </ErrorBoundary>
           </div>
 
-          <div className="flex flex-wrap order-1 gap-2 items-center w-full min-w-0 sm:gap-3 md:w-auto md:order-2">
+          <div className="flex flex-col order-1 gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 md:w-auto md:order-2">
             <ErrorBoundary fallback={<FilterSkeleton />}>
               {/* Add Lead Button - with loading skeleton */}
               {showFilterSkeletons ? (
-                <div className="h-10 bg-gray-200 rounded-md animate-pulse w-30 dark:bg-gray-700" />
+                <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-30 dark:bg-gray-700" />
               ) : (
                 <Button
                   onClick={() => setIsAddLeadDialogOpen(true)}
                   disabled={isLoading}
-                  className="text-white from-indigo-600 to-purple-600 bg-linear-to-r hover:from-indigo-700 hover:to-purple-700"
+                  className="w-full text-white from-indigo-600 to-purple-600 bg-linear-to-r hover:from-indigo-700 hover:to-purple-700 sm:w-auto"
                 >
                   <Plus className="mr-2 w-4 h-4" />
                   Add Lead
@@ -169,7 +158,7 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
 
               {/* Add Status Button - with loading skeleton */}
               {showFilterSkeletons ? (
-                <div className="h-10 bg-gray-200 rounded-md animate-pulse w-30 dark:bg-gray-700" />
+                <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-30 dark:bg-gray-700" />
               ) : (
                 <AddStatusButton disabled={isLoading} />
               )}

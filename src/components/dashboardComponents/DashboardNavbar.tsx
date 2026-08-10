@@ -119,9 +119,9 @@ export default function DashboardNavbar({
   }
 
   return (
-    <nav className="brand-navbar flex items-center justify-between px-6 py-3 shadow-lg border-b border-transparent">
+    <nav className="brand-navbar flex items-center justify-between gap-2 px-3 py-3 shadow-lg border-b border-transparent sm:px-6">
       {/* Left side - Toggle buttons for leads pages */}
-      <div className="flex items-center space-x-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         {showLeadsToggles && (
           <>
             <button
@@ -168,7 +168,7 @@ export default function DashboardNavbar({
       {!showSearch && <div className="flex-1" />}
 
       {/* Right side - Other controls */}
-      <div className="flex items-center space-x-4 shrink-0">
+      <div className="flex items-center gap-2 shrink-0 sm:gap-4">
         <DateTimeDisplay />
         <NotificationBell />
         <ThemeToggle isLoading={isLoading} />

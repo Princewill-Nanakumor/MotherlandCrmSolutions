@@ -87,18 +87,18 @@ export function AdminCard({
   };
 
   return (
-    <div className="flex items-center justify-between p-4 transition-all duration-200 border border-gray-200 rounded-lg dark:border-gray-700 backdrop-blur-lg bg-white/50 dark:bg-gray-800/50 hover:bg-white/70 dark:hover:bg-gray-800/70">
-      <div className="flex items-center space-x-4">
-        <Avatar>
+    <div className="flex flex-col gap-3 p-4 transition-all duration-200 border border-gray-200 rounded-lg min-w-0 sm:flex-row sm:items-center sm:justify-between dark:border-gray-700 backdrop-blur-lg bg-white/50 dark:bg-gray-800/50 hover:bg-white/70 dark:hover:bg-gray-800/70">
+      <div className="flex items-start gap-3 min-w-0 sm:items-center sm:gap-4 sm:space-x-0">
+        <Avatar className="shrink-0">
           <AvatarFallback className="text-white bg-linear-to-r from-indigo-600 to-purple-600">
             {admin.firstName[0]}
             {admin.lastName[0]}
           </AvatarFallback>
         </Avatar>
 
-        <div className="flex-1">
-          <div className="flex items-center mb-2 space-x-2">
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <h3 className="font-semibold text-gray-900 wrap-break-word dark:text-white">
               {admin.firstName} {admin.lastName}
             </h3>
             <Badge className={getStatusColor(admin.status)}>
@@ -116,10 +116,10 @@ export function AdminCard({
               </Badge>
             )}
           </div>
-          <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mb-2 text-sm text-gray-600 break-all dark:text-gray-400">
             {admin.email}
           </p>
-          <div className="flex items-center mb-2 space-x-4 text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
             <span>{admin.agentCount} agents</span>
             <span>{admin.leadCount} leads</span>
             {admin.balance && (
@@ -129,9 +129,9 @@ export function AdminCard({
             )}
           </div>
 
-          <div className="flex items-center space-x-6 text-xs">
-            <div className="flex items-center space-x-1">
-              <Clock className="w-3 h-3 text-gray-400" />
+          <div className="flex flex-col gap-1 text-xs sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-1">
+            <div className="flex flex-wrap items-center gap-1">
+              <Clock className="w-3 h-3 text-gray-400 shrink-0" />
               <span className="text-gray-500 dark:text-gray-400">Admin:</span>
               <span className={getLastLoginColor(admin.lastLogin)}>
                 {formatLastLogin(admin.lastLogin)}
@@ -139,8 +139,8 @@ export function AdminCard({
             </div>
 
             {admin.lastAgentLogin && (
-              <div className="flex items-center space-x-1">
-                <UserCheck className="w-3 h-3 text-gray-400" />
+              <div className="flex flex-wrap items-center gap-1">
+                <UserCheck className="w-3 h-3 text-gray-400 shrink-0" />
                 <span className="text-gray-500 dark:text-gray-400">Agent:</span>
                 <span
                   className={getLastLoginColor(admin.lastAgentLogin.lastLogin)}
@@ -157,7 +157,7 @@ export function AdminCard({
         </div>
       </div>
 
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
         <Button
           variant="outline"
           size="sm"

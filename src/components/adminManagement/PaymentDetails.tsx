@@ -255,14 +255,14 @@ export default function PaymentDetails({ payments }: PaymentDetailsProps) {
                 key={payment._id}
                 className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg backdrop-blur-lg bg-white/50 dark:bg-gray-800/50 hover:bg-white/70 dark:hover:bg-gray-800/70 transition-all duration-200"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <div className="flex flex-col gap-3 mb-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex items-start gap-3 min-w-0 sm:gap-4">
+                    <div className="w-10 h-10 shrink-0 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                       <CreditCard className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h4 className="font-semibold text-gray-900 dark:text-white">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <h4 className="font-semibold text-gray-900 wrap-break-word dark:text-white">
                           {payment.description || "Payment"}
                         </h4>
                         <Badge className={getStatusColor(payment.status)}>
@@ -272,17 +272,17 @@ export default function PaymentDetails({ payments }: PaymentDetailsProps) {
                           {payment.method}
                         </Badge>
                       </div>
-                      <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
-                        <div className="flex items-center space-x-1">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           <span>{formatDate(payment.createdAt)}</span>
                         </div>
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           <span>{formatTime(payment.createdAt)}</span>
                         </div>
                         {payment.transactionId && (
-                          <span className="text-gray-400 dark:text-gray-500">
+                          <span className="text-gray-400 break-all dark:text-gray-500">
                             ID: {payment.transactionId.slice(0, 8)}...
                           </span>
                         )}

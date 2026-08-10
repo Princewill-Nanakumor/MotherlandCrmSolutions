@@ -57,7 +57,7 @@ export function ImportModal({
                     current plan.
                   </p>
 
-                  <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
                     <div className="text-center">
                       <div className="text-2xl font-bold text-red-600 dark:text-red-400">
                         {importLimitExceeded.attempted}
