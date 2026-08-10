@@ -100,7 +100,7 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
 
   return (
     <div
-      className="flex-1 min-h-0 p-4 space-y-4 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-inner dark:bg-transparent dark:border-gray-700"
+      className="min-h-0 space-y-4 overflow-y-auto rounded-lg border border-gray-200 bg-white p-3 shadow-inner dark:bg-transparent dark:border-gray-700 sm:p-4 md:flex-1 md:min-h-0"
       style={{
         scrollbarWidth: "thin",
         scrollbarColor: "var(--brand-from) #f3f4f6",

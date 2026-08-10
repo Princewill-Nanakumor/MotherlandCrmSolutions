@@ -39,16 +39,16 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
   ).length;
 
   return (
-    <div className="flex flex-col flex-1 h-full min-h-0 bg-white dark:bg-gray-800">
-      <div className="flex flex-wrap items-center gap-1 p-3 border-b border-gray-200 sm:justify-between sm:gap-2 sm:p-6 dark:border-gray-700">
+    <div className="flex min-h-0 w-full flex-col bg-white dark:bg-gray-800 md:h-full md:flex-1">
+      <div className="flex flex-wrap items-center gap-1 p-3 border-b border-gray-200 shrink-0 sm:gap-2 sm:p-4 md:p-6 dark:border-gray-700">
         <div className="flex flex-wrap gap-1 w-full min-w-0">
           <button
             onClick={() => setActiveTab("comments")}
             className={`px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm sm:px-4 sm:gap-2 ${activeTab === "comments" ? "brand-tab-active" : "text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"}`}
           >
             <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-            <span className="sm:hidden">Comments</span>
-            <span className="hidden sm:inline">Comments & Activities</span>
+            <span className="md:hidden">Comments</span>
+            <span className="hidden md:inline">Comments & Activities</span>
           </button>
           <button
             onClick={() => setActiveTab("reminders")}
@@ -66,11 +66,11 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
       </div>
 
       {/* Keep timeline mounted so assign/unassign refetches update cache before tab switch */}
-      <div className="flex flex-col flex-1 min-h-0">
+      <div className="flex min-h-0 w-full flex-col md:flex-1 md:overflow-hidden">
         <div
           className={
             activeTab === "comments"
-              ? "flex flex-col flex-1 min-h-0"
+              ? "flex min-h-0 w-full flex-col md:flex-1 md:overflow-hidden"
               : "hidden"
           }
           aria-hidden={activeTab !== "comments"}

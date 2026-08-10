@@ -90,7 +90,7 @@ function LeadDetailsPageShell({
   return (
     <div className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden bg-white dark:bg-gray-800">
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 md:flex-row">
-        <div className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden border-b border-gray-200 bg-gray-50 max-h-[46%] dark:border-gray-700 dark:bg-gray-800/50 md:max-h-none md:h-full md:w-2/5 md:border-b-0 md:border-r">
+        <div className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden border-b border-gray-200 bg-gray-50 max-h-[38%] dark:border-gray-700 dark:bg-gray-800/50 md:max-h-none md:h-full md:w-2/5 md:border-b-0 md:border-r">
           <LeadHeader
             lead={currentLead}
             onClose={onBack}
@@ -120,7 +120,7 @@ function LeadDetailsPageShell({
             />
           </div>
         </div>
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white dark:bg-gray-800">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain bg-white dark:bg-gray-800 md:overflow-hidden">
           <CommentsAndActivities
             lead={currentLead}
             onLeadUpdated={handleLeadUpdated}

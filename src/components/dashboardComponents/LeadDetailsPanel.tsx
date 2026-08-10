@@ -395,9 +395,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       for (const q of allLeadKeys) {
         const found = findLeadInQueryData(q.state.data, lead._id);
         if (!found) continue;
-        const ts = found.updatedAt
-          ? new Date(found.updatedAt).getTime()
-          : 0;
+        const ts = found.updatedAt ? new Date(found.updatedAt).getTime() : 0;
         if (ts >= candidateUpdatedAt) {
           candidate = found;
           candidateUpdatedAt = ts;
@@ -448,7 +446,13 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       if (debounceTimeout) clearTimeout(debounceTimeout);
       unsubscribe();
     };
-  }, [isOpen, lead?._id, queryClient, currentLead?.status, currentLead?.updatedAt]);
+  }, [
+    isOpen,
+    lead?._id,
+    queryClient,
+    currentLead?.status,
+    currentLead?.updatedAt,
+  ]);
 
   const onLeadUpdatedRef = useRef(onLeadUpdated);
   onLeadUpdatedRef.current = onLeadUpdated;
@@ -539,12 +543,12 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
   return (
     <motion.div
-      className="fixed inset-x-0 top-[4.5rem] bottom-0 z-50 flex w-full flex-col overflow-hidden bg-white dark:bg-gray-800 md:inset-x-auto md:right-0 md:bottom-[3.25rem] md:w-[min(80%,1200px)] md:flex-row md:border-l-2 md:border-gray-200 dark:md:border-gray-700"
+      className="fixed inset-x-0 top-18 bottom-0 z-50 flex w-full flex-col overflow-hidden bg-white dark:bg-gray-800 md:inset-x-auto md:right-0 md:bottom-13 md:w-[min(80%,1200px)] md:flex-row md:border-l-2 md:border-gray-200 dark:md:border-gray-700"
       initial={{ x: "100%" }}
       animate={{ x: isClosing ? "100%" : 0 }}
       transition={{ type: "tween", duration: 0.25, ease: "easeOut" }}
     >
-      <div className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden border-b border-gray-200 bg-gray-50 max-h-[46%] dark:border-gray-700 dark:bg-gray-800/50 md:max-h-none md:h-full md:w-2/5 md:border-b-0 md:border-r">
+      <div className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden border-b border-gray-200 bg-gray-50 max-h-[38%] dark:border-gray-700 dark:bg-gray-800/50 md:max-h-none md:h-full md:w-2/5 md:border-b-0 md:border-r">
         <LeadHeader
           lead={currentLead}
           onClose={handleRequestClose}
@@ -552,7 +556,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           hasPrevious={hasPrevious}
           hasNext={hasNext}
         />
-        <div className="flex-1 min-h-0 space-y-4 overflow-y-auto p-4 sm:space-y-6 sm:p-6">
+        <div className="overflow-y-auto flex-1 p-4 space-y-4 min-h-0 sm:space-y-6 sm:p-6">
           <LeadStatus
             lead={currentLead}
             users={users}
@@ -577,7 +581,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           />
         </div>
       </div>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white dark:bg-gray-800">
+      <div className="flex overflow-y-auto overscroll-contain flex-col flex-1 min-w-0 min-h-0 bg-white dark:bg-gray-800 md:overflow-hidden">
         <CommentsAndActivities
           lead={currentLead}
           onLeadUpdated={handleLeadUpdated}

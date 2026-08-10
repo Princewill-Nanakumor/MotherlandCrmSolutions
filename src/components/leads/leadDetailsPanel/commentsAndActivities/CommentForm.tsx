@@ -63,18 +63,20 @@ export const CommentForm: FC<CommentFormProps> = ({
       {/* Add Comment Textarea */}
       <div
         className={`transition-all duration-300 ease-in-out overflow-hidden ${
-          showTextarea ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+          showTextarea
+            ? "max-h-36 opacity-100 sm:max-h-96"
+            : "max-h-0 opacity-0"
         }`}
       >
-        <div className="mb-6 space-y-3">
+        <div className="mb-4 space-y-2 sm:mb-6 sm:space-y-3">
           <textarea
             placeholder="Write your thoughts about this lead... (Press Cmd/Ctrl + Enter to submit)"
-            className="w-full p-3 rounded-md focus:outline-none resize-none min-h-30 text-gray-700! dark:text-white! bg-white dark:bg-gray-700/50 transition-all duration-200 border border-gray-300 dark:border-gray-600 focus:border-(--brand-focus) focus:ring-0 focus:border-(--brand-focus)"
+            className="w-full p-3 rounded-md focus:outline-none resize-none min-h-20 sm:min-h-30 text-gray-700! dark:text-white! bg-white dark:bg-gray-700/50 transition-all duration-200 border border-gray-300 dark:border-gray-600 focus:border-(--brand-focus) focus:ring-0"
             value={commentContent}
             onChange={(e) => setCommentContent(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isSaving}
-            rows={4}
+            rows={3}
           />
           <div className="flex justify-end pt-1">
             <button

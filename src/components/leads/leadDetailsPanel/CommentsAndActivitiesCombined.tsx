@@ -566,23 +566,22 @@ export const CommentsAndActivitiesCombined: FC<
   }
 
   return (
-    <div
-      className="flex flex-col flex-1 p-6 min-h-0 bg-gray-50 border border-gray-200 shadow-sm dark:bg-transparent dark:border-gray-700"
-      style={{ height: "100%" }}
-    >
-      <div className="flex flex-col flex-1 p-5 min-h-0 bg-white rounded-lg border border-gray-100 shadow-sm dark:bg-transparent dark:border-gray-700">
-        <CommentForm
-          commentContent={commentContent}
-          setCommentContent={setCommentContent}
-          showTextarea={showTextarea}
-          setShowTextarea={setShowTextarea}
-          onAddComment={handleAddComment}
-          isSaving={addCommentMutation.isPending}
-        />
+    <div className="flex w-full flex-col bg-gray-50 p-3 border border-gray-200 shadow-sm dark:bg-transparent dark:border-gray-700 sm:p-4 md:h-full md:min-h-0 md:flex-1 md:overflow-hidden md:p-6">
+      <div className="flex w-full flex-col rounded-lg border border-gray-100 bg-white p-3 shadow-sm dark:bg-transparent dark:border-gray-700 sm:p-4 md:min-h-0 md:flex-1 md:overflow-hidden md:p-5">
+        <div className="shrink-0">
+          <CommentForm
+            commentContent={commentContent}
+            setCommentContent={setCommentContent}
+            showTextarea={showTextarea}
+            setShowTextarea={setShowTextarea}
+            onAddComment={handleAddComment}
+            isSaving={addCommentMutation.isPending}
+          />
+        </div>
 
         {/* Combined Timeline */}
-        <div className="flex flex-col flex-1 min-h-0">
-          <div className="flex flex-wrap gap-1 items-center mb-3">
+        <div className="flex min-h-0 w-full flex-col md:flex-1 md:overflow-hidden">
+          <div className="mb-3 flex flex-wrap items-center gap-1 shrink-0">
             {(
               [
                 {
