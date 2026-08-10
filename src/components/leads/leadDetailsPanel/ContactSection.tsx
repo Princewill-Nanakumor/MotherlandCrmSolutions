@@ -377,7 +377,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
                 e.stopPropagation();
                 handleEdit();
               }}
-              className="h-8 px-2 transition-opacity duration-200 opacity-0 group-hover:opacity-100"
+              className="h-8 px-2 transition-opacity duration-200 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
             >
               <Edit2 className="w-4 h-4" />
             </Button>

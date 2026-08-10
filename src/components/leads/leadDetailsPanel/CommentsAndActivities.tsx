@@ -40,20 +40,21 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
 
   return (
     <div className="flex flex-col flex-1 h-full min-h-0 bg-white dark:bg-gray-800">
-      <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex gap-1">
+      <div className="flex flex-wrap items-center gap-1 p-3 border-b border-gray-200 sm:justify-between sm:gap-2 sm:p-6 dark:border-gray-700">
+        <div className="flex flex-wrap gap-1 w-full min-w-0">
           <button
             onClick={() => setActiveTab("comments")}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 ${activeTab === "comments" ? "brand-tab-active" : "text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"}`}
+            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm sm:px-4 sm:gap-2 ${activeTab === "comments" ? "brand-tab-active" : "text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"}`}
           >
-            <MessageSquare className="w-5 h-5" />
-            Comments & Activities
+            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+            <span className="sm:hidden">Comments</span>
+            <span className="hidden sm:inline">Comments & Activities</span>
           </button>
           <button
             onClick={() => setActiveTab("reminders")}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 ${activeTab === "reminders" ? "brand-tab-active" : "text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"}`}
+            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm sm:px-4 sm:gap-2 ${activeTab === "reminders" ? "brand-tab-active" : "text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"}`}
           >
-            <Bell className="w-5 h-5" />
+            <Bell className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             Reminders
             {pendingRemindersCount > 0 && (
               <span className="px-2 py-0.5 text-xs bg-red-500 text-white! rounded-full">

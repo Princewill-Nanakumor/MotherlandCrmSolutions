@@ -68,14 +68,14 @@ export const PhoneField: FC<PhoneFieldProps> = ({
 
       <div className="flex-1">
         <p className="text-sm text-gray-500! dark:text-gray-400!">Phone</p>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2 min-w-0">
           {isLoadingPermission ? (
             <Skeleton className="w-32 h-5" />
           ) : (
-            <p className="text-gray-900! dark:text-white!">{displayPhone}</p>
+            <p className="text-gray-900! dark:text-white! break-all min-w-0">{displayPhone}</p>
           )}
           {phone && !isLoadingPermission && (
-            <div className="flex items-center gap-1 ml-2">
+            <div className="flex items-center gap-1 ml-2 shrink-0">
               {onCall ? (
                 <button
                   type="button"

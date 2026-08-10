@@ -88,11 +88,9 @@ function LeadDetailsPageShell({
   );
 
   return (
-    <div className="h-screen bg-white dark:bg-gray-800 flex flex-col">
-      <div
-        className="flex h-screen rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
-      >
-        <div className="flex w-2/5 flex-col border-r border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
+    <div className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden bg-white dark:bg-gray-800">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 md:flex-row">
+        <div className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden border-b border-gray-200 bg-gray-50 max-h-[46%] dark:border-gray-700 dark:bg-gray-800/50 md:max-h-none md:h-full md:w-2/5 md:border-b-0 md:border-r">
           <LeadHeader
             lead={currentLead}
             onClose={onBack}
@@ -102,7 +100,7 @@ function LeadDetailsPageShell({
             hideNavigation={true}
             hideClose={true}
           />
-          <div className="flex-1 space-y-6 overflow-y-auto p-6">
+          <div className="flex-1 min-h-0 space-y-4 overflow-y-auto p-4 sm:space-y-6 sm:p-6">
             <LeadStatus lead={currentLead} />
             <ContactSection
               lead={currentLead}
@@ -122,7 +120,7 @@ function LeadDetailsPageShell({
             />
           </div>
         </div>
-        <div className="flex-1 bg-white dark:bg-gray-800">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white dark:bg-gray-800">
           <CommentsAndActivities
             lead={currentLead}
             onLeadUpdated={handleLeadUpdated}

@@ -167,7 +167,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, users, onLeadUpdated }) =
             disabled={isUpdating}
           >
             <SelectTrigger
-              className="transition-all duration-200 ease-in-out border rounded-md cursor-pointer w-50 dark:border-gray-600"
+              className="w-full max-w-full transition-all duration-200 ease-in-out border rounded-md cursor-pointer sm:w-50 dark:border-gray-600"
               style={{
                 backgroundColor: triggerBg,
                 color: triggerTextColor,
