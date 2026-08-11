@@ -48,7 +48,7 @@ export function FiltersFeatureMockup() {
 
   return (
     <div className="relative h-full">
-      <Panel className="absolute left-0 top-1 right-3 p-3">
+      <Panel className="absolute left-0 p-3 top-1 right-3">
         <div className="mb-2 flex items-center gap-1.5">
           <Filter className="h-3.5 w-3.5 brand-icon" />
           <span className="text-[10px] font-semibold text-gray-700">
@@ -71,7 +71,7 @@ export function FiltersFeatureMockup() {
         </div>
       </Panel>
       <Panel className="absolute bottom-0 left-5 right-0 translate-y-3 px-2.5 py-2">
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <span className="text-[10px] font-semibold text-gray-800">
             128 matches
           </span>
@@ -135,7 +135,7 @@ export function ColumnsFeatureMockup() {
   return (
     <div ref={rootRef} className="relative h-full">
       <Panel className="absolute inset-x-0 top-1 overflow-hidden p-2.5">
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex items-center justify-between mb-2">
           <span className="text-[10px] font-semibold text-gray-700">
             All Leads
           </span>
@@ -248,15 +248,15 @@ export function PhoneFeatureMockup() {
 
   return (
     <div className="relative h-full">
-      <Panel className="absolute top-1 right-2 left-2 p-3 text-center">
-        <span className="flex relative justify-center items-center mx-auto mb-2 w-10 h-10">
+      <Panel className="absolute p-3 text-center top-1 right-2 left-2">
+        <span className="relative flex items-center justify-center w-10 h-10 mx-auto mb-2">
           {!reduceMotion && (
             <>
               <span className="absolute inset-0 animate-ping rounded-xl bg-[color-mix(in_srgb,var(--brand-from)_35%,transparent)] opacity-40" />
               <span className="absolute -inset-1 rounded-xl border border-[color-mix(in_srgb,var(--brand-from)_30%,transparent)] opacity-60" />
             </>
           )}
-          <span className="flex relative justify-center items-center w-10 h-10 text-white rounded-xl brand-gradient">
+          <span className="relative flex items-center justify-center w-10 h-10 text-white rounded-xl brand-gradient">
             <Phone className="w-4 h-4" />
           </span>
         </span>
@@ -275,29 +275,155 @@ export function PhoneFeatureMockup() {
   );
 }
 
-export function DashboardFeatureMockup() {
-  const reduceMotion = useReducedMotion();
+const DASHBOARD_STATS = [
+  { l: "Total leads", target: 12.4, suffix: "k", decimals: 1 },
+  { l: "Assigned leads", target: 9.1, suffix: "k", decimals: 1 },
+  { l: "Agents", target: 10, suffix: "", decimals: 0 },
+  { l: "Statuses", target: 13, suffix: "", decimals: 0 },
+] as const;
+
+function formatStatValue(
+  value: number,
+  decimals: number,
+  suffix: string,
+): string {
+  return `${decimals > 0 ? value.toFixed(decimals) : Math.round(value)}${suffix}`;
+}
+
+function useCountUp(
+  target: number,
+  active: boolean,
+  reduceMotion: boolean | null,
+) {
+  const [value, setValue] = useState(reduceMotion || !active ? target : 0);
+
+  useEffect(() => {
+    if (reduceMotion || !active) {
+      setValue(target);
+      return;
+    }
+
+    setValue(0);
+    let frame = 0;
+    const durationMs = 900;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / durationMs);
+      const eased = 1 - (1 - t) ** 3;
+      setValue(target * eased);
+      if (t < 1) frame = requestAnimationFrame(tick);
+      else setValue(target);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [active, reduceMotion, target]);
+
+  return value;
+}
+
+function DashboardStatCard({
+  label,
+  target,
+  suffix,
+  decimals,
+  index,
+  inView,
+  activeIndex,
+  reduceMotion,
+}: {
+  label: string;
+  target: number;
+  suffix: string;
+  decimals: number;
+  index: number;
+  inView: boolean;
+  activeIndex: number;
+  reduceMotion: boolean | null;
+}) {
+  const value = useCountUp(target, inView, reduceMotion);
+  const isActive = !reduceMotion && inView && activeIndex === index;
 
   return (
-    <div className="relative h-full">
+    <motion.div
+      custom={index}
+      initial={reduceMotion ? false : "hidden"}
+      animate={
+        reduceMotion
+          ? undefined
+          : inView
+            ? {
+                opacity: 1,
+                x: 0,
+                scale: isActive ? 1.04 : 1,
+                y: isActive ? -1 : 0,
+                transition: {
+                  opacity: {
+                    delay: 0.12 + index * 0.12,
+                    duration: 0.45,
+                    ease: [0.22, 1, 0.36, 1],
+                  },
+                  x: {
+                    delay: 0.12 + index * 0.12,
+                    duration: 0.45,
+                    ease: [0.22, 1, 0.36, 1],
+                  },
+                  scale: { type: "spring", stiffness: 420, damping: 28 },
+                  y: { type: "spring", stiffness: 420, damping: 28 },
+                },
+              }
+            : { opacity: 0, x: -6, scale: 1, y: 0 }
+      }
+      className={`rounded-lg border px-2 py-1.5 ${
+        isActive
+          ? "border-(--brand-from)/40 bg-white shadow-sm"
+          : "border-gray-100 bg-gray-50/80"
+      }`}
+    >
+      <p className="text-[9px] text-gray-400">{label}</p>
+      <p
+        className={`text-sm font-bold tabular-nums ${
+          isActive ? "text-(--brand-from)" : "text-gray-900"
+        }`}
+      >
+        {formatStatValue(value, decimals, suffix)}
+      </p>
+    </motion.div>
+  );
+}
+
+export function DashboardFeatureMockup() {
+  const reduceMotion = useReducedMotion();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(rootRef, { amount: "some", margin: "80px" });
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (reduceMotion || !inView) return;
+
+    const id = window.setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % DASHBOARD_STATS.length);
+    }, 1400);
+
+    return () => window.clearInterval(id);
+  }, [reduceMotion, inView]);
+
+  return (
+    <div ref={rootRef} className="relative h-full">
       <Panel className="absolute left-0 right-4 top-1 grid grid-cols-2 gap-1.5 p-2.5">
-        {[
-          { l: "Total leads", v: "12.4k" },
-          { l: "Assigned", v: "9.1k" },
-          { l: "Agents", v: "18" },
-          { l: "Due today", v: "42" },
-        ].map((s, i) => (
-          <motion.div
+        {DASHBOARD_STATS.map((s, i) => (
+          <DashboardStatCard
             key={s.l}
-            custom={i}
-            initial={reduceMotion ? false : "hidden"}
-            animate="show"
-            variants={rowVariants}
-            className="rounded-lg border border-gray-100 bg-gray-50/80 px-2 py-1.5"
-          >
-            <p className="text-[9px] text-gray-400">{s.l}</p>
-            <p className="text-sm font-bold text-gray-900">{s.v}</p>
-          </motion.div>
+            label={s.l}
+            target={s.target}
+            suffix={s.suffix}
+            decimals={s.decimals}
+            index={i}
+            inView={!!inView}
+            activeIndex={activeIndex}
+            reduceMotion={reduceMotion}
+          />
         ))}
       </Panel>
     </div>
@@ -309,8 +435,8 @@ export function BrandFeatureMockup() {
 
   return (
     <div className="relative h-full">
-      <Panel className="absolute left-0 top-2 right-5 p-3">
-        <div className="flex gap-2 items-center mb-2">
+      <Panel className="absolute left-0 p-3 top-2 right-5">
+        <div className="flex items-center gap-2 mb-2">
           <Palette className="h-3.5 w-3.5 brand-icon" />
           <span className="text-[10px] font-semibold text-gray-700">
             Brand theme
@@ -320,7 +446,7 @@ export function BrandFeatureMockup() {
           {["#0ea5e9", "#8b5cf6", "#10b981", "#f59e0b"].map((c, i) => (
             <motion.span
               key={c}
-              className="w-6 h-6 rounded-md border border-white ring-1 ring-gray-200 shadow-sm"
+              className="w-6 h-6 border border-white rounded-md shadow-sm ring-1 ring-gray-200"
               style={{ background: c }}
               animate={
                 reduceMotion
@@ -364,9 +490,9 @@ export function BillingFeatureMockup() {
 
   return (
     <div className="relative h-full">
-      <Panel className="absolute left-0 top-1 right-4 p-3">
-        <div className="flex gap-2 items-center">
-          <span className="flex justify-center items-center w-8 h-8 rounded-lg brand-soft-bg">
+      <Panel className="absolute left-0 p-3 top-1 right-4">
+        <div className="flex items-center gap-2">
+          <span className="flex items-center justify-center w-8 h-8 rounded-lg brand-soft-bg">
             <Wallet className="w-4 h-4 brand-icon" />
           </span>
           <div>
@@ -376,7 +502,7 @@ export function BillingFeatureMockup() {
             <p className="text-[9px] text-gray-400">Monthly · Trial ready</p>
           </div>
         </div>
-        <div className="flex justify-between items-end mt-2">
+        <div className="flex items-end justify-between mt-2">
           <span className="text-lg font-bold text-gray-900">$10.99</span>
           <motion.span
             className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700"

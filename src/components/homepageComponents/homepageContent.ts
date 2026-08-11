@@ -91,6 +91,22 @@ export const HOME_FEATURES: HomeFeature[] = [
     visual: "reminders",
   },
   {
+    icon: Columns3,
+    label: "Layout",
+    title: "Drag & drop columns",
+    description:
+      "Reorder lead table columns to match how you work — grab the grip, drop it where you want, and your layout stays saved.",
+    visual: "columns",
+  },
+  {
+    icon: Palette,
+    label: "Branding",
+    title: "Your brand, your CRM",
+    description:
+      "Customize colors, fonts, and button style so the workspace matches your company identity.",
+    visual: "brand",
+  },
+  {
     icon: Activity,
     label: "Timeline",
     title: "Comments & activity",
@@ -106,14 +122,7 @@ export const HOME_FEATURES: HomeFeature[] = [
       "Filter by status, source, country, or owner — and search by name, email, or phone in seconds.",
     visual: "filters",
   },
-  {
-    icon: Columns3,
-    label: "Layout",
-    title: "Drag & drop columns",
-    description:
-      "Reorder lead table columns to match how you work — grab the grip, drop it where you want, and your layout stays saved.",
-    visual: "columns",
-  },
+
   {
     icon: Phone,
     label: "Calling",
@@ -130,14 +139,7 @@ export const HOME_FEATURES: HomeFeature[] = [
       "See total leads, active users, and assigned vs unassigned at a glance — built for daily sales ops.",
     visual: "dashboard",
   },
-  {
-    icon: Palette,
-    label: "Branding",
-    title: "Your brand, your CRM",
-    description:
-      "Customize colors, fonts, and button style so the workspace matches your company identity.",
-    visual: "brand",
-  },
+
   {
     icon: Wallet,
     label: "Billing",
