@@ -73,10 +73,7 @@ export const LeadsDialogs: React.FC<LeadsDialogsProps> = ({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Unassign {assignedLeadsCount} lead
-              {assignedLeadsCount > 1 ? "s" : ""}?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Unassign leads?</AlertDialogTitle>
             <AlertDialogDescription>
               This will remove the assignment from the selected leads. They will
               become unassigned and available for reassignment.
@@ -101,7 +98,7 @@ export const LeadsDialogs: React.FC<LeadsDialogsProps> = ({
                   Unassigning...
                 </>
               ) : (
-                "Yes, Unassign"
+                `Yes, Unassign (${assignedLeadsCount})`
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
