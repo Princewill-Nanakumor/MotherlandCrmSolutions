@@ -218,12 +218,9 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
         case "lastActivityAt": {
           const getActivityTime = (lead: Lead) =>
             new Date(
-              lead.lastActivityAt ||
-                lead.lastCommentDate ||
-                lead.statusChangedAt ||
-                lead.updatedAt ||
-                lead.createdAt ||
-                "",
+              // Keep sorting precedence aligned with backend:
+              // backend uses lastActivityAt -> updatedAt -> createdAt.
+              lead.lastActivityAt || lead.updatedAt || lead.createdAt || "",
             ).getTime();
           aValue = getActivityTime(a);
           bValue = getActivityTime(b);

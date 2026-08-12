@@ -173,6 +173,29 @@ export function UserLeadsTableContent({
                 key={row.id}
                 data-state={isSelected ? "selected" : undefined}
                 onClick={(event) => {
+                  const target = event.target as HTMLElement | null;
+                  if (!target) return;
+
+                  // Avoid accidental row-click navigation when the user clicks
+                  // any interactive element within the row (checkbox/buttons/links/etc).
+                  if (
+                    target.closest(
+                      "button, a, input, textarea, select, [data-slot='checkbox'], [role='button']",
+                    )
+                  ) {
+                    return;
+                  }
+
+                  // Ignore SVG clicks that are inside an interactive element.
+                  if (
+                    target.closest("svg") &&
+                    target.closest(
+                      "button, a, input, textarea, select, [data-slot='checkbox'], [role='button']",
+                    )
+                  ) {
+                    return;
+                  }
+
                   onRowClick(lead, event);
                 }}
                 className={`
