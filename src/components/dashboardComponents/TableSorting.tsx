@@ -142,13 +142,11 @@ export const useTableSorting = ({
           );
         case "lastActivityAt": {
           const getActivityTime = (lead: Lead) =>
-            new Date(
-              lead.lastActivityAt ||
-                lead.lastCommentDate ||
-                lead.statusChangedAt ||
-                lead.updatedAt ||
-                lead.createdAt,
-            ).getTime();
+            // Match backend ordering precedence:
+            // - prefer `lastActivityAt`
+            // - fall back to `updatedAt`
+            // - then `createdAt`
+            new Date(lead.lastActivityAt || lead.updatedAt || lead.createdAt).getTime();
           return (getActivityTime(a) - getActivityTime(b)) * multiplier;
         }
         case "statusChangedAt": {

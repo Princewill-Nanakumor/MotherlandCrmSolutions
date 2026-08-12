@@ -286,10 +286,31 @@ export function TableContent({
                 key={row.id}
                 data-state={isSelected ? "selected" : undefined}
                 onClick={(event) => {
-                  const firstCell = event.currentTarget.querySelector("td");
-                  if (firstCell && firstCell.contains(event.target as Node)) {
+                  const target = event.target as HTMLElement | null;
+                  if (!target) return;
+
+                  // Prevent row "open panel" when the user clicks any interactive
+                  // UI inside the row (checkbox, links, buttons, inputs, etc).
+                  // This avoids selection "jumping" when multi-selecting rows.
+                  if (
+                    target.closest(
+                      "button, a, input, textarea, select, [data-slot='checkbox'], [role='button']",
+                    )
+                  ) {
                     return;
                   }
+
+                  // Ignore clicks that happen on icons/SVG that are inside an
+                  // interactive control.
+                  if (
+                    target.closest("svg") &&
+                    target.closest(
+                      "button, a, input, textarea, select, [data-slot='checkbox'], [role='button']",
+                    )
+                  ) {
+                    return;
+                  }
+
                   onRowClick(lead, event);
                 }}
                 className={`
