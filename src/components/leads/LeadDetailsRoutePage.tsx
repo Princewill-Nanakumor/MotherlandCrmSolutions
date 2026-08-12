@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, use, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LeadHeader } from "@/components/leads/leadDetailsPanel/LeadHeader";
@@ -15,7 +16,7 @@ import { LeadDetailsSkeleton } from "@/components/dashboardComponents/LeadDetail
 import { Lead } from "@/types/leads";
 import { useLeadDetails, useUpdateLead } from "@/hooks/useLeadDetails";
 import { useAppBranding } from "@/components/AppBrandingProvider";
-import { isStatusOnlyLeadUpdate } from "@/lib/leadClientUpdate";
+import { isStatusOnlyLeadUpdate, normalizeLeadStatusId } from "@/lib/leadClientUpdate";
 
 export type LeadDetailsRouteMode = "admin" | "agent";
 
@@ -88,9 +89,9 @@ function LeadDetailsPageShell({
   );
 
   return (
-    <div className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden bg-white dark:bg-gray-800">
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 md:flex-row">
-        <div className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden border-b border-gray-200 bg-gray-50 max-h-[38%] dark:border-gray-700 dark:bg-gray-800/50 md:max-h-none md:h-full md:w-2/5 md:border-b-0 md:border-r">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white dark:bg-gray-800">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 md:flex-row md:overflow-hidden">
+        <div className="flex w-full min-w-0 shrink-0 flex-col border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 md:h-full md:w-2/5 md:min-h-0 md:overflow-hidden md:border-b-0 md:border-r">
           <LeadHeader
             lead={currentLead}
             onClose={onBack}
@@ -100,8 +101,11 @@ function LeadDetailsPageShell({
             hideNavigation={true}
             hideClose={true}
           />
-          <div className="flex-1 min-h-0 space-y-4 overflow-y-auto p-4 sm:space-y-6 sm:p-6">
-            <LeadStatus lead={currentLead} />
+          <div className="space-y-4 p-4 sm:space-y-6 sm:p-6 md:min-h-0 md:flex-1 md:overflow-y-auto">
+            <LeadStatus
+              lead={currentLead}
+              onLeadUpdated={handleLeadUpdated}
+            />
             <ContactSection
               lead={currentLead}
               isExpanded={expandedSections.contact}
@@ -120,7 +124,7 @@ function LeadDetailsPageShell({
             />
           </div>
         </div>
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain bg-white dark:bg-gray-800 md:overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-white dark:bg-gray-800 md:overflow-hidden">
           <CommentsAndActivities
             lead={currentLead}
             onLeadUpdated={handleLeadUpdated}
@@ -149,6 +153,7 @@ export function LeadDetailsRoutePage({ mode, params }: LeadDetailsRoutePageProps
     status === "authenticated" ? id : null,
   );
   const { updateLeadAsync } = useUpdateLead();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -174,7 +179,15 @@ export function LeadDetailsRoutePage({ mode, params }: LeadDetailsRoutePageProps
 
   const handleLeadUpdated = useCallback(
     async (updatedLead: Lead) => {
-      if (mode === "agent" && lead && isStatusOnlyLeadUpdate(lead, updatedLead)) {
+      if (lead && isStatusOnlyLeadUpdate(lead, updatedLead)) {
+        const normalized: Lead = {
+          ...updatedLead,
+          status: normalizeLeadStatusId(updatedLead.status),
+        };
+        queryClient.setQueryData(["lead", normalized._id], normalized);
+        if (normalized.id && normalized.id !== normalized._id) {
+          queryClient.setQueryData(["lead", normalized.id], normalized);
+        }
         return true;
       }
       try {
@@ -185,7 +198,7 @@ export function LeadDetailsRoutePage({ mode, params }: LeadDetailsRoutePageProps
         return false;
       }
     },
-    [lead, mode, updateLeadAsync],
+    [lead, queryClient, updateLeadAsync],
   );
 
   const handleBack = useCallback(() => {

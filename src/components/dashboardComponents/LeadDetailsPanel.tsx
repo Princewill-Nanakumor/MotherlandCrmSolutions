@@ -548,45 +548,47 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       animate={{ x: isClosing ? "100%" : 0 }}
       transition={{ type: "tween", duration: 0.25, ease: "easeOut" }}
     >
-      <div className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden border-b border-gray-200 bg-gray-50 max-h-[38%] dark:border-gray-700 dark:bg-gray-800/50 md:max-h-none md:h-full md:w-2/5 md:border-b-0 md:border-r">
-        <LeadHeader
-          lead={currentLead}
-          onClose={handleRequestClose}
-          onNavigate={onNavigate}
-          hasPrevious={hasPrevious}
-          hasNext={hasNext}
-        />
-        <div className="overflow-y-auto flex-1 p-4 space-y-4 min-h-0 sm:space-y-6 sm:p-6">
-          <LeadStatus
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain md:flex-row md:overflow-hidden">
+        <div className="flex w-full min-w-0 shrink-0 flex-col border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 md:h-full md:w-2/5 md:min-h-0 md:overflow-hidden md:border-b-0 md:border-r">
+          <LeadHeader
             lead={currentLead}
-            users={users}
-            onLeadUpdated={handleLeadUpdated}
+            onClose={handleRequestClose}
+            onNavigate={onNavigate}
+            hasPrevious={hasPrevious}
+            hasNext={hasNext}
           />
-          <ContactSection
+          <div className="space-y-4 p-4 min-h-0 sm:space-y-6 sm:p-6 md:flex-1 md:overflow-y-auto">
+            <LeadStatus
+              lead={currentLead}
+              users={users}
+              onLeadUpdated={handleLeadUpdated}
+            />
+            <ContactSection
+              lead={currentLead}
+              isExpanded={expandedSections.contact}
+              onToggle={() => toggleSection("contact")}
+              onLeadUpdated={handleLeadUpdated}
+            />
+            <AdsImageSlider
+              isExpanded={expandedSections.ads}
+              onToggle={() => toggleSection("ads")}
+            />
+            <DetailsSection
+              lead={currentLead}
+              isExpanded={expandedSections.details}
+              onToggle={() => toggleSection("details")}
+              users={users}
+              onLeadUpdated={handleLeadUpdated}
+            />
+          </div>
+        </div>
+        <div className="flex flex-col flex-1 min-w-0 min-h-0 bg-white dark:bg-gray-800 md:overflow-hidden">
+          <CommentsAndActivities
             lead={currentLead}
-            isExpanded={expandedSections.contact}
-            onToggle={() => toggleSection("contact")}
             onLeadUpdated={handleLeadUpdated}
-          />
-          <AdsImageSlider
-            isExpanded={expandedSections.ads}
-            onToggle={() => toggleSection("ads")}
-          />
-          <DetailsSection
-            lead={currentLead}
-            isExpanded={expandedSections.details}
-            onToggle={() => toggleSection("details")}
-            users={users}
-            onLeadUpdated={handleLeadUpdated}
+            key={currentLead._id}
           />
         </div>
-      </div>
-      <div className="flex overflow-y-auto overscroll-contain flex-col flex-1 min-w-0 min-h-0 bg-white dark:bg-gray-800 md:overflow-hidden">
-        <CommentsAndActivities
-          lead={currentLead}
-          onLeadUpdated={handleLeadUpdated}
-          key={currentLead._id}
-        />
       </div>
     </motion.div>
   );

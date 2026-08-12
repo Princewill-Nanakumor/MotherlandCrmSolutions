@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export const LeadDetailsSkeleton = () => {
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-800">
+    <div className="flex h-full min-h-0 flex-col bg-white dark:bg-gray-800">
       <div className="flex flex-1 min-h-0 bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700">
         {/* Left Panel - Lead Details Skeleton */}
         <div className="w-2/5 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-800/50">

@@ -71,8 +71,8 @@ export function DialerSettingsSection() {
             {dialer === null
               ? "Call button will be disabled. Please select a dialer to enable calling."
               : dialer === "zoiper"
-                ? "Uses zoiper:// protocol. Works with Zoiper Pro/Biz versions. Free version will copy number to clipboard."
-                : "Uses sip: protocol. Make sure MicroSIP is set as default handler for sip: protocol."}
+                ? "Opens zoiper:// links and logs calls as Zoiper. Works with Zoiper Pro/Biz; free versions may only copy the number."
+                : "Opens sip: links and logs calls as MicroSIP. If Zoiper opens instead, set MicroSIP as the default app for sip: links in your OS — or switch this setting to Zoiper to use zoiper:// and log Zoiper."}
           </p>
         </div>
       </div>

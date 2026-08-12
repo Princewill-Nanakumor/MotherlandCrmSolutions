@@ -283,6 +283,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     pathname === "/dashboard/leads" ||
     pathname?.startsWith("/dashboard/leads/");
 
+  const isLeadDetailPage =
+    (pathname?.startsWith("/dashboard/all-leads/") &&
+      pathname !== "/dashboard/all-leads") ||
+    (pathname?.startsWith("/dashboard/leads/") &&
+      pathname !== "/dashboard/leads");
+
   const isAdmin = session?.user?.role === "ADMIN";
 
   // Agents must not open admin-only dashboard URLs (bookmarks / typed paths).
@@ -593,7 +599,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             showSearch={showSearch}
           />
           <SelectedLeadsBanner />
-          <main className="flex-1 min-h-0 p-4 md:p-6 overflow-auto bg-background text-foreground">
+          <main
+            className={`flex-1 min-h-0 bg-background text-foreground ${
+              isLeadDetailPage
+                ? "overflow-hidden p-0"
+                : "overflow-auto p-4 md:p-6"
+            }`}
+          >
             {children}
           </main>
           <Footer />

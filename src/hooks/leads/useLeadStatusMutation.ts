@@ -195,7 +195,17 @@ export function useLeadStatusMutation({
       }
     },
     onSuccess: async (updatedLead, _vars, context) => {
-      replaceLeadInLists(updatedLead._id, updatedLead);
+      const normalized: Lead = {
+        ...updatedLead,
+        status: normalizeLeadStatusId(updatedLead.status),
+      };
+
+      queryClient.setQueryData(["lead", normalized._id], normalized);
+      if (normalized.id && normalized.id !== normalized._id) {
+        queryClient.setQueryData(["lead", normalized.id], normalized);
+      }
+
+      replaceLeadInLists(updatedLead._id, normalized);
 
       if (context) {
         const optimisticStatusActivity: Activity = {
