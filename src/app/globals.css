@@ -108,6 +108,21 @@ html.app-density-lock #app-density-root {
   background-color: #1f2937; /* gray-800 */
 }
 
+/*
+ * iOS Safari zooms the page when a focused field uses font-size < 16px, which
+ * breaks layout (especially with the density transform). Keep text fields at
+ * 16px on narrow viewports; desktop density classes can stay smaller.
+ */
+@media screen and (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  textarea,
+  select,
+  [data-slot="input"],
+  [data-slot="select-trigger"] {
+    font-size: 16px !important;
+  }
+}
+
 /* Tenant brand utilities — follow --brand-* CSS variables */
 .brand-gradient {
   background-color: var(--brand-from);

@@ -13,6 +13,9 @@ export const UI_ZOOM_MAC = 0.9;
 export const UI_ZOOM_WINDOWS = 0.8;
 export const UI_ZOOM_DEFAULT = 0.9;
 
+/** Below this width, skip density scaling (mobile / narrow viewports). */
+export const MOBILE_MAX_WIDTH = 768;
+
 /** Below this width, apply the full platform density baseline. */
 const LAPTOP_WIDTH = 1440;
 /** Around here, density is mostly relaxed. */
@@ -48,6 +51,15 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * clamp(t, 0, 1);
 }
 
+export function isMobileViewport(
+  width =
+    typeof window !== "undefined"
+      ? window.innerWidth || document.documentElement.clientWidth || MOBILE_MAX_WIDTH
+      : MOBILE_MAX_WIDTH,
+): boolean {
+  return width <= MOBILE_MAX_WIDTH;
+}
+
 /**
  * Map viewport size onto a scale between the platform baseline and 1.0.
  * Bigger screens → closer to 1 (fits properly without looking shrunk).
@@ -65,6 +77,10 @@ export function getViewportUiZoom(
         SHORT_HEIGHT
       : SHORT_HEIGHT,
 ): number {
+  if (isMobileViewport(width)) {
+    return 1;
+  }
+
   let scale: number;
 
   if (width <= LAPTOP_WIDTH) {
@@ -104,6 +120,10 @@ export function getDefaultUiZoom(
 export function resolveUiZoom(
   userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "",
 ): number {
+  if (typeof window !== "undefined" && isMobileViewport()) {
+    return 1;
+  }
+
   if (typeof window !== "undefined") {
     try {
       const stored = window.localStorage.getItem(UI_ZOOM_STORAGE_KEY);
@@ -224,5 +244,5 @@ export function syncAppScrollMode(pathname: string): void {
  * On `/dashboard*`, set `app-density-lock` before paint so the density root
  * cannot scroll the navbar out of view before React hydrates.
  */
-export const UI_ZOOM_BOOT_SCRIPT = `(function(){try{var KEY="motherland-ui-zoom";var ua=navigator.userAgent||"";var path=location.pathname||"/";var isPublic=path==="/"||path==="";var r=document.documentElement;if(isPublic){r.classList.add("public-native-scroll");r.classList.remove("app-density-lock");r.classList.remove("dark");r.style.colorScheme="light";r.style.setProperty("--app-ui-scale","1");r.dataset.uiZoom="1";r.style.removeProperty("zoom");return;}if(path==="/dashboard"||path.indexOf("/dashboard/")===0){r.classList.add("app-density-lock");}var z;try{var s=localStorage.getItem(KEY);if(s){var p=parseFloat(s);if(isFinite(p)&&p>=0.7&&p<=1.1)z=p;}}catch(e){}if(z==null){var base=/Windows/i.test(ua)?0.8:(/Mac OS X|Macintosh/i.test(ua)?0.9:0.9);var w=window.innerWidth||document.documentElement.clientWidth||1440;var h=window.innerHeight||document.documentElement.clientHeight||820;var clamp=function(n,a,b){return Math.min(b,Math.max(a,n));};var lerp=function(a,b,t){return a+(b-a)*clamp(t,0,1);};var scale;if(w<=1440)scale=base;else if(w>=2560)scale=1;else if(w>=1920){var mid=lerp(base,1,0.75);scale=lerp(mid,1,(w-1920)/(2560-1920));}else{var mid2=lerp(base,1,0.75);scale=lerp(base,mid2,(w-1440)/(1920-1440));}if(h<820)scale=Math.min(scale,base);z=Math.round(clamp(scale,0.75,1.05)*1000)/1000;}r.style.setProperty("--app-ui-scale",String(z));r.dataset.uiZoom=String(z);r.style.removeProperty("zoom");}catch(e){}})();`;
+export const UI_ZOOM_BOOT_SCRIPT = `(function(){try{var KEY="motherland-ui-zoom";var ua=navigator.userAgent||"";var path=location.pathname||"/";var isPublic=path==="/"||path==="";var r=document.documentElement;if(isPublic){r.classList.add("public-native-scroll");r.classList.remove("app-density-lock");r.classList.remove("dark");r.style.colorScheme="light";r.style.setProperty("--app-ui-scale","1");r.dataset.uiZoom="1";r.style.removeProperty("zoom");return;}if(path==="/dashboard"||path.indexOf("/dashboard/")===0){r.classList.add("app-density-lock");}var w=window.innerWidth||document.documentElement.clientWidth||1440;var z;if(w<=768){z=1;}else{try{var s=localStorage.getItem(KEY);if(s){var p=parseFloat(s);if(isFinite(p)&&p>=0.7&&p<=1.1)z=p;}}catch(e){}if(z==null){var base=/Windows/i.test(ua)?0.8:(/Mac OS X|Macintosh/i.test(ua)?0.9:0.9);var h=window.innerHeight||document.documentElement.clientHeight||820;var clamp=function(n,a,b){return Math.min(b,Math.max(a,n));};var lerp=function(a,b,t){return a+(b-a)*clamp(t,0,1);};var scale;if(w<=1440)scale=base;else if(w>=2560)scale=1;else if(w>=1920){var mid=lerp(base,1,0.75);scale=lerp(mid,1,(w-1920)/(2560-1920));}else{var mid2=lerp(base,1,0.75);scale=lerp(base,mid2,(w-1440)/(1920-1440));}if(h<820)scale=Math.min(scale,base);z=Math.round(clamp(scale,0.75,1.05)*1000)/1000;}}r.style.setProperty("--app-ui-scale",String(z));r.dataset.uiZoom=String(z);r.style.removeProperty("zoom");}catch(e){}})();`;
 
