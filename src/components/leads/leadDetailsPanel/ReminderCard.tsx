@@ -18,8 +18,10 @@ import {
   Edit,
   Volume2,
   VolumeX,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format, isValid } from "date-fns";
 import { Reminder } from "@/types/leads";
 import { formatTime24Hour } from "@/lib/utils";
@@ -37,6 +39,34 @@ interface ReminderCardProps {
   onToggleSound: (reminderId: string, currentSoundEnabled: boolean) => void;
   onSnooze: (reminderId: string, minutes: number) => void;
   onDelete: (reminderId: string) => void;
+  isDeleting?: boolean;
+  isCompleting?: boolean;
+}
+
+export function ReminderCardSkeleton() {
+  const bar = "bg-gray-100 dark:bg-gray-600";
+
+  return (
+    <div
+      className="p-4 bg-gray-50 border border-gray-200 rounded-lg dark:bg-gray-700/30 dark:border-gray-600"
+      aria-busy="true"
+      aria-label="Creating reminder"
+    >
+      <div className="flex items-start gap-3">
+        <Skeleton className={`h-9 w-9 rounded-lg shrink-0 ${bar}`} />
+        <div className="flex-1 min-w-0 space-y-2">
+          <Skeleton className={`h-4 w-2/5 ${bar}`} />
+          <Skeleton className={`h-3 w-3/4 ${bar}`} />
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Skeleton className={`h-5 w-14 rounded-full ${bar}`} />
+            <Skeleton className={`h-5 w-24 rounded-full ${bar}`} />
+            <Skeleton className={`h-5 w-20 rounded-full ${bar}`} />
+          </div>
+        </div>
+        <Loader2 className="w-4 h-4 mt-1 animate-spin brand-icon shrink-0" />
+      </div>
+    </div>
+  );
 }
 
 export const ReminderCard: FC<ReminderCardProps> = ({
@@ -46,6 +76,8 @@ export const ReminderCard: FC<ReminderCardProps> = ({
   onToggleSound,
   onSnooze,
   onDelete,
+  isDeleting = false,
+  isCompleting = false,
 }) => {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "ADMIN";
@@ -93,11 +125,16 @@ export const ReminderCard: FC<ReminderCardProps> = ({
 
   const metadataChipClass =
     "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600";
+  const snoozeMenuItemClass =
+    "cursor-pointer text-gray-900! dark:text-gray-100! focus:bg-gray-100 dark:focus:bg-gray-700/80";
 
   return (
     <div
       key={`reminder-${reminder._id}-${reminder.soundEnabled}-${reminder.status}`}
-      className="p-4 transition-shadow bg-white border border-gray-200 rounded-lg dark:bg-gray-700/50 dark:border-gray-600 hover:shadow-md"
+      className={`p-4 transition-shadow bg-white border border-gray-200 rounded-lg dark:bg-gray-700/50 dark:border-gray-600 hover:shadow-md ${
+        isDeleting || isCompleting ? "opacity-60 pointer-events-none" : ""
+      }`}
+      aria-busy={isDeleting || isCompleting}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start flex-1 gap-3">
@@ -149,16 +186,23 @@ export const ReminderCard: FC<ReminderCardProps> = ({
             size="sm"
             variant="ghost"
             onClick={() => onComplete(reminder._id)}
+            disabled={isCompleting || isDeleting}
             className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30"
-            title="Mark as complete"
+            title={
+              isCompleting ? "Marking as complete" : "Mark as complete"
+            }
           >
-            <Check className="w-4 h-4" />
+            {isCompleting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Check className="w-4 h-4" />
+            )}
           </Button>
           <Button
             size="sm"
             variant="ghost"
             onClick={() => onEdit(reminder)}
-            className="brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)]"
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
             title="Edit reminder"
           >
             <Edit className="w-4 h-4" />
@@ -190,30 +234,53 @@ export const ReminderCard: FC<ReminderCardProps> = ({
                 size="sm"
                 variant="ghost"
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                disabled={isDeleting}
+                title={isDeleting ? "Deleting reminder" : "More actions"}
               >
-                <MoreVertical className="w-4 h-4" />
+                {isDeleting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <MoreVertical className="w-4 h-4" />
+                )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onSnooze(reminder._id, 15)}>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white! dark:bg-gray-800! border-gray-200! dark:border-gray-700! text-gray-900! dark:text-gray-100!"
+            >
+              <DropdownMenuItem
+                onClick={() => onSnooze(reminder._id, 15)}
+                className={snoozeMenuItemClass}
+              >
                 <Clock className="w-4 h-4 mr-2" />
                 Snooze 15 min
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSnooze(reminder._id, 60)}>
+              <DropdownMenuItem
+                onClick={() => onSnooze(reminder._id, 60)}
+                className={snoozeMenuItemClass}
+              >
                 <Clock className="w-4 h-4 mr-2" />
                 Snooze 1 hour
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSnooze(reminder._id, 1440)}>
+              <DropdownMenuItem
+                onClick={() => onSnooze(reminder._id, 1440)}
+                className={snoozeMenuItemClass}
+              >
                 <Clock className="w-4 h-4 mr-2" />
                 Snooze 1 day
               </DropdownMenuItem>
               {canDelete && (
                 <DropdownMenuItem
                   onClick={() => onDelete(reminder._id)}
-                  className="text-red-600 dark:text-red-400"
+                  disabled={isDeleting}
+                  className="cursor-pointer text-red-600! dark:text-red-400! focus:bg-red-50 dark:focus:bg-red-950/40"
                 >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
+                  {isDeleting ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4 mr-2" />
+                  )}
+                  {isDeleting ? "Deleting…" : "Delete"}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>

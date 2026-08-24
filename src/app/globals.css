@@ -219,6 +219,11 @@ html[data-brand-button-style="solid"].dark .brand-navbar {
   font-weight: 700;
 }
 
+.brand-tab-active span,
+.brand-tab-active svg {
+  color: inherit !important;
+}
+
 .dark .dashboard-app .brand-tab-active {
   background-color: color-mix(in srgb, var(--brand-solid) 18%, #111827) !important;
   color: #fff !important;
@@ -1817,21 +1822,27 @@ span[class*="text-red"] {
 
 /* Allow Tailwind text-white on button labels — avoid matching only the exact
    `.text-white` class so `text-white!` / opacity variants still win over the
-   global bare-span `#000` rule (auth hero country select, CTAs, etc.). */
-button[class*="text-white"] > span:not([class*="text-red"]):not(
+   global bare-span `#000` rule (auth hero country select, CTAs, etc.).
+   Use whole-token matches so `dark:text-white` does not force white in light mode. */
+html:not(.dark) button[class~="text-white"] > span:not([class*="text-red"]):not(
     [class*="text-green"]
   ):not([class*="text-amber"]):not([class*="text-orange"]):not(
     [class*="text-emerald"]
   ):not([class*="text-yellow"]):not([class*="text-blue"]),
-button span.text-white,
-button.text-white span,
-[role="button"][class*="text-white"] > span:not([class*="text-red"]):not(
+html:not(.dark) button[class~="text-white!"] > span:not([class*="text-red"]):not(
     [class*="text-green"]
   ):not([class*="text-amber"]):not([class*="text-orange"]):not(
     [class*="text-emerald"]
   ):not([class*="text-yellow"]):not([class*="text-blue"]),
-[role="button"] span.text-white,
-[role="button"].text-white span {
+html:not(.dark) button span.text-white,
+html:not(.dark) button.text-white span,
+html:not(.dark) [role="button"][class~="text-white"] > span:not([class*="text-red"]):not(
+    [class*="text-green"]
+  ):not([class*="text-amber"]):not([class*="text-orange"]):not(
+    [class*="text-emerald"]
+  ):not([class*="text-yellow"]):not([class*="text-blue"]),
+html:not(.dark) [role="button"] span.text-white,
+html:not(.dark) [role="button"].text-white span {
   color: white !important;
 }
 

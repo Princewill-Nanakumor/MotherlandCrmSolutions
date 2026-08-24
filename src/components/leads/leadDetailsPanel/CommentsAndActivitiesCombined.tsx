@@ -611,7 +611,7 @@ export const CommentsAndActivitiesCombined: FC<
                   key={tab.key}
                   type="button"
                   onClick={() => setTimelineFilter(tab.key)}
-                  className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 transition-colors bg-transparent shadow-none ${
                     isActive
                       ? "brand-tab-active"
                       : "font-medium text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"

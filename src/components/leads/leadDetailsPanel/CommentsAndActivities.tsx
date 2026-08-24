@@ -43,16 +43,26 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
       <div className="flex flex-wrap items-center gap-1 p-3 border-b border-gray-200 shrink-0 sm:gap-2 sm:p-4 md:p-6 dark:border-gray-700">
         <div className="flex flex-wrap gap-1 w-full min-w-0">
           <button
+            type="button"
             onClick={() => setActiveTab("comments")}
-            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm sm:px-4 sm:gap-2 ${activeTab === "comments" ? "brand-tab-active" : "text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"}`}
+            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm sm:px-4 sm:gap-2 border-0 shadow-none ${
+              activeTab === "comments"
+                ? "brand-tab-active"
+                : "bg-transparent! text-gray-700! hover:bg-gray-100 dark:text-gray-100! dark:hover:bg-gray-700/50"
+            }`}
           >
             <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             <span className="md:hidden">Comments</span>
             <span className="hidden md:inline">Comments & Activities</span>
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab("reminders")}
-            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm sm:px-4 sm:gap-2 ${activeTab === "reminders" ? "brand-tab-active" : "text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"}`}
+            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm sm:px-4 sm:gap-2 border-0 shadow-none ${
+              activeTab === "reminders"
+                ? "brand-tab-active"
+                : "bg-transparent! text-gray-700! hover:bg-gray-100 dark:text-gray-100! dark:hover:bg-gray-700/50"
+            }`}
           >
             <Bell className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             Reminders

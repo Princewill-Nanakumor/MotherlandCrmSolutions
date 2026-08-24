@@ -7,26 +7,32 @@ import { Loader2, Bell, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, isValid } from "date-fns";
 import { Reminder } from "@/types/leads";
-import ReminderCard from "./ReminderCard";
+import ReminderCard, { ReminderCardSkeleton } from "./ReminderCard";
 
 interface RemindersListProps {
   reminders: Reminder[];
   isLoading: boolean;
+  isCreating?: boolean;
   onCompleteReminder: (reminderId: string) => void;
   onEditReminder: (reminder: Reminder) => void;
   onToggleSound: (reminderId: string, currentSoundEnabled: boolean) => void;
   onSnoozeReminder: (reminderId: string, minutes: number) => void;
   onDeleteReminder: (reminderId: string) => void;
+  deletingReminderId?: string | null;
+  completingReminderId?: string | null;
 }
 
 export const RemindersList: FC<RemindersListProps> = ({
   reminders,
   isLoading,
+  isCreating = false,
   onCompleteReminder,
   onEditReminder,
   onToggleSound,
   onSnoozeReminder,
   onDeleteReminder,
+  deletingReminderId = null,
+  completingReminderId = null,
 }) => {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "ADMIN";
@@ -54,7 +60,7 @@ export const RemindersList: FC<RemindersListProps> = ({
     );
   }
 
-  if (reminders.length === 0) {
+  if (reminders.length === 0 && !isCreating) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 py-2">
         <div className="text-center">
@@ -105,11 +111,12 @@ export const RemindersList: FC<RemindersListProps> = ({
       `}</style>
 
       {/* Pending Reminders */}
-      {pendingReminders.length > 0 && (
+      {(isCreating || pendingReminders.length > 0) && (
         <div className="space-y-3">
           <h4 className="text-sm font-semibold text-gray-700! dark:text-gray-200! uppercase tracking-wide">
             Upcoming
           </h4>
+          {isCreating ? <ReminderCardSkeleton /> : null}
           {pendingReminders.map((reminder) => (
             <ReminderCard
               key={reminder._id}
@@ -119,6 +126,8 @@ export const RemindersList: FC<RemindersListProps> = ({
               onToggleSound={onToggleSound}
               onSnooze={onSnoozeReminder}
               onDelete={onDeleteReminder}
+              isDeleting={deletingReminderId === reminder._id}
+              isCompleting={completingReminderId === reminder._id}
             />
           ))}
         </div>
@@ -170,9 +179,19 @@ export const RemindersList: FC<RemindersListProps> = ({
                     size="sm"
                     variant="ghost"
                     onClick={() => onDeleteReminder(reminder._id)}
+                    disabled={deletingReminderId === reminder._id}
                     className="text-gray-400 hover:text-red-500"
+                    title={
+                      deletingReminderId === reminder._id
+                        ? "Deleting reminder"
+                        : "Delete reminder"
+                    }
                   >
-                    <Trash2 className="w-4 h-4" />
+                    {deletingReminderId === reminder._id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
                   </Button>
                 )}
               </div>

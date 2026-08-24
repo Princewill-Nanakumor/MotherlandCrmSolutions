@@ -1,10 +1,20 @@
 // src/components/leads/leadDetailsPanel/Reminders.tsx
 "use client";
 
-import { FC, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { stopNotificationSound, alarmSound } from "@/lib/notificationSound";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Reminder } from "@/types/leads";
 import {
   formatLocalDateYmd,
@@ -13,6 +23,12 @@ import {
 } from "@/lib/reminderDueAt";
 import ReminderForm from "./ReminderForm";
 import RemindersList from "./RemindersList";
+
+function truncatePreview(text: string, max = 120): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, max)}…`;
+}
 
 interface RemindersProps {
   reminders: Reminder[];
@@ -32,6 +48,9 @@ interface RemindersProps {
   onCompleteReminder: (reminderId: string) => void;
   onSnoozeReminder: (reminderId: string, minutes: number) => void;
   isSaving: boolean;
+  isCreateError?: boolean;
+  deletingReminderId?: string | null;
+  completingReminderId?: string | null;
 }
 
 const Reminders: FC<RemindersProps> = ({
@@ -43,9 +62,16 @@ const Reminders: FC<RemindersProps> = ({
   onCompleteReminder,
   onSnoozeReminder,
   isSaving,
+  isCreateError = false,
+  deletingReminderId = null,
+  completingReminderId = null,
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [optimisticCreating, setOptimisticCreating] = useState(false);
+  const [pendingDeleteReminderId, setPendingDeleteReminderId] = useState<
+    string | null
+  >(null);
   // Helper function to get current date and time in the correct format
   const getCurrentDateTime = () => {
     const now = new Date();
@@ -100,7 +126,7 @@ const Reminders: FC<RemindersProps> = ({
       onUpdateReminder(editingId, reminderData);
       setEditingId(null);
     } else {
-      // Create new reminder
+      setOptimisticCreating(true);
       onAddReminder(reminderData);
     }
 
@@ -193,6 +219,23 @@ const Reminders: FC<RemindersProps> = ({
     }
   };
 
+  const handleRequestDeleteReminder = (reminderId: string) => {
+    if (deletingReminderId) return;
+    setPendingDeleteReminderId(reminderId);
+  };
+
+  const confirmDeleteReminder = () => {
+    if (!pendingDeleteReminderId || deletingReminderId) return;
+    const reminderId = pendingDeleteReminderId;
+    setPendingDeleteReminderId(null);
+    onDeleteReminder(reminderId);
+  };
+
+  const pendingDeleteReminder = useMemo(
+    () => reminders.find((reminder) => reminder._id === pendingDeleteReminderId),
+    [reminders, pendingDeleteReminderId],
+  );
+
   const handleToggleSound = (
     reminderId: string,
     currentSoundEnabled: boolean
@@ -229,6 +272,24 @@ const Reminders: FC<RemindersProps> = ({
     (r) => r.status === "PENDING" || r.status === "SNOOZED"
   );
 
+  const isCreatingNew = (isSaving || optimisticCreating) && !editingId;
+
+  useEffect(() => {
+    if (!optimisticCreating) return;
+    if (isCreateError) {
+      setOptimisticCreating(false);
+      return;
+    }
+    if (pendingReminders.length > 0 && !isSaving) {
+      setOptimisticCreating(false);
+    }
+  }, [
+    optimisticCreating,
+    isCreateError,
+    isSaving,
+    pendingReminders.length,
+  ]);
+
   return (
     <div
       className="flex-1 min-h-0 flex flex-col bg-gray-50 dark:bg-gray-800/50 p-6 border border-gray-200 dark:border-gray-700 shadow-sm"
@@ -237,7 +298,7 @@ const Reminders: FC<RemindersProps> = ({
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 border border-gray-100 dark:border-gray-700 flex-1 min-h-0 flex flex-col overflow-y-auto space-y-4 pb-8 scroll-pb-16">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            Reminders ({pendingReminders.length})
+            Reminders ({pendingReminders.length + (isCreatingNew ? 1 : 0)})
           </h3>
           {!showForm && (
             <Button
@@ -253,6 +314,7 @@ const Reminders: FC<RemindersProps> = ({
               }}
               size="sm"
               className="gap-2"
+              disabled={isCreatingNew}
             >
               <Plus className="w-4 h-4" />
               Add Reminder
@@ -277,14 +339,60 @@ const Reminders: FC<RemindersProps> = ({
           <RemindersList
             reminders={reminders}
             isLoading={isLoading}
+            isCreating={isCreatingNew}
             onCompleteReminder={handleCompleteReminderWithSound}
             onEditReminder={handleEdit}
             onToggleSound={handleToggleSound}
             onSnoozeReminder={onSnoozeReminder}
-            onDeleteReminder={onDeleteReminder}
+            onDeleteReminder={handleRequestDeleteReminder}
+            deletingReminderId={deletingReminderId}
+            completingReminderId={completingReminderId}
           />
         </div>
       </div>
+
+      <AlertDialog
+        open={pendingDeleteReminderId !== null}
+        onOpenChange={(open) => {
+          if (!open && !deletingReminderId) {
+            setPendingDeleteReminderId(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this reminder?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  This cannot be undone. The reminder will be removed from this
+                  lead.
+                </p>
+                {pendingDeleteReminder?.title ? (
+                  <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-md border border-gray-200 dark:border-gray-600 dark:bg-transparent dark:text-gray-200">
+                    {truncatePreview(pendingDeleteReminder.title)}
+                  </p>
+                ) : null}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!deletingReminderId}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="text-white bg-red-600 hover:bg-red-700 hover:text-white focus:ring-red-600"
+              disabled={!!deletingReminderId}
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDeleteReminder();
+              }}
+            >
+              Delete reminder
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

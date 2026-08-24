@@ -58,8 +58,13 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
 
       return await response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reminders", leadId] });
+    onSuccess: (created: Reminder) => {
+      queryClient.setQueryData<Reminder[]>(["reminders", leadId], (old) => {
+        const list = old ?? [];
+        if (!created?._id) return list;
+        if (list.some((reminder) => reminder._id === created._id)) return list;
+        return [created, ...list];
+      });
       queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
@@ -109,12 +114,15 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
         leadId,
       ]);
 
-      queryClient.setQueryData<Reminder[]>(["reminders", leadId], (old) => {
-        if (!old) return old;
-        return old.map((reminder) =>
-          reminder._id === reminderId ? { ...reminder, ...updates } : reminder
-        );
-      });
+      // Keep the upcoming card visible so the complete button can spin.
+      if (updates.status !== "COMPLETED") {
+        queryClient.setQueryData<Reminder[]>(["reminders", leadId], (old) => {
+          if (!old) return old;
+          return old.map((reminder) =>
+            reminder._id === reminderId ? { ...reminder, ...updates } : reminder
+          );
+        });
+      }
 
       return { previousReminders };
     },
@@ -170,8 +178,10 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
       );
       if (!response.ok) throw new Error("Failed to delete reminder");
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reminders", leadId] });
+    onSuccess: (_data, reminderId) => {
+      queryClient.setQueryData<Reminder[]>(["reminders", leadId], (old) =>
+        (old ?? []).filter((reminder) => reminder._id !== reminderId),
+      );
       queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
@@ -252,6 +262,18 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
       onCompleteReminder={handleCompleteReminder}
       onSnoozeReminder={handleSnoozeReminder}
       isSaving={addReminderMutation.isPending}
+      isCreateError={addReminderMutation.isError}
+      deletingReminderId={
+        deleteReminderMutation.isPending
+          ? (deleteReminderMutation.variables ?? null)
+          : null
+      }
+      completingReminderId={
+        updateReminderMutation.isPending &&
+        updateReminderMutation.variables?.updates.status === "COMPLETED"
+          ? updateReminderMutation.variables.reminderId
+          : null
+      }
     />
   );
 };
