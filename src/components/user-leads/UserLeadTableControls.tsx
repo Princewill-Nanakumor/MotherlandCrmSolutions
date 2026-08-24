@@ -41,7 +41,6 @@ export default function UserLeadTableControls({
               <SelectItem
                 key={size}
                 value={size.toString()}
-                className="dark:focus:bg-gray-700 dark:hover:bg-gray-700"
               >
                 {size}
               </SelectItem>

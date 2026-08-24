@@ -49,7 +49,7 @@ export function UserColumnVisibilityToggle({
         <Button
           variant="outline"
           size="sm"
-          className="ml-auto h-8 gap-2 bg-white! dark:bg-gray-800! border-gray-300! dark:border-gray-600! text-gray-900! dark:text-white! hover:bg-gray-50! dark:hover:bg-gray-700!"
+          className="ml-auto h-8 gap-2 bg-white! dark:bg-gray-800! border-gray-300! dark:border-gray-600! text-gray-900! dark:text-white! hover:bg-gray-50! dark:hover:bg-white/10!"
           title="Toggle columns"
         >
           <Settings2 className="h-4 w-4 text-gray-900! dark:text-white!" />
@@ -86,7 +86,7 @@ export function UserColumnVisibilityToggle({
             return (
               <DropdownMenuCheckboxItem
                 key={column.id}
-                className="capitalize cursor-pointer text-gray-900! dark:text-white!"
+                className="capitalize cursor-pointer text-gray-900! dark:text-white! dark:focus:bg-white/10 dark:focus:text-white"
                 checked={isVisible}
                 onCheckedChange={(value) => {
                   const newVisibility = {
@@ -119,7 +119,7 @@ export function UserColumnVisibilityToggle({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start h-8 text-xs text-gray-900! dark:text-white!"
+            className="w-full justify-start h-8 text-xs text-gray-900! dark:text-white! dark:hover:bg-white/10"
             onClick={() => {
               table.setColumnVisibility({});
             }}

@@ -29,7 +29,7 @@ interface UserLeadsFilterControlsProps {
 }
 
 const FilterSkeleton = () => (
-  <div className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center">
+  <div className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
     <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
     <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
     <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
@@ -68,7 +68,7 @@ export const UserLeadsFilterControls: React.FC<
   if (shouldShowLoading) {
     return (
       <div className="sticky top-0 z-10 px-4 pb-5 mt-8 bg-white sm:px-6 lg:px-8 dark:bg-gray-800">
-        <div className="flex flex-col gap-3 px-3 py-4 rounded-xl border min-w-0 sm:px-4">
+        <div className="flex flex-col gap-3 px-3 py-4 rounded-xl border min-w-0 md:flex-row md:items-center md:justify-end sm:px-4">
           <FilterSkeleton />
         </div>
       </div>
@@ -77,8 +77,8 @@ export const UserLeadsFilterControls: React.FC<
 
   return (
     <div className="sticky top-0 z-10 px-4 pb-5 mt-10 bg-white sm:px-6 lg:px-8 dark:bg-gray-800">
-      <div className="flex flex-col gap-3 px-3 py-4 rounded-xl border min-w-0 sm:px-4">
-        <div className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+      <div className="flex flex-col gap-3 px-3 py-4 rounded-xl border min-w-0 md:flex-row md:items-center md:justify-end sm:px-4">
+        <div className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3 md:w-auto">
           {/* Country Filter */}
           <CountryFilter
             value={countryFilter}
