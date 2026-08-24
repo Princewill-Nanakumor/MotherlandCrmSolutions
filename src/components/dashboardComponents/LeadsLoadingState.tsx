@@ -51,17 +51,6 @@ export const LoadingSpinner = () => (
   </div>
 );
 
-export function LoadingSpinnerWithCaption({ caption }: { caption: string }) {
-  return (
-    <div className="flex h-screen w-full flex-col items-center justify-center gap-3 bg-background text-foreground">
-      <ShieldSpinnerGlyph />
-      <p className="text-center text-base font-medium text-gray-900! dark:text-white!">
-        {caption}
-      </p>
-    </div>
-  );
-}
-
 // New component for session refresh
 export const SessionRefreshSpinner = () => (
   <div className="flex h-screen w-full items-center justify-center bg-background text-foreground">

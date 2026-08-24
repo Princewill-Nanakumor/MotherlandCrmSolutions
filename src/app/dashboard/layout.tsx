@@ -42,6 +42,7 @@ import { UserPresenceProvider } from "@/context/UserPresenceContext";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { dashboardPageTitle } from "@/lib/appBranding";
 import { syncAppScrollMode } from "@/lib/uiZoom";
+import { HolidayEffectsController } from "@/components/holidayEffects/HolidayEffectsController";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { searchQuery, setSearchQuery, isLoading } = useSearchContext();
@@ -635,6 +636,9 @@ export default function DashboardLayout({
           <AblyAwareSessionKeepAlive />
           <StatusProvider>
             <SearchProvider>
+              <Suspense fallback={null}>
+                <HolidayEffectsController />
+              </Suspense>
               <Suspense fallback={<LoadingSpinner />}>
                 <DateTimeSettingsProvider>
                   <DialerSettingsProvider>

@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import {
   LoadingSpinner,
-  LoadingSpinnerWithCaption,
+  ShieldSpinnerGlyph,
 } from "@/components/dashboardComponents/LeadsLoadingState";
 import {
   clearIntentionalSignOutMarkers,
@@ -56,8 +56,14 @@ function LoadingScreen() {
 }
 
 function RedirectingScreen() {
+  // Auth layout forces light theme, but this screen sits on the dark hero photo.
   return (
-    <LoadingSpinnerWithCaption caption="Redirecting to dashboard…" />
+    <div className="flex h-screen w-full flex-col items-center justify-center gap-3">
+      <ShieldSpinnerGlyph />
+      <p className="text-center text-base font-medium text-white drop-shadow-md">
+        Redirecting to dashboard…
+      </p>
+    </div>
   );
 }
 
