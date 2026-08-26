@@ -23,6 +23,8 @@ import { useAppBranding } from "@/components/AppBrandingProvider";
 import { refetchLeadActivities } from "@/lib/leadActivitiesQuery";
 import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
 import { normalizeLeadStatusId } from "@/lib/leadClientUpdate";
+import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
+import { maskEmail, maskPhone } from "@/lib/contactMasking";
 
 interface LeadDetailsPanelProps {
   lead: Lead | null;
@@ -102,6 +104,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
   const queryClient = useQueryClient();
   const { data: session } = useSession();
+  const { canViewEmails, canViewPhoneNumbers } = useCurrentUserPermission();
   const [currentLead, setCurrentLead] = useState<Lead | null>(lead);
   const [isClosing, setIsClosing] = useState(false);
   const previousStatusRef = useRef<string | undefined>(undefined);
@@ -182,11 +185,16 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           email: data.email,
           phone: data.phone ?? "",
         };
+        // Keep list caches aligned with what this viewer is allowed to see.
         mergeContactIntoListCaches(
           queryClient,
           data._id,
-          data.email,
-          data.phone ?? "",
+          canViewEmails
+            ? data.email
+            : maskEmail(data.email || "", false),
+          canViewPhoneNumbers
+            ? data.phone ?? ""
+            : maskPhone(data.phone || "", false),
         );
         setCurrentLead((prev) =>
           prev && prev._id === data._id
@@ -208,7 +216,14 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, lead?._id, session?.user?.id, queryClient]);
+  }, [
+    isOpen,
+    lead?._id,
+    session?.user?.id,
+    queryClient,
+    canViewEmails,
+    canViewPhoneNumbers,
+  ]);
 
   // Realtime sync. Instead of refetching every leads-list query, we
   //   - re-fetch ONLY the single lead detail (server is source of truth), and

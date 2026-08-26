@@ -25,7 +25,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { callLogsKeys } from "@/components/user-management/CallLogsModal";
 import { normalizePhoneForDialer } from "@/lib/phoneNormalize";
 import { formatLeadDetailSource } from "@/lib/leadDisplayFormat";
-import { usePathname } from "next/navigation";
+import { canEditLead } from "@/lib/roles";
 
 async function writeTextToClipboard(text: string): Promise<boolean> {
   try {
@@ -71,12 +71,10 @@ export const ContactSection: FC<ContactSectionProps> = ({
   const { data: session } = useSession();
   const { dialer } = useDialerSettings();
   const queryClient = useQueryClient();
-  const pathname = usePathname() || "";
-  const isAdmin = session?.user?.role === "ADMIN";
+  const isAdmin = canEditLead(session?.user);
   const { canViewPhoneNumbers, canViewEmails, isLoading: isLoadingPermission } =
     useCurrentUserPermission();
-  const isAgentLeadsPage = pathname.startsWith("/dashboard/leads");
-  const shouldMaskEmail = !isAgentLeadsPage && !canViewEmails;
+  const shouldMaskEmail = !canViewEmails;
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -393,7 +391,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
       {/* Content with smooth transition */}
       <div
         className={`transition-all duration-300 ease-in-out overflow-hidden ${
-          isExpanded ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
+          isExpanded ? "max-h-[60]0px opacity-100" : "max-h-0 opacity-0"
         }`}
       >
         <div className="px-4 pb-4 space-y-3">
@@ -507,8 +505,12 @@ export const ContactSection: FC<ContactSectionProps> = ({
                 editedEmail=""
                 onEmailChange={() => {}}
                 maskForDisplay={shouldMaskEmail}
-                onCopy={(text) => handleCopy(text, "email")}
-                copied={copiedField === "email"}
+                onCopy={
+                  canViewEmails
+                    ? (text) => handleCopy(text, "email")
+                    : undefined
+                }
+                copied={canViewEmails ? copiedField === "email" : false}
               />
 
               <PhoneField
@@ -518,10 +520,12 @@ export const ContactSection: FC<ContactSectionProps> = ({
                 editedPhone=""
                 onPhoneChange={() => {}}
                 onCopy={
-                  isAdmin ? (text) => handleCopy(text, "phone") : undefined
+                  canViewPhoneNumbers
+                    ? (text) => handleCopy(text, "phone")
+                    : undefined
                 }
                 onCall={handleCall}
-                copied={isAdmin ? copiedField === "phone" : false}
+                copied={canViewPhoneNumbers ? copiedField === "phone" : false}
                 canViewPhoneNumbers={canViewPhoneNumbers}
                 isLoadingPermission={isLoadingPermission}
               />

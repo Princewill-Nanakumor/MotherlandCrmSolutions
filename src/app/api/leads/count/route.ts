@@ -5,6 +5,11 @@ import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
 import { agentLeadsInTenantFilter } from "@/lib/leadAssignmentQuery";
+import {
+  canAccessAllLeads,
+  getTenantAdminId,
+  isTenantStaff,
+} from "@/lib/roles";
 
 export async function GET() {
   try {
@@ -16,16 +21,19 @@ export async function GET() {
 
     await connectMongoDB();
 
-    // Check if database connection is available
     if (!mongoose.connection.db) {
       throw new Error("Database connection not available");
     }
 
     let query: Record<string, unknown> = {};
 
-    if (session.user.role === "ADMIN") {
-      query.adminId = new mongoose.Types.ObjectId(session.user.id);
-    } else if (session.user.role === "AGENT") {
+    if (canAccessAllLeads(session.user)) {
+      const tenantId = getTenantAdminId(session.user);
+      if (!tenantId) {
+        return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      }
+      query.adminId = new mongoose.Types.ObjectId(tenantId);
+    } else if (isTenantStaff(session.user.role)) {
       if (!session.user.adminId) {
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
       }
@@ -46,7 +54,7 @@ export async function GET() {
     console.error("Error in leads/count route:", error);
     return NextResponse.json(
       { error: "Failed to fetch leads count" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

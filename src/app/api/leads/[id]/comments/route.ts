@@ -12,6 +12,7 @@ import {
 } from "@/libs/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
+import { canAccessAllLeads, getTenantAdminId } from "@/lib/roles";
 
 function extractLeadIdFromUrl(urlString: string): string {
   const url = new URL(urlString);
@@ -32,13 +33,8 @@ interface Session {
 }
 
 function getCorrectAdminId(session: Session): mongoose.Types.ObjectId | null {
-  if (session.user.role === "ADMIN") {
-    return new mongoose.Types.ObjectId(session.user.id);
-  }
-  if (session.user.role === "AGENT" && session.user.adminId) {
-    return new mongoose.Types.ObjectId(session.user.adminId);
-  }
-  return null;
+  const tenantId = getTenantAdminId(session.user);
+  return tenantId ? new mongoose.Types.ObjectId(tenantId) : null;
 }
 
 export async function GET(request: Request) {
@@ -65,6 +61,7 @@ export async function GET(request: Request) {
         adminId,
         session.user.role,
         session.user.id,
+        canAccessAllLeads(session.user),
       ),
     )
       .select({ _id: 1 })
@@ -128,6 +125,7 @@ export async function POST(request: Request) {
         adminId,
         session.user.role,
         session.user.id,
+        canAccessAllLeads(session.user),
       ),
     )
       .select({ _id: 1 })

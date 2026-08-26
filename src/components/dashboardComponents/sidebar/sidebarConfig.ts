@@ -11,6 +11,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/libs/utils";
+import {
+  canAccessAllLeads,
+  isAdmin,
+  usesAgentLeadsPage,
+} from "@/lib/roles";
 
 export const SIDEBAR_COLLAPSED_KEY = "sidebarCollapsed";
 
@@ -18,7 +23,8 @@ export interface SidebarNavItem {
   href: string;
   icon: LucideIcon;
   label: string;
-  adminOnly?: boolean;
+  ownerOnly?: boolean;
+  requiredPermission?: "ASSIGN_LEADS";
   userOnly?: boolean;
 }
 
@@ -29,38 +35,38 @@ export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
     icon: Users,
     href: "/dashboard/all-leads",
     label: "All Leads",
-    adminOnly: true,
+    requiredPermission: "ASSIGN_LEADS",
   },
   {
     icon: LayoutDashboard,
     href: "/dashboard/users",
     label: "Users",
-    adminOnly: true,
+    ownerOnly: true,
   },
   { icon: Users, href: "/dashboard/leads", label: "Leads", userOnly: true },
   {
     icon: FileInput,
     href: "/dashboard/import",
     label: "Import",
-    adminOnly: true,
+    ownerOnly: true,
   },
   {
     icon: Megaphone,
     href: "/dashboard/adsManager",
     label: "Ads",
-    adminOnly: true,
+    ownerOnly: true,
   },
   {
     icon: CreditCard,
     href: "/dashboard/billing",
     label: "Billing",
-    adminOnly: true,
+    ownerOnly: true,
   },
   {
     icon: Crown,
     href: "/dashboard/subscription",
     label: "Subscription",
-    adminOnly: true,
+    ownerOnly: true,
   },
 ];
 
@@ -127,11 +133,14 @@ export const SIDEBAR_TOOLTIP_KBD_CLASS =
 
 export function filterSidebarNavItems(
   items: SidebarNavItem[],
-  isAdmin: boolean,
+  access: { role?: string; permissions?: string[] },
 ) {
   return items.filter((item) => {
-    if (item.adminOnly) return isAdmin;
-    if (item.userOnly) return !isAdmin;
+    if (item.ownerOnly) return isAdmin(access.role);
+    if (item.requiredPermission === "ASSIGN_LEADS") {
+      return canAccessAllLeads(access);
+    }
+    if (item.userOnly) return usesAgentLeadsPage(access);
     return true;
   });
 }

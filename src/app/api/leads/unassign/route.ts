@@ -8,6 +8,7 @@ import {
   publishAdminLeadsUpdatedEvent,
   publishLeadUpdatedEvent,
 } from "@/libs/ablyServer";
+import { canAssignLeads, getTenantAdminId } from "@/lib/roles";
 
 interface UnassignLeadsRequest {
   leadIds: string[];
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.role || session.user.role !== "ADMIN") {
+    if (!session?.user?.role || !canAssignLeads(session.user)) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
@@ -63,7 +64,11 @@ export async function POST(request: Request) {
 
     const db = mongoose.connection.db;
     const leadObjectIds = leadIds.map((id) => new mongoose.Types.ObjectId(id));
-    const adminObjectId = new mongoose.Types.ObjectId(session.user.id);
+    const tenantId = getTenantAdminId(session.user);
+    if (!tenantId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+    const adminObjectId = new mongoose.Types.ObjectId(tenantId);
 
     // Get leads before update with multi-tenancy filter
     const beforeLeads = (await db
@@ -156,7 +161,13 @@ export async function POST(request: Request) {
               }
             : null,
           assignedBy: {
+            id: assignedByUserResult._id.toString(),
             _id: assignedByUserResult._id,
+            firstName: assignedByUserResult.firstName,
+            lastName: assignedByUserResult.lastName,
+          },
+          performedBy: {
+            id: assignedByUserResult._id.toString(),
             firstName: assignedByUserResult.firstName,
             lastName: assignedByUserResult.lastName,
           },

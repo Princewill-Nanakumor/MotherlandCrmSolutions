@@ -15,6 +15,7 @@ import {
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { computeReminderDueAt, reminderDateToYmd } from "@/lib/reminderDueAt";
+import { canAccessAllLeads, canManageReminders } from "@/lib/roles";
 
 // PUT - Update reminder (complete, snooze, edit)
 export async function PUT(
@@ -71,6 +72,7 @@ export async function PUT(
         new mongoose.Types.ObjectId(adminId),
         session.user.role,
         session.user.id,
+        canAccessAllLeads(session.user),
       ),
     )
       .select({ _id: 1 })
@@ -82,7 +84,7 @@ export async function PUT(
       );
     }
 
-    if (session.user.role !== "ADMIN") {
+    if (!canManageReminders(session.user)) {
       const uid = session.user.id;
       const createdByStr = reminder.createdBy
         ? String(reminder.createdBy)
@@ -315,6 +317,7 @@ export async function DELETE(
         new mongoose.Types.ObjectId(adminId),
         session.user.role,
         session.user.id,
+        canAccessAllLeads(session.user),
       ),
     )
       .select({ _id: 1 })
@@ -326,24 +329,26 @@ export async function DELETE(
       );
     }
 
+    const canManageAllReminders = canManageReminders(session.user);
+
     if (
       reminder &&
       reminder.status === "COMPLETED" &&
-      session.user.role !== "ADMIN"
+      !canManageAllReminders
     ) {
       return NextResponse.json(
         {
-          error: "Only administrators can delete completed reminders",
+          error: "You do not have permission to delete completed reminders",
         },
         { status: 403 }
       );
     }
 
-    // For non-completed reminders, non-admins can only delete their own
+    // For non-completed reminders, non-managers can only delete their own
     if (
       reminder &&
       reminder.status !== "COMPLETED" &&
-      session.user.role !== "ADMIN"
+      !canManageAllReminders
     ) {
       const ownReminder = await Reminder.findOne({
         _id: reminderId,
@@ -371,8 +376,8 @@ export async function DELETE(
       adminId: adminId,
     };
 
-    // For non-completed reminders, non-admins can only delete their own
-    if (reminder.status !== "COMPLETED" && session.user.role !== "ADMIN") {
+    // For non-completed reminders, non-assigners can only delete their own
+    if (reminder.status !== "COMPLETED" && !canManageAllReminders) {
       deleteQuery.createdBy = session.user.id;
     }
 

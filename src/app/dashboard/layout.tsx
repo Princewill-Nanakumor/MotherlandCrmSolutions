@@ -35,7 +35,8 @@ import {
   applyRemoteLeadStatusToListCaches,
 } from "@/lib/leadsListCache";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
-import { isAdminOnlyDashboardPath } from "@/lib/dashboardAdminOnlyPaths";
+import { getDashboardRoleRedirect } from "@/lib/dashboardAccess";
+import { canAccessAllLeads } from "@/lib/roles";
 import { authDebug } from "@/lib/authDebug";
 import { hasRecentIntentionalSignOut, clearPostSignInHandoff, isPostSignInHandoff, waitForServerSessionUserId } from "@/lib/sessionUtils";
 import { UserPresenceProvider } from "@/context/UserPresenceContext";
@@ -290,21 +291,29 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     (pathname?.startsWith("/dashboard/leads/") &&
       pathname !== "/dashboard/leads");
 
-  const isAdmin = session?.user?.role === "ADMIN";
+  const canUseAllLeads = canAccessAllLeads(session?.user);
 
-  // Agents must not open admin-only dashboard URLs (bookmarks / typed paths).
   useEffect(() => {
     if (status !== "authenticated" || !pathname) return;
-    if (session?.user?.role === "ADMIN") return;
-    if (!isAdminOnlyDashboardPath(pathname)) return;
-    router.replace("/dashboard/leads");
-  }, [status, session?.user?.role, pathname, router]);
+    const redirect = getDashboardRoleRedirect(
+      pathname,
+      session?.user?.role,
+      session?.user?.permissions,
+    );
+    if (redirect) {
+      router.replace(redirect);
+    }
+  }, [
+    status,
+    session?.user?.role,
+    session?.user?.permissions,
+    pathname,
+    router,
+  ]);
 
-  // Show toggle buttons for:
-  // - Admin users on admin leads pages (/all-leads)
-  // - Regular users on user leads pages (/leads)
   const showLeadsToggles =
-    (isAdminLeadsPage && isAdmin) || (isUserLeadsPage && !isAdmin);
+    (isAdminLeadsPage && canUseAllLeads) ||
+    (isUserLeadsPage && !canUseAllLeads);
 
   // Show search bar only on leads pages
   const showSearch = isAdminLeadsPage || isUserLeadsPage;

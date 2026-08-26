@@ -28,11 +28,19 @@ describe("singleLeadAccessFilter", () => {
   const adminId = new mongoose.Types.ObjectId();
   const agentId = new mongoose.Types.ObjectId().toString();
 
-  it("scopes ADMIN by lead + tenant only", () => {
-    expect(singleLeadAccessFilter(leadId, adminId, "ADMIN", "admin-user")).toEqual({
+  it("scopes ADMIN by lead + tenant only when canSeeAllTenantLeads is true", () => {
+    expect(
+      singleLeadAccessFilter(leadId, adminId, "ADMIN", "admin-user", true),
+    ).toEqual({
       _id: leadId,
       adminId,
     });
+  });
+
+  it("does not grant tenant-wide access by role alone", () => {
+    expect(
+      singleLeadAccessFilter(leadId, adminId, "ADMIN", "admin-user"),
+    ).toHaveProperty("$and");
   });
 
   it("requires assignment for AGENT", () => {
@@ -40,6 +48,17 @@ describe("singleLeadAccessFilter", () => {
     expect(filter).toHaveProperty("$and");
     const and = (filter as { $and: unknown[] }).$and;
     expect(and[0]).toEqual({ _id: leadId, adminId });
+  });
+
+  it("requires assignment for SUBADMIN unless canSeeAllTenantLeads", () => {
+    const filter = singleLeadAccessFilter(leadId, adminId, "SUBADMIN", agentId);
+    expect(filter).toHaveProperty("$and");
+    expect(
+      singleLeadAccessFilter(leadId, adminId, "SUBADMIN", agentId, true),
+    ).toEqual({
+      _id: leadId,
+      adminId,
+    });
   });
 });
 

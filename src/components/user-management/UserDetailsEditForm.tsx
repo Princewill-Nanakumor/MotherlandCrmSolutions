@@ -3,10 +3,12 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Save, X, AlertCircle, Globe, Calendar } from "lucide-react";
+import { Save, X, AlertCircle, Globe, Calendar, Loader2 } from "lucide-react";
 import { NameFields } from "./NameFields";
 import { EmailField } from "./EmailField";
 import { PhoneInputField } from "./PhoneInputField";
+import { RoleAndPermissionsFields } from "./RoleAndPermissionsFields";
+import { USER_ROLES } from "@/lib/roles";
 import {
   Select,
   countryOptions,
@@ -42,12 +44,13 @@ interface UserDetailsEditFormProps {
   getFieldError: (field: string) => string;
   onInputChange: (
     field: keyof UserFormEditData,
-    value: string | string[],
+    value: string | string[] | boolean,
   ) => void;
   onCountryChange: (option: SelectOption | null) => void;
   onPhoneChange: (value?: string) => void;
   onCancel: () => void;
   onSave: (e: React.FormEvent) => void;
+  allowRoleChange?: boolean;
 }
 
 const formatDate = (dateString?: string) => {
@@ -78,6 +81,7 @@ export function UserDetailsEditForm({
   onPhoneChange,
   onCancel,
   onSave,
+  allowRoleChange = true,
 }: UserDetailsEditFormProps) {
   return (
     <>
@@ -167,6 +171,33 @@ export function UserDetailsEditForm({
           </div>
         </div>
 
+        {user.role !== USER_ROLES.ADMIN && (
+          <RoleAndPermissionsFields
+            role={formData.role || USER_ROLES.AGENT}
+            permissions={formData.permissions || []}
+            canViewEmails={formData.canViewEmails === true}
+            canViewPhoneNumbers={formData.canViewPhoneNumbers === true}
+            disabled={isLoading}
+            allowRoleChange={allowRoleChange}
+            onRoleChange={(role) => {
+              onInputChange("role", role);
+              if (role === USER_ROLES.AGENT) {
+                onInputChange("permissions", []);
+              }
+            }}
+            onPermissionChange={(permission, checked) => {
+              const current = formData.permissions || [];
+              const next = checked
+                ? [...current, permission]
+                : current.filter((item) => item !== permission);
+              onInputChange("permissions", next);
+            }}
+            onContactVisibilityChange={(field, checked) =>
+              onInputChange(field, checked)
+            }
+          />
+        )}
+
         {/* Account Information */}
         <div className="space-y-4">
           <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b border-gray-200 dark:border-gray-700 dark:text-gray-50!">
@@ -222,7 +253,11 @@ export function UserDetailsEditForm({
             disabled={isLoading}
             className="text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
           >
-            <Save className="w-4 h-4 mr-2" />
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
             {isLoading ? "Saving..." : "Save Changes"}
           </Button>
         </div>

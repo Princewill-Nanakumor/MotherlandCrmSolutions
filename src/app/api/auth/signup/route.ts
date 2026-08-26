@@ -216,9 +216,9 @@ export async function POST(req: Request) {
       permissions: [
         "ASSIGN_LEADS",
         "DELETE_COMMENTS",
+        "MANAGE_REMINDERS",
         "VIEW_PHONE_NUMBERS",
         "VIEW_EMAILS",
-        "MANAGE_USERS",
         "EDIT_LEAD_STATUS",
       ],
       emailVerified: !mustVerify,

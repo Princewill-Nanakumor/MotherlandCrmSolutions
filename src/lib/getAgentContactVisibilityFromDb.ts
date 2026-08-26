@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { ObjectId } from "mongodb";
+import { isTenantStaff } from "@/lib/roles";
 
 /** Duck-typed DB so Mongoose's bundled `mongodb` and top-level `mongodb` both work. */
 type MongoDatabaseLike = {
@@ -43,7 +44,7 @@ async function findAgentUserForPiiPermissions(
   db: MongoDatabaseLike,
   user: NonNullable<AgentPiiSessionInput["user"]>,
 ) {
-  if (user.role !== "AGENT") return null;
+  if (!isTenantStaff(user.role)) return null;
   const rawEmail =
     typeof user.email === "string" ? user.email.trim() : "";
   if (!rawEmail) return null;
@@ -106,7 +107,7 @@ export async function getAgentContactVisibilityFromDb(
   db: MongoDatabaseLike,
   session: AgentPiiSessionInput,
 ): Promise<{ canViewEmails: boolean; canViewPhoneNumbers: boolean }> {
-  if (session.user.role !== "AGENT") {
+  if (!isTenantStaff(session.user.role)) {
     return { canViewEmails: true, canViewPhoneNumbers: true };
   }
 

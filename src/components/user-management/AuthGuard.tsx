@@ -8,17 +8,20 @@ import { useRouter, usePathname } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { ShieldSpinnerGlyph } from "@/components/dashboardComponents/LeadsLoadingState";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
+import { type SessionLike } from "@/lib/roles";
 
 interface AuthGuardProps {
   children: React.ReactNode;
   requiredRole?: string;
   redirectTo?: string;
+  canAccess?: (user: SessionLike) => boolean;
 }
 
 export function AuthGuard({
   children,
   requiredRole = "ADMIN",
   redirectTo = "/dashboard",
+  canAccess,
 }: AuthGuardProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -46,7 +49,11 @@ export function AuthGuard({
       return;
     }
 
-    if (session!.user!.role !== requiredRole) {
+    const allowed = canAccess
+      ? canAccess(session!.user)
+      : session!.user!.role === requiredRole;
+
+    if (!allowed) {
       setIsRedirecting(true);
       router.push(redirectTo);
       toast({
@@ -62,6 +69,7 @@ export function AuthGuard({
     router,
     pathname,
     toast,
+    canAccess,
     requiredRole,
     redirectTo,
   ]);
@@ -78,10 +86,11 @@ export function AuthGuard({
     );
   }
 
-  if (
-    !hasAuthorizedSession(status, session) ||
-    session!.user.role !== requiredRole
-  ) {
+  const allowed = canAccess
+    ? canAccess(session!.user)
+    : session!.user.role === requiredRole;
+
+  if (!hasAuthorizedSession(status, session) || !allowed) {
     return null;
   }
 

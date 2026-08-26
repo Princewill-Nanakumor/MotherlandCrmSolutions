@@ -90,6 +90,10 @@ export default function Sidebar() {
   }, [status, session?.user?.id, session?.user?.role]);
 
   const isAdmin = session?.user?.role === "ADMIN";
+  const filteredNavItems = filterSidebarNavItems(SIDEBAR_NAV_ITEMS, {
+    role: session?.user?.role,
+    permissions: session?.user?.permissions,
+  });
 
   useEffect(() => {
     if (status === "unauthenticated" || (!session && status !== "loading")) {
@@ -115,7 +119,6 @@ export default function Sidebar() {
     }
   }, [pathname, status, session, router]);
 
-  const filteredNavItems = filterSidebarNavItems(SIDEBAR_NAV_ITEMS, isAdmin);
   const asideClass = sidebarAsideClass(collapsed);
   const navWidthClass = sidebarNavWidthClass(collapsed);
 

@@ -16,11 +16,11 @@ export interface IUser extends Document {
   recoverablePassword?: string;
   phoneNumber: string;
   country: string;
-  role: "ADMIN" | "AGENT";
+  role: "ADMIN" | "SUBADMIN" | "AGENT";
   status: "ACTIVE" | "INACTIVE";
   permissions: string[];
-  adminId?: mongoose.Types.ObjectId; // For multi-tenancy - AGENT users have adminId, ADMIN users don't
-  createdBy?: mongoose.Types.ObjectId; // For AGENT users, this is their admin
+  adminId?: mongoose.Types.ObjectId; // For multi-tenancy - AGENT/SUBADMIN have adminId, ADMIN users don't
+  createdBy?: mongoose.Types.ObjectId; // For AGENT/SUBADMIN users, this is their admin
   lastLogin?: Date;
   /** Context captured on the most recent successful login (device, OS, geo). */
   lastLoginInfo?: {
@@ -120,7 +120,7 @@ const userSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ["ADMIN", "AGENT"],
+      enum: ["ADMIN", "SUBADMIN", "AGENT"],
       default: "AGENT",
     },
     status: {
@@ -308,12 +308,14 @@ userSchema.pre("save", function (next) {
     this.isOnTrial = true;
   }
 
-  if (this.role === "AGENT") {
+  if (this.role === "AGENT" || this.role === "SUBADMIN") {
     if (!this.adminId) {
-      return next(new Error("adminId is required for AGENT users"));
+      return next(new Error("adminId is required for AGENT and SUBADMIN users"));
     }
     if (!this.createdBy) {
-      return next(new Error("createdBy is required for AGENT users"));
+      return next(
+        new Error("createdBy is required for AGENT and SUBADMIN users"),
+      );
     }
   }
   next();

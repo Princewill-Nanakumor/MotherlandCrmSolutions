@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
 import { getSuperAdminEmails } from "@/lib/notificationQuery";
+import { getTenantAdminId, isAdmin } from "@/lib/roles";
 
 interface SessionUser {
   id: string;
-  role: "ADMIN" | "AGENT";
+  role: string;
   adminId?: string;
   email?: string | null;
 }
@@ -15,13 +16,13 @@ interface SessionShape {
 }
 
 function getAdminScope(user: SessionUser): string {
-  if (user.role === "ADMIN") return user.id;
-  if (user.role === "AGENT" && user.adminId) return user.adminId;
-  throw new Error("Invalid user scope");
+  const tenantId = getTenantAdminId(user);
+  if (!tenantId) throw new Error("Invalid user scope");
+  return tenantId;
 }
 
 function isSuperAdminUser(user: SessionUser): boolean {
-  if (user.role !== "ADMIN") return false;
+  if (!isAdmin(user.role)) return false;
   const email = user.email?.trim();
   if (!email) return false;
   return getSuperAdminEmails().includes(email);

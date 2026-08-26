@@ -6,6 +6,7 @@ import Status from "@/models/Status";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
+import { canCreateStatus } from "@/lib/roles";
 
 // Helper to retry DB operation if connection fails
 async function withDbRetry<T>(
@@ -35,8 +36,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only ADMIN users can update statuses
-    if (session.user.role !== "ADMIN") {
+    if (!canCreateStatus(session.user)) {
       return NextResponse.json(
         { error: "Only administrators can update statuses" },
         { status: 403 }
@@ -135,8 +135,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only ADMIN users can delete statuses
-    if (session.user.role !== "ADMIN") {
+    if (!canCreateStatus(session.user)) {
       return NextResponse.json(
         { error: "Only administrators can delete statuses" },
         { status: 403 }

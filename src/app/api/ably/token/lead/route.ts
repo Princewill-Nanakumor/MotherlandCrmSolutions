@@ -11,11 +11,13 @@ import {
   withAdminScope,
   type AdminScopedSession,
 } from "@/lib/withAdminScope";
+import { canAccessAllLeads } from "@/lib/roles";
 
 interface SessionUser {
   id: string;
-  role: "ADMIN" | "AGENT";
+  role: string;
   adminId?: string;
+  permissions?: string[];
 }
 
 interface SessionShape {
@@ -55,15 +57,14 @@ export async function GET(request: NextRequest) {
     const adminOid = new ObjectId(adminScopeId);
     const leadOid = new ObjectId(leadId);
 
-    const accessFilter =
-      session.user.role === "AGENT"
-        ? {
-            $and: [
-              { _id: leadOid, adminId: adminOid },
-              agentAssignedToUserClause(session.user.id),
-            ],
-          }
-        : { _id: leadOid, adminId: adminOid };
+    const accessFilter = canAccessAllLeads(session.user)
+      ? { _id: leadOid, adminId: adminOid }
+      : {
+          $and: [
+            { _id: leadOid, adminId: adminOid },
+            agentAssignedToUserClause(session.user.id),
+          ],
+        };
 
     const lead = await db.collection("leads").findOne(accessFilter, {
       projection: { _id: 1 },

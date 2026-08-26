@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
-import { ObjectId } from "mongodb";
+import { buildTenantLeadBaseQuery } from "@/lib/leadListQuery";
 
 export async function GET() {
   try {
@@ -18,13 +18,12 @@ export async function GET() {
       throw new Error("Database connection not available");
     }
 
-    const match: Record<string, unknown> = {};
-    const userId = new ObjectId(session.user.id);
-    if (session.user.role === "ADMIN") {
-      match.adminId = userId;
-    } else if (session.user.role === "AGENT") {
-      match.$or = [{ assignedTo: userId }, { "assignedTo._id": userId }];
-    }
+    const match = buildTenantLeadBaseQuery({
+      id: session.user.id,
+      role: session.user.role,
+      adminId: session.user.adminId,
+      permissions: session.user.permissions,
+    });
 
     const result = await db
       .collection("leads")
@@ -45,14 +44,14 @@ export async function GET() {
       if (!byKey.has(key)) byKey.set(key, s);
     }
     const sources = Array.from(byKey.values()).sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: "base" })
+      a.localeCompare(b, undefined, { sensitivity: "base" }),
     );
     return NextResponse.json(sources);
   } catch (error) {
     console.error("Error fetching lead sources:", error);
     return NextResponse.json(
       { error: "Failed to fetch sources" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -28,6 +28,46 @@ describe("getDashboardRoleRedirect", () => {
     expect(getDashboardRoleRedirect("/dashboard/leads", "AGENT")).toBeNull();
     expect(getDashboardRoleRedirect("/dashboard/profile", "AGENT")).toBeNull();
   });
+
+  it("lets SUBADMIN with ASSIGN_LEADS use All Leads instead of agent leads", () => {
+    expect(
+      getDashboardRoleRedirect("/dashboard/all-leads", "SUBADMIN", [
+        "ASSIGN_LEADS",
+      ]),
+    ).toBeNull();
+    expect(
+      getDashboardRoleRedirect("/dashboard/leads", "SUBADMIN", ["ASSIGN_LEADS"]),
+    ).toBe("/dashboard/all-leads");
+    expect(
+      getDashboardRoleRedirect("/dashboard/all-leads", "SUBADMIN", []),
+    ).toBe("/dashboard/leads");
+  });
+
+  it("blocks SUBADMIN from Users, billing, and other owner pages", () => {
+    expect(
+      getDashboardRoleRedirect("/dashboard/users", "SUBADMIN", [
+        "ASSIGN_LEADS",
+      ]),
+    ).toBe("/dashboard/all-leads");
+    expect(
+      getDashboardRoleRedirect("/dashboard/billing", "SUBADMIN", [
+        "ASSIGN_LEADS",
+      ]),
+    ).toBe("/dashboard/all-leads");
+    expect(
+      getDashboardRoleRedirect("/dashboard/import", "SUBADMIN", [
+        "ASSIGN_LEADS",
+      ]),
+    ).toBe("/dashboard/all-leads");
+    expect(
+      getDashboardRoleRedirect("/dashboard/subscription", "SUBADMIN", [
+        "ASSIGN_LEADS",
+      ]),
+    ).toBe("/dashboard/all-leads");
+    expect(
+      getDashboardRoleRedirect("/dashboard/help", "SUBADMIN", ["ASSIGN_LEADS"]),
+    ).toBe("/dashboard/all-leads");
+  });
 });
 
 describe("canAccessAdminManagement", () => {

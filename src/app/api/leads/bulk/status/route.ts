@@ -11,6 +11,7 @@ import {
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { rateLimitEnhanced } from "@/lib/rateLimit";
+import { canEditAnyLeadStatus } from "@/lib/roles";
 
 interface BulkStatusChangeRequest {
   leadIds: string[];
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.role || session.user.role !== "ADMIN") {
+    if (!session?.user?.role || !canEditAnyLeadStatus(session.user)) {
       return unauthorizedResponse();
     }
 

@@ -8,6 +8,7 @@ import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { agentAssignedToUserClause } from "@/lib/leadAssignmentQuery";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
 import { getAgentContactVisibilityFromDb } from "@/lib/getAgentContactVisibilityFromDb";
+import { isAdmin, isTenantStaff } from "@/lib/roles";
 
 export async function GET() {
   try {
@@ -24,18 +25,18 @@ export async function GET() {
     // Resolve the tenant scope id. We MUST always include adminId in the
     // query — agents that are missing adminId are not allowed through.
     let scopedAdminId: mongoose.Types.ObjectId | null = null;
-    if (session.user.role === "ADMIN") {
+    if (isAdmin(session.user.role)) {
       scopedAdminId = userObjectId;
-    } else if (session.user.role === "AGENT" && session.user.adminId) {
+    } else if (isTenantStaff(session.user.role) && session.user.adminId) {
       scopedAdminId = new mongoose.Types.ObjectId(session.user.adminId);
     }
     if (!scopedAdminId) {
       return forbiddenResponse("Admin scope unresolved");
     }
 
-    let canViewEmails = session.user.role !== "AGENT";
-    let canViewPhoneNumbers = session.user.role !== "AGENT";
-    if (session.user.role === "AGENT" && mongoose.connection.db) {
+    let canViewEmails = !isTenantStaff(session.user.role);
+    let canViewPhoneNumbers = !isTenantStaff(session.user.role);
+    if (isTenantStaff(session.user.role) && mongoose.connection.db) {
       const flags = await getAgentContactVisibilityFromDb(
         mongoose.connection.db,
         session,
@@ -44,9 +45,8 @@ export async function GET() {
       canViewPhoneNumbers = flags.canViewPhoneNumbers;
     }
 
-    const query: Record<string, unknown> =
-      session.user.role === "ADMIN"
-        ? {
+    const query: Record<string, unknown> = isAdmin(session.user.role)
+      ? {
             adminId: scopedAdminId,
             $and: [
               { assignedTo: { $exists: true } },

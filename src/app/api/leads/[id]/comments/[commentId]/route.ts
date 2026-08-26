@@ -12,6 +12,7 @@ import {
 } from "@/libs/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
+import { canAccessAllLeads, canDeleteComments, getTenantAdminId } from "@/lib/roles";
 
 function extractParamsFromUrl(urlString: string): {
   id: string;
@@ -52,13 +53,8 @@ interface CommentDocument {
 }
 
 function getCorrectAdminId(session: Session): mongoose.Types.ObjectId | null {
-  if (session.user.role === "ADMIN") {
-    return new mongoose.Types.ObjectId(session.user.id);
-  }
-  if (session.user.role === "AGENT" && session.user.adminId) {
-    return new mongoose.Types.ObjectId(session.user.adminId);
-  }
-  return null;
+  const tenantId = getTenantAdminId(session.user);
+  return tenantId ? new mongoose.Types.ObjectId(tenantId) : null;
 }
 
 /**
@@ -71,8 +67,7 @@ async function authorizeAndResolveComment(
   commentId: string,
   leadId: string,
   scopedAdminId: mongoose.Types.ObjectId,
-  sessionRole: string,
-  userId: string,
+  sessionUser: { id: string; role: string; permissions?: string[] },
 ): Promise<
   | { ok: true; comment: CommentDocument }
   | { ok: false; status: number; message: string }
@@ -88,8 +83,9 @@ async function authorizeAndResolveComment(
     singleLeadAccessFilter(
       new mongoose.Types.ObjectId(leadId),
       scopedAdminId,
-      sessionRole,
-      userId,
+      sessionUser.role,
+      sessionUser.id,
+      canAccessAllLeads(sessionUser),
     ),
   )
     .select({ _id: 1 })
@@ -98,7 +94,7 @@ async function authorizeAndResolveComment(
     return { ok: false, status: 404, message: "Lead not found or not authorized" };
   }
 
-  const isAdmin = sessionRole === "ADMIN";
+  const canModerate = canDeleteComments(sessionUser);
 
   const comment = (await Comment.findOne({
     _id: new mongoose.Types.ObjectId(commentId),
@@ -112,9 +108,9 @@ async function authorizeAndResolveComment(
     return { ok: false, status: 404, message: "Comment not found" };
   }
 
-  if (!isAdmin) {
+  if (!canModerate) {
     const creatorId = comment.createdBy?._id?.toString?.();
-    if (!creatorId || creatorId !== userId) {
+    if (!creatorId || creatorId !== sessionUser.id) {
       return { ok: false, status: 403, message: "Only the author or an admin can modify this comment" };
     }
   }
@@ -159,8 +155,7 @@ export async function PUT(request: Request) {
       commentId,
       id,
       adminId,
-      session.user.role,
-      session.user.id,
+      session.user,
     );
     if (!auth.ok) {
       return NextResponse.json({ message: auth.message }, { status: auth.status });
@@ -230,8 +225,7 @@ export async function DELETE(request: Request) {
       commentId,
       id,
       adminId,
-      session.user.role,
-      session.user.id,
+      session.user,
     );
     if (!auth.ok) {
       return NextResponse.json({ message: auth.message }, { status: auth.status });

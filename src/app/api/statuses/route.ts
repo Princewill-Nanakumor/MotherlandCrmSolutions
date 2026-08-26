@@ -5,6 +5,7 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import Status from "@/models/Status";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
+import { canCreateStatus } from "@/lib/roles";
 
 // Define query type for MongoDB filters
 interface StatusQuery {
@@ -45,8 +46,11 @@ export async function GET() {
     if (session.user.role === "ADMIN") {
       // Admin sees only statuses they created
       query.adminId = new mongoose.Types.ObjectId(session.user.id);
-    } else if (session.user.role === "AGENT" && session.user.adminId) {
-      // Agent sees statuses from their admin
+    } else if (
+      (session.user.role === "AGENT" || session.user.role === "SUBADMIN") &&
+      session.user.adminId
+    ) {
+      // Staff sees statuses from their admin
       query.adminId = new mongoose.Types.ObjectId(session.user.adminId);
     }
 
@@ -110,8 +114,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only ADMIN users can create statuses
-    if (session.user.role !== "ADMIN") {
+    if (!canCreateStatus(session.user)) {
       return NextResponse.json(
         { error: "Only administrators can create statuses" },
         { status: 403 }

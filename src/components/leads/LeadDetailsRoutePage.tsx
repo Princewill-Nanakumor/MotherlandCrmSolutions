@@ -17,6 +17,7 @@ import { Lead } from "@/types/leads";
 import { useLeadDetails, useUpdateLead } from "@/hooks/useLeadDetails";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { isStatusOnlyLeadUpdate, normalizeLeadStatusId } from "@/lib/leadClientUpdate";
+import { canAccessAllLeads } from "@/lib/roles";
 
 export type LeadDetailsRouteMode = "admin" | "agent";
 
@@ -167,12 +168,12 @@ export function LeadDetailsRoutePage({ mode, params }: LeadDetailsRoutePageProps
 
     if (status !== "authenticated") return;
 
-    if (mode === "admin" && session?.user?.role !== "ADMIN") {
+    if (mode === "admin" && !canAccessAllLeads(session?.user)) {
       router.push("/dashboard");
       return;
     }
 
-    if (mode === "agent" && session?.user?.role === "ADMIN") {
+    if (mode === "agent" && canAccessAllLeads(session?.user)) {
       router.push(`/dashboard/all-leads/${id}`);
     }
   }, [config.listPath, id, mode, router, session, status]);
@@ -224,11 +225,11 @@ export function LeadDetailsRoutePage({ mode, params }: LeadDetailsRoutePageProps
     return null;
   }
 
-  if (mode === "admin" && session?.user?.role !== "ADMIN") {
+  if (mode === "admin" && !canAccessAllLeads(session?.user)) {
     return null;
   }
 
-  if (mode === "agent" && session?.user?.role === "ADMIN") {
+  if (mode === "agent" && canAccessAllLeads(session?.user)) {
     return null;
   }
 

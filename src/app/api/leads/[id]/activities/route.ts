@@ -8,6 +8,7 @@ import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
+import { canAccessAllLeads, getTenantAdminId } from "@/lib/roles";
 
 // Bounded LRU-ish cache for status name resolution. Module-level caches in
 // serverless environments otherwise grow unbounded across invocations.
@@ -73,30 +74,6 @@ async function resolveStatusNames(
   return statusNames;
 }
 
-// Define session user interface
-interface SessionUser {
-  id: string;
-  role: "ADMIN" | "AGENT";
-  adminId?: string;
-  firstName?: string;
-  lastName?: string;
-}
-
-// Define session interface
-interface Session {
-  user: SessionUser;
-}
-
-function getCorrectAdminId(session: Session): mongoose.Types.ObjectId | null {
-  if (session.user.role === "ADMIN") {
-    return new mongoose.Types.ObjectId(session.user.id);
-  }
-  if (session.user.role === "AGENT" && session.user.adminId) {
-    return new mongoose.Types.ObjectId(session.user.adminId);
-  }
-  return null;
-}
-
 // Type for activity document from lean query
 interface ActivityDocument {
   _id: mongoose.Types.ObjectId;
@@ -118,14 +95,43 @@ interface ActivityDocument {
     newStatusId?: string;
     oldStatus?: string;
     newStatus?: string;
+    performedBy?: { id?: string; firstName?: string; lastName?: string };
+    assignedBy?: {
+      id?: string;
+      _id?: string | mongoose.Types.ObjectId;
+      firstName?: string;
+      lastName?: string;
+    };
     [key: string]: unknown;
+  };
+}
+
+function actorFromMetadata(
+  meta:
+    | {
+        id?: string;
+        _id?: string | mongoose.Types.ObjectId;
+        firstName?: string;
+        lastName?: string;
+      }
+    | undefined,
+): { _id: string; firstName: string; lastName: string } | null {
+  if (!meta?.firstName && !meta?.lastName) return null;
+  const id =
+    meta.id ??
+    (meta._id != null ? String(meta._id) : undefined) ??
+    "unknown";
+  return {
+    _id: id,
+    firstName: meta.firstName || "Unknown",
+    lastName: meta.lastName || "",
   };
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const session = (await getServerSession(authOptions)) as Session | null;
-    if (!session) return unauthorizedResponse();
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return unauthorizedResponse();
 
     const url = new URL(request.url);
     const pathParts = url.pathname.split("/");
@@ -143,8 +149,9 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     await connectMongoDB();
-    const adminId = getCorrectAdminId(session);
-    if (!adminId) return forbiddenResponse("Admin scope unresolved");
+    const tenantId = getTenantAdminId(session.user);
+    if (!tenantId) return forbiddenResponse("Admin scope unresolved");
+    const adminId = new mongoose.Types.ObjectId(tenantId);
 
     // Force User model registration so populate() resolves correctly.
     if (!mongoose.models.User) {
@@ -161,6 +168,7 @@ export async function GET(request: NextRequest) {
         adminId,
         session.user.role,
         session.user.id,
+        canAccessAllLeads(session.user),
       ),
     )
       .select({ _id: 1 })
@@ -217,7 +225,7 @@ export async function GET(request: NextRequest) {
     const transformedActivities = activities.map((activity: unknown) => {
       const act = activity as ActivityDocument;
 
-      // Handle populated userId (user may be deleted - populate returns null; use metadata.performedBy as fallback)
+      // Handle populated userId (user may be deleted - populate returns null; use metadata fallbacks)
       let createdBy = {
         _id: "unknown",
         firstName: "Unknown",
@@ -246,20 +254,13 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Fallback: user was deleted, use denormalized performedBy from metadata (e.g. STATUS_CHANGE)
-      const performedBy = act.metadata?.performedBy as
-        | { id?: string; firstName?: string; lastName?: string }
-        | undefined;
-      if (
-        (createdBy.firstName === "Unknown" && createdBy.lastName === "User") &&
-        performedBy?.firstName &&
-        performedBy?.lastName
-      ) {
-        createdBy = {
-          _id: performedBy.id ?? "unknown",
-          firstName: performedBy.firstName,
-          lastName: performedBy.lastName,
-        };
+      // Fallback: deleted user / populate miss — use denormalized actor metadata
+      // (STATUS_CHANGE uses performedBy; ASSIGNMENT uses assignedBy).
+      if (createdBy.firstName === "Unknown" && createdBy.lastName === "User") {
+        const fromMeta =
+          actorFromMetadata(act.metadata?.performedBy) ||
+          actorFromMetadata(act.metadata?.assignedBy);
+        if (fromMeta) createdBy = fromMeta;
       }
 
       // Resolve status names

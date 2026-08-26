@@ -10,6 +10,7 @@ import {
 } from "@/libs/ablyServer";
 import mongoose from "mongoose";
 import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
+import { canEditAnyLeadStatus, getTenantAdminId } from "@/lib/roles";
 
 interface LeadDoc {
   _id: mongoose.Types.ObjectId | string;
@@ -31,8 +32,9 @@ interface LeadDoc {
 
 interface SessionUser {
   id: string;
-  role: "ADMIN" | "AGENT";
+  role: string;
   adminId?: string;
+  permissions?: string[];
   firstName?: string;
   lastName?: string;
 }
@@ -47,12 +49,11 @@ function getCorrectAdminId(session: SessionLike): mongoose.Types.ObjectId {
   const user =
     (session as StrictSession).user ?? (session as NextAuthSession).user;
   if (!user) throw new Error("Session user missing");
-  if (user.role === "ADMIN") {
-    return new mongoose.Types.ObjectId(user.id);
-  } else if (user.role === "AGENT" && user.adminId) {
-    return new mongoose.Types.ObjectId(user.adminId);
+  const tenantId = getTenantAdminId(user);
+  if (!tenantId) {
+    throw new Error("Invalid user role or missing adminId for agent");
   }
-  throw new Error("Invalid user role or missing adminId for agent");
+  return new mongoose.Types.ObjectId(tenantId);
 }
 
 // Custom errors for transaction flow
@@ -394,10 +395,9 @@ export async function PATCH(req: NextRequest) {
       (session as StrictSession).user ?? (session as NextAuthSession).user;
 
     let resolvedAdminId: mongoose.Types.ObjectId | null = null;
-    if (sessionUser.role === "ADMIN") {
-      resolvedAdminId = new mongoose.Types.ObjectId(sessionUser.id);
-    } else if (sessionUser.role === "AGENT" && sessionUser.adminId) {
-      resolvedAdminId = new mongoose.Types.ObjectId(sessionUser.adminId);
+    const tenantId = getTenantAdminId(sessionUser);
+    if (tenantId) {
+      resolvedAdminId = new mongoose.Types.ObjectId(tenantId);
     }
     if (!resolvedAdminId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -408,6 +408,7 @@ export async function PATCH(req: NextRequest) {
       resolvedAdminId,
       sessionUser.role,
       sessionUser.id,
+      canEditAnyLeadStatus(sessionUser),
     );
 
     // Validate new status exists before any write

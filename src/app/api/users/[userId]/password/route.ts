@@ -50,7 +50,7 @@ export async function GET(
     }
 
     // Never expose admin passwords.
-    if (targetUser.role !== "AGENT") {
+    if (targetUser.role !== "AGENT" && targetUser.role !== "SUBADMIN") {
       return forbiddenResponse("Passwords are only viewable for agents");
     }
 

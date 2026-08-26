@@ -13,6 +13,8 @@ import { User } from "@/types/user.types";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { AddLeadDialog } from "@/components/dashboardComponents/AddLeadDialog";
+import { useSession } from "next-auth/react";
+import { canAssignLeads, canCreateLead, canCreateStatus } from "@/lib/roles";
 
 // ✅ Enhanced Filter Skeleton Component
 const FilterSkeleton = () => (
@@ -111,6 +113,10 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
   isLoadingStatuses = false,
 }) => {
   const [isAddLeadDialogOpen, setIsAddLeadDialogOpen] = useState(false);
+  const { data: session } = useSession();
+  const showAddLead = canCreateLead(session?.user);
+  const showAddStatus = canCreateStatus(session?.user);
+  const showUserFilter = canAssignLeads(session?.user);
 
   // ✅ Combine all loading states for consistent skeleton display
   const showFilterSkeletons = isLoading || isLoadingStatuses;
@@ -142,8 +148,8 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
 
           <div className="flex flex-col order-1 gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 md:w-auto md:order-2">
             <ErrorBoundary fallback={<FilterSkeleton />}>
-              {/* Add Lead Button - with loading skeleton */}
-              {showFilterSkeletons ? (
+              {showAddLead &&
+                (showFilterSkeletons ? (
                 <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-30 dark:bg-gray-700" />
               ) : (
                 <Button
@@ -154,16 +160,16 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
                   <Plus className="mr-2 w-4 h-4" />
                   Add Lead
                 </Button>
-              )}
+              ))}
 
-              {/* Add Status Button - with loading skeleton */}
-              {showFilterSkeletons ? (
+              {showAddStatus &&
+                (showFilterSkeletons ? (
                 <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-30 dark:bg-gray-700" />
               ) : (
                 <AddStatusButton disabled={isLoading} />
-              )}
+              ))}
 
-              {/* User Filter - reads from cache */}
+              {showUserFilter && (
               <UserFilter
                 value={filterByUser}
                 onChange={onFilterChange}
@@ -172,6 +178,7 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
                 mode={userFilterMode}
                 onModeChange={onUserFilterModeChange}
               />
+              )}
 
               {/* Status Filter - reads from cache */}
               <StatusFilter

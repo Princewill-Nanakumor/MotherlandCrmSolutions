@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
-import { ObjectId } from "mongodb";
+import { buildTenantLeadBaseQuery } from "@/lib/leadListQuery";
 
 /**
  * Returns distinct status values that have at least one lead.
@@ -22,13 +22,12 @@ export async function GET() {
       throw new Error("Database connection not available");
     }
 
-    const match: Record<string, unknown> = {};
-    const userId = new ObjectId(session.user.id);
-    if (session.user.role === "ADMIN") {
-      match.adminId = userId;
-    } else if (session.user.role === "AGENT") {
-      match.$or = [{ assignedTo: userId }, { "assignedTo._id": userId }];
-    }
+    const match = buildTenantLeadBaseQuery({
+      id: session.user.id,
+      role: session.user.role,
+      adminId: session.user.adminId,
+      permissions: session.user.permissions,
+    });
 
     const result = await db
       .collection("leads")
@@ -44,14 +43,14 @@ export async function GET() {
       .map((r) => (r._id != null ? String(r._id) : ""))
       .filter((s) => s.trim() !== "");
     const unique = [...new Set(statuses)].sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: "base" })
+      a.localeCompare(b, undefined, { sensitivity: "base" }),
     );
     return NextResponse.json(unique);
   } catch (error) {
     console.error("Error fetching lead statuses:", error);
     return NextResponse.json(
       { error: "Failed to fetch statuses" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

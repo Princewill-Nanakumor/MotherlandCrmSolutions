@@ -3,6 +3,11 @@ import { getServerSession } from "next-auth";
 import Ably from "ably";
 import { authOptions } from "@/libs/auth";
 import {
+  canAccessAllLeads,
+  getTenantAdminId,
+  isAdmin,
+} from "@/lib/roles";
+import {
   getAdminLeadsChannelName,
   getSuperAdminNotificationsChannelName,
   getUserCallLogsChannelName,
@@ -12,8 +17,9 @@ import { getSuperAdminEmails } from "@/lib/notificationQuery";
 
 interface SessionUser {
   id: string;
-  role: "ADMIN" | "AGENT";
+  role: string;
   adminId?: string;
+  permissions?: string[];
   email?: string | null;
 }
 
@@ -22,13 +28,13 @@ interface SessionShape {
 }
 
 function getAdminScope(user: SessionUser): string {
-  if (user.role === "ADMIN") return user.id;
-  if (user.role === "AGENT" && user.adminId) return user.adminId;
-  throw new Error("Invalid user scope");
+  const tenantId = getTenantAdminId(user);
+  if (!tenantId) throw new Error("Invalid user scope");
+  return tenantId;
 }
 
 function isSuperAdminUser(user: SessionUser): boolean {
-  if (user.role !== "ADMIN") return false;
+  if (!isAdmin(user.role)) return false;
   const email = user.email?.trim();
   if (!email) return false;
   return getSuperAdminEmails().includes(email);
@@ -60,18 +66,21 @@ async function handleTokenRequest() {
     const adminScope = getAdminScope(session.user);
     const client = new Ably.Rest(apiKey);
 
-    const capabilityMap: Record<string, string[]> =
-      session.user.role === "ADMIN"
-        ? { [`crm:admin:${adminScope}:*`]: ["subscribe"] }
-        : {
-            [getAdminLeadsChannelName(adminScope)]: ["subscribe"],
-            [getUserRemindersChannelName(adminScope, session.user.id)]: [
-              "subscribe",
-            ],
-            [getUserCallLogsChannelName(adminScope, session.user.id)]: [
-              "subscribe",
-            ],
-          };
+    // Tenant staff with All Leads need the wildcard so timeline/realtime
+    // stays in sync across assign, status, and comment channels.
+    const capabilityMap: Record<string, string[]> = canAccessAllLeads(
+      session.user,
+    )
+      ? { [`crm:admin:${adminScope}:*`]: ["subscribe"] }
+      : {
+          [getAdminLeadsChannelName(adminScope)]: ["subscribe"],
+          [getUserRemindersChannelName(adminScope, session.user.id)]: [
+            "subscribe",
+          ],
+          [getUserCallLogsChannelName(adminScope, session.user.id)]: [
+            "subscribe",
+          ],
+        };
 
     if (isSuperAdminUser(session.user)) {
       capabilityMap[getSuperAdminNotificationsChannelName()] = ["subscribe"];

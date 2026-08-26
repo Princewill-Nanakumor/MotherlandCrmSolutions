@@ -58,4 +58,23 @@ describe("POST /api/leads/bulk/delete permissions", () => {
     );
     expect(res.status).toBe(401);
   });
+
+  it("sub-admin cannot bulk delete leads", async () => {
+    getServerSession.mockResolvedValue({
+      user: {
+        id: new mongoose.Types.ObjectId().toString(),
+        role: "SUBADMIN",
+        adminId: new mongoose.Types.ObjectId().toString(),
+        permissions: ["ASSIGN_LEADS"],
+      },
+    });
+    const { POST } = await import("./route");
+    const res = await POST(
+      new NextRequest("http://localhost/api/leads/bulk/delete", {
+        method: "POST",
+        body: JSON.stringify({ leadIds: [new mongoose.Types.ObjectId().toString()] }),
+      }),
+    );
+    expect(res.status).toBe(401);
+  });
 });

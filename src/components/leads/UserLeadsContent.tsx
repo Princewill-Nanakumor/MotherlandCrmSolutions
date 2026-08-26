@@ -359,6 +359,7 @@ export default function UserLeadsContent() {
       subscriptionLoading={subscriptionLoading}
       hasActiveSubscription={hasActiveSubscription}
       subscriptionData={subscriptionData || null}
+      allowAccessWhenExpired
     >
       <div className="flex flex-col min-h-0 h-full">
         {/* RefetchIndicator positioned like all-leads */}

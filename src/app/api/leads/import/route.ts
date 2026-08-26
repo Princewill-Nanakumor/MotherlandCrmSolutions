@@ -4,11 +4,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
-import { unauthorizedResponse } from "@/lib/apiResponses";
+import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { rateLimitEnhanced } from "@/lib/rateLimit";
 import { checkTenantLeadImportAllowed } from "@/lib/tenantLeadImportLimits";
 import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
+import { canCreateLead } from "@/lib/roles";
 
 // Define interface for imported lead data
 interface ImportedLead {
@@ -45,6 +46,9 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return unauthorizedResponse();
+    }
+    if (!canCreateLead(session.user)) {
+      return forbiddenResponse("Only administrators can import leads");
     }
 
     await connectMongoDB();

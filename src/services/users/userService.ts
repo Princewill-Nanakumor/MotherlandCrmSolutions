@@ -5,6 +5,16 @@ import { encryptRecoverablePassword } from "@/lib/passwordRecovery";
 import {
   SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
 } from "@/lib/subscriptionPlanCatalog";
+import {
+  canAssignLeads,
+  canManageUsers,
+  getTenantAdminId,
+  isAdmin,
+  isSubAdmin,
+  sanitizeSubAdminPermissions,
+  sanitizeTeamRole,
+} from "@/lib/roles";
+import { invalidateSessionRbacCache } from "@/lib/sessionRbac";
 
 type UserUpdateFields = {
   firstName?: string;
@@ -24,6 +34,8 @@ interface SessionUser {
   role: string;
   firstName?: string;
   lastName?: string;
+  adminId?: string;
+  permissions?: string[];
 }
 
 interface UserDocument {
@@ -68,7 +80,7 @@ function isUnlimited(n: number | undefined): boolean {
 }
 
 export async function createUserForAdmin(
-  sessionUserId: string,
+  sessionUser: SessionUser,
   data: {
     firstName: string;
     lastName: string;
@@ -79,9 +91,15 @@ export async function createUserForAdmin(
     role?: string;
     status?: string;
     permissions?: string[];
+    canViewEmails?: boolean;
+    canViewPhoneNumbers?: boolean;
   },
 ) {
-  const adminId = new mongoose.Types.ObjectId(sessionUserId);
+  const tenantId = getTenantAdminId(sessionUser);
+  if (!tenantId || !canManageUsers(sessionUser)) {
+    return { status: 403, body: { message: "Unauthorized" } };
+  }
+  const adminId = new mongoose.Types.ObjectId(tenantId);
 
   const adminUser = (await withDatabase(async () => {
     const db = mongoose.connection.db;
@@ -163,10 +181,14 @@ export async function createUserForAdmin(
     const db = mongoose.connection.db;
     if (!db) throw new Error("Database connection not available");
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    const role = data.role || "AGENT";
-    // Only agents get a recoverable copy so the owning admin can re-share it.
+    const role = isSubAdmin(sessionUser.role)
+      ? "AGENT"
+      : sanitizeTeamRole(data.role);
+    const permissions = sanitizeSubAdminPermissions(role, data.permissions);
     const recoverablePassword =
-      role === "AGENT" ? encryptRecoverablePassword(data.password) : null;
+      role === "AGENT" || role === "SUBADMIN"
+        ? encryptRecoverablePassword(data.password)
+        : null;
     return db.collection("users").insertOne({
       firstName: data.firstName,
       lastName: data.lastName,
@@ -177,7 +199,9 @@ export async function createUserForAdmin(
       country: data.country,
       role,
       status: data.status || "ACTIVE",
-      permissions: data.permissions || [],
+      permissions,
+      canViewEmails: data.canViewEmails === true,
+      canViewPhoneNumbers: data.canViewPhoneNumbers === true,
       adminId,
       createdBy: adminId,
       createdAt: new Date(),
@@ -257,14 +281,21 @@ export async function listUsersForSession(sessionUser: SessionUser) {
     if (!db) throw new Error("Database connection not available");
 
     let query: UserQuery = {};
-    if (sessionUser.role === "ADMIN") {
+    if (isAdmin(sessionUser.role)) {
       query = {
         $or: [
           { adminId: new mongoose.Types.ObjectId(sessionUser.id) },
           { _id: new mongoose.Types.ObjectId(sessionUser.id) },
         ],
       };
-    } else if (sessionUser.role === "AGENT") {
+    } else if (canAssignLeads(sessionUser)) {
+      const tenantId = getTenantAdminId(sessionUser);
+      if (!tenantId) return [];
+      const tenantOid = new mongoose.Types.ObjectId(tenantId);
+      query = {
+        $or: [{ adminId: tenantOid }, { _id: tenantOid }],
+      };
+    } else {
       return [];
     }
 
@@ -341,21 +372,56 @@ export async function updateUserForAdmin(
     };
   }
 
+  const tenantId = getTenantAdminId(sessionUser);
+  if (!tenantId || !canManageUsers(sessionUser)) {
+    return {
+      status: 403,
+      body: {
+        success: false,
+        error: { message: "Unauthorized", code: "UNAUTHORIZED" },
+      },
+    };
+  }
+
   const userId = new mongoose.Types.ObjectId(requestData.id);
-  const adminId = new mongoose.Types.ObjectId(sessionUser.id);
+  const adminId = new mongoose.Types.ObjectId(tenantId);
   const updateFields: UserUpdateFields = {};
   if (requestData.firstName !== undefined) updateFields.firstName = requestData.firstName;
   if (requestData.lastName !== undefined) updateFields.lastName = requestData.lastName;
   if (requestData.email !== undefined) updateFields.email = requestData.email.trim().toLowerCase();
   if (requestData.phoneNumber !== undefined) updateFields.phoneNumber = requestData.phoneNumber;
   if (requestData.country !== undefined) updateFields.country = requestData.country;
-  if (requestData.role !== undefined) updateFields.role = requestData.role;
-  if (requestData.permissions !== undefined) updateFields.permissions = requestData.permissions;
+  if (requestData.role !== undefined) {
+    if (isSubAdmin(sessionUser.role)) {
+      updateFields.role = "AGENT";
+      updateFields.permissions = [];
+    } else {
+      const role = sanitizeTeamRole(requestData.role);
+      updateFields.role = role;
+      updateFields.permissions = sanitizeSubAdminPermissions(
+        role,
+        requestData.permissions,
+      );
+    }
+  } else if (requestData.permissions !== undefined) {
+    if (isSubAdmin(sessionUser.role)) {
+      updateFields.permissions = [];
+    } else {
+      updateFields.permissions = sanitizeSubAdminPermissions(
+        "SUBADMIN",
+        requestData.permissions,
+      );
+    }
+  }
   if (requestData.status !== undefined) updateFields.status = requestData.status;
-  if (requestData.canViewPhoneNumbers !== undefined) updateFields.canViewPhoneNumbers = requestData.canViewPhoneNumbers;
-  if (requestData.canViewEmails !== undefined) updateFields.canViewEmails = requestData.canViewEmails;
+  if (requestData.canViewPhoneNumbers !== undefined) {
+    updateFields.canViewPhoneNumbers = requestData.canViewPhoneNumbers === true;
+  }
+  if (requestData.canViewEmails !== undefined) {
+    updateFields.canViewEmails = requestData.canViewEmails === true;
+  }
 
-  if (userId.equals(adminId)) {
+  if (isAdmin(sessionUser.role) && userId.equals(adminId)) {
     if (updateFields.role !== undefined && updateFields.role !== "ADMIN") {
       return {
         status: 403,
@@ -411,12 +477,18 @@ export async function updateUserForAdmin(
 
   // Never match "no adminId" globally — that would allow updating other tenant admins.
   const updateFilter =
-    userId.equals(adminId)
+    isAdmin(sessionUser.role) && userId.equals(adminId)
       ? { _id: userId }
-      : {
-          _id: userId,
-          $or: [{ adminId: adminId }, { createdBy: adminId }],
-        };
+      : isSubAdmin(sessionUser.role)
+        ? {
+            _id: userId,
+            adminId,
+            role: "AGENT",
+          }
+        : {
+            _id: userId,
+            $or: [{ adminId: adminId }, { createdBy: adminId }],
+          };
 
   const updateResult = await db.collection("users").findOneAndUpdate(
     updateFilter,
@@ -451,6 +523,7 @@ export async function updateUserForAdmin(
   }
 
   const updatedUser = updateResult as unknown as UserDocument;
+  invalidateSessionRbacCache(updatedUser._id.toString());
   return {
     status: 200,
     body: {
@@ -484,9 +557,15 @@ export async function deleteUserForAdmin(
     const db = mongoose.connection.db;
     if (!db) throw new Error("Database connection not available");
 
+    const tenantId = getTenantAdminId(sessionUser);
+    if (!tenantId || !canManageUsers(sessionUser)) {
+      throw new Error("Unauthorized");
+    }
+
     const userToDelete = (await db.collection("users").findOne({
       _id: new mongoose.Types.ObjectId(userId),
-      adminId: new mongoose.Types.ObjectId(sessionUser.id),
+      adminId: new mongoose.Types.ObjectId(tenantId),
+      ...(isSubAdmin(sessionUser.role) ? { role: "AGENT" } : {}),
     })) as UserDocument | null;
 
     if (!userToDelete) throw new Error("User not found");
@@ -566,6 +645,10 @@ export async function deleteUserForAdmin(
       await dbSession.endSession();
     }
   });
+
+  if (result && typeof result === "object" && "deletedUserId" in result) {
+    invalidateSessionRbacCache(String((result as { deletedUserId: string }).deletedUserId));
+  }
 
   return { status: 200, body: result };
 }

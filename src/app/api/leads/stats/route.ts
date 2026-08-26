@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import { ObjectId } from "mongodb";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
+import { canAccessAllLeads, getTenantAdminId } from "@/lib/roles";
 
 export async function GET() {
   try {
@@ -20,7 +21,6 @@ export async function GET() {
       throw new Error("Database connection not available");
     }
 
-    // Prepare filters respecting multi-tenancy
     const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
 
     const adminFilter: Record<string, unknown> = {};
@@ -28,19 +28,21 @@ export async function GET() {
       adminFilter.adminId = new ObjectId(adminId);
     }
 
-    if (session.user.role === "ADMIN") {
-      // Admin: counts across their adminId
-      const adminObjectId = new ObjectId(session.user.id);
+    if (canAccessAllLeads(session.user)) {
+      const tenantId = getTenantAdminId(session.user);
+      if (!tenantId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      const tenantObjectId = new ObjectId(tenantId);
       const total = await db.collection("leads").countDocuments(adminFilter);
 
-      // Assigned = only leads assigned to this admin's agents (same definition as all-leads filter "my users")
-      // Get agent IDs: users created by this admin, excluding the admin themselves
+      // Assigned = leads assigned to this tenant's staff (agents / sub-admins)
       const agentDocs = await db
         .collection("users")
         .find(
           {
-            adminId: adminObjectId,
-            _id: { $ne: adminObjectId },
+            adminId: tenantObjectId,
+            _id: { $ne: tenantObjectId },
           },
           { projection: { _id: 1 } },
         )
@@ -60,15 +62,12 @@ export async function GET() {
               ],
             });
 
-      // Unassigned (for admin): all other leads under this admin,
-      // including leads assigned to the admin account and truly unassigned leads.
       const unassigned = total - assigned;
 
       return NextResponse.json({ total, assigned, unassigned, myLeads: 0 });
     }
 
-    // Agent: only counts leads assigned to this agent
-    // assignedTo can be stored as ObjectId or as object { _id, firstName, lastName }
+    // Assigned-only staff: counts for their own leads
     const userId = session.user.id;
     const userObjectId = new ObjectId(userId);
     const myLeads = await db.collection("leads").countDocuments({
@@ -76,7 +75,6 @@ export async function GET() {
       $or: [{ "assignedTo._id": userObjectId }, { assignedTo: userObjectId }],
     });
 
-    // Also provide overall counts for admin if available (fast counts)
     let total = 0;
     let assigned = 0;
     let unassigned = 0;

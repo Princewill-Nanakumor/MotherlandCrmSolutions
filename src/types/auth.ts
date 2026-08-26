@@ -1,5 +1,5 @@
 // src/types/auth.ts
-export type UserRole = "ADMIN" | "MANAGER" | "AGENT";
+export type UserRole = "ADMIN" | "SUBADMIN" | "AGENT";
 
 export interface Permission {
   id: string;

@@ -31,9 +31,11 @@ export const UserFormCreateSchema = z.object({
   password: passwordValidation,
   phoneNumber: z.string().min(1, "Phone number is required"),
   country: z.string().min(1, "Country is required"),
-  role: z.string().optional().default("AGENT"),
+  role: z.enum(["AGENT", "SUBADMIN"]).optional().default("AGENT"),
   status: z.string().optional().default("ACTIVE"),
   permissions: z.array(z.string()).default([]),
+  canViewEmails: z.boolean().optional().default(false),
+  canViewPhoneNumbers: z.boolean().optional().default(false),
 });
 
 export const UserFormEditSchema = z.object({
@@ -67,9 +69,11 @@ export const UserFormEditSchema = z.object({
     ),
   phoneNumber: z.string().min(1, "Phone number is required"),
   country: z.string().min(1, "Country is required"),
-  role: z.string().optional().default("AGENT"),
+  role: z.enum(["AGENT", "SUBADMIN", "ADMIN"]).optional().default("AGENT"),
   status: z.string().optional().default("ACTIVE"),
   permissions: z.array(z.string()).default([]),
+  canViewEmails: z.boolean().optional().default(false),
+  canViewPhoneNumbers: z.boolean().optional().default(false),
 });
 
 export type UserFormCreateData = z.infer<typeof UserFormCreateSchema>;

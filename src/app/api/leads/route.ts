@@ -9,6 +9,13 @@ import Lead, { generateLeadId } from "@/models/Lead";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { agentLeadsInTenantFilter, singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
+import {
+  canAccessAllLeads,
+  canCreateLead,
+  canDeleteLead,
+  isTenantStaff,
+  stripDisallowedLeadUpdateFields,
+} from "@/lib/roles";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
 import { getAgentContactVisibilityFromDb } from "@/lib/getAgentContactVisibilityFromDb";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
@@ -88,7 +95,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (session.user.role === "AGENT" && !session.user.adminId) {
+    if (isTenantStaff(session.user.role) && !session.user.adminId) {
       return forbiddenResponse("Admin scope unresolved");
     }
 
@@ -102,14 +109,13 @@ export async function GET(request: Request) {
 
     return executeDbOperation(async () => {
       const tenantOid = new mongoose.Types.ObjectId(adminScopeId);
-      const query =
-        session.user.role === "AGENT"
-          ? agentLeadsInTenantFilter(tenantOid, session.user.id)
-          : { adminId: tenantOid };
+      const query = canAccessAllLeads(session.user)
+        ? { adminId: tenantOid }
+        : agentLeadsInTenantFilter(tenantOid, session.user.id);
 
-      let canViewEmails = session.user.role !== "AGENT";
-      let canViewPhoneNumbers = session.user.role !== "AGENT";
-      if (session.user.role === "AGENT" && mongoose.connection.db) {
+      let canViewEmails = !isTenantStaff(session.user.role);
+      let canViewPhoneNumbers = !isTenantStaff(session.user.role);
+      if (isTenantStaff(session.user.role) && mongoose.connection.db) {
         const flags = await getAgentContactVisibilityFromDb(
           mongoose.connection.db,
           session,
@@ -187,7 +193,7 @@ export async function POST(request: Request) {
       return unauthorizedResponse();
     }
 
-    if (session.user.role !== "ADMIN") {
+    if (!canCreateLead(session.user)) {
       return forbiddenResponse("Only administrators can create or import leads");
     }
 
@@ -520,18 +526,10 @@ export async function PUT(request: Request) {
       );
     }
 
-    const safeUpdate = pickUpdatableFields(
-      updateData as Record<string, unknown>,
+    const safeUpdate = stripDisallowedLeadUpdateFields(
+      session.user,
+      pickUpdatableFields(updateData as Record<string, unknown>),
     );
-    if (session.user.role === "AGENT") {
-      delete safeUpdate.assignedTo;
-      const agentAllowed = new Set(["status", "comments"]);
-      for (const key of Object.keys(safeUpdate)) {
-        if (!agentAllowed.has(key)) {
-          delete safeUpdate[key];
-        }
-      }
-    }
     if (Object.keys(safeUpdate).length === 0) {
       return NextResponse.json(
         { error: "No updatable fields provided" },
@@ -558,6 +556,7 @@ export async function PUT(request: Request) {
         tenantOid,
         session.user.role,
         session.user.id,
+        canAccessAllLeads(session.user),
       );
 
       const updatedLead = await Lead.findOneAndUpdate(
@@ -589,7 +588,7 @@ export async function DELETE(request: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return unauthorizedResponse();
 
-    if (session.user.role !== "ADMIN") {
+    if (!canDeleteLead(session.user)) {
       return forbiddenResponse("Only administrators can delete leads");
     }
 

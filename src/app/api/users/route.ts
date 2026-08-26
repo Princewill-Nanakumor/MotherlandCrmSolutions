@@ -9,20 +9,31 @@ import {
   updateUserForAdmin,
 } from "@/services/users/userService";
 import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
+import { canManageUsers, getTenantAdminId } from "@/lib/roles";
 
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || !canManageUsers(session.user)) {
       return unauthorizedResponse();
     }
 
     const payload = await request.json();
-    const result = await createUserForAdmin(session.user.id, payload);
+    const result = await createUserForAdmin(
+      session.user as {
+        id: string;
+        role: string;
+        adminId?: string;
+        permissions?: string[];
+      },
+      payload,
+    );
     if (result.status >= 200 && result.status < 300) {
       try {
-        await publishAdminLeadsUpdatedEvent(session.user.id, {
+        await publishAdminLeadsUpdatedEvent(
+          getTenantAdminId(session.user) || session.user.id,
+          {
           type: "user_created",
           actorId: session.user.id,
         });
@@ -47,7 +58,14 @@ export async function GET() {
       return unauthorizedResponse();
     }
 
-    const result = await listUsersForSession(session.user as { id: string; role: string });
+    const result = await listUsersForSession(
+      session.user as {
+        id: string;
+        role: string;
+        adminId?: string;
+        permissions?: string[];
+      },
+    );
     return NextResponse.json(result.body, { status: result.status });
   } catch (error: unknown) {
     console.error("Error fetching users:", error);
@@ -61,7 +79,7 @@ export async function PUT(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.role || session.user.role !== "ADMIN") {
+    if (!session?.user?.role || !canManageUsers(session.user)) {
       return NextResponse.json(
         { success: false, error: { message: "Unauthorized" } },
         { status: 401 }
@@ -70,12 +88,21 @@ export async function PUT(request: Request) {
 
     const requestData = await request.json();
     const result = await updateUserForAdmin(
-      session.user as { id: string; role: string; firstName?: string; lastName?: string },
+      session.user as {
+        id: string;
+        role: string;
+        firstName?: string;
+        lastName?: string;
+        adminId?: string;
+        permissions?: string[];
+      },
       requestData,
     );
     if (result.status >= 200 && result.status < 300) {
       try {
-        await publishAdminLeadsUpdatedEvent(session.user.id, {
+        await publishAdminLeadsUpdatedEvent(
+          getTenantAdminId(session.user) || session.user.id,
+          {
           type: "user_updated",
           actorId: session.user.id,
           userId: requestData.id,
@@ -127,7 +154,7 @@ export async function DELETE(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || !canManageUsers(session.user)) {
       return unauthorizedResponse();
     }
 
@@ -150,12 +177,21 @@ export async function DELETE(request: Request) {
     }
 
     const result = await deleteUserForAdmin(
-      session.user as { id: string; role: string; firstName?: string; lastName?: string },
+      session.user as {
+        id: string;
+        role: string;
+        firstName?: string;
+        lastName?: string;
+        adminId?: string;
+        permissions?: string[];
+      },
       id,
     );
     if (result.status >= 200 && result.status < 300) {
       try {
-        await publishAdminLeadsUpdatedEvent(session.user.id, {
+        await publishAdminLeadsUpdatedEvent(
+          getTenantAdminId(session.user) || session.user.id,
+          {
           type: "user_deleted",
           actorId: session.user.id,
           userId: id,

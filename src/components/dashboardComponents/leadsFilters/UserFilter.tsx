@@ -82,10 +82,13 @@ export const UserFilter = ({
   const options = useMemo(() => {
     const dropdownUsers = users.filter((user) => user.status === "ACTIVE");
 
-    // Don't show current admin in the filter list (all-leads is admin-only)
-    const filteredUsers = currentUserId
-      ? dropdownUsers.filter((user) => user.id !== currentUserId)
-      : dropdownUsers;
+    // Owner is not typically assigned leads; keep them out of their own filter.
+    // Sub-admins should still see every teammate, including themselves.
+    const isOwner = session?.user?.role === "ADMIN";
+    const filteredUsers =
+      isOwner && currentUserId
+        ? dropdownUsers.filter((user) => user.id !== currentUserId)
+        : dropdownUsers;
 
     const userOptions = filteredUsers
       .map((user) => ({
@@ -95,7 +98,7 @@ export const UserFilter = ({
       .sort((a, b) => a.label.localeCompare(b.label));
 
     return [{ value: "unassigned", label: "Unassigned Leads" }, ...userOptions];
-  }, [users, currentUserId]);
+  }, [users, currentUserId, session?.user?.role]);
 
   const getPlaceholder = () => {
     if (value.length === 0) {

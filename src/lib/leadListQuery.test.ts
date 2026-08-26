@@ -30,6 +30,35 @@ describe("buildTenantLeadBaseQuery (multi-tenancy)", () => {
     });
     expect(query).not.toHaveProperty("adminId");
   });
+
+  it("scopes SUBADMIN with ASSIGN_LEADS to the tenant pool", () => {
+    const adminId = new ObjectId().toString();
+    const subId = new ObjectId().toString();
+    expect(
+      buildTenantLeadBaseQuery({
+        id: subId,
+        role: "SUBADMIN",
+        adminId,
+        permissions: ["ASSIGN_LEADS"],
+      }),
+    ).toEqual({ adminId: new ObjectId(adminId) });
+  });
+
+  it("scopes SUBADMIN without ASSIGN_LEADS to assigned leads only", () => {
+    const subId = new ObjectId().toString();
+    const query = buildTenantLeadBaseQuery({
+      id: subId,
+      role: "SUBADMIN",
+      adminId: new ObjectId().toString(),
+      permissions: [],
+    });
+    expect(query).toEqual({
+      $or: [
+        { assignedTo: new ObjectId(subId) },
+        { "assignedTo._id": new ObjectId(subId) },
+      ],
+    });
+  });
 });
 
 describe("parseLeadListPagination", () => {

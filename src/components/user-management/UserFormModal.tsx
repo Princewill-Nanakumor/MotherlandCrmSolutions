@@ -1,6 +1,7 @@
 // src/components/user-management/UserFormModal.tsx
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { X, AlertCircle, Globe, AlertTriangle } from "lucide-react";
 import { Country } from "react-phone-number-input";
 import {
@@ -22,9 +23,11 @@ import { PasswordField } from "./PasswordField";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { getCountrySelectStyles } from "./CountrySelectStyles";
 import { PhoneInputField } from "./PhoneInputField";
+import { RoleAndPermissionsFields } from "./RoleAndPermissionsFields";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { USER_ROLES, isAdmin } from "@/lib/roles";
 
 interface UsageData {
   currentUsers: number;
@@ -50,6 +53,8 @@ export function UserFormModal({
   mode,
   usageData,
 }: UserFormModalProps) {
+  const { data: session } = useSession();
+  const actorIsAdmin = isAdmin(session?.user?.role);
   const [formData, setFormData] = useState<
     UserFormCreateData | UserFormEditData
   >({
@@ -62,6 +67,8 @@ export function UserFormModal({
     role: "AGENT",
     status: "ACTIVE",
     permissions: [],
+    canViewEmails: false,
+    canViewPhoneNumbers: false,
   });
 
   const [selectedCountry, setSelectedCountry] = useState<SelectOption | null>(
@@ -111,6 +118,8 @@ export function UserFormModal({
           role: "AGENT",
           status: "ACTIVE",
           permissions: [],
+          canViewEmails: false,
+          canViewPhoneNumbers: false,
         });
         setSelectedCountry(null);
       }
@@ -121,7 +130,7 @@ export function UserFormModal({
 
   const handleInputChange = (
     field: keyof (UserFormCreateData & UserFormEditData),
-    value: string | string[],
+    value: string | string[] | boolean,
   ) => {
     // Don't allow changes if inputs are disabled
     if (shouldDisableInputs) return;
@@ -143,6 +152,26 @@ export function UserFormModal({
   const handlePhoneChange = (value?: string) => {
     if (shouldDisableInputs) return;
     handleInputChange("phoneNumber", value || "");
+  };
+
+  const handleRoleChange = (role: "AGENT" | "SUBADMIN") => {
+    if (shouldDisableInputs) return;
+    setFormData((prev) => ({
+      ...prev,
+      role,
+      permissions: role === USER_ROLES.SUBADMIN ? prev.permissions : [],
+    }));
+  };
+
+  const handlePermissionChange = (permission: string, checked: boolean) => {
+    if (shouldDisableInputs) return;
+    setFormData((prev) => {
+      const current = prev.permissions || [];
+      const next = checked
+        ? [...current, permission]
+        : current.filter((item) => item !== permission);
+      return { ...prev, permissions: next };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -262,6 +291,20 @@ export function UserFormModal({
                 onChange={(value) => handleInputChange("password", value)}
               />
             )}
+
+            <RoleAndPermissionsFields
+              role={formData.role || USER_ROLES.AGENT}
+              permissions={formData.permissions || []}
+              canViewEmails={formData.canViewEmails === true}
+              canViewPhoneNumbers={formData.canViewPhoneNumbers === true}
+              disabled={isLoading || shouldDisableInputs}
+              allowRoleChange={actorIsAdmin}
+              onRoleChange={handleRoleChange}
+              onPermissionChange={handlePermissionChange}
+              onContactVisibilityChange={(field, checked) =>
+                handleInputChange(field, checked)
+              }
+            />
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* Country Select */}

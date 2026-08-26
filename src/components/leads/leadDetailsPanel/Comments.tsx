@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format, formatDistanceToNow, isValid } from "date-fns";
 import { Comments as CommentType } from "@/types/leads";
+import { canDeleteComments } from "@/lib/roles";
 
 interface CommentsProps {
   comments: CommentType[];
@@ -53,7 +54,7 @@ const Comments: FC<CommentsProps> = ({
   const [showTextarea, setShowTextarea] = useState<boolean>(true);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
-  const isAdmin = session?.user?.role === "ADMIN";
+  const canModerateComments = canDeleteComments(session?.user);
 
   // Check for dark mode
   useEffect(() => {
@@ -394,7 +395,7 @@ const Comments: FC<CommentsProps> = ({
                       )}
                     </div>
 
-                    {isAdmin && editingId !== comment._id && (
+                    {canModerateComments && editingId !== comment._id && (
                       <div className="flex gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                         <Button
                           variant="ghost"

@@ -21,10 +21,7 @@ import { RefetchIndicator } from "@/components/ui/RefetchIndicator";
 import { useToggleContext } from "@/context/ToggleContext";
 import { Lead } from "@/types/leads";
 import { useUpdateLead } from "@/hooks/useLeadDetails";
-
-const USER_ROLES = {
-  ADMIN: "ADMIN",
-} as const;
+import { canAccessAllLeads } from "@/lib/roles";
 
 interface LeadsPageContentProps {
   searchQuery?: string;
@@ -40,7 +37,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
   const isOnline = useNetworkStatus();
 
   // Get toggle state from context
-  const { showHeader, showControls } = useToggleContext();
+  const { showHeader } = useToggleContext();
 
   // ✅ Get updateLead mutation from useLeadDetails hook
   const { updateLeadAsync } = useUpdateLead();
@@ -90,12 +87,6 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
     pageSize,
     page,
   } = useLeadsPage(searchQuery, setLayoutLoading);
-
-  // Check if any leads are selected
-  const hasSelectedLeads = selectedLeads && selectedLeads.length > 0;
-
-  // Auto-show controls when leads are selected, OR respect the manual toggle
-  const shouldShowControls = showControls || hasSelectedLeads;
 
   // ⚡ Memoized handlers to prevent unnecessary re-renders
   const handleLeadUpdate = useCallback(
@@ -169,8 +160,8 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
     return null;
   }
 
-  if (!session?.user?.role || session.user.role !== USER_ROLES.ADMIN) {
-    router.push("/dashboard");
+  if (!session?.user?.role || !canAccessAllLeads(session.user)) {
+    router.push("/dashboard/leads");
     return null;
   }
 
@@ -198,17 +189,8 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
           <LeadsHeader shouldShowLoading={shouldShowLoading} counts={counts} />
         </div>
 
-        {/* Auto-show controls with simple fade transition */}
-        <div
-          className={`transition-opacity duration-300 ease-in-out ${
-            shouldShowControls ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
-          style={{
-            marginBottom: shouldShowControls ? "0" : "-80px", // Smooth height transition
-            transition:
-              "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out",
-          }}
-        >
+        {/* Filter / assign controls — always visible on All Leads */}
+        <div className="transition-opacity duration-300 ease-in-out opacity-100">
           <LeadsFilterControls
             selectedLeads={selectedLeads}
             hasAssignedLeads={hasAssignedLeads}

@@ -8,6 +8,7 @@ import { authOptions } from "@/libs/auth";
 import Status from "@/models/Status";
 import { getAdminScopeId } from "@/lib/withAdminScope";
 import { agentLeadsInTenantFilter } from "@/lib/leadAssignmentQuery";
+import { canAccessAllLeads } from "@/lib/roles";
 
 const SYNTHETIC_NEW_ID = "NEW";
 const SYNTHETIC_NEW_COLOR = "#3B82F6";
@@ -56,12 +57,12 @@ export async function GET() {
       throw new Error("Database connection not available");
     }
 
-    const isAdmin = session.user.role === "ADMIN";
+    const canSeeAll = canAccessAllLeads(session.user);
     const adminObjectId = new mongoose.Types.ObjectId(adminScopeId);
 
-    // Admins see the whole tenant; agents only see leads assigned to them,
-    // including legacy string-id assignees (same helper as the leads list).
-    const leadsMatch: Record<string, unknown> = isAdmin
+    // Assigners (ADMIN / SUBADMIN+ASSIGN_LEADS) see the whole tenant;
+    // other staff only see leads assigned to them.
+    const leadsMatch: Record<string, unknown> = canSeeAll
       ? { adminId: adminObjectId }
       : agentLeadsInTenantFilter(adminObjectId, session.user.id);
 
@@ -177,7 +178,7 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      scope: isAdmin ? "tenant" : "assigned",
+      scope: canSeeAll ? "tenant" : "assigned",
       statusCounts: rows,
       totalStatuses: rows.length,
       totalLeads,

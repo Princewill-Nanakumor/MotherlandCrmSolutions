@@ -14,6 +14,7 @@ import {
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { computeReminderDueAt } from "@/lib/reminderDueAt";
+import { canAccessAllLeads } from "@/lib/roles";
 
 // GET - Fetch all reminders for a lead
 export async function GET(
@@ -42,6 +43,7 @@ export async function GET(
         new mongoose.Types.ObjectId(adminId),
         session.user.role,
         session.user.id,
+        canAccessAllLeads(session.user),
       ),
     )
       .select({ _id: 1 })
@@ -137,6 +139,7 @@ export async function POST(
         new mongoose.Types.ObjectId(adminId),
         session.user.role,
         session.user.id,
+        canAccessAllLeads(session.user),
       ),
     )
       .select({ _id: 1 })

@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import User from "@/models/User";
 import { authOptions } from "@/libs/auth";
+import { isTenantStaff } from "@/lib/roles";
 
 export async function GET() {
   try {
@@ -14,17 +15,17 @@ export async function GET() {
 
     await connectMongoDB();
 
-    const agent = await User.findById(session.user.id);
-    if (!agent) {
+    const staff = await User.findById(session.user.id);
+    if (!staff) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-    if (agent.role !== "AGENT") {
+    if (!isTenantStaff(staff.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // The tenant subscription lives on the admin who created the agent.
+    // The tenant subscription lives on the owner admin.
     // Prefer `adminId` (canonical) and fall back to `createdBy` for legacy rows.
-    const tenantAdminId = agent.adminId ?? agent.createdBy;
+    const tenantAdminId = staff.adminId ?? staff.createdBy;
     const admin = tenantAdminId ? await User.findById(tenantAdminId) : null;
 
     if (!admin) {

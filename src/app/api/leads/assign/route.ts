@@ -13,6 +13,7 @@ import {
   countLeadsAssignedToAgent,
   getLeadAssigneeId,
 } from "@/lib/leadAssignmentQuery";
+import { canAssignLeads, getTenantAdminId, isAssignableTeamRole } from "@/lib/roles";
 
 interface AssignLeadsRequest {
   leadIds: string[];
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.role || session.user.role !== "ADMIN") {
+    if (!session?.user?.role || !canAssignLeads(session.user)) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
@@ -70,7 +71,11 @@ export async function POST(request: Request) {
     const db = mongoose.connection.db;
     const userObjectId = new mongoose.Types.ObjectId(userId);
     const leadObjectIds = leadIds.map((id) => new mongoose.Types.ObjectId(id));
-    const adminObjectId = new mongoose.Types.ObjectId(session.user.id);
+    const tenantId = getTenantAdminId(session.user);
+    if (!tenantId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+    const adminObjectId = new mongoose.Types.ObjectId(tenantId);
 
     // Get leads before update with multi-tenancy filter
     const beforeLeads = (await db
@@ -118,8 +123,8 @@ export async function POST(request: Request) {
     }
 
     // Verify the target user is an AGENT
-    if (assignedToUser.role !== "AGENT") {
-      throw new Error("Can only assign leads to AGENT users");
+    if (!isAssignableTeamRole(assignedToUser.role)) {
+      throw new Error("Can only assign leads to team members");
     }
 
     const netNewAssignments = beforeLeads.filter(
@@ -209,7 +214,13 @@ export async function POST(request: Request) {
               }
             : null,
           assignedBy: {
+            id: assignedByUser._id.toString(),
             _id: assignedByUser._id,
+            firstName: assignedByUser.firstName,
+            lastName: assignedByUser.lastName,
+          },
+          performedBy: {
+            id: assignedByUser._id.toString(),
             firstName: assignedByUser.firstName,
             lastName: assignedByUser.lastName,
           },

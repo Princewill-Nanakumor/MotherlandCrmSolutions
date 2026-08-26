@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format, isValid } from "date-fns";
 import { Reminder } from "@/types/leads";
 import { formatTime24Hour } from "@/lib/utils";
+import { canManageReminders } from "@/lib/roles";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,8 +81,9 @@ export const ReminderCard: FC<ReminderCardProps> = ({
   isCompleting = false,
 }) => {
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === "ADMIN";
-  const canDelete = isAdmin || reminder.createdBy._id === session?.user?.id;
+  const canManageAny = canManageReminders(session?.user);
+  const canDelete =
+    canManageAny || reminder.createdBy._id === session?.user?.id;
   const formatDate = (dateString: string | Date) => {
     try {
       const date = new Date(dateString);

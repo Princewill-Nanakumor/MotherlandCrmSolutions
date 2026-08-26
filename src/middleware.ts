@@ -7,9 +7,13 @@ import {
   isAuthenticatedSessionToken,
 } from "@/lib/sessionToken";
 import {
-  getDashboardRoleRedirect,
   canAccessAdminManagement,
 } from "@/lib/dashboardAccess";
+import {
+  isOwnerOnlyDashboardPath,
+  isUsersDashboardPath,
+} from "@/lib/dashboardAdminOnlyPaths";
+import { canAccessAllLeads, isAdmin } from "@/lib/roles";
 
 // NOTE: Middleware only runs for paths in `config.matcher` below
 // (`/dashboard/*`, `/admin/*`, `/api/protected/*`). Most entries here are not
@@ -88,14 +92,23 @@ export default withAuth(
       return NextResponse.redirect(buildLoginUrl(callbackUrl));
     }
 
-    // ✅ ADMIN ↔ AGENT dashboard route matrix
+    // Owner-only / Users page: role checks only.
+    // All Leads ↔ Leads is primarily enforced client-side after JWT RBAC refresh;
+    // middleware still sends staff without ASSIGN_LEADS away from owner pages
+    // to the correct home (All Leads vs My Leads when the token already has perms).
     if (isDashboardPage && isAuth) {
-      const roleRedirect = getDashboardRoleRedirect(
-        path,
-        token?.role as string | undefined,
-      );
-      if (roleRedirect) {
-        return NextResponse.redirect(new URL(roleRedirect, request.url));
+      const role = token?.role as string | undefined;
+      const permissions = Array.isArray(token?.permissions)
+        ? (token.permissions as string[])
+        : [];
+      const staffHome = canAccessAllLeads({ role, permissions })
+        ? "/dashboard/all-leads"
+        : "/dashboard/leads";
+      if (isOwnerOnlyDashboardPath(path) && !isAdmin(role)) {
+        return NextResponse.redirect(new URL(staffHome, request.url));
+      }
+      if (isUsersDashboardPath(path) && !isAdmin(role)) {
+        return NextResponse.redirect(new URL(staffHome, request.url));
       }
     }
 

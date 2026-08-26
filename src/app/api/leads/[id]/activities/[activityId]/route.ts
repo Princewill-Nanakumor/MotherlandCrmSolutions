@@ -11,6 +11,12 @@ import {
   publishLeadUpdatedEvent,
 } from "@/libs/ablyServer";
 import { forbiddenResponse } from "@/lib/apiResponses";
+import {
+  canAccessAllLeads,
+  canDeleteActivities,
+  getTenantAdminId,
+} from "@/lib/roles";
+import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 
 function extractParamsFromUrl(urlString: string): {
   id: string;
@@ -23,54 +29,44 @@ function extractParamsFromUrl(urlString: string): {
   return { id, activityId };
 }
 
-interface SessionUser {
-  id: string;
-  role: "ADMIN" | "AGENT";
-  adminId?: string;
-  firstName?: string;
-  lastName?: string;
-}
-
-interface Session {
-  user: SessionUser;
-}
-
-function getCorrectAdminId(session: Session): mongoose.Types.ObjectId {
-  if (session.user.role === "ADMIN") {
-    return new mongoose.Types.ObjectId(session.user.id);
-  }
-  if (session.user.role === "AGENT" && session.user.adminId) {
-    return new mongoose.Types.ObjectId(session.user.adminId);
-  }
-  throw new Error("Invalid user role or missing adminId for agent");
-}
-
 export async function DELETE(request: Request) {
   try {
     const { id: leadId, activityId } = extractParamsFromUrl(request.url);
-    const session = (await getServerSession(authOptions)) as Session | null;
+    const session = await getServerSession(authOptions);
 
-    if (!session) {
+    if (!session?.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     await connectMongoDB();
 
-    if (session.user.role !== "ADMIN") {
-      return forbiddenResponse("Only administrators can delete activities");
+    // Same grant as comment moderation (ADMIN or SUBADMIN+DELETE_COMMENTS).
+    if (!canDeleteActivities(session.user)) {
+      return forbiddenResponse(
+        "You do not have permission to delete activities",
+      );
     }
 
-    const adminId = getCorrectAdminId(session);
+    const tenantId = getTenantAdminId(session.user);
+    if (!tenantId) {
+      return forbiddenResponse("Admin scope unresolved");
+    }
+    const adminId = new mongoose.Types.ObjectId(tenantId);
 
     if (!mongoose.Types.ObjectId.isValid(leadId)) {
       return NextResponse.json({ message: "Invalid lead id" }, { status: 400 });
     }
 
     const leadObjectId = new mongoose.Types.ObjectId(leadId);
-    const leadExists = await Lead.findOne({
-      _id: leadObjectId,
-      adminId,
-    })
+    const leadExists = await Lead.findOne(
+      singleLeadAccessFilter(
+        leadObjectId,
+        adminId,
+        session.user.role,
+        session.user.id,
+        canAccessAllLeads(session.user),
+      ),
+    )
       .select({ _id: 1 })
       .lean();
     if (!leadExists) {
@@ -89,10 +85,7 @@ export async function DELETE(request: Request) {
     } = {
       _id: activityId,
       leadId,
-      $or: [
-        { adminId },
-        { adminId: { $exists: false } },
-      ],
+      $or: [{ adminId }, { adminId: { $exists: false } }],
     };
 
     const deleted = await Activity.findOneAndDelete(query);
@@ -100,7 +93,7 @@ export async function DELETE(request: Request) {
     if (!deleted) {
       return NextResponse.json(
         { message: "Activity not found or not authorized" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -130,7 +123,7 @@ export async function DELETE(request: Request) {
     console.error("Error deleting activity:", error);
     return NextResponse.json(
       { message: "Error deleting activity" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

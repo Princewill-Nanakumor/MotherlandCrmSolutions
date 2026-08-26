@@ -14,6 +14,13 @@ import { unauthorizedResponse } from "@/lib/apiResponses";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { agentAssignedToUserClause } from "@/lib/leadAssignmentQuery";
+import {
+  canAccessAllLeads,
+  canAssignLeads,
+  canEditLead,
+  canUpdateLeadStatusOnAccessibleLead,
+  isTenantStaff,
+} from "@/lib/roles";
 
 function buildLeadAccessFilter(
   session: Session,
@@ -23,7 +30,7 @@ function buildLeadAccessFilter(
   const adminOid = new ObjectId(adminScopeId);
   const core: Record<string, unknown> = { ...baseIdFilter, adminId: adminOid };
 
-  if (session.user.role !== "AGENT") {
+  if (canAccessAllLeads(session.user)) {
     return core;
   }
 
@@ -297,28 +304,11 @@ export async function PUT(
       updatedAt: new Date(),
     };
 
-    const isAgent = session.user.role === "AGENT";
+    const allowDetails = canEditLead(session.user);
+    const allowStatus = canUpdateLeadStatusOnAccessibleLead(session.user);
+    const allowComments = isTenantStaff(session.user.role) || allowDetails;
 
-    if (isAgent) {
-      let agentHasUpdate = false;
-      if (updateData.status !== undefined) {
-        const statusChangedAt = new Date();
-        updatePayload.status = updateData.status;
-        updatePayload.statusChangedAt = statusChangedAt;
-        updatePayload.lastActivityAt = statusChangedAt;
-        agentHasUpdate = true;
-      }
-      if (updateData.comments !== undefined) {
-        updatePayload.comments = updateData.comments;
-        agentHasUpdate = true;
-      }
-      if (!agentHasUpdate) {
-        return NextResponse.json(
-          { error: "Agents may only update status and comments" },
-          { status: 400 },
-        );
-      }
-    } else {
+    if (allowDetails) {
       if (updateData.firstName !== undefined)
         updatePayload.firstName = String(updateData.firstName || "").trim();
       if (updateData.lastName !== undefined)
@@ -332,22 +322,24 @@ export async function PUT(
         updatePayload.phone = String(updateData.phone || "").trim();
       if (updateData.source !== undefined)
         updatePayload.source = String(updateData.source || "").trim();
-      if (updateData.status !== undefined) {
-        const statusChangedAt = new Date();
-        updatePayload.status = updateData.status;
-        updatePayload.statusChangedAt = statusChangedAt;
-        updatePayload.lastActivityAt = statusChangedAt;
-      }
       if (updateData.country !== undefined)
         updatePayload.country = normalizeCountryInput(
           String(updateData.country || ""),
         );
-      if (updateData.comments !== undefined)
-        updatePayload.comments = updateData.comments;
     }
 
-    // Handle assignedTo field (admins only — agents cannot reassign leads via this API)
-    if (updateData.assignedTo !== undefined && session.user.role !== "AGENT") {
+    if (allowStatus && updateData.status !== undefined) {
+      const statusChangedAt = new Date();
+      updatePayload.status = updateData.status;
+      updatePayload.statusChangedAt = statusChangedAt;
+      updatePayload.lastActivityAt = statusChangedAt;
+    }
+
+    if (allowComments && updateData.comments !== undefined) {
+      updatePayload.comments = updateData.comments;
+    }
+
+    if (canAssignLeads(session.user) && updateData.assignedTo !== undefined) {
       if (updateData.assignedTo) {
         if (!mongoose.Types.ObjectId.isValid(updateData.assignedTo)) {
           return NextResponse.json(
@@ -359,6 +351,16 @@ export async function PUT(
       } else {
         updatePayload.assignedTo = null;
       }
+    }
+
+    const hasMeaningfulUpdate = Object.keys(updatePayload).some(
+      (key) => key !== "updatedAt",
+    );
+    if (!hasMeaningfulUpdate) {
+      return NextResponse.json(
+        { error: "No updatable fields provided" },
+        { status: 400 },
+      );
     }
 
     // Perform the update

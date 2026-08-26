@@ -8,6 +8,7 @@ import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { rateLimitEnhanced } from "@/lib/rateLimit";
+import { canDeleteLead } from "@/lib/roles";
 
 interface BulkDeleteRequest {
   leadIds: string[];
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.role || session.user.role !== "ADMIN") {
+    if (!session?.user?.role || !canDeleteLead(session.user)) {
       return unauthorizedResponse();
     }
 

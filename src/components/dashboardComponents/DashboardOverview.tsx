@@ -6,6 +6,7 @@ import { BarChart3, Users, Search } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useUsersData, useLeadsStats } from "@/hooks/useDashboardData";
 import LeadStatusStats from "@/components/dashboardComponents/LeadStatusStats";
+import { canAccessAllLeads } from "@/lib/roles";
 
 // Loading skeleton for stat cards
 const StatCardSkeleton = () => (
@@ -31,7 +32,7 @@ export default function DashboardOverview({
 
   // Use React Query for data fetching
   const { users, isLoading: isLoadingUsers } = useUsersData();
-  const isAdmin = session?.user?.role === "ADMIN";
+  const isAdmin = canAccessAllLeads(session?.user);
   const { stats, isLoading: isLoadingStats, hasData } = useLeadsStats(isAdmin);
 
   if (status === "loading") {

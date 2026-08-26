@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import { agentLeadsInTenantFilter } from "@/lib/leadAssignmentQuery";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
 import { getAgentContactVisibilityFromDb } from "@/lib/getAgentContactVisibilityFromDb";
+import { isAdmin, isTenantStaff } from "@/lib/roles";
 
 interface LeadDocument {
   _id: mongoose.Types.ObjectId;
@@ -65,9 +66,9 @@ export async function GET() {
     let canViewEmails = true;
     let canViewPhoneNumbers = true;
 
-    if (session.user.role === "ADMIN") {
+    if (isAdmin(session.user.role)) {
       query = { adminId: new mongoose.Types.ObjectId(session.user.id) };
-    } else if (session.user.role === "AGENT") {
+    } else if (isTenantStaff(session.user.role)) {
       if (!session.user.adminId) {
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
       }

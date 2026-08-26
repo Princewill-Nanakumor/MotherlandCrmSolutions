@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { format, isValid } from "date-fns";
 import { Reminder } from "@/types/leads";
 import ReminderCard, { ReminderCardSkeleton } from "./ReminderCard";
+import { canManageReminders } from "@/lib/roles";
 
 interface RemindersListProps {
   reminders: Reminder[];
@@ -35,7 +36,7 @@ export const RemindersList: FC<RemindersListProps> = ({
   completingReminderId = null,
 }) => {
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === "ADMIN";
+  const canManageAny = canManageReminders(session?.user);
 
   const formatDate = (dateString: string | Date) => {
     try {
@@ -174,7 +175,7 @@ export const RemindersList: FC<RemindersListProps> = ({
                     </div>
                   </div>
                 </div>
-                {isAdmin && (
+                {canManageAny && (
                   <Button
                     size="sm"
                     variant="ghost"

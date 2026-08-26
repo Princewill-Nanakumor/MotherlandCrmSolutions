@@ -15,6 +15,7 @@ import {
 import { useStatuses } from "@/context/StatusContext";
 import { useSession } from "next-auth/react";
 import { useLeadStatusMutation } from "@/hooks/leads/useLeadStatusMutation";
+import { canAccessAllLeads } from "@/lib/roles";
 import {
   getLeadAssignedDisplayName,
   isLeadAssignedToActiveUser,
@@ -73,7 +74,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, users, onLeadUpdated }) =
       ? "NEW"
       : lead.status || "NEW";
 
-  const isAdmin = session?.user?.role === "ADMIN";
+  const isAdmin = canAccessAllLeads(session?.user);
 
   const assignedDisplayName = getLeadAssignedDisplayName(lead.assignedTo, users);
   const showAssignedBadge =

@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import LeadsPageContent from "@/components/dashboardComponents/LeadsPageContent";
 import { useSearchContext } from "@/context/SearchContext";
 import { ShieldSpinnerGlyph } from "@/components/dashboardComponents/LeadsLoadingState";
+import { canAccessAllLeads } from "@/lib/roles";
 
 const AllLeadsPage: React.FC = () => {
   const { data: session, status } = useSession();
@@ -23,8 +24,11 @@ const AllLeadsPage: React.FC = () => {
           ? `${window.location.pathname}${window.location.search}`
           : "/dashboard/all-leads";
       router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
-    } else if (status === "authenticated" && session?.user?.role !== "ADMIN") {
-      router.push("/dashboard");
+    } else if (
+      status === "authenticated" &&
+      !canAccessAllLeads(session?.user)
+    ) {
+      router.push("/dashboard/leads");
     }
   }, [status, session, router]);
 
@@ -38,7 +42,7 @@ const AllLeadsPage: React.FC = () => {
 
   if (
     status === "unauthenticated" ||
-    (status === "authenticated" && session?.user?.role !== "ADMIN")
+    (status === "authenticated" && !canAccessAllLeads(session?.user))
   ) {
     return null;
   }

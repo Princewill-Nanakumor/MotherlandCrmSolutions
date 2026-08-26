@@ -30,6 +30,14 @@ describe("getAdminScopeId", () => {
     ).toBe("tenant-a");
   });
 
+  it("uses SUBADMIN adminId as tenant scope", () => {
+    expect(
+      getAdminScopeId(
+        session({ id: "sub-1", role: "SUBADMIN", adminId: "tenant-a" }),
+      ),
+    ).toBe("tenant-a");
+  });
+
   it("throws when AGENT has no adminId", () => {
     expect(() =>
       getAdminScopeId(session({ id: "agent-1", role: "AGENT" })),

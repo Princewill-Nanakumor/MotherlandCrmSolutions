@@ -17,6 +17,7 @@ import { CallLogsModal } from "./CallLogsModal";
 import { User } from "./UserTableColumns";
 import type { UserFormCreateData } from "@/schemas/UserFormSchema";
 import { ShieldSpinnerGlyph } from "@/components/dashboardComponents/LeadsLoadingState";
+import { canManageUsers } from "@/lib/roles";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -120,7 +121,7 @@ export default function UsersManagement({
   }
 
   return (
-    <AuthGuard>
+    <AuthGuard canAccess={canManageUsers}>
       <UserCRUDOperations
         onUserCreated={handleUserCreated}
         onUserUpdated={handleUserUpdated}

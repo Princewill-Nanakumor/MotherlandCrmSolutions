@@ -23,6 +23,8 @@ import { Lead } from "@/types/leads";
 import { Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { canDeleteLead, canEditAnyLeadStatus } from "@/lib/roles";
 
 interface BulkActionsProps {
   selectedLeads: Lead[];
@@ -52,6 +54,9 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
   statuses: propStatuses,
   isLoadingStatuses: propIsLoadingStatuses,
 }) => {
+  const { data: session } = useSession();
+  const showDelete = canDeleteLead(session?.user);
+  const showBulkStatus = canEditAnyLeadStatus(session?.user);
   const [isAssigning, setIsAssigning] = useState(false);
   const [isUnassigning, setIsUnassigning] = useState(false);
   const [isChangingStatus, setIsChangingStatus] = useState(false);
@@ -188,6 +193,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
           )}
         </Button>
       )}
+      {showBulkStatus && (
       <Select
         value={selectedStatus}
         onValueChange={handleStatusChange}
@@ -233,12 +239,14 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
           )}
         </SelectContent>
       </Select>
-      {isChangingStatus && (
+      )}
+      {isChangingStatus && showBulkStatus && (
         <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 shrink-0">
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           <span className="hidden sm:inline">Changing status...</span>
         </div>
       )}
+      {showDelete && (
       <Button
         variant="destructive"
         className="shrink-0"
@@ -266,6 +274,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
           </>
         )}
       </Button>
+      )}
       <AlertDialog
         open={!!pendingStatus}
         onOpenChange={(open) => {
@@ -310,7 +319,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
       </AlertDialog>
 
       <AlertDialog
-        open={pendingDelete}
+        open={pendingDelete && showDelete}
         onOpenChange={(open) => {
           if (!open && !isDeleting) {
             setPendingDelete(false);

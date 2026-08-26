@@ -5,6 +5,7 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { getSuperAdminEmails } from "@/lib/notificationQuery";
+import { isAdmin, isTenantStaff } from "@/lib/roles";
 
 // Define proper types
 interface UserQuery {
@@ -30,18 +31,18 @@ export async function GET() {
 
     const emailNormalized = session.user.email.trim().toLowerCase();
     const query: UserQuery = { email: emailNormalized };
-    if (session.user.role === "AGENT") {
+    if (isTenantStaff(session.user.role)) {
       if (session.user.adminId) {
         query.adminId = session.user.adminId;
       }
-    } else if (session.user.role === "ADMIN") {
+    } else if (isAdmin(session.user.role)) {
       query.role = "ADMIN";
     }
 
     // Try to find the user
     let user = await db.collection("users").findOne(query);
 
-    if (!user && session.user.role === "AGENT") {
+    if (!user && isTenantStaff(session.user.role)) {
       user = await db.collection("users").findOne({ email: emailNormalized });
       if (!user && session.user.email.trim() !== emailNormalized) {
         user = await db

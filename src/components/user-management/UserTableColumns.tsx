@@ -121,18 +121,21 @@ export function useUserTableColumns({
       accessorKey: "role",
       header: "Role",
       cell: ({ row }) => {
-        const isAdmin = row.original.role === "ADMIN";
+        const isOwner = row.original.role === "ADMIN";
+        const isSubAdmin = row.original.role === "SUBADMIN";
         return (
           <div className="flex items-center gap-2">
             <Badge
               variant="outline"
               className={`dark:border-gray-600 dark:text-white! ${
-                isAdmin
+                isOwner
                   ? "text-white border-transparent"
-                  : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                  : isSubAdmin
+                    ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200"
+                    : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
               }`}
               style={
-                isAdmin
+                isOwner
                   ? {
                       backgroundColor: "var(--brand-from)",
                       borderColor: "var(--brand-from)",
@@ -141,12 +144,18 @@ export function useUserTableColumns({
               }
             >
               <div className="flex items-center gap-1.5">
-                {isAdmin ? (
+                {isOwner ? (
                   <MotherlandLogo className="h-3 w-3 rounded-[22%]" />
                 ) : (
                   <UserIcon className="w-3 h-3" />
                 )}
-                <span>{row.original.role}</span>
+                <span>
+                  {isOwner
+                    ? "ADMIN"
+                    : isSubAdmin
+                      ? "SUB ADMIN"
+                      : row.original.role}
+                </span>
               </div>
             </Badge>
           </div>

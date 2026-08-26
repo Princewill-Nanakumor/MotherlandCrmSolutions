@@ -13,11 +13,13 @@ import {
   expandCountryFilterValues,
   normalizeCountryInput,
 } from "@/lib/countryNormalize";
+import { canAccessAllLeads, getTenantAdminId, isTenantStaff } from "@/lib/roles";
 
 interface SessionUser {
   id: string;
   role: string;
   adminId?: string;
+  permissions?: string[];
   /** Required for agent PII flags to match GET /api/users/me (same as JWT email). */
   email?: string | null;
 }
@@ -185,9 +187,9 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
   // Permission-aware PII gating: agents only see unmasked email/phone when
   // their user record explicitly grants `canViewEmails` / `canViewPhoneNumbers`.
   // Admins always see raw values (same model as `GET /api/leads`).
-  let canViewEmails = sessionUser.role !== "AGENT";
-  let canViewPhoneNumbers = sessionUser.role !== "AGENT";
-  if (sessionUser.role === "AGENT") {
+  let canViewEmails = !isTenantStaff(sessionUser.role);
+  let canViewPhoneNumbers = !isTenantStaff(sessionUser.role);
+  if (isTenantStaff(sessionUser.role)) {
     const flags = await getAgentContactVisibilityFromDb(db, {
       user: {
         id: sessionUser.id,
@@ -203,7 +205,7 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
   const baseQuery: LeadFilter = buildTenantLeadBaseQuery(sessionUser);
 
   const filter: LeadFilter = { ...baseQuery };
-  if (sessionUser.role === "ADMIN" && userFilter.length > 0) {
+  if (canAccessAllLeads(sessionUser) && userFilter.length > 0) {
     const hasUnassigned = userFilter.some((v) => String(v).toLowerCase() === "unassigned");
     const userIds = userFilter
       .filter((v) => String(v).toLowerCase() !== "unassigned")
@@ -283,7 +285,9 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
     filter.$and = filter.$and ? [...filter.$and, searchOr] : [searchOr];
   }
 
-  const countCacheKey = sessionUser.role === "ADMIN" ? `admin:${sessionUser.id}` : `agent:${sessionUser.id}`;
+  const countCacheKey = canAccessAllLeads(sessionUser)
+    ? `admin:${getTenantAdminId(sessionUser) || sessionUser.id}`
+    : `agent:${sessionUser.id}`;
   let totalAllCount = getCachedTotalAll(countCacheKey);
   let totalCount: number;
   if (totalAllCount === null) {
@@ -323,12 +327,8 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
     users.forEach((user) => userMap.set(user._id.toString(), user as UserData));
   }
 
-  const adminIdForComments =
-    sessionUser.role === "ADMIN"
-      ? new ObjectId(sessionUser.id)
-      : sessionUser.adminId
-        ? new ObjectId(sessionUser.adminId)
-        : null;
+  const tenantId = getTenantAdminId(sessionUser);
+  const adminIdForComments = tenantId ? new ObjectId(tenantId) : null;
   const leadIds = leads.map(
     (lead: Record<string, unknown>) =>
       (lead._id instanceof ObjectId ? lead._id : new ObjectId(safeObjectIdToString(lead._id) || "")),

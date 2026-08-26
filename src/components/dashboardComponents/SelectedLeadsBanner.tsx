@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSelectedLeads, useClearSelection } from "@/stores/leadsStore";
+import { canAccessAllLeads } from "@/lib/roles";
 
 /**
  * Shows a sticky banner on the all-leads page when leads are checkbox-selected.
@@ -19,7 +20,7 @@ export function SelectedLeadsBanner() {
   const selectedLeads = useSelectedLeads();
   const clearSelection = useClearSelection();
 
-  const isAdmin = session?.user?.role === "ADMIN";
+  const canUseAllLeads = canAccessAllLeads(session?.user);
   const count = selectedLeads.length;
   const isAllLeadsPage = pathname === "/dashboard/all-leads";
 
@@ -31,7 +32,7 @@ export function SelectedLeadsBanner() {
     }
   }, [isAllLeadsPage, count, clearSelection]);
 
-  if (!isAdmin || count === 0 || !isAllLeadsPage) return null;
+  if (!canUseAllLeads || count === 0 || !isAllLeadsPage) return null;
 
   return (
     <div className="sticky top-0 z-20 flex items-center justify-between gap-4 pl-16 pr-8 py-2 text-sm text-indigo-900 border-b border-indigo-200 bg-indigo-50 dark:bg-indigo-950/50 dark:border-indigo-800 dark:text-indigo-100">

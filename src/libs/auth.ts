@@ -19,6 +19,7 @@ import {
 } from "@/lib/credentialsEmailVerifyErrors";
 import { findUserForCredentialLoginByEmail } from "@/lib/authEmailUserLookup";
 import { getPasswordChangedAtUnixCached } from "@/lib/authPasswordVersion";
+import { getSessionRbacFromDbCached } from "@/lib/sessionRbac";
 import { tryConsumeCaptchaSignatureOnce } from "@/lib/captchaConsumeStore";
 import {
   captchaConsumeTtlMs,
@@ -54,6 +55,7 @@ declare module "next-auth" {
     country: string;
     adminId?: string;
     canViewPhoneNumbers?: boolean;
+    canViewEmails?: boolean;
     /** Set by `authorize` from the "Remember me" checkbox; consumed once in the jwt callback. */
     rememberMe?: boolean;
   }
@@ -71,11 +73,12 @@ declare module "next-auth" {
       phoneNumber: string;
       country: string;
       adminId?: string;
-      canViewPhoneNumbers?: boolean;
-      /** Platform super admin (SUPER_ADMIN_EMAILS); only meaningful when role is ADMIN. */
-      isSuperAdmin?: boolean;
-    };
-  }
+    canViewPhoneNumbers?: boolean;
+    canViewEmails?: boolean;
+    /** Platform super admin (SUPER_ADMIN_EMAILS); only meaningful when role is ADMIN. */
+    isSuperAdmin?: boolean;
+  };
+}
 }
 
 // Extend the built-in JWT types
@@ -91,6 +94,7 @@ declare module "next-auth/jwt" {
     country: string;
     adminId?: string;
     canViewPhoneNumbers?: boolean;
+    canViewEmails?: boolean;
     exp?: number; // Token expiration timestamp
     loginTimestamp?: number; // Absolute timestamp of initial login
     /** Effective session lifetime in seconds chosen at login (default vs "Remember me"). */
@@ -109,7 +113,7 @@ async function isTenantAdminEmailVerifiedForAgent(user: {
   adminId?: { toString: () => string } | null;
   createdBy?: { toString: () => string } | null;
 }): Promise<boolean> {
-  if (user.role !== "AGENT") return false;
+  if (user.role !== "AGENT" && user.role !== "SUBADMIN") return false;
   const raw = user.adminId ?? user.createdBy;
   if (!raw) return false;
   const adminUser = await User.findById(raw.toString())
@@ -204,7 +208,10 @@ export const authOptions: NextAuthOptions = {
                 : CRED_EMAIL_VERIFY_EXPIRED_ADMIN,
             );
           }
-          if (user.role === "AGENT" && user.emailVerified === false) {
+          if (
+            (user.role === "AGENT" || user.role === "SUBADMIN") &&
+            user.emailVerified === false
+          ) {
             const waivedByVerifiedAdmin =
               await isTenantAdminEmailVerifiedForAgent(user);
             if (!waivedByVerifiedAdmin) {
@@ -257,6 +264,7 @@ export const authOptions: NextAuthOptions = {
             country: user.country || "",
             adminId: user.adminId?.toString(),
             canViewPhoneNumbers: user.canViewPhoneNumbers ?? false,
+            canViewEmails: user.canViewEmails ?? false,
             rememberMe,
           };
         } catch (error) {
@@ -319,6 +327,7 @@ export const authOptions: NextAuthOptions = {
         token.country = user.country;
         token.adminId = user.adminId;
         token.canViewPhoneNumbers = user.canViewPhoneNumbers;
+        token.canViewEmails = user.canViewEmails;
 
         // "Remember me" picks the longer lifetime; the chosen value is
         // pinned on the JWT so middleware/session checks honor it.
@@ -388,6 +397,24 @@ export const authOptions: NextAuthOptions = {
             console.error("jwt passwordChangedAt check:", e);
           }
         }
+
+        // Refresh role/permissions/contact flags from DB so admin checkbox
+        // changes apply on the next page refresh without requiring re-login.
+        if (typeof token.id === "string" && token.id.length > 0) {
+          try {
+            const rbac = await getSessionRbacFromDbCached(token.id);
+            if (rbac) {
+              token.role = rbac.role;
+              token.permissions = rbac.permissions;
+              token.status = rbac.status;
+              token.adminId = rbac.adminId;
+              token.canViewPhoneNumbers = rbac.canViewPhoneNumbers;
+              token.canViewEmails = rbac.canViewEmails;
+            }
+          } catch (e) {
+            console.error("jwt session RBAC refresh:", e);
+          }
+        }
       }
 
       // Handle session updates (but don't change expiration).
@@ -407,6 +434,7 @@ export const authOptions: NextAuthOptions = {
           country: string;
           adminId: string;
           canViewPhoneNumbers: boolean;
+          canViewEmails: boolean;
         }>;
 
         if (typeof userPatch.id === "string" && userPatch.id.length > 0) {
@@ -441,6 +469,9 @@ export const authOptions: NextAuthOptions = {
         }
         if (typeof userPatch.canViewPhoneNumbers === "boolean") {
           nextToken.canViewPhoneNumbers = userPatch.canViewPhoneNumbers;
+        }
+        if (typeof userPatch.canViewEmails === "boolean") {
+          nextToken.canViewEmails = userPatch.canViewEmails;
         }
 
         return applySuperAdminToToken(nextToken);
@@ -491,6 +522,7 @@ export const authOptions: NextAuthOptions = {
       session.user.country = token.country ?? "";
       session.user.adminId = token.adminId ?? undefined;
       session.user.canViewPhoneNumbers = token.canViewPhoneNumbers ?? false;
+      session.user.canViewEmails = token.canViewEmails ?? false;
       session.user.email =
         typeof token.email === "string"
           ? token.email

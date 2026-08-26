@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
       id: session.user.id,
       role: session.user.role,
       adminId: session.user.adminId,
+      permissions: session.user.permissions,
       email: session.user.email,
     });
     return NextResponse.json(result);

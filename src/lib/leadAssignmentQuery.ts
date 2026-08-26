@@ -33,14 +33,18 @@ export function agentLeadsInTenantFilter(
   };
 }
 
-/** Single-lead read/update/delete: tenant + assignment for agents. */
+/** Single-lead read/update/delete: tenant + assignment for agents.
+ *  Pass `canSeeAllTenantLeads` explicitly for assigners (ADMIN / SUBADMIN+ASSIGN_LEADS).
+ *  Default is false so forgotten callers never grant tenant-wide access by role alone.
+ */
 export function singleLeadAccessFilter(
   leadObjectId: mongoose.Types.ObjectId,
   tenantAdminId: mongoose.Types.ObjectId,
   role: string,
   sessionUserId: string,
+  canSeeAllTenantLeads = false,
 ): Record<string, unknown> {
-  if (role === "AGENT") {
+  if (!canSeeAllTenantLeads) {
     return {
       $and: [
         { _id: leadObjectId, adminId: tenantAdminId },

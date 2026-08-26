@@ -14,6 +14,7 @@ import { useSession } from "next-auth/react";
 import { Activity, Lead, Status } from "@/types/leads";
 import { isTaboolaLeadImportActivity } from "@/lib/leadActivityDisplay";
 import { Comment, CombinedItem } from "./commentsAndActivities/types";
+import { canDeleteComments } from "@/lib/roles";
 import {
   transformComment,
   LOCAL_STORAGE_KEY,
@@ -67,7 +68,7 @@ export const CommentsAndActivitiesCombined: FC<
     "all" | "comments" | "status"
   >("all");
 
-  const isAdmin = session?.user?.role === "ADMIN";
+  const isAdmin = canDeleteComments(session?.user);
 
   const patchLeadCachesFromComments = useCallback(
     (nextComments: Comment[]) => {

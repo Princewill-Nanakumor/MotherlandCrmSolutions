@@ -1,15 +1,20 @@
 import { ObjectId } from "mongodb";
+import { canAccessAllLeads, getTenantAdminId } from "@/lib/roles";
 
 /** Tenant base filter for all-leads / assigned-leads list queries. */
 export function buildTenantLeadBaseQuery(sessionUser: {
   id: string;
   role: string;
   adminId?: string;
+  permissions?: string[];
 }): Record<string, unknown> {
-  if (sessionUser.role === "ADMIN") {
-    return { adminId: new ObjectId(sessionUser.id) };
+  if (canAccessAllLeads(sessionUser)) {
+    const tenantId = getTenantAdminId(sessionUser);
+    if (tenantId) {
+      return { adminId: new ObjectId(tenantId) };
+    }
   }
-  if (sessionUser.role === "AGENT") {
+  if (sessionUser.role === "AGENT" || sessionUser.role === "SUBADMIN") {
     const agentId = new ObjectId(sessionUser.id);
     return {
       $or: [{ assignedTo: agentId }, { "assignedTo._id": agentId }],

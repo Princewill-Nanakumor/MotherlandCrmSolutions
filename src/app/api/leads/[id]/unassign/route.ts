@@ -10,6 +10,7 @@ import {
 } from "@/libs/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
+import { canAssignLeads } from "@/lib/roles";
 
 export async function POST(request: Request) {
   try {
@@ -19,8 +20,8 @@ export async function POST(request: Request) {
       return unauthorizedResponse();
     }
 
-    if (session.user.role !== "ADMIN") {
-      return forbiddenResponse("Only administrators can unassign leads");
+    if (!canAssignLeads(session.user)) {
+      return forbiddenResponse("You do not have permission to unassign leads");
     }
 
     await connectMongoDB();
@@ -145,6 +146,13 @@ export async function POST(request: Request) {
           assignedTo: null,
           assignedFrom: assignedFromUser,
           assignedBy: assignedByUser,
+          performedBy: assignedByUser
+            ? {
+                id: assignedByUser.id,
+                firstName: assignedByUser.firstName,
+                lastName: assignedByUser.lastName,
+              }
+            : undefined,
         },
       });
 

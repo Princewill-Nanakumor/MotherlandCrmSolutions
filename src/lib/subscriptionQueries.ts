@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import type { SubscriptionStatusData } from "@/lib/subscriptionIndicator";
+import { isTenantStaff } from "@/lib/roles";
 
 export function subscriptionStatusQueryKey(role?: string) {
   return ["subscription-status", role ?? "unknown"] as const;
@@ -18,10 +19,11 @@ export function isSubscriptionStatusQuery(queryKey: readonly unknown[]): boolean
 export async function fetchSubscriptionStatus(
   role?: string,
 ): Promise<SubscriptionStatusData> {
-  const endpoint =
-    role === "AGENT"
-      ? "/api/subscription/agent-status"
-      : "/api/subscription/status";
+  // Agents and sub-admins inherit the tenant owner's subscription — not their
+  // own user document (which has no plan fields).
+  const endpoint = isTenantStaff(role)
+    ? "/api/subscription/agent-status"
+    : "/api/subscription/status";
   const response = await apiCallWithSessionRefresh(endpoint, {
     cache: "no-store",
   });

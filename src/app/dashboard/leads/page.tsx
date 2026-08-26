@@ -14,6 +14,7 @@ const ReactQueryDevtools = dynamic(
 );
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { canAccessAllLeads } from "@/lib/roles";
 
 export default function UserLeadsPage() {
   const { data: session, status } = useSession();
@@ -32,8 +33,8 @@ export default function UserLeadsPage() {
       return;
     }
 
-    if (session?.user?.role === "ADMIN") {
-      router.push("/dashboard");
+    if (canAccessAllLeads(session?.user)) {
+      router.push("/dashboard/all-leads");
       return;
     }
   }, [session, status, router]);
@@ -48,7 +49,7 @@ export default function UserLeadsPage() {
   }
 
   // Don't render anything if user is unauthenticated or admin
-  if (status === "unauthenticated" || session?.user?.role === "ADMIN") {
+  if (status === "unauthenticated" || canAccessAllLeads(session?.user)) {
     return null;
   }
 

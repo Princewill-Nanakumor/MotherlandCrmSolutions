@@ -127,14 +127,14 @@ export function useUserMutations({
       return data.user as User;
     },
     onSuccess: async (created) => {
+      await invalidateUserCachesAfterWrite(queryClient);
+      await onRefreshUsers?.();
+      onUserCreated?.(created);
       toast({
         title: "Success",
         description: "User created successfully",
         variant: "success",
       });
-      await invalidateUserCachesAfterWrite(queryClient);
-      await onRefreshUsers?.();
-      onUserCreated?.(created);
     },
   });
 
@@ -142,11 +142,6 @@ export function useUserMutations({
     mutationFn: ({ userId, body }: UpdateUserVariables) =>
       updateUserRequest(userId, body),
     onSuccess: async (updated) => {
-      toast({
-        title: "Success",
-        description: "User updated successfully",
-        variant: "success",
-      });
       await invalidateUserCachesAfterWrite(queryClient, {
         includeCurrentUserPermission: true,
       });
