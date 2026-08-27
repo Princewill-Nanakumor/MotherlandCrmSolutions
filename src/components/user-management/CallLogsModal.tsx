@@ -24,12 +24,17 @@ interface CallLog {
   userId: string;
   leadId: string | null;
   leadName: string | null;
-  leadDisplayId: number | null;
+  leadDisplayId: number | string | null;
   leadCountry: string | null;
   leadSource: string | null;
+  leadStatus: { name: string; color: string } | null;
   phoneNumber: string;
   dialer: "microsip" | "zoiper" | "unknown";
   createdAt: string;
+  comment: {
+    content: string;
+    createdAt: string;
+  } | null;
 }
 
 interface CallLogsModalProps {
@@ -39,15 +44,24 @@ interface CallLogsModalProps {
   userName: string;
 }
 
-const formatDateTime = (dateString: string) => {
+const formatDateOnly = (dateString: string) => {
   const date = new Date(dateString);
   if (isNaN(date.getTime())) {
     return "Invalid Date";
   }
-  return date.toLocaleString("en-US", {
+  return date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
+  });
+};
+
+const formatTimeOnly = (dateString: string) => {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    return "Invalid Time";
+  }
+  return date.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -102,10 +116,10 @@ const getDialerName = (dialer: string) => {
   }
 };
 
-// Query key factory for call logs
+// Query key factory for call logs (v2 includes comment payload)
 export const callLogsKeys = {
   all: ["call-logs"] as const,
-  user: (userId: string) => ["call-logs", "user", userId] as const,
+  user: (userId: string) => ["call-logs", "user", userId, "v2"] as const,
 };
 
 // Fetch call logs function
@@ -134,13 +148,23 @@ export function CallLogsModal({
     {
       queryKey: callLogsKeys.user(userId),
       queryFn: () => fetchCallLogs(userId),
-      enabled: isOpen && !!userId, // Only fetch when modal is open and userId exists
-      refetchOnMount: "always", // Always refetch when modal opens
-      refetchOnWindowFocus: false, // Don't refetch on window focus
-      staleTime: 0, // Always consider data stale so it refetches when modal opens
-      gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+      enabled: isOpen && !!userId,
+      refetchOnMount: "always",
+      refetchOnWindowFocus: true,
+      staleTime: 0,
+      gcTime: 5 * 60 * 1000,
     },
   );
+
+  // Force a fresh pull whenever the modal opens so comments posted after a
+  // call (or while the modal was closed) show without a full page reload.
+  useEffect(() => {
+    if (!isOpen || !userId) return;
+    void queryClient.invalidateQueries({
+      queryKey: callLogsKeys.user(userId),
+      refetchType: "active",
+    });
+  }, [isOpen, userId, queryClient]);
 
   useEffect(() => {
     if (!isOpen || !session?.user?.id) return;
@@ -381,6 +405,9 @@ export function CallLogsModal({
                         Lead
                       </th>
                       <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700! dark:text-gray-300! sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-30">
+                        Status
+                      </th>
+                      <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700! dark:text-gray-300! sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-30">
                         Country
                       </th>
                       <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700! dark:text-gray-300! sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-30">
@@ -388,6 +415,9 @@ export function CallLogsModal({
                       </th>
                       <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700! dark:text-gray-300! sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-37.5">
                         Phone Number
+                      </th>
+                      <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700! dark:text-gray-300! sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-55">
+                        Comment
                       </th>
                       <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700! dark:text-gray-300! sticky top-0 bg-gray-50 dark:bg-gray-800/50 min-w-30">
                         Dialer
@@ -401,7 +431,14 @@ export function CallLogsModal({
                         className="transition-colors border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                       >
                         <td className="py-3 px-6 text-sm text-gray-900! dark:text-white! whitespace-nowrap">
-                          {formatDateTime(log.createdAt)}
+                          <div>
+                            <div className="font-medium">
+                              {formatDateOnly(log.createdAt)}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                              {formatTimeOnly(log.createdAt)}
+                            </div>
+                          </div>
                         </td>
                         <td className="py-3 px-6 text-sm text-gray-900! dark:text-white!">
                           {log.leadName ? (
@@ -413,6 +450,29 @@ export function CallLogsModal({
                                 </div>
                               )}
                             </div>
+                          ) : (
+                            <span className="text-gray-400 dark:text-gray-500">
+                              —
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-6 text-sm text-gray-900! dark:text-white! whitespace-nowrap">
+                          {log.leadStatus ? (
+                            <Badge
+                              variant="outline"
+                              className="inline-flex items-center gap-1.5 font-medium border"
+                              style={{
+                                backgroundColor: `${log.leadStatus.color}15`,
+                                color: log.leadStatus.color,
+                                borderColor: `${log.leadStatus.color}30`,
+                              }}
+                            >
+                              <span
+                                className="w-1.5 h-1.5 rounded-full shrink-0"
+                                style={{ backgroundColor: log.leadStatus.color }}
+                              />
+                              {log.leadStatus.name}
+                            </Badge>
                           ) : (
                             <span className="text-gray-400 dark:text-gray-500">
                               —
@@ -435,6 +495,23 @@ export function CallLogsModal({
                         </td>
                         <td className="py-3 px-6 text-sm text-gray-900! dark:text-white! font-mono whitespace-nowrap">
                           {log.phoneNumber}
+                        </td>
+                        <td className="py-3 px-6 text-sm text-gray-900! dark:text-white! max-w-70">
+                          {log.comment?.content ? (
+                            <div>
+                              <p className="whitespace-pre-wrap wrap-break-word line-clamp-3 font-medium">
+                                {log.comment.content}
+                              </p>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                <div>{formatDateOnly(log.comment.createdAt)}</div>
+                                <div>{formatTimeOnly(log.comment.createdAt)}</div>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 dark:text-gray-500">
+                              —
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap">
                           <Badge

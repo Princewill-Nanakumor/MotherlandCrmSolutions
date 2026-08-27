@@ -15,6 +15,7 @@ import { Activity, Lead, Status } from "@/types/leads";
 import { isTaboolaLeadImportActivity } from "@/lib/leadActivityDisplay";
 import { Comment, CombinedItem } from "./commentsAndActivities/types";
 import { canDeleteComments } from "@/lib/roles";
+import { callLogsKeys } from "@/components/user-management/CallLogsModal";
 import {
   transformComment,
   LOCAL_STORAGE_KEY,
@@ -318,6 +319,12 @@ export const CommentsAndActivitiesCombined: FC<
       patchLeadCachesFromComments(nextComments);
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
+      if (session?.user?.id) {
+        queryClient.invalidateQueries({
+          queryKey: callLogsKeys.user(session.user.id),
+          refetchType: "active",
+        });
+      }
       setCommentContent("");
       toast({
         title: "Success",
@@ -463,6 +470,12 @@ export const CommentsAndActivitiesCombined: FC<
       patchLeadCachesFromComments(nextComments);
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
+      if (session?.user?.id) {
+        queryClient.invalidateQueries({
+          queryKey: callLogsKeys.user(session.user.id),
+          refetchType: "active",
+        });
+      }
       toast({
         title: "Success",
         description: "Comment updated successfully",
