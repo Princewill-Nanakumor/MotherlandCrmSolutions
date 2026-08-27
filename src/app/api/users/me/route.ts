@@ -1,18 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { ObjectId } from "mongodb";
 import { authOptions } from "@/libs/auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { getSuperAdminEmails } from "@/lib/notificationQuery";
 import { isAdmin, isTenantStaff } from "@/lib/roles";
-
-// Define proper types
-interface UserQuery {
-  email: string;
-  adminId?: string;
-  role?: string;
-}
 
 export async function GET() {
   try {
@@ -30,17 +24,35 @@ export async function GET() {
     }
 
     const emailNormalized = session.user.email.trim().toLowerCase();
-    const query: UserQuery = { email: emailNormalized };
-    if (isTenantStaff(session.user.role)) {
-      if (session.user.adminId) {
-        query.adminId = session.user.adminId;
-      }
-    } else if (isAdmin(session.user.role)) {
-      query.role = "ADMIN";
-    }
+    const sessionUserId =
+      typeof session.user.id === "string" ? session.user.id : "";
 
-    // Try to find the user
-    let user = await db.collection("users").findOne(query);
+    // Prefer stable _id from the JWT — email+adminId string queries miss ObjectId
+    // adminId in Mongo and can return the wrong row after role changes.
+    let user =
+      sessionUserId && mongoose.Types.ObjectId.isValid(sessionUserId)
+        ? await db.collection("users").findOne({
+            _id: new ObjectId(sessionUserId),
+          })
+        : null;
+
+    if (!user) {
+      const query: Record<string, unknown> = { email: emailNormalized };
+      if (isTenantStaff(session.user.role)) {
+        if (session.user.adminId) {
+          const adminIdRaw = String(session.user.adminId);
+          if (mongoose.Types.ObjectId.isValid(adminIdRaw)) {
+            query.adminId = new ObjectId(adminIdRaw);
+          } else {
+            query.adminId = adminIdRaw;
+          }
+        }
+      } else if (isAdmin(session.user.role)) {
+        query.role = "ADMIN";
+      }
+
+      user = await db.collection("users").findOne(query);
+    }
 
     if (!user && isTenantStaff(session.user.role)) {
       user = await db.collection("users").findOne({ email: emailNormalized });
@@ -89,7 +101,7 @@ export async function GET() {
     console.error("Error fetching user profile:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -22,6 +22,7 @@ export const ImportManager = () => {
     isLoading,
     error,
     successMessage,
+    importProgress,
     showModal,
     activeTab,
     importHistory,
@@ -90,6 +91,7 @@ export const ImportManager = () => {
             setShowModal={setShowModal}
             missingFields={missingFields}
             usageData={importUsageData}
+            importProgress={importProgress}
           />
 
           {/* Import History Section */}

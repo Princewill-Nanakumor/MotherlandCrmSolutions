@@ -355,37 +355,12 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
           Activity Log ({visibleActivities.length})
         </h3>
         <div
-          className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 space-y-4 border border-gray-200 dark:border-gray-700 shadow-inner"
+          className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-4 space-y-4 border border-gray-200 dark:border-gray-700 shadow-inner lead-panel-scroll"
           style={{
             scrollbarWidth: "thin",
             scrollbarColor: "var(--brand-from) #f3f4f6",
           }}
         >
-          <style jsx>{`
-            div::-webkit-scrollbar {
-              width: 8px;
-            }
-            div::-webkit-scrollbar-track {
-              background: #f3f4f6;
-              border-radius: 4px;
-            }
-            div::-webkit-scrollbar-thumb {
-              background: #6366f1;
-              border-radius: 4px;
-            }
-            div::-webkit-scrollbar-thumb:hover {
-              background: var(--brand-from);
-            }
-            .dark div::-webkit-scrollbar-track {
-              background: #374151;
-            }
-            .dark div::-webkit-scrollbar-thumb {
-              background: #6366f1;
-            }
-            .dark div::-webkit-scrollbar-thumb:hover {
-              background: var(--brand-from);
-            }
-          `}</style>
           {visibleActivities.map((activity) => (
             <div
               key={activity._id}

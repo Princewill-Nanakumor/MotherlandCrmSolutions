@@ -3,13 +3,16 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { ProcessedLead } from "@/types/import";
+import { ProcessedLead, ImportProgressState } from "@/types/import";
 import { processFile } from "@/utils/FileProcessing";
 import { useImportHistory } from "./useImportHistory";
 import {
   useImportMutations,
   isImportUpgradeRequiredError,
 } from "./useImportMutations";
+import {
+  getPerImportLimitError,
+} from "@/lib/importBatchLimits";
 
 interface ImportLimitExceeded {
   attempted: number;
@@ -27,6 +30,8 @@ export const useImportManager = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [importProgress, setImportProgress] =
+    useState<ImportProgressState | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"new" | "history" | "export">(
     "new",
@@ -46,6 +51,7 @@ export const useImportManager = () => {
   const { importLeads } = useImportMutations({
     refreshImportHistory,
     onImportSuccess: setSuccessMessage,
+    onImportProgress: setImportProgress,
   });
   const runImportLeads = importLeads.mutateAsync;
 
@@ -67,10 +73,20 @@ export const useImportManager = () => {
 
       setError(null);
       setSuccessMessage(null);
+      setImportProgress(null);
       setImportLimitExceeded(null);
       setIsLoading(true);
 
       const handleSuccess = async (processedLeads: ProcessedLead[]) => {
+        const perUploadError = getPerImportLimitError(processedLeads.length);
+        if (perUploadError) {
+          setError(perUploadError);
+          setIsLoading(false);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+          setShowModal(true);
+          return;
+        }
+
         const usageData = queryClient.getQueryData<{
           currentLeads: number;
           maxLeads: number;
@@ -191,6 +207,7 @@ export const useImportManager = () => {
     isInitialLoading: historyLoading,
     error,
     successMessage,
+    importProgress,
     showModal,
     activeTab,
     importHistory: importHistory || [],

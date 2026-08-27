@@ -79,38 +79,12 @@ export const RemindersList: FC<RemindersListProps> = ({
 
   return (
     <div
-      className="bg-white dark:bg-gray-800 rounded-lg p-4 space-y-4 border border-gray-200 dark:border-gray-700 mb-4"
+      className="bg-white dark:bg-gray-800 rounded-lg p-4 space-y-4 border border-gray-200 dark:border-gray-700 mb-4 lead-panel-scroll"
       style={{
         scrollbarWidth: "thin",
         scrollbarColor: "#6366f1 #f3f4f6",
       }}
     >
-      <style jsx>{`
-        div::-webkit-scrollbar {
-          width: 8px;
-        }
-        div::-webkit-scrollbar-track {
-          background: #f3f4f6;
-          border-radius: 4px;
-        }
-        div::-webkit-scrollbar-thumb {
-          background: #6366f1;
-          border-radius: 4px;
-        }
-        div::-webkit-scrollbar-thumb:hover {
-          background: var(--brand-from);
-        }
-        .dark div::-webkit-scrollbar-track {
-          background: #374151;
-        }
-        .dark div::-webkit-scrollbar-thumb {
-          background: #6366f1;
-        }
-        .dark div::-webkit-scrollbar-thumb:hover {
-          background: var(--brand-from);
-        }
-      `}</style>
-
       {/* Pending Reminders */}
       {(isCreating || pendingReminders.length > 0) && (
         <div className="space-y-3">

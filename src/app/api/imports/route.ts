@@ -4,9 +4,14 @@ import { getServerSession } from "next-auth";
 import { executeDbOperation } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
-import { unauthorizedResponse } from "@/lib/apiResponses";
+import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
+import { canCreateLead } from "@/lib/roles";
 import { checkTenantLeadImportAllowed } from "@/lib/tenantLeadImportLimits";
+import {
+  MAX_LEADS_PER_IMPORT,
+  getPerImportLimitError,
+} from "@/lib/importBatchLimits";
 import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 
 // Define query types for MongoDB filters
@@ -78,6 +83,9 @@ export async function POST(request: Request) {
     if (!session?.user?.id) {
       return unauthorizedResponse();
     }
+    if (!canCreateLead(session.user)) {
+      return forbiddenResponse("Only administrators can import leads");
+    }
 
     if (!mongoose.connection.db) {
       throw new Error("Database connection not available");
@@ -92,6 +100,19 @@ export async function POST(request: Request) {
       );
     }
     const adminObjectId = new mongoose.Types.ObjectId(adminScopeId);
+
+    const batchLimitError = getPerImportLimitError(requestData.recordCount);
+    if (batchLimitError) {
+      return NextResponse.json(
+        {
+          error: batchLimitError,
+          message: batchLimitError,
+          maxPerImport: MAX_LEADS_PER_IMPORT,
+          attempted: requestData.recordCount,
+        },
+        { status: 400 },
+      );
+    }
 
     const limitCheck = await checkTenantLeadImportAllowed(
       mongoose.connection.db,
@@ -108,9 +129,15 @@ export async function POST(request: Request) {
     const importData = {
       fileName: requestData.fileName,
       recordCount: requestData.recordCount,
-      status: requestData.status || "new",
-      successCount: requestData.successCount || 0,
-      failureCount: requestData.failureCount || 0,
+      status: "staging",
+      successCount: 0,
+      failureCount: 0,
+      processedCount: 0,
+      duplicateCount: 0,
+      errorCount: 0,
+      nextChunkIndex: 0,
+      chunkTotal: 0,
+      mode: "queued",
       timestamp: requestData.timestamp || Date.now(),
       uploadedBy: new mongoose.Types.ObjectId(session.user.id),
       adminId: adminObjectId,
@@ -132,7 +159,8 @@ export async function POST(request: Request) {
           _id: createdImport!._id.toString(),
           ...createdImport,
         },
-        message: "Import record created successfully",
+        message: "Import job accepted",
+        accepted: true,
         usage: {
           currentLeads: currentLeads + requestData.recordCount,
           maxLeads,
@@ -146,7 +174,8 @@ export async function POST(request: Request) {
         },
       };
 
-      return NextResponse.json(response);
+      // 202 Accepted — client stages chunks, then worker drains via /api/imports/run
+      return NextResponse.json(response, { status: 202 });
     } catch (dbError) {
       console.error("Database error during import creation:", dbError);
       throw dbError;

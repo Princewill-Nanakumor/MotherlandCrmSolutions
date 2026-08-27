@@ -108,12 +108,22 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         leadIds?: string[];
         status?: string;
         deletedLeads?: number;
+        importId?: string;
+        percent?: number;
       };
       const eventType = eventData.type ?? "";
       const isUserEvent = eventType.startsWith("user_");
       const isImportEvent =
-        eventType === "import_deleted" || eventType === "imports_cleared";
+        eventType === "import_deleted" ||
+        eventType === "imports_cleared" ||
+        eventType === "import_progress";
       const importTouchedLeads = (eventData.deletedLeads ?? 0) > 0;
+
+      if (eventType === "import_progress") {
+        // Live progress: patch history only — avoid refetching all leads every chunk.
+        void queryClient.invalidateQueries({ queryKey: ["import-history"] });
+        return;
+      }
 
       if (isUserEvent) {
         void queryClient.invalidateQueries({

@@ -1908,3 +1908,70 @@ a[class*="text-white!"] {
 .dark a[class*="text-white!"] {
   color: white !important;
 }
+
+
+/* Lead details panel scrollbars (replaces <style jsx> to avoid React DOM warnings) */
+.lead-panel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-from) #f3f4f6;
+}
+.lead-panel-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.lead-panel-scroll::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+.lead-panel-scroll::-webkit-scrollbar-thumb {
+  background: var(--brand-from, #6366f1);
+  border-radius: 4px;
+}
+.lead-panel-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-from, #6366f1);
+}
+.dark .lead-panel-scroll {
+  scrollbar-color: var(--brand-from) #374151;
+}
+.dark .lead-panel-scroll::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.smooth-scroll-content {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+.dark .smooth-scroll-content {
+  scrollbar-color: #6b7280 #374151;
+}
+.smooth-scroll-content::-webkit-scrollbar {
+  width: 8px;
+}
+.smooth-scroll-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+.dark .smooth-scroll-content::-webkit-scrollbar-track {
+  background: #374151;
+}
+.smooth-scroll-content::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+.dark .smooth-scroll-content::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+.smooth-scroll-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.dark .smooth-scroll-content::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+.status-item {
+  transition: all 0.2s ease-in-out;
+}
+.status-item:hover {
+  transform: translateX(2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

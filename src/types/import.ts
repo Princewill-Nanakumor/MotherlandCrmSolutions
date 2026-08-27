@@ -51,15 +51,39 @@ export interface Contact {
 
 // Import history record structure
 export interface ImportHistoryItem {
-  _id?: string | Types.ObjectId; // MongoDB ID
-  id?: string; // Client-side ID
+  _id?: string | Types.ObjectId;
+  id?: string;
   fileName: string;
   timestamp: number;
   uploadedBy: string;
   recordCount: number;
-  status: "completed" | "failed" | "processing";
+  status: "completed" | "failed" | "processing" | "new" | "staging" | "queued";
   successCount: number;
   failureCount: number;
+  processedCount?: number;
+  duplicateCount?: number;
+  errorCount?: number;
+  errorMessage?: string | null;
+  mode?: string;
+  nextChunkIndex?: number;
+  chunkTotal?: number;
+}
+
+/** Live progress for the import page UI (chunked + Ably). */
+export interface ImportProgressState {
+  importId: string;
+  status: "processing" | "completed" | "failed";
+  recordCount: number;
+  processedCount: number;
+  inserted: number;
+  duplicates: number;
+  errors: number;
+  percent: number;
+  chunkIndex: number;
+  chunkTotal: number;
+  errorMessage?: string;
+  startedAt: number;
+  estimatedRemainingMs?: number | null;
 }
 
 // MongoDB document structure

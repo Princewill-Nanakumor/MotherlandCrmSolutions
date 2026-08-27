@@ -28,6 +28,8 @@ export const useUserFormData = ({
     role: "AGENT",
     status: "ACTIVE",
     permissions: [],
+    canViewEmails: false,
+    canViewPhoneNumbers: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -47,6 +49,8 @@ export const useUserFormData = ({
           role: "AGENT",
           status: "ACTIVE",
           permissions: [],
+          canViewEmails: false,
+          canViewPhoneNumbers: false,
         });
       }
       setErrors({});
@@ -55,7 +59,7 @@ export const useUserFormData = ({
 
   const handleInputChange = (
     field: keyof UserFormData,
-    value: string | string[]
+    value: string | string[] | boolean,
   ) => {
     setFormData((prev) => ({
       ...prev,

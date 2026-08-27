@@ -3,12 +3,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ImportHistoryItem } from "@/types/import";
+import { ImportHistoryItem, ImportProgressState } from "@/types/import";
 import { RequiredFieldsModal } from "./RequireFieldModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Upload, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MAX_LEADS_PER_IMPORT } from "@/lib/importBatchLimits";
 
 interface UsageData {
   currentLeads: number;
@@ -32,6 +33,16 @@ interface FileUploadSectionProps {
   missingFields: string[];
   usageData?: UsageData | null;
   usageDataLoading?: boolean;
+  importProgress?: ImportProgressState | null;
+}
+
+function formatEta(ms: number | null | undefined): string | null {
+  if (ms == null || !Number.isFinite(ms) || ms <= 0) return null;
+  const sec = Math.ceil(ms / 1000);
+  if (sec < 60) return `${sec}s`;
+  const min = Math.floor(sec / 60);
+  const rem = sec % 60;
+  return `${min}m ${rem}s`;
 }
 
 export const FileUploadSection = ({
@@ -41,6 +52,7 @@ export const FileUploadSection = ({
   handleFileUpload,
   usageData,
   usageDataLoading = false,
+  importProgress = null,
 }: FileUploadSectionProps) => {
   const [showRequiredFields, setShowRequiredFields] = useState(false);
   const router = useRouter();
@@ -52,6 +64,9 @@ export const FileUploadSection = ({
   if (activeTab !== "new") {
     return null;
   }
+
+  const percent = importProgress?.percent ?? 0;
+  const eta = formatEta(importProgress?.estimatedRemainingMs);
 
   return (
     <div className="px-6 pb-6 mt-4">
@@ -95,6 +110,10 @@ export const FileUploadSection = ({
         </h3>
         <ul className="list-disc pl-5 text-sm text-gray-600 dark:text-gray-300 space-y-1">
           <li>Ensure your file is in Excel (.xlsx) or CSV format</li>
+          <li>
+            Maximum {MAX_LEADS_PER_IMPORT.toLocaleString()} leads per upload — split
+            larger files into multiple imports
+          </li>
           <li>
             Required columns: First Name, Last Name or Full Name, Email Address,
             Phone Number, Country
@@ -182,29 +201,71 @@ ${
       </div>
 
       {isLoading && (
-        <div className="mt-4 w-full">
+        <div className="mt-4 w-full space-y-3">
+          <div className="flex items-center justify-between text-sm text-gray-700 dark:text-gray-200">
+            <span className="font-medium">
+              {importProgress?.importId
+                ? `Import #${String(importProgress.importId).slice(-6)}`
+                : "Importing…"}
+            </span>
+            <span className="tabular-nums text-blue-600 dark:text-blue-400">
+              {percent}%
+            </span>
+          </div>
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
             <div
-              className="bg-blue-600 h-2.5 rounded-full animate-loading-bar"
-              style={{ width: "100%" }}
-            ></div>
+              data-testid="import-job-progress"
+              className="bg-blue-600 h-2.5 rounded-full transition-[width] duration-300 ease-out"
+              style={{ width: `${Math.max(percent, 2)}%` }}
+              role="progressbar"
+              aria-valuenow={percent}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            />
           </div>
-          <div className="text-center text-blue-600 dark:text-blue-400 text-xs mt-2">
-            Importing, please wait...
+          {importProgress ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-gray-600 dark:text-gray-300">
+              <div>
+                <div className="text-gray-400 dark:text-gray-500">Processed</div>
+                <div className="tabular-nums font-medium">
+                  {importProgress.processedCount.toLocaleString()} /{" "}
+                  {importProgress.recordCount.toLocaleString()}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-400 dark:text-gray-500">Inserted</div>
+                <div className="tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
+                  {importProgress.inserted.toLocaleString()}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-400 dark:text-gray-500">Duplicates</div>
+                <div className="tabular-nums font-medium">
+                  {importProgress.duplicates.toLocaleString()}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-400 dark:text-gray-500">Failed</div>
+                <div className="tabular-nums font-medium text-red-600 dark:text-red-400">
+                  {importProgress.errors.toLocaleString()}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center text-blue-600 dark:text-blue-400 text-xs">
+              Preparing import job…
+            </div>
+          )}
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
+            <span>
+              Chunk{" "}
+              {importProgress
+                ? `${Math.min(importProgress.chunkIndex, importProgress.chunkTotal)} / ${importProgress.chunkTotal}`
+                : "—"}
+              {" · "}queued worker · 1,000 / stage batch
+            </span>
+            <span>{eta ? `Est. remaining: ${eta}` : "Calculating ETA…"}</span>
           </div>
-          <style jsx>{`
-            @keyframes loading-bar {
-              0% {
-                transform: translateX(-100%);
-              }
-              100% {
-                transform: translateX(100%);
-              }
-            }
-            .animate-loading-bar {
-              animation: loading-bar 1.2s linear infinite;
-            }
-          `}</style>
         </div>
       )}
 

@@ -4,8 +4,8 @@ How to run and maintain tests for Motherland CRM.
 
 ## Current suite (approximate)
 
-- **146** Vitest tests (unit, API mocks, components).
-- **6** Playwright tests that run (smoke + seeded lifecycle)
+- **236** Vitest tests (unit, API mocks, components) in `src/tests/`
+- Playwright E2E in `e2e/` (smoke + lifecycle; opt-in import soak/pressure/concurrent)
 - **1** Playwright realtime test **skipped** (`test.fixme`) — pending stabilization of Ably attach timing in headless browser environments
 
 Counts drift as tests are added; re-run `npm run test:run` / `npm run test:e2e` for exact numbers.
@@ -47,22 +47,30 @@ npm run test:e2e
 
 # Smoke only (same as CI E2E job)
 npx playwright test e2e/smoke.spec.ts
+
+# Level 4 — real Mongo import load + concurrent multi-tenant isolation (opt-in)
+npm run test:import-load                    # quick: 100/500/1k + 3×1k
+npm run test:import-load:correctness        # races, mid-fail+resume, index, upsert safety
+npm run test:import-load:medium             # 5k/10k + 3×10k concurrent (headline)
+npm run test:import-load:concurrent10k      # 3×10k concurrent only
+npm run test:import-load:heavy              # 25k/50k + 5×10k
+npm run test:import-load:stress             # 100k + 10×10k
+IMPORT_LOAD_TENANTS=5 npm run test:import-load:medium
+IMPORT_LOAD_BATCH_SIZE=5000 npm run test:import-load:medium
+RUN_IMPORT_MONGO_LOAD=1 npm run test:import-load:vitest
 ```
 
-Requires a working `.env` (`MONGODB_URI`, `NEXTAUTH_SECRET`, etc.) for lifecycle E2E. Unit tests and Playwright smoke do not need the database. Seed is skipped automatically when `MONGODB_URI` is unset.
+Requires a working `.env` (`MONGODB_URI`, `NEXTAUTH_SECRET`, etc.) for lifecycle E2E and import load. Unit tests and Playwright smoke do not need the database. Seed is skipped automatically when `MONGODB_URI` is unset.
+
+Import load writes only disposable `@import-load.motherland.test` users/leads and deletes them unless `IMPORT_LOAD_KEEP_DATA=1`. It mirrors the **inline `bulkWrite` upsert** write path (not per-row `Lead.create()`, not the product HTTP queue/worker). Default CI does **not** run it.
 
 ## What’s covered
 
 | Layer          | Location                                        | What is tested                                                                                           |
 | -------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Domain helpers | `src/lib/**/*.test.ts`, `src/libs/**/*.test.ts` | Phone/country normalization, tenant scoping, search, billing rules, Ably channel names                   |
-| Schemas        | `src/schemas/*.test.ts`                         | Signup/login Zod validation                                                                              |
-| API routes     | `src/app/api/**/*.test.ts`                      | Auth, tenant isolation, role checks with mocked session/DB                                               |
-| Components     | `src/**/*.test.tsx`                             | Interactive UI (e.g. Import History delete modal)                                                        |
-| CSV import     | `src/utils/csvImport.test.ts`                   | Missing headers + valid CSV parsing                                                                      |
-| E2E smoke      | `e2e/smoke.spec.ts`                             | Homepage, login fields, dashboard → login redirect                                                       |
-| E2E lifecycle  | `e2e/lead-lifecycle.spec.ts`                    | Seeded admin/agent: import → assign → comment → admin sees update → export                               |
-| E2E realtime   | `e2e/realtime-sync.spec.ts`                     | Browser↔browser Ably sync — skipped pending stabilization of Ably attach timing in headless environments |
+| Unit / API / UI | `src/tests/**`                                 | Domain helpers, schemas, API routes (mocked), components, CSV import                                     |
+| Mongo import load | `scripts/import-load-harness.mjs` (opt-in)   | Real Mongo: throughput, dupes, invalid rows, memory/CPU, concurrent tenants, isolation                |
+| E2E            | `e2e/**`                                        | Smoke, lifecycle, import soak/pressure/concurrent (opt-in), realtime (skipped)                           |
 
 ## E2E users
 
@@ -76,11 +84,11 @@ Override with `E2E_ADMIN_EMAIL`, `E2E_AGENT_EMAIL`, `E2E_PASSWORD` if needed. Pl
 
 ## Layout
 
-- `vitest.config.mts` — unit/integration runner
-- `playwright.config.ts` — E2E runner
-- `src/test/setup.ts` — Testing Library setup
+- `vitest.config.mts` — unit/integration runner (`src/tests/**`)
+- `playwright.config.ts` — E2E runner (`e2e/**`)
+- `src/tests/setup.ts` — Testing Library setup
 - `e2e/helpers/auth.ts` — login + `apiJson` helpers
-- `e2e/global-setup.mjs` — seeds Mongo before E2E
+- `e2e/global-setup.mjs` — cleanup + seed before E2E
 - `.github/workflows/test.yml` — PR CI
 
 ## Not in git
@@ -93,4 +101,65 @@ Playwright output (`test-results/`, `playwright-report/`) is gitignored. Don’t
 - UI-only CSV upload E2E
 - UI-only assign-dialog E2E
 - Payment webhook / upgrade-downgrade tests
-- Mongo large-dataset benchmarks (beyond in-memory `largeDatasetPerf.test.ts`)
+- Collect Netlify soak artifacts (function duration/OOM) from a real deploy run of `test:import-http-soak:*`
+
+## Completing the last three gaps
+
+```bash
+# 1) Real Mongo disconnect mid-import + resume
+npm run test:import-midflight-kill
+
+# 2) HTTP soak via real dashboard APIs (needs .env MONGODB_URI; globalSetup seeds E2E admin)
+npm run test:import-http-soak              # default 10k
+npm run test:import-http-soak:50k          # product max per upload
+# Against Netlify:
+PLAYWRIGHT_BASE_URL=https://YOUR_SITE.netlify.app npm run test:import-http-soak:50k
+
+# 3) Browser UI pressure (file upload on /dashboard/import; same .env + seed)
+npm run test:import-browser-pressure       # default 10k rows
+npm run test:import-browser-pressure:50k
+```
+
+## Import HTTP path performance (50k before/after)
+
+Measured with `npm run test:import-http-bench:50k` (dedicated Next on :3010, auto-kick disabled so staging/worker split is clean):
+
+| metric | before (1k / drain 5 / per-chunk quota) | after (5k / drain 100 / job quota) | delta |
+| --- | ---: | ---: | ---: |
+| stage | 112.7s | 37.8s | −67% |
+| worker | 462.4s | 161.7s | −65% |
+| **total** | **579.8s (~9.7 min)** | **204.0s (~3.4 min)** | **−65%** |
+| throughput | 86 leads/s | 245 leads/s | +184% |
+| Mongo RTs (worker) | 210 | 12 | −94% |
+| bulkWrites | 35* | 10 | — |
+| quotaChecks / emailFinds | 35 / 35 | 0 / 0 | — |
+
+\*Before profile still showed fewer counted bulkWrites than staging chunks in one run; treat RT/throughput totals as the headline.
+
+Product defaults now: **5k client chunks**, **job-level quota** (create check + end-of-job cap), **worker drain 100 chunks/tick**.
+
+### Concurrent / same-tenant HTTP
+
+```bash
+# Seed tenants A–E (unlimited maxLeads)
+npm run test:e2e:seed-concurrent
+
+# 5 × 50k through real stage → worker (long)
+npm run test:import-http-concurrent:50k
+
+# Same tenant: import #2 stays queued while #1 processes
+IMPORT_STAGE_AUTO_KICK=0 npm run test:import-http-same-tenant
+```
+
+Policy: **one active processing import per tenant**; other same-tenant jobs remain `queued` until the active lease finishes. Different tenants may drain in parallel (`IMPORT_WORKER_MAX_JOBS`).
+
+## Import recommendation triage
+
+| Recommendation | Status |
+| --- | --- |
+| Concurrent multi-tenant load + isolation | Done |
+| Detached worker + cron + cursor resume | Done |
+| Chunked staging + progress UI + Ably | Done |
+| Real mid-import Mongo kill + resume | Done (`test:import-midflight-kill`) |
+| HTTP soak up to 50k (local or Netlify URL) | Done (opt-in Playwright; capped at product max) |
+| Browser pressure large CSV | Done (opt-in Playwright) |

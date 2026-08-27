@@ -7,6 +7,8 @@ const __dirname = path.dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Playwright / E2E uses http://127.0.0.1:3000 while Next binds as localhost.
+  allowedDevOrigins: ["127.0.0.1", "127.0.0.1:3000", "localhost", "localhost:3000"],
   // Set output file tracing root to silence multiple lockfiles warning
   outputFileTracingRoot: path.join(__dirname),
   images: {

@@ -398,83 +398,57 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // Refresh role/permissions/contact flags from DB so admin checkbox
-        // changes apply on the next page refresh without requiring re-login.
-        if (typeof token.id === "string" && token.id.length > 0) {
-          try {
-            const rbac = await getSessionRbacFromDbCached(token.id);
-            if (rbac) {
-              token.role = rbac.role;
-              token.permissions = rbac.permissions;
-              token.status = rbac.status;
-              token.adminId = rbac.adminId;
-              token.canViewPhoneNumbers = rbac.canViewPhoneNumbers;
-              token.canViewEmails = rbac.canViewEmails;
-            }
-          } catch (e) {
-            console.error("jwt session RBAC refresh:", e);
-          }
-        }
       }
 
-      // Handle session updates (but don't change expiration).
-      // Only apply defined user fields so we never clobber required token values
-      // (e.g. token.id) with undefined during client update() calls.
+      // Profile `update()` may only patch display fields. Role / contact flags /
+      // adminId / status / permissions always come from DB below so a stale
+      // client session cannot undo an admin role or unmask change after refresh.
       if (trigger === "update" && session?.user) {
-        const nextToken = { ...token };
         const userPatch = session.user as Partial<{
           id: string;
           email: string;
-          role: string;
-          permissions: string[];
-          status: string;
           firstName: string;
           lastName: string;
           phoneNumber: string;
           country: string;
-          adminId: string;
-          canViewPhoneNumbers: boolean;
-          canViewEmails: boolean;
         }>;
 
         if (typeof userPatch.id === "string" && userPatch.id.length > 0) {
-          nextToken.id = userPatch.id;
+          token.id = userPatch.id;
         }
         if (typeof userPatch.email === "string") {
-          nextToken.email = userPatch.email;
-        }
-        if (typeof userPatch.role === "string") {
-          nextToken.role = userPatch.role;
-        }
-        if (Array.isArray(userPatch.permissions)) {
-          nextToken.permissions = userPatch.permissions;
-        }
-        if (typeof userPatch.status === "string") {
-          nextToken.status = userPatch.status;
+          token.email = userPatch.email;
         }
         if (typeof userPatch.firstName === "string") {
-          nextToken.firstName = userPatch.firstName;
+          token.firstName = userPatch.firstName;
         }
         if (typeof userPatch.lastName === "string") {
-          nextToken.lastName = userPatch.lastName;
+          token.lastName = userPatch.lastName;
         }
         if (typeof userPatch.phoneNumber === "string") {
-          nextToken.phoneNumber = userPatch.phoneNumber;
+          token.phoneNumber = userPatch.phoneNumber;
         }
         if (typeof userPatch.country === "string") {
-          nextToken.country = userPatch.country;
+          token.country = userPatch.country;
         }
-        if (typeof userPatch.adminId === "string") {
-          nextToken.adminId = userPatch.adminId;
-        }
-        if (typeof userPatch.canViewPhoneNumbers === "boolean") {
-          nextToken.canViewPhoneNumbers = userPatch.canViewPhoneNumbers;
-        }
-        if (typeof userPatch.canViewEmails === "boolean") {
-          nextToken.canViewEmails = userPatch.canViewEmails;
-        }
+      }
 
-        return applySuperAdminToToken(nextToken);
+      // Refresh role/permissions/contact flags from DB so admin changes apply
+      // on the next page refresh (and after client update()) without re-login.
+      if (typeof token.id === "string" && token.id.length > 0) {
+        try {
+          const rbac = await getSessionRbacFromDbCached(token.id);
+          if (rbac) {
+            token.role = rbac.role;
+            token.permissions = rbac.permissions;
+            token.status = rbac.status;
+            token.adminId = rbac.adminId;
+            token.canViewPhoneNumbers = rbac.canViewPhoneNumbers;
+            token.canViewEmails = rbac.canViewEmails;
+          }
+        } catch (e) {
+          console.error("jwt session RBAC refresh:", e);
+        }
       }
 
       return applySuperAdminToToken(token);

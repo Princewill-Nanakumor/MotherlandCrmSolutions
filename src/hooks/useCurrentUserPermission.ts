@@ -56,22 +56,26 @@ export const useCurrentUserPermission = () => {
     isLoading,
     error,
   } = useQuery<CurrentUserData, Error>({
-    queryKey: ["current-user-permission"],
+    queryKey: ["current-user-permission", session?.user?.id ?? "anonymous"],
     queryFn: fetchCurrentUser,
     enabled: hasAuthorizedSession(status, session),
     staleTime: 30 * 1000, // 30 seconds - refresh more frequently
     gcTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
     refetchOnWindowFocus: true, // Refetch when user returns to window
-    refetchOnMount: true,
+    refetchOnMount: "always",
   });
 
-  // Admins should always be able to view phone numbers and emails
+  // Prefer live /me flags; fall back to JWT while the first fetch is in flight
+  // so a role flip + refresh does not flash/stick as masked incorrectly.
   const canViewPhoneNumbers =
     currentUser?.role === "ADMIN" ||
-    (currentUser?.canViewPhoneNumbers ?? false);
+    (currentUser?.canViewPhoneNumbers ??
+      session?.user?.canViewPhoneNumbers ??
+      false);
   const canViewEmails =
-    currentUser?.role === "ADMIN" || (currentUser?.canViewEmails ?? false);
+    currentUser?.role === "ADMIN" ||
+    (currentUser?.canViewEmails ?? session?.user?.canViewEmails ?? false);
 
   return {
     canViewPhoneNumbers,

@@ -119,8 +119,12 @@ Host presets live in `src/lib/appBranding.ts` (display name, support email, Tele
 | `npm run dev`                                          | Local development |
 | `npm run build` / `npm start`                          | Production        |
 | `npm run lint` / `npm run typecheck` / `npm run check` | Quality gates     |
-| `npm test` / `npm run test:run`                        | Vitest            |
-| `npm run test:e2e`                                     | Playwright        |
+| `npm test` / `npm run test:run`                        | Vitest (`src/tests/`) |
+| `npm run test:e2e`                                     | Playwright (`e2e/`)   |
+
+Full commands (import load, HTTP soak/pressure/concurrent, midflight kill, cleanup/seed) live in **[TESTING.md](./TESTING.md)**.
+
+Unit/API/UI tests are consolidated under `src/tests/` (setup: `src/tests/setup.ts`). Playwright specs stay in `e2e/`.
 
 ## For AI / code reviewers
 

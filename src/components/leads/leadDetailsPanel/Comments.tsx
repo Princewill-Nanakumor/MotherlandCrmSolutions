@@ -294,37 +294,12 @@ const Comments: FC<CommentsProps> = ({
             </div>
           ) : (
             <div
-              className="overflow-y-auto flex-1 p-4 space-y-4 min-h-0 bg-white rounded-lg border border-gray-200 shadow-inner dark:bg-transparent dark:border-gray-700"
+              className="overflow-y-auto flex-1 p-4 space-y-4 min-h-0 bg-white rounded-lg border border-gray-200 shadow-inner dark:bg-transparent dark:border-gray-700 lead-panel-scroll"
               style={{
                 scrollbarWidth: "thin",
                 scrollbarColor: "var(--brand-from) #f3f4f6",
               }}
             >
-              <style jsx>{`
-                div::-webkit-scrollbar {
-                  width: 8px;
-                }
-                div::-webkit-scrollbar-track {
-                  background: #f3f4f6;
-                  border-radius: 4px;
-                }
-                div::-webkit-scrollbar-thumb {
-                  background: var(--brand-from);
-                  border-radius: 4px;
-                }
-                div::-webkit-scrollbar-thumb:hover {
-                  background: var(--brand-from);
-                }
-                .dark div::-webkit-scrollbar-track {
-                  background: #374151;
-                }
-                .dark div::-webkit-scrollbar-thumb {
-                  background: var(--brand-from);
-                }
-                .dark div::-webkit-scrollbar-thumb:hover {
-                  background: var(--brand-from);
-                }
-              `}</style>
               {comments.map((comment) => (
                 <div
                   key={comment._id}

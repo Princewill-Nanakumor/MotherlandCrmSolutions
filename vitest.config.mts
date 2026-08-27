@@ -8,8 +8,8 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [react()],
   test: {
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
-    setupFiles: ["./src/test/setup.ts"],
+    include: ["src/tests/**/*.{test,spec}.{ts,tsx}"],
+    setupFiles: ["./src/tests/setup.ts"],
     environment: "node",
     globals: false,
   },

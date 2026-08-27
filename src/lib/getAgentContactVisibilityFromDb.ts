@@ -31,42 +31,38 @@ const piiProjection = {
 } as const;
 
 /**
- * Same `users` lookup order as GET /api/users/me for agents, then fallbacks:
- * - ObjectId `adminId` (Mongoose stores adminId as ObjectId; /me uses string in query)
- * - email-only (again, same as /me)
- * - JWT `sub` / session user id (last resort)
- *
- * Previously, lead routes preferred `_id` first. That can return a row whose flags
- * disagree with `/api/users/me` (e.g. duplicate email, stale id), so the UI showed
- * `canViewEmails: true` while GET /api/leads/[id] still masked.
+ * Same `users` lookup order as GET /api/users/me:
+ * - JWT `_id` first (stable across role changes)
+ * - email + ObjectId `adminId`
+ * - email-only fallback
  */
 async function findAgentUserForPiiPermissions(
   db: MongoDatabaseLike,
   user: NonNullable<AgentPiiSessionInput["user"]>,
 ) {
   if (!isTenantStaff(user.role)) return null;
+
+  // 1) Prefer session user id — matches /api/users/me
+  if (user.id && mongoose.Types.ObjectId.isValid(user.id)) {
+    const byId = await db.collection("users").findOne(
+      { _id: new ObjectId(user.id) },
+      { projection: piiProjection },
+    );
+    if (byId) return byId;
+  }
+
   const rawEmail =
     typeof user.email === "string" ? user.email.trim() : "";
   if (!rawEmail) return null;
   // User model stores email lowercase; JWT may differ in casing.
   const email = rawEmail.toLowerCase();
 
-  // 1) Match GET /api/users/me exactly (adminId as stored in JWT — string)
-  const qMe: Record<string, unknown> = { email };
-  if (user.adminId) {
-    qMe.adminId = user.adminId;
-  }
-  let doc = await db.collection("users").findOne(qMe, {
-    projection: piiProjection,
-  });
-  if (doc) return doc;
-
-  // 2) DB stores adminId as ObjectId — native /me query may miss; try ObjectId
+  // 2) email + adminId as ObjectId (how Mongo stores it)
   if (
     user.adminId &&
     mongoose.Types.ObjectId.isValid(String(user.adminId))
   ) {
-    doc = await db.collection("users").findOne(
+    const doc = await db.collection("users").findOne(
       {
         email,
         adminId: new ObjectId(String(user.adminId)),
@@ -76,22 +72,22 @@ async function findAgentUserForPiiPermissions(
     if (doc) return doc;
   }
 
-  // 3) /api/users/me agent fallback: email only (lowercase)
-  doc = await db.collection("users").findOne({ email }, { projection: piiProjection });
-  if (doc) return doc;
-
-  if (rawEmail !== email) {
-    doc = await db.collection("users").findOne(
-      { email: rawEmail },
+  // 3) email + adminId as JWT string (legacy /me shape)
+  if (user.adminId) {
+    const doc = await db.collection("users").findOne(
+      { email, adminId: user.adminId },
       { projection: piiProjection },
     );
     if (doc) return doc;
   }
 
-  // 4) Last resort: session user id
-  if (user.id && mongoose.Types.ObjectId.isValid(user.id)) {
+  // 4) email-only fallback
+  let doc = await db.collection("users").findOne({ email }, { projection: piiProjection });
+  if (doc) return doc;
+
+  if (rawEmail !== email) {
     doc = await db.collection("users").findOne(
-      { _id: new ObjectId(user.id) },
+      { email: rawEmail },
       { projection: piiProjection },
     );
   }
@@ -100,8 +96,8 @@ async function findAgentUserForPiiPermissions(
 }
 
 /**
- * Resolves whether an AGENT may see unmasked lead email/phone — aligned with
- * GET /api/users/me user resolution, not `_id`-only.
+ * Resolves whether tenant staff may see unmasked lead email/phone — aligned with
+ * GET /api/users/me user resolution (prefer session user id).
  */
 export async function getAgentContactVisibilityFromDb(
   db: MongoDatabaseLike,

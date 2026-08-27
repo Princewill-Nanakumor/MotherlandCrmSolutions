@@ -87,6 +87,84 @@ export async function reconcileLeadQuotaOrRollback(
 }
 
 /**
+ * End-of-job quota safety net when per-chunk reconcile is skipped.
+ * Deletes the newest overshoot leads for the tenant (by _id).
+ */
+export async function enforceTenantLeadCapByNewest(
+  dbRaw: unknown,
+  options: { adminObjectId: ObjectId },
+): Promise<{ status: number; body: Record<string, unknown> } | null> {
+  const { adminObjectId } = options;
+  const db = dbRaw as {
+    collection: (name: string) => {
+      countDocuments: (filter?: object) => Promise<number>;
+      findOne: (
+        filter: object,
+        options?: object,
+      ) => Promise<Record<string, unknown> | null>;
+      find: (filter: object) => {
+        project: (p: object) => {
+          sort: (s: object) => {
+            limit: (n: number) => {
+              toArray: () => Promise<Array<{ _id: ObjectId }>>;
+            };
+          };
+        };
+      };
+      deleteMany: (
+        filter: object,
+      ) => Promise<{ deletedCount?: number }>;
+    };
+  };
+
+  const billingUser = await db
+    .collection("users")
+    .findOne({ _id: adminObjectId });
+  const rawMax = billingUser?.maxLeads as number | undefined;
+  const maxLeads =
+    rawMax === -1
+      ? -1
+      : typeof rawMax === "number"
+        ? rawMax
+        : DEFAULT_TRIAL_MAX_LEADS;
+  if (maxLeads === -1) return null;
+
+  const currentLeads = await db
+    .collection("leads")
+    .countDocuments({ adminId: adminObjectId });
+  if (currentLeads <= maxLeads) return null;
+
+  const overshoot = currentLeads - maxLeads;
+  const newest = await db
+    .collection("leads")
+    .find({ adminId: adminObjectId })
+    .project({ _id: 1 })
+    .sort({ _id: -1 })
+    .limit(overshoot)
+    .toArray();
+  const idsToRemove = newest.map((d) => d._id);
+  if (idsToRemove.length === 0) return null;
+
+  await db.collection("leads").deleteMany({
+    adminId: adminObjectId,
+    _id: { $in: idsToRemove },
+  });
+
+  return {
+    status: 403,
+    body: {
+      error: "Import would exceed lead limit",
+      details: {
+        currentLeads: currentLeads - idsToRemove.length,
+        maxLeads,
+        rolledBack: idsToRemove.length,
+      },
+      upgradeRequired: true,
+    },
+  };
+}
+
+/**
  * Enforces subscription/trial and max-lead quota for a tenant (admin scope).
  * Always uses the billing admin document at {@link adminObjectId}, not the caller,
  * so agents cannot import under another tenant's limits by mistake.

@@ -23,6 +23,10 @@ import {
   checkTenantLeadImportAllowed,
   reconcileLeadQuotaOrRollback,
 } from "@/lib/tenantLeadImportLimits";
+import {
+  MAX_LEADS_PER_IMPORT,
+  getPerImportLimitError,
+} from "@/lib/importBatchLimits";
 import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 
 interface MongoDocument {
@@ -306,6 +310,19 @@ export async function POST(request: Request) {
 
     if (!mongoose.connection.db) {
       throw new Error("Database connection not available");
+    }
+
+    const batchLimitError = getPerImportLimitError(leads.length);
+    if (batchLimitError) {
+      return NextResponse.json(
+        {
+          error: batchLimitError,
+          message: batchLimitError,
+          maxPerImport: MAX_LEADS_PER_IMPORT,
+          attempted: leads.length,
+        },
+        { status: 400 },
+      );
     }
 
     const normalizedBulkRows: Array<(typeof leads)[0] & { _normalizedEmail: string }> =

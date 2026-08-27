@@ -70,7 +70,12 @@ function hardNavigateTo(target: string) {
   );
 }
 
-/** Never land on NextAuth's GET /api/auth/signout confirmation page. */
+/**
+ * Never land on NextAuth's GET /api/auth/signout confirmation page.
+ * Also never follow a cross-origin redirect — NextAuth absolutizes relative
+ * callbackUrls with NEXTAUTH_URL (often Motherland), which would yank Vertex
+ * users off their brand host after logout.
+ */
 function sanitizeSignOutRedirectUrl(
   candidate: string | undefined,
   fallback: string,
@@ -83,7 +88,7 @@ function sanitizeSignOutRedirectUrl(
     if (parsed.origin === window.location.origin) {
       return `${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
-    return candidate;
+    return fallback;
   } catch {
     return fallback;
   }
@@ -99,9 +104,15 @@ async function postNextAuthSignOutThenNavigate(callbackUrl: string) {
     throw new Error("Missing CSRF token for sign-out");
   }
   const safeCallbackUrl = stripLeadFilterModesFromUrl(callbackUrl);
+  // Absolute same-origin URL so NextAuth's redirect callback can keep Vertex
+  // (trusted origin) instead of rewriting "/" via NEXTAUTH_URL → Motherland.
+  const absoluteCallbackUrl = new URL(
+    safeCallbackUrl.startsWith("/") ? safeCallbackUrl : `/${safeCallbackUrl}`,
+    window.location.origin,
+  ).toString();
   const body = new URLSearchParams({
     csrfToken,
-    callbackUrl: safeCallbackUrl,
+    callbackUrl: absoluteCallbackUrl,
     json: "true",
   });
   const res = await fetch(`${window.location.origin}/api/auth/signout`, {

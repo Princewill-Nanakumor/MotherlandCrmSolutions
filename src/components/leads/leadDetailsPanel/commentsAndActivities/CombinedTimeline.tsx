@@ -100,37 +100,12 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
 
   return (
     <div
-      className="min-h-0 space-y-4 rounded-lg border border-gray-200 bg-white p-3 shadow-inner dark:bg-transparent dark:border-gray-700 sm:p-4 md:flex-1 md:min-h-0 md:overflow-y-auto"
+      className="min-h-0 space-y-4 rounded-lg border border-gray-200 bg-white p-3 shadow-inner dark:bg-transparent dark:border-gray-700 sm:p-4 md:flex-1 md:min-h-0 md:overflow-y-auto lead-panel-scroll"
       style={{
         scrollbarWidth: "thin",
         scrollbarColor: "var(--brand-from) #f3f4f6",
       }}
     >
-      <style jsx>{`
-        div::-webkit-scrollbar {
-          width: 8px;
-        }
-        div::-webkit-scrollbar-track {
-          background: #f3f4f6;
-          border-radius: 4px;
-        }
-        div::-webkit-scrollbar-thumb {
-          background: var(--brand-from);
-          border-radius: 4px;
-        }
-        div::-webkit-scrollbar-thumb:hover {
-          background: var(--brand-from);
-        }
-        .dark div::-webkit-scrollbar-track {
-          background: #374151;
-        }
-        .dark div::-webkit-scrollbar-thumb {
-          background: var(--brand-from);
-        }
-        .dark div::-webkit-scrollbar-thumb:hover {
-          background: var(--brand-from);
-        }
-      `}</style>
 
       {combinedItems.map((item) => {
         if (item.type === "comment" && item.comment) {

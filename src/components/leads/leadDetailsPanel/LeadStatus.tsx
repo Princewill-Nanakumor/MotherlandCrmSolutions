@@ -117,41 +117,6 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, users, onLeadUpdated }) =
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <style jsx>{`
-        .smooth-scroll-content {
-          scroll-behavior: smooth;
-          scrollbar-width: thin;
-          scrollbar-color: ${isDark ? "#6b7280 #374151" : "#cbd5e1 #f1f5f9"};
-        }
-
-        .smooth-scroll-content::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        .smooth-scroll-content::-webkit-scrollbar-track {
-          background: ${isDark ? "#374151" : "#f1f5f9"};
-          border-radius: 4px;
-        }
-
-        .smooth-scroll-content::-webkit-scrollbar-thumb {
-          background: ${isDark ? "#6b7280" : "#94a3b8"};
-          border-radius: 4px;
-          transition: background-color 0.2s ease;
-        }
-
-        .smooth-scroll-content::-webkit-scrollbar-thumb:hover {
-          background: ${isDark ? "#9ca3af" : "#94a3b8"};
-        }
-
-        .status-item {
-          transition: all 0.2s ease-in-out;
-        }
-
-        .status-item:hover {
-          transform: translateX(2px);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-      `}</style>
 
       <div className="flex-1">
         <p className="text-sm text-gray-500! dark:text-gray-400! mb-1">
