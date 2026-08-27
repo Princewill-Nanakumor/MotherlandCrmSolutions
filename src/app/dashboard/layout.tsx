@@ -1,6 +1,13 @@
 "use client";
 
-import React, { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useSession, SessionProvider, getSession } from "next-auth/react";
 import { AblyAwareSessionKeepAlive } from "@/components/AblyAwareSessionKeepAlive";
 import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
@@ -31,14 +38,17 @@ import {
   getAdminLeadsChannelName,
 } from "@/libs/realtime";
 import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
-import {
-  applyRemoteLeadStatusToListCaches,
-} from "@/lib/leadsListCache";
+import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { getDashboardRoleRedirect } from "@/lib/dashboardAccess";
 import { canAccessAllLeads } from "@/lib/roles";
 import { authDebug } from "@/lib/authDebug";
-import { hasRecentIntentionalSignOut, clearPostSignInHandoff, isPostSignInHandoff, waitForServerSessionUserId } from "@/lib/sessionUtils";
+import {
+  hasRecentIntentionalSignOut,
+  clearPostSignInHandoff,
+  isPostSignInHandoff,
+  waitForServerSessionUserId,
+} from "@/lib/sessionUtils";
 import { UserPresenceProvider } from "@/context/UserPresenceContext";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { dashboardPageTitle } from "@/lib/appBranding";
@@ -56,7 +66,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   // Prevent double redirect when we signOut due to expiry
   const redirectingDueToExpiryRef = useRef(false);
-  const unauthRedirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const unauthRedirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const hasSeenAuthenticatedRef = useRef(false);
 
   useEffect(() => {
@@ -128,7 +140,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       if (isUserEvent) {
         void queryClient.invalidateQueries({
           predicate: (query) => {
-            const root = Array.isArray(query.queryKey) ? query.queryKey[0] : null;
+            const root = Array.isArray(query.queryKey)
+              ? query.queryKey[0]
+              : null;
             return (
               root === "users" ||
               root === "user-usage-data" ||
@@ -142,7 +156,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       if (isImportEvent && !importTouchedLeads) {
         void queryClient.invalidateQueries({
           predicate: (query) => {
-            const root = Array.isArray(query.queryKey) ? query.queryKey[0] : null;
+            const root = Array.isArray(query.queryKey)
+              ? query.queryKey[0]
+              : null;
             return (
               root === "import-history" ||
               root === "import-usage-data" ||
@@ -207,13 +223,18 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
     void (async () => {
       try {
-        const scopeResponse = await apiCallWithSessionRefresh("/api/ably/scope", {
-          method: "GET",
-          cache: "no-store",
-        });
+        const scopeResponse = await apiCallWithSessionRefresh(
+          "/api/ably/scope",
+          {
+            method: "GET",
+            cache: "no-store",
+          },
+        );
         if (!scopeResponse.ok || cancelled) return;
 
-        const scopeData = (await scopeResponse.json()) as { adminScope?: string };
+        const scopeData = (await scopeResponse.json()) as {
+          adminScope?: string;
+        };
         if (!scopeData.adminScope || cancelled) return;
 
         realtimeClient = getAblyRealtimeClient(session.user.id);
@@ -356,49 +377,61 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   }, [searchQuery, showSearch, pathname, searchParams, router]);
 
   // Page title mapping
-  const getPageTitle = useCallback((path: string | null): string | null => {
-    if (!path) return dashboardPageTitle(shortName, "Dashboard");
+  const getPageTitle = useCallback(
+    (path: string | null): string | null => {
+      if (!path) return dashboardPageTitle(shortName, "Dashboard");
 
-    // Don't set title for lead detail pages (they handle their own titles)
-    if (
-      path.startsWith("/dashboard/all-leads/") &&
-      path !== "/dashboard/all-leads"
-    ) {
-      return null; // Let the page handle it
-    }
-    if (path.startsWith("/dashboard/leads/") && path !== "/dashboard/leads") {
-      return null; // Let the page handle it
-    }
+      // Don't set title for lead detail pages (they handle their own titles)
+      if (
+        path.startsWith("/dashboard/all-leads/") &&
+        path !== "/dashboard/all-leads"
+      ) {
+        return null; // Let the page handle it
+      }
+      if (path.startsWith("/dashboard/leads/") && path !== "/dashboard/leads") {
+        return null; // Let the page handle it
+      }
 
-    // Don't set title for other dynamic routes (they should handle their own)
-    if (path.startsWith("/dashboard/payment-details/")) {
-      return null; // Let the page handle it
-    }
-    if (
-      path.startsWith("/dashboard/admin-management/") &&
-      path !== "/dashboard/admin-management"
-    ) {
-      return null; // Let the page handle it
-    }
+      // Don't set title for other dynamic routes (they should handle their own)
+      if (path.startsWith("/dashboard/payment-details/")) {
+        return null; // Let the page handle it
+      }
+      if (
+        path.startsWith("/dashboard/admin-management/") &&
+        path !== "/dashboard/admin-management"
+      ) {
+        return null; // Let the page handle it
+      }
 
-    const titleMap: Record<string, string> = {
-      "/dashboard": dashboardPageTitle(shortName, "Dashboard"),
-      "/dashboard/all-leads": dashboardPageTitle(shortName, "All Leads"),
-      "/dashboard/leads": dashboardPageTitle(shortName, "My Leads"),
-      "/dashboard/import": dashboardPageTitle(shortName, "Import"),
-      "/dashboard/users": dashboardPageTitle(shortName, "Users"),
-      "/dashboard/settings": dashboardPageTitle(shortName, "Settings"),
-      "/dashboard/profile": dashboardPageTitle(shortName, "Profile"),
-      "/dashboard/billing": dashboardPageTitle(shortName, "Billing"),
-      "/dashboard/subscription": dashboardPageTitle(shortName, "Subscription"),
-      "/dashboard/notifications": dashboardPageTitle(shortName, "Notifications"),
-      "/dashboard/help": dashboardPageTitle(shortName, "Help"),
-      "/dashboard/admin-management": dashboardPageTitle(shortName, "Admin Management"),
-      "/dashboard/adsManager": dashboardPageTitle(shortName, "Ads Manager"),
-    };
+      const titleMap: Record<string, string> = {
+        "/dashboard": dashboardPageTitle(shortName, "Dashboard"),
+        "/dashboard/all-leads": dashboardPageTitle(shortName, "All Leads"),
+        "/dashboard/leads": dashboardPageTitle(shortName, "My Leads"),
+        "/dashboard/import": dashboardPageTitle(shortName, "Import"),
+        "/dashboard/users": dashboardPageTitle(shortName, "Users"),
+        "/dashboard/settings": dashboardPageTitle(shortName, "Settings"),
+        "/dashboard/profile": dashboardPageTitle(shortName, "Profile"),
+        "/dashboard/billing": dashboardPageTitle(shortName, "Billing"),
+        "/dashboard/subscription": dashboardPageTitle(
+          shortName,
+          "Subscription",
+        ),
+        "/dashboard/notifications": dashboardPageTitle(
+          shortName,
+          "Notifications",
+        ),
+        "/dashboard/help": dashboardPageTitle(shortName, "Help"),
+        "/dashboard/admin-management": dashboardPageTitle(
+          shortName,
+          "Admin Management",
+        ),
+        "/dashboard/adsManager": dashboardPageTitle(shortName, "Ads Manager"),
+      };
 
-    return titleMap[path] || dashboardPageTitle(shortName, "Dashboard");
-  }, [shortName]);
+      return titleMap[path] || dashboardPageTitle(shortName, "Dashboard");
+    },
+    [shortName],
+  );
 
   // Set page title based on pathname
   // Only set if it's not a dynamic route (those handle their own titles)
@@ -435,7 +468,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             currentTitle !== dashboardPageTitle(shortName, "Subscription") &&
             currentTitle !== dashboardPageTitle(shortName, "Notifications") &&
             currentTitle !== dashboardPageTitle(shortName, "Help") &&
-            currentTitle !== dashboardPageTitle(shortName, "Admin Management") &&
+            currentTitle !==
+              dashboardPageTitle(shortName, "Admin Management") &&
             currentTitle !== dashboardPageTitle(shortName, "Ads Manager") &&
             currentTitle !== dashboardPageTitle(shortName, "Payment Details") &&
             !currentTitle.includes("Modern CRM Solution");
@@ -452,7 +486,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         }
       }
     }
-  }, [pathname, status, isAdminLeadsPage, isUserLeadsPage, getPageTitle, shortName]);
+  }, [
+    pathname,
+    status,
+    isAdminLeadsPage,
+    isUserLeadsPage,
+    getPageTitle,
+    shortName,
+  ]);
 
   // Client lost session unexpectedly (expired / cleared). Skip when user explicitly signed out.
   useEffect(() => {
@@ -604,36 +645,36 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   return (
     <UserPresenceProvider enabled={status === "authenticated"}>
       <ToggleProvider value={showLeadsToggles ? toggleContextValue : null}>
-      <div className="dashboard-app flex h-full max-h-full bg-background text-foreground overflow-hidden">
-        <Sidebar />
-        <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-          <DashboardNavbar
-            onSearch={setSearchQuery}
-            searchQuery={searchQuery}
-            isLoading={isLoading}
-            showLeadsToggles={showLeadsToggles}
-            showHeader={showHeader}
-            showControls={showControls}
-            onToggleHeader={handleToggleHeader}
-            onToggleControls={handleToggleControls}
-            showSearch={showSearch}
-          />
-          <SelectedLeadsBanner />
-          <main
-            className={`flex-1 min-h-0 bg-background text-foreground ${
-              isLeadDetailPage
-                ? "overflow-hidden p-0"
-                : "overflow-auto p-4 md:p-6"
-            }`}
-          >
-            {children}
-          </main>
-          <Footer />
-          <ReminderNotifications />
-          <Toaster />
+        <div className="dashboard-app flex h-full max-h-full bg-background text-foreground overflow-hidden">
+          <Sidebar />
+          <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
+            <DashboardNavbar
+              onSearch={setSearchQuery}
+              searchQuery={searchQuery}
+              isLoading={isLoading}
+              showLeadsToggles={showLeadsToggles}
+              showHeader={showHeader}
+              showControls={showControls}
+              onToggleHeader={handleToggleHeader}
+              onToggleControls={handleToggleControls}
+              showSearch={showSearch}
+            />
+            <SelectedLeadsBanner />
+            <main
+              className={`flex-1 min-h-0 bg-background text-foreground ${
+                isLeadDetailPage
+                  ? "overflow-hidden p-0"
+                  : "overflow-auto p-4 md:p-6"
+              }`}
+            >
+              {children}
+            </main>
+            <Footer />
+            <ReminderNotifications />
+            <Toaster />
+          </div>
         </div>
-      </div>
-    </ToggleProvider>
+      </ToggleProvider>
     </UserPresenceProvider>
   );
 }
@@ -646,10 +687,7 @@ export default function DashboardLayout({
   const [queryClient] = useState(() => createQueryClient());
 
   return (
-    <SessionProvider
-      refetchInterval={0}
-      refetchOnWindowFocus={true}
-    >
+    <SessionProvider refetchInterval={0} refetchOnWindowFocus={true}>
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <AblyAwareSessionKeepAlive />
