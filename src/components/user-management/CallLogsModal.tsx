@@ -16,7 +16,7 @@ import { useSession } from "next-auth/react";
 import { getAblyRealtimeClient } from "@/libs/ablyClient";
 import {
   CALL_LOG_CREATED_EVENT,
-  getUserCallLogsChannelName,
+  getTenantChannelName,
 } from "@/libs/realtime";
 
 interface CallLog {
@@ -195,9 +195,11 @@ export function CallLogsModal({
     if (!isOpen || !adminScope || !session?.user?.id || !userId) return;
 
     const realtime = getAblyRealtimeClient(session.user.id);
-    const channelName = getUserCallLogsChannelName(adminScope, userId);
+    const channelName = getTenantChannelName(adminScope);
     const channel = realtime.channels.get(channelName);
-    const onCallLogged = () => {
+    const onCallLogged = (message: { data?: unknown }) => {
+      const data = (message.data ?? {}) as { userId?: string };
+      if (data.userId && data.userId !== userId) return;
       queryClient.invalidateQueries({
         queryKey: callLogsKeys.user(userId),
         refetchType: "active",
@@ -219,12 +221,7 @@ export function CallLogsModal({
       if (subscribed) {
         channel.unsubscribe(CALL_LOG_CREATED_EVENT, onCallLogged);
       }
-      void channel.detach().catch(() => undefined);
-      try {
-        realtime.channels.release(channelName);
-      } catch {
-        // ignore
-      }
+      // Shared tenant channel — do not detach/release.
     };
   }, [isOpen, adminScope, session?.user?.id, userId, queryClient]);
 

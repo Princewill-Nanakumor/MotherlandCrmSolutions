@@ -5,9 +5,11 @@
  * Profiles:
  *   quick         100/500/1k + 3×1k concurrent
  *   medium        5k/10k + 3×10k concurrent   ← headline multi-tenant
+ *   standard      alias of medium
+ *   concurrent10k 3×10k concurrent only
  *   heavy         25k/50k + 5×10k concurrent
  *   stress        100k + 10×10k concurrent
- *   concurrent10k 3×10k only
+ *   correctness   small volume + race/resume checks
  *
  * Usage:
  *   npm run test:import-load

@@ -4,11 +4,15 @@ import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
+import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 import {
-  publishAdminLeadsUpdatedEvent,
-  publishLeadUpdatedEvent,
-} from "@/libs/ablyServer";
+  formatAssigneeName,
+  getEmbeddedAssignee,
+  insertActivitiesInChunks,
+  MAX_BULK_LEAD_OPS,
+} from "@/lib/bulkLeadOps";
 import { canAssignLeads, getTenantAdminId } from "@/lib/roles";
+import { rateLimitEnhanced } from "@/lib/rateLimit";
 
 interface UnassignLeadsRequest {
   leadIds: string[];
@@ -16,20 +20,8 @@ interface UnassignLeadsRequest {
 
 interface LeadDocument {
   _id: mongoose.Types.ObjectId;
-  assignedTo?:
-    | {
-        _id: mongoose.Types.ObjectId;
-        firstName: string;
-        lastName: string;
-      }
-    | mongoose.Types.ObjectId;
+  assignedTo?: unknown;
   adminId: mongoose.Types.ObjectId;
-  firstName: string;
-  lastName: string;
-  email: string;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 interface UserDocument {
@@ -40,6 +32,13 @@ interface UserDocument {
 
 export async function POST(request: Request) {
   try {
+    if (!rateLimitEnhanced(request, 30, 60_000, "leads-unassign")) {
+      return NextResponse.json(
+        { message: "Too many unassignment requests. Please try again shortly." },
+        { status: 429 },
+      );
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.role || !canAssignLeads(session.user)) {
@@ -51,13 +50,23 @@ export async function POST(request: Request) {
     if (!leadIds?.length) {
       return NextResponse.json(
         { message: "Invalid request data" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    if (leadIds.length > MAX_BULK_LEAD_OPS) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Cannot unassign more than ${MAX_BULK_LEAD_OPS} leads at once`,
+          code: "BULK_UNASSIGN_LIMIT",
+        },
+        { status: 400 },
       );
     }
 
     await connectMongoDB();
 
-    // Check if database connection is available
     if (!mongoose.connection.db) {
       throw new Error("Database connection not available");
     }
@@ -70,86 +79,66 @@ export async function POST(request: Request) {
     }
     const adminObjectId = new mongoose.Types.ObjectId(tenantId);
 
-    // Get leads before update with multi-tenancy filter
     const beforeLeads = (await db
       .collection("leads")
       .find({
         _id: { $in: leadObjectIds },
         assignedTo: { $exists: true, $ne: null },
-        adminId: adminObjectId, // Multi-tenancy: only leads belonging to this admin
+        adminId: adminObjectId,
       })
       .toArray()) as LeadDocument[];
 
     if (beforeLeads.length === 0) {
       return NextResponse.json(
         { message: "No valid leads found to unassign" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Get user doing the unassignment
     const assignedByUserResult = (await db
       .collection("users")
       .findOne(
         { _id: new mongoose.Types.ObjectId(session.user.id) },
-        { projection: { firstName: 1, lastName: 1 } }
+        { projection: { firstName: 1, lastName: 1 } },
       )) as UserDocument | null;
 
     if (!assignedByUserResult) {
       throw new Error("User not found");
     }
 
-    // Update leads and create activities
-    const updatePromises = beforeLeads.map(async (lead) => {
-      const now = new Date();
-      const oldAssignedTo = lead.assignedTo;
+    const now = new Date();
+    const leadIdsToUnassign = beforeLeads.map((lead) => lead._id);
 
-      // Get the user being unassigned (handle both object and ObjectId formats)
-      let unassignedUser: UserDocument | null = null;
-      if (oldAssignedTo) {
-        let userId: mongoose.Types.ObjectId;
-
-        if (typeof oldAssignedTo === "object" && oldAssignedTo._id) {
-          // If assignedTo is an object with _id
-          userId = oldAssignedTo._id;
-        } else if (oldAssignedTo instanceof mongoose.Types.ObjectId) {
-          // If assignedTo is already an ObjectId
-          userId = oldAssignedTo;
-        } else {
-          // If assignedTo is a string, convert to ObjectId
-          userId = new mongoose.Types.ObjectId(oldAssignedTo.toString());
-        }
-
-        const unassignedUserResult = (await db
-          .collection("users")
-          .findOne(
-            { _id: userId },
-            { projection: { firstName: 1, lastName: 1 } }
-          )) as UserDocument | null;
-
-        unassignedUser = unassignedUserResult;
-      }
-
-      // Update lead
-      const updatedLead = await db.collection("leads").findOneAndUpdate(
-        { _id: lead._id },
-        {
-          $set: {
-            assignedTo: null,
-            updatedAt: now,
-            lastActivityAt: now,
-          },
+    await db.collection("leads").updateMany(
+      {
+        _id: { $in: leadIdsToUnassign },
+        adminId: adminObjectId,
+      },
+      {
+        $set: {
+          assignedTo: null,
+          updatedAt: now,
+          lastActivityAt: now,
         },
-        { returnDocument: "after" }
-      );
+      },
+    );
 
-      // Create activity with multi-tenancy
-      const activityData = {
-        type: "ASSIGNMENT", // Using ASSIGNMENT type for unassignment too
+    const performedBy = {
+      id: assignedByUserResult._id.toString(),
+      firstName: assignedByUserResult.firstName,
+      lastName: assignedByUserResult.lastName,
+    };
+
+    const activities = beforeLeads.map((lead) => {
+      const unassignedUser = getEmbeddedAssignee(lead.assignedTo);
+      const fromName = formatAssigneeName(unassignedUser);
+
+      return {
+        type: "ASSIGNMENT",
         userId: new mongoose.Types.ObjectId(session.user.id),
-        details: `Lead unassigned from ${unassignedUser ? `${unassignedUser.firstName} ${unassignedUser.lastName}` : "Unknown User"}`,
+        details: `Lead unassigned from ${fromName}`,
         leadId: lead._id,
-        adminId: adminObjectId, // Multi-tenancy
+        adminId: adminObjectId,
         timestamp: now,
         metadata: {
           assignedTo: null,
@@ -161,43 +150,27 @@ export async function POST(request: Request) {
               }
             : null,
           assignedBy: {
-            id: assignedByUserResult._id.toString(),
+            id: performedBy.id,
             _id: assignedByUserResult._id,
-            firstName: assignedByUserResult.firstName,
-            lastName: assignedByUserResult.lastName,
+            firstName: performedBy.firstName,
+            lastName: performedBy.lastName,
           },
-          performedBy: {
-            id: assignedByUserResult._id.toString(),
-            firstName: assignedByUserResult.firstName,
-            lastName: assignedByUserResult.lastName,
-          },
+          performedBy,
         },
       };
-
-      await db.collection("activities").insertOne(activityData);
-      return updatedLead;
     });
 
-    const results = await Promise.all(updatePromises);
-    const updatedLeads = results.filter(Boolean);
+    await insertActivitiesInChunks(db, activities);
 
-    await Promise.allSettled(
-      beforeLeads.map((lead) =>
-        publishLeadUpdatedEvent(adminObjectId.toString(), lead._id.toString(), {
-          type: "lead_unassigned_bulk",
-          leadId: lead._id.toString(),
-        })
-      )
-    );
     await publishAdminLeadsUpdatedEvent(adminObjectId.toString(), {
       type: "lead_unassigned_bulk",
-      leadIds: beforeLeads.map((lead) => lead._id.toString()),
+      leadIds: leadIdsToUnassign.map((id) => id.toString()),
     });
 
     return NextResponse.json({
       success: true,
-      message: `Successfully unassigned ${updatedLeads.length} leads`,
-      unassignedCount: updatedLeads.length,
+      message: `Successfully unassigned ${beforeLeads.length} leads`,
+      unassignedCount: beforeLeads.length,
     });
   } catch (error) {
     console.error("Error in unassign endpoint:", error);
@@ -207,7 +180,7 @@ export async function POST(request: Request) {
         message:
           error instanceof Error ? error.message : "Error unassigning leads",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

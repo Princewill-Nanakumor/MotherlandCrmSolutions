@@ -162,7 +162,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
 
   if (!session?.user?.role || !canAccessAllLeads(session.user)) {
     router.push("/dashboard/leads");
-    return null;
+    return <LoadingSpinner />;
   }
 
   return (

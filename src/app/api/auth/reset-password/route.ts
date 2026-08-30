@@ -47,7 +47,7 @@ function withClearCaptcha(res: NextResponse): NextResponse {
 export async function POST(req: Request) {
   // Pre-captcha flood guard: generous so a stale captcha cookie does not
   // burn the strict per-hour budget below.
-  if (!rateLimitEnhanced(req, 60, 60_000)) {
+  if (!rateLimitEnhanced(req, 60, 60_000, "auth-reset-password-minute")) {
     return NextResponse.json(
       { error: "Too many requests. Try again later." },
       { status: 429 },
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
 
   // Strict per-hour limit, applied only after captcha succeeded so
   // captcha failures cannot lock real users out for an hour.
-  if (!rateLimitEnhanced(req, 10, 60 * 60 * 1000)) {
+  if (!rateLimitEnhanced(req, 10, 60 * 60 * 1000, "auth-reset-password-hour")) {
     return withClearCaptcha(
       NextResponse.json(
         { error: "Too many requests. Try again later." },

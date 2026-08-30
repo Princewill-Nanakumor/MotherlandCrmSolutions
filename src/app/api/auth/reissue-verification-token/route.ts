@@ -35,7 +35,7 @@ function timingDelay(): Promise<void> {
  * a fresh email so they are not stuck on a dead link.
  */
 export async function POST(req: Request) {
-  if (!rateLimitEnhanced(req, 20, 60_000)) {
+  if (!rateLimitEnhanced(req, 20, 60_000, "auth-reissue-verification")) {
     return NextResponse.json(
       { status: "rate_limited", message: "Too many requests. Try again later." },
       { status: 429 },

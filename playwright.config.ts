@@ -30,11 +30,16 @@ function loadRepoEnv() {
 
 loadRepoEnv();
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000";
+const port = process.env.PLAYWRIGHT_PORT || "3000";
+const baseURL = process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${port}`;
 const isRemote = !/127\.0\.0\.1|localhost/.test(baseURL);
 /** Bench scripts start their own Next on another port. */
 const skipWebServer =
   isRemote || process.env.PLAYWRIGHT_NO_WEBSERVER === "1";
+/** Set CI=1 or PLAYWRIGHT_FRESH_SERVER=1 to start a new dev server (avoids a hung :3000). */
+const reuseExistingServer =
+  !process.env.CI &&
+  process.env.PLAYWRIGHT_FRESH_SERVER !== "1";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -48,17 +53,19 @@ export default defineConfig({
   use: {
     baseURL,
     trace: "on-first-retry",
+    actionTimeout: 30_000,
   },
   ...(skipWebServer
     ? {}
     : {
         webServer: {
-          command: "npm run dev -- --port 3000",
-          url: "http://127.0.0.1:3000",
-          reuseExistingServer: !process.env.CI,
+          command: `npm run dev -- --port ${port}`,
+          url: baseURL,
+          reuseExistingServer,
           timeout: 120_000,
           env: {
             ...process.env,
+            E2E_RELAX_RATE_LIMITS: "1",
           },
         },
       }),

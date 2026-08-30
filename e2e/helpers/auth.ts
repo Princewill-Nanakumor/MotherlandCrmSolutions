@@ -4,6 +4,8 @@ export const E2E_ADMIN_EMAIL =
   process.env.E2E_ADMIN_EMAIL || "e2e-admin@motherland.test";
 export const E2E_AGENT_EMAIL =
   process.env.E2E_AGENT_EMAIL || "e2e-agent@motherland.test";
+export const E2E_AGENT_B_EMAIL =
+  process.env.E2E_AGENT_B_EMAIL || "e2e-agent-b@motherland.test";
 export const E2E_PASSWORD = process.env.E2E_PASSWORD || "E2eTest1!";
 
 /** Serializable fetch options for Playwright `page.evaluate` (no streams/Headers). */
@@ -13,24 +15,44 @@ export type ApiJsonInit = {
   headers?: Record<string, string>;
 };
 
-/** Login via UI, solving the captcha from the displayed digits. */
+/** Login via UI, solving the captcha from the displayed digits. Retries once on flake. */
 export async function loginAs(page: Page, email: string, password: string) {
-  await page.goto("/login");
-  await page.getByPlaceholder(/email address/i).fill(email);
-  await page.getByPlaceholder(/^password$/i).fill(password);
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const response = await page.goto("/login", {
+        waitUntil: "domcontentloaded",
+        timeout: 30_000,
+      });
+      expect(
+        response?.ok(),
+        "Login page did not load — stop any hung dev server and re-run (or use PLAYWRIGHT_FRESH_SERVER=1 PLAYWRIGHT_PORT=3001).",
+      ).toBeTruthy();
 
-  await page.getByRole("button", { name: /i.?m not a robot/i }).click();
+      await page.getByPlaceholder(/email address/i).fill(email);
+      await page.getByPlaceholder(/^password$/i).fill(password);
 
-  const captchaBox = page.locator("[data-auth-captcha] .font-mono").first();
-  await expect(captchaBox).toBeVisible({ timeout: 20_000 });
-  const masked = (await captchaBox.innerText()).trim();
-  const code = masked.replace(/\D/g, "");
-  expect(code.length).toBe(6);
+      await page.getByRole("button", { name: /i.?m not a robot/i }).click();
 
-  await page.locator("#login-captcha-input").fill(code);
-  await page.getByRole("button", { name: /^sign in$/i }).click();
+      const captchaBox = page.locator("[data-auth-captcha] .font-mono").first();
+      await expect(captchaBox).toBeVisible({ timeout: 20_000 });
+      const masked = (await captchaBox.innerText()).trim();
+      const code = masked.replace(/\D/g, "");
+      expect(code.length).toBe(6);
 
-  await expect(page).toHaveURL(/\/dashboard/, { timeout: 60_000 });
+      await page.locator("#login-captcha-input").fill(code);
+      await page.getByRole("button", { name: /^sign in$/i }).click();
+
+      await expect(page).toHaveURL(/\/dashboard/, { timeout: 60_000 });
+      return;
+    } catch (err) {
+      lastError = err;
+      if (attempt < 2) {
+        await page.waitForTimeout(1_500);
+      }
+    }
+  }
+  throw lastError;
 }
 
 export async function apiJson(

@@ -14,11 +14,16 @@ const ReactQueryDevtools = dynamic(
 );
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { ShieldSpinnerGlyph } from "@/components/dashboardComponents/LeadsLoadingState";
 import { canAccessAllLeads } from "@/lib/roles";
 
 export default function UserLeadsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+
+  const isRedirecting =
+    status === "unauthenticated" ||
+    (status === "authenticated" && canAccessAllLeads(session?.user));
 
   // Redirect admins away from this page
   useEffect(() => {
@@ -39,18 +44,12 @@ export default function UserLeadsPage() {
     }
   }, [session, status, router]);
 
-  // Show loading while checking authentication
-  if (status === "loading") {
+  if (status === "loading" || isRedirecting) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-gray-700 dark:text-white">Loading...</p>
+        <ShieldSpinnerGlyph />
       </div>
     );
-  }
-
-  // Don't render anything if user is unauthenticated or admin
-  if (status === "unauthenticated" || canAccessAllLeads(session?.user)) {
-    return null;
   }
 
   // Only render for non-admin users

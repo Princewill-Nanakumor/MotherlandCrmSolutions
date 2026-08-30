@@ -16,7 +16,7 @@ const BodySchema = z.object({
 });
 
 export async function POST(req: Request) {
-  if (!rateLimitEnhanced(req, 30, 60_000)) {
+  if (!rateLimitEnhanced(req, 30, 60_000, "verify-email")) {
     return NextResponse.json(
       { status: "rate_limited", message: "Too many requests. Try again later." },
       { status: 429 },

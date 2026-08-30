@@ -1,102 +1,21 @@
-"use client";
-
-import Ably from "ably";
-import type { TokenDetails } from "ably";
-
-let leadRealtime: Ably.Realtime | null = null;
-let leadRealtimeCacheKey: string | null = null;
-
 /**
- * Dedicated Realtime connection for a single lead channel, authorized via
- * `/api/ably/token/lead` (assignment-checked). Keeps the main `/api/ably/token`
- * connection free of tenant-wide `lead:*` capability for agents.
+ * @deprecated Per-lead Ably connections removed. All realtime uses
+ * {@link getAblyRealtimeClient} on `crm:tenant:{adminId}`.
+ * These stubs keep sign-out / teardown call sites compiling.
  */
+
+/** @deprecated No-op — use getAblyRealtimeClient instead. */
 export function getAblyLeadRealtimeClient(
-  userId: string,
-  leadId: string,
-): Ably.Realtime {
-  const cacheKey = `${userId}::${leadId}`;
-  if (leadRealtime && leadRealtimeCacheKey === cacheKey) {
-    return leadRealtime;
-  }
-  if (leadRealtime) {
-    try {
-      leadRealtime.close();
-    } catch {
-      // ignore
-    }
-    leadRealtime = null;
-    leadRealtimeCacheKey = null;
-  }
-
-  const tokenUrl = `/api/ably/token/lead?leadId=${encodeURIComponent(leadId)}`;
-
-  const fresh = new Ably.Realtime({
-    authCallback(_tokenParams, callback) {
-      void (async () => {
-        try {
-          const res = await fetch(tokenUrl, {
-            method: "GET",
-            credentials: "include",
-          });
-          if (!res.ok) {
-            if (res.status === 401) {
-              const self = this as Ably.Realtime;
-              try {
-                self.close();
-              } catch {
-                // ignore
-              }
-              if (leadRealtime === self) {
-                leadRealtime = null;
-                leadRealtimeCacheKey = null;
-              }
-              callback("Unauthorized", null);
-              return;
-            }
-            callback(`Token request failed (${res.status})`, null);
-            return;
-          }
-          const tokenDetails = (await res.json()) as TokenDetails;
-          callback(null, tokenDetails);
-        } catch (e) {
-          callback(
-            e instanceof Error ? e.message : "Token request failed",
-            null,
-          );
-        }
-      })();
-    },
-    clientId: userId,
-    autoConnect: true,
-  });
-  leadRealtime = fresh;
-  leadRealtimeCacheKey = cacheKey;
-  return leadRealtime;
+  _userId: string,
+  _leadId: string,
+): never {
+  throw new Error(
+    "getAblyLeadRealtimeClient was removed — subscribe on the tenant channel via getAblyRealtimeClient",
+  );
 }
 
-export function releaseAblyLeadRealtimeClient(leadId: string): void {
-  if (!leadRealtime || !leadRealtimeCacheKey?.endsWith(`::${leadId}`)) {
-    return;
-  }
-  try {
-    leadRealtime.close();
-  } catch {
-    // ignore
-  }
-  leadRealtime = null;
-  leadRealtimeCacheKey = null;
-}
+/** @deprecated No-op */
+export function releaseAblyLeadRealtimeClient(_leadId: string): void {}
 
-/** Close the lead-scoped Realtime client (call on sign-out with main client). */
-export function disconnectAblyLeadRealtimeClient(): void {
-  if (leadRealtime) {
-    try {
-      leadRealtime.close();
-    } catch {
-      // ignore
-    }
-    leadRealtime = null;
-    leadRealtimeCacheKey = null;
-  }
-}
+/** @deprecated No-op */
+export function disconnectAblyLeadRealtimeClient(): void {}

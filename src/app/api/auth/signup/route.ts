@@ -125,7 +125,7 @@ function withClearCaptcha(res: NextResponse): NextResponse {
 }
 
 export async function POST(req: Request) {
-  if (!rateLimitEnhanced(req, 10, 60_000)) {
+  if (!rateLimitEnhanced(req, 10, 60_000, "auth-signup")) {
     return NextResponse.json(
       { message: "Too many signup attempts. Try again later." },
       { status: 429 },

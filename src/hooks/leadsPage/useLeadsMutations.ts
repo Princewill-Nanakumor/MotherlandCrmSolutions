@@ -195,7 +195,7 @@ export function useLeadsMutations({
         predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
       });
       queryClient.invalidateQueries({ queryKey: assignedLeadsKeys.all });
-      await refetchLeadActivities(queryClient, variables.leadIds);
+      void refetchLeadActivities(queryClient, variables.leadIds);
     },
     onSettled: () => {
       if (mutationInProgressRef.current) mutationInProgressRef.current = false;
@@ -276,7 +276,7 @@ export function useLeadsMutations({
         predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
       });
       queryClient.invalidateQueries({ queryKey: assignedLeadsKeys.all });
-      await refetchLeadActivities(queryClient, variables.leadIds);
+      void refetchLeadActivities(queryClient, variables.leadIds);
     },
     onSettled: () => {
       mutationInProgressRef.current = false;

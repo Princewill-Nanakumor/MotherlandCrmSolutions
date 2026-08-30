@@ -35,7 +35,9 @@ export default async function globalSetup() {
 
   const needsSeed =
     process.env.IMPORT_BROWSER_PRESSURE === "1" ||
-    process.env.IMPORT_HTTP_SOAK === "1";
+    process.env.IMPORT_HTTP_SOAK === "1" ||
+    process.env.ASSIGN_BULK_BENCH === "1" ||
+    process.env.ASSIGN_BULK_UI === "1";
 
   if (!process.env.MONGODB_URI) {
     if (needsSeed) {

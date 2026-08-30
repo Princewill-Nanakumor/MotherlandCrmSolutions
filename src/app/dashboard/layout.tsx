@@ -70,6 +70,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     null,
   );
   const hasSeenAuthenticatedRef = useRef(false);
+  const currentUserIdRef = useRef<string | undefined>(undefined);
+  currentUserIdRef.current = session?.user?.id;
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -122,6 +124,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         deletedLeads?: number;
         importId?: string;
         percent?: number;
+        userId?: string;
       };
       const eventType = eventData.type ?? "";
       const isUserEvent = eventType.startsWith("user_");
@@ -150,6 +153,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             );
           },
         });
+        if (
+          eventData.userId &&
+          eventData.userId === currentUserIdRef.current
+        ) {
+          // Role/permission changes apply on next getSession() — refresh so
+          // leads ↔ all-leads redirects run without a full page reload.
+          void getSession();
+        }
         return;
       }
 

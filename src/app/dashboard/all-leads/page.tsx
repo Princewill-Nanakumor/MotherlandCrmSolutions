@@ -16,6 +16,10 @@ const AllLeadsPage: React.FC = () => {
   // Get search context from layout
   const { searchQuery, setLayoutLoading } = useSearchContext();
 
+  const isRedirecting =
+    status === "unauthenticated" ||
+    (status === "authenticated" && !canAccessAllLeads(session?.user));
+
   // Handle navigation in useEffect instead of during render
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -32,19 +36,12 @@ const AllLeadsPage: React.FC = () => {
     }
   }, [status, session, router]);
 
-  if (status === "loading") {
+  if (status === "loading" || isRedirecting) {
     return (
       <div className="flex items-center justify-center h-screen">
         <ShieldSpinnerGlyph />
       </div>
     );
-  }
-
-  if (
-    status === "unauthenticated" ||
-    (status === "authenticated" && !canAccessAllLeads(session?.user))
-  ) {
-    return null;
   }
 
   return (

@@ -40,7 +40,7 @@ interface TransformedLead {
 export async function POST(request: Request) {
   const req = request as unknown as import("next/server").NextRequest;
   try {
-    if (!rateLimitEnhanced(req, 15, 60000)) {
+    if (!rateLimitEnhanced(req, 15, 60000, "leads-import")) {
       return NextResponse.json(
         { error: "Too many import requests. Please try again shortly." },
         { status: 429 },

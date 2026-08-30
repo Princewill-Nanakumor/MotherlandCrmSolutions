@@ -28,6 +28,26 @@ import { useTableColumns } from "./TableColumns";
 import { useTableConfiguration } from "./TableConfiguration";
 import { useColumnOrder } from "@/hooks/useColumnOrder";
 import { useColumnVisibility } from "@/hooks/useColumnVisibility";
+
+function leadRowNeedsPanelResync(prev: Lead, next: Lead): boolean {
+  const prevAssignee =
+    typeof prev.assignedTo === "object" && prev.assignedTo
+      ? prev.assignedTo.id ?? (prev.assignedTo as { _id?: string })._id
+      : prev.assignedTo;
+  const nextAssignee =
+    typeof next.assignedTo === "object" && next.assignedTo
+      ? next.assignedTo.id ?? (next.assignedTo as { _id?: string })._id
+      : next.assignedTo;
+  return (
+    next.status !== prev.status ||
+    next.updatedAt !== prev.updatedAt ||
+    next.firstName !== prev.firstName ||
+    next.lastName !== prev.lastName ||
+    next.email !== prev.email ||
+    next.phone !== prev.phone ||
+    String(nextAssignee ?? "") !== String(prevAssignee ?? "")
+  );
+}
 import { Loader } from "lucide-react";
 import {
   DndContext,
@@ -237,9 +257,7 @@ export default function LeadsTable({
     ),
   });
 
-  // ✅ FIX: Keep selectedLead in sync with full leads array
-  // This ensures selectedLead always has the latest data, even if filtered out
-  // KEY: Never close panel if URL has lead parameter (lead might just be filtered out)
+  // Keep selectedLead in sync with full leads array (incl. assignment changes).
   useEffect(() => {
     const leadIdParam = searchParams.get("lead");
 
@@ -250,14 +268,7 @@ export default function LeadsTable({
         const updatedLead = leads.find((l) => l._id === selectedLead._id);
         if (updatedLead) {
           // Update selectedLead if key fields have changed (status, updatedAt, etc.)
-          if (
-            updatedLead.status !== selectedLead.status ||
-            updatedLead.updatedAt !== selectedLead.updatedAt ||
-            updatedLead.firstName !== selectedLead.firstName ||
-            updatedLead.lastName !== selectedLead.lastName ||
-            updatedLead.email !== selectedLead.email ||
-            updatedLead.phone !== selectedLead.phone
-          ) {
+          if (leadRowNeedsPanelResync(selectedLead, updatedLead)) {
             setSelectedLead(updatedLead);
           }
         }

@@ -153,7 +153,7 @@ export default function LeadStatusStats({
 
         <div className="text-right">
           <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
-            Statuses
+            All statuses
           </p>
           <p className="text-xl font-bold text-gray-900 dark:text-white">
             {statusCountDisplay}

@@ -23,7 +23,7 @@ import { useAblyChannelAttached } from "@/hooks/useAblyChannelAttached";
 import {
   PAYMENT_NOTIFICATION_EVENT,
   getSuperAdminNotificationsChannelName,
-  getUserNotificationsChannelName,
+  getTenantChannelName,
 } from "@/libs/realtime";
 import type { Connection, RealtimeChannel } from "ably";
 
@@ -218,7 +218,9 @@ export function NotificationBell() {
       const payload = (message.data ?? {}) as {
         type?: string;
         paymentId?: string;
+        userId?: string;
       };
+      if (payload.userId && payload.userId !== session.user.id) return;
       refreshNotifications();
       if (
         payload.type === "PAYMENT_APPROVED" ||
@@ -233,10 +235,7 @@ export function NotificationBell() {
       refreshNotifications();
     };
 
-    const userChannelName = getUserNotificationsChannelName(
-      adminScope,
-      session.user.id,
-    );
+    const userChannelName = getTenantChannelName(adminScope);
     const userChannel = realtime.channels.get(userChannelName);
     setNotificationsChannel(userChannel);
     channels.push({
@@ -258,7 +257,6 @@ export function NotificationBell() {
         try {
           await entry.channel.attach();
           if (cancelled) {
-            void entry.channel.detach().catch(() => undefined);
             return;
           }
           const listener =
@@ -282,11 +280,14 @@ export function NotificationBell() {
         } catch {
           // ignore
         }
-        void entry.channel.detach().catch(() => undefined);
-        try {
-          realtime.channels.release(entry.name);
-        } catch {
-          // ignore
+        // Only detach/release the super-admin channel; tenant channel is shared.
+        if (entry.name === getSuperAdminNotificationsChannelName()) {
+          void entry.channel.detach().catch(() => undefined);
+          try {
+            realtime.channels.release(entry.name);
+          } catch {
+            // ignore
+          }
         }
       }
     };

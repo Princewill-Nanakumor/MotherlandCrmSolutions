@@ -19,7 +19,7 @@ import { useAblyAwareRefetchInterval } from "@/hooks/useAblyAwareRefetchInterval
 import { useAblyChannelAttached } from "@/hooks/useAblyChannelAttached";
 import {
   REMINDER_DUE_EVENT,
-  getUserRemindersChannelName,
+  getTenantChannelName,
 } from "@/libs/realtime";
 import type { Connection, RealtimeChannel } from "ably";
 
@@ -125,10 +125,18 @@ export default function ReminderNotifications() {
 
     let cancelled = false;
     const realtime = getAblyRealtimeClient(session.user.id);
-    const channelName = getUserRemindersChannelName(adminScope, session.user.id);
+    const channelName = getTenantChannelName(adminScope);
     const channel = realtime.channels.get(channelName);
+    const currentUserId = session.user.id;
 
-    const onReminderDue = () => {
+    const onReminderDue = (message: { data?: unknown }) => {
+      const data = (message.data ?? {}) as {
+        userId?: string;
+        reminderId?: string;
+      };
+      // Tenant channel is shared — only react to reminders for this user.
+      // Auth is the Ably token (tenant channel); this filter is UX only.
+      if (data.userId && data.userId !== currentUserId) return;
       void refetch();
     };
 
@@ -157,12 +165,7 @@ export default function ReminderNotifications() {
       } catch {
         // ignore
       }
-      void channel.detach().catch(() => undefined);
-      try {
-        realtime.channels.release(channelName);
-      } catch {
-        // ignore
-      }
+      // Shared tenant channel — do not detach/release (dashboard owns it).
     };
   }, [session?.user?.id, adminScope, refetch]);
 

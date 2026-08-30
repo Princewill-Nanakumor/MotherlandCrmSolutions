@@ -1,44 +1,12 @@
 // src/lib/rateLimit.ts
-const rateLimitMap = new Map();
+const rateLimitMap = new Map<string, number[]>();
 
-export function rateLimit(
-  req: Request,
-  limit: number = 10,
-  windowMs: number = 60000
-) {
-  // Get IP from headers or use a fallback
-  const forwarded = req.headers.get("x-forwarded-for");
-  const realIp = req.headers.get("x-real-ip");
-  const ip = forwarded?.split(",")[0] || realIp || "unknown";
-
-  const now = Date.now();
-  const windowStart = now - windowMs;
-
-  if (!rateLimitMap.has(ip)) {
-    rateLimitMap.set(ip, []);
-  }
-
-  const requests = rateLimitMap
-    .get(ip)
-    .filter((timestamp: number) => timestamp > windowStart);
-  rateLimitMap.set(ip, requests);
-
-  if (requests.length >= limit) {
-    return false;
-  }
-
-  requests.push(now);
-  return true;
-}
-
-// Alternative: More robust IP detection
 export function getClientIP(req: Request): string {
-  // Try multiple headers for IP detection
   const headers = [
     "x-forwarded-for",
     "x-real-ip",
     "x-client-ip",
-    "cf-connecting-ip", // Cloudflare
+    "cf-connecting-ip",
     "x-forwarded",
     "forwarded-for",
     "forwarded",
@@ -47,7 +15,6 @@ export function getClientIP(req: Request): string {
   for (const header of headers) {
     const value = req.headers.get(header);
     if (value) {
-      // Handle comma-separated IPs (take the first one)
       const ip = value.split(",")[0].trim();
       if (ip && ip !== "unknown") {
         return ip;
@@ -58,24 +25,26 @@ export function getClientIP(req: Request): string {
   return "unknown";
 }
 
-// Updated rate limit function with better IP detection
-export function rateLimitEnhanced(
-  req: Request,
-  limit: number = 10,
-  windowMs: number = 60000
-) {
-  const ip = getClientIP(req);
+function shouldBypassRateLimits(): boolean {
+  return process.env.E2E_RELAX_RATE_LIMITS === "1";
+}
+
+function checkRateLimit(
+  key: string,
+  limit: number,
+  windowMs: number,
+): boolean {
   const now = Date.now();
   const windowStart = now - windowMs;
 
-  if (!rateLimitMap.has(ip)) {
-    rateLimitMap.set(ip, []);
+  if (!rateLimitMap.has(key)) {
+    rateLimitMap.set(key, []);
   }
 
   const requests = rateLimitMap
-    .get(ip)
-    .filter((timestamp: number) => timestamp > windowStart);
-  rateLimitMap.set(ip, requests);
+    .get(key)!
+    .filter((timestamp) => timestamp > windowStart);
+  rateLimitMap.set(key, requests);
 
   if (requests.length >= limit) {
     return false;
@@ -85,25 +54,54 @@ export function rateLimitEnhanced(
   return true;
 }
 
-// Memory cleanup function to prevent memory leaks
+/** @deprecated Prefer rateLimitEnhanced with an explicit scope. */
+export function rateLimit(
+  req: Request,
+  limit: number = 10,
+  windowMs: number = 60000,
+  scope = "legacy",
+) {
+  if (shouldBypassRateLimits()) {
+    return true;
+  }
+  const ip = getClientIP(req);
+  return checkRateLimit(`${scope}:${ip}`, limit, windowMs);
+}
+
+/**
+ * Per-route rate limiting. Each scope has its own counter per client IP so
+ * unrelated endpoints (login, import, bulk status) do not share one bucket.
+ */
+export function rateLimitEnhanced(
+  req: Request,
+  limit: number = 10,
+  windowMs: number = 60000,
+  scope = "default",
+): boolean {
+  if (shouldBypassRateLimits()) {
+    return true;
+  }
+  const ip = getClientIP(req);
+  return checkRateLimit(`${scope}:${ip}`, limit, windowMs);
+}
+
 export function cleanupRateLimitMap() {
   const now = Date.now();
-  const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+  const maxAge = 24 * 60 * 60 * 1000;
 
-  for (const [ip, requests] of rateLimitMap.entries()) {
+  for (const [key, requests] of rateLimitMap.entries()) {
     const validRequests = requests.filter(
-      (timestamp: number) => now - timestamp < maxAge
+      (timestamp) => now - timestamp < maxAge,
     );
 
     if (validRequests.length === 0) {
-      rateLimitMap.delete(ip);
+      rateLimitMap.delete(key);
     } else {
-      rateLimitMap.set(ip, validRequests);
+      rateLimitMap.set(key, validRequests);
     }
   }
 }
 
-// Auto-cleanup every hour
 if (typeof window === "undefined") {
   setInterval(cleanupRateLimitMap, 60 * 60 * 1000);
 }

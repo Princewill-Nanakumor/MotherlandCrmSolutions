@@ -2,16 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import Ably from "ably";
 import { authOptions } from "@/libs/auth";
+import { getTenantAdminId, isAdmin } from "@/lib/roles";
 import {
-  canAccessAllLeads,
-  getTenantAdminId,
-  isAdmin,
-} from "@/lib/roles";
-import {
-  getAdminLeadsChannelName,
   getSuperAdminNotificationsChannelName,
-  getUserCallLogsChannelName,
-  getUserRemindersChannelName,
+  getTenantChannelName,
 } from "@/libs/realtime";
 import { getSuperAdminEmails } from "@/lib/notificationQuery";
 
@@ -59,28 +53,17 @@ async function handleTokenRequest() {
     if (!apiKey) {
       return NextResponse.json(
         { message: "ABLY_API_KEY is not configured" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const adminScope = getAdminScope(session.user);
     const client = new Ably.Rest(apiKey);
 
-    // Tenant staff with All Leads need the wildcard so timeline/realtime
-    // stays in sync across assign, status, and comment channels.
-    const capabilityMap: Record<string, string[]> = canAccessAllLeads(
-      session.user,
-    )
-      ? { [`crm:admin:${adminScope}:*`]: ["subscribe"] }
-      : {
-          [getAdminLeadsChannelName(adminScope)]: ["subscribe"],
-          [getUserRemindersChannelName(adminScope, session.user.id)]: [
-            "subscribe",
-          ],
-          [getUserCallLogsChannelName(adminScope, session.user.id)]: [
-            "subscribe",
-          ],
-        };
+    // One tenant channel only — no wildcards, no per-lead / per-user channels.
+    const capabilityMap: Record<string, string[]> = {
+      [getTenantChannelName(adminScope)]: ["subscribe"],
+    };
 
     if (isSuperAdminUser(session.user)) {
       capabilityMap[getSuperAdminNotificationsChannelName()] = ["subscribe"];
@@ -88,8 +71,6 @@ async function handleTokenRequest() {
 
     const capability = JSON.stringify(capabilityMap);
 
-    // Return TokenDetails directly to the browser SDK to avoid
-    // client-side tokenRequest exchange edge-cases.
     const tokenDetails = await client.auth.requestToken({
       clientId: session.user.id,
       capability,

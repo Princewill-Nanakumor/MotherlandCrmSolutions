@@ -31,9 +31,18 @@
     "test:import-http-same-tenant": "IMPORT_HTTP_SAME_TENANT=1 IMPORT_STAGE_AUTO_KICK=0 playwright test e2e/import-http-same-tenant.spec.ts",
     "test:import-browser-pressure": "IMPORT_BROWSER_PRESSURE=1 playwright test e2e/import-browser-pressure.spec.ts",
     "test:import-browser-pressure:50k": "IMPORT_BROWSER_PRESSURE=1 IMPORT_BROWSER_ROWS=50000 playwright test e2e/import-browser-pressure.spec.ts",
+    "test:assign-bulk-bench": "ASSIGN_BULK_BENCH=1 ASSIGN_BENCH_SIZE=500 playwright test e2e/assignment-bulk-bench.spec.ts",
+    "test:assign-bulk-bench:200": "ASSIGN_BULK_BENCH=1 ASSIGN_BENCH_SIZE=200 playwright test e2e/assignment-bulk-bench.spec.ts",
+    "test:assign-bulk-bench:500": "ASSIGN_BULK_BENCH=1 ASSIGN_BENCH_SIZE=500 playwright test e2e/assignment-bulk-bench.spec.ts",
+    "test:assign-bulk-ui": "ASSIGN_BULK_UI=1 playwright test e2e/assignment-bulk-ui.spec.ts",
+    "test:assign-bulk-ui:25": "ASSIGN_BULK_UI=1 ASSIGN_UI_SIZE=25 playwright test e2e/assignment-bulk-ui.spec.ts",
+    "test:assign-bulk-ui:fresh": "PLAYWRIGHT_FRESH_SERVER=1 PLAYWRIGHT_PORT=3001 ASSIGN_BULK_UI=1 playwright test e2e/assignment-bulk-ui.spec.ts",
+    "test:bulk-realtime-sync": "BULK_REALTIME_SYNC=1 playwright test e2e/bulk-realtime-sync.spec.ts",
+    "test:bulk-realtime-sync:fresh": "PLAYWRIGHT_FRESH_SERVER=1 PLAYWRIGHT_PORT=3001 BULK_REALTIME_SYNC=1 playwright test e2e/bulk-realtime-sync.spec.ts",
     "test:e2e": "playwright test",
     "test:e2e:seed": "node --env-file=.env scripts/e2e-seed.mjs",
     "test:e2e:cleanup": "node --env-file=.env scripts/e2e-cleanup-disposable.mjs",
+    "cleanup:test-data": "node --env-file=.env scripts/e2e-cleanup-disposable.mjs",
     "generate:fonts": "node scripts/generate-brand-font-loaders.mjs"
   },
   "dependencies": {

@@ -17,35 +17,23 @@ const DISPATCH_LEASE_MS = 2 * 60 * 1000;
 
 type ReminderLean = {
   _id: mongoose.Types.ObjectId;
-  title: string;
-  description?: string;
   reminderDate: Date;
   reminderTime: string;
   dueAt?: Date;
   timezone?: string;
-  type: "CALL" | "EMAIL" | "TASK" | "MEETING";
   status: "PENDING" | "COMPLETED" | "SNOOZED" | "DISMISSED";
-  leadId:
-    | mongoose.Types.ObjectId
-    | {
-        _id: mongoose.Types.ObjectId;
-        firstName?: string;
-        lastName?: string;
-        email?: string;
-      };
-  assignedTo:
-    | mongoose.Types.ObjectId
-    | { _id: mongoose.Types.ObjectId; firstName?: string; lastName?: string };
+  leadId: mongoose.Types.ObjectId | { _id: mongoose.Types.ObjectId };
+  assignedTo: mongoose.Types.ObjectId | { _id: mongoose.Types.ObjectId };
   adminId: mongoose.Types.ObjectId;
   snoozedUntil?: Date;
-  soundEnabled: boolean;
   notificationSent?: boolean;
   dispatchClaimedAt?: Date;
   dispatchClaimId?: string;
 };
 
+/** IDs + due-check fields only — Ably gets a lean signal, not the full reminder. */
 const REMINDER_SELECT =
-  "_id title description reminderDate reminderTime dueAt timezone type status leadId assignedTo adminId snoozedUntil soundEnabled notificationSent dispatchClaimedAt dispatchClaimId";
+  "_id reminderDate reminderTime dueAt timezone status leadId assignedTo adminId snoozedUntil notificationSent dispatchClaimedAt dispatchClaimId";
 
 type ClaimKind = "pending_due" | "pending_legacy" | "snoozed";
 
@@ -118,8 +106,6 @@ async function claimReminderForDispatch(
     { new: true },
   )
     .select(REMINDER_SELECT)
-    .populate("leadId", "firstName lastName email")
-    .populate("assignedTo", "firstName lastName")
     .lean()) as ReminderLean | null;
 
   return claimed;
@@ -164,20 +150,7 @@ async function publishClaimedReminder(
 ): Promise<boolean> {
   const adminId = resolveObjectId(reminder.adminId);
   const assignedToId = resolveObjectId(reminder.assignedTo);
-  const leadObjRaw =
-    typeof reminder.leadId === "object" &&
-    reminder.leadId !== null &&
-    "_id" in reminder.leadId
-      ? reminder.leadId
-      : null;
-  const leadObj = leadObjRaw as
-    | {
-        _id: mongoose.Types.ObjectId;
-        firstName?: string;
-        lastName?: string;
-        email?: string;
-      }
-    | null;
+  const leadId = resolveObjectId(reminder.leadId);
 
   if (!adminId || !assignedToId) {
     await releaseClaim(reminder._id, claimId);
@@ -185,22 +158,10 @@ async function publishClaimedReminder(
   }
 
   try {
+    // Lean signal only — ReminderNotifications refetches due list from the API.
     await publishReminderDueEvent(adminId, assignedToId, {
       reminderId: String(reminder._id),
-      title: reminder.title,
-      description: reminder.description ?? "",
-      type: reminder.type,
-      reminderTime: reminder.reminderTime,
-      reminderDate: reminder.reminderDate,
-      soundEnabled: reminder.soundEnabled ?? true,
-      lead: leadObj
-        ? {
-            _id: String(leadObj._id),
-            firstName: leadObj.firstName ?? "",
-            lastName: leadObj.lastName ?? "",
-            email: leadObj.email ?? "",
-          }
-        : null,
+      ...(leadId ? { leadId } : {}),
     });
     await finalizeSuccessfulDispatch(reminder._id, claimId);
     return true;

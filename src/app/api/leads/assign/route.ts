@@ -4,16 +4,20 @@ import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
-import {
-  publishAdminLeadsUpdatedEvent,
-  publishLeadUpdatedEvent,
-} from "@/libs/ablyServer";
+import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 import {
   assertAssignmentCapacity,
   countLeadsAssignedToAgent,
   getLeadAssigneeId,
 } from "@/lib/leadAssignmentQuery";
+import {
+  formatAssigneeName,
+  getEmbeddedAssignee,
+  insertActivitiesInChunks,
+  MAX_BULK_LEAD_OPS,
+} from "@/lib/bulkLeadOps";
 import { canAssignLeads, getTenantAdminId, isAssignableTeamRole } from "@/lib/roles";
+import { rateLimitEnhanced } from "@/lib/rateLimit";
 
 interface AssignLeadsRequest {
   leadIds: string[];
@@ -28,12 +32,6 @@ interface LeadDocument {
     lastName: string;
   };
   adminId: mongoose.Types.ObjectId;
-  firstName: string;
-  lastName: string;
-  email: string;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 interface UserDocument {
@@ -41,11 +39,17 @@ interface UserDocument {
   firstName: string;
   lastName: string;
   role: string;
-  adminId?: mongoose.Types.ObjectId;
 }
 
 export async function POST(request: Request) {
   try {
+    if (!rateLimitEnhanced(request, 30, 60_000, "leads-assign")) {
+      return NextResponse.json(
+        { message: "Too many assignment requests. Please try again shortly." },
+        { status: 429 },
+      );
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.role || !canAssignLeads(session.user)) {
@@ -57,13 +61,23 @@ export async function POST(request: Request) {
     if (!leadIds?.length || !userId) {
       return NextResponse.json(
         { message: "Invalid request data" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    if (leadIds.length > MAX_BULK_LEAD_OPS) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Cannot assign more than ${MAX_BULK_LEAD_OPS} leads at once`,
+          code: "BULK_ASSIGN_LIMIT",
+        },
+        { status: 400 },
       );
     }
 
     await connectMongoDB();
 
-    // Check if database connection is available
     if (!mongoose.connection.db) {
       throw new Error("Database connection not available");
     }
@@ -77,40 +91,35 @@ export async function POST(request: Request) {
     }
     const adminObjectId = new mongoose.Types.ObjectId(tenantId);
 
-    // Get leads before update with multi-tenancy filter
     const beforeLeads = (await db
       .collection("leads")
       .find({
         _id: { $in: leadObjectIds },
-        adminId: adminObjectId, // Only leads belonging to this admin
+        adminId: adminObjectId,
       })
       .toArray()) as LeadDocument[];
 
     if (beforeLeads.length === 0) {
       return NextResponse.json(
         { message: "No valid leads found to assign" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Get user details with multi-tenancy check
     const [assignedToUserResult, assignedByUserResult] = await Promise.all([
       db.collection("users").findOne(
         {
           _id: userObjectId,
-          adminId: adminObjectId, // Only users created by this admin
+          adminId: adminObjectId,
         },
-        { projection: { firstName: 1, lastName: 1, role: 1 } }
+        { projection: { firstName: 1, lastName: 1, role: 1 } },
       ),
-      db
-        .collection("users")
-        .findOne(
-          { _id: new mongoose.Types.ObjectId(session.user.id) },
-          { projection: { firstName: 1, lastName: 1 } }
-        ),
+      db.collection("users").findOne(
+        { _id: new mongoose.Types.ObjectId(session.user.id) },
+        { projection: { firstName: 1, lastName: 1 } },
+      ),
     ]);
 
-    // Type assertion after the Promise resolves
     const assignedToUser = assignedToUserResult as UserDocument | null;
     const assignedByUser = assignedByUserResult as UserDocument | null;
 
@@ -122,13 +131,29 @@ export async function POST(request: Request) {
       throw new Error("Assigned by user not found");
     }
 
-    // Verify the target user is an AGENT
     if (!isAssignableTeamRole(assignedToUser.role)) {
       throw new Error("Can only assign leads to team members");
     }
 
-    const netNewAssignments = beforeLeads.filter(
+    const changedLeads = beforeLeads.filter(
       (lead) => getLeadAssigneeId(lead.assignedTo) !== userId,
+    );
+
+    if (changedLeads.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: "Successfully assigned 0 leads",
+        modifiedCount: 0,
+        assignedTo: {
+          id: assignedToUser._id.toString(),
+          firstName: assignedToUser.firstName,
+          lastName: assignedToUser.lastName,
+        },
+      });
+    }
+
+    const netNewAssignments = changedLeads.filter(
+      (lead) => !getLeadAssigneeId(lead.assignedTo),
     ).length;
 
     if (netNewAssignments > 0) {
@@ -158,54 +183,52 @@ export async function POST(request: Request) {
       }
     }
 
-    // Update leads and create activities
-    const updatePromises = beforeLeads.map(async (lead) => {
-      const now = new Date();
-      const oldAssignedTo = lead.assignedTo;
-      const isReassignment = !!oldAssignedTo;
+    const assignedToData = {
+      _id: assignedToUser._id,
+      firstName: assignedToUser.firstName,
+      lastName: assignedToUser.lastName,
+    };
+    const now = new Date();
+    const changedIds = changedLeads.map((lead) => lead._id);
 
-      // Check if assignment is actually changing
-      if (oldAssignedTo && oldAssignedTo._id.toString() === userId) {
-        return lead; // No change needed
-      }
-
-      // Store assignedTo as an object with user details for consistency
-      const assignedToData = {
-        _id: assignedToUser._id,
-        firstName: assignedToUser.firstName,
-        lastName: assignedToUser.lastName,
-      };
-
-      // Update lead
-      const updatedLeadResult = await db.collection("leads").findOneAndUpdate(
-        { _id: lead._id },
-        {
-          $set: {
-            assignedTo: assignedToData,
-            assignedAt: now,
-            updatedAt: now,
-            lastActivityAt: now,
-          },
+    await db.collection("leads").updateMany(
+      {
+        _id: { $in: changedIds },
+        adminId: adminObjectId,
+      },
+      {
+        $set: {
+          assignedTo: assignedToData,
+          assignedAt: now,
+          updatedAt: now,
+          lastActivityAt: now,
         },
-        { returnDocument: "after" }
-      );
+      },
+    );
 
-      // Create activity only if assignment actually changed
-      const activityData = {
+    const performedBy = {
+      id: assignedByUser._id.toString(),
+      firstName: assignedByUser.firstName,
+      lastName: assignedByUser.lastName,
+    };
+
+    const activities = changedLeads.map((lead) => {
+      const oldAssignedTo = getEmbeddedAssignee(lead.assignedTo);
+      const isReassignment = !!oldAssignedTo;
+      const fromName = formatAssigneeName(oldAssignedTo, "Previous User");
+      const toName = formatAssigneeName(assignedToData);
+
+      return {
         type: "ASSIGNMENT",
         userId: new mongoose.Types.ObjectId(session.user.id),
         details: isReassignment
-          ? `Lead reassigned from ${oldAssignedTo ? `${oldAssignedTo.firstName} ${oldAssignedTo.lastName}` : "Previous User"} to ${assignedToUser.firstName} ${assignedToUser.lastName}`
-          : `Lead assigned to ${assignedToUser.firstName} ${assignedToUser.lastName}`,
+          ? `Lead reassigned from ${fromName} to ${toName}`
+          : `Lead assigned to ${toName}`,
         leadId: lead._id,
-        adminId: adminObjectId, // Multi-tenancy
+        adminId: adminObjectId,
         timestamp: now,
         metadata: {
-          assignedTo: {
-            _id: assignedToUser._id,
-            firstName: assignedToUser.firstName,
-            lastName: assignedToUser.lastName,
-          },
+          assignedTo: assignedToData,
           assignedFrom: oldAssignedTo
             ? {
                 _id: oldAssignedTo._id,
@@ -214,46 +237,28 @@ export async function POST(request: Request) {
               }
             : null,
           assignedBy: {
-            id: assignedByUser._id.toString(),
+            id: performedBy.id,
             _id: assignedByUser._id,
-            firstName: assignedByUser.firstName,
-            lastName: assignedByUser.lastName,
+            firstName: performedBy.firstName,
+            lastName: performedBy.lastName,
           },
-          performedBy: {
-            id: assignedByUser._id.toString(),
-            firstName: assignedByUser.firstName,
-            lastName: assignedByUser.lastName,
-          },
+          performedBy,
         },
       };
-
-      await db.collection("activities").insertOne(activityData);
-
-      return updatedLeadResult;
     });
 
-    const results = await Promise.all(updatePromises);
-    const actualUpdates = results.filter((lead) => lead !== null);
+    await insertActivitiesInChunks(db, activities);
 
-    await Promise.allSettled(
-      beforeLeads.map((lead) =>
-        publishLeadUpdatedEvent(adminObjectId.toString(), lead._id.toString(), {
-          type: "lead_assigned_bulk",
-          leadId: lead._id.toString(),
-          assignedTo: userId,
-        })
-      )
-    );
     await publishAdminLeadsUpdatedEvent(adminObjectId.toString(), {
       type: "lead_assigned_bulk",
-      leadIds: beforeLeads.map((lead) => lead._id.toString()),
+      leadIds: changedIds.map((id) => id.toString()),
       assignedTo: userId,
     });
 
     return NextResponse.json({
       success: true,
-      message: `Successfully assigned ${actualUpdates.length} leads`,
-      modifiedCount: actualUpdates.length,
+      message: `Successfully assigned ${changedLeads.length} leads`,
+      modifiedCount: changedLeads.length,
       assignedTo: {
         id: assignedToUser._id.toString(),
         firstName: assignedToUser.firstName,

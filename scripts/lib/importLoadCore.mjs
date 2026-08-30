@@ -74,6 +74,14 @@ export const PROFILES = {
     duplicatePassSize: 100,
     invalidMixSize: 50,
   },
+  /** Concurrent-only: 3×10k (no single-tenant ramp) */
+  concurrent10k: {
+    singleSizes: [],
+    concurrentPerTenant: 10000,
+    tenantCount: 3,
+    duplicatePassSize: 500,
+    invalidMixSize: 200,
+  },
 };
 
 export const ARCHITECTURE = {

@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
  *   so it never shares or overwrites the login captcha on the same page.
  */
 export async function GET(req: Request) {
-  if (!rateLimitEnhanced(req, 40, 60_000)) {
+  if (!rateLimitEnhanced(req, 40, 60_000, "auth-captcha-issue")) {
     return NextResponse.json(
       { error: "Too many captcha requests. Try again shortly." },
       {

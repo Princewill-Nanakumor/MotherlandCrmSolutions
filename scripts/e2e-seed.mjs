@@ -9,6 +9,9 @@ import mongoose from "mongoose";
 
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || "e2e-admin@motherland.test";
 const AGENT_EMAIL = process.env.E2E_AGENT_EMAIL || "e2e-agent@motherland.test";
+/** Second agent for reassign benches (assign → agent A → agent B). */
+const AGENT_B_EMAIL =
+  process.env.E2E_AGENT_B_EMAIL || "e2e-agent-b@motherland.test";
 const PASSWORD = process.env.E2E_PASSWORD || "E2eTest1!";
 
 function getDbName() {
@@ -84,6 +87,31 @@ async function main() {
     { upsert: true, returnDocument: "after" },
   );
 
+  await users.findOneAndUpdate(
+    { email: AGENT_B_EMAIL },
+    {
+      $set: {
+        firstName: "E2E",
+        lastName: "AgentB",
+        email: AGENT_B_EMAIL,
+        password: hash,
+        phoneNumber: "+15550003333",
+        country: "United States",
+        role: "AGENT",
+        status: "ACTIVE",
+        permissions: [],
+        adminId: admin._id,
+        createdBy: admin._id,
+        emailVerified: true,
+        canViewPhoneNumbers: true,
+        canViewEmails: true,
+        updatedAt: new Date(),
+      },
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true, returnDocument: "after" },
+  );
+
   // Clean leftover e2e leads from prior runs for this tenant (keep volume low)
   await mongoose.connection.collection("leads").deleteMany({
     adminId: admin._id,
@@ -95,6 +123,7 @@ async function main() {
       ok: true,
       adminEmail: ADMIN_EMAIL,
       agentEmail: AGENT_EMAIL,
+      agentBEmail: AGENT_B_EMAIL,
       adminId: String(admin._id),
       passwordFromEnv: Boolean(process.env.E2E_PASSWORD),
     }),

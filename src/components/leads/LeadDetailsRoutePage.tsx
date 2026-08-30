@@ -156,6 +156,12 @@ export function LeadDetailsRoutePage({ mode, params }: LeadDetailsRoutePageProps
   const { updateLeadAsync } = useUpdateLead();
   const queryClient = useQueryClient();
 
+  const isRedirecting =
+    status === "unauthenticated" ||
+    (status === "authenticated" &&
+      ((mode === "admin" && !canAccessAllLeads(session?.user)) ||
+        (mode === "agent" && canAccessAllLeads(session?.user))));
+
   useEffect(() => {
     if (status === "unauthenticated") {
       const callbackUrl =
@@ -217,20 +223,8 @@ export function LeadDetailsRoutePage({ mode, params }: LeadDetailsRoutePageProps
     document.title = `${leadTitle} - ${shortName}`;
   }, [lead, shortName]);
 
-  if (status === "loading" || isLoading) {
+  if (status === "loading" || isLoading || isRedirecting) {
     return <LeadDetailsSkeleton />;
-  }
-
-  if (status === "unauthenticated") {
-    return null;
-  }
-
-  if (mode === "admin" && !canAccessAllLeads(session?.user)) {
-    return null;
-  }
-
-  if (mode === "agent" && canAccessAllLeads(session?.user)) {
-    return null;
   }
 
   if (error) {

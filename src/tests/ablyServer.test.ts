@@ -33,20 +33,33 @@ describe("ablyServer publishers", () => {
       leadId: "lead1",
     });
 
-    expect(getChannel).toHaveBeenCalledWith("crm:admin:admin1:leads");
+    expect(getChannel).toHaveBeenCalledWith("crm:tenant:admin1");
     expect(publish).toHaveBeenCalledWith("admin.leads.updated", {
       type: "status_changed",
       leadId: "lead1",
     });
   });
 
-  it("publishes lead updated event on lead channel", async () => {
+  it("publishLeadUpdatedEvent is a no-op (avoids double-publish with admin event)", async () => {
     const { publishLeadUpdatedEvent } = await import("@/libs/ablyServer");
     await publishLeadUpdatedEvent("admin1", "lead9", { type: "status_changed" });
 
-    expect(getChannel).toHaveBeenCalledWith("crm:admin:admin1:lead:lead9");
-    expect(publish).toHaveBeenCalledWith("lead.updated", {
-      type: "status_changed",
+    expect(getChannel).not.toHaveBeenCalled();
+    expect(publish).not.toHaveBeenCalled();
+  });
+
+  it("publishes reminders on the tenant channel with lean ids only", async () => {
+    const { publishReminderDueEvent } = await import("@/libs/ablyServer");
+    await publishReminderDueEvent("admin1", "user2", {
+      reminderId: "r1",
+      leadId: "lead9",
+    });
+
+    expect(getChannel).toHaveBeenCalledWith("crm:tenant:admin1");
+    expect(publish).toHaveBeenCalledWith("reminder.due", {
+      reminderId: "r1",
+      leadId: "lead9",
+      userId: "user2",
     });
   });
 });

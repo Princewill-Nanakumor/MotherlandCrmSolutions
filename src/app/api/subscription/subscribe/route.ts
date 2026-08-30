@@ -17,7 +17,7 @@ function roundCents(n: number): number {
 }
 
 export async function POST(req: NextRequest) {
-  if (!rateLimitEnhanced(req, 5, 60000)) {
+  if (!rateLimitEnhanced(req, 5, 60000, "subscription-subscribe")) {
     return NextResponse.json(
       { error: "Rate limit exceeded. Please try again later." },
       { status: 429 },

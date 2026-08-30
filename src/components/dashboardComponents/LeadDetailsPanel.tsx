@@ -14,11 +14,11 @@ import AdsImageSlider from "../ads/AdsImageSlider";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { useSession } from "next-auth/react";
-import { LEAD_UPDATED_EVENT, getLeadChannelName } from "@/libs/realtime";
 import {
-  getAblyLeadRealtimeClient,
-  releaseAblyLeadRealtimeClient,
-} from "@/libs/ablyLeadClient";
+  ADMIN_LEADS_UPDATED_EVENT,
+  getTenantChannelName,
+} from "@/libs/realtime";
+import { getAblyRealtimeClient } from "@/libs/ablyClient";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { refetchLeadActivities } from "@/lib/leadActivitiesQuery";
 import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
@@ -225,26 +225,84 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     canViewPhoneNumbers,
   ]);
 
-  // Realtime sync. Instead of refetching every leads-list query, we
-  //   - re-fetch ONLY the single lead detail (server is source of truth), and
-  //   - invalidate the comments/activities for this lead.
-  // The other open list views are kept fresh via their own ADMIN_LEADS_UPDATED
-  // subscription rather than us forcing a global refetch from this panel.
+  // Realtime sync: single tenant channel (filter by leadId / leadIds).
   useEffect(() => {
     if (!isOpen || !lead?._id || !session?.user?.id) return;
 
-    let channel: {
+    const openLeadId = lead._id;
+    let adminChannel: {
       unsubscribe: (
         eventName: string,
         listener: (message: { data?: unknown }) => void,
       ) => void;
       detach: () => Promise<void>;
-      state?: string;
     } | null = null;
-    let messageListener: ((message: { data?: unknown }) => void) | null = null;
-    let channelName: string | null = null;
-    let didSubscribe = false;
+    let adminChannelName: string | null = null;
+    let adminMessageListener: ((message: { data?: unknown }) => void) | null =
+      null;
+    let adminSubscribed = false;
     let isDisposed = false;
+
+    const syncLeadFromServer = async () => {
+      try {
+        if (!isDisposed) {
+          await queryClient.invalidateQueries({
+            queryKey: ["comments", openLeadId],
+            exact: true,
+          });
+          await refetchLeadActivities(queryClient, [openLeadId]);
+        }
+
+        const response = await apiCallWithSessionRefresh(
+          `/api/leads/${openLeadId}`,
+          {
+            method: "GET",
+            cache: "no-store",
+          },
+        );
+        if (!response.ok) return;
+        const freshLead = (await response.json()) as Lead;
+        if (!freshLead?._id || isDisposed) return;
+
+        unmaskedForPanelRef.current = {
+          leadId: freshLead._id,
+          email: freshLead.email,
+          phone: freshLead.phone ?? "",
+        };
+        applyRemoteLeadStatusToListCaches(
+          queryClient,
+          freshLead._id,
+          normalizeLeadStatusId(freshLead.status),
+          { touchActivity: true },
+        );
+        mergeContactIntoListCaches(
+          queryClient,
+          freshLead._id,
+          freshLead.email,
+          freshLead.phone ?? "",
+        );
+        previousStatusRef.current = freshLead.status;
+        previousLeadRef.current = freshLead;
+        setCurrentLead(freshLead);
+      } catch (error) {
+        console.error(
+          "Failed to sync lead details from realtime event:",
+          error,
+        );
+      }
+    };
+
+    const eventTouchesOpenLead = (data: unknown): boolean => {
+      const eventData = (data ?? {}) as {
+        leadId?: string;
+        leadIds?: string[];
+      };
+      if (eventData.leadId === openLeadId) return true;
+      return (
+        Array.isArray(eventData.leadIds) &&
+        eventData.leadIds.some((id) => id === openLeadId)
+      );
+    };
 
     const setupRealtime = async () => {
       try {
@@ -268,14 +326,17 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         const adminScope = scopeData.adminScope;
         if (!adminScope || isDisposed) return;
 
-        const realtime = getAblyLeadRealtimeClient(session.user.id, lead._id);
-        channelName = getLeadChannelName(adminScope, lead._id);
-        const ablyChannel = realtime.channels.get(channelName);
-        channel = ablyChannel;
+        adminMessageListener = (message: { data?: unknown }) => {
+          if (!eventTouchesOpenLead(message.data)) return;
+          void syncLeadFromServer();
+        };
 
-        const attachWithRetry = async () => {
+        const attachWithRetry = async (
+          channel: { attach: () => Promise<unknown> },
+          client: { connect?: () => void },
+        ) => {
           try {
-            await ablyChannel.attach();
+            await channel.attach();
             return true;
           } catch (error) {
             const message =
@@ -290,12 +351,12 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
             }
             await new Promise((resolve) => setTimeout(resolve, 800));
             try {
-              realtime.connect?.();
+              client.connect?.();
             } catch {
               /* ignore */
             }
             try {
-              await ablyChannel.attach();
+              await channel.attach();
               return true;
             } catch {
               return false;
@@ -303,66 +364,21 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           }
         };
 
-        const attached = await attachWithRetry();
-        if (!attached || isDisposed) {
-          return;
-        }
+        const adminRealtime = getAblyRealtimeClient(session.user.id);
+        adminChannelName = getTenantChannelName(adminScope);
+        const ablyAdminChannel = adminRealtime.channels.get(adminChannelName);
+        adminChannel = ablyAdminChannel;
+        const adminAttached = await attachWithRetry(
+          ablyAdminChannel,
+          adminRealtime,
+        );
+        if (!adminAttached || isDisposed) return;
 
-        messageListener = async () => {
-          try {
-            // Invalidate timeline caches immediately — do not wait on GET /leads/[id].
-            // Otherwise a failed/slow refetch leaves comments stale after remote deletes.
-            if (!isDisposed) {
-              await queryClient.invalidateQueries({
-                queryKey: ["comments", lead._id],
-                exact: true,
-              });
-              await refetchLeadActivities(queryClient, [lead._id]);
-            }
-
-            const response = await apiCallWithSessionRefresh(
-              `/api/leads/${lead._id}`,
-              {
-                method: "GET",
-                cache: "no-store",
-              },
-            );
-            if (!response.ok) return;
-            const freshLead = (await response.json()) as Lead;
-            if (!freshLead?._id || isDisposed) return;
-
-            unmaskedForPanelRef.current = {
-              leadId: freshLead._id,
-              email: freshLead.email,
-              phone: freshLead.phone ?? "",
-            };
-            // Keep all-leads / assigned tables in sync with the fresh status so
-            // closing the panel does not show a stale Callback row again.
-            applyRemoteLeadStatusToListCaches(
-              queryClient,
-              freshLead._id,
-              normalizeLeadStatusId(freshLead.status),
-              { touchActivity: true },
-            );
-            mergeContactIntoListCaches(
-              queryClient,
-              freshLead._id,
-              freshLead.email,
-              freshLead.phone ?? "",
-            );
-            previousStatusRef.current = freshLead.status;
-            previousLeadRef.current = freshLead;
-            setCurrentLead(freshLead);
-          } catch (error) {
-            console.error(
-              "Failed to sync lead details from realtime event:",
-              error,
-            );
-          }
-        };
-
-        ablyChannel.subscribe(LEAD_UPDATED_EVENT, messageListener);
-        didSubscribe = true;
+        ablyAdminChannel.subscribe(
+          ADMIN_LEADS_UPDATED_EVENT,
+          adminMessageListener,
+        );
+        adminSubscribed = true;
       } catch (error) {
         console.error(
           "Failed to initialize panel realtime subscription:",
@@ -378,15 +394,14 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     return () => {
       isDisposed = true;
       void (async () => {
-        if (didSubscribe && channel && messageListener) {
-          channel.unsubscribe(LEAD_UPDATED_EVENT, messageListener);
+        if (adminSubscribed && adminChannel && adminMessageListener) {
+          adminChannel.unsubscribe(
+            ADMIN_LEADS_UPDATED_EVENT,
+            adminMessageListener,
+          );
+          await adminChannel.detach().catch(() => undefined);
         }
-        // Do not explicitly detach here. During rapid close/reopen, detach can race
-        // with the next attach and produce noisy "state = detached" SDK errors.
-        // Releasing/closing the lead-scoped realtime client below is sufficient.
-        if (lead?._id) {
-          releaseAblyLeadRealtimeClient(lead._id);
-        }
+        // Do not release the shared tenant channel — dashboard layout owns it.
       })();
     };
   }, [isOpen, lead?._id, queryClient, session?.user?.id]);

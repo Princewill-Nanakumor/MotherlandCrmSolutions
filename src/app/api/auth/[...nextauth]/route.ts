@@ -12,7 +12,7 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ nextauth: string[] }> },
 ) {
-  if (!rateLimitEnhanced(request, 20, 60_000)) {
+  if (!rateLimitEnhanced(request, 20, 60_000, "auth-nextauth")) {
     return NextResponse.json(
       { error: "Too many authentication attempts. Please try again." },
       { status: 429 },

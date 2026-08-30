@@ -21,7 +21,7 @@ interface LeadDocument {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!rateLimitEnhanced(request, 20, 60000)) {
+    if (!rateLimitEnhanced(request, 20, 60000, "leads-bulk-delete")) {
       return NextResponse.json(
         { message: "Too many bulk delete requests" },
         { status: 429 },

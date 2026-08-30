@@ -1,6 +1,6 @@
 /**
- * Free Atlas space by deleting disposable load/E2E import data.
- * Safe: only removes known test email domains / harness import files.
+ * Remove disposable load / E2E / bench data from MongoDB.
+ * Keeps seeded E2E users (e2e-admin@motherland.test, agents); deletes test leads and harness imports.
  *
  *   npm run test:e2e:cleanup
  *   node --env-file=.env scripts/e2e-cleanup-disposable.mjs
@@ -12,6 +12,32 @@ function getDbName() {
   const uri = process.env.MONGODB_URI || "";
   const match = uri.match(/\/([^/?]+)(\?|$)/);
   return match?.[1] || "your_default_db_name";
+}
+
+/** Leads created by E2E, import load harness, or bulk assign benches. */
+function disposableLeadFilter() {
+  return {
+    $or: [
+      { email: { $regex: /@e2e\.motherland\.test$/i } },
+      { email: { $regex: /@import-load\.motherland\.test$/i } },
+      { source: { $regex: /^assign-bulk/i } },
+      { source: { $in: ["assign-bulk-ui", "assign-bulk-bench"] } },
+    ],
+  };
+}
+
+function disposableImportFilter() {
+  return {
+    $or: [
+      { fileName: { $regex: /^soak-/i } },
+      { fileName: { $regex: /^concurrent-/i } },
+      { fileName: { $regex: /^same-tenant-/i } },
+      { fileName: { $regex: /^load-harness-/i } },
+      { fileName: { $regex: /pressure/i } },
+      { fileName: { $regex: /http-soak/i } },
+      { fileName: { $regex: /assign-bulk/i } },
+    ],
+  };
 }
 
 async function main() {
@@ -26,34 +52,47 @@ async function main() {
   const imports = db.collection("imports");
   const staging = db.collection("importstagingchunks");
   const users = db.collection("users");
+  const activities = db.collection("activities");
+  const comments = db.collection("comments");
+  const callLogs = db.collection("calllogs");
+  const reminders = db.collection("reminders");
 
-  const leadOr = {
-    $or: [
-      { email: { $regex: /@e2e\.motherland\.test$/i } },
-      { email: { $regex: /@import-load\.motherland\.test$/i } },
-    ],
-  };
+  const leadFilter = disposableLeadFilter();
+  const leadCountBefore = await leads.countDocuments(leadFilter);
 
-  const leadCountBefore = await leads.countDocuments(leadOr);
-  const leadResult = await leads.deleteMany(leadOr);
+  const leadIdDocs = await leads
+    .find(leadFilter, { projection: { _id: 1 } })
+    .toArray();
+  const leadIds = leadIdDocs.map((d) => d._id);
 
-  const importFilter = {
-    $or: [
-      { fileName: { $regex: /^soak-/i } },
-      { fileName: { $regex: /^concurrent-/i } },
-      { fileName: { $regex: /^same-tenant-/i } },
-      { fileName: { $regex: /^load-harness-/i } },
-      { fileName: { $regex: /pressure/i } },
-      { fileName: { $regex: /http-soak/i } },
-    ],
-  };
+  let activitiesDeleted = 0;
+  let commentsDeleted = 0;
+  let callLogsDeleted = 0;
+  let remindersDeleted = 0;
+
+  if (leadIds.length > 0) {
+    const [act, com, calls, rems] = await Promise.all([
+      activities.deleteMany({ leadId: { $in: leadIds } }),
+      comments.deleteMany({ leadId: { $in: leadIds } }),
+      callLogs.deleteMany({ leadId: { $in: leadIds } }),
+      reminders.deleteMany({ leadId: { $in: leadIds } }),
+    ]);
+    activitiesDeleted = act.deletedCount || 0;
+    commentsDeleted = com.deletedCount || 0;
+    callLogsDeleted = calls.deletedCount || 0;
+    remindersDeleted = rems.deletedCount || 0;
+  }
+
+  const leadResult = await leads.deleteMany(leadFilter);
+
+  const importFilter = disposableImportFilter();
   const importDocs = await imports
     .find(importFilter, { projection: { _id: 1 } })
     .toArray();
   const importIds = importDocs.map((d) => d._id);
 
   let stagingDeleted = 0;
-  if (importIds.length) {
+  if (importIds.length > 0) {
     const st = await staging.deleteMany({ importId: { $in: importIds } });
     stagingDeleted = st.deletedCount || 0;
   }
@@ -69,10 +108,14 @@ async function main() {
     db: getDbName(),
     leadsMatched: leadCountBefore,
     leadsDeleted: leadResult.deletedCount || 0,
+    activitiesDeleted,
+    commentsDeleted,
+    callLogsDeleted,
+    remindersDeleted,
     importsDeleted: importResult.deletedCount || 0,
     stagingDeleted,
     loadUsersDeleted: loadUsers.deletedCount || 0,
-    tip: "Re-run npm run test:e2e:seed after cleanup. If still over quota, wait for Atlas compact or upgrade.",
+    tip: "E2E seed users kept. Re-run npm run test:e2e:seed before the next E2E session.",
   };
   console.log(JSON.stringify(report, null, 2));
 
