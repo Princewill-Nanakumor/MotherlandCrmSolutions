@@ -42,6 +42,7 @@
     "test:leads-startup-bench": "node scripts/leads-startup-bench.mjs",
     "test:leads-filters-client": "vitest run src/tests/agentLeadsFilter.perf.test.ts",
     "test:leads-assignment-cap": "LEADS_ASSIGNMENT_CAP=1 playwright test e2e/leads-assignment-cap.spec.ts",
+    "test:users-create-ui": "USERS_CREATE_UI=1 playwright test e2e/users-create-ui.spec.ts",
     "test:assign-bulk-ui": "ASSIGN_BULK_UI=1 playwright test e2e/assignment-bulk-ui.spec.ts",
     "test:assign-bulk-ui:25": "ASSIGN_BULK_UI=1 ASSIGN_UI_SIZE=25 playwright test e2e/assignment-bulk-ui.spec.ts",
     "test:assign-bulk-ui:fresh": "PLAYWRIGHT_FRESH_SERVER=1 PLAYWRIGHT_PORT=3001 ASSIGN_BULK_UI=1 playwright test e2e/assignment-bulk-ui.spec.ts",

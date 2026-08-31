@@ -18,6 +18,7 @@ import { User } from "./UserTableColumns";
 import type { UserFormCreateData } from "@/schemas/UserFormSchema";
 import { ShieldSpinnerGlyph } from "@/components/dashboardComponents/LeadsLoadingState";
 import { canManageUsers } from "@/lib/roles";
+import { useToast } from "@/components/ui/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +48,7 @@ export default function UsersManagement({
   filterActiveOnly = true,
 }: UsersManagementProps) {
   const { status } = useSession();
+  const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -79,11 +81,14 @@ export default function UsersManagement({
   const handleUserCreated = useCallback(
     (user: User) => {
       onUserCreated?.(user);
-      refetchUsers(); // Refetch users after creation
-      refreshUserUsageData(); // Refetch usage immediately
-      setShowModal(false);
+      toast({
+        title: "Success",
+        description: "User created successfully",
+        variant: "success",
+      });
+      refreshUserUsageData();
     },
-    [onUserCreated, refetchUsers, refreshUserUsageData],
+    [onUserCreated, refreshUserUsageData, toast],
   );
 
   const handleUserUpdated = useCallback(

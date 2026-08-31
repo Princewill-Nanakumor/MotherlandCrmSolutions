@@ -6,6 +6,7 @@ import {
   useMutation,
   useQueryClient,
   type QueryClient,
+  type UseMutationResult,
 } from "@tanstack/react-query";
 import type { User } from "@/components/user-management/UserTableColumns";
 import type { UserFormCreateData, UserFormEditData } from "@/schemas/UserFormSchema";
@@ -80,7 +81,7 @@ export function useUserMutations({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const createUser = useMutation({
+  const createUserMutation = useMutation({
     mutationFn: async (userData: UserFormCreateData): Promise<User> => {
       if (!session?.user?.id) {
         throw { message: "User session not found. Please log in again." };
@@ -126,34 +127,43 @@ export function useUserMutations({
 
       return data.user as User;
     },
-    onSuccess: async (created) => {
+  });
+
+  const createUser = {
+    ...createUserMutation,
+    mutateAsync: async (userData: UserFormCreateData) => {
+      const created = await createUserMutation.mutateAsync(userData);
       await invalidateUserCachesAfterWrite(queryClient);
       await onRefreshUsers?.();
       onUserCreated?.(created);
-      toast({
-        title: "Success",
-        description: "User created successfully",
-        variant: "success",
-      });
+      return created;
     },
-  });
+  } satisfies UseMutationResult<User, unknown, UserFormCreateData>;
 
-  const updateUser = useMutation({
+  const updateUserMutation = useMutation({
     mutationFn: ({ userId, body }: UpdateUserVariables) =>
       updateUserRequest(userId, body),
-    onSuccess: async (updated) => {
-      await invalidateUserCachesAfterWrite(queryClient, {
-        includeCurrentUserPermission: true,
-      });
-      await onRefreshUsers?.();
-      onUserUpdated?.(updated);
-    },
-    onError: (error: unknown) => {
-      console.error("Update user error details:", error);
-    },
   });
 
-  const deleteUser = useMutation({
+  const updateUser = {
+    ...updateUserMutation,
+    mutateAsync: async (variables: UpdateUserVariables) => {
+      try {
+        const updated = await updateUserMutation.mutateAsync(variables);
+        await invalidateUserCachesAfterWrite(queryClient, {
+          includeCurrentUserPermission: true,
+        });
+        await onRefreshUsers?.();
+        onUserUpdated?.(updated);
+        return updated;
+      } catch (error: unknown) {
+        console.error("Update user error details:", error);
+        throw error;
+      }
+    },
+  } satisfies UseMutationResult<User, unknown, UpdateUserVariables>;
+
+  const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
       const response = await apiCallWithSessionRefresh(
         `/api/users?id=${userId}`,
@@ -168,28 +178,35 @@ export function useUserMutations({
         throw new Error(error.message || "Failed to delete user");
       }
     },
-    onSuccess: async (_void, userId) => {
-      await invalidateUserCachesAfterWrite(queryClient);
-      onRefreshUsers?.();
-      toast({
-        title: "Success",
-        description: "User permanently deleted successfully",
-        variant: "success",
-      });
-      onUserDeleted?.(userId);
-    },
-    onError: (error: unknown) => {
-      console.error("Error deleting user:", error);
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to delete user",
-        variant: "destructive",
-      });
-    },
   });
 
-  const resetPassword = useMutation({
+  const deleteUser = {
+    ...deleteUserMutation,
+    mutateAsync: async (userId: string) => {
+      try {
+        await deleteUserMutation.mutateAsync(userId);
+        await invalidateUserCachesAfterWrite(queryClient);
+        await onRefreshUsers?.();
+        toast({
+          title: "Success",
+          description: "User permanently deleted successfully",
+          variant: "success",
+        });
+        onUserDeleted?.(userId);
+      } catch (error: unknown) {
+        console.error("Error deleting user:", error);
+        toast({
+          title: "Error",
+          description:
+            error instanceof Error ? error.message : "Failed to delete user",
+          variant: "destructive",
+        });
+        throw error;
+      }
+    },
+  } satisfies UseMutationResult<void, unknown, string>;
+
+  const resetPasswordMutation = useMutation({
     mutationFn: async ({
       userId,
       password,
@@ -214,32 +231,43 @@ export function useUserMutations({
         throw new Error(error.message || "Failed to reset password");
       }
     },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Password has been reset successfully",
-        variant: "success",
-      });
-    },
-    onError: (error: unknown) => {
-      console.error("Error resetting password:", error);
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to reset password",
-        variant: "destructive",
-      });
-    },
   });
+
+  const resetPassword = {
+    ...resetPasswordMutation,
+    mutateAsync: async (variables: { userId: string; password: string }) => {
+      try {
+        await resetPasswordMutation.mutateAsync(variables);
+        toast({
+          title: "Success",
+          description: "Password has been reset successfully",
+          variant: "success",
+        });
+      } catch (error: unknown) {
+        console.error("Error resetting password:", error);
+        toast({
+          title: "Error",
+          description:
+            error instanceof Error ? error.message : "Failed to reset password",
+          variant: "destructive",
+        });
+        throw error;
+      }
+    },
+  } satisfies UseMutationResult<
+    void,
+    unknown,
+    { userId: string; password: string }
+  >;
 
   return {
     createUser,
     updateUser,
     deleteUser,
     resetPassword,
-    isCreating: createUser.isPending,
-    isUpdating: updateUser.isPending,
-    isDeleting: deleteUser.isPending,
-    isResettingPassword: resetPassword.isPending,
+    isCreating: createUserMutation.isPending,
+    isUpdating: updateUserMutation.isPending,
+    isDeleting: deleteUserMutation.isPending,
+    isResettingPassword: resetPasswordMutation.isPending,
   };
 }
