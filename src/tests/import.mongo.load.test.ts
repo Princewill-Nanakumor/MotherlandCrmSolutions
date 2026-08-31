@@ -9,6 +9,7 @@
  *   RUN_IMPORT_MONGO_LOAD=1 npm run test:import-load:vitest
  */
 import { describe, expect, it } from "vitest";
+import type { ImportLoadSuiteReport } from "@/types/importLoadCore";
 import {
   PROFILES,
   resolveMongoUri,
@@ -22,7 +23,9 @@ describe.skipIf(!enabled)("import load (real MongoDB)", () => {
   it(
     "quick profile: single + concurrent tenants, dupes, invalid rows, isolation",
     async () => {
-      const report = await runImportLoadSuiteSafe("quick");
+      const report = (await runImportLoadSuiteSafe(
+        "quick",
+      )) as ImportLoadSuiteReport;
 
       expect(report.failures).toEqual([]);
       expect(report.ok).toBe(true);

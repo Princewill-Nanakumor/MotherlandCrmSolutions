@@ -15,62 +15,92 @@ import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { computeReminderDueAt } from "@/lib/reminderDueAt";
 import { canAccessAllLeads } from "@/lib/roles";
+import { ApiRoutePerf } from "@/lib/apiRoutePerf";
+import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
+import {
+  sessionPerfMark,
+  withSessionPerf,
+} from "@/lib/sessionPerfProbe";
+import { withMongoPerf } from "@/lib/mongoPerfProbe";
 
 // GET - Fetch all reminders for a lead
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return unauthorizedResponse();
-    }
+  const wallStart = Date.now();
+  const [response] = await withMongoPerf(async () => {
+    const perf = new ApiRoutePerf("GET /api/leads/[id]/reminders");
+    try {
+      const [session, sessionProbe] = await withSessionPerf(async () => {
+        sessionPerfMark("getServerSessionEnter");
+        const s = await getServerSession(authOptions);
+        sessionPerfMark("getServerSessionExit");
+        return s;
+      });
+      perf.mark("getServerSession");
+      if (!session) {
+        perf.finish({ status: 401 });
+        return unauthorizedResponse();
+      }
 
-    await connectMongoDB();
-    const { id } = await params;
+      await connectMongoDB();
+      perf.mark("connectMongoDB");
+      const { id } = await params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: "Invalid lead id" }, { status: 400 });
-    }
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        perf.finish({ status: 400 });
+        return NextResponse.json({ error: "Invalid lead id" }, { status: 400 });
+      }
 
-    // Get adminId to ensure we're working within the same organization
-    const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
+      const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
+      perf.mark("adminScope");
 
-    const leadOk = await Lead.findOne(
-      singleLeadAccessFilter(
-        new mongoose.Types.ObjectId(id),
-        new mongoose.Types.ObjectId(adminId),
-        session.user.role,
-        session.user.id,
-        canAccessAllLeads(session.user),
-      ),
-    )
-      .select({ _id: 1 })
-      .lean();
-    if (!leadOk) {
+      const leadOk = await Lead.findOne(
+        singleLeadAccessFilter(
+          new mongoose.Types.ObjectId(id),
+          new mongoose.Types.ObjectId(adminId),
+          session.user.role,
+          session.user.id,
+          canAccessAllLeads(session.user),
+        ),
+      )
+        .select({ _id: 1 })
+        .lean();
+      perf.mark("leadAccessCheck");
+      if (!leadOk) {
+        perf.finish({ status: 404 });
+        return NextResponse.json(
+          { error: "Lead not found or not authorized" },
+          { status: 404 },
+        );
+      }
+
+      const reminders = await Reminder.find({
+        leadId: new mongoose.Types.ObjectId(id),
+        adminId: new mongoose.Types.ObjectId(adminId),
+      })
+        .populate("assignedTo", "firstName lastName")
+        .populate("createdBy", "firstName lastName")
+        .sort({ createdAt: -1 })
+        .lean();
+      perf.mark("fetchReminders");
+
+      return apiPerfJsonResponse(perf, reminders, {
+        sessionProbe,
+        wallMs: Date.now() - wallStart,
+        extra: { count: reminders.length },
+      });
+    } catch (error) {
+      console.error("Error fetching reminders:", error);
+      perf.finish({ error: true, wallMs: Date.now() - wallStart });
       return NextResponse.json(
-        { error: "Lead not found or not authorized" },
-        { status: 404 },
+        { error: "Failed to fetch reminders" },
+        { status: 500 }
       );
     }
-
-    const reminders = await Reminder.find({
-      leadId: new mongoose.Types.ObjectId(id),
-      adminId: new mongoose.Types.ObjectId(adminId),
-    })
-      .populate("assignedTo", "firstName lastName")
-      .populate("createdBy", "firstName lastName")
-      .sort({ createdAt: -1 });
-
-    return NextResponse.json(reminders);
-  } catch (error) {
-    console.error("Error fetching reminders:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch reminders" },
-      { status: 500 }
-    );
-  }
+  });
+  return response;
 }
 
 // POST - Create a new reminder

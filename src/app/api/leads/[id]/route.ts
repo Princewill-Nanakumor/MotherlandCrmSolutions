@@ -13,6 +13,13 @@ import {
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
 import { withAdminScope } from "@/lib/withAdminScope";
+import { ApiRoutePerf } from "@/lib/apiRoutePerf";
+import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
+import {
+  sessionPerfMark,
+  withSessionPerf,
+} from "@/lib/sessionPerfProbe";
+import { withMongoPerf } from "@/lib/mongoPerfProbe";
 import { agentAssignedToUserClause } from "@/lib/leadAssignmentQuery";
 import {
   canAccessAllLeads,
@@ -93,93 +100,104 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return unauthorizedResponse();
-    }
-
-    await connectMongoDB();
-    const { id } = await params;
-
-    const db = mongoose.connection.db;
-    if (!db) throw new Error("Database connection not available");
-
-    // Support legacy numeric leadId, new LD-* leadId, and MongoDB _id.
-    const isLegacyNumericLeadId = /^\d{5,6}$/.test(id);
-    const isPrefixedLeadId = /^LD-[A-Za-z0-9_-]+$/i.test(id);
-    const baseQuery: { _id?: ObjectId; leadId?: string | number } = {};
-
-    if (isLegacyNumericLeadId) {
-      baseQuery.leadId = parseInt(id, 10);
-    } else if (isPrefixedLeadId) {
-      baseQuery.leadId = id.toUpperCase();
-    } else if (mongoose.Types.ObjectId.isValid(id)) {
-      // Search by MongoDB _id
-      baseQuery._id = new ObjectId(id);
-    } else {
-      return NextResponse.json({ error: "Invalid lead ID" }, { status: 400 });
-    }
-
-    const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
-    const query = buildLeadAccessFilter(session, adminScopeId, baseQuery);
-
-    const lead = await db.collection("leads").findOne(query);
-
-    if (!lead) {
-      return NextResponse.json(
-        { error: "Lead not found or not authorized" },
-        { status: 404 },
-      );
-    }
-
-    // Heal orphaned custom status values (status document was deleted).
-    // Without this, the details panel shows the raw Mongo id.
-    const rawStatus = String(lead.status ?? "").trim();
-    const knownDefaults = new Set([
-      "NEW",
-      "CONTACTED",
-      "IN_PROGRESS",
-      "QUALIFIED",
-      "LOST",
-      "WON",
-    ]);
-    if (
-      rawStatus &&
-      !knownDefaults.has(rawStatus.toUpperCase()) &&
-      mongoose.Types.ObjectId.isValid(rawStatus)
-    ) {
-      const statusOid = new ObjectId(rawStatus);
-      const adminOid = new ObjectId(adminScopeId);
-      const statusExists =
-        (await db.collection("status").findOne({
-          _id: statusOid,
-          adminId: adminOid,
-        })) ||
-        (await db.collection("statuses").findOne({
-          _id: statusOid,
-          adminId: adminOid,
-        }));
-      if (!statusExists) {
-        const now = new Date();
-        await db.collection("leads").updateOne(
-          { _id: lead._id },
-          {
-            $set: {
-              status: "NEW",
-              statusChangedAt: now,
-              updatedAt: now,
-            },
-          },
-        );
-        lead.status = "NEW";
-        lead.statusChangedAt = now;
-        lead.updatedAt = now;
+  const wallStart = Date.now();
+  const [response] = await withMongoPerf(async () => {
+    const perf = new ApiRoutePerf("GET /api/leads/[id]");
+    try {
+      const [session, sessionProbe] = await withSessionPerf(async () => {
+        sessionPerfMark("getServerSessionEnter");
+        const s = await getServerSession(authOptions);
+        sessionPerfMark("getServerSessionExit");
+        return s;
+      });
+      perf.mark("getServerSession");
+      if (!session) {
+        perf.finish({ status: 401 });
+        return unauthorizedResponse();
       }
-    }
 
-    // Normalize assignedTo: in DB it can be ObjectId, string, or object { _id, firstName, lastName }
-    let assignedToUserId: ObjectId | string | null = null;
+      await connectMongoDB();
+      perf.mark("connectMongoDB");
+      const { id } = await params;
+
+      const db = mongoose.connection.db;
+      if (!db) throw new Error("Database connection not available");
+
+      const isLegacyNumericLeadId = /^\d{5,6}$/.test(id);
+      const isPrefixedLeadId = /^LD-[A-Za-z0-9_-]+$/i.test(id);
+      const baseQuery: { _id?: ObjectId; leadId?: string | number } = {};
+
+      if (isLegacyNumericLeadId) {
+        baseQuery.leadId = parseInt(id, 10);
+      } else if (isPrefixedLeadId) {
+        baseQuery.leadId = id.toUpperCase();
+      } else if (mongoose.Types.ObjectId.isValid(id)) {
+        baseQuery._id = new ObjectId(id);
+      } else {
+        perf.finish({ status: 400 });
+        return NextResponse.json({ error: "Invalid lead ID" }, { status: 400 });
+      }
+
+      const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
+      perf.mark("adminScope");
+      const query = buildLeadAccessFilter(session, adminScopeId, baseQuery);
+
+      const lead = await db.collection("leads").findOne(query);
+      perf.mark("findLead");
+
+      if (!lead) {
+        perf.finish({ status: 404 });
+        return NextResponse.json(
+          { error: "Lead not found or not authorized" },
+          { status: 404 },
+        );
+      }
+
+      const rawStatus = String(lead.status ?? "").trim();
+      const knownDefaults = new Set([
+        "NEW",
+        "CONTACTED",
+        "IN_PROGRESS",
+        "QUALIFIED",
+        "LOST",
+        "WON",
+      ]);
+      if (
+        rawStatus &&
+        !knownDefaults.has(rawStatus.toUpperCase()) &&
+        mongoose.Types.ObjectId.isValid(rawStatus)
+      ) {
+        const statusOid = new ObjectId(rawStatus);
+        const adminOid = new ObjectId(adminScopeId);
+        const statusExists =
+          (await db.collection("status").findOne({
+            _id: statusOid,
+            adminId: adminOid,
+          })) ||
+          (await db.collection("statuses").findOne({
+            _id: statusOid,
+            adminId: adminOid,
+          }));
+        if (!statusExists) {
+          const now = new Date();
+          await db.collection("leads").updateOne(
+            { _id: lead._id },
+            {
+              $set: {
+                status: "NEW",
+                statusChangedAt: now,
+                updatedAt: now,
+              },
+            },
+          );
+          lead.status = "NEW";
+          lead.statusChangedAt = now;
+          lead.updatedAt = now;
+        }
+      }
+      perf.mark("statusHeal");
+
+      let assignedToUserId: ObjectId | string | null = null;
     if (lead.assignedTo) {
       if (
         typeof lead.assignedTo === "object" &&
@@ -194,11 +212,11 @@ export async function GET(
       }
     }
 
-    // Populate assignedTo with user details
     const assignedToUser = await getAssignedToUser(
       db as unknown as Db,
       assignedToUserId,
     );
+    perf.mark("assignedToUser");
 
     const transformedLead = {
       _id: lead._id.toString(),
@@ -242,14 +260,20 @@ export async function GET(
       comments: lead.comments || "",
     };
 
-    return NextResponse.json(transformedLead);
+    return apiPerfJsonResponse(perf, transformedLead, {
+      sessionProbe,
+      wallMs: Date.now() - wallStart,
+    });
   } catch (error) {
     console.error("Error fetching lead:", error);
+    perf.finish({ error: true, wallMs: Date.now() - wallStart });
     return NextResponse.json(
       { error: "Failed to fetch lead" },
       { status: 500 },
     );
   }
+  });
+  return response;
 }
 
 // PUT /api/leads/[id]

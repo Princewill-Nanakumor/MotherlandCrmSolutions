@@ -11,6 +11,7 @@ import {
 import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
 import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { isTimelineChurnAdminEvent } from "@/lib/leadPanelRealtimeSync";
 
 /**
  * Subscribes to tenant lead events after first paint so Ably scope/token
@@ -60,6 +61,34 @@ export function TenantLeadsRealtimeSync() {
         eventType === "imports_cleared" ||
         eventType === "import_progress";
       const importTouchedLeads = (eventData.deletedLeads ?? 0) > 0;
+
+      // Comment/reminder CRUD already patches detail caches in the panel mutation.
+      // Do not invalidate ["leads"] + refetch activities here — that refetches
+      // /api/leads/all and the full timeline (~5s) on every delete.
+      if (isTimelineChurnAdminEvent(eventType)) {
+        const leadId = eventData.leadId;
+        if (leadId) {
+          if (eventType.startsWith("comment_")) {
+            void queryClient.invalidateQueries({
+              queryKey: ["comments", leadId],
+              exact: true,
+              refetchType: "inactive",
+            });
+          }
+          if (eventType.startsWith("reminder_")) {
+            void queryClient.invalidateQueries({
+              queryKey: ["reminders", leadId],
+              exact: true,
+              refetchType: "inactive",
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ["activities", leadId],
+              refetchType: "none",
+            });
+          }
+        }
+        return;
+      }
 
       if (eventType === "import_progress") {
         void queryClient.invalidateQueries({ queryKey: ["import-history"] });

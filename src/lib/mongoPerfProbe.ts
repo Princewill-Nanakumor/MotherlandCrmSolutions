@@ -106,6 +106,13 @@ export async function probeMongoQuery<T>(
   }
 }
 
+/** Time mongoose.connect / pool checkout (inFlight count = contention signal). */
+export async function probeMongoConnect(
+  label = "connectMongoDB",
+): Promise<typeof mongoose> {
+  return probeMongoQuery(label, "mongoose", () => connectMongoDB());
+}
+
 /** Compact header: label=ms(detail)|... */
 export function formatMongoPerfHeader(
   probe: MongoPerfProbe | null,

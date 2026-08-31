@@ -13,6 +13,13 @@ import {
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 import { canAccessAllLeads, canDeleteComments, getTenantAdminId } from "@/lib/roles";
+import { ApiRoutePerf } from "@/lib/apiRoutePerf";
+import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
+import {
+  sessionPerfMark,
+  withSessionPerf,
+} from "@/lib/sessionPerfProbe";
+import { withMongoPerf } from "@/lib/mongoPerfProbe";
 
 function extractParamsFromUrl(urlString: string): {
   id: string;
@@ -79,27 +86,33 @@ async function authorizeAndResolveComment(
     return { ok: false, status: 400, message: "Invalid id" };
   }
 
-  const lead = await Lead.findOne(
-    singleLeadAccessFilter(
-      new mongoose.Types.ObjectId(leadId),
-      scopedAdminId,
-      sessionUser.role,
-      sessionUser.id,
-      canAccessAllLeads(sessionUser),
-    ),
-  )
-    .select({ _id: 1 })
-    .lean();
+  const leadObjectId = new mongoose.Types.ObjectId(leadId);
+  const commentObjectId = new mongoose.Types.ObjectId(commentId);
+
+  const [lead, comment] = await Promise.all([
+    Lead.findOne(
+      singleLeadAccessFilter(
+        leadObjectId,
+        scopedAdminId,
+        sessionUser.role,
+        sessionUser.id,
+        canAccessAllLeads(sessionUser),
+      ),
+    )
+      .select({ _id: 1 })
+      .lean(),
+    Comment.findOne({
+      _id: commentObjectId,
+      leadId: leadObjectId,
+    }).lean() as Promise<CommentDocument | null>,
+  ]);
+
   if (!lead) {
     return { ok: false, status: 404, message: "Lead not found or not authorized" };
   }
 
   const canModerate = canDeleteComments(sessionUser);
 
-  const comment = (await Comment.findOne({
-    _id: new mongoose.Types.ObjectId(commentId),
-    leadId: new mongoose.Types.ObjectId(leadId),
-  }).lean()) as CommentDocument | null;
   if (!comment) {
     return { ok: false, status: 404, message: "Comment not found" };
   }
@@ -212,66 +225,98 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  try {
-    const { id, commentId } = extractParamsFromUrl(request.url);
-    const session = (await getServerSession(authOptions)) as Session | null;
-    if (!session) return unauthorizedResponse();
+  const wallStart = Date.now();
+  const [response] = await withMongoPerf(async () => {
+    const perf = new ApiRoutePerf("DELETE /api/leads/[id]/comments/[commentId]");
+    try {
+      const { id, commentId } = extractParamsFromUrl(request.url);
+      const [session, sessionProbe] = await withSessionPerf(async () => {
+        sessionPerfMark("getServerSessionEnter");
+        const s = (await getServerSession(authOptions)) as Session | null;
+        sessionPerfMark("getServerSessionExit");
+        return s;
+      });
+      perf.mark("getServerSession");
+      if (!session) {
+        perf.finish({ status: 401 });
+        return unauthorizedResponse();
+      }
 
-    await connectMongoDB();
-    const adminId = getCorrectAdminId(session);
-    if (!adminId) return forbiddenResponse("Admin scope unresolved");
+      await connectMongoDB();
+      perf.mark("connectMongoDB");
+      const adminId = getCorrectAdminId(session);
+      if (!adminId) {
+        perf.finish({ status: 403 });
+        return forbiddenResponse("Admin scope unresolved");
+      }
 
-    const auth = await authorizeAndResolveComment(
-      commentId,
-      id,
-      adminId,
-      session.user,
-    );
-    if (!auth.ok) {
-      return NextResponse.json({ message: auth.message }, { status: auth.status });
-    }
+      const auth = await authorizeAndResolveComment(
+        commentId,
+        id,
+        adminId,
+        session.user,
+      );
+      perf.mark("authorizeComment");
+      if (!auth.ok) {
+        perf.finish({ status: auth.status });
+        return NextResponse.json({ message: auth.message }, { status: auth.status });
+      }
 
-    const canonicalLeadId = auth.comment.leadId.toString();
+      const canonicalLeadId = auth.comment.leadId.toString();
 
-    const deleted = await Comment.findOneAndDelete({
-      _id: auth.comment._id,
-      adminId,
-    }).lean<CommentDocument>();
+      const deleted = await Comment.findOneAndDelete({
+        _id: auth.comment._id,
+        adminId,
+      }).lean<CommentDocument>();
+      perf.mark("deleteComment");
 
-    if (!deleted) {
+      if (!deleted) {
+        perf.finish({ status: 404 });
+        return NextResponse.json(
+          { message: "Comment not found or not authorized" },
+          { status: 404 },
+        );
+      }
+
+      const activityAt = new Date();
+      await Lead.updateOne(
+        { _id: auth.comment.leadId, adminId },
+        { $set: { lastActivityAt: activityAt, updatedAt: activityAt } },
+      );
+      perf.mark("touchLeadActivity");
+
+      try {
+        void publishLeadUpdatedEvent(adminId.toString(), canonicalLeadId, {
+          type: "comment_deleted",
+          leadId: canonicalLeadId,
+          commentId: deleted._id.toString(),
+        }).catch((publishError) => {
+          console.error("Failed to publish realtime comment delete event:", publishError);
+        });
+        void publishAdminLeadsUpdatedEvent(adminId.toString(), {
+          type: "comment_deleted",
+          leadId: canonicalLeadId,
+          commentId: deleted._id.toString(),
+        }).catch((publishError) => {
+          console.error("Failed to publish admin comment delete event:", publishError);
+        });
+        perf.mark("publishAblyQueued");
+      } catch (publishError) {
+        console.error("Failed to queue realtime comment delete event:", publishError);
+      }
+
+      return apiPerfJsonResponse(perf, { success: true }, {
+        sessionProbe,
+        wallMs: Date.now() - wallStart,
+      });
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      perf.finish({ error: true, wallMs: Date.now() - wallStart });
       return NextResponse.json(
-        { message: "Comment not found or not authorized" },
-        { status: 404 },
+        { message: "Error deleting comment" },
+        { status: 500 },
       );
     }
-
-    const activityAt = new Date();
-    await Lead.updateOne(
-      { _id: auth.comment.leadId, adminId },
-      { $set: { lastActivityAt: activityAt, updatedAt: activityAt } },
-    );
-
-    try {
-      await publishLeadUpdatedEvent(adminId.toString(), canonicalLeadId, {
-        type: "comment_deleted",
-        leadId: canonicalLeadId,
-        commentId: deleted._id.toString(),
-      });
-      await publishAdminLeadsUpdatedEvent(adminId.toString(), {
-        type: "comment_deleted",
-        leadId: canonicalLeadId,
-        commentId: deleted._id.toString(),
-      });
-    } catch (publishError) {
-      console.error("Failed to publish realtime comment delete event:", publishError);
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error deleting comment:", error);
-    return NextResponse.json(
-      { message: "Error deleting comment" },
-      { status: 500 },
-    );
-  }
+  });
+  return response;
 }

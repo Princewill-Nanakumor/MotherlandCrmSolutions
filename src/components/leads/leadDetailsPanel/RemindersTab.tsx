@@ -65,10 +65,10 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
         if (list.some((reminder) => reminder._id === created._id)) return list;
         return [created, ...list];
       });
-      queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
-      queryClient.refetchQueries({ queryKey: ["activities", leadId] });
+      queryClient.invalidateQueries({
+        queryKey: ["activities", leadId],
+        refetchType: "none",
+      });
       toast({
         title: "Success",
         description: "Reminder created successfully",
@@ -145,18 +145,19 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
         });
       }
     },
-    onSuccess: async (data, variables) => {
-      // Force immediate refetch from server to ensure data is fresh
-      await queryClient.refetchQueries({
-        queryKey: ["reminders", leadId],
-        exact: true,
-      });
+    onSuccess: (updated, variables) => {
+      if (updated?._id) {
+        queryClient.setQueryData<Reminder[]>(["reminders", leadId], (old) =>
+          (old ?? []).map((reminder) =>
+            reminder._id === updated._id ? updated : reminder,
+          ),
+        );
+      }
 
-      // Refresh timeline - reminder updates create activity logs
-      queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
-      queryClient.refetchQueries({ queryKey: ["activities", leadId] });
+      queryClient.invalidateQueries({
+        queryKey: ["activities", leadId],
+        refetchType: "none",
+      });
 
       // Only show toast for non-sound toggle updates
       if (!variables.updates.hasOwnProperty("soundEnabled")) {
@@ -182,10 +183,11 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
       queryClient.setQueryData<Reminder[]>(["reminders", leadId], (old) =>
         (old ?? []).filter((reminder) => reminder._id !== reminderId),
       );
-      queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
-      queryClient.refetchQueries({ queryKey: ["activities", leadId] });
+      // Defer timeline refresh — avoid refetching 100+ activities while on Reminders tab.
+      queryClient.invalidateQueries({
+        queryKey: ["activities", leadId],
+        refetchType: "none",
+      });
       toast({
         title: "Success",
         description: "Reminder deleted",

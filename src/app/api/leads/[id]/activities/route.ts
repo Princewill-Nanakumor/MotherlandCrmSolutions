@@ -3,12 +3,18 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import Activity from "@/models/Activity";
 import Lead from "@/models/Lead";
-import User from "@/models/User";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 import { canAccessAllLeads, getTenantAdminId } from "@/lib/roles";
+import { ApiRoutePerf } from "@/lib/apiRoutePerf";
+import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
+import {
+  sessionPerfMark,
+  withSessionPerf,
+} from "@/lib/sessionPerfProbe";
+import { withMongoPerf } from "@/lib/mongoPerfProbe";
 
 // Bounded LRU-ish cache for status name resolution. Module-level caches in
 // serverless environments otherwise grow unbounded across invocations.
@@ -129,76 +135,82 @@ function actorFromMetadata(
 }
 
 export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) return unauthorizedResponse();
+  const wallStart = Date.now();
+  const [response] = await withMongoPerf(async () => {
+    const perf = new ApiRoutePerf("GET /api/leads/[id]/activities");
+    try {
+      const [session, sessionProbe] = await withSessionPerf(async () => {
+        sessionPerfMark("getServerSessionEnter");
+        const s = await getServerSession(authOptions);
+        sessionPerfMark("getServerSessionExit");
+        return s;
+      });
+      perf.mark("getServerSession");
+      if (!session?.user) return unauthorizedResponse();
 
-    const url = new URL(request.url);
-    const pathParts = url.pathname.split("/");
-    const leadId = pathParts[pathParts.length - 2];
+      const url = new URL(request.url);
+      const pathParts = url.pathname.split("/");
+      const leadId = pathParts[pathParts.length - 2];
 
-    if (!mongoose.Types.ObjectId.isValid(leadId)) {
-      return NextResponse.json({ message: "Invalid lead id" }, { status: 400 });
-    }
+      if (!mongoose.Types.ObjectId.isValid(leadId)) {
+        perf.finish({ status: 400 });
+        return NextResponse.json({ message: "Invalid lead id" }, { status: 400 });
+      }
 
-    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"));
-    const limit = Math.min(
-      100,
-      Math.max(1, parseInt(url.searchParams.get("limit") || "20")),
-    );
-    const skip = (page - 1) * limit;
-
-    await connectMongoDB();
-    const tenantId = getTenantAdminId(session.user);
-    if (!tenantId) return forbiddenResponse("Admin scope unresolved");
-    const adminId = new mongoose.Types.ObjectId(tenantId);
-
-    // Force User model registration so populate() resolves correctly.
-    if (!mongoose.models.User) {
-      void User;
-    }
-
-    const leadObjectId = new mongoose.Types.ObjectId(leadId);
-
-    // Verify the lead is in the caller's tenant before returning any
-    // activities, otherwise legacy activities (no adminId) could leak.
-    const lead = await Lead.findOne(
-      singleLeadAccessFilter(
-        leadObjectId,
-        adminId,
-        session.user.role,
-        session.user.id,
-        canAccessAllLeads(session.user),
-      ),
-    )
-      .select({ _id: 1 })
-      .lean();
-    if (!lead) {
-      return NextResponse.json(
-        { message: "Lead not found or not authorized" },
-        { status: 404 },
+      const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"));
+      const limit = Math.min(
+        100,
+        Math.max(1, parseInt(url.searchParams.get("limit") || "20")),
       );
-    }
+      const skip = (page - 1) * limit;
 
-    // Exclude COMMENT activities — comments are shown directly in the comments
-    // pane. We also exclude null types to avoid false negatives from $ne.
-    const query: Record<string, unknown> = {
-      leadId: leadObjectId,
-      type: { $nin: ["COMMENT", null] },
-      $or: [
-        { adminId },
-        { adminId: { $exists: false } },
-        { adminId: null },
-      ],
-    };
+      await connectMongoDB();
+      perf.mark("connectMongoDB");
+      const tenantId = getTenantAdminId(session.user);
+      if (!tenantId) {
+        perf.finish({ status: 403 });
+        return forbiddenResponse("Admin scope unresolved");
+      }
+      const adminId = new mongoose.Types.ObjectId(tenantId);
 
-    // Find activities with proper population and multi-tenancy filter
-    const activities = await Activity.find(query)
-      .populate("userId", "firstName lastName")
-      .sort({ timestamp: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+      const leadObjectId = new mongoose.Types.ObjectId(leadId);
+
+      const lead = await Lead.findOne(
+        singleLeadAccessFilter(
+          leadObjectId,
+          adminId,
+          session.user.role,
+          session.user.id,
+          canAccessAllLeads(session.user),
+        ),
+      )
+        .select({ _id: 1 })
+        .lean();
+      perf.mark("leadAccessCheck");
+      if (!lead) {
+        perf.finish({ status: 404 });
+        return NextResponse.json(
+          { message: "Lead not found or not authorized" },
+          { status: 404 },
+        );
+      }
+
+      const query: Record<string, unknown> = {
+        leadId: leadObjectId,
+        type: { $nin: ["COMMENT", null] },
+        $or: [
+          { adminId },
+          { adminId: { $exists: false } },
+          { adminId: null },
+        ],
+      };
+
+      const activities = await Activity.find(query)
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+      perf.mark("fetchActivities");
 
     // Collect status IDs for resolution
     const statusIds = new Set<string>();
@@ -220,6 +232,7 @@ export async function GET(request: NextRequest) {
 
     // Resolve status names
     const statusNames = await resolveStatusNames(statusIds);
+    perf.mark("resolveStatusNames");
 
     // Transform activities
     const transformedActivities = activities.map((activity: unknown) => {
@@ -290,7 +303,11 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json(transformedActivities);
+    return apiPerfJsonResponse(perf, transformedActivities, {
+      sessionProbe,
+      wallMs: Date.now() - wallStart,
+      extra: { count: transformedActivities.length },
+    });
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error("Error message:", error.message);
@@ -299,9 +316,12 @@ export async function GET(request: NextRequest) {
       console.error("Unknown error type:", typeof error);
       console.error("Error value:", error);
     }
+    perf.finish({ error: true, wallMs: Date.now() - wallStart });
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
     );
   }
+  });
+  return response;
 }

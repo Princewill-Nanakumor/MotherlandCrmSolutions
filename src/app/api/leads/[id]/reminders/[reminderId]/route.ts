@@ -16,6 +16,24 @@ import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { computeReminderDueAt, reminderDateToYmd } from "@/lib/reminderDueAt";
 import { canAccessAllLeads, canManageReminders } from "@/lib/roles";
+import { ApiRoutePerf } from "@/lib/apiRoutePerf";
+import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
+import {
+  sessionPerfMark,
+  withSessionPerf,
+} from "@/lib/sessionPerfProbe";
+import { withMongoPerf } from "@/lib/mongoPerfProbe";
+
+type ReminderDeleteLean = {
+  _id: mongoose.Types.ObjectId;
+  leadId: mongoose.Types.ObjectId;
+  status: string;
+  createdBy: mongoose.Types.ObjectId;
+  title: string;
+  type: string;
+  reminderDate: Date;
+  reminderTime: string;
+};
 
 // PUT - Update reminder (complete, snooze, edit)
 export async function PUT(
@@ -267,174 +285,173 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string; reminderId: string }> }
 ) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return unauthorizedResponse();
-    }
-
-    await connectMongoDB();
-    const { reminderId, id } = await params;
-
-    // Get adminId to ensure we're working within the same organization
-    const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
-
-    if (!adminId) {
-      return NextResponse.json(
-        { error: "Admin ID not found" },
-        { status: 400 }
-      );
-    }
-
-    // Get the reminder before deleting it for activity logging
-    // Users can only delete reminders they created (unless they're admin)
-    // Completed reminders can only be deleted by admins
-    const reminder = await Reminder.findOne({
-      _id: reminderId,
-      adminId: adminId, // Ensure reminder belongs to the same organization
-    });
-
-    if (!reminder) {
-      return NextResponse.json(
-        {
-          error: "Reminder not found or you don't have permission to delete it",
-        },
-        { status: 404 },
-      );
-    }
-
-    const delReminderLeadId = String(reminder.leadId);
-    if (delReminderLeadId !== id || !mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { error: "Reminder not found" },
-        { status: 404 },
-      );
-    }
-
-    const delLeadAccess = await Lead.findOne(
-      singleLeadAccessFilter(
-        new mongoose.Types.ObjectId(id),
-        new mongoose.Types.ObjectId(adminId),
-        session.user.role,
-        session.user.id,
-        canAccessAllLeads(session.user),
-      ),
-    )
-      .select({ _id: 1 })
-      .lean();
-    if (!delLeadAccess) {
-      return NextResponse.json(
-        { error: "Lead not found or not authorized" },
-        { status: 404 },
-      );
-    }
-
-    const canManageAllReminders = canManageReminders(session.user);
-
-    if (
-      reminder &&
-      reminder.status === "COMPLETED" &&
-      !canManageAllReminders
-    ) {
-      return NextResponse.json(
-        {
-          error: "You do not have permission to delete completed reminders",
-        },
-        { status: 403 }
-      );
-    }
-
-    // For non-completed reminders, non-managers can only delete their own
-    if (
-      reminder &&
-      reminder.status !== "COMPLETED" &&
-      !canManageAllReminders
-    ) {
-      const ownReminder = await Reminder.findOne({
-        _id: reminderId,
-        adminId: adminId,
-        createdBy: session.user.id,
+  const wallStart = Date.now();
+  const [response] = await withMongoPerf(async () => {
+    const perf = new ApiRoutePerf("DELETE /api/leads/[id]/reminders/[reminderId]");
+    try {
+      const [session, sessionProbe] = await withSessionPerf(async () => {
+        sessionPerfMark("getServerSessionEnter");
+        const s = await getServerSession(authOptions);
+        sessionPerfMark("getServerSessionExit");
+        return s;
       });
+      perf.mark("getServerSession");
+      if (!session) {
+        perf.finish({ status: 401 });
+        return unauthorizedResponse();
+      }
 
-      if (!ownReminder) {
+      await connectMongoDB();
+      perf.mark("connectMongoDB");
+      const { reminderId, id } = await params;
+
+      const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
+      perf.mark("adminScope");
+
+      if (!adminId) {
+        perf.finish({ status: 400 });
+        return NextResponse.json(
+          { error: "Admin ID not found" },
+          { status: 400 }
+        );
+      }
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        perf.finish({ status: 400 });
+        return NextResponse.json({ error: "Invalid lead id" }, { status: 400 });
+      }
+
+      const leadObjectId = new mongoose.Types.ObjectId(id);
+      const adminObjectId = new mongoose.Types.ObjectId(adminId);
+
+      const [reminder, delLeadAccess] = await Promise.all([
+        Reminder.findOne({ _id: reminderId, adminId }).lean<ReminderDeleteLean>(),
+        Lead.findOne(
+          singleLeadAccessFilter(
+            leadObjectId,
+            adminObjectId,
+            session.user.role,
+            session.user.id,
+            canAccessAllLeads(session.user),
+          ),
+        )
+          .select({ _id: 1 })
+          .lean(),
+      ]);
+      perf.mark("loadReminderAndLead");
+
+      if (!reminder) {
+        perf.finish({ status: 404 });
         return NextResponse.json(
           {
-            error: "You can only delete reminders you created",
+            error: "Reminder not found or you don't have permission to delete it",
+          },
+          { status: 404 },
+        );
+      }
+
+      if (String(reminder.leadId) !== id || !delLeadAccess) {
+        perf.finish({ status: 404 });
+        return NextResponse.json(
+          { error: "Reminder not found" },
+          { status: 404 },
+        );
+      }
+
+      const canManageAllReminders = canManageReminders(session.user);
+
+      if (reminder.status === "COMPLETED" && !canManageAllReminders) {
+        perf.finish({ status: 403 });
+        return NextResponse.json(
+          {
+            error: "You do not have permission to delete completed reminders",
           },
           { status: 403 }
         );
       }
-    }
 
-    // Delete the reminder based on the permission logic above
-    const deleteQuery: {
-      _id: string;
-      adminId: string;
-      createdBy?: string;
-    } = {
-      _id: reminderId,
-      adminId: adminId,
-    };
+      if (
+        reminder.status !== "COMPLETED" &&
+        !canManageAllReminders &&
+        String(reminder.createdBy) !== session.user.id
+      ) {
+        perf.finish({ status: 403 });
+        return NextResponse.json(
+          { error: "You can only delete reminders you created" },
+          { status: 403 },
+        );
+      }
 
-    // For non-completed reminders, non-assigners can only delete their own
-    if (reminder.status !== "COMPLETED" && !canManageAllReminders) {
-      deleteQuery.createdBy = session.user.id;
-    }
+      const deleteQuery: {
+        _id: string;
+        adminId: string;
+        createdBy?: string;
+      } = {
+        _id: reminderId,
+        adminId: adminId,
+      };
 
-    await Reminder.findOneAndDelete(deleteQuery);
+      if (reminder.status !== "COMPLETED" && !canManageAllReminders) {
+        deleteQuery.createdBy = session.user.id;
+      }
 
-    // Create activity log for reminder deletion
-    try {
+      await Reminder.findOneAndDelete(deleteQuery);
+      perf.mark("deleteReminder");
+
       const activityAt = new Date();
-      await Activity.create({
-        type: "REMINDER_DELETED",
-        userId: new mongoose.Types.ObjectId(session.user.id),
-        details: `Deleted reminder: ${reminder.title}`,
-        leadId: new mongoose.Types.ObjectId(id),
-        adminId: new mongoose.Types.ObjectId(adminId),
-        timestamp: activityAt,
-        metadata: {
-          reminderId: reminder._id.toString(),
-          reminderTitle: reminder.title,
-          reminderType: reminder.type,
-          reminderStatus: reminder.status,
-          reminderDate: reminder.reminderDate.toISOString(),
-          reminderTime: reminder.reminderTime,
-        },
+      try {
+        await Promise.all([
+          Activity.create({
+            type: "REMINDER_DELETED",
+            userId: new mongoose.Types.ObjectId(session.user.id),
+            details: `Deleted reminder: ${reminder.title}`,
+            leadId: leadObjectId,
+            adminId: adminObjectId,
+            timestamp: activityAt,
+            metadata: {
+              reminderId: String(reminder._id),
+              reminderTitle: reminder.title,
+              reminderType: reminder.type,
+              reminderStatus: reminder.status,
+              reminderDate: new Date(reminder.reminderDate).toISOString(),
+              reminderTime: reminder.reminderTime,
+            },
+          }),
+          Lead.updateOne(
+            { _id: leadObjectId, adminId: adminObjectId },
+            { $set: { lastActivityAt: activityAt, updatedAt: activityAt } },
+          ),
+        ]);
+        perf.mark("activityAndLeadTouch");
+      } catch (activityError) {
+        console.error("Error logging reminder deletion activity:", activityError);
+      }
+
+      void publishAdminLeadsUpdatedEvent(String(adminId), {
+        type: "reminder_deleted",
+        leadId: id,
+        reminderId: String(reminder._id),
+      }).catch((publishError) => {
+        console.error("Failed to publish realtime reminder delete event:", publishError);
       });
-      await Lead.updateOne(
+      perf.mark("publishAblyQueued");
+
+      return apiPerfJsonResponse(
+        perf,
+        { message: "Reminder deleted successfully" },
         {
-          _id: new mongoose.Types.ObjectId(id),
-          adminId: new mongoose.Types.ObjectId(adminId),
+          sessionProbe,
+          wallMs: Date.now() - wallStart,
         },
-        { $set: { lastActivityAt: activityAt, updatedAt: activityAt } },
       );
-    } catch (activityError) {
-      console.error("Error logging reminder deletion activity:", activityError);
-      // Don't fail the request if activity logging fails
+    } catch (error) {
+      console.error("Error deleting reminder:", error);
+      perf.finish({ error: true, wallMs: Date.now() - wallStart });
+      return NextResponse.json(
+        { error: "Failed to delete reminder" },
+        { status: 500 }
+      );
     }
-
-    try {
-      await publishLeadUpdatedEvent(String(adminId), id, {
-        type: "reminder_deleted",
-        leadId: id,
-        reminderId: reminder._id.toString(),
-      });
-      await publishAdminLeadsUpdatedEvent(String(adminId), {
-        type: "reminder_deleted",
-        leadId: id,
-        reminderId: reminder._id.toString(),
-      });
-    } catch (publishError) {
-      console.error("Failed to publish realtime reminder delete event:", publishError);
-    }
-
-    return NextResponse.json({ message: "Reminder deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting reminder:", error);
-    return NextResponse.json(
-      { error: "Failed to delete reminder" },
-      { status: 500 }
-    );
-  }
+  });
+  return response;
 }

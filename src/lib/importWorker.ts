@@ -376,7 +376,9 @@ export async function runImportWorkerTick(options?: {
     const { chunks, done } = await processClaimedImport(job, claimId);
     result.chunksProcessed += chunks;
 
-    const after = await Import.findById(job._id).select("status").lean();
+    const after = await Import.findById(job._id)
+      .select("status")
+      .lean<{ status: string }>();
     if (after?.status === "completed") result.completed += 1;
     if (after?.status === "failed") result.failed += 1;
     void beforeStatus;

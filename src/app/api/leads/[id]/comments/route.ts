@@ -13,6 +13,13 @@ import {
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 import { canAccessAllLeads, getTenantAdminId } from "@/lib/roles";
+import { ApiRoutePerf } from "@/lib/apiRoutePerf";
+import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
+import {
+  sessionPerfMark,
+  withSessionPerf,
+} from "@/lib/sessionPerfProbe";
+import { probeMongoConnect, probeMongoQuery, withMongoPerf } from "@/lib/mongoPerfProbe";
 
 function extractLeadIdFromUrl(urlString: string): string {
   const url = new URL(urlString);
@@ -38,56 +45,90 @@ function getCorrectAdminId(session: Session): mongoose.Types.ObjectId | null {
 }
 
 export async function GET(request: Request) {
-  try {
-    const id = extractLeadIdFromUrl(request.url);
-    const session = (await getServerSession(authOptions)) as Session | null;
-    if (!session) return unauthorizedResponse();
+  const wallStart = Date.now();
+  const [response] = await withMongoPerf(async () => {
+    const perf = new ApiRoutePerf("GET /api/leads/[id]/comments");
+    try {
+      const id = extractLeadIdFromUrl(request.url);
+      const [session, sessionProbe] = await withSessionPerf(async () => {
+        sessionPerfMark("getServerSessionEnter");
+        const s = (await getServerSession(authOptions)) as Session | null;
+        sessionPerfMark("getServerSessionExit");
+        return s;
+      });
+      perf.mark("getServerSession");
+      if (!session) return unauthorizedResponse();
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ message: "Invalid lead id" }, { status: 400 });
-    }
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        perf.finish({ status: 400 });
+        return NextResponse.json({ message: "Invalid lead id" }, { status: 400 });
+      }
 
-    await connectMongoDB();
-    const adminId = getCorrectAdminId(session);
-    if (!adminId) return forbiddenResponse("Admin scope unresolved");
+      await probeMongoConnect();
+      perf.mark("connectMongoDB");
+      const adminId = getCorrectAdminId(session);
+      if (!adminId) {
+        perf.finish({ status: 403 });
+        return forbiddenResponse("Admin scope unresolved");
+      }
 
-    const leadObjectId = new mongoose.Types.ObjectId(id);
+      const leadObjectId = new mongoose.Types.ObjectId(id);
 
-    // Verify the lead is in the caller's tenant before returning any comments,
-    // so legacy comments (without adminId) cannot leak across tenants.
-    const lead = await Lead.findOne(
-      singleLeadAccessFilter(
-        leadObjectId,
-        adminId,
-        session.user.role,
-        session.user.id,
-        canAccessAllLeads(session.user),
-      ),
-    )
-      .select({ _id: 1 })
-      .lean();
-    if (!lead) {
+      const lead = await probeMongoQuery(
+        "leadAccessCheck",
+        "mongoose",
+        () =>
+          Lead.findOne(
+            singleLeadAccessFilter(
+              leadObjectId,
+              adminId,
+              session.user.role,
+              session.user.id,
+              canAccessAllLeads(session.user),
+            ),
+          )
+            .select({ _id: 1 })
+            .lean(),
+        { collection: "leads", filter: { _id: String(leadObjectId) } },
+      );
+      perf.mark("leadAccessCheck");
+      if (!lead) {
+        perf.finish({ status: 404 });
+        return NextResponse.json(
+          { message: "Lead not found or not authorized" },
+          { status: 404 },
+        );
+      }
+
+      const comments = await probeMongoQuery(
+        "fetchComments",
+        "mongoose",
+        () =>
+          Comment.find({
+            leadId: leadObjectId,
+            $or: [{ adminId }, { adminId: { $exists: false } }, { adminId: null }],
+          })
+            .sort({ createdAt: -1 })
+            .lean<IComment[]>(),
+        { collection: "comments", filter: { leadId: String(leadObjectId) } },
+      );
+      perf.mark("fetchComments");
+
+      return apiPerfJsonResponse(perf, comments, {
+        sessionProbe,
+        wallMs: Date.now() - wallStart,
+        extra: { count: comments.length },
+      });
+    } catch (error) {
+      console.error("Error in comments GET endpoint:", error);
+      perf.finish({ error: true, wallMs: Date.now() - wallStart });
       return NextResponse.json(
-        { message: "Lead not found or not authorized" },
-        { status: 404 },
+        { success: false, message: "Error fetching comments" },
+        { status: 500 },
       );
     }
-
-    const comments = await Comment.find({
-      leadId: leadObjectId,
-      $or: [{ adminId }, { adminId: { $exists: false } }, { adminId: null }],
-    })
-      .sort({ createdAt: -1 })
-      .lean<IComment[]>();
-
-    return NextResponse.json(comments);
-  } catch (error) {
-    console.error("Error in comments GET endpoint:", error);
-    return NextResponse.json(
-      { success: false, message: "Error fetching comments" },
-      { status: 500 },
-    );
-  }
+  });
+  return response;
 }
 
 export async function POST(request: Request) {

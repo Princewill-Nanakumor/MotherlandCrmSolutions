@@ -210,7 +210,9 @@ export const CommentsAndActivitiesCombined: FC<
   } = useQuery<Activity[], Error>({
     queryKey: ["activities", leadId],
     queryFn: async (): Promise<Activity[]> => {
-      const response = await fetch(`/api/leads/${leadId}/activities`);
+      const response = await fetch(
+        `/api/leads/${leadId}/activities?limit=100`,
+      );
       if (!response.ok) {
         throw new Error(`Failed to fetch activities: ${response.status}`);
       }
@@ -317,8 +319,6 @@ export const CommentsAndActivitiesCombined: FC<
         },
       );
       patchLeadCachesFromComments(nextComments);
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       if (session?.user?.id) {
         queryClient.invalidateQueries({
           queryKey: callLogsKeys.user(session.user.id),
@@ -369,8 +369,6 @@ export const CommentsAndActivitiesCombined: FC<
         },
       );
       patchLeadCachesFromComments(nextComments);
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       toast({
         title: "Success",
         description: "Comment deleted successfully",
@@ -468,8 +466,6 @@ export const CommentsAndActivitiesCombined: FC<
         },
       );
       patchLeadCachesFromComments(nextComments);
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      queryClient.invalidateQueries({ queryKey: ["assignedLeads"] });
       if (session?.user?.id) {
         queryClient.invalidateQueries({
           queryKey: callLogsKeys.user(session.user.id),

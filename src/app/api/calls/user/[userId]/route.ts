@@ -174,14 +174,14 @@ export async function GET(
       const commentLookback = new Date(threeDaysAgo);
       commentLookback.setDate(commentLookback.getDate() - 7);
 
-      const comments = (await Comment.find({
+      const comments = await Comment.find({
         leadId: { $in: leadObjectIds },
         "createdBy._id": requestedUserId,
         createdAt: { $gte: commentLookback },
       })
         .select({ leadId: 1, content: 1, createdAt: 1 })
         .sort({ createdAt: -1 })
-        .lean()) as CommentDoc[];
+        .lean<CommentDoc[]>();
 
       for (const comment of comments) {
         const key = comment.leadId.toString();

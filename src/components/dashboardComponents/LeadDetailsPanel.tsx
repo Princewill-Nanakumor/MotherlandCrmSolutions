@@ -21,6 +21,11 @@ import {
 import { getAblyRealtimeClient } from "@/libs/ablyClient";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { refetchLeadActivities } from "@/lib/leadActivitiesQuery";
+import {
+  adminEventTouchesLead,
+  handleAdminLeadPanelEvent,
+  type AdminLeadPanelEvent,
+} from "@/lib/leadPanelRealtimeSync";
 import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
 import { normalizeLeadStatusId } from "@/lib/leadClientUpdate";
 import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
@@ -292,17 +297,8 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       }
     };
 
-    const eventTouchesOpenLead = (data: unknown): boolean => {
-      const eventData = (data ?? {}) as {
-        leadId?: string;
-        leadIds?: string[];
-      };
-      if (eventData.leadId === openLeadId) return true;
-      return (
-        Array.isArray(eventData.leadIds) &&
-        eventData.leadIds.some((id) => id === openLeadId)
-      );
-    };
+    const eventTouchesOpenLead = (data: unknown): boolean =>
+      adminEventTouchesLead((data ?? {}) as AdminLeadPanelEvent, openLeadId);
 
     const setupRealtime = async () => {
       try {
@@ -328,7 +324,12 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
         adminMessageListener = (message: { data?: unknown }) => {
           if (!eventTouchesOpenLead(message.data)) return;
-          void syncLeadFromServer();
+          void handleAdminLeadPanelEvent(
+            queryClient,
+            openLeadId,
+            (message.data ?? {}) as AdminLeadPanelEvent,
+            syncLeadFromServer,
+          );
         };
 
         const attachWithRetry = async (

@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "stamp": 1788209442757,
+  "leadId": "6a95e92382c4834093bff3fe",
+  "email": "e2e.lead.detail.bench.1788209442757@motherland.test",
+  "adminId": "6a93ccdd588ee2907840ba48",
+  "counts": {
+    "comments": 150,
+    "activities": 50,
+    "reminders": 15,
+    "timelineExpected": 200
+  },
+  "seedMs": 402
+}

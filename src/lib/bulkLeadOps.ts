@@ -1,4 +1,3 @@
-import type { Db } from "mongodb";
 import mongoose from "mongoose";
 
 /** Align with agent assignment cap and bulk status limit. */
@@ -7,7 +6,7 @@ export const MAX_BULK_LEAD_OPS = 500;
 export const ACTIVITY_INSERT_CHUNK = 250;
 
 export async function insertActivitiesInChunks(
-  db: Db,
+  db: mongoose.mongo.Db,
   activities: Record<string, unknown>[],
 ): Promise<void> {
   for (let i = 0; i < activities.length; i += ACTIVITY_INSERT_CHUNK) {
