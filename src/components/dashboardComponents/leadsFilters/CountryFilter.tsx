@@ -61,7 +61,8 @@ export const CountryFilter = ({
 
   // If availableCountries are provided, use them directly (for user leads page)
   // Otherwise, fetch distinct countries from API (for admin all-leads page)
-  const { data: fetchedCountries = [] } = useQuery<string[]>({
+  const { data: fetchedCountries = [], isLoading: isLoadingCountries } =
+    useQuery<string[]>({
     queryKey: [...LEAD_COUNTRIES_QUERY_KEY],
     queryFn: async () => {
       const response = await fetch("/api/leads/countries", {
@@ -117,14 +118,16 @@ export const CountryFilter = ({
     return `Show ${value.length} ${value.length === 1 ? "country" : "countries"}`;
   };
 
+  const countriesLoading = !providedCountries && isLoadingCountries;
+
   return (
     <MultiSelectFilter
       value={value}
       onChange={onChange}
       options={options}
       placeholder={getPlaceholder()}
-      disabled={disabled}
-      isLoading={isLoading}
+      disabled={disabled || countriesLoading}
+      isLoading={isLoading || countriesLoading}
       mode={mode}
       onModeChange={handleModeToggle}
     />

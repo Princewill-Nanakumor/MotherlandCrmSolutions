@@ -6,6 +6,7 @@ import Status from "@/models/Status";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { canCreateStatus } from "@/lib/roles";
+import { ApiRoutePerf } from "@/lib/apiRoutePerf";
 
 // Define query type for MongoDB filters
 interface StatusQuery {
@@ -34,9 +35,12 @@ async function withDbRetry<T>(
 
 // GET /api/statuses
 export async function GET() {
+  const perf = new ApiRoutePerf("GET /api/statuses");
   try {
     const session = await getServerSession(authOptions);
+    perf.mark("getServerSession");
     if (!session) {
+      perf.finish({ status: 401 });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -57,6 +61,7 @@ export async function GET() {
     const statuses = await withDbRetry(() =>
       Status.find(query).sort({ createdAt: 1 })
     );
+    perf.mark("Status.find");
 
     // FIXED: Return the correct structure that works for both filtering and display
     const transformedStatuses = statuses.map((status) => ({
@@ -93,12 +98,15 @@ export async function GET() {
     headers.set("Cache-Control", "private, no-store, max-age=0");
     headers.set("Vary", "Cookie");
 
+    perf.mark("serialize");
+    perf.finish({ count: transformedStatuses.length });
     return NextResponse.json(transformedStatuses, {
       headers,
       status: 200,
     });
   } catch (error) {
     console.error("Error fetching statuses:", error);
+    perf.finish({ error: true });
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

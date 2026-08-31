@@ -11,11 +11,16 @@ import {
   isLeadAssignedToActiveUser,
 } from "@/lib/leadAssignmentDisplay";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
-import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { Lead } from "@/types/leads";
 import { useLeadsLookupQueries } from "@/hooks/leadsPage/useLeadsLookupQueries";
 import { useLeadsMutations } from "@/hooks/leadsPage/useLeadsMutations";
 import { useLeadsFilters } from "@/hooks/leadsPage/useLeadsFilters";
+import {
+  ALL_LEADS_QUERY_STALE_MS,
+  AllLeadsListResponse,
+  buildAllLeadsQueryKey,
+  fetchAllLeadsPage,
+} from "@/lib/allLeadsListQuery";
 
 export const useLeadsPage = (
   searchQuery: string,
@@ -31,9 +36,6 @@ export const useLeadsPage = (
 
   // Initialize state
   const [isInitialized, setIsInitialized] = useState(false);
-
-  /** Longer timeout for paginated /api/leads/all (cold starts / slow DB). */
-  const LEADS_QUERY_TIMEOUT_MS = 90_000;
 
   // ===== PAGINATION (from URL; reset to 1 when filters change for correct first page) =====
   const pageFromUrl = Math.max(
@@ -56,12 +58,6 @@ export const useLeadsPage = (
 
   // ===== REACT QUERY HOOKS =====
   const isAuthenticated = hasAuthorizedSession(status, session);
-
-  interface LeadsResponse {
-    leads: Lead[];
-    total: number;
-    totalAll: number;
-  }
 
   // ===== STORE HOOKS =====
   const { selectedLeads, setSelectedLeads, filterByUser, setFilterByUser } =
@@ -133,20 +129,19 @@ export const useLeadsPage = (
   };
 
   // ===== LEADS QUERY (use searchQuery prop in key so navbar search refetches immediately) =====
-  const leadsQueryKey = [
-    "leads",
+  const leadsQueryKey = buildAllLeadsQueryKey({
     page,
     pageSize,
     filterByUser,
-    uiState.filterByCountry,
-    uiState.filterByStatus,
-    uiState.filterBySource,
-    uiState.countryFilterMode,
-    uiState.statusFilterMode,
-    uiState.sourceFilterMode,
-    uiState.userFilterMode,
+    filterByCountry: uiState.filterByCountry,
+    filterByStatus: uiState.filterByStatus,
+    filterBySource: uiState.filterBySource,
+    countryFilterMode: uiState.countryFilterMode,
+    statusFilterMode: uiState.statusFilterMode,
+    sourceFilterMode: uiState.sourceFilterMode,
+    userFilterMode: uiState.userFilterMode,
     searchQuery,
-  ] as const;
+  });
 
   const {
     assignLeadsMutation,
@@ -164,7 +159,7 @@ export const useLeadsPage = (
   });
 
   // Keep last successful data so we don't flash "No leads found" when search/filters change
-  const lastLeadsDataRef = useRef<LeadsResponse | undefined>(undefined);
+  const lastLeadsDataRef = useRef<AllLeadsListResponse | undefined>(undefined);
 
   const {
     data: leadsData,
@@ -174,58 +169,22 @@ export const useLeadsPage = (
     refetch: refetchLeads,
   } = useQuery({
     queryKey: leadsQueryKey,
-    queryFn: async (): Promise<LeadsResponse> => {
-      const params = new URLSearchParams();
-      params.set("page", String(page));
-      params.set("pageSize", String(pageSize));
-      const userArr =
-        filterByUser === "all" || !filterByUser
-          ? []
-          : filterByUser.includes(",")
-            ? filterByUser.split(",")
-            : [filterByUser];
-      if (userArr.length > 0) params.set("user", JSON.stringify(userArr));
-      if (uiState.filterByCountry?.length)
-        params.set("country", JSON.stringify(uiState.filterByCountry));
-      if (uiState.filterByStatus?.length)
-        params.set("status", JSON.stringify(uiState.filterByStatus));
-      if (uiState.filterBySource?.length)
-        params.set("source", JSON.stringify(uiState.filterBySource));
-      params.set("countryMode", uiState.countryFilterMode);
-      params.set("statusMode", uiState.statusFilterMode);
-      params.set("sourceMode", uiState.sourceFilterMode);
-      params.set("userMode", uiState.userFilterMode);
-      const searchTrimmed = (searchQuery ?? "").trim();
-      if (searchTrimmed) {
-        // Encode so "+15195660267" is sent as %2B15195660267 (not decoded as space)
-        params.set("search", searchTrimmed);
-      }
-      let url = `/api/leads/all?${params.toString()}`;
-      if (searchTrimmed && url.includes("search=")) {
-        // Replace search param with properly encoded value (fixes + in some environments)
-        url = url.replace(
-          /search=[^&]*/,
-          "search=" + encodeURIComponent(searchTrimmed)
-        );
-      }
-      const response = await apiCallWithSessionRefresh(url, {
-        cache: "no-store",
-        timeoutMs: LEADS_QUERY_TIMEOUT_MS,
-      });
-      if (!response.ok) throw new Error("Failed to fetch leads");
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        return { leads: data, total: data.length, totalAll: data.length };
-      }
-      return {
-        leads: Array.isArray(data.leads) ? data.leads : [],
-        total: typeof data.total === "number" ? data.total : 0,
-        totalAll:
-          typeof data.totalAll === "number" ? data.totalAll : (data.total ?? 0),
-      };
-    },
+    queryFn: () =>
+      fetchAllLeadsPage({
+        page,
+        pageSize,
+        filterByUser,
+        filterByCountry: uiState.filterByCountry,
+        filterByStatus: uiState.filterByStatus,
+        filterBySource: uiState.filterBySource,
+        countryFilterMode: uiState.countryFilterMode,
+        statusFilterMode: uiState.statusFilterMode,
+        sourceFilterMode: uiState.sourceFilterMode,
+        userFilterMode: uiState.userFilterMode,
+        searchQuery,
+      }),
     enabled: isAuthenticated,
-    staleTime: 2 * 60 * 1000,
+    staleTime: ALL_LEADS_QUERY_STALE_MS,
     // Always refetch when the tab becomes visible again so missed Ably
     // status events cannot leave a filtered table stale indefinitely.
     refetchOnWindowFocus: "always",
@@ -316,9 +275,9 @@ export const useLeadsPage = (
 
   useEffect(() => {
     if (setLayoutLoading) {
-      setLayoutLoading(isLoadingLeads || isLoadingUsers || isLoadingStatuses);
+      setLayoutLoading(isLoadingLeads && leads.length === 0);
     }
-  }, [isLoadingLeads, isLoadingUsers, isLoadingStatuses, setLayoutLoading]);
+  }, [isLoadingLeads, leads.length, setLayoutLoading]);
 
   // ===== COMPUTED VALUES (server-side pagination: leads = current page only) =====
   const availableCountries = useMemo(
@@ -403,10 +362,10 @@ export const useLeadsPage = (
     [leadsTotalAll, leadsTotal, selectedLeads, availableCountries.length, isSelectedLeadActivelyAssigned]
   );
 
-  // Full skeleton only on initial load (no data yet). Filter/search refetches keep table visible + RefetchIndicator.
-  const shouldShowLoading =
-    isLoadingLeads || isLoadingUsers || isLoadingStatuses;
-  const showEmptyState = !shouldShowLoading && leadsTotal === 0;
+  // Table skeleton only until the first leads page arrives; lookups load independently.
+  const shouldShowLoading = isLoadingLeads && leads.length === 0 && !leadsError;
+  const showEmptyState =
+    !isLoadingLeads && !isRefetchingLeads && leadsTotal === 0 && !leadsError;
 
   // ===== OPTIMIZED EVENT HANDLERS =====
   const handleAssignLeads = useCallback(async () => {

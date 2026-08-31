@@ -14,6 +14,7 @@ import {
 } from "@/lib/importBatchLimits";
 import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 import { canCreateLead } from "@/lib/roles";
+import { normalizeCountryInput } from "@/lib/countryNormalize";
 
 // Define interface for imported lead data
 interface ImportedLead {
@@ -21,6 +22,7 @@ interface ImportedLead {
   email: string;
   phone?: string;
   source?: string;
+  country?: string;
 }
 
 // Define interface for transformed lead data
@@ -29,6 +31,7 @@ interface TransformedLead {
   lastName: string;
   email: string;
   phone: string;
+  country: string;
   source: string;
   status: string;
   createdBy: mongoose.Types.ObjectId;
@@ -107,6 +110,7 @@ export async function POST(request: Request) {
           lastName: rest.join(" ") || "",
           email: lead.email.trim().toLowerCase(),
           phone: lead.phone || "",
+          country: normalizeCountryInput(lead.country || ""),
           source: lead.source && lead.source !== "-" && lead.source.trim() !== "" ? lead.source : "—",
           status: "NEW",
           createdBy: userObjectId,

@@ -46,6 +46,7 @@ describe("GET /api/leads/all permissions + tenancy handoff", () => {
     expect(getAllLeadsForSession).toHaveBeenCalledWith(
       expect.any(NextRequest),
       expect.objectContaining({ id: adminId, role: "ADMIN" }),
+      expect.anything(),
     );
   });
 
@@ -63,6 +64,7 @@ describe("GET /api/leads/all permissions + tenancy handoff", () => {
     expect(getAllLeadsForSession).toHaveBeenCalledWith(
       expect.any(NextRequest),
       expect.objectContaining({ id: agentId, role: "AGENT", adminId }),
+      expect.anything(),
     );
   });
 });

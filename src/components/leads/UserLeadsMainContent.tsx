@@ -1,8 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { usePathname, useSearchParams } from "next/navigation";
-import LeadDetailsPanel from "@/components/dashboardComponents/LeadDetailsPanel";
+
+const LeadDetailsPanel = dynamic(
+  () => import("@/components/dashboardComponents/LeadDetailsPanel"),
+  { ssr: false },
+);
 import { UserLeadsHeader } from "@/components/leads/UserLeadsHeader";
 import { UserLeadsFilterControls } from "@/components/leads/UserLeadsFilterControls";
 import { TableSkeleton } from "@/components/leads/UserLeadsLoadingStates";

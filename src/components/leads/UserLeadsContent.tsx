@@ -2,10 +2,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Lead } from "@/types/leads";
-import { LoadingSpinner } from "@/components/leads/UserLeadsLoadingStates";
 import { FilterLogic } from "@/components/user-leads/FilterLogic";
 import { URLStateManager } from "../user-leads/URLStatemanager";
 import { SubscriptionGuard } from "@/components/user-leads/SubscriptionGuard";
@@ -25,8 +23,6 @@ import {
 import { isStatusOnlyLeadUpdate } from "@/lib/leadClientUpdate";
 
 export default function UserLeadsContent() {
-  const { status } = useSession();
-  const router = useRouter();
   const searchParams = useSearchParams()!;
   const { searchQuery } = useSearchContext();
   const toggleContext = useToggleContext();
@@ -317,24 +313,9 @@ export default function UserLeadsContent() {
     [handleURLNavigation],
   );
 
-  // Auth check
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      const callbackUrl =
-        typeof window !== "undefined"
-          ? `${window.location.pathname}${window.location.search}`
-          : "/dashboard/leads";
-      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
-    }
-  }, [status, router]);
-
   // Loading states - Only show loading on first load, not on navigation back
   const isDataReady = !isLoading || leads.length > 0;
   const shouldShowLoading = isLoading && leads.length === 0;
-
-  if (status === "loading") {
-    return <LoadingSpinner />;
-  }
 
   if (isError) {
     return (

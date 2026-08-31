@@ -14,6 +14,7 @@ import {
   normalizeCountryInput,
 } from "@/lib/countryNormalize";
 import { canAccessAllLeads, getTenantAdminId, isTenantStaff } from "@/lib/roles";
+import type { ApiRoutePerf } from "@/lib/apiRoutePerf";
 
 interface SessionUser {
   id: string;
@@ -166,7 +167,11 @@ function statusFilterValues(statusFilter: string[]): (string | ObjectId)[] {
   return result;
 }
 
-export async function getAllLeadsForSession(request: NextRequest, sessionUser: SessionUser) {
+export async function getAllLeadsForSession(
+  request: NextRequest,
+  sessionUser: SessionUser,
+  perf?: ApiRoutePerf,
+) {
   const url = new URL(request.url);
   const searchParams = url.searchParams;
   const { page, pageSize } = parseLeadListPagination(searchParams);
@@ -181,6 +186,7 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
   const rawSearch = searchParams.get("search") || "";
 
   await connectMongoDB();
+  perf?.mark("connectMongoDB");
   const db = mongoose.connection.db;
   if (!db) throw new Error("Database connection not available");
 
@@ -201,6 +207,7 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
     canViewEmails = flags.canViewEmails;
     canViewPhoneNumbers = flags.canViewPhoneNumbers;
   }
+  perf?.mark("agent-contact-visibility");
 
   const baseQuery: LeadFilter = buildTenantLeadBaseQuery(sessionUser);
 
@@ -295,9 +302,11 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
       db.collection("leads").countDocuments(baseQuery),
       db.collection("leads").countDocuments(filter),
     ]);
+    perf?.mark("countDocuments(baseQuery+filter)");
     setCachedTotalAll(countCacheKey, totalAllCount);
   } else {
     totalCount = await db.collection("leads").countDocuments(filter);
+    perf?.mark("countDocuments(filter)");
   }
 
   const leads = await db
@@ -308,6 +317,7 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
     .skip((page - 1) * pageSize)
     .limit(pageSize)
     .toArray();
+  perf?.mark("find()");
 
   const uniqueUserIds = new Set<string>();
   leads.forEach((lead: Record<string, unknown>) => {
@@ -326,6 +336,7 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
       .toArray();
     users.forEach((user) => userMap.set(user._id.toString(), user as UserData));
   }
+  perf?.mark("assigned-users-lookup");
 
   const tenantId = getTenantAdminId(sessionUser);
   const adminIdForComments = tenantId ? new ObjectId(tenantId) : null;
@@ -393,6 +404,7 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
     commentCounts.forEach((result) => commentCountsMap.set(result._id.toString(), result.count));
     activityCounts.forEach((result) => activityCountsMap.set(result._id.toString(), result.count));
   }
+  perf?.mark("comment-activity-aggregations");
 
   const transformedLeads = await Promise.all(
     leads.map(async (lead: Record<string, unknown>) => {
@@ -450,6 +462,7 @@ export async function getAllLeadsForSession(request: NextRequest, sessionUser: S
       };
     }),
   );
+  perf?.mark("transform");
 
   return {
     leads: transformedLeads,

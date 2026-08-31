@@ -1,17 +1,16 @@
-// src/components/dashboardComponents/leadsFilters/StatusFilter.tsx
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useStatuses } from "@/context/StatusContext";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 
 interface StatusFilterProps {
-  value: string[]; // Changed to array
-  onChange: (values: string[]) => void; // Changed to array
+  value: string[];
+  onChange: (values: string[]) => void;
   disabled: boolean;
   isLoading?: boolean;
-  mode?: "include" | "exclude"; // Filter mode
-  onModeChange?: (mode: "include" | "exclude") => void; // Mode change handler
+  mode?: "include" | "exclude";
+  onModeChange?: (mode: "include" | "exclude") => void;
 }
 
 export const StatusFilter = ({
@@ -22,7 +21,6 @@ export const StatusFilter = ({
   mode: externalMode,
   onModeChange,
 }: StatusFilterProps) => {
-  // Internal mode state if not controlled externally
   const [internalMode, setInternalMode] = useState<"include" | "exclude">(
     () => {
       if (typeof window !== "undefined") {
@@ -32,16 +30,15 @@ export const StatusFilter = ({
           | "exclude";
       }
       return "include";
-    }
+    },
   );
 
   const mode = externalMode ?? internalMode;
+  const { statuses, isLoading: isLoadingStatuses } = useStatuses();
 
-  // Save mode to localStorage when it changes and dispatch custom event
   useEffect(() => {
     if (typeof window !== "undefined" && !externalMode) {
       localStorage.setItem("statusFilterMode", mode);
-      // Dispatch custom event for immediate sync (same-tab)
       window.dispatchEvent(new CustomEvent("statusFilterModeChanged"));
     }
   }, [mode, externalMode]);
@@ -55,44 +52,6 @@ export const StatusFilter = ({
     }
   };
 
-  // All status definitions (from settings)
-  const { data: statuses = [] } = useQuery<
-    Array<{ id: string; _id?: string; name: string; color?: string }>
-  >({
-    queryKey: ["statuses"],
-    queryFn: async () => {
-      const response = await fetch("/api/statuses", {
-        credentials: "include",
-        cache: "no-store",
-        headers: {
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch statuses");
-      const data = await response.json();
-
-      const hasNewStatus = data.some(
-        (s: { id?: string; _id?: string; name?: string }) =>
-          s._id === "NEW" || s.id === "NEW" || s.name?.toUpperCase() === "NEW"
-      );
-      if (!hasNewStatus) {
-        data.unshift({
-          _id: "NEW",
-          id: "NEW",
-          name: "New",
-          color: "#3B82F6",
-        });
-      }
-      return data;
-    },
-    staleTime: 30 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: true,
-    retry: 2,
-  });
-
-  // Show all statuses from /api/statuses (even if no current leads have them)
   const options = useMemo(() => {
     return statuses
       .map((status) => {
@@ -104,7 +63,7 @@ export const StatusFilter = ({
         };
       })
       .filter((opt): opt is { value: string; label: string } =>
-        Boolean(opt && opt.value)
+        Boolean(opt && opt.value),
       )
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [statuses]);
@@ -119,14 +78,16 @@ export const StatusFilter = ({
     return `Show ${value.length} ${value.length === 1 ? "status" : "statuses"}`;
   };
 
+  const filterLoading = isLoading || isLoadingStatuses;
+
   return (
     <MultiSelectFilter
       value={value}
       onChange={onChange}
       options={options}
       placeholder={getPlaceholder()}
-      disabled={disabled}
-      isLoading={isLoading}
+      disabled={disabled || filterLoading}
+      isLoading={filterLoading}
       mode={mode}
       onModeChange={handleModeToggle}
     />

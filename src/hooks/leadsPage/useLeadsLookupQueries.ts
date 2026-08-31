@@ -1,12 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { User } from "@/types/user.types";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
-
-type StatusItem = {
-  id: string;
-  name: string;
-  color?: string;
-};
+import { useStatuses } from "@/context/StatusContext";
 
 type UseLeadsLookupQueriesParams = {
   isAuthenticated: boolean;
@@ -38,25 +33,11 @@ export function useLeadsLookupQueries({
   });
 
   const {
-    data: statuses = [],
+    statuses,
     isLoading: isLoadingStatuses,
     error: statusesError,
-    refetch: refetchStatuses,
-  } = useQuery({
-    queryKey: ["statuses"],
-    queryFn: async (): Promise<StatusItem[]> => {
-      const response = await apiCallWithSessionRefresh("/api/statuses", {
-        cache: "no-store",
-      });
-      if (!response.ok) throw new Error("Failed to fetch statuses");
-      return response.json();
-    },
-    enabled: isAuthenticated,
-    staleTime: 60 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    retry: 2,
-    refetchOnMount: false,
-  });
+    refreshStatuses: refetchStatuses,
+  } = useStatuses();
 
   return {
     users,

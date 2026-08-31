@@ -9,13 +9,20 @@ import { agentAssignedToUserClause } from "@/lib/leadAssignmentQuery";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
 import { getAgentContactVisibilityFromDb } from "@/lib/getAgentContactVisibilityFromDb";
 import { isAdmin, isTenantStaff } from "@/lib/roles";
+import { ApiRoutePerf } from "@/lib/apiRoutePerf";
 
 export async function GET() {
+  const perf = new ApiRoutePerf("GET /api/leads/assigned");
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return unauthorizedResponse();
+    perf.mark("getServerSession");
+    if (!session?.user?.id) {
+      perf.finish({ status: 401 });
+      return unauthorizedResponse();
+    }
 
     await connectMongoDB();
+    perf.mark("connectMongoDB");
     if (!mongoose.connection.db) {
       throw new Error("Database connection not available");
     }
@@ -250,12 +257,18 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({
-      assignedLeads: transformedLeads,
-      count: transformedLeads.length,
-    });
+    perf.mark("serialize");
+    perf.finish({ count: transformedLeads.length });
+    return NextResponse.json(
+      {
+        assignedLeads: transformedLeads,
+        count: transformedLeads.length,
+      },
+      { headers: perf.responseHeaders() },
+    );
   } catch (error) {
     console.error("Error fetching assigned leads:", error);
+    perf.finish({ error: true });
     return NextResponse.json(
       { message: "Error fetching assigned leads" },
       { status: 500 },

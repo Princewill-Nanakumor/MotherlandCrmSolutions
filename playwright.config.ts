@@ -66,6 +66,17 @@ export default defineConfig({
           env: {
             ...process.env,
             E2E_RELAX_RATE_LIMITS: "1",
+            ...(process.env.PLAYWRIGHT_BASE_URL
+              ? {
+                  NEXTAUTH_URL: process.env.PLAYWRIGHT_BASE_URL,
+                  NEXT_PUBLIC_APP_URL: process.env.PLAYWRIGHT_BASE_URL,
+                }
+              : process.env.PLAYWRIGHT_PORT && process.env.PLAYWRIGHT_PORT !== "3000"
+                ? {
+                    NEXTAUTH_URL: `http://127.0.0.1:${process.env.PLAYWRIGHT_PORT}`,
+                    NEXT_PUBLIC_APP_URL: `http://127.0.0.1:${process.env.PLAYWRIGHT_PORT}`,
+                  }
+                : {}),
           },
         },
       }),

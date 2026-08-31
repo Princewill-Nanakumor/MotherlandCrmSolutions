@@ -15,19 +15,43 @@ export type ApiJsonInit = {
   headers?: Record<string, string>;
 };
 
+const LOGIN_URL = "/login?callbackUrl=%2Fdashboard";
+
+/** Open login with a clean cookie jar; tolerate auth redirect races on /login. */
+async function openLoginPage(page: Page) {
+  await page.context().clearCookies();
+
+  try {
+    const response = await page.goto(LOGIN_URL, {
+      waitUntil: "domcontentloaded",
+      timeout: 30_000,
+    });
+    if (response && !response.ok()) {
+      expect(
+        response.ok(),
+        "Login page did not load — stop any hung dev server and re-run (or use PLAYWRIGHT_FRESH_SERVER=1 PLAYWRIGHT_PORT=3001).",
+      ).toBeTruthy();
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const onLogin = /\/login/.test(page.url());
+    if (!onLogin && !/interrupted/i.test(msg)) {
+      throw err;
+    }
+  }
+
+  await expect(page).toHaveURL(/\/login/, { timeout: 30_000 });
+  await expect(page.getByPlaceholder(/email address/i)).toBeVisible({
+    timeout: 30_000,
+  });
+}
+
 /** Login via UI, solving the captcha from the displayed digits. Retries once on flake. */
 export async function loginAs(page: Page, email: string, password: string) {
   let lastError: unknown;
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const response = await page.goto("/login", {
-        waitUntil: "domcontentloaded",
-        timeout: 30_000,
-      });
-      expect(
-        response?.ok(),
-        "Login page did not load — stop any hung dev server and re-run (or use PLAYWRIGHT_FRESH_SERVER=1 PLAYWRIGHT_PORT=3001).",
-      ).toBeTruthy();
+      await openLoginPage(page);
 
       await page.getByPlaceholder(/email address/i).fill(email);
       await page.getByPlaceholder(/^password$/i).fill(password);
@@ -43,7 +67,18 @@ export async function loginAs(page: Page, email: string, password: string) {
       await page.locator("#login-captcha-input").fill(code);
       await page.getByRole("button", { name: /^sign in$/i }).click();
 
-      await expect(page).toHaveURL(/\/dashboard/, { timeout: 60_000 });
+      try {
+        await expect(page).toHaveURL(/\/dashboard/, { timeout: 60_000 });
+      } catch {
+        const onLogin = /\/login/.test(page.url());
+        const prodHint =
+          onLogin && process.env.LEADS_BENCH_RUNTIME === "production"
+            ? " For local `next start`, NEXTAUTH_URL must be http://127.0.0.1:<port> (not :3000 from .env)."
+            : "";
+        throw new Error(
+          `Login did not reach /dashboard — stuck at ${page.url()}.${prodHint}`,
+        );
+      }
       return;
     } catch (err) {
       lastError = err;

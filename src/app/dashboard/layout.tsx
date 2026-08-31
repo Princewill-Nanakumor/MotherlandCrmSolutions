@@ -11,7 +11,7 @@ import React, {
 import { useSession, SessionProvider, getSession } from "next-auth/react";
 import { AblyAwareSessionKeepAlive } from "@/components/AblyAwareSessionKeepAlive";
 import { ThemeProvider } from "@/components/dashboardComponents/Theme-Provider";
-import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { createQueryClient } from "@/lib/queryClient";
 import { StatusProvider } from "@/context/StatusContext";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
@@ -25,21 +25,13 @@ import { DialerSettingsProvider } from "@/context/DialerSettingsContext";
 import { TenantThemeProvider } from "@/components/TenantThemeProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { ToggleProvider } from "@/context/ToggleContext";
-import ReminderNotifications from "@/components/notifications/ReminderNotifications";
+import dynamic from "next/dynamic";
 import { Toaster } from "@/components/ui/toaster";
 import { SelectedLeadsBanner } from "@/components/dashboardComponents/SelectedLeadsBanner";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
-import {
-  disconnectAblyRealtimeClient,
-  getAblyRealtimeClient,
-} from "@/libs/ablyClient";
-import {
-  ADMIN_LEADS_UPDATED_EVENT,
-  getAdminLeadsChannelName,
-} from "@/libs/realtime";
-import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
-import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
-import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { disconnectAblyRealtimeClient } from "@/libs/ablyClient";
+import { useDeferAfterPaint } from "@/hooks/useDeferAfterPaint";
+import { TenantLeadsRealtimeSync } from "@/components/dashboardComponents/TenantLeadsRealtimeSync";
 import { getDashboardRoleRedirect } from "@/lib/dashboardAccess";
 import { canAccessAllLeads } from "@/lib/roles";
 import { authDebug } from "@/lib/authDebug";
@@ -55,11 +47,15 @@ import { dashboardPageTitle } from "@/lib/appBranding";
 import { syncAppScrollMode } from "@/lib/uiZoom";
 import { HolidayEffectsController } from "@/components/holidayEffects/HolidayEffectsController";
 
+const ReminderNotifications = dynamic(
+  () => import("@/components/notifications/ReminderNotifications"),
+  { ssr: false },
+);
+
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { searchQuery, setSearchQuery, isLoading } = useSearchContext();
   const { shortName } = useAppBranding();
   const { status, data: session } = useSession();
-  const queryClient = useQueryClient();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -70,8 +66,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     null,
   );
   const hasSeenAuthenticatedRef = useRef(false);
-  const currentUserIdRef = useRef<string | undefined>(undefined);
-  currentUserIdRef.current = session?.user?.id;
+  const deferNonCriticalShell = useDeferAfterPaint();
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -94,190 +89,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       disconnectAblyRealtimeClient();
     };
   }, []);
-
-  // Keep leads views in sync across tabs/users when status changes happen elsewhere.
-  useEffect(() => {
-    if (!session?.user?.id) return;
-    let cancelled = false;
-    let realtimeClient: ReturnType<typeof getAblyRealtimeClient> | null = null;
-    let channelName: string | null = null;
-    let channel: {
-      subscribe: (
-        eventName: string,
-        listener: (message: { data?: unknown }) => void,
-      ) => void;
-      unsubscribe: (
-        eventName: string,
-        listener: (message: { data?: unknown }) => void,
-      ) => void;
-      attach: () => Promise<unknown>;
-      detach: () => Promise<unknown>;
-    } | null = null;
-    let subscribed = false;
-
-    const onAdminLeadsUpdated = (message: { data?: unknown }) => {
-      const eventData = (message.data ?? {}) as {
-        type?: string;
-        leadId?: string;
-        leadIds?: string[];
-        status?: string;
-        deletedLeads?: number;
-        importId?: string;
-        percent?: number;
-        userId?: string;
-      };
-      const eventType = eventData.type ?? "";
-      const isUserEvent = eventType.startsWith("user_");
-      const isImportEvent =
-        eventType === "import_deleted" ||
-        eventType === "imports_cleared" ||
-        eventType === "import_progress";
-      const importTouchedLeads = (eventData.deletedLeads ?? 0) > 0;
-
-      if (eventType === "import_progress") {
-        // Live progress: patch history only — avoid refetching all leads every chunk.
-        void queryClient.invalidateQueries({ queryKey: ["import-history"] });
-        return;
-      }
-
-      if (isUserEvent) {
-        void queryClient.invalidateQueries({
-          predicate: (query) => {
-            const root = Array.isArray(query.queryKey)
-              ? query.queryKey[0]
-              : null;
-            return (
-              root === "users" ||
-              root === "user-usage-data" ||
-              root === "admin-overview"
-            );
-          },
-        });
-        if (
-          eventData.userId &&
-          eventData.userId === currentUserIdRef.current
-        ) {
-          // Role/permission changes apply on next getSession() — refresh so
-          // leads ↔ all-leads redirects run without a full page reload.
-          void getSession();
-        }
-        return;
-      }
-
-      if (isImportEvent && !importTouchedLeads) {
-        void queryClient.invalidateQueries({
-          predicate: (query) => {
-            const root = Array.isArray(query.queryKey)
-              ? query.queryKey[0]
-              : null;
-            return (
-              root === "import-history" ||
-              root === "import-usage-data" ||
-              root === "admin-overview"
-            );
-          },
-        });
-        return;
-      }
-
-      // Immediate list patch so filtered all-leads rows update (or disappear)
-      // before the invalidate-driven refetch finishes.
-      if (eventType === "status_changed" && eventData.status) {
-        const statusLeadIds = [
-          ...(eventData.leadId ? [eventData.leadId] : []),
-          ...(Array.isArray(eventData.leadIds) ? eventData.leadIds : []),
-        ].filter((id, index, arr) => id && arr.indexOf(id) === index);
-
-        for (const leadId of statusLeadIds) {
-          applyRemoteLeadStatusToListCaches(
-            queryClient,
-            leadId,
-            eventData.status,
-            { touchActivity: true },
-          );
-        }
-      }
-
-      void queryClient.invalidateQueries({
-        predicate: (query) => {
-          const root = Array.isArray(query.queryKey) ? query.queryKey[0] : null;
-          return (
-            root === "leads" ||
-            root === "assignedLeads" ||
-            root === "admin-overview" ||
-            root === "leads-stats" ||
-            root === "users" ||
-            root === "import-history" ||
-            root === "import-usage-data"
-          );
-        },
-      });
-
-      void refetchLeadFilterOptions(queryClient);
-
-      if (eventData.leadId) {
-        void queryClient.invalidateQueries({
-          queryKey: ["activities", eventData.leadId],
-          exact: false,
-        });
-      }
-      if (Array.isArray(eventData.leadIds)) {
-        for (const leadId of eventData.leadIds) {
-          if (typeof leadId !== "string" || !leadId) continue;
-          void queryClient.invalidateQueries({
-            queryKey: ["activities", leadId],
-            exact: false,
-          });
-        }
-      }
-    };
-
-    void (async () => {
-      try {
-        const scopeResponse = await apiCallWithSessionRefresh(
-          "/api/ably/scope",
-          {
-            method: "GET",
-            cache: "no-store",
-          },
-        );
-        if (!scopeResponse.ok || cancelled) return;
-
-        const scopeData = (await scopeResponse.json()) as {
-          adminScope?: string;
-        };
-        if (!scopeData.adminScope || cancelled) return;
-
-        realtimeClient = getAblyRealtimeClient(session.user.id);
-        channelName = getAdminLeadsChannelName(scopeData.adminScope);
-        const activeChannel = realtimeClient.channels.get(channelName);
-        channel = activeChannel;
-        await activeChannel.attach();
-        if (cancelled) return;
-        activeChannel.subscribe(ADMIN_LEADS_UPDATED_EVENT, onAdminLeadsUpdated);
-        subscribed = true;
-      } catch {
-        // Leads pages remain functional with normal query invalidation.
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      if (channel && subscribed) {
-        channel.unsubscribe(ADMIN_LEADS_UPDATED_EVENT, onAdminLeadsUpdated);
-      }
-      if (channel) {
-        void channel.detach().catch(() => undefined);
-      }
-      if (realtimeClient && channelName) {
-        try {
-          realtimeClient.channels.release(channelName);
-        } catch {
-          // ignore
-        }
-      }
-    };
-  }, [queryClient, session?.user?.id, session?.user?.role]);
 
   // Check if session has expired using session.expires (set from token.exp in auth callback)
   useEffect(() => {
@@ -681,7 +492,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               {children}
             </main>
             <Footer />
-            <ReminderNotifications />
+            {deferNonCriticalShell && status === "authenticated" && (
+              <>
+                <TenantLeadsRealtimeSync />
+                <ReminderNotifications />
+              </>
+            )}
             <Toaster />
           </div>
         </div>

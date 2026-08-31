@@ -320,20 +320,29 @@ export const filterLeadsBySource = (
   }
 };
 
+function debugSearchLog(...args: unknown[]): void {
+  if (
+    typeof process !== "undefined" &&
+    process.env.DEBUG_SEARCH === "1"
+  ) {
+    console.log(...args);
+  }
+}
+
 export const searchLeads = (leads: Lead[], searchQuery: string): Lead[] => {
   if (!searchQuery.trim()) {
-    console.log("searchLeads: No search query, returning all leads");
+    debugSearchLog("searchLeads: No search query, returning all leads");
     return leads;
   }
 
   const trimmedQuery = searchQuery.trim();
   const query = trimmedQuery.toLowerCase();
-  console.log(
+  debugSearchLog(
     "searchLeads: Searching for:",
     trimmedQuery,
     "in",
     leads.length,
-    "leads"
+    "leads",
   );
 
   const isLegacyNumericId = isLegacyNumericLeadId(trimmedQuery);
@@ -349,7 +358,7 @@ export const searchLeads = (leads: Lead[], searchQuery: string): Lead[] => {
         normalizedLeadId === normalizeLeadId(numericId)) ||
       (prefixedId !== null && normalizedLeadId.toUpperCase() === prefixedId)
     ) {
-      console.log("searchLeads: Match found by leadId:", {
+      debugSearchLog("searchLeads: Match found by leadId:", {
         id: lead._id,
         leadId: lead.leadId,
         query: trimmedQuery,
@@ -375,7 +384,7 @@ export const searchLeads = (leads: Lead[], searchQuery: string): Lead[] => {
         phoneDigitsOnly.includes(searchDigitsOnly));
 
     if (matches) {
-      console.log("searchLeads: Match found:", {
+      debugSearchLog("searchLeads: Match found:", {
         id: lead._id,
         leadId: lead.leadId,
         name: fullName,
@@ -388,11 +397,11 @@ export const searchLeads = (leads: Lead[], searchQuery: string): Lead[] => {
     return matches;
   });
 
-  console.log(
+  debugSearchLog(
     "searchLeads: Found",
     results.length,
     "matches for query:",
-    query
+    query,
   );
   return results;
 };

@@ -34,7 +34,7 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
   subscriptionData,
   allowAccessWhenExpired = false,
 }) => {
-  if (subscriptionLoading && !subscriptionData) {
+  if (subscriptionLoading && !subscriptionData && !allowAccessWhenExpired) {
     return <LoadingSpinner />;
   }
 

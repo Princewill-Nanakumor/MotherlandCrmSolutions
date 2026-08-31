@@ -290,12 +290,15 @@ export const authOptions: NextAuthOptions = {
     error: "/login?error=true",
     newUser: "/signup",
   },
-  // Cookie configuration for Vercel/production.
-  // Use `||` (not `??`): when NEXTAUTH_URL is `http://...` the left side is
-  // `false` (defined) and `??` would skip the production fallback entirely.
+  // Secure cookies only for HTTPS (or production without an explicit http NEXTAUTH_URL).
+  // Local `next start` on http://127.0.0.1:PORT must set NEXTAUTH_URL to that http origin
+  // or sessions will not persist (browser ignores Secure cookies on plain HTTP).
   useSecureCookies:
-    process.env.NEXTAUTH_URL?.startsWith("https://") ||
-    process.env.NODE_ENV === "production",
+    process.env.NEXTAUTH_FORCE_INSECURE_COOKIES === "1"
+      ? false
+      : process.env.NEXTAUTH_URL?.startsWith("https://") ||
+        (process.env.NODE_ENV === "production" &&
+          !/^http:\/\//i.test(process.env.NEXTAUTH_URL ?? "")),
   callbacks: {
     async redirect({ url, baseUrl }) {
       if (url.startsWith("/")) {

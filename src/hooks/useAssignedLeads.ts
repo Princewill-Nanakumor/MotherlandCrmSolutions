@@ -1,47 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { Lead, LeadSource } from "@/types/leads";
+import { Lead } from "@/types/leads";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import {
+  ASSIGNED_LEADS_QUERY_STALE_MS,
+  assignedLeadsKeys,
+  fetchAssignedLeads,
+} from "@/lib/assignedLeadsQuery";
 
-// Define proper type for assignedTo field that matches the Lead interface
-interface AssignedToUser {
-  _id?: string;
-  id?: string;
-  firstName: string;
-  lastName: string;
-}
-
-interface LeadFromAPI {
-  _id: string;
-  leadId?: string | number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  country?: string;
-  value?: number;
-  source: string; // This will be converted to LeadSource
-  status: string;
-  comments?: string; // Not used since Lead expects Comment[] | undefined
-  lastComment?: string;
-  lastCommentDate?: string;
-  lastActivityAt?: string;
-  commentCount?: number;
-  assignedAt?: string;
-  assignedTo: AssignedToUser | string | null; // Can be object, string, or null
-  statusChangedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface AssignedLeadsResponse {
-  assignedLeads?: LeadFromAPI[];
-  count?: number;
-}
+export { assignedLeadsKeys } from "@/lib/assignedLeadsQuery";
 
 // Interface for API update payload - using the /api/leads endpoint format
 interface LeadUpdatePayload {
-  id: string; // The /api/leads endpoint expects 'id' in the body
+  id: string;
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -50,144 +21,17 @@ interface LeadUpdatePayload {
   value?: number;
   source?: string;
   status?: string;
-  assignedTo?: string | null; // API expects string ID or null
+  assignedTo?: string | null;
   assignedAt?: string;
 }
 
-// Query key factory for better cache management
-export const assignedLeadsKeys = {
-  all: ["assignedLeads"] as const,
-  lists: () => [...assignedLeadsKeys.all, "list"] as const,
-  list: (userId: string) => [...assignedLeadsKeys.lists(), userId] as const,
-  details: () => [...assignedLeadsKeys.all, "detail"] as const,
-  detail: (id: string) => [...assignedLeadsKeys.details(), id] as const,
-};
-
-// Helper function to normalize assignedTo field to match Lead interface
-const normalizeAssignedTo = (
-  assignedTo: AssignedToUser | string | null
-): { id: string; firstName: string; lastName: string } | null => {
-  if (!assignedTo) return null;
-
-  if (typeof assignedTo === "string") {
-    // For string format, we can't get the name, so return null
-    // or you could fetch user details separately
-    return null;
-  }
-
-  if (typeof assignedTo === "object") {
-    // Return object format as expected by Lead interface
-    return {
-      id: assignedTo._id || assignedTo.id || "",
-      firstName: assignedTo.firstName,
-      lastName: assignedTo.lastName,
-    };
-  }
-
-  return null;
-};
-
-// Helper function to convert source string to LeadSource
-const normalizeSource = (source: string): LeadSource | string => {
-  // If source is empty, null, or undefined, return em dash
-  if (
-    !source ||
-    source.trim() === "" ||
-    source.trim() === "null" ||
-    source.trim() === "undefined"
-  ) {
-    return "—";
-  }
-
-  // If source is already a dash (regular or em dash), keep it as em dash
-  if (source.trim() === "-" || source.trim() === "—") {
-    return "—";
-  }
-
-  // Clean the source
-  const cleanSource = source.trim();
-
-  // Only normalize known standard sources to uppercase, otherwise preserve original
-  const standardSources: Record<string, LeadSource> = {
-    WEBSITE: "WEBSITE",
-    WEB: "WEBSITE",
-    REFERRAL: "REFERRAL",
-    SOCIAL: "SOCIAL",
-    EMAIL: "EMAIL",
-    OTHER: "OTHER",
-  };
-
-  const upperSource = cleanSource.toUpperCase();
-
-  // Check if it's a standard source we want to normalize
-  if (standardSources[upperSource]) {
-    return standardSources[upperSource];
-  }
-
-  // For custom sources like "Richer Now", return as-is (preserving original case)
-  return cleanSource;
-};
-
-const fetchAssignedLeads = async (): Promise<Lead[]> => {
-  const res = await apiCallWithSessionRefresh("/api/leads/assigned", {
-    headers: { "Content-Type": "application/json" },
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error(
-      res.status === 401
-        ? "Unauthorized"
-        : `Failed to fetch assigned leads (${res.status})`,
-    );
-  }
-
-  const data = (await res.json()) as AssignedLeadsResponse | LeadFromAPI[];
-  const leadRows: LeadFromAPI[] = Array.isArray(data)
-    ? data
-    : Array.isArray(data.assignedLeads)
-      ? data.assignedLeads
-      : [];
-
-  // Transform the data to match your Lead interface exactly
-  return leadRows.map(
-    (lead: LeadFromAPI): Lead => ({
-      _id: lead._id,
-      id: lead._id,
-      leadId: lead.leadId,
-      firstName: lead.firstName,
-      lastName: lead.lastName,
-      name: `${lead.firstName} ${lead.lastName}`,
-      email: lead.email,
-      phone: lead.phone,
-      country: lead.country,
-      value: lead.value,
-      source: normalizeSource(lead.source) as LeadSource, // Cast to LeadSource
-      status: lead.status,
-      comments: undefined, // Always undefined since API returns string but Lead expects Comment[]
-      lastComment: lead.lastComment,
-      lastCommentDate: lead.lastCommentDate,
-      lastActivityAt: lead.lastActivityAt,
-      commentCount: lead.commentCount,
-      assignedTo: normalizeAssignedTo(lead.assignedTo),
-      assignedAt: lead.assignedAt,
-      statusChangedAt: lead.statusChangedAt,
-      createdAt: lead.createdAt,
-      updatedAt: lead.updatedAt,
-    })
-  );
-};
-
-// Lead update function - using /api/leads endpoint (corrected URL)
 const updateLead = async (
-  updatedLead: Partial<Lead> & { _id: string }
+  updatedLead: Partial<Lead> & { _id: string },
 ): Promise<Lead> => {
-  // Create API-compatible payload for /api/leads endpoint
   const apiPayload: Partial<LeadUpdatePayload> = {
-    id: updatedLead._id, // This endpoint expects id in the body
+    id: updatedLead._id,
   };
 
-  // Map only the fields that the API accepts
   if (updatedLead.firstName !== undefined)
     apiPayload.firstName = updatedLead.firstName;
   if (updatedLead.lastName !== undefined)
@@ -202,7 +46,6 @@ const updateLead = async (
   if (updatedLead.assignedAt !== undefined)
     apiPayload.assignedAt = updatedLead.assignedAt;
 
-  // Handle assignedTo - convert object to string ID
   if (updatedLead.assignedTo !== undefined) {
     if (updatedLead.assignedTo === null) {
       apiPayload.assignedTo = null;
@@ -216,7 +59,6 @@ const updateLead = async (
     }
   }
 
-  // Use /api/leads/[id] endpoint - remove 'id' from payload since it's in the URL
   const { id, ...updateData } = apiPayload;
 
   const res = await apiCallWithSessionRefresh(`/api/leads/${id}`, {
@@ -236,8 +78,8 @@ const updateLead = async (
 export const useAssignedLeads = () => {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
+  const userId = session?.user?.id || "";
 
-  // Main query for assigned leads
   const {
     data: leads = [],
     isLoading,
@@ -247,64 +89,56 @@ export const useAssignedLeads = () => {
     isFetching,
     isRefetching,
   } = useQuery<Lead[], Error>({
-    queryKey: assignedLeadsKeys.list(session?.user?.id || ""),
+    queryKey: assignedLeadsKeys.list(userId),
     queryFn: fetchAssignedLeads,
-    enabled: !!session?.user?.id, // Only fetch when user is authenticated
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-    refetchOnWindowFocus: false, // Prevent refetch on window focus
+    enabled: !!userId,
+    staleTime: ASSIGNED_LEADS_QUERY_STALE_MS,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: true,
-    retry: (failureCount, error) => {
-      // Don't retry on auth errors
-      if (error?.message?.includes("Unauthorized")) {
+    retry: (failureCount, err) => {
+      if (err?.message?.includes("Unauthorized")) {
         return false;
       }
       return failureCount < 2;
     },
   });
 
-  // Mutation for updating leads
   const updateLeadMutation = useMutation({
     mutationFn: updateLead,
     onMutate: async (updatedLead) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({
-        queryKey: assignedLeadsKeys.list(session?.user?.id || ""),
+        queryKey: assignedLeadsKeys.list(userId),
       });
 
-      // Snapshot previous value
       const previousLeads = queryClient.getQueryData<Lead[]>(
-        assignedLeadsKeys.list(session?.user?.id || "")
+        assignedLeadsKeys.list(userId),
       );
 
-      // Optimistically update cache
       queryClient.setQueryData<Lead[]>(
-        assignedLeadsKeys.list(session?.user?.id || ""),
+        assignedLeadsKeys.list(userId),
         (old = []) =>
           old.map((lead) =>
-            lead._id === updatedLead._id ? { ...lead, ...updatedLead } : lead
-          )
+            lead._id === updatedLead._id ? { ...lead, ...updatedLead } : lead,
+          ),
       );
 
       return { previousLeads };
     },
-    onError: (err, updatedLead, context) => {
-      // Rollback on error
+    onError: (_err, _updatedLead, context) => {
       if (context?.previousLeads) {
         queryClient.setQueryData(
-          assignedLeadsKeys.list(session?.user?.id || ""),
-          context.previousLeads
+          assignedLeadsKeys.list(userId),
+          context.previousLeads,
         );
       }
     },
-    onSettled: (data, error, variables) => {
-      // Invalidate and refetch
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({
-        queryKey: assignedLeadsKeys.list(session?.user?.id || ""),
+        queryKey: assignedLeadsKeys.list(userId),
       });
 
-      // Refresh timeline for the updated lead
       if (variables._id) {
         queryClient.invalidateQueries({
           queryKey: ["activities", variables._id],
@@ -314,18 +148,16 @@ export const useAssignedLeads = () => {
     },
   });
 
-  // Helper functions
   const updateLeadFn = (updatedLead: Partial<Lead> & { _id: string }) => {
     return updateLeadMutation.mutateAsync(updatedLead);
   };
 
   const invalidateLeads = () => {
     queryClient.invalidateQueries({
-      queryKey: assignedLeadsKeys.list(session?.user?.id || ""),
+      queryKey: assignedLeadsKeys.list(userId),
     });
   };
 
-  // Prefetch individual lead details if needed
   const prefetchLead = (leadId: string) => {
     queryClient.prefetchQuery({
       queryKey: assignedLeadsKeys.detail(leadId),
@@ -338,28 +170,21 @@ export const useAssignedLeads = () => {
         }
         return res.json();
       },
-      staleTime: 2 * 60 * 1000, // 2 minutes
+      staleTime: 2 * 60 * 1000,
     });
   };
 
   return {
-    // Data
     leads,
-
-    // Loading states
     isLoading,
     isFetching,
     isRefetching,
     isError,
     error,
-
-    // Actions
     refetch,
     updateLead: updateLeadFn,
     invalidateLeads,
     prefetchLead,
-
-    // Mutation states
     isUpdatingLead: updateLeadMutation.isPending,
     updateLeadError: updateLeadMutation.error,
   };

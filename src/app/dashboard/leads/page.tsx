@@ -1,9 +1,16 @@
-// src/app/dashboard/leads/page.tsx
 "use client";
 
-import UserLeadsContent from "@/components/leads/UserLeadsContent";
 import dynamic from "next/dynamic";
-import { useEffect } from "react";
+import { TableSkeleton } from "@/components/leads/UserLeadsLoadingStates";
+import { usePrefetchAssignedLeads } from "@/hooks/leadsPage/usePrefetchAssignedLeads";
+
+const UserLeadsContent = dynamic(
+  () => import("@/components/leads/UserLeadsContent"),
+  {
+    loading: () => <TableSkeleton />,
+    ssr: false,
+  },
+);
 
 const ReactQueryDevtools = dynamic(
   () =>
@@ -12,52 +19,14 @@ const ReactQueryDevtools = dynamic(
     ),
   { ssr: false },
 );
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { ShieldSpinnerGlyph } from "@/components/dashboardComponents/LeadsLoadingState";
-import { canAccessAllLeads } from "@/lib/roles";
 
 export default function UserLeadsPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  usePrefetchAssignedLeads();
 
-  const isRedirecting =
-    status === "unauthenticated" ||
-    (status === "authenticated" && canAccessAllLeads(session?.user));
-
-  // Redirect admins away from this page
-  useEffect(() => {
-    if (status === "loading") return;
-
-    if (status === "unauthenticated") {
-      const callbackUrl =
-        typeof window !== "undefined"
-          ? `${window.location.pathname}${window.location.search}`
-          : "/dashboard/leads";
-      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
-      return;
-    }
-
-    if (canAccessAllLeads(session?.user)) {
-      router.push("/dashboard/all-leads");
-      return;
-    }
-  }, [session, status, router]);
-
-  if (status === "loading" || isRedirecting) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <ShieldSpinnerGlyph />
-      </div>
-    );
-  }
-
-  // Only render for non-admin users
   return (
     <>
       <UserLeadsContent />
 
-      {/* Development: React Query DevTools for debugging */}
       {process.env.NODE_ENV === "development" && (
         <ReactQueryDevtools
           initialIsOpen={false}

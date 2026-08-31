@@ -74,10 +74,10 @@ interface LeadsFilterControlsProps {
   onSourceFilterModeChange?: (mode: "include" | "exclude") => void; // Mode change handler
   userFilterMode?: "include" | "exclude";
   onUserFilterModeChange?: (mode: "include" | "exclude") => void;
-  isLoading: boolean;
   filterByUser: string[]; // Changed to array
   onFilterChange: (values: string[]) => void; // Changed to array
   users: User[];
+  isLoadingUsers?: boolean;
   statuses?: Array<{ id: string; name: string; color?: string; _id?: string }>;
   isLoadingStatuses?: boolean;
   onAddLead?: () => void;
@@ -106,9 +106,10 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
   onSourceFilterModeChange,
   userFilterMode,
   onUserFilterModeChange,
-  isLoading,
   filterByUser,
   onFilterChange,
+  users,
+  isLoadingUsers = false,
   statuses,
   isLoadingStatuses = false,
 }) => {
@@ -117,9 +118,6 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
   const showAddLead = canCreateLead(session?.user);
   const showAddStatus = canCreateStatus(session?.user);
   const showUserFilter = canAssignLeads(session?.user);
-
-  // ✅ Combine all loading states for consistent skeleton display
-  const showFilterSkeletons = isLoading || isLoadingStatuses;
 
   return (
     <>
@@ -148,66 +146,58 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
 
           <div className="flex flex-col order-1 gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 md:w-auto md:order-2">
             <ErrorBoundary fallback={<FilterSkeleton />}>
-              {showAddLead &&
-                (showFilterSkeletons ? (
-                <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-30 dark:bg-gray-700" />
-              ) : (
+              {showAddLead && (
                 <Button
                   onClick={() => setIsAddLeadDialogOpen(true)}
-                  disabled={isLoading}
+                  disabled={isUpdating}
                   className="w-full text-white from-indigo-600 to-purple-600 bg-linear-to-r hover:from-indigo-700 hover:to-purple-700 sm:w-auto"
                 >
                   <Plus className="mr-2 w-4 h-4" />
                   Add Lead
                 </Button>
-              ))}
+              )}
 
-              {showAddStatus &&
-                (showFilterSkeletons ? (
-                <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-30 dark:bg-gray-700" />
-              ) : (
-                <AddStatusButton disabled={isLoading} />
-              ))}
+              {showAddStatus && (
+                <AddStatusButton disabled={isUpdating} />
+              )}
 
               {showUserFilter && (
               <UserFilter
                 value={filterByUser}
                 onChange={onFilterChange}
-                disabled={isLoading}
-                isLoading={showFilterSkeletons}
+                disabled={isUpdating}
+                isLoading={isLoadingUsers}
+                users={users}
                 mode={userFilterMode}
                 onModeChange={onUserFilterModeChange}
               />
               )}
 
-              {/* Status Filter - reads from cache */}
               <StatusFilter
                 value={filterByStatus}
                 onChange={onStatusFilterChange}
-                disabled={isLoading}
-                isLoading={showFilterSkeletons}
+                disabled={isUpdating}
+                isLoading={isLoadingStatuses}
                 mode={statusFilterMode}
                 onModeChange={onStatusFilterModeChange}
               />
 
-              {/* Source Filter - reads from cache */}
               <SourceFilter
                 value={filterBySource}
                 onChange={onSourceFilterChange}
-                disabled={isLoading}
-                isLoading={showFilterSkeletons}
+                disabled={isUpdating}
+                isLoading={false}
                 mode={sourceFilterMode}
                 onModeChange={onSourceFilterModeChange}
               />
 
-              {/* Country Filter - reads from cache */}
               <CountryFilter
                 value={filterByCountry}
                 onChange={onCountryFilterChange}
                 mode={countryFilterMode}
                 onModeChange={onCountryFilterModeChange}
-                disabled={isLoading}
-                isLoading={showFilterSkeletons}
+                disabled={isUpdating}
+                isLoading={false}
               />
             </ErrorBoundary>
           </div>

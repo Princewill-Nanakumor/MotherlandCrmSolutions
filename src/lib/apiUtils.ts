@@ -7,6 +7,37 @@ export type ApiCallOptions = RequestInit & {
   timeoutMs?: number;
 };
 
+/** Avoid a full navigation when already on /login (breaks Playwright + login UX). */
+function redirectToLoginPage(options: {
+  expired?: boolean;
+  callbackPath: string;
+}): void {
+  const { expired = false, callbackPath } = options;
+  const params = new URLSearchParams();
+  if (expired) params.set("expired", "true");
+  params.set("callbackUrl", callbackPath);
+  const target = `/login?${params.toString()}`;
+
+  if (window.location.pathname === "/login") {
+    const merged = new URLSearchParams(window.location.search);
+    if (!merged.get("callbackUrl")) {
+      merged.set("callbackUrl", callbackPath);
+    }
+    if (expired && merged.get("expired") !== "true") {
+      merged.set("expired", "true");
+    }
+    const qs = merged.toString();
+    window.history.replaceState(
+      {},
+      "",
+      `/login${qs ? `?${qs}` : ""}${window.location.hash ?? ""}`,
+    );
+    return;
+  }
+
+  window.location.href = target;
+}
+
 /**
  * Helper function to handle API calls with session refresh and better timeout handling
  */
@@ -69,9 +100,7 @@ export const apiCallWithSessionRefresh = async (
           const { pathname, search } = window.location;
           const callbackPath =
             pathname === "/login" ? "/dashboard" : `${pathname}${search}`;
-          window.location.href = `/login?expired=true&callbackUrl=${encodeURIComponent(
-            callbackPath,
-          )}`;
+          redirectToLoginPage({ expired: true, callbackPath });
         }
         throw new Error("Session expired. Please log in again.");
       }
@@ -142,9 +171,7 @@ export const apiCallWithSessionRefresh = async (
         const { pathname, search } = window.location;
         const callbackPath =
           pathname === "/login" ? "/dashboard" : `${pathname}${search}`;
-        window.location.href = `/login?callbackUrl=${encodeURIComponent(
-          callbackPath,
-        )}`;
+        redirectToLoginPage({ callbackPath });
       }
       throw new Error("Please sign in again.");
     }

@@ -10,6 +10,7 @@ import {
 } from "@/services/users/userService";
 import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 import { canManageUsers, getTenantAdminId } from "@/lib/roles";
+import { ApiRoutePerf } from "@/lib/apiRoutePerf";
 
 export async function POST(request: Request) {
   try {
@@ -51,10 +52,13 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
+  const perf = new ApiRoutePerf("GET /api/users");
   try {
     const session = await getServerSession(authOptions);
+    perf.mark("getServerSession");
 
     if (!session) {
+      perf.finish({ status: 401 });
       return unauthorizedResponse();
     }
 
@@ -66,9 +70,12 @@ export async function GET() {
         permissions?: string[];
       },
     );
+    perf.mark("listUsersForSession");
+    perf.finish({ status: result.status });
     return NextResponse.json(result.body, { status: result.status });
   } catch (error: unknown) {
     console.error("Error fetching users:", error);
+    perf.finish({ error: true });
     const message =
       error instanceof Error ? error.message : "Error fetching users";
     return NextResponse.json({ message }, { status: 500 });

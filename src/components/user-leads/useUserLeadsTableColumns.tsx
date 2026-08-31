@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useStatuses } from "@/hooks/useStatuses";
+import { useStatuses } from "@/context/StatusContext";
 import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
 import { maskPhoneNumber, maskEmail } from "@/utils/phoneMask";
 import { formatLeadPhoneForTable } from "@/lib/phoneNormalize";

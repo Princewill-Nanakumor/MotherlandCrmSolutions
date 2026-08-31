@@ -12,7 +12,6 @@ import { LeadsDialogs } from "./LeadDialog";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import {
   TableSkeleton,
-  LoadingSpinner,
   ErrorBoundary,
 } from "./LeadsLoadingState";
 import { useLeadsPage } from "@/hooks/useLeadsPage";
@@ -152,7 +151,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
   }
 
   if (status === "loading") {
-    return <LoadingSpinner />;
+    return null;
   }
 
   if (status === "unauthenticated") {
@@ -161,8 +160,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
   }
 
   if (!session?.user?.role || !canAccessAllLeads(session.user)) {
-    router.push("/dashboard/leads");
-    return <LoadingSpinner />;
+    return null;
   }
 
   return (
@@ -214,7 +212,6 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
             onSourceFilterModeChange={handleSourceFilterModeChange}
             userFilterMode={uiState.userFilterMode}
             onUserFilterModeChange={handleUserFilterModeChange}
-            isLoading={shouldShowLoading}
             filterByUser={
               displayFilterByUser === "all" || !displayFilterByUser
                 ? []
@@ -224,6 +221,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
             }
             onFilterChange={handleFilterChange}
             users={users}
+            isLoadingUsers={isLoadingUsers}
             statuses={statuses}
             isLoadingStatuses={isLoadingStatuses}
           />
@@ -244,20 +242,16 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
             }
           >
             <Suspense fallback={<TableSkeleton />}>
-              {leadsError || usersError || statusesError ? (
+              {leadsError ? (
                 <div className="p-8 overflow-hidden text-center bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
                   <p className="mb-2 text-red-500 dark:text-red-400">
-                    Failed to load data. This can happen in production if the
+                    Failed to load leads. This can happen in production if the
                     server is slow or the request timed out.
                   </p>
                   <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
                     {leadsError instanceof Error
                       ? leadsError.message
-                      : usersError instanceof Error
-                        ? usersError.message
-                        : statusesError instanceof Error
-                          ? statusesError.message
-                          : "Unknown error"}
+                      : "Unknown error"}
                   </p>
                   <button
                     type="button"
@@ -302,7 +296,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                     onServerPageChange={handleServerPageChange}
                     onPageSizeChange={handlePageSizeChange}
                     onLeadUpdated={handleLeadUpdate}
-                    isLoading={shouldShowLoading}
+                    isLoading={false}
                     isRefetching={isRefetchingLeads}
                     selectedLeads={selectedLeads}
                     users={users}

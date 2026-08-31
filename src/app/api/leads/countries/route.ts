@@ -5,15 +5,20 @@ import { connectMongoDB } from "@/libs/dbConfig";
 import mongoose from "mongoose";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
 import { buildTenantLeadBaseQuery } from "@/lib/leadListQuery";
+import { ApiRoutePerf } from "@/lib/apiRoutePerf";
 
 export async function GET() {
+  const perf = new ApiRoutePerf("GET /api/leads/countries");
   try {
     const session = await getServerSession(authOptions);
+    perf.mark("getServerSession");
     if (!session) {
+      perf.finish({ status: 401 });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectMongoDB();
+    perf.mark("connectMongoDB");
     const db = mongoose.connection.db;
     if (!db) {
       throw new Error("Database connection not available");
@@ -35,6 +40,7 @@ export async function GET() {
         { $sort: { _id: 1 } },
       ])
       .toArray();
+    perf.mark("aggregate");
 
     const countries = result
       .map((r) => (r._id != null ? String(r._id).trim() : ""))
@@ -45,11 +51,15 @@ export async function GET() {
       const key = canonical.toLowerCase();
       if (!byKey.has(key)) byKey.set(key, canonical);
     }
-    return NextResponse.json(
-      Array.from(byKey.values()).sort((a, b) => a.localeCompare(b)),
+    const payload = Array.from(byKey.values()).sort((a, b) =>
+      a.localeCompare(b),
     );
+    perf.mark("serialize");
+    perf.finish({ count: payload.length });
+    return NextResponse.json(payload);
   } catch (error) {
     console.error("Error fetching lead countries:", error);
+    perf.finish({ error: true });
     return NextResponse.json(
       { error: "Failed to fetch countries" },
       { status: 500 },

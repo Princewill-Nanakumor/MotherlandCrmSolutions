@@ -1,4 +1,3 @@
-// src/components/dashboardComponents/leadsFilters/UserFilter.tsx
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
@@ -8,12 +7,14 @@ import { User } from "@/types/user.types";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 
 interface UserFilterProps {
-  value: string[]; // Changed to array
-  onChange: (values: string[]) => void; // Changed to array
+  value: string[];
+  onChange: (values: string[]) => void;
   disabled: boolean;
   isLoading?: boolean;
-  mode?: "include" | "exclude"; // Filter mode
-  onModeChange?: (mode: "include" | "exclude") => void; // Mode change handler
+  mode?: "include" | "exclude";
+  onModeChange?: (mode: "include" | "exclude") => void;
+  /** When provided, skip the internal /api/users fetch (All Leads page). */
+  users?: User[];
 }
 
 export const UserFilter = ({
@@ -23,8 +24,8 @@ export const UserFilter = ({
   isLoading = false,
   mode: externalMode,
   onModeChange,
+  users: providedUsers,
 }: UserFilterProps) => {
-  // Internal mode state if not controlled externally
   const [internalMode, setInternalMode] = useState<"include" | "exclude">(
     () => {
       if (typeof window !== "undefined") {
@@ -34,16 +35,14 @@ export const UserFilter = ({
           | "exclude";
       }
       return "include";
-    }
+    },
   );
 
   const mode = externalMode ?? internalMode;
 
-  // Save mode to localStorage when it changes and dispatch custom event
   useEffect(() => {
     if (typeof window !== "undefined" && !externalMode) {
       localStorage.setItem("userFilterMode", mode);
-      // Dispatch custom event for immediate sync (same-tab)
       window.dispatchEvent(new CustomEvent("userFilterModeChanged"));
     }
   }, [mode, externalMode]);
@@ -60,9 +59,11 @@ export const UserFilter = ({
   const { data: session, status: sessionStatus } = useSession();
   const currentUserId = session?.user?.id;
   const isAuthenticated = sessionStatus === "authenticated";
+  const useProvidedUsers = providedUsers !== undefined;
 
-  // Only fetch users when authenticated so dev doesn't get 401 and empty list
-  const { data: users = [] } = useQuery<User[]>({
+  const { data: fetchedUsers = [], isLoading: isFetchingUsers } = useQuery<
+    User[]
+  >({
     queryKey: ["users"],
     queryFn: async () => {
       const response = await fetch("/api/users", {
@@ -76,14 +77,15 @@ export const UserFilter = ({
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     retry: 2,
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !useProvidedUsers,
   });
+
+  const users = useProvidedUsers ? providedUsers : fetchedUsers;
+  const usersLoading = useProvidedUsers ? isLoading : isFetchingUsers;
 
   const options = useMemo(() => {
     const dropdownUsers = users.filter((user) => user.status === "ACTIVE");
 
-    // Owner is not typically assigned leads; keep them out of their own filter.
-    // Sub-admins should still see every teammate, including themselves.
     const isOwner = session?.user?.role === "ADMIN";
     const filteredUsers =
       isOwner && currentUserId
@@ -116,8 +118,8 @@ export const UserFilter = ({
       onChange={onChange}
       options={options}
       placeholder={getPlaceholder()}
-      disabled={disabled}
-      isLoading={isLoading}
+      disabled={disabled || usersLoading}
+      isLoading={usersLoading}
       mode={mode}
       onModeChange={handleModeToggle}
     />
