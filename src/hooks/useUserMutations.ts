@@ -133,9 +133,23 @@ export function useUserMutations({
     ...createUserMutation,
     mutateAsync: async (userData: UserFormCreateData) => {
       const created = await createUserMutation.mutateAsync(userData);
-      await invalidateUserCachesAfterWrite(queryClient);
-      await onRefreshUsers?.();
+      // Toast / UI first — don't block modal close on list refetch.
       onUserCreated?.(created);
+      // Optimistic row so the table updates without waiting on GET /api/users.
+      queryClient.setQueryData<User[]>(["users"], (prev) => {
+        const list = Array.isArray(prev) ? prev : [];
+        if (list.some((u) => u.id === created.id || u.email === created.email)) {
+          return list;
+        }
+        return [created, ...list];
+      });
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["user-usage-data"] }),
+        // Mark users stale; background refetch must not gate the create UX.
+        queryClient.invalidateQueries({ queryKey: ["users"] }),
+      ]).catch((err) => {
+        console.error("Post-create users cache refresh failed:", err);
+      });
       return created;
     },
   } satisfies UseMutationResult<User, unknown, UserFormCreateData>;

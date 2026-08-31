@@ -11,44 +11,94 @@ import {
 import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 import { canManageUsers, getTenantAdminId } from "@/lib/roles";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";
+import {
+  formatSessionPerfHeader,
+  sessionPerfMark,
+  withSessionPerf,
+} from "@/lib/sessionPerfProbe";
+import {
+  formatMongoPerfHeader,
+  getMongoPerfProbe,
+  withMongoPerf,
+} from "@/lib/mongoPerfProbe";
 
 export async function POST(request: Request) {
-  try {
-    const session = await getServerSession(authOptions);
+  const wallStart = Date.now();
+  const [response] = await withMongoPerf(async () => {
+    const perf = new ApiRoutePerf("POST /api/users");
+    try {
+      const [session, sessionProbe] = await withSessionPerf(async () => {
+        sessionPerfMark("getServerSessionEnter");
+        const s = await getServerSession(authOptions);
+        sessionPerfMark("getServerSessionExit");
+        return s;
+      });
+      perf.mark("getServerSession");
 
-    if (!session || !canManageUsers(session.user)) {
-      return unauthorizedResponse();
-    }
+      if (!session || !canManageUsers(session.user)) {
+        perf.finish({ status: 401 });
+        return unauthorizedResponse();
+      }
 
-    const payload = await request.json();
-    const result = await createUserForAdmin(
-      session.user as {
-        id: string;
-        role: string;
-        adminId?: string;
-        permissions?: string[];
-      },
-      payload,
-    );
-    if (result.status >= 200 && result.status < 300) {
-      try {
-        await publishAdminLeadsUpdatedEvent(
+      const payload = await request.json();
+      perf.mark("parseBody");
+
+      const result = await createUserForAdmin(
+        session.user as {
+          id: string;
+          role: string;
+          adminId?: string;
+          permissions?: string[];
+        },
+        payload,
+        perf,
+      );
+      perf.mark("createUserForAdmin");
+
+      if (result.status >= 200 && result.status < 300) {
+        // Realtime is best-effort — don't hold the create response on Ably.
+        void publishAdminLeadsUpdatedEvent(
           getTenantAdminId(session.user) || session.user.id,
           {
-          type: "user_created",
-          actorId: session.user.id,
+            type: "user_created",
+            actorId: session.user.id,
+          },
+        ).catch((publishError) => {
+          console.error("Ably publish failed after user creation:", publishError);
         });
-      } catch (publishError) {
-        console.error("Ably publish failed after user creation:", publishError);
+        perf.mark("publishAblyQueued");
       }
+
+      const wallMs = Date.now() - wallStart;
+      const sessionHeader = formatSessionPerfHeader(sessionProbe);
+      const mongoHeader = formatMongoPerfHeader(getMongoPerfProbe());
+      if (sessionHeader) {
+        console.log(`[api-perf] POST /api/users session ${sessionHeader}`);
+      }
+      if (mongoHeader) {
+        console.log(`[api-perf] POST /api/users mongo ${mongoHeader}`);
+      }
+      perf.finish({ status: result.status, wallMs });
+      return NextResponse.json(result.body, {
+        status: result.status,
+        headers: {
+          ...perf.responseHeaders(),
+          "X-Api-Perf-Wall-Ms": String(wallMs),
+          ...(sessionHeader
+            ? { "X-Api-Perf-Session": sessionHeader }
+            : {}),
+          ...(mongoHeader ? { "X-Api-Perf-Mongo": mongoHeader } : {}),
+        },
+      });
+    } catch (error: unknown) {
+      console.error("Error creating user:", error);
+      perf.finish({ error: true, wallMs: Date.now() - wallStart });
+      const message =
+        error instanceof Error ? error.message : "Error creating user";
+      return NextResponse.json({ message }, { status: 500 });
     }
-    return NextResponse.json(result.body, { status: result.status });
-  } catch (error: unknown) {
-    console.error("Error creating user:", error);
-    const message =
-      error instanceof Error ? error.message : "Error creating user";
-    return NextResponse.json({ message }, { status: 500 });
-  }
+  });
+  return response;
 }
 
 export async function GET() {

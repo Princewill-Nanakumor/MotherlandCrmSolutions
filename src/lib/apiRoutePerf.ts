@@ -33,13 +33,30 @@ export class ApiRoutePerf {
     );
   }
 
-  /** Expose route timing to clients (startup bench reads this header). */
+  /** Cumulative marks from `mark()` (empty when timing is disabled). */
+  getMarks(): ReadonlyArray<{ label: string; ms: number }> {
+    return this.marks;
+  }
+
+  /** Expose route timing to clients (startup bench / E2E sync tests read these). */
   responseHeaders(): Record<string, string> {
     if (!isApiPerfTimingEnabled()) return {};
     const total = performance.now() - this.t0;
+    const stages = this.marks
+      .map((m) => `${m.label};dur=${m.ms.toFixed(2)}`)
+      .join(", ");
     return {
-      "Server-Timing": `total;dur=${total.toFixed(2)}`,
+      "Server-Timing": [`total;dur=${total.toFixed(2)}`, stages]
+        .filter(Boolean)
+        .join(", "),
       "X-Api-Perf-Total-Ms": total.toFixed(2),
+      ...(this.marks.length
+        ? {
+            "X-Api-Perf-Stages": this.marks
+              .map((m) => `${m.label}=${m.ms.toFixed(1)}`)
+              .join("|"),
+          }
+        : {}),
     };
   }
 }

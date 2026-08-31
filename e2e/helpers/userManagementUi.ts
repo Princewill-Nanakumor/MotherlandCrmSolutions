@@ -3,10 +3,17 @@ import { openToasts } from "./assignmentUi";
 
 export type CreateUserSyncTimings = {
   submitMs: number;
+  apiRequestStartedMs: number | null;
   apiWireMs: number;
   modalClosedMs: number;
   toastVisibleMs: number;
   tableRowMs: number;
+  serverTimingMs: number | null;
+  serverWallMs: number | null;
+  serverStages: string | null;
+  sessionPerf: string | null;
+  mongoPerf: string | null;
+  resourceTimingMs: number | null;
 };
 
 export function addUserModal(page: Page) {
@@ -76,6 +83,12 @@ export async function expectUserRowVisible(
   email: string,
   timeoutMs = 60_000,
 ) {
+  // Created users can land past the default 15-row page (name sort).
+  const pageSize = page.locator("select").filter({ has: page.locator('option[value="100"]') }).first();
+  if (await pageSize.count()) {
+    await pageSize.selectOption("100").catch(() => undefined);
+  }
+
   const row = page.locator("table tbody tr").filter({ hasText: email }).first();
   await expect(row).toBeVisible({ timeout: timeoutMs });
   return row;
@@ -84,31 +97,54 @@ export async function expectUserRowVisible(
 /**
  * Submit Add User form and assert modal → API → toast → table stay in sync.
  * Returns timing breakdown for perf debugging.
+ *
+ * Important: do not await a `/^Create User$/` locator for "Creating…" text.
+ * Once the label flips, that locator stops matching and burns the full
+ * expect timeout (~10s), which used to inflate `apiWireMs` falsely.
  */
 export async function submitAddUserAndExpectSync(
   page: Page,
   email: string,
 ): Promise<CreateUserSyncTimings> {
   const modal = addUserModal(page);
-  const submit = modal.getByRole("button", { name: /^Create User$/i });
+  const submit = modal.getByRole("button", {
+    name: /^(Create User|Creating)/i,
+  });
 
   const t0 = Date.now();
+  let apiRequestStartedMs: number | null = null;
 
   const responsePromise = page.waitForResponse(
     (res) => res.request().method() === "POST" && res.url().includes("/api/users"),
     { timeout: 120_000 },
   );
+  const requestPromise = page
+    .waitForRequest(
+      (req) => req.method() === "POST" && req.url().includes("/api/users"),
+      { timeout: 120_000 },
+    )
+    .then((req) => {
+      apiRequestStartedMs = Date.now() - t0;
+      return req;
+    });
   const toastPromise = expectUserCreateToast(page);
 
   await submit.click();
 
-  await expect(submit).toHaveText(/Creating/i, { timeout: 10_000 }).catch(() => {
-    // Fast paths may skip the loading label; response + assertions still cover sync.
-  });
-
+  await requestPromise;
   const response = await responsePromise;
   const apiWireMs = Date.now() - t0;
   expect(response.ok(), `POST /api/users failed: ${response.status()}`).toBeTruthy();
+
+  const timing = response.request().timing();
+  const headers = response.headers();
+  const serverTimingRaw = headers["x-api-perf-total-ms"];
+  const serverTimingMs = serverTimingRaw ? Number(serverTimingRaw) : null;
+  const serverWallRaw = headers["x-api-perf-wall-ms"];
+  const serverWallMs = serverWallRaw ? Number(serverWallRaw) : null;
+  const serverStages = headers["x-api-perf-stages"] ?? null;
+  const sessionPerf = headers["x-api-perf-session"] ?? null;
+  const mongoPerf = headers["x-api-perf-mongo"] ?? null;
 
   await toastPromise;
   const toastVisibleMs = Date.now() - t0;
@@ -121,10 +157,20 @@ export async function submitAddUserAndExpectSync(
 
   return {
     submitMs: t0,
+    apiRequestStartedMs,
     apiWireMs,
     modalClosedMs,
     toastVisibleMs,
     tableRowMs,
+    serverTimingMs: Number.isFinite(serverTimingMs) ? serverTimingMs : null,
+    serverWallMs: Number.isFinite(serverWallMs) ? serverWallMs : null,
+    serverStages,
+    sessionPerf,
+    mongoPerf,
+    resourceTimingMs:
+      timing.responseEnd >= 0 && timing.requestStart >= 0
+        ? timing.responseEnd - timing.requestStart
+        : null,
   };
 }
 

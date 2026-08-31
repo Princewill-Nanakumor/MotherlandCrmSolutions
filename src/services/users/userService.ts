@@ -15,6 +15,8 @@ import {
   sanitizeTeamRole,
 } from "@/lib/roles";
 import { invalidateSessionRbacCache } from "@/lib/sessionRbac";
+import { probeMongoQuery } from "@/lib/mongoPerfProbe";
+import type { ApiRoutePerf } from "@/lib/apiRoutePerf";
 
 type UserUpdateFields = {
   firstName?: string;
@@ -94,18 +96,53 @@ export async function createUserForAdmin(
     canViewEmails?: boolean;
     canViewPhoneNumbers?: boolean;
   },
+  perf?: ApiRoutePerf,
 ) {
   const tenantId = getTenantAdminId(sessionUser);
   if (!tenantId || !canManageUsers(sessionUser)) {
     return { status: 403, body: { message: "Unauthorized" } };
   }
   const adminId = new mongoose.Types.ObjectId(tenantId);
+  const normalizedEmail = data.email.trim().toLowerCase();
 
+  // Admin doc first, then seat count + email in parallel (max 2 concurrent —
+  // avoids a third cold pool socket when minPoolSize is 2).
   const adminUser = (await withDatabase(async () => {
     const db = mongoose.connection.db;
     if (!db) throw new Error("Database connection not available");
-    return db.collection("users").findOne({ _id: adminId });
+    return probeMongoQuery(
+      "loadAdmin",
+      "native",
+      () => db.collection("users").findOne({ _id: adminId }),
+      { collection: "users", filter: { _id: adminId } },
+    );
   })) as UserDocument | null;
+  perf?.mark("loadAdmin");
+
+  const [currentUsersEarly, existingUser] = (await withDatabase(
+    async () => {
+      const db = mongoose.connection.db;
+      if (!db) throw new Error("Database connection not available");
+      const users = db.collection("users");
+      return Promise.all([
+        probeMongoQuery(
+          "seatCount",
+          "native",
+          () => users.countDocuments({ adminId }),
+          { collection: "users", filter: { adminId } },
+        ),
+        probeMongoQuery(
+          "emailDupeCheck",
+          "native",
+          () => users.findOne({ email: normalizedEmail }),
+          { collection: "users", filter: { email: normalizedEmail } },
+        ),
+      ]);
+    },
+  )) as [number, unknown];
+  perf?.mark("seatCount");
+  perf?.mark("emailDupeCheck");
+  perf?.mark("loadAdminSeatEmail");
 
   if (!adminUser) {
     return { status: 404, body: { message: "Admin user not found" } };
@@ -136,59 +173,51 @@ export async function createUserForAdmin(
       },
     };
   }
+  perf?.mark("subscriptionGate");
 
   const rawMax = adminUser.maxUsers ?? TRIAL_LIMITS.maxUsers;
   const unlimited = isUnlimited(rawMax);
+  const currentUsers = unlimited ? 0 : currentUsersEarly;
 
-  // Pre-flight: cheap reject before pre-checking email/hashing the password.
-  if (!unlimited) {
-    const currentUsers = await withDatabase(async () => {
-      const db = mongoose.connection.db;
-      if (!db) throw new Error("Database connection not available");
-      return db.collection("users").countDocuments({ adminId });
-    });
-    if (currentUsers >= rawMax) {
-      return {
-        status: 403,
-        body: {
-          message: "User limit reached",
-          details: {
-            currentUsers,
-            maxUsers: rawMax,
-            remainingSlots: 0,
-          },
-          upgradeRequired: true,
+  if (!unlimited && currentUsers >= rawMax) {
+    return {
+      status: 403,
+      body: {
+        message: "User limit reached",
+        details: {
+          currentUsers,
+          maxUsers: rawMax,
+          remainingSlots: 0,
         },
-      };
-    }
+        upgradeRequired: true,
+      },
+    };
   }
-
-  const normalizedEmail = data.email.trim().toLowerCase();
-
-  const existingUser = await withDatabase(async () => {
-    const db = mongoose.connection.db;
-    if (!db) throw new Error("Database connection not available");
-    return db.collection("users").findOne({ email: normalizedEmail });
-  });
   if (existingUser) {
     return {
       status: 409,
       body: { message: "User with this email already exists" },
     };
   }
+  perf?.mark("preInsertGates");
+
+  const role = isSubAdmin(sessionUser.role)
+    ? "AGENT"
+    : sanitizeTeamRole(data.role);
+  const permissions = sanitizeSubAdminPermissions(role, data.permissions);
+  const status = data.status || "ACTIVE";
+  const createdAt = new Date();
 
   const inserted = await executeDbOperation(async () => {
     const db = mongoose.connection.db;
     if (!db) throw new Error("Database connection not available");
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    const role = isSubAdmin(sessionUser.role)
-      ? "AGENT"
-      : sanitizeTeamRole(data.role);
-    const permissions = sanitizeSubAdminPermissions(role, data.permissions);
+    perf?.mark("bcryptHash");
     const recoverablePassword =
       role === "AGENT" || role === "SUBADMIN"
         ? encryptRecoverablePassword(data.password)
         : null;
+    perf?.mark("prepareInsert");
     return db.collection("users").insertOne({
       firstName: data.firstName,
       lastName: data.lastName,
@@ -198,21 +227,22 @@ export async function createUserForAdmin(
       phoneNumber: data.phoneNumber,
       country: data.country,
       role,
-      status: data.status || "ACTIVE",
+      status,
       permissions,
       canViewEmails: data.canViewEmails === true,
       canViewPhoneNumbers: data.canViewPhoneNumbers === true,
       adminId,
       createdBy: adminId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt,
+      updatedAt: createdAt,
     });
   }, "Error creating user");
+  perf?.mark("insertUser");
 
   // Post-insert seat reconciliation. Two concurrent POSTs can both pass the
   // pre-flight count, so we recount after the insert and compensate (delete
   // exactly the row we inserted) if we now exceed `maxUsers`.
-  let finalCount: number | null = null;
+  let finalCount: number | null = unlimited ? currentUsers + 1 : null;
   if (!unlimited) {
     const db = mongoose.connection.db;
     if (db) {
@@ -221,6 +251,7 @@ export async function createUserForAdmin(
         await db
           .collection("users")
           .deleteOne({ _id: inserted.insertedId, adminId });
+        perf?.mark("postInsertReconcile");
         return {
           status: 403,
           body: {
@@ -236,36 +267,23 @@ export async function createUserForAdmin(
       }
     }
   }
-
-  const createdUser = (await withDatabase(async () => {
-    const db = mongoose.connection.db;
-    if (!db) throw new Error("Database connection not available");
-    return db
-      .collection("users")
-      .findOne({ _id: inserted.insertedId });
-  })) as UserDocument | null;
-  if (!createdUser) {
-    return {
-      status: 500,
-      body: { message: "Failed to load created user" },
-    };
-  }
+  perf?.mark("postInsertReconcile");
 
   return {
     status: 201,
     body: {
       message: "User created successfully",
       user: {
-        id: createdUser._id,
-        firstName: createdUser.firstName,
-        lastName: createdUser.lastName,
-        email: createdUser.email,
-        role: createdUser.role,
-        status: createdUser.status,
-        createdAt: createdUser.createdAt.toISOString(),
+        id: inserted.insertedId,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: normalizedEmail,
+        role,
+        status,
+        createdAt: createdAt.toISOString(),
       },
       usage: {
-        currentUsers: unlimited ? finalCount ?? 0 : finalCount ?? 0,
+        currentUsers: finalCount ?? 0,
         maxUsers: rawMax,
         remainingUsers: unlimited
           ? -1

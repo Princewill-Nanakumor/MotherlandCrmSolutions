@@ -63,7 +63,11 @@ function getConnectionOptions(): mongoose.ConnectOptions {
   );
   const minPoolSize = Math.max(
     0,
-    Number.parseInt(process.env.MONGODB_MIN_POOL_SIZE ?? "0", 10) || 0,
+    Number.parseInt(process.env.MONGODB_MIN_POOL_SIZE ?? "2", 10) || 2,
+  );
+  const maxIdleTimeMS = Math.max(
+    10_000,
+    Number.parseInt(process.env.MONGODB_MAX_IDLE_MS ?? "60000", 10) || 60_000,
   );
 
   return {
@@ -73,7 +77,10 @@ function getConnectionOptions(): mongoose.ConnectOptions {
     autoIndex: process.env.NODE_ENV !== "production",
     maxPoolSize,
     minPoolSize: Math.min(minPoolSize, maxPoolSize),
-    maxIdleTimeMS: 10_000,
+    // Keep at least minPoolSize sockets warm across API bursts (create user
+    // cold→warm). The old 10s idle timeout caused ~1s TLS handshakes when
+    // parallel queries opened extra pool connections after idle.
+    maxIdleTimeMS,
     serverSelectionTimeoutMS: 30000,
     socketTimeoutMS: 45000,
     family: 4,

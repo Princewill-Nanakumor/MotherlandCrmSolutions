@@ -18,8 +18,12 @@ import {
   CRED_EMAIL_VERIFY_PENDING_AGENT,
 } from "@/lib/credentialsEmailVerifyErrors";
 import { findUserForCredentialLoginByEmail } from "@/lib/authEmailUserLookup";
-import { getPasswordChangedAtUnixCached } from "@/lib/authPasswordVersion";
 import { getSessionRbacFromDbCached } from "@/lib/sessionRbac";
+import { resolveJwtSessionDb } from "@/lib/sessionJwtDb";
+import {
+  sessionPerfMark,
+  sessionPerfNote,
+} from "@/lib/sessionPerfProbe";
 import { tryConsumeCaptchaSignatureOnce } from "@/lib/captchaConsumeStore";
 import {
   captchaConsumeTtlMs,
@@ -97,6 +101,8 @@ declare module "next-auth/jwt" {
     canViewEmails?: boolean;
     exp?: number; // Token expiration timestamp
     loginTimestamp?: number; // Absolute timestamp of initial login
+    /** Unix seconds when role/permissions were last loaded from DB. */
+    rbacFetchedAt?: number;
     /** Effective session lifetime in seconds chosen at login (default vs "Remember me"). */
     maxAgeSec?: number;
     email?: string;
@@ -349,6 +355,7 @@ export const authOptions: NextAuthOptions = {
         // If we keep an old iat from a previous expired token, the next jwt() pass
         // can immediately mark this brand-new login as expired.
         token.iat = nowTimestamp;
+        token.rbacFetchedAt = nowTimestamp;
       } else if (token) {
         // Existing token - check if it's expired. Don't throw (causes 500 on Netlify/serverless);
         // strip id so session callback can return null (empty id still counts as "authenticated" on the client).
@@ -376,31 +383,94 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Password reset after this JWT was issued — invalidate session (JWT has no server store).
+        // Parallelize with RBAC refresh when RBAC is due; skip RBAC DB when the
+        // JWT still carries a fresh snapshot (avoids ~1s Atlas RTT on hot API paths).
         if (typeof token.id === "string" && token.id.length > 0) {
-          try {
-            const changedAt = await getPasswordChangedAtUnixCached(token.id);
-            const iat =
-              typeof token.iat === "number" && token.iat > 0
-                ? token.iat
-                : typeof token.loginTimestamp === "number"
-                  ? token.loginTimestamp
-                  : 0;
-            if (changedAt > iat) {
-              return { ...token, id: "", exp: 0 };
-            }
-          } catch (e) {
-            // Soft-fail: a transient Mongo error must not invalidate every
-            // active session. The downside (stolen JWT surviving a password
-            // rotation while the DB is unreachable) is bounded by how long
-            // the DB is down — and during that window the rest of the app
-            // is unusable anyway. Crucially, fail-closing here would also
-            // turn the post-signin /api/auth/session call into an instant
-            // "Session Expired" bounce on any DB blip, which is worse UX
-            // than the security gain.
-            console.error("jwt passwordChangedAt check:", e);
-          }
-        }
+          const userId = token.id;
+          const iat =
+            typeof token.iat === "number" && token.iat > 0
+              ? token.iat
+              : typeof token.loginTimestamp === "number"
+                ? token.loginTimestamp
+                : 0;
+          const RBAC_MAX_AGE_SEC = 30;
+          const rbacAgeSec =
+            typeof token.rbacFetchedAt === "number" && token.rbacFetchedAt > 0
+              ? currentTime - token.rbacFetchedAt
+              : Number.POSITIVE_INFINITY;
+          const refreshRbac = rbacAgeSec >= RBAC_MAX_AGE_SEC;
 
+          sessionPerfNote(
+            "jwtExistingToken",
+            `refreshRbac=${refreshRbac} rbacAgeSec=${Number.isFinite(rbacAgeSec) ? rbacAgeSec : "inf"}`,
+          );
+
+          const jwtDbStarted = performance.now();
+          const jwtDb = await resolveJwtSessionDb(userId, refreshRbac).catch(
+            (e) => {
+              console.error("jwt session DB refresh:", e);
+              return {
+                passwordChangedAtUnix: 0,
+                rbac: null as import("@/lib/sessionRbac").SessionRbacSnapshot | null,
+              };
+            },
+          );
+
+          sessionPerfMark(
+            "jwtDbDone",
+            `${(performance.now() - jwtDbStarted).toFixed(1)}ms`,
+          );
+
+          if (jwtDb.passwordChangedAtUnix > iat) {
+            return { ...token, id: "", exp: 0 };
+          }
+
+          if (jwtDb.rbac) {
+            const rbac = jwtDb.rbac;
+            token.role = rbac.role;
+            token.permissions = rbac.permissions;
+            token.status = rbac.status;
+            token.adminId = rbac.adminId;
+            token.canViewPhoneNumbers = rbac.canViewPhoneNumbers;
+            token.canViewEmails = rbac.canViewEmails;
+            token.rbacFetchedAt = currentTime;
+          }
+
+          // Profile `update()` may only patch display fields. Role / contact flags /
+          // adminId / status / permissions always come from DB above so a stale
+          // client session cannot undo an admin role or unmask change after refresh.
+          if (trigger === "update" && session?.user) {
+            const userPatch = session.user as Partial<{
+              id: string;
+              email: string;
+              firstName: string;
+              lastName: string;
+              phoneNumber: string;
+              country: string;
+            }>;
+
+            if (typeof userPatch.id === "string" && userPatch.id.length > 0) {
+              token.id = userPatch.id;
+            }
+            if (typeof userPatch.email === "string") {
+              token.email = userPatch.email;
+            }
+            if (typeof userPatch.firstName === "string") {
+              token.firstName = userPatch.firstName;
+            }
+            if (typeof userPatch.lastName === "string") {
+              token.lastName = userPatch.lastName;
+            }
+            if (typeof userPatch.phoneNumber === "string") {
+              token.phoneNumber = userPatch.phoneNumber;
+            }
+            if (typeof userPatch.country === "string") {
+              token.country = userPatch.country;
+            }
+          }
+
+          return applySuperAdminToToken(token);
+        }
       }
 
       // Profile `update()` may only patch display fields. Role / contact flags /
@@ -436,8 +506,8 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      // Refresh role/permissions/contact flags from DB so admin changes apply
-      // on the next page refresh (and after client update()) without re-login.
+      // Fresh login path (user set above) still refreshes RBAC once so invited
+      // agents pick up latest permissions without a second round-trip later.
       if (typeof token.id === "string" && token.id.length > 0) {
         try {
           const rbac = await getSessionRbacFromDbCached(token.id);
@@ -448,6 +518,7 @@ export const authOptions: NextAuthOptions = {
             token.adminId = rbac.adminId;
             token.canViewPhoneNumbers = rbac.canViewPhoneNumbers;
             token.canViewEmails = rbac.canViewEmails;
+            token.rbacFetchedAt = Math.floor(Date.now() / 1000);
           }
         } catch (e) {
           console.error("jwt session RBAC refresh:", e);

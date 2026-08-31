@@ -1,6 +1,11 @@
 import User from "@/models/User";
 import { connectMongoDB } from "@/libs/dbConfig";
+import { probeMongoQuery } from "@/lib/mongoPerfProbe";
 import { sanitizeSubAdminPermissions } from "@/lib/roles";
+import {
+  sessionPerfMark,
+  sessionPerfNote,
+} from "@/lib/sessionPerfProbe";
 
 export type SessionRbacSnapshot = {
   role: string;
@@ -12,8 +17,11 @@ export type SessionRbacSnapshot = {
 };
 
 const cache = new Map<string, { value: SessionRbacSnapshot; fetchedAt: number }>();
-/** Short TTL so admin checkbox changes show up after a normal page refresh. */
-const CACHE_MS = 5_000;
+/**
+ * Keep RBAC hot across a short burst of API calls (create user → refetch list).
+ * Admin permission edits still call {@link invalidateSessionRbacCache}.
+ */
+const CACHE_MS = 30_000;
 const MAX_ENTRIES = 5_000;
 
 function rememberInCache(
@@ -41,27 +49,47 @@ export async function getSessionRbacFromDbCached(
   const now = Date.now();
   const hit = cache.get(userId);
   if (hit && now - hit.fetchedAt < CACHE_MS) {
+    sessionPerfNote(
+      "rbacCache",
+      `hit ageMs=${now - hit.fetchedAt}`,
+    );
     return hit.value;
   }
 
+  sessionPerfNote("rbacCache", "miss");
+  const connectStarted = performance.now();
   await connectMongoDB();
-  const doc = await User.findById(userId)
-    .select({
-      role: 1,
-      permissions: 1,
-      status: 1,
-      adminId: 1,
-      canViewPhoneNumbers: 1,
-      canViewEmails: 1,
-    })
-    .lean<{
-      role?: string;
-      permissions?: string[];
-      status?: string;
-      adminId?: { toString(): string } | string;
-      canViewPhoneNumbers?: boolean;
-      canViewEmails?: boolean;
-    } | null>();
+  sessionPerfMark(
+    "rbacConnectMongo",
+    `${(performance.now() - connectStarted).toFixed(1)}ms`,
+  );
+
+  const doc = await probeMongoQuery(
+    "rbacFindById",
+    "mongoose",
+    () =>
+      User.findById(userId)
+        .select({
+          role: 1,
+          permissions: 1,
+          status: 1,
+          adminId: 1,
+          canViewPhoneNumbers: 1,
+          canViewEmails: 1,
+        })
+        .lean<{
+          role?: string;
+          permissions?: string[];
+          status?: string;
+          adminId?: { toString(): string } | string;
+          canViewPhoneNumbers?: boolean;
+          canViewEmails?: boolean;
+        } | null>(),
+    {
+      collection: "users",
+      filter: { _id: userId },
+    },
+  );
 
   if (!doc?.role) return null;
 
@@ -84,4 +112,21 @@ export async function getSessionRbacFromDbCached(
 
 export function invalidateSessionRbacCache(userId: string): void {
   cache.delete(userId);
+}
+
+/** Populate cache after a coalesced JWT session read. */
+export function seedSessionRbacCache(
+  userId: string,
+  value: SessionRbacSnapshot,
+): void {
+  rememberInCache(userId, { value, fetchedAt: Date.now() });
+}
+
+/** Test/diagnostics: whether the in-memory RBAC cache currently has an entry. */
+export function peekSessionRbacCache(
+  userId: string,
+): { hit: boolean; ageMs: number | null; value: SessionRbacSnapshot | null } {
+  const hit = cache.get(userId);
+  if (!hit) return { hit: false, ageMs: null, value: null };
+  return { hit: true, ageMs: Date.now() - hit.fetchedAt, value: hit.value };
 }
