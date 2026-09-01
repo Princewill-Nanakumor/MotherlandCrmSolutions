@@ -49,6 +49,7 @@
     "test:lead-detail-panel-bench:prod": "node scripts/wait-for-http.mjs && LEAD_DETAIL_PANEL_BENCH=1 API_PERF_TIMING=1 PLAYWRIGHT_NO_WEBSERVER=1 playwright test e2e/lead-detail-panel-bench.spec.ts",
     "test:lead-detail-panel-edge": "LEAD_DETAIL_PANEL_EDGE=1 playwright test e2e/lead-detail-panel-edge.spec.ts",
     "test:all-leads-loading": "ALL_LEADS_LOADING_E2E=1 playwright test e2e/all-leads-loading.spec.ts",
+    "test:user-leads-loading": "USER_LEADS_LOADING_E2E=1 playwright test e2e/user-leads-loading.spec.ts",
     "mongo:users-create-explain": "node --env-file=.env scripts/mongo-users-create-explain.mjs",
     "mongo:users-create-explain:idle": "node --env-file=.env scripts/mongo-users-create-explain.mjs --idle-test",
     "test:assign-bulk-ui": "ASSIGN_BULK_UI=1 playwright test e2e/assignment-bulk-ui.spec.ts",

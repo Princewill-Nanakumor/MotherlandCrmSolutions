@@ -10,7 +10,6 @@ const LeadDetailsPanel = dynamic(
 );
 import { UserLeadsHeader } from "@/components/leads/UserLeadsHeader";
 import { UserLeadsFilterControls } from "@/components/leads/UserLeadsFilterControls";
-import { TableSkeleton } from "@/components/leads/UserLeadsLoadingStates";
 import { UserLeadsTableContainer } from "@/components/user-leads/UserLeadsTableContainer";
 import { Lead } from "@/types/leads";
 import { CountsData } from "@/types/pagination.types";
@@ -31,7 +30,6 @@ interface UserLeadsMainContentProps {
   filterBySource: string[];
   sortField: SortField;
   sortOrder: SortOrder;
-  shouldShowLoading: boolean;
   showHeader: boolean;
   showControls: boolean;
   currentIndex: number;
@@ -117,7 +115,6 @@ export function UserLeadsMainContent({
   filterBySource,
   sortField,
   sortOrder,
-  shouldShowLoading,
   showHeader,
   showControls,
   currentIndex,
@@ -223,7 +220,7 @@ export function UserLeadsMainContent({
         className={`shrink-0 transition-opacity duration-300 ease-in-out ${showHeader ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         style={{ marginBottom: showHeader ? "0" : "-100px", transition: "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out" }}
       >
-        <UserLeadsHeader shouldShowLoading={shouldShowLoading} counts={counts} />
+        <UserLeadsHeader shouldShowLoading={false} counts={counts} />
       </div>
 
       <div
@@ -231,7 +228,6 @@ export function UserLeadsMainContent({
         style={{ marginBottom: showControls ? "0" : "-80px", transition: "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out" }}
       >
         <UserLeadsFilterControls
-          shouldShowLoading={shouldShowLoading}
           filterByCountry={filterByCountry}
           filterByStatus={filterByStatus}
           filterBySource={filterBySource}
@@ -252,9 +248,7 @@ export function UserLeadsMainContent({
       </div>
 
       <div className="flex-1 min-h-0 min-w-0 px-4 pb-4 overflow-auto sm:px-8">
-        {shouldShowLoading ? (
-          <TableSkeleton />
-        ) : filteredLeads.length === 0 ? (
+        {filteredLeads.length === 0 ? (
           <EmptyState searchQuery={searchQuery} />
         ) : (
           <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">

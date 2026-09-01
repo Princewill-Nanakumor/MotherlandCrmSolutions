@@ -9,7 +9,6 @@ import { CountryFilter } from "../dashboardComponents/leadsFilters/CountryFilter
 import { SourceFilter } from "../dashboardComponents/leadsFilters/SourceFilter";
 
 interface UserLeadsFilterControlsProps {
-  shouldShowLoading: boolean;
   filterByCountry: string | string[];
   filterByStatus: string | string[];
   filterBySource: string | string[];
@@ -23,23 +22,14 @@ interface UserLeadsFilterControlsProps {
   onStatusFilterModeChange: (mode: "include" | "exclude") => void;
   onSourceFilterModeChange: (mode: "include" | "exclude") => void;
   availableCountries: string[];
-  availableStatuses: string[]; // Keep this for backward compatibility but won't use it
+  availableStatuses: string[];
   availableSources: string[];
   counts: CountsData;
 }
 
-const FilterSkeleton = () => (
-  <div className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
-    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
-    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
-  </div>
-);
-
 export const UserLeadsFilterControls: React.FC<
   UserLeadsFilterControlsProps
 > = ({
-  shouldShowLoading,
   filterByCountry,
   filterByStatus,
   filterBySource,
@@ -55,7 +45,6 @@ export const UserLeadsFilterControls: React.FC<
   availableCountries,
   availableSources,
 }) => {
-  // Normalize filters to arrays
   const normalizeFilter = (filter: string | string[]): string[] => {
     if (Array.isArray(filter)) return filter;
     return filter === "all" || !filter ? [] : [filter];
@@ -65,46 +54,33 @@ export const UserLeadsFilterControls: React.FC<
   const statusFilter = normalizeFilter(filterByStatus);
   const sourceFilter = normalizeFilter(filterBySource);
 
-  if (shouldShowLoading) {
-    return (
-      <div className="sticky top-0 z-10 px-4 pb-5 mt-8 bg-white sm:px-6 lg:px-8 dark:bg-gray-800">
-        <div className="flex flex-col gap-3 px-3 py-4 rounded-xl border min-w-0 md:flex-row md:items-center md:justify-end sm:px-4">
-          <FilterSkeleton />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="sticky top-0 z-10 px-4 pb-5 mt-10 bg-white sm:px-6 lg:px-8 dark:bg-gray-800">
       <div className="flex flex-col gap-3 px-3 py-4 rounded-xl border min-w-0 md:flex-row md:items-center md:justify-end sm:px-4">
         <div className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3 md:w-auto">
-          {/* Country Filter */}
           <CountryFilter
             value={countryFilter}
             onChange={onCountryFilterChange}
-            disabled={shouldShowLoading}
+            disabled={false}
             isLoading={false}
             mode={countryFilterMode}
             onModeChange={onCountryFilterModeChange}
             availableCountries={availableCountries}
           />
 
-          {/* Status Filter - Use the same component as ADMIN */}
           <StatusFilter
             value={statusFilter}
             onChange={onStatusFilterChange}
-            disabled={shouldShowLoading}
+            disabled={false}
             isLoading={false}
             mode={statusFilterMode}
             onModeChange={onStatusFilterModeChange}
           />
 
-          {/* Source Filter */}
           <SourceFilter
             value={sourceFilter}
             onChange={onSourceFilterChange}
-            disabled={shouldShowLoading}
+            disabled={false}
             isLoading={false}
             mode={sourceFilterMode}
             onModeChange={onSourceFilterModeChange}

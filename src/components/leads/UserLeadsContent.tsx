@@ -14,6 +14,7 @@ import { useToggleContext } from "@/context/ToggleContext";
 import { useAssignedLeads } from "@/hooks/useAssignedLeads";
 import { RefetchIndicator } from "@/components/ui/RefetchIndicator";
 import { UserLeadsMainContent } from "@/components/leads/UserLeadsMainContent";
+import { UserLeadsPageLoadingShell } from "@/components/leads/UserLeadsPageLoadingShell";
 import { SortField, SortOrder } from "@/components/leads/userLeadsTypes";
 import {
   isLegacyNumericLeadId,
@@ -32,7 +33,7 @@ export default function UserLeadsContent() {
   const showControls = toggleContext?.showControls ?? true;
 
   // React Query hook for leads data
-  const { leads, isLoading, isFetching, isError, error, updateLead } =
+  const { leads, isLoading, isFetching, isError, error, updateLead, refetch } =
     useAssignedLeads();
 
   // React Query hook for subscription (prevents flashing)
@@ -316,6 +317,23 @@ export default function UserLeadsContent() {
   // Loading states - Only show loading on first load, not on navigation back
   const isDataReady = !isLoading || leads.length > 0;
   const shouldShowLoading = isLoading && leads.length === 0;
+  const isBootstrapping = subscriptionLoading || shouldShowLoading;
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    (
+      window as Window & {
+        __e2eRefetchAssignedLeads?: () => Promise<unknown>;
+      }
+    ).__e2eRefetchAssignedLeads = () => refetch();
+    return () => {
+      delete (
+        window as Window & {
+          __e2eRefetchAssignedLeads?: () => Promise<unknown>;
+        }
+      ).__e2eRefetchAssignedLeads;
+    };
+  }, [refetch]);
 
   if (isError) {
     return (
@@ -342,6 +360,12 @@ export default function UserLeadsContent() {
       subscriptionData={subscriptionData || null}
       allowAccessWhenExpired
     >
+      {isBootstrapping ? (
+        <UserLeadsPageLoadingShell
+          showHeader={showHeader}
+          showControls={showControls}
+        />
+      ) : (
       <div className="flex flex-col min-h-0 h-full">
         {/* RefetchIndicator positioned like all-leads */}
         <RefetchIndicator />
@@ -383,7 +407,6 @@ export default function UserLeadsContent() {
                   filterBySource={filterBySource}
                   sortField={sortField}
                   sortOrder={sortOrder}
-                  shouldShowLoading={shouldShowLoading}
                   showHeader={showHeader}
                   showControls={showControls}
                   currentIndex={
@@ -415,6 +438,7 @@ export default function UserLeadsContent() {
           </FilterLogic>
         </URLStateManager>
       </div>
+      )}
     </SubscriptionGuard>
   );
 }

@@ -6,6 +6,25 @@ import { RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { ShieldSpinnerGlyph } from "@/components/dashboardComponents/LeadsLoadingState";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 
+export const FilterControlsLoadingShell = () => (
+  <div
+    className="sticky top-0 z-10 px-4 pb-5 mt-10 bg-white sm:px-6 lg:px-8 dark:bg-gray-800"
+    role="status"
+    aria-label="Loading filters"
+  >
+    <div className="flex flex-col gap-3 px-3 py-4 rounded-xl border min-w-0 md:flex-row md:items-center md:justify-end sm:px-4">
+      <div className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3 md:w-auto">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700"
+          />
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 export const TableSkeleton = () => (
   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
     <div className="animate-pulse">
@@ -34,7 +53,10 @@ export const TableSkeleton = () => (
 );
 
 export const LoadingSpinner = () => (
-  <div className="flex justify-center items-center h-screen bg-background text-foreground">
+  <div
+    className="flex justify-center items-center h-screen bg-background text-foreground"
+    data-testid="fullscreen-loading-spinner"
+  >
     <ShieldSpinnerGlyph />
   </div>
 );

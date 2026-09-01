@@ -1,13 +1,26 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { TableSkeleton } from "@/components/leads/UserLeadsLoadingStates";
+import { useToggleContext } from "@/context/ToggleContext";
+import { UserLeadsPageLoadingShell } from "@/components/leads/UserLeadsPageLoadingShell";
 import { usePrefetchAssignedLeads } from "@/hooks/leadsPage/usePrefetchAssignedLeads";
+
+function UserLeadsPageDynamicFallback() {
+  const toggleContext = useToggleContext();
+  const showHeader = toggleContext?.showHeader ?? true;
+  const showControls = toggleContext?.showControls ?? true;
+  return (
+    <UserLeadsPageLoadingShell
+      showHeader={showHeader}
+      showControls={showControls}
+    />
+  );
+}
 
 const UserLeadsContent = dynamic(
   () => import("@/components/leads/UserLeadsContent"),
   {
-    loading: () => <TableSkeleton />,
+    loading: () => <UserLeadsPageDynamicFallback />,
     ssr: false,
   },
 );

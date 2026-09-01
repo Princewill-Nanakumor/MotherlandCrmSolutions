@@ -19,6 +19,19 @@ export type ApiJsonInit = {
 
 const LOGIN_URL = "/login?callbackUrl=%2Fdashboard";
 const DEFAULT_AUTH_STORAGE = path.join(process.cwd(), "e2e", ".auth-admin.json");
+
+function authStoragePathForEmail(email: string): string {
+  if (process.env.E2E_AUTH_STORAGE) return process.env.E2E_AUTH_STORAGE;
+  if (email === E2E_ADMIN_EMAIL) return DEFAULT_AUTH_STORAGE;
+  if (email === E2E_AGENT_EMAIL) {
+    return path.join(process.cwd(), "e2e", ".auth-agent.json");
+  }
+  if (email === E2E_AGENT_B_EMAIL) {
+    return path.join(process.cwd(), "e2e", ".auth-agent-b.json");
+  }
+  const slug = email.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+  return path.join(process.cwd(), "e2e", `.auth-${slug}.json`);
+}
 /** Reuse saved session cookies when younger than this (dev JWT is typically longer). */
 const AUTH_STORAGE_MAX_AGE_MS = 30 * 60 * 1000;
 
@@ -156,7 +169,7 @@ async function tryRestoreAuthStorage(
  */
 export async function loginAsFast(page: Page, email: string, password: string) {
   if (process.env.E2E_AUTH_STORAGE !== "0") {
-    const storagePath = process.env.E2E_AUTH_STORAGE || DEFAULT_AUTH_STORAGE;
+    const storagePath = authStoragePathForEmail(email);
     if (await tryRestoreAuthStorage(page, storagePath)) return;
     await loginAsApi(page, email, password);
     fs.mkdirSync(path.dirname(storagePath), { recursive: true });
