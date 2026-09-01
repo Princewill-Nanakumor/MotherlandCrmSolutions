@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
-import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
+import { applyRemoteLeadStatusToListCaches, removeLeadsFromAssignedLeadsCaches } from "@/lib/leadsListCache";
 import type { Lead } from "@/types/leads";
 
 function lead(overrides: Partial<Lead> & { _id: string; status: string }): Lead {
@@ -73,5 +73,59 @@ describe("applyRemoteLeadStatusToListCaches", () => {
     expect(queryClient.getQueryData<Lead[]>(["assignedLeads"])?.[0].status).toBe(
       "NEW",
     );
+  });
+});
+
+describe("removeLeadsFromAssignedLeadsCaches", () => {
+  it("removes leads from per-user assignedLeads list caches", () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(
+      ["assignedLeads", "list", "agent-1"],
+      [
+        lead({ _id: "a", status: "NEW" }),
+        lead({ _id: "b", status: "NEW" }),
+      ],
+    );
+
+    removeLeadsFromAssignedLeadsCaches(queryClient, ["a"]);
+
+    const next = queryClient.getQueryData<Lead[]>([
+      "assignedLeads",
+      "list",
+      "agent-1",
+    ]);
+    expect(next?.map((l) => l._id)).toEqual(["b"]);
+  });
+
+  it("clears assignedTo on paginated all-leads caches", () => {
+    const queryClient = new QueryClient();
+    const key = [
+      "leads",
+      1,
+      25,
+      "all",
+      [],
+      [],
+      [],
+      "include",
+      "include",
+      "include",
+      "include",
+      "",
+    ];
+    queryClient.setQueryData(key, {
+      leads: [
+        {
+          ...lead({ _id: "a", status: "NEW" }),
+          assignedTo: { id: "agent-1", firstName: "A", lastName: "Gent" },
+        },
+      ],
+      total: 1,
+    });
+
+    removeLeadsFromAssignedLeadsCaches(queryClient, ["a"]);
+
+    const next = queryClient.getQueryData<{ leads: Lead[] }>(key);
+    expect(next?.leads[0].assignedTo).toBeNull();
   });
 });

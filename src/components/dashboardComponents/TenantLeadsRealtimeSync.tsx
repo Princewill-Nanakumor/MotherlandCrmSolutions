@@ -9,7 +9,7 @@ import {
   getAdminLeadsChannelName,
 } from "@/libs/realtime";
 import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
-import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
+import { applyRemoteLeadStatusToListCaches, removeLeadsFromAssignedLeadsCaches } from "@/lib/leadsListCache";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { isTimelineChurnAdminEvent } from "@/lib/leadPanelRealtimeSync";
 
@@ -147,6 +147,29 @@ export function TenantLeadsRealtimeSync() {
             { touchActivity: true },
           );
         }
+      }
+
+      const assignmentLeadIds = [
+        ...(eventData.leadId ? [eventData.leadId] : []),
+        ...(Array.isArray(eventData.leadIds) ? eventData.leadIds : []),
+      ].filter((id, index, arr) => id && arr.indexOf(id) === index);
+
+      const isAssignmentEvent =
+        eventType === "lead_assigned" ||
+        eventType === "lead_assigned_bulk" ||
+        eventType === "lead_unassigned" ||
+        eventType === "lead_unassigned_bulk";
+
+      if (isAssignmentEvent && assignmentLeadIds.length > 0) {
+        removeLeadsFromAssignedLeadsCaches(queryClient, assignmentLeadIds);
+        void queryClient.refetchQueries({
+          predicate: (query) => {
+            const root = Array.isArray(query.queryKey)
+              ? query.queryKey[0]
+              : null;
+            return root === "assignedLeads";
+          },
+        });
       }
 
       void queryClient.invalidateQueries({

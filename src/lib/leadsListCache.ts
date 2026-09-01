@@ -236,3 +236,69 @@ export function reassignDeletedStatusInListCaches(
     );
   }
 }
+
+function uniqueLeadIds(leadIds: string[]): string[] {
+  return leadIds.filter(
+    (id, index, arr) => Boolean(id) && arr.indexOf(id) === index,
+  );
+}
+
+function patchPaginatedLeadsAssignmentClear(
+  old: unknown,
+  leadIds: Set<string>,
+): unknown {
+  const clearLead = (lead: Lead): Lead =>
+    leadIds.has(lead._id) ? { ...lead, assignedTo: null } : lead;
+
+  if (old && typeof old === "object") {
+    const withLeads = old as {
+      leads?: Lead[];
+      data?: Lead[];
+      [key: string]: unknown;
+    };
+
+    if (Array.isArray(withLeads.leads)) {
+      return { ...withLeads, leads: withLeads.leads.map(clearLead) };
+    }
+    if (Array.isArray(withLeads.data)) {
+      return { ...withLeads, data: withLeads.data.map(clearLead) };
+    }
+  }
+
+  return old;
+}
+
+/**
+ * Drop leads from every assigned-leads list cache (agent My Leads) and clear
+ * assignment on matching rows in paginated all-leads caches.
+ */
+export function removeLeadsFromAssignedLeadsCaches(
+  queryClient: QueryClient,
+  leadIds: string[],
+): void {
+  const ids = new Set(uniqueLeadIds(leadIds));
+  if (ids.size === 0) return;
+
+  const queries = queryClient.getQueryCache().findAll({
+    predicate: (query) => isLeadsListRoot(query.queryKey),
+  });
+
+  for (const query of queries) {
+    const key = query.queryKey;
+    if (!Array.isArray(key)) continue;
+
+    if (key[0] === "assignedLeads" && key[1] === "list") {
+      queryClient.setQueryData(key, (old: unknown) => {
+        if (!Array.isArray(old)) return old;
+        return (old as Lead[]).filter((lead) => !ids.has(lead._id));
+      });
+      continue;
+    }
+
+    if (key[0] === "leads") {
+      queryClient.setQueryData(key, (old: unknown) =>
+        patchPaginatedLeadsAssignmentClear(old, ids),
+      );
+    }
+  }
+}
