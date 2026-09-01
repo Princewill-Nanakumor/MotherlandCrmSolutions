@@ -17,6 +17,7 @@ import { SortField, SortOrder } from "@/components/leads/userLeadsTypes";
 
 interface UserLeadsMainContentProps {
   loading: boolean;
+  shouldShowLoading: boolean;
   isDataReady: boolean;
   filteredLeads: Lead[];
   sortedLeads: Lead[];
@@ -102,6 +103,7 @@ function EmptyState({ searchQuery }: { searchQuery: string }) {
 
 export function UserLeadsMainContent({
   loading,
+  shouldShowLoading,
   isDataReady,
   filteredLeads,
   sortedLeads,
@@ -220,7 +222,7 @@ export function UserLeadsMainContent({
         className={`shrink-0 transition-opacity duration-300 ease-in-out ${showHeader ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         style={{ marginBottom: showHeader ? "0" : "-100px", transition: "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out" }}
       >
-        <UserLeadsHeader shouldShowLoading={false} counts={counts} />
+        <UserLeadsHeader shouldShowLoading={shouldShowLoading} counts={counts} />
       </div>
 
       <div
@@ -248,7 +250,25 @@ export function UserLeadsMainContent({
       </div>
 
       <div className="flex-1 min-h-0 min-w-0 px-4 pb-4 overflow-auto sm:px-8">
-        {filteredLeads.length === 0 ? (
+        {shouldShowLoading ? (
+          <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+            <UserLeadsTableContainer
+              loading
+              leads={[]}
+              pageSize={pageSize}
+              pageIndex={pageIndex}
+              totalEntries={0}
+              totalPages={1}
+              selectedLead={null}
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onLeadClick={handleLeadClick}
+              onSort={handleSort}
+              onPageSizeChange={handlePageSizeChange}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        ) : filteredLeads.length === 0 ? (
           <EmptyState searchQuery={searchQuery} />
         ) : (
           <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">

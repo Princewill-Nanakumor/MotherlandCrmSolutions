@@ -15,6 +15,7 @@ import {
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { DraggableColumnHeader } from "@/components/dashboardComponents/DraggableColumnHeader";
+import { useStatuses } from "@/context/StatusContext";
 
 interface UserLeadsTableContentProps {
   table: TanstackTable<Lead>;
@@ -75,7 +76,10 @@ const TableSkeleton = ({
 }) => (
   <>
     <TableHeaderSkeleton columnCount={columnCount} />
-    <TableBody className="dark:bg-gray-800">
+    <TableBody
+      className="dark:bg-gray-800"
+      data-testid="user-leads-table-loading"
+    >
       {Array.from({ length: rowCount }).map((_, index) => (
         <TableRowSkeleton
           key={`skeleton-row-${index}`}
@@ -92,12 +96,13 @@ export function UserLeadsTableContent({
   selectedLead,
   isLoading = false,
 }: UserLeadsTableContentProps) {
+  const { isLoading: isStatusLoading } = useStatuses();
   const columnIds = table
     .getAllColumns()
     .filter((col) => col.id !== "select")
     .map((col) => col.id);
 
-  const showLoadingState = isLoading;
+  const showLoadingState = isLoading || isStatusLoading;
   const columnCount = table.getAllColumns().length;
 
   // Show skeleton when loading

@@ -14,8 +14,8 @@ interface UserLeadsPageLoadingShellProps {
 }
 
 /**
- * Single bootstrap UI for /dashboard/leads (agent assigned leads).
- * Used by dynamic import, subscription wait, and first assigned-leads fetch.
+ * Single bootstrap UI for /dashboard/leads while subscription status loads.
+ * Assigned leads then load in layered UI (real filters + table cell skeleton).
  */
 export function UserLeadsPageLoadingShell({
   showHeader = true,

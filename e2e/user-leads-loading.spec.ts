@@ -32,6 +32,7 @@ import {
   removeBootstrapDelays,
   seedAssignedLeadsForAgent,
   SUBSCRIPTION_DELAY_MS,
+  tableLoadingSkeleton,
   triggerAssignedLeadsRefetch,
   warmUpMyLeadsRoute,
 } from "./helpers/userLeadsLoadingUi";
@@ -151,6 +152,7 @@ test.describe("user-leads loading contract", () => {
 
       await expect(bootstrapShell(page)).toHaveCount(0, { timeout: 15_000 });
       await expect(filterLoadingShell(page)).toHaveCount(0, { timeout: 15_000 });
+      await expect(tableLoadingSkeleton(page)).toHaveCount(0, { timeout: 15_000 });
       logContract("shell-cleared");
 
       await expectMyLeadsFiltersReady(page);

@@ -317,7 +317,8 @@ export default function UserLeadsContent() {
   // Loading states - Only show loading on first load, not on navigation back
   const isDataReady = !isLoading || leads.length > 0;
   const shouldShowLoading = isLoading && leads.length === 0;
-  const isBootstrapping = subscriptionLoading || shouldShowLoading;
+  // Match all-leads: full-page shell only while subscription resolves; leads load in layered UI.
+  const isBootstrapping = subscriptionLoading;
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "development") return;
@@ -394,6 +395,7 @@ export default function UserLeadsContent() {
               return (
                 <UserLeadsMainContent
                   loading={isFetching && !isDataReady}
+                  shouldShowLoading={shouldShowLoading}
                   isDataReady={isDataReady}
                   filteredLeads={filteredLeads}
                   sortedLeads={sortedLeads}

@@ -36,6 +36,8 @@ export type BootstrapViolation = {
 
 export const BOOTSTRAP_SHELL_SELECTOR =
   '[data-testid="user-leads-bootstrap-shell"]';
+export const TABLE_LOADING_SELECTOR =
+  '[data-testid="user-leads-table-loading"]';
 export const FILTER_LOADING_SELECTOR = '[aria-label="Loading filters"]';
 export const FULLSCREEN_SPINNER_SELECTOR =
   'main [data-testid="fullscreen-loading-spinner"]';
@@ -43,6 +45,9 @@ export const LEADS_TITLE_SELECTOR = 'role=heading[name=/my leads/i]';
 
 export const bootstrapShell = (page: Page) =>
   page.getByTestId("user-leads-bootstrap-shell");
+
+export const tableLoadingSkeleton = (page: Page) =>
+  page.getByTestId("user-leads-table-loading");
 
 export const filterLoadingShell = (page: Page) =>
   page.locator(FILTER_LOADING_SELECTOR);
@@ -102,21 +107,58 @@ export async function inspectBootstrapShell(
   const violations: BootstrapViolation[] = [];
 
   const shellVisible = await bootstrapShell(page).isVisible().catch(() => false);
-  if (!shellVisible) {
-    violations.push({
-      contract: "single bootstrap shell",
-      expected: "visible",
-      found: "not visible",
-      checkpoint,
-      selector: BOOTSTRAP_SHELL_SELECTOR,
-    });
+  const tableLoadingVisible = await tableLoadingSkeleton(page)
+    .isVisible()
+    .catch(() => false);
+
+  if (checkpoint === "subscription-resolved-leads-pending") {
+    if (shellVisible) {
+      violations.push({
+        contract: "bootstrap shell cleared after subscription resolves",
+        expected: "not visible",
+        found: "visible",
+        checkpoint,
+        selector: BOOTSTRAP_SHELL_SELECTOR,
+      });
+    }
+
+    if (!tableLoadingVisible) {
+      violations.push({
+        contract: "layered table skeleton while assigned leads load",
+        expected: "visible",
+        found: "not visible",
+        checkpoint,
+        selector: TABLE_LOADING_SELECTOR,
+      });
+    }
+  } else {
+    if (!shellVisible) {
+      violations.push({
+        contract: "single bootstrap shell",
+        expected: "visible",
+        found: "not visible",
+        checkpoint,
+        selector: BOOTSTRAP_SHELL_SELECTOR,
+      });
+    }
+
+    const filterShellCount = await filterLoadingShell(page).count();
+    if (filterShellCount !== 1) {
+      violations.push({
+        contract: "filter loading placeholder inside bootstrap shell",
+        expected: "1",
+        found: String(filterShellCount),
+        checkpoint,
+        selector: FILTER_LOADING_SELECTOR,
+      });
+    }
   }
 
   const filterShellCount = await filterLoadingShell(page).count();
-  if (filterShellCount !== 1) {
+  if (checkpoint === "subscription-resolved-leads-pending" && filterShellCount > 0) {
     violations.push({
-      contract: "filter loading placeholder inside bootstrap shell",
-      expected: "1",
+      contract: "no generic filter shell after subscription resolves",
+      expected: "0",
       found: String(filterShellCount),
       checkpoint,
       selector: FILTER_LOADING_SELECTOR,
@@ -262,6 +304,17 @@ export async function inspectPostBootstrapUi(
       found: String(filterShellCount),
       checkpoint,
       selector: FILTER_LOADING_SELECTOR,
+    });
+  }
+
+  const tableLoadingCount = await tableLoadingSkeleton(page).count();
+  if (tableLoadingCount > 0) {
+    violations.push({
+      contract: "no table loading skeleton after bootstrap",
+      expected: "0",
+      found: String(tableLoadingCount),
+      checkpoint,
+      selector: TABLE_LOADING_SELECTOR,
     });
   }
 
