@@ -14,3 +14,9 @@ export function maskPhone(phone: string, visible: boolean): string {
   if (digits.length <= 4) return "••••";
   return `••••••${digits.slice(-4)}`;
 }
+
+/** Server-masked contact values use bullet characters instead of digits. */
+export function isMaskedContactValue(value: string | null | undefined): boolean {
+  if (!value) return false;
+  return /[•\u2022]/.test(value);
+}

@@ -24,6 +24,8 @@ import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
 import { useQueryClient } from "@tanstack/react-query";
 import { callLogsKeys } from "@/components/user-management/CallLogsModal";
 import { normalizePhoneForDialer } from "@/lib/phoneNormalize";
+import { isMaskedContactValue } from "@/lib/contactMasking";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import {
   buildDialerProtocolUrl,
   buildTelUrl,
@@ -83,6 +85,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isResolvingCall, setIsResolvingCall] = useState(false);
   const [copiedField, setCopiedField] = useState<
     "leadId" | "name" | "email" | "phone" | "country" | "source" | null
   >(null);
@@ -139,25 +142,45 @@ export const ContactSection: FC<ContactSectionProps> = ({
     [toast],
   );
 
-  const handleCall = useCallback(
-    async (phoneNumber: string) => {
-      try {
-        let cleanedNumber = normalizePhoneForDialer(phoneNumber, lead?.country);
+  const resolvePhoneForDial = useCallback(async (): Promise<string | null> => {
+    const fromLead = normalizePhoneForDialer(lead?.phone ?? "", lead?.country);
+    if (fromLead && !isMaskedContactValue(fromLead)) {
+      return fromLead;
+    }
 
-        // Do not dial server-masked values (would be only partial digits)
-        if (/[•\u2022]/.test(cleanedNumber)) {
-          toast({
-            variant: "destructive",
-            description:
-              "Full phone is still loading. Close and reopen this lead, or wait a moment.",
-          });
-          return;
-        }
+    if (!lead?._id) return null;
+
+    try {
+      const response = await apiCallWithSessionRefresh(`/api/leads/${lead._id}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+      if (!response.ok) return null;
+
+      const data = (await response.json()) as Lead;
+      const fromDetail = normalizePhoneForDialer(
+        data.phone ?? "",
+        data.country ?? lead.country,
+      );
+      if (!fromDetail || isMaskedContactValue(fromDetail)) return null;
+      return fromDetail;
+    } catch {
+      return null;
+    }
+  }, [lead]);
+
+  const handleCall = useCallback(
+    async (_phoneNumber: string) => {
+      if (isResolvingCall) return;
+
+      setIsResolvingCall(true);
+      try {
+        let cleanedNumber = (await resolvePhoneForDial()) ?? "";
 
         if (!cleanedNumber) {
           toast({
             variant: "destructive",
-            description: "No phone number to call",
+            description: "Could not load phone number. Try again in a moment.",
           });
           return;
         }
@@ -225,9 +248,11 @@ export const ContactSection: FC<ContactSectionProps> = ({
         }
       } catch (error) {
         console.error("Error initiating call:", error);
+      } finally {
+        setIsResolvingCall(false);
       }
     },
-    [dialer, lead, session?.user?.id, queryClient, toast]
+    [dialer, lead, session?.user?.id, queryClient, toast, isResolvingCall, resolvePhoneForDial]
   );
 
   const handleEdit = useCallback(() => {
@@ -501,6 +526,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
                     : undefined
                 }
                 onCall={handleCall}
+                isCallLoading={isResolvingCall}
                 copied={canViewPhoneNumbers ? copiedField === "phone" : false}
                 canViewPhoneNumbers={canViewPhoneNumbers}
                 isLoadingPermission={isLoadingPermission}

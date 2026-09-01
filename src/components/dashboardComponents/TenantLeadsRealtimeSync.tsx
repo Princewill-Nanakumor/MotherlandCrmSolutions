@@ -12,10 +12,10 @@ import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
 import { removeLeadsFromAssignedLeadsCaches } from "@/lib/leadsListCache";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import {
-  invalidateLeadDetailCache,
   isActivityTimelineAdminEvent,
   isTimelineChurnAdminEvent,
   syncActivityTimelineFromAdminEvent,
+  syncCommentsFromAdminEvent,
 } from "@/lib/leadPanelRealtimeSync";
 
 /**
@@ -56,6 +56,7 @@ export function TenantLeadsRealtimeSync() {
         leadIds?: string[];
         status?: string;
         activityId?: string;
+        commentId?: string;
         deletedLeads?: number;
         importId?: string;
         percent?: number;
@@ -76,13 +77,11 @@ export function TenantLeadsRealtimeSync() {
         const leadId = eventData.leadId;
         if (leadId) {
           if (eventType.startsWith("comment_")) {
-            void queryClient.invalidateQueries({
-              queryKey: ["comments", leadId],
-              exact: true,
+            void syncCommentsFromAdminEvent(queryClient, {
+              type: eventType,
+              leadId,
+              commentId: eventData.commentId,
             });
-            if (eventType === "comment_created" || eventType === "comment_updated") {
-              void invalidateLeadDetailCache(queryClient, leadId);
-            }
           }
           if (eventType.startsWith("reminder_")) {
             void queryClient.invalidateQueries({

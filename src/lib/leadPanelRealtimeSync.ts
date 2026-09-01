@@ -1,4 +1,9 @@
 import type { QueryClient } from "@tanstack/react-query";
+import type { Comment } from "@/components/leads/leadDetailsPanel/commentsAndActivities/types";
+import {
+  patchLeadListCachesFromComments,
+  refreshCommentsCacheForLead,
+} from "@/lib/commentCacheSync";
 import { normalizeLeadStatusId } from "@/lib/leadClientUpdate";
 import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
 import type { Lead } from "@/types/leads";
@@ -142,6 +147,37 @@ export async function syncLeadDetailFromAdminEvent(
  * Targeted activity-timeline sync for Ably events — mirrors comment_created handling.
  * Patches list status when applicable and refetches activities for affected leads.
  */
+/**
+ * Pull comment rows from the API and patch list/detail caches.
+ * Used for remote comment_created / comment_updated / comment_deleted events.
+ */
+export async function syncCommentsFromAdminEvent(
+  queryClient: QueryClient,
+  event: AdminLeadPanelEvent,
+): Promise<void> {
+  const type = event.type ?? "";
+  const leadId = event.leadId;
+  if (!leadId || !COMMENT_TIMELINE_EVENTS.has(type)) return;
+
+  if (type === "comment_deleted" && event.commentId) {
+    const cached = queryClient.getQueryData<Comment[]>(["comments", leadId]);
+    if (cached) {
+      const nextComments = cached.filter(
+        (comment) => comment._id !== event.commentId,
+      );
+      queryClient.setQueryData(["comments", leadId], nextComments);
+      patchLeadListCachesFromComments(queryClient, leadId, nextComments);
+      return;
+    }
+  }
+
+  await refreshCommentsCacheForLead(queryClient, leadId);
+
+  if (type === "comment_created" || type === "comment_updated") {
+    void invalidateLeadDetailCache(queryClient, leadId);
+  }
+}
+
 export async function syncActivityTimelineFromAdminEvent(
   queryClient: QueryClient,
   event: AdminLeadPanelEvent,
@@ -199,21 +235,11 @@ export async function handleAdminLeadPanelEvent(
 ): Promise<void> {
   const type = event.type ?? "";
 
-  if (type === "comment_deleted" && event.commentId) {
-    queryClient.setQueryData(
-      ["comments", openLeadId],
-      (old: Array<{ _id: string }> | undefined) =>
-        (old ?? []).filter((comment) => comment._id !== event.commentId),
-    );
-    return;
-  }
-
-  if (type === "comment_created" || type === "comment_updated") {
-    await queryClient.invalidateQueries({
-      queryKey: ["comments", openLeadId],
-      exact: true,
+  if (COMMENT_TIMELINE_EVENTS.has(type)) {
+    await syncCommentsFromAdminEvent(queryClient, {
+      ...event,
+      leadId: openLeadId,
     });
-    void invalidateLeadDetailCache(queryClient, openLeadId);
     return;
   }
 
@@ -234,10 +260,6 @@ export async function handleAdminLeadPanelEvent(
       queryKey: ["activities", openLeadId],
       refetchType: "none",
     });
-    return;
-  }
-
-  if (COMMENT_TIMELINE_EVENTS.has(type)) {
     return;
   }
 

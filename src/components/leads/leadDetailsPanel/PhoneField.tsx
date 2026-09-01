@@ -1,10 +1,11 @@
 // src/components/leads/leadDetailsPanel/PhoneField.tsx
 import { FC } from "react";
-import { Phone, PhoneCall, Copy, Check } from "lucide-react";
+import { Phone, PhoneCall, Copy, Check, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { maskPhoneNumber } from "@/utils/phoneMask";
 import { formatLeadPhoneForTable } from "@/lib/phoneNormalize";
+import { isMaskedContactValue } from "@/lib/contactMasking";
 import { buildTelUrl, openExternalDialerUrl } from "@/lib/openDialerUrl";
 
 interface PhoneFieldProps {
@@ -18,6 +19,7 @@ interface PhoneFieldProps {
   copied?: boolean;
   canViewPhoneNumbers?: boolean; // Whether user can see full phone number
   isLoadingPermission?: boolean; // Whether permission is being loaded
+  isCallLoading?: boolean;
 }
 
 export const PhoneField: FC<PhoneFieldProps> = ({
@@ -31,6 +33,7 @@ export const PhoneField: FC<PhoneFieldProps> = ({
   copied = false,
   canViewPhoneNumbers = false,
   isLoadingPermission = false,
+  isCallLoading = false,
 }) => {
   if (isEditing) {
     return (
@@ -63,6 +66,8 @@ export const PhoneField: FC<PhoneFieldProps> = ({
         })
       : "Not provided";
 
+  const phoneLooksMasked = isMaskedContactValue(phone);
+
   return (
     <div className="flex items-center gap-3 text-gray-700! dark:text-gray-300!">
       <Phone className="w-5 h-5 text-gray-400! dark:text-gray-500! cursor-pointer" />
@@ -84,10 +89,21 @@ export const PhoneField: FC<PhoneFieldProps> = ({
                     e.stopPropagation();
                     onCall(phone);
                   }}
-                  className="p-1.5 rounded transition-colors brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)]"
-                  title="Click to call"
+                  disabled={isCallLoading}
+                  className="p-1.5 rounded transition-colors brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)] disabled:opacity-50 disabled:pointer-events-none"
+                  title={
+                    isCallLoading
+                      ? "Loading phone number…"
+                      : phoneLooksMasked
+                        ? "Load full number and call"
+                        : "Click to call"
+                  }
                 >
-                  <PhoneCall className="w-4 h-4" />
+                  {isCallLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <PhoneCall className="w-4 h-4" />
+                  )}
                 </button>
               ) : (
                 <button

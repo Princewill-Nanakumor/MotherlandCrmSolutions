@@ -6,6 +6,7 @@ import {
   isActivityTimelineAdminEvent,
   patchLeadDetailStatusInCache,
   syncActivityTimelineFromAdminEvent,
+  syncCommentsFromAdminEvent,
 } from "@/lib/leadPanelRealtimeSync";
 import type { Lead } from "@/types/leads";
 
@@ -81,5 +82,60 @@ describe("leadPanelRealtimeSync", () => {
     expect(
       queryClient.getQueryData<Lead>(["lead", "lead-1"])?.status,
     ).toBe("CONTACTED");
+  });
+
+  it("refetches comments on comment_updated for open panel", async () => {
+    const queryClient = new QueryClient();
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            _id: "c1",
+            content: "edited text",
+            createdAt: "2026-01-01T00:00:00.000Z",
+            createdBy: {
+              _id: "u1",
+              firstName: "Admin",
+              lastName: "User",
+            },
+          },
+        ],
+      } as Response);
+
+    queryClient.setQueryData(["assignedLeads", "agent-1"], {
+      leads: [
+        {
+          _id: "lead-1",
+          lastComment: "old text",
+        },
+      ],
+    });
+
+    await syncCommentsFromAdminEvent(queryClient, {
+      type: "comment_updated",
+      leadId: "lead-1",
+      commentId: "c1",
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith("/api/leads/lead-1/comments", {
+      cache: "no-store",
+    });
+    expect(
+      queryClient.getQueryData<Array<{ content: string }>>(["comments", "lead-1"]),
+    ).toEqual([
+      expect.objectContaining({ _id: "c1", content: "edited text" }),
+    ]);
+    expect(
+      (
+        queryClient.getQueryData<{ leads: Array<{ lastComment?: string }> }>([
+          "assignedLeads",
+          "agent-1",
+        ])?.leads ?? []
+      )[0]?.lastComment,
+    ).toBe("edited text");
+
+    fetchSpy.mockRestore();
   });
 });
