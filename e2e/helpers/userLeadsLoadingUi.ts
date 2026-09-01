@@ -12,6 +12,8 @@ import {
 export const SUBSCRIPTION_DELAY_MS = 1_000;
 export const LEADS_DELAY_MS = 2_500;
 export const REFETCH_DELAY_MS = 1_500;
+/** Cold dev compile + hydration can delay the bootstrap shell on first navigation. */
+export const BOOTSTRAP_SHELL_TIMEOUT_MS = 60_000;
 
 export type BootstrapCheckpoint =
   | "shell-visible"
@@ -152,14 +154,43 @@ export async function inspectBootstrapShell(
 export async function assertStableBootstrapShell(
   page: Page,
   checkpoint: BootstrapCheckpoint,
+  options: { timeoutMs?: number } = {},
 ) {
+  const timeoutMs = options.timeoutMs ?? BOOTSTRAP_SHELL_TIMEOUT_MS;
   await expect(async () => {
     const violations = await inspectBootstrapShell(page, checkpoint);
     expect(
       violations,
       violations.length ? formatBootstrapViolations(violations) : undefined,
     ).toEqual([]);
-  }).toPass({ timeout: 15_000 });
+  }).toPass({ timeout: timeoutMs });
+}
+
+export async function clearUserLeadsRouteMocks(page: Page) {
+  await page.unroute(/\/api\/subscription\/agent-status/).catch(() => undefined);
+  await page.unroute(/\/api\/leads\/assigned/).catch(() => undefined);
+}
+
+export async function warmUpMyLeadsRoute(page: Page) {
+  await page.goto("/dashboard/leads", {
+    waitUntil: "domcontentloaded",
+    timeout: BOOTSTRAP_SHELL_TIMEOUT_MS,
+  });
+  await expectMyLeadsHeading(page);
+}
+
+export async function expectMyLeadsHeading(page: Page) {
+  await expect(page.getByRole("heading", { name: /my leads/i })).toBeVisible({
+    timeout: BOOTSTRAP_SHELL_TIMEOUT_MS,
+  });
+}
+
+/** Status filter is a real button once /api/statuses has resolved (pulse skeleton before that). */
+export async function expectMyLeadsFiltersReady(page: Page) {
+  await expectMyLeadsHeading(page);
+  await expect(
+    page.getByRole("button", { name: /all statuses/i }),
+  ).toBeVisible({ timeout: BOOTSTRAP_SHELL_TIMEOUT_MS });
 }
 
 export async function installStaggeredBootstrapDelays(page: Page) {
@@ -176,8 +207,7 @@ export async function installStaggeredBootstrapDelays(page: Page) {
 }
 
 export async function removeBootstrapDelays(page: Page) {
-  await page.unroute(/\/api\/subscription\/agent-status/);
-  await page.unroute(/\/api\/leads\/assigned/);
+  await clearUserLeadsRouteMocks(page);
 }
 
 /** Delays the next GET /api/leads/assigned after `arm()` is called. */
@@ -201,7 +231,7 @@ export async function installAssignedLeadsRefetchDelay(
       state.armed = true;
     },
     remove: async () => {
-      await page.unroute(/\/api\/leads\/assigned/);
+      await page.unroute(/\/api\/leads\/assigned/).catch(() => undefined);
     },
   };
 }

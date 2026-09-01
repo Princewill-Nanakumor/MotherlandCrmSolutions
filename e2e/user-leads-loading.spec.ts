@@ -19,6 +19,9 @@ import {
   bootstrapShell,
   BootstrapCheckpoint,
   BootstrapViolationTracker,
+  BOOTSTRAP_SHELL_TIMEOUT_MS,
+  clearUserLeadsRouteMocks,
+  expectMyLeadsFiltersReady,
   filterLoadingShell,
   inspectBootstrapShell,
   inspectPostBootstrapUi,
@@ -30,6 +33,7 @@ import {
   seedAssignedLeadsForAgent,
   SUBSCRIPTION_DELAY_MS,
   triggerAssignedLeadsRefetch,
+  warmUpMyLeadsRoute,
 } from "./helpers/userLeadsLoadingUi";
 
 const enabled = process.env.USER_LEADS_LOADING_E2E === "1";
@@ -43,7 +47,7 @@ async function expectUserLeadsTableAreaSettled(
     name: /no leads (available|found)/i,
   });
   await expect(row.or(pagination).or(emptyHeading).first()).toBeVisible({
-    timeout: 60_000,
+    timeout: BOOTSTRAP_SHELL_TIMEOUT_MS,
   });
 }
 
@@ -55,25 +59,39 @@ function logContract(scenario: string, data: Record<string, unknown> = {}) {
 
 test.describe("user-leads loading contract", () => {
   test.skip(!enabled, "Set USER_LEADS_LOADING_E2E=1 to run");
+  test.describe.configure({ mode: "serial" });
+
+  test.beforeAll(async ({ browser }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await loginAsFast(page, E2E_AGENT_EMAIL, E2E_PASSWORD);
+    await warmUpMyLeadsRoute(page);
+    await context.close();
+  });
+
+  test.afterEach(async ({ page }) => {
+    await clearUserLeadsRouteMocks(page);
+  });
 
   test("bootstrap shell stays stable while subscription and leads load", async ({
     page,
   }) => {
     await loginAsFast(page, E2E_AGENT_EMAIL, E2E_PASSWORD);
+    await clearUserLeadsRouteMocks(page);
     await installStaggeredBootstrapDelays(page);
 
     const subscriptionResponse = page.waitForResponse(
       (res) =>
         res.url().includes("/api/subscription/agent-status") &&
         res.request().method() === "GET",
-      { timeout: 60_000 },
+      { timeout: BOOTSTRAP_SHELL_TIMEOUT_MS },
     );
     const leadsResponse = page.waitForResponse(
       (res) =>
         res.url().includes("/api/leads/assigned") &&
         res.request().method() === "GET" &&
         res.ok(),
-      { timeout: 60_000 },
+      { timeout: BOOTSTRAP_SHELL_TIMEOUT_MS },
     );
 
     const tracker = new BootstrapViolationTracker();
@@ -103,62 +121,65 @@ test.describe("user-leads loading contract", () => {
 
     void watchStability;
 
-    await page.goto("/dashboard/leads", { waitUntil: "domcontentloaded" });
+    try {
+      await page.goto("/dashboard/leads", {
+        waitUntil: "domcontentloaded",
+        timeout: BOOTSTRAP_SHELL_TIMEOUT_MS,
+      });
 
-    await assertStableBootstrapShell(page, "shell-visible");
-    shellSeen = true;
-    logContract("shell-visible", {
-      subscriptionDelayMs: SUBSCRIPTION_DELAY_MS,
-      leadsDelayMs: LEADS_DELAY_MS,
-    });
+      await assertStableBootstrapShell(page, "shell-visible");
+      shellSeen = true;
+      logContract("shell-visible", {
+        subscriptionDelayMs: SUBSCRIPTION_DELAY_MS,
+        leadsDelayMs: LEADS_DELAY_MS,
+      });
 
-    await subscriptionResponse;
-    currentCheckpoint = "subscription-resolved-leads-pending";
-    await assertStableBootstrapShell(page, currentCheckpoint);
-    logContract("subscription-resolved-leads-pending");
+      await subscriptionResponse;
+      currentCheckpoint = "subscription-resolved-leads-pending";
+      await assertStableBootstrapShell(page, currentCheckpoint);
+      logContract("subscription-resolved-leads-pending");
 
-    bootstrapComplete = true;
-    await watchStability;
+      bootstrapComplete = true;
+      await watchStability;
 
-    await leadsResponse;
-    logContract("leads-resolved");
+      await leadsResponse;
+      logContract("leads-resolved");
 
-    await page.waitForTimeout(250);
+      await page.waitForTimeout(250);
 
-    tracker.assertEmpty();
+      tracker.assertEmpty();
 
-    await expect(bootstrapShell(page)).toHaveCount(0, { timeout: 15_000 });
-    await expect(filterLoadingShell(page)).toHaveCount(0, { timeout: 15_000 });
-    logContract("shell-cleared");
+      await expect(bootstrapShell(page)).toHaveCount(0, { timeout: 15_000 });
+      await expect(filterLoadingShell(page)).toHaveCount(0, { timeout: 15_000 });
+      logContract("shell-cleared");
 
-    await expect(
-      page.getByRole("button", { name: /all statuses/i }),
-    ).toBeVisible({ timeout: 15_000 });
-    await expectUserLeadsTableAreaSettled(page);
-    logContract("settled", { ok: true });
-
-    await removeBootstrapDelays(page);
+      await expectMyLeadsFiltersReady(page);
+      await expectUserLeadsTableAreaSettled(page);
+      logContract("settled", { ok: true });
+    } finally {
+      bootstrapComplete = true;
+      await watchStability.catch(() => undefined);
+      await removeBootstrapDelays(page);
+    }
   });
 
   test("warm revisit does not re-show bootstrap shell", async ({ page }) => {
     await loginAsFast(page, E2E_AGENT_EMAIL, E2E_PASSWORD);
 
-    await page.goto("/dashboard/leads", { waitUntil: "domcontentloaded" });
-    await expect(bootstrapShell(page)).toHaveCount(0, { timeout: 60_000 });
-    await expect(
-      page.getByRole("button", { name: /all statuses/i }),
-    ).toBeVisible({ timeout: 15_000 });
+    await page.goto("/dashboard/leads", {
+      waitUntil: "domcontentloaded",
+      timeout: BOOTSTRAP_SHELL_TIMEOUT_MS,
+    });
+    await expect(bootstrapShell(page)).toHaveCount(0, {
+      timeout: BOOTSTRAP_SHELL_TIMEOUT_MS,
+    });
+    await expectMyLeadsFiltersReady(page);
 
     await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
     await page.goto("/dashboard/leads", { waitUntil: "domcontentloaded" });
 
-    await expect(
-      page.getByRole("heading", { name: /my leads/i }),
-    ).toBeVisible({ timeout: 15_000 });
+    await expectMyLeadsFiltersReady(page);
     await expect(bootstrapShell(page)).toHaveCount(0, { timeout: 5_000 });
-    await expect(
-      page.getByRole("button", { name: /all statuses/i }),
-    ).toBeVisible({ timeout: 10_000 });
 
     logContract("warm-revisit", { ok: true });
   });
@@ -246,7 +267,7 @@ test.describe("user-leads loading contract", () => {
         (res) =>
           res.url().includes("/api/leads/assigned") &&
           res.request().method() === "GET",
-        { timeout: 60_000 },
+        { timeout: BOOTSTRAP_SHELL_TIMEOUT_MS },
       );
 
       refetchDelay.arm();
