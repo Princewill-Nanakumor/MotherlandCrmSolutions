@@ -1,7 +1,7 @@
 // src/components/dashboardComponents/LeadsPageContent.tsx
 "use client";
 
-import { useCallback, Suspense } from "react";
+import { useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import LeadsTable from "@/components/dashboardComponents/LeadsTable";
@@ -10,10 +10,8 @@ import { LeadsHeader } from "./LeadHeader";
 import { LeadsFilterControls } from "./leadsFilters/LeadFilter";
 import { LeadsDialogs } from "./LeadDialog";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
-import {
-  TableSkeleton,
-  ErrorBoundary,
-} from "./LeadsLoadingState";
+import { ErrorBoundary } from "./LeadsLoadingState";
+import { AllLeadsPageLoadingShell } from "./AllLeadsPageLoadingShell";
 import { useLeadsPage } from "@/hooks/useLeadsPage";
 import { SubscriptionGuard } from "./SubscriptionGuard";
 import { RefetchIndicator } from "@/components/ui/RefetchIndicator";
@@ -21,6 +19,7 @@ import { useToggleContext } from "@/context/ToggleContext";
 import { Lead } from "@/types/leads";
 import { useUpdateLead } from "@/hooks/useLeadDetails";
 import { canAccessAllLeads } from "@/lib/roles";
+import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 
 interface LeadsPageContentProps {
   searchQuery?: string;
@@ -32,13 +31,10 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
   setLayoutLoading,
 }) => {
   const { data: session, status } = useSession();
+  const { isLoading: isSubscriptionLoading } = useSubscriptionData();
   const router = useRouter();
   const isOnline = useNetworkStatus();
-
-  // Get toggle state from context
   const { showHeader } = useToggleContext();
-
-  // ✅ Get updateLead mutation from useLeadDetails hook
   const { updateLeadAsync } = useUpdateLead();
 
   const {
@@ -79,15 +75,17 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
     hasAssignedLeads,
     isRefetchingLeads,
     leadsError,
-    usersError,
-    statusesError,
     refetchAll,
     leadsTotal,
     pageSize,
     page,
   } = useLeadsPage(searchQuery, setLayoutLoading);
 
-  // ⚡ Memoized handlers to prevent unnecessary re-renders
+  const isBootstrapping =
+    status === "loading" ||
+    isSubscriptionLoading ||
+    shouldShowLoading;
+
   const handleLeadUpdate = useCallback(
     async (updatedLead: Lead) => {
       try {
@@ -131,7 +129,6 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
     [setUiState],
   );
 
-  // ⚡ Early returns for better performance
   if (!isOnline) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -150,98 +147,93 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
     );
   }
 
-  if (status === "loading") {
-    return null;
-  }
-
   if (status === "unauthenticated") {
     router.push("/");
     return null;
   }
 
-  if (!session?.user?.role || !canAccessAllLeads(session.user)) {
+  if (!isBootstrapping && (!session?.user?.role || !canAccessAllLeads(session.user))) {
     return null;
   }
 
   return (
     <SubscriptionGuard>
-      <div className="flex flex-col h-full min-w-0 max-w-full overflow-x-hidden border rounded-lg bg-background dark:bg-gray-800">
-        {/* ⚡ Refetch indicator with transition */}
-        {isRefetchingLeads && (
-          <div className="duration-200 animate-in slide-in-from-top-2">
-            <RefetchIndicator />
-          </div>
-        )}
+      {isBootstrapping ? (
+        <AllLeadsPageLoadingShell showHeader={showHeader} />
+      ) : (
+        <div className="flex flex-col h-full min-w-0 max-w-full overflow-x-hidden border rounded-lg bg-background dark:bg-gray-800">
+          {isRefetchingLeads && (
+            <div className="duration-200 animate-in slide-in-from-top-2">
+              <RefetchIndicator />
+            </div>
+          )}
 
-        {/* Conditionally render LeadsHeader with simple fade transition */}
-        <div
-          className={`transition-opacity duration-300 ease-in-out ${
-            showHeader ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
-          style={{
-            marginBottom: showHeader ? "0" : "-100px",
-            transition:
-              "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out",
-          }}
-        >
-          <LeadsHeader shouldShowLoading={shouldShowLoading} counts={counts} />
-        </div>
-
-        {/* Filter / assign controls — always visible on All Leads */}
-        <div className="transition-opacity duration-300 ease-in-out opacity-100">
-          <LeadsFilterControls
-            selectedLeads={selectedLeads}
-            hasAssignedLeads={hasAssignedLeads}
-            assignedLeadsCount={counts.assigned}
-            isUpdating={isAssigning || isUnassigning}
-            onAssign={handleAssignClick}
-            onUnassign={handleUnassignClick}
-            onStatusChange={handleBulkStatusChange}
-            onDelete={handleBulkDelete}
-            filterByCountry={displayFilterByCountry}
-            onCountryFilterChange={handleCountryFilterChange}
-            countryFilterMode={uiState.countryFilterMode}
-            onCountryFilterModeChange={handleCountryFilterModeChange}
-            filterByStatus={displayFilterByStatus}
-            onStatusFilterChange={handleStatusFilterChange}
-            statusFilterMode={uiState.statusFilterMode}
-            onStatusFilterModeChange={handleStatusFilterModeChange}
-            filterBySource={displayFilterBySource}
-            onSourceFilterChange={handleSourceFilterChange}
-            sourceFilterMode={uiState.sourceFilterMode}
-            onSourceFilterModeChange={handleSourceFilterModeChange}
-            userFilterMode={uiState.userFilterMode}
-            onUserFilterModeChange={handleUserFilterModeChange}
-            filterByUser={
-              displayFilterByUser === "all" || !displayFilterByUser
-                ? []
-                : displayFilterByUser.includes(",")
-                  ? displayFilterByUser.split(",")
-                  : [displayFilterByUser]
-            }
-            onFilterChange={handleFilterChange}
-            users={users}
-            isLoadingUsers={isLoadingUsers}
-            statuses={statuses}
-            isLoadingStatuses={isLoadingStatuses}
-          />
-        </div>
-
-        <div className="flex-1 min-w-0 px-4 pb-4 overflow-auto sm:px-8">
-          <ErrorBoundary
-            fallback={
-              <div className="p-4 text-center text-red-500">
-                <p>Table failed to load</p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="px-4 py-2 mt-2 text-white transition-colors bg-red-500 rounded hover:bg-red-600"
-                >
-                  Reload Page
-                </button>
-              </div>
-            }
+          <div
+            className={`transition-opacity duration-300 ease-in-out ${
+              showHeader ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+            style={{
+              marginBottom: showHeader ? "0" : "-100px",
+              transition:
+                "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out",
+            }}
           >
-            <Suspense fallback={<TableSkeleton />}>
+            <LeadsHeader shouldShowLoading={false} counts={counts} />
+          </div>
+
+          <div className="transition-opacity duration-300 ease-in-out opacity-100">
+            <LeadsFilterControls
+              selectedLeads={selectedLeads}
+              hasAssignedLeads={hasAssignedLeads}
+              assignedLeadsCount={counts.assigned}
+              isUpdating={isAssigning || isUnassigning}
+              onAssign={handleAssignClick}
+              onUnassign={handleUnassignClick}
+              onStatusChange={handleBulkStatusChange}
+              onDelete={handleBulkDelete}
+              filterByCountry={displayFilterByCountry}
+              onCountryFilterChange={handleCountryFilterChange}
+              countryFilterMode={uiState.countryFilterMode}
+              onCountryFilterModeChange={handleCountryFilterModeChange}
+              filterByStatus={displayFilterByStatus}
+              onStatusFilterChange={handleStatusFilterChange}
+              statusFilterMode={uiState.statusFilterMode}
+              onStatusFilterModeChange={handleStatusFilterModeChange}
+              filterBySource={displayFilterBySource}
+              onSourceFilterChange={handleSourceFilterChange}
+              sourceFilterMode={uiState.sourceFilterMode}
+              onSourceFilterModeChange={handleSourceFilterModeChange}
+              userFilterMode={uiState.userFilterMode}
+              onUserFilterModeChange={handleUserFilterModeChange}
+              filterByUser={
+                displayFilterByUser === "all" || !displayFilterByUser
+                  ? []
+                  : displayFilterByUser.includes(",")
+                    ? displayFilterByUser.split(",")
+                    : [displayFilterByUser]
+              }
+              onFilterChange={handleFilterChange}
+              users={users}
+              isLoadingUsers={isLoadingUsers}
+              statuses={statuses}
+              isLoadingStatuses={isLoadingStatuses}
+            />
+          </div>
+
+          <div className="flex-1 min-w-0 px-4 pb-4 overflow-auto sm:px-8">
+            <ErrorBoundary
+              fallback={
+                <div className="p-4 text-center text-red-500">
+                  <p>Table failed to load</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 mt-2 text-white transition-colors bg-red-500 rounded hover:bg-red-600"
+                  >
+                    Reload Page
+                  </button>
+                </div>
+              }
+            >
               {leadsError ? (
                 <div className="p-8 overflow-hidden text-center bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
                   <p className="mb-2 text-red-500 dark:text-red-400">
@@ -261,8 +253,6 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                     Retry
                   </button>
                 </div>
-              ) : shouldShowLoading ? (
-                <TableSkeleton />
               ) : showEmptyState ? (
                 <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
                   <EmptyState
@@ -296,7 +286,6 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                     onServerPageChange={handleServerPageChange}
                     onPageSizeChange={handlePageSizeChange}
                     onLeadUpdated={handleLeadUpdate}
-                    isLoading={false}
                     isRefetching={isRefetchingLeads}
                     selectedLeads={selectedLeads}
                     users={users}
@@ -312,27 +301,27 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                   />
                 </div>
               )}
-            </Suspense>
-          </ErrorBoundary>
-        </div>
+            </ErrorBoundary>
+          </div>
 
-        <LeadsDialogs
-          isDialogOpen={uiState.isDialogOpen}
-          onDialogClose={handleDialogClose}
-          users={users}
-          selectedUser={uiState.selectedUser}
-          setSelectedUser={handleUserSelect}
-          isLoadingUsers={isLoadingUsers}
-          isAssigning={isAssigning}
-          onAssign={handleAssignLeads}
-          onUnassign={handleUnassignLeads}
-          selectedLeads={selectedLeads}
-          isUnassignDialogOpen={uiState.isUnassignDialogOpen}
-          onUnassignDialogChange={handleUnassignDialogChange}
-          isUnassigning={isUnassigning}
-          assignedLeadsCount={counts.assigned}
-        />
-      </div>
+          <LeadsDialogs
+            isDialogOpen={uiState.isDialogOpen}
+            onDialogClose={handleDialogClose}
+            users={users}
+            selectedUser={uiState.selectedUser}
+            setSelectedUser={handleUserSelect}
+            isLoadingUsers={isLoadingUsers}
+            isAssigning={isAssigning}
+            onAssign={handleAssignLeads}
+            onUnassign={handleUnassignLeads}
+            selectedLeads={selectedLeads}
+            isUnassignDialogOpen={uiState.isUnassignDialogOpen}
+            onUnassignDialogChange={handleUnassignDialogChange}
+            isUnassigning={isUnassigning}
+            assignedLeadsCount={counts.assigned}
+          />
+        </div>
+      )}
     </SubscriptionGuard>
   );
 };

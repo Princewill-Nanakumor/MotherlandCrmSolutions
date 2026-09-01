@@ -28,9 +28,29 @@ function captchaDigitsFromMasked(masked: string): string {
   return code;
 }
 
+function isConnectionRefused(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /ECONNREFUSED|ENOTFOUND|connect ECONNREFUSED|fetch failed/i.test(msg);
+}
+
+function devServerNotRunningMessage(): string {
+  return (
+    "Dev server not reachable at PLAYWRIGHT_BASE_URL (default http://127.0.0.1:3000). " +
+    "Run `npm run dev` in another terminal, or run Playwright without PLAYWRIGHT_NO_WEBSERVER=1 " +
+    "so the config can start the server for you."
+  );
+}
+
 async function assertAuthenticated(page: Page) {
-  const meRes = await page.request.get("/api/users/me");
-  expect(meRes.ok(), `GET /api/users/me after login: ${meRes.status()}`).toBeTruthy();
+  try {
+    const meRes = await page.request.get("/api/users/me");
+    expect(meRes.ok(), `GET /api/users/me after login: ${meRes.status()}`).toBeTruthy();
+  } catch (err) {
+    if (isConnectionRefused(err)) {
+      throw new Error(devServerNotRunningMessage());
+    }
+    throw err;
+  }
 }
 
 /**
@@ -40,7 +60,15 @@ async function assertAuthenticated(page: Page) {
 export async function loginAsApi(page: Page, email: string, password: string) {
   await page.context().clearCookies();
 
-  const csrfRes = await page.request.get("/api/auth/csrf");
+  let csrfRes;
+  try {
+    csrfRes = await page.request.get("/api/auth/csrf");
+  } catch (err) {
+    if (isConnectionRefused(err)) {
+      throw new Error(devServerNotRunningMessage());
+    }
+    throw err;
+  }
   expect(csrfRes.ok(), `csrf: ${csrfRes.status()}`).toBeTruthy();
   const { csrfToken } = (await csrfRes.json()) as { csrfToken: string };
 
@@ -107,12 +135,19 @@ async function tryRestoreAuthStorage(
   await page.context().clearCookies();
   await page.context().addCookies(state.cookies);
 
-  const meRes = await page.request.get("/api/users/me");
-  if (!meRes.ok()) {
+  try {
+    const meRes = await page.request.get("/api/users/me");
+    if (!meRes.ok()) {
+      await page.context().clearCookies();
+      return false;
+    }
+    return true;
+  } catch (err) {
     await page.context().clearCookies();
-    return false;
+    // Server not up yet or stale cache — fall back to loginAsApi.
+    if (isConnectionRefused(err)) return false;
+    throw err;
   }
-  return true;
 }
 
 /**

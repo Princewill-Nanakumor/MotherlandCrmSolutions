@@ -31,6 +31,27 @@ export const TableSkeleton = () => (
   </div>
 );
 
+/** Filter bar placeholder while lookups bootstrap (not an error state). */
+export const FilterControlsLoadingShell = () => (
+  <div
+    className="sticky top-0 z-10 px-4 pb-5 mt-8 bg-white sm:px-6 lg:px-8 dark:bg-gray-800"
+    role="status"
+    aria-label="Loading filters"
+  >
+    <div className="flex flex-col gap-4 px-3 py-4 rounded-xl border min-w-0 md:flex-row md:items-center md:justify-between sm:px-4">
+      <div className="h-10 w-32 bg-gray-200 rounded-md animate-pulse dark:bg-gray-700" />
+      <div className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 md:w-auto">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700"
+          />
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 /** Same glyph as dashboard layout session gate — reuse for full-page auth waits. */
 export const ShieldSpinnerGlyph = () => (
   <div className="relative flex h-16 w-16 items-center justify-center p-2.5">
@@ -46,7 +67,10 @@ export const ShieldSpinnerGlyph = () => (
 );
 
 export const LoadingSpinner = () => (
-  <div className="flex h-screen w-full items-center justify-center bg-background text-foreground">
+  <div
+    className="flex h-screen w-full items-center justify-center bg-background text-foreground"
+    data-testid="fullscreen-loading-spinner"
+  >
     <ShieldSpinnerGlyph />
   </div>
 );

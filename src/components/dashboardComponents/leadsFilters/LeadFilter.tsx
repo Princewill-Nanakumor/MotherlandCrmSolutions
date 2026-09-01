@@ -16,19 +16,13 @@ import { AddLeadDialog } from "@/components/dashboardComponents/AddLeadDialog";
 import { useSession } from "next-auth/react";
 import { canAssignLeads, canCreateLead, canCreateStatus } from "@/lib/roles";
 
-// ✅ Enhanced Filter Skeleton Component
-const FilterSkeleton = () => (
+// ✅ Error fallback when filter controls throw (not a loading state)
+const FilterErrorFallback = () => (
   <div
-    className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3"
-    role="status"
-    aria-label="Loading filters"
+    className="px-3 py-2 text-sm text-red-600 rounded-md border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+    role="alert"
   >
-    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-30 dark:bg-gray-700" />
-    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-30 dark:bg-gray-700" />
-    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
-    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
-    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
-    <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-45 dark:bg-gray-700" />
+    Filters failed to load. Refresh the page to try again.
   </div>
 );
 
@@ -145,7 +139,7 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
           </div>
 
           <div className="flex flex-col order-1 gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 md:w-auto md:order-2">
-            <ErrorBoundary fallback={<FilterSkeleton />}>
+            <ErrorBoundary fallback={<FilterErrorFallback />}>
               {showAddLead && (
                 <Button
                   onClick={() => setIsAddLeadDialogOpen(true)}

@@ -144,7 +144,7 @@ function summarizeLeadFetch(calls: LeadDetailApiCall[], leadId: string): LeadFet
   const requests = gets.map((c) => ({
     wallDurationMs: c.durationMs,
     resourceTimingMs: c.resourceTimingMs,
-    serverHandlerMs: c.handlerTotalMs,
+    serverHandlerMs: c.handlerTotalMs ?? null,
     startedMs: c.requestStartedMs,
     status: c.status,
   }));

@@ -8,7 +8,6 @@ import { useSession } from "next-auth/react";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { isAdmin, isTenantStaff } from "@/lib/roles";
-import { LoadingSpinner } from "./LeadsLoadingState";
 
 interface SubscriptionGuardProps {
   children: React.ReactNode;
@@ -24,12 +23,12 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
   const staffUser = isTenantStaff(session?.user?.role);
   const ownerUser = isAdmin(session?.user?.role);
 
-  // Show loading while session is resolving or subscription is loading
+  // Parent owns bootstrap UI (AllLeadsPageLoadingShell). Only enforce blocks once loaded.
   if (
     status === "loading" ||
     (hasAuthorizedSession(status, session) && isLoading)
   ) {
-    return <LoadingSpinner />;
+    return <>{children}</>;
   }
 
   // Avoid "subscribe" messaging when the subscription API failed (e.g. stale session / 401)

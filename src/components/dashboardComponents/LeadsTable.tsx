@@ -48,7 +48,6 @@ function leadRowNeedsPanelResync(prev: Lead, next: Lead): boolean {
     String(nextAssignee ?? "") !== String(prevAssignee ?? "")
   );
 }
-import { Loader } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -79,7 +78,6 @@ interface LeadsTableProps {
   /** When set (e.g. server-side pagination), page size changes update URL and refetch */
   onPageSizeChange?: (pageSize: number) => void;
   onLeadUpdated: (lead: Lead) => Promise<boolean>;
-  isLoading?: boolean;
   /** When true, table is refetching (e.g. after filter change); show subtle updating state */
   isRefetching?: boolean;
   users: User[];
@@ -101,7 +99,6 @@ export default function LeadsTable({
   onServerPageChange,
   onPageSizeChange,
   onLeadUpdated,
-  isLoading = false,
   isRefetching = false,
   users = [],
   statuses = [],
@@ -481,14 +478,6 @@ export default function LeadsTable({
     },
     [columnOrder, setColumnOrder, table],
   );
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader />
-      </div>
-    );
-  }
 
   const showEmptyState = sortedLeads.length === 0;
 
