@@ -16,6 +16,8 @@
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/e2e/.auth-*.json
+/e2e/.lead-detail-bench.json
 
 # next.js
 /.next/

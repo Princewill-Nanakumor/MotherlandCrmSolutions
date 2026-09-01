@@ -19,6 +19,8 @@ function disposableLeadFilter() {
   return {
     $or: [
       { email: { $regex: /@e2e\.motherland\.test$/i } },
+      { email: { $regex: /^e2e\.lead\./i } },
+      { source: { $regex: /^e2e-detail/i } },
       { email: { $regex: /@import-load\.motherland\.test$/i } },
       { source: { $regex: /^assign-bulk/i } },
       { source: { $in: ["assign-bulk-ui", "assign-bulk-bench"] } },

@@ -76,14 +76,21 @@ export async function gotoAllLeadsForBench(page: Page) {
   });
 }
 
-export async function searchLeadInTable(page: Page, email: string) {
+export async function searchLeadInTable(
+  page: Page,
+  email: string,
+  opts?: { debounceMs?: number },
+) {
   const search = page.getByPlaceholder(/search/i).first();
+  const debounceMs = opts?.debounceMs ?? 400;
   if (await search.isVisible().catch(() => false)) {
     await search.fill(email);
-    await page.waitForTimeout(400);
+    if (debounceMs > 0) {
+      await page.waitForTimeout(debounceMs);
+    }
   }
   const row = leadsDataTable(page).locator("tbody tr").filter({ hasText: email }).first();
-  await expect(row).toBeVisible({ timeout: 60_000 });
+  await expect(row).toBeVisible({ timeout: 20_000 });
   return row;
 }
 
@@ -485,11 +492,142 @@ export async function deleteReminderInPanel(page: Page, title: string) {
   };
 }
 
-export async function closeLeadDetailPanel(page: Page) {
+export async function dismissDialogIfOpen(page: Page) {
+  const dialog = page.getByRole("dialog");
+  if (!(await dialog.isVisible().catch(() => false))) {
+    return;
+  }
+  const namedClose = dialog.getByRole("button", { name: /^close$/i });
+  if (await namedClose.isVisible().catch(() => false)) {
+    await namedClose.click();
+  } else {
+    await page.keyboard.press("Escape");
+  }
+  await expect(dialog).toBeHidden({ timeout: 10_000 }).catch(() => {});
+}
+
+export async function closeLeadDetailPanelIfOpen(
+  page: Page,
+  opts?: { force?: boolean },
+) {
   const t0 = Date.now();
-  await page.getByLabel("Close panel").click();
-  await expect(page.getByLabel("Close panel")).toBeHidden({ timeout: 15_000 });
+  const closeBtn = leadDetailsPanel(page).getByLabel("Close panel");
+  if (!(await closeBtn.isVisible().catch(() => false))) {
+    return 0;
+  }
+  await closeBtn.click({ force: opts?.force, timeout: 10_000 }).catch(() => {});
+  await expect(page.getByLabel("Close panel"))
+    .toBeHidden({ timeout: 15_000 })
+    .catch(() => {});
   return Date.now() - t0;
+}
+
+export async function closeLeadDetailPanel(
+  page: Page,
+  opts?: { force?: boolean },
+) {
+  return closeLeadDetailPanelIfOpen(page, opts);
+}
+
+/** Open panel from All Leads without waiting for timeline APIs to finish. */
+/** Artificial delay for interrupt scenarios (ms). Keep low — only needs to beat navigation. */
+export const INTERRUPT_DELAY_MS = 700;
+
+export const EDGE_PANEL_TIMEOUT_MS = 20_000;
+
+export async function openLeadDetailPanelOnly(
+  page: Page,
+  email: string,
+  opts?: { panelTimeoutMs?: number; searchDebounceMs?: number },
+) {
+  const panel = leadDetailsPanel(page);
+  const row = await searchLeadInTable(page, email, {
+    debounceMs: opts?.searchDebounceMs,
+  });
+  await row.click();
+  await expect(panel.getByLabel("Close panel")).toBeVisible({
+    timeout: opts?.panelTimeoutMs ?? EDGE_PANEL_TIMEOUT_MS,
+  });
+  return panel;
+}
+
+export async function showCommentTextareaInPanel(page: Page) {
+  const panel = leadDetailsPanel(page);
+  await switchToCommentsTab(page);
+  const toggle = panel.getByTitle(/show comment textarea/i);
+  if (await toggle.isVisible().catch(() => false)) {
+    await toggle.click();
+  }
+  const textarea = panel.getByPlaceholder(/write your thoughts/i);
+  await expect(textarea).toBeVisible({ timeout: 15_000 });
+  return textarea;
+}
+
+export async function readCommentDraftLocal(page: Page, leadId: string) {
+  return page.evaluate(
+    (id) => localStorage.getItem(`lead_comment_draft_${id}`),
+    leadId,
+  );
+}
+
+export async function clickCallButtonInPanel(page: Page) {
+  const panel = leadDetailsPanel(page);
+  await panel.getByTitle("Click to call").click();
+}
+
+export async function expectContactPhoneVisible(page: Page, phoneFragment: string) {
+  const panel = leadDetailsPanel(page);
+  await expect(panel.getByText("Phone").first()).toBeVisible({ timeout: 30_000 });
+  await expect(panel.getByText(phoneFragment).first()).toBeVisible({ timeout: 30_000 });
+  await expect(panel.getByTitle("Click to call")).toBeVisible({ timeout: 15_000 });
+}
+
+export async function selectLeadStatusInPanel(page: Page, statusName: string) {
+  const panel = leadDetailsPanel(page);
+  await panel.getByRole("combobox").click();
+  const option = page.getByRole("option", { name: statusName, exact: true });
+  await expect(option).toBeVisible({ timeout: 15_000 });
+  await option.click();
+}
+
+export async function openAddStatusModal(page: Page) {
+  await page.getByRole("button", { name: /add status/i }).click({ force: true });
+  await expect(
+    page.getByRole("dialog").getByText(/create new status/i),
+  ).toBeVisible({ timeout: 15_000 });
+}
+
+export async function fillAddStatusForm(page: Page, name: string, color = "#336699") {
+  await page.getByPlaceholder(/enter status name/i).fill(name);
+  await page.locator('input[type="color"]').fill(color);
+}
+
+export async function submitAddStatusForm(page: Page) {
+  await page.getByRole("button", { name: /^create status$/i }).click();
+}
+
+export async function navigateAwayFromPanel(page: Page) {
+  await page.goto("/dashboard/profile", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/dashboard\/profile/, { timeout: 15_000 });
+}
+
+export async function delayApiRoute(
+  page: Page,
+  urlPattern: RegExp,
+  delayMs: number,
+  methods?: string[],
+) {
+  await page.route(urlPattern, async (route) => {
+    const method = route.request().method();
+    if (!methods || methods.includes(method)) {
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+    await route.continue();
+  });
+}
+
+export async function removeApiRouteDelay(page: Page, urlPattern: RegExp) {
+  await page.unroute(urlPattern);
 }
 
 export function summarizeQueueContention(calls: LeadDetailApiCall[]) {

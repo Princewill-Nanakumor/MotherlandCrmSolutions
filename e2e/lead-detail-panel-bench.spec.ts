@@ -11,6 +11,9 @@
  * Production server (no next dev — compares cold queue vs dev compilation):
  *   Terminal 1: npm run build && npm run start   # wait for "Ready"
  *   Terminal 2: LEAD_DETAIL_PANEL_BENCH=1 LEAD_DETAIL_BENCH_COMMENTS=150 ... npm run test:lead-detail-panel-bench:prod
+ *
+ * Edge cases (comment draft, call before load, status interrupts):
+ *   npm run test:lead-detail-panel-edge
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";

@@ -47,6 +47,7 @@
     "test:lead-detail-panel-bench:200": "LEAD_DETAIL_PANEL_BENCH=1 LEAD_DETAIL_BENCH_COMMENTS=100 LEAD_DETAIL_BENCH_ACTIVITIES=100 LEAD_DETAIL_BENCH_REMINDERS=10 API_PERF_TIMING=1 playwright test e2e/lead-detail-panel-bench.spec.ts",
     "test:lead-detail-panel-bench:custom": "LEAD_DETAIL_PANEL_BENCH=1 API_PERF_TIMING=1 playwright test e2e/lead-detail-panel-bench.spec.ts",
     "test:lead-detail-panel-bench:prod": "node scripts/wait-for-http.mjs && LEAD_DETAIL_PANEL_BENCH=1 API_PERF_TIMING=1 PLAYWRIGHT_NO_WEBSERVER=1 playwright test e2e/lead-detail-panel-bench.spec.ts",
+    "test:lead-detail-panel-edge": "LEAD_DETAIL_PANEL_EDGE=1 playwright test e2e/lead-detail-panel-edge.spec.ts",
     "mongo:users-create-explain": "node --env-file=.env scripts/mongo-users-create-explain.mjs",
     "mongo:users-create-explain:idle": "node --env-file=.env scripts/mongo-users-create-explain.mjs --idle-test",
     "test:assign-bulk-ui": "ASSIGN_BULK_UI=1 playwright test e2e/assignment-bulk-ui.spec.ts",
@@ -57,6 +58,7 @@
     "test:e2e": "playwright test",
     "test:e2e:seed": "node --env-file=.env scripts/e2e-seed.mjs",
     "test:e2e:cleanup": "node --env-file=.env scripts/e2e-cleanup-disposable.mjs",
+    "test:e2e:clean": "rm -rf test-results playwright-report blob-report playwright/.cache e2e/.auth-*.json e2e/.lead-detail-bench.json",
     "cleanup:test-data": "node --env-file=.env scripts/e2e-cleanup-disposable.mjs",
     "generate:fonts": "node scripts/generate-brand-font-loaders.mjs"
   },

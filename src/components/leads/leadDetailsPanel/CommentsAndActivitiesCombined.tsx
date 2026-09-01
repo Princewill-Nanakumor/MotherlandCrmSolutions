@@ -18,8 +18,9 @@ import { canDeleteComments } from "@/lib/roles";
 import { callLogsKeys } from "@/components/user-management/CallLogsModal";
 import {
   transformComment,
-  LOCAL_STORAGE_KEY,
   TEXTAREA_TOGGLE_KEY,
+  loadCommentDraft,
+  persistCommentDraft,
 } from "./commentsAndActivities/utils";
 import { CommentForm } from "./commentsAndActivities/CommentForm";
 import { CombinedTimeline } from "./commentsAndActivities/CombinedTimeline";
@@ -51,7 +52,7 @@ export const CommentsAndActivitiesCombined: FC<
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
-  const [commentContent, setCommentContent] = useState("");
+  const [commentContent, setCommentContent] = useState(() => loadCommentDraft(leadId));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState<string>("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -143,22 +144,14 @@ export const CommentsAndActivitiesCombined: FC<
     }
   }, []);
 
-  // Clear draft when lead changes and load saved draft for new lead
+  // Swap draft when the open lead changes (prev/next in panel).
   useEffect(() => {
-    setCommentContent("");
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY(leadId));
-    if (saved) {
-      setCommentContent(saved);
-    }
+    setCommentContent(loadCommentDraft(leadId));
   }, [leadId]);
 
-  // Save draft to localStorage when content changes
+  // Save draft to localStorage when content changes.
   useEffect(() => {
-    if (commentContent) {
-      localStorage.setItem(LOCAL_STORAGE_KEY(leadId), commentContent);
-    } else {
-      localStorage.removeItem(LOCAL_STORAGE_KEY(leadId));
-    }
+    persistCommentDraft(leadId, commentContent);
   }, [commentContent, leadId]);
 
   // Fetch comments

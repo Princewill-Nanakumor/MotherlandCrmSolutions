@@ -18,6 +18,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format, formatDistanceToNow, isValid } from "date-fns";
 import { Comments as CommentType } from "@/types/leads";
 import { canDeleteComments } from "@/lib/roles";
+import {
+  loadCommentDraft,
+  persistCommentDraft,
+} from "./commentsAndActivities/utils";
 
 interface CommentsProps {
   comments: CommentType[];
@@ -33,7 +37,6 @@ interface CommentsProps {
   leadId: string;
 }
 
-const LOCAL_STORAGE_KEY = (leadId: string) => `lead_comment_draft_${leadId}`;
 const TEXTAREA_TOGGLE_KEY = "lead_comment_textarea_visible";
 
 const Comments: FC<CommentsProps> = ({
@@ -83,12 +86,8 @@ const Comments: FC<CommentsProps> = ({
 
   // Load draft from localStorage on mount - lead-specific
   useEffect(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY(leadId));
-    if (saved && !commentContent) {
-      setCommentContent(saved);
-    }
-    // eslint-disable-next-line
-  }, [leadId]);
+    setCommentContent(loadCommentDraft(leadId));
+  }, [leadId, setCommentContent]);
 
   // Load textarea visibility state from localStorage
   useEffect(() => {
@@ -100,17 +99,8 @@ const Comments: FC<CommentsProps> = ({
 
   // Save draft to localStorage on change - lead-specific
   useEffect(() => {
-    if (commentContent) {
-      localStorage.setItem(LOCAL_STORAGE_KEY(leadId), commentContent);
-    } else {
-      localStorage.removeItem(LOCAL_STORAGE_KEY(leadId));
-    }
+    persistCommentDraft(leadId, commentContent);
   }, [commentContent, leadId]);
-
-  // Clear draft when lead changes
-  useEffect(() => {
-    setCommentContent("");
-  }, [leadId, setCommentContent]);
 
   const formatDate = (dateString: string) => {
     try {
