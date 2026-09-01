@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { maskPhoneNumber } from "@/utils/phoneMask";
 import { formatLeadPhoneForTable } from "@/lib/phoneNormalize";
+import { buildTelUrl, openExternalDialerUrl } from "@/lib/openDialerUrl";
 
 interface PhoneFieldProps {
   phone: string | null | undefined;
@@ -95,7 +96,7 @@ export const PhoneField: FC<PhoneFieldProps> = ({
                     e.stopPropagation();
                     const digits = (phone || "").replace(/\D/g, "");
                     if (digits.length >= 3) {
-                      window.location.href = `tel:${encodeURIComponent(digits)}`;
+                      openExternalDialerUrl(buildTelUrl(digits));
                     }
                   }}
                   className="p-1.5 rounded transition-colors brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)]"

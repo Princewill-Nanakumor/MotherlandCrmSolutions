@@ -24,6 +24,11 @@ import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
 import { useQueryClient } from "@tanstack/react-query";
 import { callLogsKeys } from "@/components/user-management/CallLogsModal";
 import { normalizePhoneForDialer } from "@/lib/phoneNormalize";
+import {
+  buildDialerProtocolUrl,
+  buildTelUrl,
+  openExternalDialerUrl,
+} from "@/lib/openDialerUrl";
 import { formatLeadDetailSource } from "@/lib/leadDisplayFormat";
 import { canEditLead } from "@/lib/roles";
 
@@ -170,9 +175,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
         }
 
         if (!dialer) {
-          window.location.assign(
-            `tel:${encodeURIComponent(cleanedNumber.replace(/\s/g, ""))}`,
-          );
+          openExternalDialerUrl(buildTelUrl(cleanedNumber));
           try {
             await fetch("/api/calls/log", {
               method: "POST",
@@ -189,34 +192,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
           return;
         }
 
-        // Get the dialer URL based on user's preference
-        let dialerUrl: string;
-
-        if (dialer === "microsip") {
-          // MicroSIP uses sip: protocol
-          // Standard SIP URI format: sip:number or sip:number@domain
-          // Always use standard format - PBX configuration handles number hiding
-          dialerUrl = `sip:${cleanedNumber}`;
-        } else {
-          // Zoiper uses zoiper:// protocol
-          dialerUrl = `zoiper://${cleanedNumber}`;
-        }
-
-        // Try to open the selected dialer with the number
-        try {
-          const link = document.createElement("a");
-          link.href = dialerUrl;
-          link.style.display = "none";
-          document.body.appendChild(link);
-          link.click();
-          setTimeout(() => {
-            if (document.body.contains(link)) {
-              document.body.removeChild(link);
-            }
-          }, 100);
-        } catch (err) {
-          console.error(`Error with ${dialer}:// protocol:`, err);
-        }
+        openExternalDialerUrl(buildDialerProtocolUrl(dialer, cleanedNumber));
 
         // Log the call attempt to the database
         try {
