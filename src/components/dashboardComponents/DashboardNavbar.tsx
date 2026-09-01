@@ -170,7 +170,7 @@ export default function DashboardNavbar({
       {/* Right side - Other controls */}
       <div className="flex items-center gap-2 shrink-0 sm:gap-4">
         <DateTimeDisplay />
-        <NotificationBell />
+        {session?.user?.id ? <NotificationBell /> : null}
         <ThemeToggle isLoading={isLoading} />
         <UserDropdownMenu
           session={session}

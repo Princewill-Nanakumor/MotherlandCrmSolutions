@@ -156,14 +156,14 @@ export function UserDropdownMenu({
             <div className="max-w-full min-w-0 pr-1 ml-3 sm:max-w-54">
               <p className="text-sm font-medium text-gray-900! dark:text-white! break-all">
                 {session?.user?.firstName && session?.user?.lastName
-                  ? `${session.user.firstName} ${session.user.lastName}`
+                  ? `${session?.user?.firstName} ${session?.user?.lastName}`
                   : userProfile?.firstName && userProfile?.lastName
                     ? `${userProfile.firstName} ${userProfile.lastName}`
                     : "User"}
               </p>
               <p className="text-xs text-gray-500! dark:text-gray-400! break-all">
                 {session?.user?.email
-                  ? session.user.email
+                  ? session?.user?.email
                   : userProfile?.email
                     ? userProfile.email
                     : ""}

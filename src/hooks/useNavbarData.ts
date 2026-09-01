@@ -1,7 +1,9 @@
 // src/hooks/useNavbarData.ts
 import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 interface UserProfile {
   _id: string;
@@ -35,6 +37,8 @@ const fetchUserProfile = async (): Promise<UserProfile> => {
   return data.user;
 };
 export const useUserProfileData = () => {
+  const { status, data: session } = useSession();
+
   const {
     data: userProfile,
     isLoading,
@@ -49,7 +53,7 @@ export const useUserProfileData = () => {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    enabled: true,
+    enabled: hasAuthorizedSession(status, session),
   });
 
   return {

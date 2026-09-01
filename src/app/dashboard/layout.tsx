@@ -41,6 +41,7 @@ import {
   clearPostSignInHandoff,
   isPostSignInHandoff,
   waitForServerSessionUserId,
+  hasAuthorizedSession,
 } from "@/lib/sessionUtils";
 import { UserPresenceProvider } from "@/context/UserPresenceContext";
 import { useAppBranding } from "@/components/AppBrandingProvider";
@@ -69,14 +70,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const hasSeenAuthenticatedRef = useRef(false);
   const deferNonCriticalShell = useDeferAfterPaint();
   const isOnline = useNetworkStatus();
-  const sessionUserId = session?.user?.id;
-  const hasSessionUser = Boolean(sessionUserId);
 
   useEffect(() => {
-    if (status === "authenticated") {
+    if (hasAuthorizedSession(status, session)) {
       hasSeenAuthenticatedRef.current = true;
     }
-  }, [status]);
+  }, [status, session]);
 
   // After the session gate swaps LoadingSpinner → shell, re-lock density scroll.
   // Pathname alone may not change, so leftover density scroll would clip the navbar.
@@ -451,18 +450,46 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     };
   }, [status, pathname, searchParams, router]);
 
-  // After first auth, NextAuth can briefly return null session during refetch
-  // (e.g. offline / tab focus). Do not mount session-dependent pages until stable.
-  const shouldGateMainContent =
-    hasSeenAuthenticatedRef.current && !hasSessionUser;
+  const sessionReady = hasAuthorizedSession(status, session);
 
-  const showOfflineShell = shouldGateMainContent && !isOnline;
+  // After first auth, NextAuth can briefly clear session during refetch (offline,
+  // tab focus). Unmount the whole dashboard shell until session is valid again.
+  const showSessionRecovery =
+    hasSeenAuthenticatedRef.current && !sessionReady;
+
+  const showOfflineShell = showSessionRecovery && !isOnline;
 
   // Avoid full-page "reload" flash after profile save/session updates:
   // once user has already been authenticated in this layout, keep rendering
   // the current dashboard shell during short loading transitions.
   if (status === "loading" && !hasSeenAuthenticatedRef.current) {
     return <LoadingSpinner />;
+  }
+
+  if (showSessionRecovery) {
+    return (
+      <div className="flex h-full min-h-screen flex-col items-center justify-center gap-4 bg-background p-8 text-center text-foreground">
+        {showOfflineShell ? (
+          <>
+            <p className="text-red-500">
+              You are offline. Please check your connection.
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
+            >
+              Retry
+            </button>
+          </>
+        ) : (
+          <>
+            <LoadingSpinner />
+            <p className="text-sm text-muted-foreground">Reconnecting…</p>
+          </>
+        )}
+      </div>
+    );
   }
 
   const handleToggleHeader = () => setShowHeader(!showHeader);
@@ -476,7 +503,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <UserPresenceProvider enabled={status === "authenticated"}>
+    <UserPresenceProvider enabled={sessionReady}>
       <ToggleProvider value={showLeadsToggles ? toggleContextValue : null}>
         <div className="dashboard-app flex h-full max-h-full bg-background text-foreground overflow-hidden">
           <Sidebar />
@@ -500,36 +527,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                   : "overflow-auto p-4 md:p-6"
               }`}
             >
-              {shouldGateMainContent ? (
-                <div className="flex h-full min-h-48 flex-col items-center justify-center gap-4 p-8 text-center">
-                  {showOfflineShell ? (
-                    <>
-                      <p className="text-red-500">
-                        You are offline. Please check your connection.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => window.location.reload()}
-                        className="rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
-                      >
-                        Retry
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <LoadingSpinner />
-                      <p className="text-sm text-muted-foreground">
-                        Reconnecting…
-                      </p>
-                    </>
-                  )}
-                </div>
-              ) : (
-                children
-              )}
+              {children}
             </main>
             <Footer />
-            {deferNonCriticalShell && hasSessionUser && (
+            {deferNonCriticalShell && sessionReady && (
               <>
                 <TenantLeadsRealtimeSync />
                 <ReminderNotifications />
@@ -551,7 +552,7 @@ export default function DashboardLayout({
   const [queryClient] = useState(() => createQueryClient());
 
   return (
-    <SessionProvider refetchInterval={0} refetchOnWindowFocus={true}>
+    <SessionProvider refetchInterval={0} refetchOnWindowFocus={false}>
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <AblyAwareSessionKeepAlive />

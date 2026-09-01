@@ -221,8 +221,9 @@ export const useLeadStatusCounts = () => {
   // Keep the last known scope across brief session refetches on tab focus.
   // Flipping the key to "guest" would drop cached counts and flash a skeleton.
   const scopeKeyRef = useRef<string | null>(null);
-  if (session?.user?.id) {
-    scopeKeyRef.current = isAdmin ? "admin" : session.user.id;
+  const userId = session?.user?.id;
+  if (userId) {
+    scopeKeyRef.current = isAdmin ? "admin" : userId;
   }
   const scopeKey = scopeKeyRef.current;
 

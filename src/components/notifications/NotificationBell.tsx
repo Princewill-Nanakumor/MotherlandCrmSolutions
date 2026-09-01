@@ -146,8 +146,9 @@ export function NotificationBell() {
     if (!session?.user?.id) return;
     let cancelled = false;
 
+    const sessionUser = session.user;
     const sessionSuperAdmin = Boolean(
-      (session.user as { isSuperAdmin?: boolean }).isSuperAdmin,
+      (sessionUser as { isSuperAdmin?: boolean }).isSuperAdmin,
     );
     if (sessionSuperAdmin) {
       setIsSuperAdmin(true);

@@ -19,10 +19,18 @@ export function AblyAwareSessionKeepAlive() {
   });
 
   useEffect(() => {
-    const id = window.setInterval(() => {
+    const refreshSession = () => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
       void getSession();
-    }, intervalMs);
-    return () => window.clearInterval(id);
+    };
+
+    const id = window.setInterval(refreshSession, intervalMs);
+    window.addEventListener("online", refreshSession);
+
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("online", refreshSession);
+    };
   }, [intervalMs]);
 
   return null;
