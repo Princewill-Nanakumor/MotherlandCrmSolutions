@@ -117,17 +117,18 @@ export default function ReminderNotifications() {
 
   // Subscribe to server-pushed due reminder events (primary delivery path)
   useEffect(() => {
-    if (!session?.user?.id || !adminScope) {
+    const userId = session?.user?.id;
+    if (!userId || !adminScope) {
       setRemindersChannel(null);
       setAblyConnection(null);
       return;
     }
 
     let cancelled = false;
-    const realtime = getAblyRealtimeClient(session.user.id);
+    const realtime = getAblyRealtimeClient(userId);
     const channelName = getTenantChannelName(adminScope);
     const channel = realtime.channels.get(channelName);
-    const currentUserId = session.user.id;
+    const currentUserId = userId;
 
     const onReminderDue = (message: { data?: unknown }) => {
       const data = (message.data ?? {}) as {

@@ -14,7 +14,7 @@ const INTENTIONAL_SIGN_OUT_TTL_MS = 60_000;
 export function hasAuthorizedSession(
   status: string,
   session: Session | null | undefined,
-): boolean {
+): session is Session & { user: NonNullable<Session["user"]> & { id: string } } {
   return (
     status === "authenticated" &&
     !!session?.user?.id &&

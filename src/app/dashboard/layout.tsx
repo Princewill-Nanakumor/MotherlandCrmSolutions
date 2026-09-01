@@ -31,6 +31,7 @@ import { SelectedLeadsBanner } from "@/components/dashboardComponents/SelectedLe
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 import { disconnectAblyRealtimeClient } from "@/libs/ablyClient";
 import { useDeferAfterPaint } from "@/hooks/useDeferAfterPaint";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { TenantLeadsRealtimeSync } from "@/components/dashboardComponents/TenantLeadsRealtimeSync";
 import { getDashboardRoleRedirect } from "@/lib/dashboardAccess";
 import { canAccessAllLeads } from "@/lib/roles";
@@ -67,6 +68,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   );
   const hasSeenAuthenticatedRef = useRef(false);
   const deferNonCriticalShell = useDeferAfterPaint();
+  const isOnline = useNetworkStatus();
+  const sessionUserId = session?.user?.id;
+  const hasSessionUser = Boolean(sessionUserId);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -447,6 +451,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     };
   }, [status, pathname, searchParams, router]);
 
+  // After first auth, NextAuth can briefly return null session during refetch
+  // (e.g. offline / tab focus). Do not mount session-dependent pages until stable.
+  const shouldGateMainContent =
+    hasSeenAuthenticatedRef.current && !hasSessionUser;
+
+  const showOfflineShell = shouldGateMainContent && !isOnline;
+
   // Avoid full-page "reload" flash after profile save/session updates:
   // once user has already been authenticated in this layout, keep rendering
   // the current dashboard shell during short loading transitions.
@@ -489,10 +500,36 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                   : "overflow-auto p-4 md:p-6"
               }`}
             >
-              {children}
+              {shouldGateMainContent ? (
+                <div className="flex h-full min-h-48 flex-col items-center justify-center gap-4 p-8 text-center">
+                  {showOfflineShell ? (
+                    <>
+                      <p className="text-red-500">
+                        You are offline. Please check your connection.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => window.location.reload()}
+                        className="rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
+                      >
+                        Retry
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <LoadingSpinner />
+                      <p className="text-sm text-muted-foreground">
+                        Reconnecting…
+                      </p>
+                    </>
+                  )}
+                </div>
+              ) : (
+                children
+              )}
             </main>
             <Footer />
-            {deferNonCriticalShell && status === "authenticated" && (
+            {deferNonCriticalShell && hasSessionUser && (
               <>
                 <TenantLeadsRealtimeSync />
                 <ReminderNotifications />

@@ -45,7 +45,7 @@ export default function AdminManagementContent() {
         router.push("/dashboard");
       } else if (
         allowedEmails.length > 0 &&
-        !allowedEmails.includes(session.user.email)
+        !allowedEmails.includes(session?.user?.email ?? "")
       ) {
         router.push("/dashboard");
       }

@@ -232,7 +232,8 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
   // Realtime sync: single tenant channel (filter by leadId / leadIds).
   useEffect(() => {
-    if (!isOpen || !lead?._id || !session?.user?.id) return;
+    const userId = session?.user?.id;
+    if (!isOpen || !lead?._id || !userId) return;
 
     const openLeadId = lead._id;
     let adminChannel: {
@@ -365,7 +366,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           }
         };
 
-        const adminRealtime = getAblyRealtimeClient(session.user.id);
+        const adminRealtime = getAblyRealtimeClient(userId);
         adminChannelName = getTenantChannelName(adminScope);
         const ablyAdminChannel = adminRealtime.channels.get(adminChannelName);
         adminChannel = ablyAdminChannel;

@@ -50,8 +50,8 @@ export function AuthGuard({
     }
 
     const allowed = canAccess
-      ? canAccess(session!.user)
-      : session!.user!.role === requiredRole;
+      ? canAccess(session.user)
+      : session.user.role === requiredRole;
 
     if (!allowed) {
       setIsRedirecting(true);
@@ -86,11 +86,15 @@ export function AuthGuard({
     );
   }
 
-  const allowed = canAccess
-    ? canAccess(session!.user)
-    : session!.user.role === requiredRole;
+  if (!hasAuthorizedSession(status, session)) {
+    return null;
+  }
 
-  if (!hasAuthorizedSession(status, session) || !allowed) {
+  const allowed = canAccess
+    ? canAccess(session.user)
+    : session.user.role === requiredRole;
+
+  if (!allowed) {
     return null;
   }
 

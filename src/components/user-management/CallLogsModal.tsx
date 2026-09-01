@@ -192,9 +192,10 @@ export function CallLogsModal({
   }, [isOpen, session?.user?.id]);
 
   useEffect(() => {
-    if (!isOpen || !adminScope || !session?.user?.id || !userId) return;
+    const sessionUserId = session?.user?.id;
+    if (!isOpen || !adminScope || !sessionUserId || !userId) return;
 
-    const realtime = getAblyRealtimeClient(session.user.id);
+    const realtime = getAblyRealtimeClient(sessionUserId);
     const channelName = getTenantChannelName(adminScope);
     const channel = realtime.channels.get(channelName);
     const onCallLogged = (message: { data?: unknown }) => {

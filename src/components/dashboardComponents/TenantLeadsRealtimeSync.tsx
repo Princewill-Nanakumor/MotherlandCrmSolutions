@@ -29,7 +29,8 @@ export function TenantLeadsRealtimeSync() {
   currentUserIdRef.current = session?.user?.id;
 
   useEffect(() => {
-    if (!session?.user?.id) return;
+    const userId = session?.user?.id;
+    if (!userId) return;
 
     let cancelled = false;
     let realtimeClient: ReturnType<typeof getAblyRealtimeClient> | null = null;
@@ -231,7 +232,7 @@ export function TenantLeadsRealtimeSync() {
         };
         if (!scopeData.adminScope || cancelled) return;
 
-        realtimeClient = getAblyRealtimeClient(session.user.id);
+        realtimeClient = getAblyRealtimeClient(userId);
         channelName = getAdminLeadsChannelName(scopeData.adminScope);
         const activeChannel = realtimeClient.channels.get(channelName);
         channel = activeChannel;

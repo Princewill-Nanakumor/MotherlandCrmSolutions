@@ -152,7 +152,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
     return null;
   }
 
-  if (!isBootstrapping && (!session?.user?.role || !canAccessAllLeads(session.user))) {
+  if (!isBootstrapping && (!session?.user?.role || !canAccessAllLeads(session?.user))) {
     return null;
   }
 

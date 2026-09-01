@@ -184,14 +184,15 @@ export function NotificationBell() {
 
   // Realtime payment notification updates (approve / reject / pending)
   useEffect(() => {
-    if (!session?.user?.id || !adminScope) {
+    const userId = session?.user?.id;
+    if (!userId || !adminScope) {
       setNotificationsChannel(null);
       setAblyConnection(null);
       return;
     }
 
     let cancelled = false;
-    const realtime = getAblyRealtimeClient(session.user.id);
+    const realtime = getAblyRealtimeClient(userId);
     setAblyConnection(realtime.connection);
     const channels: Array<{
       name: string;
@@ -220,7 +221,7 @@ export function NotificationBell() {
         paymentId?: string;
         userId?: string;
       };
-      if (payload.userId && payload.userId !== session.user.id) return;
+      if (payload.userId && payload.userId !== userId) return;
       refreshNotifications();
       if (
         payload.type === "PAYMENT_APPROVED" ||
