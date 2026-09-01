@@ -58,16 +58,6 @@ export const UserLeadsFilterControls: React.FC<
     <div className="sticky top-0 z-10 px-4 pb-5 mt-10 bg-white sm:px-6 lg:px-8 dark:bg-gray-800">
       <div className="flex flex-col gap-3 px-3 py-4 rounded-xl border min-w-0 md:flex-row md:items-center md:justify-end sm:px-4">
         <div className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3 md:w-auto">
-          <CountryFilter
-            value={countryFilter}
-            onChange={onCountryFilterChange}
-            disabled={false}
-            isLoading={false}
-            mode={countryFilterMode}
-            onModeChange={onCountryFilterModeChange}
-            availableCountries={availableCountries}
-          />
-
           <StatusFilter
             value={statusFilter}
             onChange={onStatusFilterChange}
@@ -85,6 +75,16 @@ export const UserLeadsFilterControls: React.FC<
             mode={sourceFilterMode}
             onModeChange={onSourceFilterModeChange}
             availableSources={availableSources}
+          />
+
+          <CountryFilter
+            value={countryFilter}
+            onChange={onCountryFilterChange}
+            disabled={false}
+            isLoading={false}
+            mode={countryFilterMode}
+            onModeChange={onCountryFilterModeChange}
+            availableCountries={availableCountries}
           />
         </div>
       </div>
