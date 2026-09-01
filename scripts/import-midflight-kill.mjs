@@ -42,10 +42,6 @@ async function main() {
 
   const db = mongoose.connection.db;
   const imports = db.collection("imports");
-  const staging = db.collection("importstagingchunks");
-  // Mongoose lowercases/pluralizes — match ImportStagingChunk model collection name
-  const stagingCol =
-    db.collection("importstagingchunks") || staging;
 
   // Discover actual collection name from mongoose if registered
   let stagingName = "importstagingchunks";

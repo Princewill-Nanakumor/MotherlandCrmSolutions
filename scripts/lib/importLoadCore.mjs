@@ -96,17 +96,14 @@ export const ARCHITECTURE = {
 
 export function getDbName() {
   if (process.env.MONGODB_DB_NAME) return process.env.MONGODB_DB_NAME;
-  const uri = process.env.MONGODB_URI || process.env.IMPORT_LOAD_MONGODB_URI || "";
+  const uri =
+    process.env.MONGODB_URI || process.env.IMPORT_LOAD_MONGODB_URI || "";
   const match = uri.match(/\/([^/?]+)(\?|$)/);
   return match?.[1] || "your_default_db_name";
 }
 
 export function resolveMongoUri() {
-  return (
-    process.env.IMPORT_LOAD_MONGODB_URI ||
-    process.env.MONGODB_URI ||
-    ""
-  );
+  return process.env.IMPORT_LOAD_MONGODB_URI || process.env.MONGODB_URI || "";
 }
 
 export function resolveBatchSize() {
@@ -269,10 +266,7 @@ export async function importLeadsForTenant({
   for (let i = 0; i < uniqueEmails.length; i += findChunk) {
     const slice = uniqueEmails.slice(i, i + findChunk);
     const existing = await leadsCol
-      .find(
-        { adminId, email: { $in: slice } },
-        { projection: { email: 1 } },
-      )
+      .find({ adminId, email: { $in: slice } }, { projection: { email: 1 } })
       .toArray();
     dbRoundTrips += 1;
     for (const d of existing) {
@@ -421,7 +415,8 @@ export async function importLeadsForTenant({
     duplicates,
     errors,
     retryAttempts,
-    errorRecovery: retryAttempts > 0 ? "retried_failed_bulkWrite_chunk" : "none_needed",
+    errorRecovery:
+      retryAttempts > 0 ? "retried_failed_bulkWrite_chunk" : "none_needed",
     aborted,
     abortReason,
     importStatus: aborted
@@ -441,8 +436,7 @@ export async function importLeadsForTenant({
       apiLatencyMs: wallMs,
     },
     elapsedMs: totalMs,
-    recordsPerSec:
-      wallMs > 0 ? +((processed) / (wallMs / 1000)).toFixed(1) : 0,
+    recordsPerSec: wallMs > 0 ? +(processed / (wallMs / 1000)).toFixed(1) : 0,
     memory: {
       before: memBefore,
       after: memAfter,
@@ -680,7 +674,6 @@ export async function cleanupLoadUsers() {
  * Failure modes, race, index, upsert-safety — the senior correctness suite.
  */
 export async function runCorrectnessChecks({
-  admins,
   primary,
   batchSize,
   log = console.log,
@@ -708,7 +701,11 @@ export async function runCorrectnessChecks({
     ok: Boolean(uniqueCompound),
     index: uniqueCompound || null,
     createdDuringTest: false,
-    allIndexes: indexList.map((i) => ({ name: i.name, key: i.key, unique: i.unique })),
+    allIndexes: indexList.map((i) => ({
+      name: i.name,
+      key: i.key,
+      unique: i.unique,
+    })),
   };
   if (!out.uniqueIndex.ok) {
     out.failures.push("missing unique index on { email: 1, adminId: 1 }");
@@ -772,7 +769,9 @@ export async function runCorrectnessChecks({
       : null,
   };
   if (!out.upsertDoesNotOverwrite.ok) {
-    out.failures.push("upsert overwrote existing lead fields (expected $setOnInsert only)");
+    out.failures.push(
+      "upsert overwrote existing lead fields (expected $setOnInsert only)",
+    );
   }
 
   // 3) Same tenant: two overlapping imports concurrently
@@ -805,9 +804,18 @@ export async function runCorrectnessChecks({
     ok: actual === uniqueExpected,
     expectedUniqueLeads: uniqueExpected,
     actualLeadCount: actual,
-    importA: { inserted: r1.inserted, duplicates: r1.duplicates, status: r1.importStatus },
-    importB: { inserted: r2.inserted, duplicates: r2.duplicates, status: r2.importStatus },
-    combinedInsertedPlusDupes: r1.inserted + r1.duplicates + r2.inserted + r2.duplicates,
+    importA: {
+      inserted: r1.inserted,
+      duplicates: r1.duplicates,
+      status: r1.importStatus,
+    },
+    importB: {
+      inserted: r2.inserted,
+      duplicates: r2.duplicates,
+      status: r2.importStatus,
+    },
+    combinedInsertedPlusDupes:
+      r1.inserted + r1.duplicates + r2.inserted + r2.duplicates,
     importDocs: importDocs.map((d) => ({
       fileName: d.fileName,
       status: d.status,
@@ -873,8 +881,10 @@ export async function runCorrectnessChecks({
       importStatus: resume.importStatus,
       leadsAfterResume: afterResume,
     },
-    progressReporting: "product: Ably import_progress (not exercised by this harness)",
-    backgroundResume: "product: worker claim + nextChunkIndex cursor (see test:import-midflight-kill)",
+    progressReporting:
+      "product: Ably import_progress (not exercised by this harness)",
+    backgroundResume:
+      "product: worker claim + nextChunkIndex cursor (see test:import-midflight-kill)",
     notes:
       "This harness mid-fail check aborts inline bulkWrite and finishes via a new re-import. " +
       "That is intentional for the harness write path — not a claim that product lacks progress/resume. " +
@@ -894,7 +904,10 @@ export async function runCorrectnessChecks({
  * @param {keyof typeof PROFILES | string} profileName
  * @param {{ keepData?: boolean, log?: Function }} [options]
  */
-export async function runImportLoadSuiteSafe(profileName = "quick", options = {}) {
+export async function runImportLoadSuiteSafe(
+  profileName = "quick",
+  options = {},
+) {
   const log = options.log || console.log;
   const profile = PROFILES[profileName] || PROFILES.quick;
   const batchSize = resolveBatchSize();

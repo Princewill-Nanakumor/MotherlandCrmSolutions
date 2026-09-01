@@ -9,9 +9,14 @@ import {
   getAdminLeadsChannelName,
 } from "@/libs/realtime";
 import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
-import { applyRemoteLeadStatusToListCaches, removeLeadsFromAssignedLeadsCaches } from "@/lib/leadsListCache";
+import { removeLeadsFromAssignedLeadsCaches } from "@/lib/leadsListCache";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
-import { isTimelineChurnAdminEvent } from "@/lib/leadPanelRealtimeSync";
+import {
+  invalidateLeadDetailCache,
+  isActivityTimelineAdminEvent,
+  isTimelineChurnAdminEvent,
+  syncActivityTimelineFromAdminEvent,
+} from "@/lib/leadPanelRealtimeSync";
 
 /**
  * Subscribes to tenant lead events after first paint so Ably scope/token
@@ -49,6 +54,7 @@ export function TenantLeadsRealtimeSync() {
         leadId?: string;
         leadIds?: string[];
         status?: string;
+        activityId?: string;
         deletedLeads?: number;
         importId?: string;
         percent?: number;
@@ -72,8 +78,10 @@ export function TenantLeadsRealtimeSync() {
             void queryClient.invalidateQueries({
               queryKey: ["comments", leadId],
               exact: true,
-              refetchType: "inactive",
             });
+            if (eventType === "comment_created" || eventType === "comment_updated") {
+              void invalidateLeadDetailCache(queryClient, leadId);
+            }
           }
           if (eventType.startsWith("reminder_")) {
             void queryClient.invalidateQueries({
@@ -87,6 +95,46 @@ export function TenantLeadsRealtimeSync() {
             });
           }
         }
+        return;
+      }
+
+      if (isActivityTimelineAdminEvent(eventType)) {
+        void syncActivityTimelineFromAdminEvent(queryClient, eventData);
+        if (
+          eventType === "lead_assigned" ||
+          eventType === "lead_assigned_bulk" ||
+          eventType === "lead_unassigned" ||
+          eventType === "lead_unassigned_bulk"
+        ) {
+          const assignmentLeadIds = [
+            ...(eventData.leadId ? [eventData.leadId] : []),
+            ...(Array.isArray(eventData.leadIds) ? eventData.leadIds : []),
+          ].filter((id, index, arr) => id && arr.indexOf(id) === index);
+
+          if (assignmentLeadIds.length > 0) {
+            removeLeadsFromAssignedLeadsCaches(queryClient, assignmentLeadIds);
+            void queryClient.refetchQueries({
+              predicate: (query) => {
+                const root = Array.isArray(query.queryKey)
+                  ? query.queryKey[0]
+                  : null;
+                return root === "assignedLeads";
+              },
+            });
+          }
+        }
+
+        void queryClient.invalidateQueries({
+          predicate: (query) => {
+            const root = Array.isArray(query.queryKey) ? query.queryKey[0] : null;
+            return (
+              root === "leads" ||
+              root === "assignedLeads" ||
+              root === "leads-stats"
+            );
+          },
+        });
+        void refetchLeadFilterOptions(queryClient);
         return;
       }
 
@@ -133,45 +181,6 @@ export function TenantLeadsRealtimeSync() {
         return;
       }
 
-      if (eventType === "status_changed" && eventData.status) {
-        const statusLeadIds = [
-          ...(eventData.leadId ? [eventData.leadId] : []),
-          ...(Array.isArray(eventData.leadIds) ? eventData.leadIds : []),
-        ].filter((id, index, arr) => id && arr.indexOf(id) === index);
-
-        for (const leadId of statusLeadIds) {
-          applyRemoteLeadStatusToListCaches(
-            queryClient,
-            leadId,
-            eventData.status,
-            { touchActivity: true },
-          );
-        }
-      }
-
-      const assignmentLeadIds = [
-        ...(eventData.leadId ? [eventData.leadId] : []),
-        ...(Array.isArray(eventData.leadIds) ? eventData.leadIds : []),
-      ].filter((id, index, arr) => id && arr.indexOf(id) === index);
-
-      const isAssignmentEvent =
-        eventType === "lead_assigned" ||
-        eventType === "lead_assigned_bulk" ||
-        eventType === "lead_unassigned" ||
-        eventType === "lead_unassigned_bulk";
-
-      if (isAssignmentEvent && assignmentLeadIds.length > 0) {
-        removeLeadsFromAssignedLeadsCaches(queryClient, assignmentLeadIds);
-        void queryClient.refetchQueries({
-          predicate: (query) => {
-            const root = Array.isArray(query.queryKey)
-              ? query.queryKey[0]
-              : null;
-            return root === "assignedLeads";
-          },
-        });
-      }
-
       void queryClient.invalidateQueries({
         predicate: (query) => {
           const root = Array.isArray(query.queryKey) ? query.queryKey[0] : null;
@@ -192,7 +201,7 @@ export function TenantLeadsRealtimeSync() {
       if (eventData.leadId) {
         void queryClient.invalidateQueries({
           queryKey: ["activities", eventData.leadId],
-          exact: false,
+          exact: true,
         });
       }
       if (Array.isArray(eventData.leadIds)) {
@@ -200,7 +209,7 @@ export function TenantLeadsRealtimeSync() {
           if (typeof leadId !== "string" || !leadId) continue;
           void queryClient.invalidateQueries({
             queryKey: ["activities", leadId],
-            exact: false,
+            exact: true,
           });
         }
       }

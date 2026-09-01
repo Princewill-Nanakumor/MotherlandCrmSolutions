@@ -223,6 +223,20 @@ export function LeadDetailsRoutePage({ mode, params }: LeadDetailsRoutePageProps
     document.title = `${leadTitle} - ${shortName}`;
   }, [lead, shortName]);
 
+  useEffect(() => {
+    if (!id) return;
+    const refreshLeadIfVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      void queryClient.invalidateQueries({
+        queryKey: ["lead", id],
+        exact: true,
+      });
+    };
+    document.addEventListener("visibilitychange", refreshLeadIfVisible);
+    return () =>
+      document.removeEventListener("visibilitychange", refreshLeadIfVisible);
+  }, [id, queryClient]);
+
   if (status === "loading" || isLoading || isRedirecting) {
     return <LeadDetailsSkeleton />;
   }

@@ -154,6 +154,25 @@ export const CommentsAndActivitiesCombined: FC<
     persistCommentDraft(leadId, commentContent);
   }, [commentContent, leadId]);
 
+  // Keep timeline in sync when returning to this tab (multi-tab / background Ably).
+  useEffect(() => {
+    const refreshTimelineIfVisible = () => {
+      if (document.visibilityState !== "visible" || !leadId) return;
+      void queryClient.invalidateQueries({
+        queryKey: ["comments", leadId],
+        exact: true,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["activities", leadId],
+        exact: true,
+      });
+    };
+
+    document.addEventListener("visibilitychange", refreshTimelineIfVisible);
+    return () =>
+      document.removeEventListener("visibilitychange", refreshTimelineIfVisible);
+  }, [leadId, queryClient]);
+
   // Fetch comments
   const {
     data: comments = [],
