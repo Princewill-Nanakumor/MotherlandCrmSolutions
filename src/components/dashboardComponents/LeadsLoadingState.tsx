@@ -38,9 +38,15 @@ export const FilterControlsLoadingShell = () => (
     role="status"
     aria-label="Loading filters"
   >
+    {/* Mirrors LeadFilter: bulk slot (empty on load) + right-aligned actions/filters */}
     <div className="flex flex-col gap-4 px-3 py-4 rounded-xl border min-w-0 md:flex-row md:items-center md:justify-between sm:px-4">
-      <div className="h-10 w-32 bg-gray-200 rounded-md animate-pulse dark:bg-gray-700" />
-      <div className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 md:w-auto">
+      <div className="hidden order-2 md:block md:order-1 md:min-w-0" aria-hidden />
+      <div className="flex flex-col order-1 gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3 md:w-auto md:order-2">
+        {/* Add Lead */}
+        <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-28 dark:bg-gray-700" />
+        {/* Add Status */}
+        <div className="h-10 w-full bg-gray-200 rounded-md animate-pulse sm:w-32 dark:bg-gray-700" />
+        {/* All Leads / Status / Source / Country */}
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
