@@ -22,6 +22,9 @@ import {
   TEXTAREA_TOGGLE_KEY,
   loadCommentDraft,
   persistCommentDraft,
+  emptyCommentDraft,
+  getCommentDraftAuthorLabel,
+  type CommentDraft,
 } from "./commentsAndActivities/utils";
 import { CommentForm } from "./commentsAndActivities/CommentForm";
 import { CombinedTimeline } from "./commentsAndActivities/CombinedTimeline";
@@ -53,7 +56,10 @@ export const CommentsAndActivitiesCombined: FC<
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
-  const [commentContent, setCommentContent] = useState(() => loadCommentDraft(leadId));
+  const [commentDraft, setCommentDraft] = useState<CommentDraft>(() =>
+    loadCommentDraft(leadId),
+  );
+  const [showRestoredDraftNotice, setShowRestoredDraftNotice] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState<string>("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -72,6 +78,31 @@ export const CommentsAndActivitiesCombined: FC<
   >("all");
 
   const isAdmin = canDeleteComments(session?.user);
+  const commentContent = commentDraft.content;
+
+  const handleCommentContentChange = useCallback(
+    (content: string) => {
+      setShowRestoredDraftNotice(false);
+      setCommentDraft((prev) => {
+        if (!content.trim()) {
+          return { ...emptyCommentDraft(), content };
+        }
+
+        const user = session?.user;
+        const needsMeta = !prev.createdAt || !prev.userId;
+        return {
+          content,
+          createdAt: needsMeta ? new Date().toISOString() : prev.createdAt,
+          userId: needsMeta ? (user?.id ?? prev.userId) : prev.userId,
+          firstName: needsMeta
+            ? (user?.firstName ?? prev.firstName)
+            : prev.firstName,
+          lastName: needsMeta ? (user?.lastName ?? prev.lastName) : prev.lastName,
+        };
+      });
+    },
+    [session?.user],
+  );
 
   const patchLeadCachesFromComments = useCallback(
     (nextComments: Comment[]) => {
@@ -90,13 +121,17 @@ export const CommentsAndActivitiesCombined: FC<
 
   // Swap draft when the open lead changes (prev/next in panel).
   useEffect(() => {
-    setCommentContent(loadCommentDraft(leadId));
+    const draft = loadCommentDraft(leadId);
+    setCommentDraft(draft);
+    setShowRestoredDraftNotice(
+      Boolean(draft.content.trim() && draft.createdAt),
+    );
   }, [leadId]);
 
   // Save draft to localStorage when content changes.
   useEffect(() => {
-    persistCommentDraft(leadId, commentContent);
-  }, [commentContent, leadId]);
+    persistCommentDraft(leadId, commentDraft);
+  }, [commentDraft, leadId]);
 
   // Keep timeline in sync when returning to this tab (multi-tab / background Ably).
   useEffect(() => {
@@ -281,7 +316,8 @@ export const CommentsAndActivitiesCombined: FC<
           refetchType: "active",
         });
       }
-      setCommentContent("");
+      setCommentDraft(emptyCommentDraft());
+      setShowRestoredDraftNotice(false);
       toast({
         title: "Success",
         description: "Comment added successfully",
@@ -537,7 +573,10 @@ export const CommentsAndActivitiesCombined: FC<
         <div className="shrink-0">
           <CommentForm
             commentContent={commentContent}
-            setCommentContent={setCommentContent}
+            setCommentContent={handleCommentContentChange}
+            showRestoredDraftNotice={showRestoredDraftNotice}
+            restoredDraftAuthor={getCommentDraftAuthorLabel(commentDraft)}
+            restoredDraftCreatedAt={commentDraft.createdAt}
             showTextarea={showTextarea}
             setShowTextarea={setShowTextarea}
             onAddComment={handleAddComment}

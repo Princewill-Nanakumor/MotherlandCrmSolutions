@@ -86,7 +86,7 @@ const Comments: FC<CommentsProps> = ({
 
   // Load draft from localStorage on mount - lead-specific
   useEffect(() => {
-    setCommentContent(loadCommentDraft(leadId));
+    setCommentContent(loadCommentDraft(leadId).content);
   }, [leadId, setCommentContent]);
 
   // Load textarea visibility state from localStorage
@@ -99,7 +99,11 @@ const Comments: FC<CommentsProps> = ({
 
   // Save draft to localStorage on change - lead-specific
   useEffect(() => {
-    persistCommentDraft(leadId, commentContent);
+    const existing = loadCommentDraft(leadId);
+    persistCommentDraft(leadId, {
+      ...existing,
+      content: commentContent,
+    });
   }, [commentContent, leadId]);
 
   const formatDate = (dateString: string) => {

@@ -4,11 +4,14 @@
 import { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus, ChevronUp, Type } from "lucide-react";
-import { TEXTAREA_TOGGLE_KEY } from "./utils";
+import { TEXTAREA_TOGGLE_KEY, formatDate } from "./utils";
 
 interface CommentFormProps {
   commentContent: string;
   setCommentContent: (content: string) => void;
+  showRestoredDraftNotice?: boolean;
+  restoredDraftAuthor?: string;
+  restoredDraftCreatedAt?: string;
   showTextarea: boolean;
   setShowTextarea: (show: boolean) => void;
   onAddComment: () => void;
@@ -18,6 +21,9 @@ interface CommentFormProps {
 export const CommentForm: FC<CommentFormProps> = ({
   commentContent,
   setCommentContent,
+  showRestoredDraftNotice = false,
+  restoredDraftAuthor,
+  restoredDraftCreatedAt,
   showTextarea,
   setShowTextarea,
   onAddComment,
@@ -68,7 +74,7 @@ export const CommentForm: FC<CommentFormProps> = ({
             : "max-h-0 opacity-0"
         }`}
       >
-        <div className="mb-4 space-y-2 sm:mb-6 sm:space-y-3">
+        <div className="mb-4 sm:mb-6">
           <textarea
             placeholder="Write your thoughts about this lead... (Press Cmd/Ctrl + Enter to submit)"
             className="w-full p-3 rounded-md focus:outline-none resize-none min-h-20 sm:min-h-30 text-gray-700! dark:text-white! bg-white dark:bg-gray-700/50 transition-all duration-200 border border-gray-300 dark:border-gray-600 focus:border-(--brand-focus) focus:ring-0"
@@ -78,7 +84,15 @@ export const CommentForm: FC<CommentFormProps> = ({
             disabled={isSaving}
             rows={3}
           />
-          <div className="flex justify-end pt-1">
+          {showRestoredDraftNotice &&
+          restoredDraftAuthor &&
+          restoredDraftCreatedAt ? (
+            <p className="mt-0.5 px-1 text-xs leading-tight text-gray-500! dark:text-gray-400!">
+              Draft by {restoredDraftAuthor} ·{" "}
+              {formatDate(restoredDraftCreatedAt)}
+            </p>
+          ) : null}
+          <div className="mt-2 flex justify-end pt-1">
             <button
               onClick={onAddComment}
               disabled={isSaving || !commentContent.trim()}

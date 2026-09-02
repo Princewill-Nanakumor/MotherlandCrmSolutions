@@ -6,18 +6,60 @@ import { ApiComment, Comment } from "./types";
 export const LOCAL_STORAGE_KEY = (leadId: string) => `lead_comment_draft_${leadId}`;
 export const TEXTAREA_TOGGLE_KEY = "lead_comment_textarea_visible";
 
-export function loadCommentDraft(leadId: string): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem(LOCAL_STORAGE_KEY(leadId)) ?? "";
+export type CommentDraft = {
+  content: string;
+  createdAt: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+};
+
+export function emptyCommentDraft(): CommentDraft {
+  return {
+    content: "",
+    createdAt: "",
+    userId: "",
+    firstName: "",
+    lastName: "",
+  };
 }
 
-export function persistCommentDraft(leadId: string, content: string): void {
-  if (typeof window === "undefined") return;
-  if (content) {
-    localStorage.setItem(LOCAL_STORAGE_KEY(leadId), content);
-  } else {
-    localStorage.removeItem(LOCAL_STORAGE_KEY(leadId));
+export function getCommentDraftAuthorLabel(draft: CommentDraft): string {
+  const name = `${draft.firstName} ${draft.lastName}`.trim();
+  return name || "You";
+}
+
+export function loadCommentDraft(leadId: string): CommentDraft {
+  if (typeof window === "undefined") return emptyCommentDraft();
+
+  const raw = localStorage.getItem(LOCAL_STORAGE_KEY(leadId));
+  if (!raw) return emptyCommentDraft();
+
+  if (raw.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(raw) as Partial<CommentDraft>;
+      return {
+        content: parsed.content ?? "",
+        createdAt: parsed.createdAt ?? "",
+        userId: parsed.userId ?? "",
+        firstName: parsed.firstName ?? "",
+        lastName: parsed.lastName ?? "",
+      };
+    } catch {
+      return { ...emptyCommentDraft(), content: raw };
+    }
   }
+
+  return { ...emptyCommentDraft(), content: raw };
+}
+
+export function persistCommentDraft(leadId: string, draft: CommentDraft): void {
+  if (typeof window === "undefined") return;
+  if (!draft.content.trim()) {
+    localStorage.removeItem(LOCAL_STORAGE_KEY(leadId));
+    return;
+  }
+  localStorage.setItem(LOCAL_STORAGE_KEY(leadId), JSON.stringify(draft));
 }
 
 export function transformComment(apiComment: ApiComment): Comment {

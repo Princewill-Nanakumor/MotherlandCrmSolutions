@@ -564,10 +564,19 @@ export async function showCommentTextareaInPanel(page: Page) {
 }
 
 export async function readCommentDraftLocal(page: Page, leadId: string) {
-  return page.evaluate(
-    (id) => localStorage.getItem(`lead_comment_draft_${id}`),
-    leadId,
-  );
+  return page.evaluate((id) => {
+    const raw = localStorage.getItem(`lead_comment_draft_${id}`);
+    if (!raw) return "";
+    if (raw.startsWith("{")) {
+      try {
+        const parsed = JSON.parse(raw) as { content?: string };
+        return parsed.content ?? "";
+      } catch {
+        return raw;
+      }
+    }
+    return raw;
+  }, leadId);
 }
 
 export async function clickCallButtonInPanel(page: Page) {
