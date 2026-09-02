@@ -6,7 +6,8 @@ import * as React from "react";
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_DURATION = 4200;
+const TOAST_REMOVE_DELAY = 480;
 
 type ToasterToast = ToastProps & {
   id: string;
@@ -53,6 +54,33 @@ interface State {
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+const autoDismissTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+
+const clearAutoDismiss = (toastId: string) => {
+  const timeout = autoDismissTimeouts.get(toastId);
+  if (timeout) {
+    clearTimeout(timeout);
+    autoDismissTimeouts.delete(toastId);
+  }
+};
+
+const scheduleAutoDismiss = (toastId: string, duration: number) => {
+  clearAutoDismiss(toastId);
+
+  if (!Number.isFinite(duration) || duration <= 0) {
+    return;
+  }
+
+  const timeout = setTimeout(() => {
+    autoDismissTimeouts.delete(toastId);
+    dispatch({
+      type: ActionType.DISMISS_TOAST,
+      toastId,
+    });
+  }, duration);
+
+  autoDismissTimeouts.set(toastId, timeout);
+};
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
@@ -70,52 +98,76 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout);
 };
 
-export const reducer = (state: State, action: Action): State => {
+const reducer = (state: State, action: Action): State => {
   switch (action.type) {
-    case ActionType.ADD_TOAST:
+    case ActionType.ADD_TOAST: {
+      state.toasts.forEach((toast) => clearAutoDismiss(toast.id));
+
       return {
         ...state,
         toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
       };
+    }
 
-    case ActionType.UPDATE_TOAST:
-      return {
-        ...state,
-        toasts: state.toasts.map((t) =>
-          t.id === action.toast.id ? { ...t, ...action.toast } : t
-        ),
-      };
+    case ActionType.UPDATE_TOAST: {
+      const updatedToasts = state.toasts.map((t) =>
+        t.id === action.toast.id ? { ...t, ...action.toast } : t,
+      );
+      const updatedToast = updatedToasts.find((t) => t.id === action.toast.id);
 
-    case ActionType.DISMISS_TOAST: {
-      const { toastId } = action;
-
-      if (toastId) {
-        addToRemoveQueue(toastId);
-      } else {
-        state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id);
-        });
+      if (
+        updatedToast &&
+        typeof action.toast.duration === "number" &&
+        updatedToast.open !== false
+      ) {
+        scheduleAutoDismiss(
+          updatedToast.id,
+          action.toast.duration ?? TOAST_DURATION,
+        );
       }
 
       return {
         ...state,
+        toasts: updatedToasts,
+      };
+    }
+
+    case ActionType.DISMISS_TOAST: {
+      const { toastId } = action;
+      const toDismiss = state.toasts.filter((t) =>
+        toastId ? t.id === toastId && t.open !== false : t.open !== false,
+      );
+
+      if (toDismiss.length === 0) {
+        return state;
+      }
+
+      toDismiss.forEach((toast) => {
+        clearAutoDismiss(toast.id);
+        addToRemoveQueue(toast.id);
+      });
+
+      return {
+        ...state,
         toasts: state.toasts.map((t) =>
-          t.id === toastId || toastId === undefined
+          toDismiss.some((dismissed) => dismissed.id === t.id)
             ? {
                 ...t,
                 open: false,
               }
-            : t
+            : t,
         ),
       };
     }
     case ActionType.REMOVE_TOAST:
       if (action.toastId === undefined) {
+        state.toasts.forEach((toast) => clearAutoDismiss(toast.id));
         return {
           ...state,
           toasts: [],
         };
       }
+      clearAutoDismiss(action.toastId);
       return {
         ...state,
         toasts: state.toasts.filter((t) => t.id !== action.toastId),
@@ -152,12 +204,15 @@ function toast({ ...props }: Toast) {
     toast: {
       ...props,
       id,
+      duration: props.duration ?? TOAST_DURATION,
       open: true,
       onOpenChange: (open) => {
         if (!open) dismiss();
       },
     },
   });
+
+  scheduleAutoDismiss(id, props.duration ?? TOAST_DURATION);
 
   return {
     id: id,
@@ -189,3 +244,15 @@ function useToast() {
 }
 
 export { useToast, toast };
+
+/** Clears toast state between tests. */
+export function resetToastsForTests() {
+  toastTimeouts.forEach((timeout) => clearTimeout(timeout));
+  toastTimeouts.clear();
+  autoDismissTimeouts.forEach((timeout) => clearTimeout(timeout));
+  autoDismissTimeouts.clear();
+  memoryState = { toasts: [] };
+  listeners.forEach((listener) => {
+    listener(memoryState);
+  });
+}

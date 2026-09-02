@@ -350,21 +350,16 @@ export default function LoginPage() {
     };
   }, []);
 
-  if (!mounted) {
-    return (
-      <>
-        <Toaster />
-        <LoadingScreen />
-      </>
-    );
-  }
-
   return (
     <>
       <Toaster />
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
+      {!mounted ? (
+        <LoadingScreen />
+      ) : (
+        <>
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
           /* Login page only: scoped so removing .is-login-page restores theme/globals */
           html.is-login-page {
             background-color: #1a1a1a !important;
@@ -429,16 +424,18 @@ export default function LoginPage() {
             border-color: var(--brand-from) !important;
           }
         `,
-        }}
-      />
+            }}
+          />
 
-      <SessionProvider
-        refetchInterval={5 * 60} // Refetch session every 5 minutes
-        refetchOnWindowFocus={true} // Refetch when user returns to window (important for offline → online)
-      >
-        <AuthStateHandler />
-        <LoginFormContent />
-      </SessionProvider>
+          <SessionProvider
+            refetchInterval={5 * 60} // Refetch session every 5 minutes
+            refetchOnWindowFocus={true} // Refetch when user returns to window (important for offline → online)
+          >
+            <AuthStateHandler />
+            <LoginFormContent />
+          </SessionProvider>
+        </>
+      )}
     </>
   );
 }

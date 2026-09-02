@@ -1975,3 +1975,54 @@ a[class*="text-white!"] {
   transform: translateX(2px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+/* Toast: slide in from right, swipe out to the right */
+@keyframes toast-in {
+  0% {
+    opacity: 0;
+    transform: translateX(calc(100% + 2.5rem));
+  }
+  50% {
+    opacity: 1;
+  }
+  68% {
+    opacity: 1;
+    transform: translateX(-1.35rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes toast-swipe-right {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  32% {
+    opacity: 1;
+    transform: translateX(-1.35rem);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(calc(100% + 2.5rem));
+  }
+}
+
+.toast-enter {
+  opacity: 0;
+  transform: translateX(calc(100% + 2.5rem));
+  animation: toast-in 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.toast-exit.toast-exit-right {
+  animation: toast-swipe-right 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-enter,
+  .toast-exit.toast-exit-right {
+    animation-duration: 0.01ms;
+  }
+}

@@ -2,11 +2,15 @@
  * @vitest-environment jsdom
  */
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { Toaster } from "@/components/ui/toaster";
-import { toast } from "@/components/ui/use-toast";
+import { resetToastsForTests, toast } from "@/components/ui/use-toast";
 
 describe("user create toast", () => {
+  afterEach(() => {
+    resetToastsForTests();
+  });
+
   it("renders success toast text in the toaster", async () => {
     render(<Toaster />);
     toast({

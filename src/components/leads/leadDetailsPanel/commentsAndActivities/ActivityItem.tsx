@@ -13,6 +13,7 @@ import {
   getStatusColor,
 } from "./ActivityHelpers";
 import { formatDate, getUserDisplayName } from "./utils";
+import { cn } from "@/lib/utils";
 
 interface ActivityItemProps {
   activity: Activity;
@@ -124,7 +125,12 @@ export const ActivityItem: FC<ActivityItemProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-gray-500! hover:text-red-500! dark:text-gray-400! dark:hover:text-red-400!"
+                  className={cn(
+                    "transition-opacity duration-200 text-gray-500! hover:text-red-500! dark:text-gray-400! dark:hover:text-red-400!",
+                    isDeleting
+                      ? "opacity-100"
+                      : "opacity-0 group-hover:opacity-100",
+                  )}
                   onClick={() => onDelete(activity._id)}
                   disabled={isDeleting || isDeleteDisabled}
                 >

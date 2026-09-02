@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Toast,
-  ToastClose,
   ToastDescription,
   ToastProvider,
   ToastTitle,
@@ -21,14 +20,12 @@ export function Toaster() {
     setMounted(true);
   }, []);
 
-  // Portal to document.body so toasts stack above Dialog/AlertDialog portals
-  // (those also render on body). Nested layout stacking contexts would otherwise
-  // keep toasts under modals even with a high z-index.
   const content = (
-    <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
+    <ToastProvider duration={Number.POSITIVE_INFINITY}>
+      <ToastViewport />
+      {toasts.map(({ id, title, description, action, ...props }) => {
         return (
-          <Toast key={id} {...props}>
+          <Toast key={id} {...props} duration={Number.POSITIVE_INFINITY}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
@@ -36,11 +33,9 @@ export function Toaster() {
               )}
             </div>
             {action}
-            <ToastClose />
           </Toast>
         );
       })}
-      <ToastViewport />
     </ToastProvider>
   );
 

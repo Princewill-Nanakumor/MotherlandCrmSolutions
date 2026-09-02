@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, MessageSquare, Pencil, Save, Trash2, X } from "lucide-react";
 import { Comment } from "./types";
 import { formatDate, formatRelative } from "./utils";
+import { cn } from "@/lib/utils";
 
 interface CommentItemProps {
   comment: Comment;
@@ -109,16 +110,23 @@ export const CommentItem: FC<CommentItemProps> = ({
         </div>
 
         {isAdmin && !isEditing && (
-          <div className="flex gap-1 transition-opacity duration-200 opacity-0 shrink-0 group-hover:opacity-100">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-500! hover:text-(--brand-from)! dark:text-gray-400! dark:hover:text-(--brand-focus)!"
-              onClick={() => onEdit(comment)}
-              disabled={isEditingMutation}
-            >
-              <Pencil className="w-4 h-4" />
-            </Button>
+          <div
+            className={cn(
+              "flex gap-1 transition-opacity duration-200 shrink-0",
+              isDeleting ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            )}
+          >
+            {!isDeleting && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-500! hover:text-(--brand-from)! dark:text-gray-400! dark:hover:text-(--brand-focus)!"
+                onClick={() => onEdit(comment)}
+                disabled={isEditingMutation}
+              >
+                <Pencil className="w-4 h-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"

@@ -155,6 +155,18 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
                 <AddStatusButton disabled={isUpdating} />
               )}
 
+              {showUserFilter && (
+              <UserFilter
+                value={filterByUser}
+                onChange={onFilterChange}
+                disabled={isUpdating}
+                isLoading={isLoadingUsers}
+                users={users}
+                mode={userFilterMode}
+                onModeChange={onUserFilterModeChange}
+              />
+              )}
+
               <StatusFilter
                 value={filterByStatus}
                 onChange={onStatusFilterChange}
@@ -181,18 +193,6 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
                 disabled={isUpdating}
                 isLoading={false}
               />
-
-              {showUserFilter && (
-              <UserFilter
-                value={filterByUser}
-                onChange={onFilterChange}
-                disabled={isUpdating}
-                isLoading={isLoadingUsers}
-                users={users}
-                mode={userFilterMode}
-                onModeChange={onUserFilterModeChange}
-              />
-              )}
             </ErrorBoundary>
           </div>
         </div>

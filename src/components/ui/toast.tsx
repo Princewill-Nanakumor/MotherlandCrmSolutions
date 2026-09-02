@@ -17,7 +17,7 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      "fixed top-4 right-4 z-11000 flex max-h-screen w-full flex-col gap-4 p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-105",
+      "flex fixed top-4 right-4 flex-col gap-4 p-4 w-full max-h-screen z-11000 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-105",
       className,
     )}
     {...props}
@@ -26,7 +26,7 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-start gap-4 overflow-hidden rounded-xl border p-6 shadow-lg transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in data-[state=closed]:fade-out data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full sm:data-[state=open]:slide-in-from-bottom-full",
+  "group pointer-events-auto relative flex w-full items-start gap-4 overflow-hidden rounded-xl border p-6 shadow-lg",
   {
     variants: {
       variant: {
@@ -50,34 +50,57 @@ const Toast = React.forwardRef<
     VariantProps<typeof toastVariants> & {
       icon?: React.ReactNode;
     }
->(({ className, variant, icon, children, ...props }, ref) => {
-  const getDefaultIcon = () => {
-    switch (variant) {
-      case "destructive":
-        return <AlertCircle className="w-5 h-5 text-white" />;
-      case "success":
-        return <CheckCircle className="w-5 h-5 text-white dark:text-white" />;
-      case "info":
-        return <Info className="w-5 h-5 text-blue-500 dark:text-blue-400" />;
-      default:
-        return null;
-    }
-  };
+>(
+  (
+    {
+      className,
+      variant,
+      icon,
+      children,
+      open,
+      onOpenChange,
+      ...props
+    },
+    ref,
+  ) => {
+    const exiting = open === false;
 
-  return (
-    <ToastPrimitives.Root
-      ref={ref}
-      className={cn(toastVariants({ variant }), className)}
-      {...props}
-    >
-      <div className="flex items-start w-full gap-3">
-        {icon || getDefaultIcon()}
-        <div className="flex-1 space-y-1">{children}</div>
-      </div>
-      <ToastClose />
-    </ToastPrimitives.Root>
-  );
-});
+    const getDefaultIcon = () => {
+      switch (variant) {
+        case "destructive":
+          return <AlertCircle className="w-5 h-5 text-white" />;
+        case "success":
+          return <CheckCircle className="w-5 h-5 text-white dark:text-white" />;
+        case "info":
+          return <Info className="w-5 h-5 text-blue-500 dark:text-blue-400" />;
+        default:
+          return null;
+      }
+    };
+
+    return (
+      <ToastPrimitives.Root
+        ref={ref}
+        forceMount
+        {...props}
+        open={open}
+        onOpenChange={onOpenChange}
+        className={cn(
+          toastVariants({ variant }),
+          !exiting && "toast-enter",
+          exiting && "toast-exit toast-exit-right",
+          className,
+        )}
+      >
+        <div className="flex gap-3 items-start w-full">
+          {icon || getDefaultIcon()}
+          <div className="flex-1 space-y-1">{children}</div>
+        </div>
+        <ToastClose />
+      </ToastPrimitives.Root>
+    );
+  },
+);
 Toast.displayName = ToastPrimitives.Root.displayName;
 
 const ToastAction = React.forwardRef<
