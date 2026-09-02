@@ -64,6 +64,7 @@ import {
   isPrefixedLeadId,
   normalizeLeadId,
 } from "@/lib/leadId";
+import { getLiveSearchParam } from "@/lib/liveSearchParams";
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -256,7 +257,7 @@ export default function LeadsTable({
 
   // Keep selectedLead in sync with full leads array (incl. assignment changes).
   useEffect(() => {
-    const leadIdParam = searchParams.get("lead");
+    const leadIdParam = getLiveSearchParam("lead", searchParams);
 
     // If URL has lead parameter, NEVER close the panel (lead might be filtered out)
     if (leadIdParam && selectedLead) {
@@ -302,7 +303,7 @@ export default function LeadsTable({
   // ✅ FIX: Read lead parameter from URL and open panel automatically
   // ✅ FIX: Keep panel open even if lead is filtered out (only close if lead is deleted)
   useEffect(() => {
-    const leadIdParam = searchParams.get("lead");
+    const leadIdParam = getLiveSearchParam("lead", searchParams);
 
     if (leadIdParam && leads.length > 0) {
       // Always search in full leads array (not filtered sortedLeads)

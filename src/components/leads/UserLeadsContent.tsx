@@ -22,6 +22,7 @@ import {
   normalizeLeadId,
 } from "@/lib/leadId";
 import { isStatusOnlyLeadUpdate } from "@/lib/leadClientUpdate";
+import { getLiveSearchParam } from "@/lib/liveSearchParams";
 
 export default function UserLeadsContent() {
   const searchParams = useSearchParams()!;
@@ -243,7 +244,7 @@ export default function UserLeadsContent() {
 
   // Keep selected lead/panel synced from URL like /dashboard/all-leads.
   useEffect(() => {
-    const leadIdParam = searchParams.get("lead");
+    const leadIdParam = getLiveSearchParam("lead", searchParams);
     if (!leadIdParam) {
       if (isPanelOpen || selectedLead) {
         setIsPanelOpen(false);

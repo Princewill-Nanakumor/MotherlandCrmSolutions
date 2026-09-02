@@ -52,15 +52,7 @@ const Toast = React.forwardRef<
     }
 >(
   (
-    {
-      className,
-      variant,
-      icon,
-      children,
-      open,
-      onOpenChange,
-      ...props
-    },
+    { className, variant, icon, children, open, onOpenChange, ...props },
     ref,
   ) => {
     const exiting = open === false;
