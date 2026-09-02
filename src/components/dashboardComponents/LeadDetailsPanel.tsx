@@ -433,6 +433,24 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           candidateUpdatedAt = ts;
         }
       }
+      if (!candidate) {
+        const detailLead = queryClient.getQueryData<Lead>(["lead", lead._id]);
+        if (detailLead) {
+          candidate = detailLead;
+          candidateUpdatedAt = detailLead.updatedAt
+            ? new Date(detailLead.updatedAt).getTime()
+            : 0;
+        }
+      } else {
+        const detailLead = queryClient.getQueryData<Lead>(["lead", lead._id]);
+        const detailTs = detailLead?.updatedAt
+          ? new Date(detailLead.updatedAt).getTime()
+          : 0;
+        if (detailLead && detailTs >= candidateUpdatedAt) {
+          candidate = detailLead;
+          candidateUpdatedAt = detailTs;
+        }
+      }
       if (!candidate) return;
 
       const timeSinceLastManualUpdate =
@@ -467,7 +485,9 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       if (
         event.type === "updated" &&
         (event.query.queryKey[0] === "leads" ||
-          event.query.queryKey[0] === "assignedLeads")
+          event.query.queryKey[0] === "assignedLeads" ||
+          (event.query.queryKey[0] === "lead" &&
+            event.query.queryKey[1] === lead._id))
       ) {
         if (debounceTimeout) clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(reconcile, 100);

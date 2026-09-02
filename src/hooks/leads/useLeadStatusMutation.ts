@@ -68,6 +68,8 @@ function patchLeadInData(
   return data;
 }
 
+type StatusMutationResponse = Lead & { statusChanged?: boolean };
+
 export function useLeadStatusMutation({
   lead,
   getStatusDisplayName,
@@ -143,7 +145,7 @@ export function useLeadStatusMutation({
           );
         }
 
-        return (await response.json()) as Lead;
+        return (await response.json()) as StatusMutationResponse;
       } finally {
         clearTimeout(timeoutId);
       }
@@ -194,7 +196,10 @@ export function useLeadStatusMutation({
         });
       }
     },
-    onSuccess: async (updatedLead, _vars, context) => {
+    onSuccess: async (updatedLeadPayload, _vars, context) => {
+      const statusChanged = updatedLeadPayload.statusChanged !== false;
+      const { statusChanged: _statusChanged, ...updatedLead } =
+        updatedLeadPayload;
       const normalized: Lead = {
         ...updatedLead,
         status: normalizeLeadStatusId(updatedLead.status),
@@ -205,12 +210,12 @@ export function useLeadStatusMutation({
         queryClient.setQueryData(["lead", normalized.id], normalized);
       }
 
-      replaceLeadInLists(updatedLead._id, normalized);
+      replaceLeadInLists(normalized._id, normalized);
 
-      if (context) {
+      if (context && statusChanged) {
         const optimisticStatusActivity: Activity = {
-          _id: `optimistic-status-${updatedLead._id}-${Date.now()}`,
-          leadId: updatedLead._id,
+          _id: `optimistic-status-${normalized._id}-${Date.now()}`,
+          leadId: normalized._id,
           type: "STATUS_CHANGE",
           description: `Status changed from ${getStatusDisplayName(context.previousStatus)} to ${getStatusDisplayName(context.newStatusId)}`,
           createdBy: {
@@ -229,7 +234,7 @@ export function useLeadStatusMutation({
         };
 
         queryClient.setQueryData(
-          ["activities", updatedLead._id],
+          ["activities", normalized._id],
           (oldActivities: Activity[] = []) => {
             const hasEquivalentRecentStatusChange = oldActivities.some(
               (activity) =>
@@ -243,10 +248,18 @@ export function useLeadStatusMutation({
         );
       }
 
-      await queryClient.refetchQueries({
-        queryKey: ["activities", updatedLead._id],
-        exact: false,
-      });
+      if (statusChanged) {
+        await queryClient.refetchQueries({
+          queryKey: ["activities", normalized._id],
+          exact: false,
+        });
+
+        // The dashboard status distribution shifted by one lead.
+        void queryClient.invalidateQueries({
+          queryKey: ["leads-stats"],
+          exact: false,
+        });
+      }
 
       // Lists are already patched from the PATCH /status response. Refetching
       // here can briefly overwrite with stale assigned-leads data on slow networks.
@@ -255,24 +268,17 @@ export function useLeadStatusMutation({
         refetchType: "none",
       });
 
-      // The dashboard status distribution shifted by one lead.
-      void queryClient.invalidateQueries({
-        queryKey: ["leads-stats"],
-        exact: false,
-      });
-
       if (onLeadUpdated) {
-        onLeadUpdated({
-          ...updatedLead,
-          status: normalizeLeadStatusId(updatedLead.status),
-        }).catch((err) =>
+        onLeadUpdated(normalized).catch((err) =>
           console.error("Error notifying parent of status update:", err),
         );
       }
 
       toast({
-        title: "Status updated",
-        description: "Lead status changed successfully.",
+        title: statusChanged ? "Status updated" : "Status already up to date",
+        description: statusChanged
+          ? "Lead status changed successfully."
+          : `This lead is already set to ${getStatusDisplayName(normalized.status)}.`,
         variant: "success",
       });
     },

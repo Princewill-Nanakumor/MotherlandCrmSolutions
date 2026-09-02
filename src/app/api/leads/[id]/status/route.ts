@@ -58,7 +58,53 @@ function getCorrectAdminId(session: SessionLike): mongoose.Types.ObjectId {
 
 // Custom errors for transaction flow
 const NOT_FOUND = "STATUS_LEAD_NOT_FOUND";
-const ALREADY_SAME = "STATUS_ALREADY_SAME";
+
+const LEAD_STATUS_PROJECTION = {
+  _id: 1,
+  leadId: 1,
+  firstName: 1,
+  lastName: 1,
+  email: 1,
+  phone: 1,
+  country: 1,
+  source: 1,
+  status: 1,
+  assignedTo: 1,
+  comments: 1,
+  createdAt: 1,
+  updatedAt: 1,
+  statusChangedAt: 1,
+  lastActivityAt: 1,
+} as const;
+
+type StatusUpdateResult = {
+  responseData: Record<string, unknown>;
+  statusChanged: boolean;
+};
+
+function serializeLeadStatusResponse(
+  lead: LeadDoc,
+  fallbackNow?: Date,
+): Record<string, unknown> {
+  const now = fallbackNow ?? new Date();
+  return {
+    _id: lead._id.toString(),
+    leadId: lead.leadId,
+    firstName: lead.firstName,
+    lastName: lead.lastName,
+    email: lead.email,
+    phone: lead.phone,
+    country: lead.country,
+    source: lead.source,
+    status: lead.status,
+    assignedTo: lead.assignedTo ?? null,
+    comments: lead.comments ?? null,
+    createdAt: lead.createdAt,
+    updatedAt: lead.updatedAt,
+    statusChangedAt: lead.statusChangedAt ?? undefined,
+    lastActivityAt: lead.lastActivityAt ?? now,
+  };
+}
 
 /** True if the error indicates transactions are not supported (e.g. standalone MongoDB / Netlify). */
 function isTransactionUnsupportedError(error: unknown): boolean {
@@ -110,25 +156,34 @@ async function resolveStatusNames(
   return { previousStatusName, newStatusName };
 }
 
-/** Run status update inside a transaction, or fall back to non-transactional. Returns response data or throws NOT_FOUND / ALREADY_SAME. */
+/** Run status update inside a transaction, or fall back to non-transactional. */
 async function runStatusUpdate(
   query: Record<string, unknown>,
   newStatus: string,
   session: SessionLike
-): Promise<Record<string, unknown>> {
+): Promise<StatusUpdateResult> {
   const sessionUser =
     (session as StrictSession).user ?? (session as NextAuthSession).user;
 
   try {
     const dbSession = await mongoose.startSession();
     try {
-      const responseData = (await dbSession.withTransaction(async () => {
+      const result = (await dbSession.withTransaction(async () => {
         const currentLead = (await Lead.findOne(query, { status: 1 })
           .session(dbSession)
           .lean()) as { status: string } | null;
 
         if (!currentLead) throw new Error(NOT_FOUND);
-        if (currentLead.status === newStatus) throw new Error(ALREADY_SAME);
+        if (currentLead.status === newStatus) {
+          const unchangedLead = (await Lead.findOne(query, LEAD_STATUS_PROJECTION)
+            .session(dbSession)
+            .lean()) as LeadDoc | null;
+          if (!unchangedLead) throw new Error(NOT_FOUND);
+          return {
+            responseData: serializeLeadStatusResponse(unchangedLead),
+            statusChanged: false,
+          };
+        }
 
         const previousStatus = currentLead.status;
         const { previousStatusName, newStatusName } = await resolveStatusNames(
@@ -150,23 +205,7 @@ async function runStatusUpdate(
             lean: true,
             runValidators: false,
             session: dbSession,
-            projection: {
-              _id: 1,
-              leadId: 1,
-              firstName: 1,
-              lastName: 1,
-              email: 1,
-              phone: 1,
-              country: 1,
-              source: 1,
-              status: 1,
-              assignedTo: 1,
-              comments: 1,
-              createdAt: 1,
-              updatedAt: 1,
-              statusChangedAt: 1,
-              lastActivityAt: 1,
-            },
+            projection: LEAD_STATUS_PROJECTION,
           }
         )) as LeadDoc | null;
 
@@ -203,24 +242,11 @@ async function runStatusUpdate(
         );
 
         return {
-          _id: updatedLead._id.toString(),
-          leadId: updatedLead.leadId,
-          firstName: updatedLead.firstName,
-          lastName: updatedLead.lastName,
-          email: updatedLead.email,
-          phone: updatedLead.phone,
-          country: updatedLead.country,
-          source: updatedLead.source,
-          status: updatedLead.status,
-          assignedTo: updatedLead.assignedTo ?? null,
-          comments: updatedLead.comments ?? null,
-          createdAt: updatedLead.createdAt,
-          updatedAt: updatedLead.updatedAt,
-          statusChangedAt: (updatedLead as LeadDoc & { statusChangedAt?: Date }).statusChangedAt ?? undefined,
-          lastActivityAt: updatedLead.lastActivityAt ?? now,
+          responseData: serializeLeadStatusResponse(updatedLead, now),
+          statusChanged: true,
         };
-      })) as Record<string, unknown>;
-      return responseData;
+      })) as StatusUpdateResult;
+      return result;
     } finally {
       await dbSession.endSession();
     }
@@ -235,7 +261,7 @@ async function runStatusUpdate(
         newStatus,
         session
       );
-      return result.responseData as Record<string, unknown>;
+      return result;
     }
     throw txnError;
   }
@@ -246,7 +272,7 @@ async function updateStatusWithoutTransaction(
   query: Record<string, unknown>,
   newStatus: string,
   session: SessionLike
-): Promise<{ responseData: Record<string, unknown>; error?: string }> {
+): Promise<StatusUpdateResult> {
   const sessionUser =
     (session as StrictSession).user ?? (session as NextAuthSession).user;
 
@@ -258,7 +284,17 @@ async function updateStatusWithoutTransaction(
     throw new Error(NOT_FOUND);
   }
   if (currentLead.status === newStatus) {
-    throw new Error(ALREADY_SAME);
+    const unchangedLead = (await Lead.findOne(
+      query,
+      LEAD_STATUS_PROJECTION,
+    ).lean()) as LeadDoc | null;
+    if (!unchangedLead) {
+      throw new Error(NOT_FOUND);
+    }
+    return {
+      responseData: serializeLeadStatusResponse(unchangedLead),
+      statusChanged: false,
+    };
   }
 
   const previousStatus = currentLead.status;
@@ -280,23 +316,7 @@ async function updateStatusWithoutTransaction(
       new: true,
       lean: true,
       runValidators: false,
-      projection: {
-        _id: 1,
-        leadId: 1,
-        firstName: 1,
-        lastName: 1,
-        email: 1,
-        phone: 1,
-        country: 1,
-        source: 1,
-        status: 1,
-        assignedTo: 1,
-        comments: 1,
-        createdAt: 1,
-        updatedAt: 1,
-        statusChangedAt: 1,
-        lastActivityAt: 1,
-      },
+      projection: LEAD_STATUS_PROJECTION,
     }
   )) as LeadDoc | null;
 
@@ -347,23 +367,8 @@ async function updateStatusWithoutTransaction(
   }
 
   return {
-    responseData: {
-      _id: updatedLead._id.toString(),
-      leadId: updatedLead.leadId,
-      firstName: updatedLead.firstName,
-      lastName: updatedLead.lastName,
-      email: updatedLead.email,
-      phone: updatedLead.phone,
-      country: updatedLead.country,
-      source: updatedLead.source,
-      status: updatedLead.status,
-      assignedTo: updatedLead.assignedTo ?? null,
-      comments: updatedLead.comments ?? null,
-      createdAt: updatedLead.createdAt,
-      updatedAt: updatedLead.updatedAt,
-      statusChangedAt: updatedLead.statusChangedAt ?? undefined,
-      lastActivityAt: updatedLead.lastActivityAt ?? now,
-    },
+    responseData: serializeLeadStatusResponse(updatedLead, now),
+    statusChanged: true,
   };
 }
 
@@ -464,43 +469,46 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    const responseData = await runStatusUpdate(query, newStatus, session);
+    const { responseData, statusChanged } = await runStatusUpdate(
+      query,
+      newStatus,
+      session,
+    );
 
-    try {
-      const adminScope = getCorrectAdminId(session).toString();
-      await publishLeadUpdatedEvent(adminScope, id, {
-        type: "status_changed",
-        leadId: id,
-        status: newStatus,
-      });
-      await publishAdminLeadsUpdatedEvent(adminScope, {
-        type: "status_changed",
-        leadId: id,
-        status: newStatus,
-      });
-    } catch (publishError) {
-      console.error("Failed to publish realtime status event:", publishError);
+    if (statusChanged) {
+      try {
+        const adminScope = getCorrectAdminId(session).toString();
+        await publishLeadUpdatedEvent(adminScope, id, {
+          type: "status_changed",
+          leadId: id,
+          status: newStatus,
+        });
+        await publishAdminLeadsUpdatedEvent(adminScope, {
+          type: "status_changed",
+          leadId: id,
+          status: newStatus,
+        });
+      } catch (publishError) {
+        console.error("Failed to publish realtime status event:", publishError);
+      }
     }
 
-    return NextResponse.json(responseData, {
-      status: 200,
-      headers: {
-        "Cache-Control": "no-cache",
-        "Content-Type": "application/json",
+    return NextResponse.json(
+      { ...responseData, statusChanged },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-cache",
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (message === NOT_FOUND) {
       return NextResponse.json(
         { error: "Lead not found or not authorized" },
         { status: 404 }
-      );
-    }
-    if (message === ALREADY_SAME) {
-      return NextResponse.json(
-        { error: "Status is already set to this value" },
-        { status: 400 }
       );
     }
     console.error("API Error (status change):", error);
