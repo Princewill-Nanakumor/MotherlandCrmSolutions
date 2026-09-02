@@ -7,7 +7,16 @@ const SITE_URL =
   "https://motherlandcrmsolutions.com";
 
 /** Public marketing + auth routes crawlers may index. */
-const PUBLIC_ALLOW = ["/", "/login", "/signup"] as const;
+const PUBLIC_ALLOW = [
+  "/",
+  "/features",
+  "/pricing",
+  "/about",
+  "/security",
+  "/contact",
+  "/login",
+  "/signup",
+] as const;
 
 /** Private app surfaces — keep out of search / AI training crawls. */
 const PRIVATE_DISALLOW = [

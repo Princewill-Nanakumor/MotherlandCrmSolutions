@@ -1,32 +1,44 @@
 // src/components/homepageComponents/HomeFooter.tsx
 "use client";
 
+import type { MouseEvent } from "react";
 import Link from "next/link";
 import { Coins, Mail, MessageCircle } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { scrollToHomepageSection } from "@/components/homepageComponents/scrollToHomepageSection";
-
-const PRODUCT_LINKS = [
-  { label: "Features", href: "#features" },
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
-] as const;
+import {
+  MARKETING_FOOTER_COMPANY_LINKS,
+  MARKETING_FOOTER_PRODUCT_LINKS,
+} from "@/lib/marketingNav";
 
 export default function HomeFooter() {
   const { displayName, supportEmail, telegramHandle, telegramUrl } =
     useAppBranding();
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   const isAuthed = hasAuthorizedSession(status, session);
   const year = new Date().getFullYear();
+
+  const onHashLink = (
+    event: MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
+    if (!href.includes("#")) return;
+    const hash = `#${href.split("#")[1]}`;
+    if (pathname === "/") {
+      event.preventDefault();
+      scrollToHomepageSection(hash);
+    }
+  };
 
   return (
     <footer className="bg-gray-50 border-t border-gray-200">
       <div className="px-6 py-14 mx-auto max-w-7xl">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link href="/" className="flex gap-2 items-center">
@@ -52,24 +64,36 @@ export default function HomeFooter() {
           <div>
             <h3 className="text-sm font-semibold text-gray-900">Product</h3>
             <ul className="mt-4 space-y-3">
-              {PRODUCT_LINKS.map((link) => (
+              {MARKETING_FOOTER_PRODUCT_LINKS.map((link) => (
                 <li key={link.href}>
-                  <a
+                  <Link
                     href={link.href}
                     className="text-sm text-gray-600 transition-colors hover:text-(--brand-from)"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      scrollToHomepageSection(link.href);
-                    }}
+                    onClick={(event) => onHashLink(event, link.href)}
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Company */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">Company</h3>
+            <ul className="mt-4 space-y-3">
+              {MARKETING_FOOTER_COMPANY_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-gray-600 transition-colors hover:text-(--brand-from)"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-900">
               Get in touch
@@ -96,9 +120,6 @@ export default function HomeFooter() {
                   <Mail className="w-4 h-4" />
                   {supportEmail}
                 </a>
-              </li>
-              <li>
-                <p className="text-sm text-gray-600">Sign in</p>
               </li>
               <li>
                 {status === "loading" ? (

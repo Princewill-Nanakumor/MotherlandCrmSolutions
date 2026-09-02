@@ -12,6 +12,7 @@ import { BrandThemeApplier } from "@/components/BrandThemeApplier";
 import { PublicLightTheme } from "@/components/PublicLightTheme";
 import { PublicNativeScroll } from "@/components/homepageComponents/PublicNativeScroll";
 import HomeFooter from "@/components/homepageComponents/HomeFooter";
+import { HomepageHashScroll } from "@/components/homepageComponents/HomepageHashScroll";
 import { InViewSwap } from "@/components/homepageComponents/InViewSwap";
 import {
   FeaturesSectionSeo,
@@ -67,6 +68,7 @@ function HomePageContent() {
       style={{ backgroundColor: "#ffffff" }}
     >
       <ScrollProgress />
+      <HomepageHashScroll />
       <ScrollToTopButton />
       <Navbar />
       <main>

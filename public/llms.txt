@@ -12,6 +12,11 @@
 
 ## Site
 - Homepage: https://motherlandcrmsolutions.com/
+- Features: https://motherlandcrmsolutions.com/features
+- Pricing: https://motherlandcrmsolutions.com/pricing
+- About: https://motherlandcrmsolutions.com/about
+- Security: https://motherlandcrmsolutions.com/security
+- Contact: https://motherlandcrmsolutions.com/contact
 - Sign up: https://motherlandcrmsolutions.com/signup
 - Login: https://motherlandcrmsolutions.com/login
 

@@ -22,8 +22,11 @@ import { canAccessAllLeads, isAdmin } from "@/lib/roles";
 const PUBLIC_PAGES = [
   "/",
   "/about",
-  "/test-performance",
+  "/features",
+  "/pricing",
+  "/security",
   "/contact",
+  "/test-performance",
   "/login",
   "/signup",
   "/forgot-password",

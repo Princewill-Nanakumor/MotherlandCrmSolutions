@@ -12,14 +12,10 @@ import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { cn } from "@/libs/utils";
-import { scrollToHomepageSection } from "@/components/homepageComponents/scrollToHomepageSection";
-
-const HOME_SECTION_LINKS = [
-  { label: "Features", href: "#features" },
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
-] as const;
+import {
+  MARKETING_NAV_LINKS,
+  isMarketingPath,
+} from "@/lib/marketingNav";
 
 function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse bg-gray-200 rounded ${className}`} />;
@@ -38,27 +34,15 @@ export default function Navbar() {
     pathname === "/forgot-password" ||
     (pathname?.startsWith("/reset-password/") ?? false) ||
     (pathname?.startsWith("/verify-email/") ?? false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const isAuthed = hasAuthorizedSession(status, session);
 
-  const isHomePage = pathname === "/";
-  // Light homepage hero needs solid chrome; auth hero pages stay translucent.
-  const useSolidChrome = (isScrolled || isHomePage) && !isAuthHeroPage;
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const heroHeight = window.innerHeight;
-      setIsScrolled(window.scrollY > heroHeight * 0.95);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const showMarketingLinks = isMarketingPath(pathname);
+  // Light marketing pages use solid chrome; auth hero pages stay translucent.
+  const useSolidChrome = !isAuthHeroPage;
 
   useEffect(() => {
     try {
@@ -180,6 +164,25 @@ export default function Navbar() {
           </Link>
         </div>
 
+        <div className="hidden flex-1 items-center justify-center min-w-0 gap-1 lg:flex xl:gap-1.5">
+          {showMarketingLinks
+            ? MARKETING_NAV_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    textLinkClass,
+                    "px-2.5 py-1.5 rounded-lg",
+                    pathname === link.href &&
+                      "text-(--brand-from) brand-soft-bg",
+                  )}
+                >
+                  {link.label}
+                </Link>
+              ))
+            : null}
+        </div>
+
         <div className="items-center hidden gap-4 lg:flex">
           {status === "loading" ? (
             <>
@@ -275,7 +278,7 @@ export default function Navbar() {
           >
             <div className="px-4 pt-4 pb-3 border-b border-gray-100">
               <p className="text-xs font-semibold tracking-wide uppercase text-(--brand-from)">
-                {isHomePage ? "Menu" : "Account"}
+                {showMarketingLinks ? "Menu" : "Account"}
               </p>
               <p className="mt-1 text-sm font-semibold text-gray-900 truncate">
                 {displayName}
@@ -283,24 +286,22 @@ export default function Navbar() {
             </div>
 
             <div className="p-3 space-y-2">
-              {isHomePage && (
+              {showMarketingLinks && (
                 <div className="pb-2 mb-1 space-y-1 border-b border-gray-100">
-                  {HOME_SECTION_LINKS.map((link) => (
-                    <a
+                  {MARKETING_NAV_LINKS.map((link) => (
+                    <Link
                       key={link.href}
                       href={link.href}
-                      className="flex items-center h-10 px-3 text-sm font-medium text-gray-800 transition-colors rounded-xl hover:brand-soft-bg hover:text-(--brand-from)"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        setMenuOpen(false);
-                        // Let the menu close / unlock body scroll first.
-                        window.requestAnimationFrame(() => {
-                          scrollToHomepageSection(link.href);
-                        });
-                      }}
+                      onClick={() => setMenuOpen(false)}
+                      className={cn(
+                        "flex items-center h-10 px-3 text-sm font-medium transition-colors rounded-xl hover:brand-soft-bg hover:text-(--brand-from)",
+                        pathname === link.href
+                          ? "text-(--brand-from) brand-soft-bg"
+                          : "text-gray-800",
+                      )}
                     >
                       {link.label}
-                    </a>
+                    </Link>
                   ))}
                 </div>
               )}

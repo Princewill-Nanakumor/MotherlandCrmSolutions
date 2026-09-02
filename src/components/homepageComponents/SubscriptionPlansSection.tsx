@@ -35,7 +35,11 @@ const SUBSCRIPTION_PLANS = SUBSCRIPTION_PLAN_ORDER.map((key) => {
   };
 });
 
-export default function SubscriptionPlansSection() {
+export default function SubscriptionPlansSection({
+  className,
+}: {
+  className?: string;
+}) {
   const { supportEmail, telegramUrl } = useAppBranding();
   const { data: session, status } = useSession();
   const isAuthed = hasAuthorizedSession(status, session);
@@ -47,7 +51,10 @@ export default function SubscriptionPlansSection() {
     <section
       id="pricing"
       aria-labelledby="pricing-heading"
-      className="px-6 py-20 bg-linear-to-b from-gray-50 to-white sm:py-28"
+      className={cn(
+        "px-6 py-20 sm:py-28",
+        className ?? "bg-linear-to-b from-gray-50 to-white",
+      )}
     >
       <div className="mx-auto max-w-6xl">
         <SectionHeading
