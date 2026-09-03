@@ -1,6 +1,10 @@
 "use client";
 
-import { HOME_FEATURES, HOME_FAQS, HOME_JOURNEY } from "@/components/homepageComponents/homepageContent";
+import {
+  HOME_FEATURES,
+  HOME_FAQS,
+  HOME_JOURNEY,
+} from "@/components/homepageComponents/homepageContent";
 import {
   SUBSCRIPTION_PLAN_CATALOG,
   SUBSCRIPTION_PLAN_ORDER,
@@ -30,7 +34,7 @@ function SectionHeading({
   subtitle?: React.ReactNode;
 }) {
   return (
-    <div className="max-w-2xl mx-auto text-center">
+    <div className="mx-auto max-w-2xl text-center">
       <div className="mb-4">{eyebrow}</div>
       <h2
         id={id}
@@ -81,12 +85,14 @@ function FeatureCardSeo({
           </h3>
         </div>
       </div>
-      <p className="mt-4 text-sm leading-relaxed text-gray-600">{description}</p>
+      <p className="mt-4 text-sm leading-relaxed text-gray-600">
+        {description}
+      </p>
 
       {/* Reserve space for the animated mockup visuals (prevents layout jump). */}
       <div
         aria-hidden
-        className="mt-auto h-45 shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-gray-50/40"
+        className="overflow-hidden mt-auto rounded-lg border border-gray-100 h-45 shrink-0 bg-gray-50/40"
       />
     </article>
   );
@@ -94,7 +100,11 @@ function FeatureCardSeo({
 
 export function FeaturesSectionSeo() {
   return (
-    <section id="features" aria-labelledby="features-heading" className="px-6 py-20 sm:py-28">
+    <section
+      id="features"
+      aria-labelledby="features-heading"
+      className="px-6 py-20 sm:py-28"
+    >
       <div className="mx-auto max-w-6xl">
         <SectionHeading
           id="features-heading"
@@ -122,8 +132,12 @@ export function FeaturesSectionSeo() {
 
 export function TimelineSectionSeo() {
   return (
-    <section id="how-it-works" aria-labelledby="timeline-heading" className="relative overflow-hidden px-6 py-20 sm:py-28">
-      <div className="relative z-10 max-w-5xl mx-auto">
+    <section
+      id="how-it-works"
+      aria-labelledby="timeline-heading"
+      className="overflow-hidden relative px-6 py-20 sm:py-28"
+    >
+      <div className="relative z-10 mx-auto max-w-5xl">
         <SectionHeading
           id="timeline-heading"
           eyebrow={<Eyebrow>Your journey</Eyebrow>}
@@ -135,16 +149,20 @@ export function TimelineSectionSeo() {
           {HOME_JOURNEY.map((m) => {
             const Icon = m.icon;
             return (
-              <li key={m.step} className="flex items-start gap-4">
-                <span className="flex items-center justify-center w-11 h-11 rounded-xl text-white brand-gradient shadow-md shrink-0">
+              <li key={m.step} className="flex gap-4 items-start">
+                <span className="flex justify-center items-center w-11 h-11 text-white rounded-xl shadow-md brand-gradient shrink-0">
                   <Icon className="w-5 h-5" />
                 </span>
                 <div>
-                  <div className="text-3xl font-bold tracking-tight text-gray-400 tabular-nums">
+                  <div className="text-3xl font-bold tabular-nums tracking-tight text-gray-400">
                     {m.step}
                   </div>
-                  <h3 className="mt-2 text-lg font-semibold text-gray-900">{m.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-gray-600">{m.description}</p>
+                  <h3 className="mt-2 text-lg font-semibold text-gray-900">
+                    {m.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                    {m.description}
+                  </p>
                 </div>
               </li>
             );
@@ -160,14 +178,14 @@ export function PricingSectionSeo() {
     <section
       id="pricing"
       aria-labelledby="pricing-heading"
-      className="px-6 py-20 bg-linear-to-b from-gray-50 to-white sm:py-28"
+      className="px-6 py-20 from-gray-50 to-white bg-linear-to-b sm:py-28"
     >
       <div className="mx-auto max-w-6xl">
         <SectionHeading
           id="pricing-heading"
           eyebrow={<Eyebrow>Simple, transparent pricing</Eyebrow>}
           title="Pick a plan that fits your pipeline"
-          subtitle={`Start with a ${SUBSCRIPTION_TRIAL_DURATION_DAYS}-day free trial — no credit card. Upgrade anytime; billed monthly in crypto (USDT).`}
+          subtitle={`Start with a ${SUBSCRIPTION_TRIAL_DURATION_DAYS}-day free trial — no credit card. Upgrade anytime; billed monthly`}
         />
 
         <div className="grid gap-6 mt-16 md:grid-cols-3 md:items-stretch">
@@ -185,7 +203,7 @@ export function PricingSectionSeo() {
                 )}
               >
                 {key === "professional" ? (
-                  <div className="absolute -translate-x-1/2 -top-4 left-1/2">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <span className="px-4 py-1.5 text-xs font-semibold text-white rounded-full shadow-md brand-gradient">
                       Most popular
                     </span>
@@ -193,17 +211,25 @@ export function PricingSectionSeo() {
                 ) : null}
 
                 <div className="text-center">
-                  <h3 className="mb-2 text-xl font-bold text-gray-900">{plan.name}</h3>
-                  <p className="min-h-10 text-sm text-gray-500">{plan.description}</p>
-                  <div className="flex items-baseline justify-center mt-5">
-                    <span className="text-4xl font-bold text-gray-900">{price}</span>
-                    <span className="ml-2 text-sm text-gray-500">/ per month</span>
+                  <h3 className="mb-2 text-xl font-bold text-gray-900">
+                    {plan.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 min-h-10">
+                    {plan.description}
+                  </p>
+                  <div className="flex justify-center items-baseline mt-5">
+                    <span className="text-4xl font-bold text-gray-900">
+                      {price}
+                    </span>
+                    <span className="ml-2 text-sm text-gray-500">
+                      / per month
+                    </span>
                   </div>
                 </div>
 
                 <ul className="mt-8 space-y-3">
                   {plan.marketingFeatures.map((f, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
+                    <li key={idx} className="flex gap-3 items-start">
                       <span className="flex items-center justify-center w-5 h-5 mt-0.5 rounded-full shrink-0 brand-soft-bg">
                         <span className="w-1.5 h-1.5 rounded-full bg-white" />
                       </span>
@@ -222,8 +248,12 @@ export function PricingSectionSeo() {
 
 export function FaqSectionSeo() {
   return (
-    <section id="faq" aria-labelledby="faq-heading" className="relative overflow-hidden px-6 py-20 sm:py-28">
-      <div className="relative z-10 max-w-4xl mx-auto">
+    <section
+      id="faq"
+      aria-labelledby="faq-heading"
+      className="overflow-hidden relative px-6 py-20 sm:py-28"
+    >
+      <div className="relative z-10 mx-auto max-w-4xl">
         <SectionHeading
           id="faq-heading"
           eyebrow={<Eyebrow>Questions & answers</Eyebrow>}
@@ -234,7 +264,7 @@ export function FaqSectionSeo() {
           {HOME_FAQS.map((faq, index) => (
             <article
               key={faq.question}
-              className="bg-white/90 border border-gray-200 rounded-xl backdrop-blur-sm p-5"
+              className="p-5 rounded-xl border border-gray-200 backdrop-blur-sm bg-white/90"
             >
               <h3 className="text-base font-semibold text-gray-900">
                 {index + 1}. {faq.question}
@@ -251,4 +281,3 @@ export function FaqSectionSeo() {
     </section>
   );
 }
-

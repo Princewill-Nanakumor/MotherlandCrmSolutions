@@ -24,8 +24,8 @@ export default function AboutPageContent() {
       <MarketingPageHero
         eyebrow="Our story"
         title="A CRM built for desks"
-        accent="that actually close."
-        description={`${displayName} is Motherland CRM — a real-time workspace for importing leads, assigning agents, and following every deal from first touch to won.`}
+        accent="that actually performs."
+        description={`${displayName} — a real-time workspace for importing leads, assigning agents, and following every deal from first touch to won.`}
       />
 
       <section className="px-6 py-20 sm:py-28">
@@ -45,9 +45,9 @@ export default function AboutPageContent() {
                 <motion.article
                   key={value.title}
                   variants={reduce ? undefined : revealItem}
-                  className="relative overflow-hidden p-8 bg-white border border-gray-200 rounded-3xl shadow-sm transition-shadow hover:shadow-lg"
+                  className="overflow-hidden relative p-8 bg-white rounded-3xl border border-gray-200 shadow-sm transition-shadow hover:shadow-lg"
                 >
-                  <div className="flex items-center justify-center w-12 h-12 rounded-2xl border border-gray-200 bg-gray-50">
+                  <div className="flex justify-center items-center w-12 h-12 bg-gray-50 rounded-2xl border border-gray-200">
                     <Icon className="w-5 h-5 brand-icon" />
                   </div>
                   <h3 className="mt-5 text-xl font-semibold text-gray-900">
@@ -72,11 +72,17 @@ export default function AboutPageContent() {
           />
           <ol className="relative mt-16 space-y-10 before:absolute before:left-5 before:top-3 before:bottom-3 before:w-px before:bg-gray-200 sm:before:left-6">
             {ABOUT_MILESTONES.map((item, index) => (
-              <Reveal key={item.year} delay={index * 0.08} className="relative pl-16 sm:pl-20">
-                <span className="absolute left-0 flex items-center justify-center w-10 h-10 text-sm font-bold text-white rounded-full brand-gradient sm:w-12 sm:h-12">
+              <Reveal
+                key={item.year}
+                delay={index * 0.08}
+                className="relative pl-16 sm:pl-20"
+              >
+                <span className="flex absolute left-0 justify-center items-center w-10 h-10 text-sm font-bold text-white rounded-full brand-gradient sm:w-12 sm:h-12">
                   {item.year}
                 </span>
-                <h3 className="text-xl font-semibold text-gray-900">{item.title}</h3>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {item.title}
+                </h3>
                 <p className="mt-2 text-sm leading-relaxed text-gray-600">
                   {item.description}
                 </p>

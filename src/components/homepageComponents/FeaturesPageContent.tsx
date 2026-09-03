@@ -7,7 +7,10 @@ import {
   SectionHeading,
   revealItem,
 } from "@/components/homepageComponents/primitives";
-import { HOME_FEATURES, HOME_FEATURE_TABS } from "@/components/homepageComponents/homepageContent";
+import {
+  HOME_FEATURES,
+  HOME_FEATURE_TABS,
+} from "@/components/homepageComponents/homepageContent";
 import { MarketingPageHero } from "@/components/homepageComponents/MarketingPageHero";
 import { cn } from "@/libs/utils";
 
@@ -18,7 +21,7 @@ export default function FeaturesPageContent() {
     <>
       <MarketingPageHero
         eyebrow="Product"
-        title="Everything your floor"
+        title="Everything your Team"
         accent="needs in one CRM."
         description="Lead import, assignment, live comments, reminders, calling, filters, branding, and crypto billing — the same toolkit waiting in the dashboard."
       />
@@ -43,7 +46,7 @@ export default function FeaturesPageContent() {
                     "border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)]",
                   )}
                 >
-                  <div className="flex items-center justify-center w-11 h-11 rounded-xl border border-gray-200 bg-gray-50">
+                  <div className="flex justify-center items-center w-11 h-11 bg-gray-50 rounded-xl border border-gray-200">
                     <Icon className="w-5 h-5 brand-icon" />
                   </div>
                   <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
@@ -75,10 +78,10 @@ export default function FeaturesPageContent() {
                 <motion.article
                   key={tab.id}
                   variants={reduce ? undefined : revealItem}
-                  className="p-8 bg-white border border-gray-200 rounded-3xl"
+                  className="p-8 bg-white rounded-3xl border border-gray-200"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center justify-center w-10 h-10 rounded-lg brand-soft-bg">
+                  <div className="flex gap-3 items-center">
+                    <span className="flex justify-center items-center w-10 h-10 rounded-lg brand-soft-bg">
                       <Icon className="w-5 h-5 brand-icon" />
                     </span>
                     <h3 className="text-xl font-semibold text-gray-900">

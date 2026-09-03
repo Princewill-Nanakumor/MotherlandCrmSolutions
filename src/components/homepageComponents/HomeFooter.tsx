@@ -23,10 +23,7 @@ export default function HomeFooter() {
   const isAuthed = hasAuthorizedSession(status, session);
   const year = new Date().getFullYear();
 
-  const onHashLink = (
-    event: MouseEvent<HTMLAnchorElement>,
-    href: string,
-  ) => {
+  const onHashLink = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
     if (!href.includes("#")) return;
     const hash = `#${href.split("#")[1]}`;
     if (pathname === "/") {
@@ -141,7 +138,7 @@ export default function HomeFooter() {
           <p>
             &copy; {year} {displayName}. All rights reserved.
           </p>
-          <p>Made for teams that close.</p>
+          <p>Made for teams that performs.</p>
         </div>
       </div>
     </footer>

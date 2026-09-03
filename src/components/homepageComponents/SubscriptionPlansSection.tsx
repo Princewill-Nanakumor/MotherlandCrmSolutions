@@ -53,7 +53,7 @@ export default function SubscriptionPlansSection({
       aria-labelledby="pricing-heading"
       className={cn(
         "px-6 py-20 sm:py-28",
-        className ?? "bg-linear-to-b from-gray-50 to-white",
+        className ?? "from-gray-50 to-white bg-linear-to-b",
       )}
     >
       <div className="mx-auto max-w-6xl">
@@ -61,7 +61,7 @@ export default function SubscriptionPlansSection({
           id="pricing-heading"
           eyebrow={<Eyebrow>Simple, transparent pricing</Eyebrow>}
           title="Pick a plan that fits your pipeline"
-          subtitle={`Start with a ${SUBSCRIPTION_TRIAL_DURATION_DAYS}-day free trial — no credit card. Upgrade anytime; billed monthly in crypto (USDT).`}
+          subtitle={`Start with a ${SUBSCRIPTION_TRIAL_DURATION_DAYS}-day free trial — no credit card. Upgrade anytime; billed monthly`}
         />
 
         <RevealGroup className="grid gap-6 mt-16 md:grid-cols-3 md:items-stretch">
@@ -77,7 +77,7 @@ export default function SubscriptionPlansSection({
               )}
             >
               {plan.popular && (
-                <div className="absolute -translate-x-1/2 -top-4 left-1/2">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                   <span className="px-4 py-1.5 text-xs font-semibold text-white rounded-full shadow-md brand-gradient">
                     Most popular
                   </span>
@@ -88,10 +88,10 @@ export default function SubscriptionPlansSection({
                 <h3 className="mb-2 text-xl font-bold text-gray-900">
                   {plan.name}
                 </h3>
-                <p className="min-h-10 text-sm text-gray-500">
+                <p className="text-sm text-gray-500 min-h-10">
                   {plan.description}
                 </p>
-                <div className="flex items-baseline justify-center mt-5">
+                <div className="flex justify-center items-baseline mt-5">
                   <span className="text-4xl font-bold text-gray-900">
                     {plan.price}
                   </span>
@@ -125,7 +125,7 @@ export default function SubscriptionPlansSection({
 
               <ul className="mt-8 space-y-3">
                 {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-3">
+                  <li key={index} className="flex gap-3 items-start">
                     <span className="flex items-center justify-center w-5 h-5 mt-0.5 rounded-full shrink-0 brand-soft-bg">
                       <Check className="w-3 h-3 brand-icon" />
                     </span>
@@ -139,18 +139,18 @@ export default function SubscriptionPlansSection({
 
         <Reveal
           y={12}
-          className="flex flex-col items-center gap-4 mt-14 text-center"
+          className="flex flex-col gap-4 items-center mt-14 text-center"
         >
           <p className="text-gray-600">
             Have questions before you start? Our team is one message away.
           </p>
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex flex-wrap gap-3 justify-center">
             {telegramUrl ? (
               <a
                 href={telegramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 font-medium text-white transition-all duration-200 shadow-md rounded-xl brand-gradient hover:brightness-95 hover:shadow-lg"
+                className="inline-flex gap-2 justify-center items-center px-6 py-3 font-medium text-white rounded-xl shadow-md transition-all duration-200 brand-gradient hover:brightness-95 hover:shadow-lg"
               >
                 <MessageCircle className="w-5 h-5" />
                 Chat on Telegram

@@ -40,7 +40,7 @@ export default function PricingPageContent() {
         eyebrow="Pricing"
         title="Simple plans."
         accent="No card to start."
-        description={`Start with a ${SUBSCRIPTION_TRIAL_DURATION_DAYS}-day trial, then subscribe monthly in USDT. Pick the seat and lead cap that matches your floor.`}
+        description={`Start with a ${SUBSCRIPTION_TRIAL_DURATION_DAYS}-day trial, then subscribe monthly. Pick the seat and lead cap that matches your team.`}
       />
 
       <SubscriptionPlansSection className="bg-white" />
@@ -56,7 +56,7 @@ export default function PricingPageContent() {
               <motion.article
                 key={note.title}
                 variants={reduce ? undefined : revealItem}
-                className="p-7 bg-white border border-gray-200 rounded-3xl shadow-sm"
+                className="p-7 bg-white rounded-3xl border border-gray-200 shadow-sm"
               >
                 <div className="flex items-center gap-2 text-(--brand-from)">
                   <Shield className="w-4 h-4" />
@@ -71,14 +71,14 @@ export default function PricingPageContent() {
             ))}
           </RevealGroup>
 
-          <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mt-12 text-sm text-gray-600">
+          <ul className="flex flex-wrap gap-y-3 gap-x-8 justify-center items-center mt-12 text-sm text-gray-600">
             {[
               "Live team updates included",
               "Excel & CSV import",
               "Softphone calling",
               "White-label branding",
             ].map((item) => (
-              <li key={item} className="inline-flex items-center gap-2">
+              <li key={item} className="inline-flex gap-2 items-center">
                 <Check className="w-4 h-4 brand-icon" />
                 {item}
               </li>
