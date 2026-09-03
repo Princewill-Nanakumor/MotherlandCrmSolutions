@@ -108,16 +108,6 @@ export const CountryFilter = ({
     [countries]
   );
 
-  const getPlaceholder = () => {
-    if (value.length === 0) {
-      return "All Countries";
-    }
-    if (mode === "exclude") {
-      return `Hide ${value.length} ${value.length === 1 ? "country" : "countries"}`;
-    }
-    return `Show ${value.length} ${value.length === 1 ? "country" : "countries"}`;
-  };
-
   const countriesLoading = !providedCountries && isLoadingCountries;
 
   return (
@@ -125,11 +115,12 @@ export const CountryFilter = ({
       value={value}
       onChange={onChange}
       options={options}
-      placeholder={getPlaceholder()}
+      placeholder="All Countries"
       disabled={disabled || countriesLoading}
       isLoading={isLoading || countriesLoading}
       mode={mode}
       onModeChange={handleModeToggle}
+      itemNoun={{ singular: "country", plural: "countries" }}
     />
   );
 };

@@ -5,7 +5,7 @@ import React, { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
-import { LayoutDashboard, Loader2, LogIn, LogOut, Menu, X } from "lucide-react";
+import { Loader2, LogIn, LogOut, Menu, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
@@ -16,6 +16,7 @@ import {
   MARKETING_NAV_LINKS,
   isMarketingPath,
 } from "@/lib/marketingNav";
+import { HomepageDashboardMenu } from "@/components/homepageComponents/HomepageDashboardMenu";
 
 function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse bg-gray-200 rounded ${className}`} />;
@@ -208,9 +209,10 @@ export default function Navbar() {
                   />
                 </div>
               ) : (
-                <Link href="/dashboard" className={textLinkClass}>
-                  Dashboard
-                </Link>
+                <HomepageDashboardMenu
+                  solid={useSolidChrome}
+                  linkClassName={textLinkClass}
+                />
               )}
               <button
                 type="button"
@@ -317,14 +319,12 @@ export default function Navbar() {
                       <Loader2 className="w-5 h-5 animate-spin brand-icon" />
                     </div>
                   ) : (
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-medium text-white brand-gradient hover:brightness-95"
-                    >
-                      <LayoutDashboard className="w-4 h-4" />
-                      Go to Dashboard
-                    </Link>
+                    <HomepageDashboardMenu
+                      variant="mobile"
+                      solid
+                      linkClassName={textLinkClass}
+                      onNavigate={() => setMenuOpen(false)}
+                    />
                   )}
                   <button
                     type="button"

@@ -68,16 +68,6 @@ export const StatusFilter = ({
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [statuses]);
 
-  const getPlaceholder = () => {
-    if (value.length === 0) {
-      return "All Statuses";
-    }
-    if (mode === "exclude") {
-      return `Hide ${value.length} ${value.length === 1 ? "status" : "statuses"}`;
-    }
-    return `Show ${value.length} ${value.length === 1 ? "status" : "statuses"}`;
-  };
-
   const filterLoading = isLoading || isLoadingStatuses;
 
   return (
@@ -85,11 +75,12 @@ export const StatusFilter = ({
       value={value}
       onChange={onChange}
       options={options}
-      placeholder={getPlaceholder()}
+      placeholder="All Statuses"
       disabled={disabled || filterLoading}
       isLoading={filterLoading}
       mode={mode}
       onModeChange={handleModeToggle}
+      itemNoun={{ singular: "status", plural: "statuses" }}
     />
   );
 };

@@ -119,26 +119,17 @@ export const SourceFilter = ({
     [sources]
   );
 
-  const getPlaceholder = () => {
-    if (value.length === 0) {
-      return "All Sources";
-    }
-    if (mode === "exclude") {
-      return `Hide ${value.length} ${value.length === 1 ? "source" : "sources"}`;
-    }
-    return `Show ${value.length} ${value.length === 1 ? "source" : "sources"}`;
-  };
-
   return (
     <MultiSelectFilter
       value={value}
       onChange={onChange}
       options={options}
-      placeholder={getPlaceholder()}
+      placeholder="All Sources"
       disabled={disabled || isLoadingSources}
       isLoading={isLoading || isLoadingSources}
       mode={mode}
       onModeChange={handleModeToggle}
+      itemNoun={{ singular: "source", plural: "sources" }}
     />
   );
 };

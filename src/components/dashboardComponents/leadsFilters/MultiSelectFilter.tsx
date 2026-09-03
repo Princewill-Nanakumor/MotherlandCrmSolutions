@@ -20,6 +20,18 @@ interface MultiSelectFilterProps {
   maxDisplayItems?: number; // Max items to show in button before showing count
   mode?: "include" | "exclude"; // Filter mode (for country filter)
   onModeChange?: () => void; // Mode toggle handler
+  /** Singular/plural noun for selection counts, e.g. user/users, status/statuses */
+  itemNoun?: { singular: string; plural: string };
+}
+
+function formatItemCount(
+  count: number,
+  itemNoun?: { singular: string; plural: string },
+) {
+  if (!itemNoun) {
+    return `${count} ${count === 1 ? "item" : "items"}`;
+  }
+  return `${count} ${count === 1 ? itemNoun.singular : itemNoun.plural}`;
 }
 
 export const MultiSelectFilter = ({
@@ -32,6 +44,7 @@ export const MultiSelectFilter = ({
   maxDisplayItems = 2,
   mode,
   onModeChange,
+  itemNoun,
 }: MultiSelectFilterProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -92,7 +105,7 @@ export const MultiSelectFilter = ({
     return value.includes(optionValue);
   };
 
-  // Get display text for button (with exclusion mode support)
+  // Get display text for the closed select (option labels, not count)
   const getDisplayText = () => {
     if (value.length === 0) {
       return placeholder;
@@ -216,9 +229,7 @@ export const MultiSelectFilter = ({
                 aria-label="Select all"
               />
               <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {placeholder.includes("Exclude")
-                  ? "Show All Countries"
-                  : `All ${placeholder.replace("All ", "")}`}
+                {`All ${placeholder.replace(/^All\s+/i, "")}`}
               </span>
             </label>
           </div>
@@ -282,7 +293,7 @@ export const MultiSelectFilter = ({
           {isActiveFilter && (
             <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 dark:border-gray-700 dark:bg-gray-900/50">
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {value.length} {value.length === 1 ? "item" : "items"} selected
+                {formatItemCount(value.length, itemNoun)} selected
               </p>
             </div>
           )}

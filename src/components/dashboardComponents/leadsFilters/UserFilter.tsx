@@ -102,26 +102,17 @@ export const UserFilter = ({
     return [{ value: "unassigned", label: "Unassigned Leads" }, ...userOptions];
   }, [users, currentUserId, session?.user?.role]);
 
-  const getPlaceholder = () => {
-    if (value.length === 0) {
-      return "All Leads";
-    }
-    if (mode === "exclude") {
-      return `Hide ${value.length} ${value.length === 1 ? "user" : "users"}`;
-    }
-    return `Show ${value.length} ${value.length === 1 ? "user" : "users"}`;
-  };
-
   return (
     <MultiSelectFilter
       value={value}
       onChange={onChange}
       options={options}
-      placeholder={getPlaceholder()}
+      placeholder="All Leads"
       disabled={disabled || usersLoading}
       isLoading={usersLoading}
       mode={mode}
       onModeChange={handleModeToggle}
+      itemNoun={{ singular: "user", plural: "users" }}
     />
   );
 };
