@@ -9,8 +9,8 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  // Contact already has Telegram / email CTAs — skip the shared trial band.
-  const showCta = pathname !== "/contact";
+  // Homepage already includes its own CTA band; contact has channel cards.
+  const showCta = pathname !== "/contact" && pathname !== "/";
 
   return <MarketingPageShell showCta={showCta}>{children}</MarketingPageShell>;
 }

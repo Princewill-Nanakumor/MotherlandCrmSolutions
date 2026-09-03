@@ -10,6 +10,8 @@ import { BrandThemeApplier } from "@/components/BrandThemeApplier";
 import { PublicLightTheme } from "@/components/PublicLightTheme";
 import { PublicNativeScroll } from "@/components/homepageComponents/PublicNativeScroll";
 import CtaBandSection from "@/components/homepageComponents/CtaBandSection";
+import { MarketingRouteProgress } from "@/components/homepageComponents/MarketingRouteProgress";
+import { MarketingPageTransition } from "@/components/homepageComponents/MarketingPageTransition";
 
 export function MarketingPageShell({
   children,
@@ -24,11 +26,14 @@ export function MarketingPageShell({
       <PublicLightTheme />
       <BrandThemeApplier />
       <div className="homepage bg-white text-gray-900 [font-family:var(--brand-font-body)]">
+        <MarketingRouteProgress />
         <ScrollProgress />
         <ScrollToTopButton />
         <Navbar />
-        <main>{children}</main>
-        {showCta ? <CtaBandSection /> : null}
+        <MarketingPageTransition>
+          <main>{children}</main>
+          {showCta ? <CtaBandSection /> : null}
+        </MarketingPageTransition>
         <HomeFooter />
       </div>
     </SessionProvider>

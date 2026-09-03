@@ -142,9 +142,9 @@ export default function Navbar() {
           ? "bg-white/95 backdrop-blur-md shadow-md border-b border-gray-200"
           : "bg-transparent border-b border-white/20",
       )}
-      initial={{ y: "-100%" }}
+      // Keep nav mounted across marketing routes; only entrance-animate once.
+      initial={false}
       animate={{ y: 0 }}
-      transition={{ duration: 0.85, ease: "easeOut" }}
     >
       <div className="flex items-center justify-between gap-3 mx-auto max-w-7xl">
         <div className="min-w-0">
