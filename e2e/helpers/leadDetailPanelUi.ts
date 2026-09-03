@@ -374,6 +374,48 @@ export async function switchToRemindersTab(page: Page) {
   return Date.now() - t0;
 }
 
+export async function addReminderInPanel(page: Page, title: string) {
+  const panel = leadDetailsPanel(page);
+  await switchToRemindersTab(page);
+  await panel.getByRole("button", { name: /add reminder/i }).click();
+  await expect(panel.getByText("New Reminder")).toBeVisible({ timeout: 15_000 });
+  await panel.getByPlaceholder("e.g., Call for follow-up").fill(title);
+  await panel.getByRole("combobox").filter({ hasText: /select type/i }).click();
+  await page.getByRole("option", { name: "Call" }).click();
+  const created = page.waitForResponse(
+    (res) =>
+      res.request().method() === "POST" &&
+      /\/api\/leads\/[^/]+\/reminders$/.test(new URL(res.url()).pathname) &&
+      res.ok(),
+  );
+  await panel.getByRole("button", { name: /create reminder/i }).click();
+  await created;
+  await expect(
+    panel.getByRole("heading", { name: title, exact: true }),
+  ).toBeVisible({ timeout: 30_000 });
+}
+
+export async function completeReminderInPanel(page: Page, title: string) {
+  const panel = leadDetailsPanel(page);
+  const card = panel
+    .getByRole("heading", { name: title, exact: true })
+    .locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  const updated = page.waitForResponse(
+    (res) =>
+      res.request().method() === "PUT" &&
+      res.url().includes("/reminders/") &&
+      res.ok(),
+  );
+  await card.getByTitle(/mark as complete/i).click();
+  await updated;
+  await expect(panel.getByRole("heading", { name: "Completed" })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(
+    panel.getByRole("heading", { name: title, exact: true }),
+  ).toBeVisible();
+}
+
 export async function switchToCommentsTab(page: Page) {
   const panel = leadDetailsPanel(page);
   await panel.getByRole("button", { name: /Comments/i }).first().click();
@@ -460,8 +502,13 @@ export async function deleteReminderInPanel(page: Page, title: string) {
   const card = panel
     .getByRole("heading", { name: title, exact: true })
     .locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
-  await card.getByTitle(/more actions/i).click();
-  await page.getByRole("menuitem", { name: /^Delete$/i }).click();
+  const completedDelete = card.getByTitle(/delete reminder/i);
+  if (await completedDelete.isVisible().catch(() => false)) {
+    await completedDelete.click();
+  } else {
+    await card.getByTitle(/more actions/i).click();
+    await page.getByRole("menuitem", { name: /^Delete$/i }).click();
+  }
   const deleteResponsePromise = page.waitForResponse(
     (res) =>
       res.request().method() === "DELETE" &&

@@ -8,6 +8,8 @@ import CommentsAndActivitiesCombined from "./CommentsAndActivitiesCombined";
 import RemindersTab from "./RemindersTab";
 import { useQuery } from "@tanstack/react-query";
 import { Reminder } from "@/types/leads";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { pendingReminderCount } from "@/lib/reminderCache";
 
 interface CommentsAndActivitiesProps {
   lead: Lead;
@@ -23,20 +25,23 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
   const { data: reminders = [] } = useQuery({
     queryKey: ["reminders", lead._id],
     queryFn: async (): Promise<Reminder[]> => {
-      const response = await fetch(`/api/leads/${lead._id}/reminders`);
+      const response = await apiCallWithSessionRefresh(
+        `/api/leads/${lead._id}/reminders`,
+        { cache: "no-store" },
+      );
       if (!response.ok) {
         throw new Error(`Failed to fetch reminders: ${response.status}`);
       }
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!lead._id,
-    staleTime: 0,
+    staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
-  const pendingRemindersCount = reminders.filter(
-    (r) => r.status === "PENDING" || r.status === "SNOOZED",
-  ).length;
+  const pendingRemindersCount = pendingReminderCount(reminders);
 
   return (
     <div className="flex min-h-0 w-full flex-col bg-white dark:bg-gray-800 md:h-full md:flex-1">

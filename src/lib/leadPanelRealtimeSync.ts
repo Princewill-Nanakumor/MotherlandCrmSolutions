@@ -7,6 +7,7 @@ import {
 import { normalizeLeadStatusId } from "@/lib/leadClientUpdate";
 import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
 import type { Lead } from "@/types/leads";
+import { patchReminderDeletedInCache } from "@/lib/reminderCache";
 
 export type AdminLeadPanelEvent = {
   type?: string;
@@ -245,11 +246,7 @@ export async function handleAdminLeadPanelEvent(
 
   if (REMINDER_TIMELINE_EVENTS.has(type)) {
     if (type === "reminder_deleted" && event.reminderId) {
-      queryClient.setQueryData(
-        ["reminders", openLeadId],
-        (old: Array<{ _id: string }> | undefined) =>
-          (old ?? []).filter((reminder) => reminder._id !== event.reminderId),
-      );
+      patchReminderDeletedInCache(queryClient, openLeadId, event.reminderId);
     } else {
       await queryClient.invalidateQueries({
         queryKey: ["reminders", openLeadId],
@@ -258,7 +255,7 @@ export async function handleAdminLeadPanelEvent(
     }
     queryClient.invalidateQueries({
       queryKey: ["activities", openLeadId],
-      refetchType: "none",
+      refetchType: "active",
     });
     return;
   }

@@ -257,26 +257,22 @@ export async function apiJson(
   path: string,
   init?: ApiJsonInit,
 ): Promise<{ status: number; body: unknown }> {
-  return page.evaluate(
-    async ({ path: p, init: i }) => {
-      const res = await fetch(p, {
-        method: i?.method,
-        body: i?.body,
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          ...(i?.headers ?? {}),
-        },
-      });
-      const text = await res.text();
-      let body: unknown = null;
-      try {
-        body = text ? JSON.parse(text) : null;
-      } catch {
-        body = text;
-      }
-      return { status: res.status, body };
+  // Use the request context (baseURL + cookies) so this works after API login
+  // on about:blank. page.evaluate(fetch("/api/...")) fails without an origin.
+  const res = await page.request.fetch(path, {
+    method: init?.method ?? "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
     },
-    { path, init },
-  );
+    ...(init?.body != null ? { data: init.body } : {}),
+  });
+  const text = await res.text();
+  let body: unknown = null;
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    body = text;
+  }
+  return { status: res.status(), body };
 }

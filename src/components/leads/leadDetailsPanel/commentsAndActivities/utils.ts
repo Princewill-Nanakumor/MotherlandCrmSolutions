@@ -108,12 +108,9 @@ export function getUserDisplayName(
       }
     | string
 ): string {
-  if (
-    typeof createdBy === "object" &&
-    createdBy?.firstName &&
-    createdBy?.lastName
-  ) {
-    return `${createdBy.firstName} ${createdBy.lastName}`;
+  if (typeof createdBy === "object" && createdBy) {
+    const name = `${createdBy.firstName ?? ""} ${createdBy.lastName ?? ""}`.trim();
+    if (name && name !== "Unknown User") return name;
   }
   if (typeof createdBy === "string") {
     return `User ${createdBy.substring(0, 8)}`;

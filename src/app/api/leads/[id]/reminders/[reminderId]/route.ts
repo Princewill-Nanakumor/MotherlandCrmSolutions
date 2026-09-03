@@ -190,6 +190,11 @@ export async function PUT(
         reminderType: reminder.type,
         reminderStatus: reminder.status,
         oldReminderStatus: oldStatus,
+        performedBy: {
+          id: session.user.id,
+          firstName: session.user.firstName ?? "",
+          lastName: session.user.lastName ?? "",
+        },
       };
 
       if (body.status === "COMPLETED") {
@@ -415,6 +420,11 @@ export async function DELETE(
               reminderStatus: reminder.status,
               reminderDate: new Date(reminder.reminderDate).toISOString(),
               reminderTime: reminder.reminderTime,
+              performedBy: {
+                id: session.user.id,
+                firstName: session.user.firstName ?? "",
+                lastName: session.user.lastName ?? "",
+              },
             },
           }),
           Lead.updateOne(

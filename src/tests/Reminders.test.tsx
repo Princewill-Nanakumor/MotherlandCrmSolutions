@@ -591,6 +591,54 @@ describe("RemindersTab", () => {
     expect(screen.queryByText("No Reminders Set")).not.toBeInTheDocument();
   });
 
+  it("removes a deleted reminder from the list without waiting for a refetch", async () => {
+    const user = userEvent.setup();
+    const reminder = makeReminder();
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    apiCallMock.mockImplementation(async (_url: string, init?: RequestInit) => {
+      if (init?.method === "DELETE") {
+        return { ok: true, json: async () => ({ message: "ok" }) };
+      }
+      const cached =
+        client.getQueryData<Reminder[]>(["reminders", "lead-1"]) ?? [reminder];
+      return {
+        ok: true,
+        json: async () => cached,
+      };
+    });
+
+    render(
+      <QueryClientProvider client={client}>
+        <RemindersTab leadId="lead-1" />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText("Follow-up call")).toBeInTheDocument();
+
+    await user.click(screen.getByTitle("More actions"));
+    await user.click(await screen.findByRole("menuitem", { name: /delete/i }));
+    const dialog = await screen.findByRole("alertdialog");
+    await user.click(
+      within(dialog).getByRole("button", { name: "Delete reminder" }),
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText("Follow-up call")).not.toBeInTheDocument();
+    });
+    expect(await screen.findByText("No Reminders Set")).toBeInTheDocument();
+    expect(client.getQueryData(["reminders", "lead-1"])).toEqual([]);
+    expect(apiCallMock).toHaveBeenCalledWith(
+      "/api/leads/lead-1/reminders/rem-1",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+  });
+
   it("shows a spinner on mark as complete until the update finishes", async () => {
     const user = userEvent.setup();
     const reminder = makeReminder();

@@ -109,6 +109,9 @@ npm run test:assign-bulk-ui:fresh          # starts dev on :3001 (use when :3000
 npm run test:bulk-realtime-sync
 npm run test:bulk-realtime-sync:fresh      # starts dev on :3001
 
+# Lead panel reminder UI (create → timeline → complete → delete)
+npm run test:reminder-flow
+
 # Correctness (Vitest, no Mongo): 500 selected / 50 pre-assigned → 450
 npm run test:run -- src/tests/api.leads.bulk-assign.route.test.ts
 ```
@@ -129,6 +132,7 @@ Needs `.env` (`MONGODB_URI`, `NEXTAUTH_SECRET`, …). Set `IMPORT_PERF_STATS=1` 
 | Bulk realtime sync | `test:bulk-realtime-sync` | Two browsers: admin list + open panel + agent list after bulk assign/reassign |
 | Bulk assign correctness | `src/tests/api.leads.bulk-assign.route.test.ts` | 500 selected / 50 already assigned → 450 updates + 450 activities + 1 Ably call |
 | E2E smoke / lifecycle | `e2e/smoke.spec.ts`, `lead-lifecycle.spec.ts` | Public pages + admin/agent import→assign→comment→export |
+| E2E reminder flow | `e2e/reminder-flow.spec.ts` | Create / timeline log / complete / delete in the lead panel (opt-in `REMINDER_FLOW_E2E=1`) |
 | E2E realtime | `e2e/realtime-sync.spec.ts` | Skipped (`test.fixme`) pending Ably headless attach |
 
 ## E2E users

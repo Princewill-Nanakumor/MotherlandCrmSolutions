@@ -206,6 +206,22 @@ export function getActivityDescription(activity: Activity): string {
       return "deleted";
     case "IMPORT":
       return "imported";
+    case "REMINDER_CREATED":
+      return "created reminder";
+    case "REMINDER_UPDATED":
+      return "updated reminder";
+    case "REMINDER_DELETED":
+      return "deleted reminder";
+    case "REMINDER_COMPLETED":
+      return "completed reminder";
+    case "REMINDER_SNOOZED":
+      return "snoozed reminder";
+    case "REMINDER_DISMISSED":
+      return "dismissed reminder";
+    case "REMINDER_MUTED":
+      return "muted reminder";
+    case "REMINDER_UNMUTED":
+      return "unmuted reminder";
     default:
       return activity.description;
   }

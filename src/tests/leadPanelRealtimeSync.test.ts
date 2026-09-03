@@ -47,6 +47,30 @@ describe("leadPanelRealtimeSync", () => {
     expect(fullSync).not.toHaveBeenCalled();
   });
 
+  it("removes a deleted reminder from cache and refreshes the timeline", async () => {
+    const queryClient = new QueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+    queryClient.setQueryData(["reminders", "lead-1"], [
+      { _id: { $oid: "rem-1" }, title: "Follow-up" },
+      { _id: "rem-2", title: "Keep" },
+    ]);
+
+    await handleAdminLeadPanelEvent(
+      queryClient,
+      "lead-1",
+      { type: "reminder_deleted", leadId: "lead-1", reminderId: "rem-1" },
+      vi.fn(),
+    );
+
+    expect(
+      queryClient.getQueryData<Array<{ title: string }>>(["reminders", "lead-1"]),
+    ).toEqual([{ _id: "rem-2", title: "Keep" }]);
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: ["activities", "lead-1"],
+      refetchType: "active",
+    });
+  });
+
   it("removes deleted activity rows from cache", async () => {
     const queryClient = new QueryClient();
     queryClient.setQueryData(

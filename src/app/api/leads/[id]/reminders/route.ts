@@ -232,6 +232,11 @@ export async function POST(
           reminderTime: reminderTime,
           reminderStatus: "PENDING",
           soundEnabled: soundEnabled !== undefined ? soundEnabled : true,
+          performedBy: {
+            id: session.user.id,
+            firstName: session.user.firstName ?? "",
+            lastName: session.user.lastName ?? "",
+          },
         },
       });
     } catch (activityError) {

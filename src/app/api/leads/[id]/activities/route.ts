@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import Activity from "@/models/Activity";
 import Lead from "@/models/Lead";
+import "@/models/User";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
@@ -15,6 +16,7 @@ import {
   withSessionPerf,
 } from "@/lib/sessionPerfProbe";
 import { withMongoPerf } from "@/lib/mongoPerfProbe";
+import { resolveActivityCreatedBy } from "@/lib/activityActor";
 
 // Bounded LRU-ish cache for status name resolution. Module-level caches in
 // serverless environments otherwise grow unbounded across invocations.
@@ -112,28 +114,6 @@ interface ActivityDocument {
   };
 }
 
-function actorFromMetadata(
-  meta:
-    | {
-        id?: string;
-        _id?: string | mongoose.Types.ObjectId;
-        firstName?: string;
-        lastName?: string;
-      }
-    | undefined,
-): { _id: string; firstName: string; lastName: string } | null {
-  if (!meta?.firstName && !meta?.lastName) return null;
-  const id =
-    meta.id ??
-    (meta._id != null ? String(meta._id) : undefined) ??
-    "unknown";
-  return {
-    _id: id,
-    firstName: meta.firstName || "Unknown",
-    lastName: meta.lastName || "",
-  };
-}
-
 export async function GET(request: NextRequest) {
   const wallStart = Date.now();
   const [response] = await withMongoPerf(async () => {
@@ -206,6 +186,7 @@ export async function GET(request: NextRequest) {
       };
 
       const activities = await Activity.find(query)
+        .populate("userId", "firstName lastName")
         .sort({ timestamp: -1 })
         .skip(skip)
         .limit(limit)
@@ -238,43 +219,10 @@ export async function GET(request: NextRequest) {
     const transformedActivities = activities.map((activity: unknown) => {
       const act = activity as ActivityDocument;
 
-      // Handle populated userId (user may be deleted - populate returns null; use metadata fallbacks)
-      let createdBy = {
-        _id: "unknown",
-        firstName: "Unknown",
-        lastName: "User",
-      };
-
-      if (act.userId) {
-        if (Array.isArray(act.userId)) {
-          createdBy = act.userId[0] || createdBy;
-        } else if (typeof act.userId === "object" && act.userId !== null) {
-          // Check if it's a populated user object
-          if ("firstName" in act.userId && "lastName" in act.userId) {
-            createdBy = {
-              _id: act.userId._id?.toString() || "unknown",
-              firstName: act.userId.firstName || "Unknown",
-              lastName: act.userId.lastName || "User",
-            };
-          } else {
-            // It's just an ObjectId (populate failed)
-            createdBy = {
-              _id: act.userId.toString(),
-              firstName: "Unknown",
-              lastName: "User",
-            };
-          }
-        }
-      }
-
-      // Fallback: deleted user / populate miss — use denormalized actor metadata
-      // (STATUS_CHANGE uses performedBy; ASSIGNMENT uses assignedBy).
-      if (createdBy.firstName === "Unknown" && createdBy.lastName === "User") {
-        const fromMeta =
-          actorFromMetadata(act.metadata?.performedBy) ||
-          actorFromMetadata(act.metadata?.assignedBy);
-        if (fromMeta) createdBy = fromMeta;
-      }
+      const createdBy = resolveActivityCreatedBy({
+        userId: Array.isArray(act.userId) ? act.userId[0] : act.userId,
+        metadata: act.metadata,
+      });
 
       // Resolve status names
       const oldStatus =

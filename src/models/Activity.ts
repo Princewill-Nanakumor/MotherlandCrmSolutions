@@ -72,6 +72,11 @@ export interface IActivity {
       firstName: string;
       lastName: string;
     };
+    performedBy?: {
+      id: string;
+      firstName: string;
+      lastName: string;
+    };
     commentContent?: string;
     oldCommentContent?: string;
     changes?: Array<{

@@ -58,6 +58,7 @@
     "test:bulk-realtime-sync": "BULK_REALTIME_SYNC=1 playwright test e2e/bulk-realtime-sync.spec.ts",
     "test:bulk-realtime-sync:fresh": "PLAYWRIGHT_FRESH_SERVER=1 PLAYWRIGHT_PORT=3001 BULK_REALTIME_SYNC=1 playwright test e2e/bulk-realtime-sync.spec.ts",
     "test:status-race-sync": "STATUS_RACE_E2E=1 playwright test e2e/status-race-sync.spec.ts",
+    "test:reminder-flow": "REMINDER_FLOW_E2E=1 playwright test e2e/reminder-flow.spec.ts",
     "test:e2e": "playwright test",
     "test:e2e:seed": "node --env-file=.env scripts/e2e-seed.mjs",
     "test:e2e:cleanup": "node --env-file=.env scripts/e2e-cleanup-disposable.mjs",

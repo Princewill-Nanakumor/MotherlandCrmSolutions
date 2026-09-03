@@ -7,6 +7,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Reminders from "./Reminders";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import {
+  patchReminderDeletedInCache,
+  reminderRecordId,
+  replaceReminderInList,
+  upsertReminderInList,
+} from "@/lib/reminderCache";
 
 interface RemindersTabProps {
   leadId: string;
@@ -20,15 +26,18 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
   const { data: reminders = [], isLoading: isLoadingReminders } = useQuery({
     queryKey: ["reminders", leadId],
     queryFn: async (): Promise<Reminder[]> => {
-      const response = await apiCallWithSessionRefresh(`/api/leads/${leadId}/reminders`);
+      const response = await apiCallWithSessionRefresh(
+        `/api/leads/${leadId}/reminders`,
+        { cache: "no-store" },
+      );
       if (!response.ok) {
         throw new Error(`Failed to fetch reminders: ${response.status}`);
       }
       return response.json();
     },
     enabled: !!leadId,
-    staleTime: 0, // Don't cache - always treat as stale for immediate updates
-    refetchInterval: 60 * 1000, // Check every minute for updates
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
@@ -59,15 +68,12 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
       return await response.json();
     },
     onSuccess: (created: Reminder) => {
-      queryClient.setQueryData<Reminder[]>(["reminders", leadId], (old) => {
-        const list = old ?? [];
-        if (!created?._id) return list;
-        if (list.some((reminder) => reminder._id === created._id)) return list;
-        return [created, ...list];
-      });
+      queryClient.setQueryData<Reminder[]>(["reminders", leadId], (old) =>
+        upsertReminderInList(old, created),
+      );
       queryClient.invalidateQueries({
         queryKey: ["activities", leadId],
-        refetchType: "none",
+        refetchType: "active",
       });
       toast({
         title: "Success",
@@ -119,7 +125,9 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
         queryClient.setQueryData<Reminder[]>(["reminders", leadId], (old) => {
           if (!old) return old;
           return old.map((reminder) =>
-            reminder._id === reminderId ? { ...reminder, ...updates } : reminder
+            reminderRecordId(reminder) === String(reminderId)
+              ? { ...reminder, ...updates }
+              : reminder,
           );
         });
       }
@@ -146,17 +154,15 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
       }
     },
     onSuccess: (updated, variables) => {
-      if (updated?._id) {
+      if (updated && reminderRecordId(updated)) {
         queryClient.setQueryData<Reminder[]>(["reminders", leadId], (old) =>
-          (old ?? []).map((reminder) =>
-            reminder._id === updated._id ? updated : reminder,
-          ),
+          replaceReminderInList(old, updated),
         );
       }
 
       queryClient.invalidateQueries({
         queryKey: ["activities", leadId],
-        refetchType: "none",
+        refetchType: "active",
       });
 
       // Only show toast for non-sound toggle updates
@@ -179,14 +185,20 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
       );
       if (!response.ok) throw new Error("Failed to delete reminder");
     },
+    onMutate: async (reminderId) => {
+      await queryClient.cancelQueries({ queryKey: ["reminders", leadId] });
+      const previousReminders = queryClient.getQueryData<Reminder[]>([
+        "reminders",
+        leadId,
+      ]);
+      patchReminderDeletedInCache(queryClient, leadId, reminderId);
+      return { previousReminders };
+    },
     onSuccess: (_data, reminderId) => {
-      queryClient.setQueryData<Reminder[]>(["reminders", leadId], (old) =>
-        (old ?? []).filter((reminder) => reminder._id !== reminderId),
-      );
-      // Defer timeline refresh — avoid refetching 100+ activities while on Reminders tab.
+      patchReminderDeletedInCache(queryClient, leadId, reminderId);
       queryClient.invalidateQueries({
         queryKey: ["activities", leadId],
-        refetchType: "none",
+        refetchType: "active",
       });
       toast({
         title: "Success",
@@ -194,7 +206,13 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
         variant: "success",
       });
     },
-    onError: (error) => {
+    onError: (error, _reminderId, context) => {
+      if (context?.previousReminders) {
+        queryClient.setQueryData(
+          ["reminders", leadId],
+          context.previousReminders,
+        );
+      }
       console.error("Error deleting reminder:", error);
       toast({
         title: "Error",

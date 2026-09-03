@@ -17,6 +17,7 @@ import {
   syncActivityTimelineFromAdminEvent,
   syncCommentsFromAdminEvent,
 } from "@/lib/leadPanelRealtimeSync";
+import { patchReminderDeletedInCache } from "@/lib/reminderCache";
 
 /**
  * Subscribes to tenant lead events after first paint so Ably scope/token
@@ -57,6 +58,7 @@ export function TenantLeadsRealtimeSync() {
         status?: string;
         activityId?: string;
         commentId?: string;
+        reminderId?: string;
         deletedLeads?: number;
         importId?: string;
         percent?: number;
@@ -84,14 +86,22 @@ export function TenantLeadsRealtimeSync() {
             });
           }
           if (eventType.startsWith("reminder_")) {
-            void queryClient.invalidateQueries({
-              queryKey: ["reminders", leadId],
-              exact: true,
-              refetchType: "inactive",
-            });
+            if (eventType === "reminder_deleted" && eventData.reminderId) {
+              patchReminderDeletedInCache(
+                queryClient,
+                leadId,
+                eventData.reminderId,
+              );
+            } else {
+              void queryClient.invalidateQueries({
+                queryKey: ["reminders", leadId],
+                exact: true,
+                refetchType: "inactive",
+              });
+            }
             void queryClient.invalidateQueries({
               queryKey: ["activities", leadId],
-              refetchType: "none",
+              refetchType: "active",
             });
           }
         }
