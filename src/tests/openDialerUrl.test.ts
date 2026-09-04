@@ -30,7 +30,7 @@ describe("openDialerUrl helpers", () => {
     );
   });
 
-  it("opens dialer links in a new browsing context so Opera Mini keeps the CRM tab", () => {
+  it("opens dialer links with a same-tab programmatic anchor click", () => {
     const click = vi.fn();
     const appendSpy = vi.spyOn(document.body, "appendChild");
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(click);
@@ -41,8 +41,7 @@ describe("openDialerUrl helpers", () => {
     const link = appendSpy.mock.calls[0]?.[0] as HTMLAnchorElement;
     expect(link).toBeInstanceOf(HTMLAnchorElement);
     expect(link.href).toContain("tel:+15551234567");
-    expect(link.target).toBe("_blank");
-    expect(link.rel).toContain("noopener");
+    expect(link.target).toBe("");
     expect(click).toHaveBeenCalledTimes(1);
   });
 });
