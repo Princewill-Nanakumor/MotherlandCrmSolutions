@@ -44,22 +44,37 @@ type LeadRow = {
   } | null;
 };
 
-function buildLeads(total: number, preAssignedToTarget: number): LeadRow[] {
-  return Array.from({ length: total }, (_, index) => ({
-    _id: new mongoose.Types.ObjectId(),
-    adminId,
-    assignedTo:
-      index < preAssignedToTarget
-        ? {
-            _id: agentId,
-            firstName: "E2E",
-            lastName: "Agent",
-          }
-        : null,
-  }));
+function buildLeads(
+  total: number,
+  preAssignedToTarget: number,
+  options?: { reassignedFromOther?: number },
+): LeadRow[] {
+  const otherAgentId = new mongoose.Types.ObjectId();
+  const reassignedFromOther = options?.reassignedFromOther ?? 0;
+  return Array.from({ length: total }, (_, index) => {
+    let assignedTo: LeadRow["assignedTo"] = null;
+    if (index < preAssignedToTarget) {
+      assignedTo = {
+        _id: agentId,
+        firstName: "E2E",
+        lastName: "Agent",
+      };
+    } else if (index < preAssignedToTarget + reassignedFromOther) {
+      assignedTo = {
+        _id: otherAgentId,
+        firstName: "Other",
+        lastName: "Agent",
+      };
+    }
+    return {
+      _id: new mongoose.Types.ObjectId(),
+      adminId,
+      assignedTo,
+    };
+  });
 }
 
-function createMockDb(leads: LeadRow[]) {
+function createMockDb(leads: LeadRow[], agentAssignedCount = 0) {
   let updateManyFilter: Record<string, unknown> | null = null;
   let insertedActivities: Record<string, unknown>[] = [];
 
@@ -83,7 +98,7 @@ function createMockDb(leads: LeadRow[]) {
       );
       return { matchedCount: matched.length, modifiedCount: matched.length };
     },
-    countDocuments: async () => 0,
+    countDocuments: async () => agentAssignedCount,
   };
 
   const usersCollection = {
@@ -185,5 +200,31 @@ describe("POST /api/leads/assign bulk correctness", () => {
       leadIds?: string[];
     };
     expect(ablyPayload.leadIds).toHaveLength(450);
+  });
+
+  it("rejects reassignment when it would push the agent over the 500 cap", async () => {
+    // 10 leads currently on another agent; target already at 495 → would become 505
+    const leads = buildLeads(10, 0, { reassignedFromOther: 10 });
+    const leadIds = leads.map((lead) => lead._id.toString());
+    const mock = createMockDb(leads, 495);
+
+    Object.defineProperty(mongoose.connection, "db", {
+      configurable: true,
+      value: mock.db,
+    });
+
+    const { POST } = await import("@/app/api/leads/assign/route");
+    const res = await POST(
+      new Request("http://localhost/api/leads/assign", {
+        method: "POST",
+        body: JSON.stringify({ leadIds, userId: agentId.toString() }),
+      }),
+    );
+
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { success?: boolean; message?: string };
+    expect(body.success).toBe(false);
+    expect(body.message).toMatch(/already have 495 assigned leads/);
+    expect(mock.getUpdateManyFilter()).toBeNull();
   });
 });

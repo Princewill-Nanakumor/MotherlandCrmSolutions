@@ -1,14 +1,21 @@
-import { describe, expect, it } from "vitest";
+/**
+ * @vitest-environment jsdom
+ */
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildDialerProtocolUrl,
   buildTelUrl,
+  openExternalDialerUrl,
 } from "@/lib/openDialerUrl";
 
 describe("openDialerUrl helpers", () => {
-  it("builds tel URLs without spaces", () => {
-    expect(buildTelUrl("+1 819 962 5286")).toBe(
-      "tel:%2B18199625286",
-    );
+  afterEach(() => {
+    document.body.innerHTML = "";
+    vi.restoreAllMocks();
+  });
+
+  it("builds tel URLs without spaces and keeps + literal", () => {
+    expect(buildTelUrl("+1 819 962 5286")).toBe("tel:+18199625286");
   });
 
   it("builds microsip sip URLs", () => {
@@ -21,5 +28,21 @@ describe("openDialerUrl helpers", () => {
     expect(buildDialerProtocolUrl("zoiper", "+491701234567")).toBe(
       "zoiper://+491701234567",
     );
+  });
+
+  it("opens dialer links in a new browsing context so Opera Mini keeps the CRM tab", () => {
+    const click = vi.fn();
+    const appendSpy = vi.spyOn(document.body, "appendChild");
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(click);
+
+    openExternalDialerUrl("tel:+15551234567");
+
+    expect(appendSpy).toHaveBeenCalled();
+    const link = appendSpy.mock.calls[0]?.[0] as HTMLAnchorElement;
+    expect(link).toBeInstanceOf(HTMLAnchorElement);
+    expect(link.href).toContain("tel:+15551234567");
+    expect(link.target).toBe("_blank");
+    expect(link.rel).toContain("noopener");
+    expect(click).toHaveBeenCalledTimes(1);
   });
 });

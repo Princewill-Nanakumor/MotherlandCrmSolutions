@@ -4,6 +4,11 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
+import {
+  assertAssignmentCapacity,
+  countAssignmentsTowardCapacity,
+  countLeadsAssignedToAgent,
+} from "@/lib/leadAssignmentQuery";
 
 interface LeadDocument {
   _id: mongoose.Types.ObjectId;
@@ -149,27 +154,81 @@ export async function POST(request: Request) {
       throw new Error("Database connection not available");
     }
 
+    const db = mongoose.connection.db;
     const adminObjectId = new mongoose.Types.ObjectId(session.user.id);
+    const leadObjectIds = leadIds.map(
+      (id: string) => new mongoose.Types.ObjectId(id),
+    );
+
+    const targetUser = await db.collection("users").findOne(
+      { _id: new mongoose.Types.ObjectId(userId) },
+      { projection: { firstName: 1, lastName: 1 } },
+    );
+
+    if (!targetUser) {
+      return NextResponse.json(
+        { message: "Target user not found" },
+        { status: 404 },
+      );
+    }
+
+    const targetLeads = await db
+      .collection("leads")
+      .find({
+        _id: { $in: leadObjectIds },
+        adminId: adminObjectId,
+      })
+      .project({ assignedTo: 1 })
+      .toArray();
+
+    const netNewAssignments = countAssignmentsTowardCapacity(
+      targetLeads,
+      userId,
+    );
+
+    if (netNewAssignments > 0) {
+      const currentCount = await countLeadsAssignedToAgent(
+        db.collection("leads"),
+        adminObjectId,
+        userId,
+      );
+      try {
+        assertAssignmentCapacity(
+          String(targetUser.firstName ?? "Agent"),
+          String(targetUser.lastName ?? ""),
+          currentCount,
+          netNewAssignments,
+        );
+      } catch (capacityError) {
+        return NextResponse.json(
+          {
+            message:
+              capacityError instanceof Error
+                ? capacityError.message
+                : "Assignment limit exceeded",
+          },
+          { status: 400 },
+        );
+      }
+    }
 
     // Update all selected leads with multi-tenancy filter
-    const updateResult = await mongoose.connection.db
-      .collection("leads")
-      .updateMany(
-        {
-          _id: { $in: leadIds.map((id) => new mongoose.Types.ObjectId(id)) },
-          adminId: adminObjectId, // Only leads belonging to this admin
-        },
-        {
-          $set: {
-            assignedTo: {
-              id: userId,
-              assignedAt: new Date(),
-            },
-            status: "CONTACTED", // Or whatever status you want to set when assigned
-            updatedAt: new Date(),
+    const updateResult = await db.collection("leads").updateMany(
+      {
+        _id: { $in: leadObjectIds },
+        adminId: adminObjectId, // Only leads belonging to this admin
+      },
+      {
+        $set: {
+          assignedTo: {
+            id: userId,
+            assignedAt: new Date(),
           },
-        }
-      );
+          status: "CONTACTED", // Or whatever status you want to set when assigned
+          updatedAt: new Date(),
+        },
+      },
+    );
 
     if (updateResult.modifiedCount === 0) {
       return NextResponse.json(

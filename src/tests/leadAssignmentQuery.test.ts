@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import {
   MAX_ASSIGNED_LEADS_PER_AGENT,
   assertAssignmentCapacity,
+  countAssignmentsTowardCapacity,
   formatAssignmentCapacityError,
   getLeadAssigneeId,
   singleLeadAccessFilter,
@@ -17,9 +18,33 @@ describe("getLeadAssigneeId", () => {
     expect(getLeadAssigneeId({ _id: "agent-2", name: "Sam" })).toBe("agent-2");
   });
 
+  it("reads ObjectId assignee", () => {
+    const id = new mongoose.Types.ObjectId();
+    expect(getLeadAssigneeId(id)).toBe(id.toString());
+  });
+
   it("returns null for missing assignee", () => {
     expect(getLeadAssigneeId(null)).toBeNull();
     expect(getLeadAssigneeId(undefined)).toBeNull();
+  });
+});
+
+describe("countAssignmentsTowardCapacity", () => {
+  const target = "agent-target";
+  const other = "agent-other";
+
+  it("counts unassigned and reassigned leads, not already-on-target", () => {
+    expect(
+      countAssignmentsTowardCapacity(
+        [
+          { assignedTo: null },
+          { assignedTo: { _id: other } },
+          { assignedTo: { _id: target } },
+          { assignedTo: target },
+        ],
+        target,
+      ),
+    ).toBe(2);
   });
 });
 

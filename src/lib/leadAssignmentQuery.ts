@@ -58,6 +58,9 @@ export function singleLeadAccessFilter(
 export function getLeadAssigneeId(assignedTo: unknown): string | null {
   if (!assignedTo) return null;
   if (typeof assignedTo === "string") return assignedTo;
+  if (assignedTo instanceof mongoose.Types.ObjectId) {
+    return assignedTo.toString();
+  }
   if (typeof assignedTo === "object") {
     const obj = assignedTo as { _id?: unknown; id?: unknown };
     if (obj._id != null) return String(obj._id);
@@ -106,4 +109,21 @@ export function assertAssignmentCapacity(
       netNewAssignments,
     ),
   );
+}
+
+/**
+ * Leads that are not already assigned to `targetUserId` each increase that
+ * agent's assigned total (unassigned → agent and agentA → agentB both count).
+ */
+export function countAssignmentsTowardCapacity(
+  leads: ReadonlyArray<{ assignedTo?: unknown } | Record<string, unknown>>,
+  targetUserId: string,
+): number {
+  return leads.filter((lead) => {
+    const assignedTo =
+      lead && typeof lead === "object" && "assignedTo" in lead
+        ? lead.assignedTo
+        : undefined;
+    return getLeadAssigneeId(assignedTo) !== targetUserId;
+  }).length;
 }

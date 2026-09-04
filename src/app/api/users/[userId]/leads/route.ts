@@ -8,6 +8,7 @@ import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import {
   assertAssignmentCapacity,
+  countAssignmentsTowardCapacity,
   countLeadsAssignedToAgent,
 } from "@/lib/leadAssignmentQuery";
 
@@ -68,15 +69,10 @@ export async function POST(request: Request) {
       .project({ assignedTo: 1 })
       .toArray();
 
-    const netNewAssignments = targetLeads.filter((lead) => {
-      const assignee = lead.assignedTo;
-      if (!assignee) return true;
-      const assigneeId =
-        typeof assignee === "object" && assignee !== null && "_id" in assignee
-          ? String((assignee as { _id: unknown })._id)
-          : String(assignee);
-      return assigneeId !== userId;
-    }).length;
+    const netNewAssignments = countAssignmentsTowardCapacity(
+      targetLeads,
+      userId,
+    );
 
     if (netNewAssignments > 0) {
       const currentCount = await countLeadsAssignedToAgent(

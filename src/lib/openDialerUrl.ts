@@ -3,7 +3,10 @@
  *
  * Do not use a hidden iframe — production CSP is `frame-src 'self'`, so
  * custom-protocol iframe loads are blocked and the dialer never opens.
- * A programmatic <a> click hands the URL to the OS/app handler.
+ *
+ * A programmatic <a> click hands the URL to the OS/app handler. Always use
+ * target="_blank": Opera Mini (and some mobile WebViews) treat same-tab
+ * tel:/sip:/zoiper:// clicks as a full navigation and close/replace the CRM tab.
  */
 export function openExternalDialerUrl(url: string): void {
   if (typeof document === "undefined") return;
@@ -12,6 +15,7 @@ export function openExternalDialerUrl(url: string): void {
   try {
     const link = document.createElement("a");
     link.href = url;
+    link.target = "_blank";
     link.rel = "noopener noreferrer";
     link.style.display = "none";
     document.body.appendChild(link);
@@ -24,9 +28,10 @@ export function openExternalDialerUrl(url: string): void {
   }
 }
 
+/** RFC 3966 tel: URIs keep "+" literal; only strip whitespace. */
 export function buildTelUrl(phoneE164: string): string {
   const digits = phoneE164.replace(/\s/g, "");
-  return `tel:${encodeURIComponent(digits)}`;
+  return `tel:${digits}`;
 }
 
 export function buildDialerProtocolUrl(

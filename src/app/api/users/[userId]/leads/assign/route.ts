@@ -6,6 +6,11 @@ import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
+import {
+  assertAssignmentCapacity,
+  countAssignmentsTowardCapacity,
+  countLeadsAssignedToAgent,
+} from "@/lib/leadAssignmentQuery";
 
 function extractLeadIdFromUrl(urlString: string): string {
   const url = new URL(urlString);
@@ -41,6 +46,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid lead ID" }, { status: 400 });
     }
 
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
+
     // Build query with multi-tenancy filter
     const query: {
       _id: mongoose.Types.ObjectId;
@@ -52,6 +61,53 @@ export async function POST(request: Request) {
     // Admin can only assign leads they created
     const adminScopeId = await withAdminScope(session, async (adminId) => adminId);
     query.adminId = new mongoose.Types.ObjectId(adminScopeId);
+
+    const existingLead = await db.collection("leads").findOne(query, {
+      projection: { assignedTo: 1 },
+    });
+
+    if (!existingLead) {
+      return NextResponse.json(
+        { message: "Lead not found or not authorized" },
+        { status: 404 },
+      );
+    }
+
+    const netNewAssignments = countAssignmentsTowardCapacity(
+      [existingLead],
+      userId,
+    );
+
+    if (netNewAssignments > 0) {
+      const targetUser = await db.collection("users").findOne(
+        { _id: new mongoose.Types.ObjectId(userId) },
+        { projection: { firstName: 1, lastName: 1 } },
+      );
+
+      const currentCount = await countLeadsAssignedToAgent(
+        db.collection("leads"),
+        query.adminId,
+        userId,
+      );
+      try {
+        assertAssignmentCapacity(
+          String(targetUser?.firstName ?? "Agent"),
+          String(targetUser?.lastName ?? ""),
+          currentCount,
+          netNewAssignments,
+        );
+      } catch (capacityError) {
+        return NextResponse.json(
+          {
+            message:
+              capacityError instanceof Error
+                ? capacityError.message
+                : "Assignment limit exceeded",
+          },
+          { status: 400 },
+        );
+      }
+    }
 
     const lead = await db.collection("leads").findOneAndUpdate(
       query,

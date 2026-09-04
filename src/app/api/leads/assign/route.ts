@@ -7,6 +7,7 @@ import { authOptions } from "@/libs/auth";
 import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
 import {
   assertAssignmentCapacity,
+  countAssignmentsTowardCapacity,
   countLeadsAssignedToAgent,
   getLeadAssigneeId,
 } from "@/lib/leadAssignmentQuery";
@@ -152,9 +153,10 @@ export async function POST(request: Request) {
       });
     }
 
-    const netNewAssignments = changedLeads.filter(
-      (lead) => !getLeadAssigneeId(lead.assignedTo),
-    ).length;
+    const netNewAssignments = countAssignmentsTowardCapacity(
+      changedLeads,
+      userId,
+    );
 
     if (netNewAssignments > 0) {
       const currentCount = await countLeadsAssignedToAgent(
