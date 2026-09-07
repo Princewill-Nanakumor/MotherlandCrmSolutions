@@ -220,7 +220,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                 <SelectItem
                   key={status._id || status.id}
                   value={status._id || status.id || ""}
-                  className="dark:focus:bg-gray-700 dark:hover:bg-gray-700"
+                  className="cursor-pointer dark:focus:bg-gray-700 dark:hover:bg-gray-700"
                 >
                   <div className="flex items-center gap-2">
                     {status.color && (
@@ -235,7 +235,9 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
               ),
             )
           ) : (
-            <SelectItem value="NEW">New</SelectItem>
+            <SelectItem value="NEW" className="cursor-pointer">
+              New
+            </SelectItem>
           )}
         </SelectContent>
       </Select>
