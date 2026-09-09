@@ -9,6 +9,7 @@ import {
   Activity as ActivityIcon,
   MessageSquare,
   ArrowRightLeft,
+  PhoneCall,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Activity, Status } from "@/types/leads";
@@ -74,7 +75,7 @@ export const CommentsAndActivitiesCombined: FC<
   >(null);
   const [showTextarea, setShowTextarea] = useState<boolean>(true);
   const [timelineFilter, setTimelineFilter] = useState<
-    "all" | "comments" | "status"
+    "all" | "comments" | "status" | "calls"
   >("all");
 
   const isAdmin = canDeleteComments(session?.user);
@@ -259,7 +260,7 @@ export const CommentsAndActivitiesCombined: FC<
     return items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }, [comments, activities]);
 
-  // Subsets for the timeline sub-tabs (Comments only / Status changes only)
+  // Subsets for the timeline sub-tabs (Comments / Status / Calls)
   const commentOnlyItems = useMemo(
     () => combinedItems.filter((item) => item.type === "comment"),
     [combinedItems],
@@ -274,12 +275,24 @@ export const CommentsAndActivitiesCombined: FC<
     [combinedItems],
   );
 
+  const callItems = useMemo(
+    () =>
+      combinedItems.filter(
+        (item) =>
+          item.type === "activity" &&
+          Boolean(item.activity?.type?.startsWith("CALL_")),
+      ),
+    [combinedItems],
+  );
+
   const visibleTimelineItems =
     timelineFilter === "comments"
       ? commentOnlyItems
       : timelineFilter === "status"
         ? statusChangeItems
-        : combinedItems;
+        : timelineFilter === "calls"
+          ? callItems
+          : combinedItems;
 
   // Add comment mutation
   const addCommentMutation = useMutation({
@@ -607,6 +620,12 @@ export const CommentsAndActivitiesCombined: FC<
                   icon: ArrowRightLeft,
                   count: statusChangeItems.length,
                 },
+                {
+                  key: "calls",
+                  label: "Calls",
+                  icon: PhoneCall,
+                  count: callItems.length,
+                },
               ] as const
             ).map((tab) => {
               const isActive = timelineFilter === tab.key;
@@ -659,14 +678,18 @@ export const CommentsAndActivitiesCombined: FC<
                 ? "No Comments Yet"
                 : timelineFilter === "status"
                   ? "No Status Changes Yet"
-                  : "No Activity Yet"
+                  : timelineFilter === "calls"
+                    ? "No Calls Yet"
+                    : "No Activity Yet"
             }
             emptyDescription={
               timelineFilter === "comments"
                 ? "Add a comment to start the conversation on this lead."
                 : timelineFilter === "status"
                   ? "Status changes for this lead will appear here."
-                  : "Add an activity or make changes to this lead to start the timeline."
+                  : timelineFilter === "calls"
+                    ? "Calls initiated from this lead will appear here."
+                    : "Add an activity or make changes to this lead to start the timeline."
             }
           />
         </div>

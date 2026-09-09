@@ -170,7 +170,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
   }, [lead]);
 
   const handleCall = useCallback(
-    async (_phoneNumber: string) => {
+    async () => {
       if (isResolvingCall) return;
 
       setIsResolvingCall(true);
@@ -200,7 +200,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
         if (!dialer) {
           openExternalDialerUrl(buildTelUrl(cleanedNumber));
           try {
-            await fetch("/api/calls/log", {
+            const response = await fetch("/api/calls/log", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -209,6 +209,12 @@ export const ContactSection: FC<ContactSectionProps> = ({
                 dialer: "tel",
               }),
             });
+            if (response.ok && lead?._id) {
+              void queryClient.invalidateQueries({
+                queryKey: ["activities", lead._id],
+                refetchType: "active",
+              });
+            }
           } catch {
             /* ignore */
           }
@@ -232,6 +238,12 @@ export const ContactSection: FC<ContactSectionProps> = ({
           });
 
           if (response.ok) {
+            if (lead?._id) {
+              void queryClient.invalidateQueries({
+                queryKey: ["activities", lead._id],
+                refetchType: "active",
+              });
+            }
             // Invalidate call logs for the current user who made the call
             // React Query will automatically refetch any active queries (if modal is open)
             // This ensures the call logs modal shows the latest data immediately without page refresh

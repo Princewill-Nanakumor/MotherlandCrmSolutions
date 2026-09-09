@@ -108,6 +108,7 @@ export interface IActivity {
     soundEnabled?: boolean;
     // Call-specific metadata
     phoneNumber?: string;
+    dialer?: string;
     callDuration?: number; // Duration in seconds
     callStartTime?: string;
     callEndTime?: string;

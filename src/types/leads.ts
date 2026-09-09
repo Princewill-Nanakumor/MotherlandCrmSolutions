@@ -117,6 +117,7 @@ export interface Activity {
     soundEnabled?: boolean;
     // Call-specific metadata
     phoneNumber?: string;
+    dialer?: string;
     callDuration?: number;
     callStartTime?: string;
     callEndTime?: string;

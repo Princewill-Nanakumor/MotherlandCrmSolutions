@@ -31,6 +31,8 @@ const REMINDER_TIMELINE_EVENTS = new Set([
   "reminder_deleted",
 ]);
 
+const CALL_TIMELINE_EVENTS = new Set(["call_initiated"]);
+
 const ACTIVITY_TIMELINE_EVENTS = new Set([
   "status_changed",
   "bulk_status_changed",
@@ -48,9 +50,13 @@ const ASSIGNMENT_DETAIL_EVENTS = new Set([
   "lead_unassigned_bulk",
 ]);
 
-/** Admin Ably events that only touch comment/reminder detail caches — not the full leads list. */
+/** Admin Ably events that only touch comment/reminder/call detail caches — not the full leads list. */
 export function isTimelineChurnAdminEvent(type: string): boolean {
-  return COMMENT_TIMELINE_EVENTS.has(type) || REMINDER_TIMELINE_EVENTS.has(type);
+  return (
+    COMMENT_TIMELINE_EVENTS.has(type) ||
+    REMINDER_TIMELINE_EVENTS.has(type) ||
+    CALL_TIMELINE_EVENTS.has(type)
+  );
 }
 
 export function isActivityTimelineAdminEvent(type: string): boolean {
@@ -257,6 +263,12 @@ export async function handleAdminLeadPanelEvent(
       queryKey: ["activities", openLeadId],
       refetchType: "active",
     });
+    return;
+  }
+
+  if (CALL_TIMELINE_EVENTS.has(type)) {
+    await invalidateLeadActivitiesTimeline(queryClient, openLeadId);
+    void invalidateLeadDetailCache(queryClient, openLeadId);
     return;
   }
 

@@ -104,6 +104,17 @@ export function TenantLeadsRealtimeSync() {
               refetchType: "active",
             });
           }
+          if (eventType === "call_initiated") {
+            void queryClient.invalidateQueries({
+              queryKey: ["activities", leadId],
+              refetchType: "active",
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ["lead", leadId],
+              exact: true,
+              refetchType: "active",
+            });
+          }
         }
         return;
       }

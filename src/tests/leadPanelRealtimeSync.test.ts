@@ -17,6 +17,27 @@ describe("leadPanelRealtimeSync", () => {
     expect(isActivityTimelineAdminEvent("lead_assigned")).toBe(true);
     expect(isActivityTimelineAdminEvent("activity_deleted")).toBe(true);
     expect(isActivityTimelineAdminEvent("comment_created")).toBe(false);
+    expect(isActivityTimelineAdminEvent("call_initiated")).toBe(false);
+  });
+
+  it("treats call_initiated as timeline churn without full leads refetch", async () => {
+    const queryClient = new QueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+    const fullSync = vi.fn().mockResolvedValue(undefined);
+
+    await handleAdminLeadPanelEvent(
+      queryClient,
+      "lead-1",
+      { type: "call_initiated", leadId: "lead-1", activityId: "act-1" },
+      fullSync,
+    );
+
+    expect(fullSync).not.toHaveBeenCalled();
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["activities", "lead-1"],
+      }),
+    );
   });
 
   it("collects lead ids from single and bulk events", () => {

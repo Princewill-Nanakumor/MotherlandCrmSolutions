@@ -4,6 +4,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -66,6 +67,7 @@ export const FilterSelect = ({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
   const currentOption = options.find((option) => option.value === value);
   const displayValue = currentOption?.label || placeholder;
   const isActiveFilter =
@@ -191,6 +193,7 @@ export const FilterSelect = ({
       >
         <div
           ref={listRef}
+          id={listboxId}
           role="listbox"
           className={
             options.length > FILTER_SCROLL_HINT_MIN_ITEMS
@@ -250,6 +253,7 @@ export const FilterSelect = ({
         role="combobox"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
+        aria-controls={listboxId}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={`w-full h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-between gap-2 transition-[border-color,background-color] ${

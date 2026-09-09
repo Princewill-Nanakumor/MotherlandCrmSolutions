@@ -14,6 +14,9 @@ import {
   Volume2,
   Edit,
   Trash2,
+  PhoneCall,
+  PhoneOff,
+  PhoneMissed,
 } from "lucide-react";
 import type { Activity, Status } from "@/types/leads";
 
@@ -57,11 +60,7 @@ export function getActivityIcon(type: Activity["type"]): React.ReactElement {
         />
       );
     case "IMPORT":
-      return (
-        <ActivityIcon
-          className={`${iconSizeClass} brand-icon`}
-        />
-      );
+      return <ActivityIcon className={`${iconSizeClass} brand-icon`} />;
     case "REMINDER_CREATED":
       return (
         <Clock
@@ -110,6 +109,26 @@ export function getActivityIcon(type: Activity["type"]): React.ReactElement {
           className={`${iconSizeClass} text-blue-500! dark:text-blue-400!`}
         />
       );
+    case "CALL_INITIATED":
+    case "CALL_CONNECTED":
+      return (
+        <PhoneCall
+          className={`${iconSizeClass} text-emerald-600! dark:text-emerald-400!`}
+        />
+      );
+    case "CALL_ENDED":
+      return (
+        <PhoneOff
+          className={`${iconSizeClass} text-gray-600! dark:text-gray-400!`}
+        />
+      );
+    case "CALL_FAILED":
+    case "CALL_MISSED":
+      return (
+        <PhoneMissed
+          className={`${iconSizeClass} text-red-500! dark:text-red-400!`}
+        />
+      );
     default:
       return (
         <ActivityIcon
@@ -148,6 +167,14 @@ export function getActivityBackground(type: Activity["type"]): string {
     case "REMINDER_DISMISSED":
     case "REMINDER_MUTED":
       return "bg-gray-100 dark:bg-gray-900/30";
+    case "CALL_INITIATED":
+    case "CALL_CONNECTED":
+      return "bg-emerald-100 dark:bg-emerald-900/30";
+    case "CALL_ENDED":
+      return "bg-gray-100 dark:bg-gray-900/30";
+    case "CALL_FAILED":
+    case "CALL_MISSED":
+      return "bg-red-100 dark:bg-red-900/30";
     default:
       return "bg-gray-100 dark:bg-gray-800";
   }
@@ -222,6 +249,16 @@ export function getActivityDescription(activity: Activity): string {
       return "muted reminder";
     case "REMINDER_UNMUTED":
       return "unmuted reminder";
+    case "CALL_INITIATED":
+      return "initiated a call";
+    case "CALL_CONNECTED":
+      return "connected a call";
+    case "CALL_ENDED":
+      return "ended a call";
+    case "CALL_FAILED":
+      return "failed a call";
+    case "CALL_MISSED":
+      return "missed a call";
     default:
       return activity.description;
   }
