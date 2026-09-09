@@ -1,9 +1,14 @@
 // src/components/dashboardComponents/leadsFilters/MultiSelectFilter.tsx
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { ChevronDown, X, Eye, EyeOff } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  FilterScrollHint,
+  FILTER_LIST_MAX_HEIGHT_CLASS,
+  useFilterListScrollHint,
+} from "./FilterScrollHint";
 
 interface Option {
   value: string;
@@ -48,6 +53,18 @@ export const MultiSelectFilter = ({
 }: MultiSelectFilterProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const listOptions = useMemo(
+    () => options.filter((opt) => opt.value !== "all"),
+    [options],
+  );
+
+  const { showHint, atBottom, scrollList } = useFilterListScrollHint(
+    listRef,
+    listOptions.length,
+    isOpen && !disabled,
+  );
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -155,7 +172,7 @@ export const MultiSelectFilter = ({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full min-h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-0 focus:border-(--brand-focus)! disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-between gap-2 transition-[border-color,background-color] ${
+        className={`w-full min-h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-0 focus:border-(--brand-focus)! disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-between gap-2 transition-[border-color,background-color] cursor-pointer ${
           isActiveFilter || isOpen
             ? "bg-white dark:bg-gray-800 border-(--brand-from)!"
             : "bg-white border-gray-300 dark:border-gray-600 dark:bg-gray-800 hover:border-gray-400 hover:bg-gray-50 dark:hover:border-gray-500 dark:hover:bg-white/4"
@@ -190,17 +207,17 @@ export const MultiSelectFilter = ({
       </button>
 
       {isOpen && !disabled && (
-        <div className="overflow-y-auto absolute left-0 right-0 top-full z-50 mt-1 max-h-60 bg-white rounded-md border border-gray-300 shadow-lg dark:bg-gray-800 dark:border-gray-600 sm:right-auto sm:min-w-50 sm:max-w-75 brand-scrollbar">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 flex max-h-96 flex-col overflow-hidden bg-white rounded-md border border-gray-300 shadow-lg dark:bg-gray-800 dark:border-gray-600 sm:right-auto sm:min-w-50 sm:max-w-75">
           {/* Mode Toggle Button (only show if mode and onModeChange are provided) */}
           {mode !== undefined && onModeChange && (
-            <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+            <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onModeChange();
                 }}
-                className={`flex items-center justify-center w-full px-2 py-1.5 rounded transition-colors ${
+                className={`flex w-full cursor-pointer items-center justify-center rounded px-2 py-1.5 transition-colors ${
                   mode === "exclude"
                     ? "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -221,7 +238,7 @@ export const MultiSelectFilter = ({
           )}
 
           {/* Select All / Clear All option */}
-          <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+          <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
             <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 -mx-3 px-3 py-1.5 rounded">
               <Checkbox
                 checked={allSelected}
@@ -234,16 +251,28 @@ export const MultiSelectFilter = ({
             </label>
           </div>
 
-          {/* Individual options */}
-          <div className="py-1">
-            {options
-              .filter((opt) => opt.value !== "all") // Exclude "all" from list since we have it at top
-              .map((option) => {
+          {/* Fixed-height list (~4 rows) so the selected footer cannot compress it */}
+          <div className="flex flex-col overflow-hidden shrink-0">
+            <div
+              ref={listRef}
+              className={`overflow-y-auto py-1 brand-scrollbar ${FILTER_LIST_MAX_HEIGHT_CLASS}`}
+            >
+              {listOptions.map((option) => {
                 const checked = isSelected(option.value);
                 return (
                   <div
                     key={option.value}
-                    className="flex gap-2 items-center px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 focus-within:bg-gray-100 dark:focus-within:bg-gray-700"
+                    className="flex gap-2 items-center px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                    onMouseDown={(e) => {
+                      // Keep hover stable: avoid focus flash on click.
+                      if (
+                        !(e.target as HTMLElement).closest(
+                          '[data-slot="checkbox"]',
+                        )
+                      ) {
+                        e.preventDefault();
+                      }
+                    }}
                     onClick={(e) => {
                       e.stopPropagation();
                       // Only toggle if click is not on the checkbox itself
@@ -287,11 +316,17 @@ export const MultiSelectFilter = ({
                   </div>
                 );
               })}
+            </div>
+            <FilterScrollHint
+              show={showHint}
+              atBottom={atBottom}
+              onScrollClick={scrollList}
+            />
           </div>
 
-          {/* Selected count footer */}
+          {/* Selected count footer — same as GitHub: only when something is selected */}
           {isActiveFilter && (
-            <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 dark:border-gray-700 dark:bg-gray-900/50">
+            <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 dark:border-gray-700 dark:bg-gray-900/50 shrink-0">
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {formatItemCount(value.length, itemNoun)} selected
               </p>

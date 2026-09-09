@@ -2,6 +2,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -10,6 +11,12 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
+import {
+  FilterScrollHint,
+  FILTER_LIST_MAX_HEIGHT_PX,
+  FILTER_SCROLL_HINT_MIN_ITEMS,
+  useFilterListScrollHint,
+} from "./FilterScrollHint";
 
 interface Option {
   value: string;
@@ -55,19 +62,34 @@ export const FilterSelect = ({
   const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const currentOption = options.find((option) => option.value === value);
   const displayValue = currentOption?.label || placeholder;
   const isActiveFilter =
     showActiveHighlight && value !== inactiveValue && value !== "";
   const showBrandBorder = isOpen || isActiveFilter;
 
-  const updateMenuPosition = () => {
+  const { showHint, atBottom, scrollList } = useFilterListScrollHint(
+    listRef,
+    options.length,
+    isOpen && !disabled,
+  );
+
+  const updateMenuPosition = useCallback(() => {
     const trigger = triggerRef.current;
     if (!trigger) return;
 
     const rect = trigger.getBoundingClientRect();
     const gap = 4;
-    const preferredMaxHeight = 240;
+    const listMaxHeight =
+      options.length > FILTER_SCROLL_HINT_MIN_ITEMS
+        ? FILTER_LIST_MAX_HEIGHT_PX
+        : 240;
+    // Reserve space for the scroll-hint strip when the list will overflow.
+    const preferredMaxHeight =
+      options.length > FILTER_SCROLL_HINT_MIN_ITEMS
+        ? listMaxHeight + 28
+        : listMaxHeight;
     const spaceBelow = window.innerHeight - rect.bottom - gap;
     const spaceAbove = rect.top - gap;
     const openUpward =
@@ -84,7 +106,7 @@ export const FilterSelect = ({
       maxHeight,
       openUpward,
     });
-  };
+  }, [options.length]);
 
   useLayoutEffect(() => {
     if (!isOpen) {
@@ -102,7 +124,7 @@ export const FilterSelect = ({
       window.removeEventListener("resize", handleReposition);
       window.removeEventListener("scroll", handleReposition, true);
     };
-  }, [isOpen]);
+  }, [isOpen, updateMenuPosition]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -160,26 +182,42 @@ export const FilterSelect = ({
           maxHeight: menuPosition.maxHeight,
           zIndex: 9999,
         }}
-        className="overflow-y-auto bg-white rounded-md border border-gray-300 shadow-lg dark:bg-gray-800 dark:border-gray-600 brand-scrollbar"
+        className="flex flex-col overflow-hidden bg-white rounded-md border border-gray-300 shadow-lg dark:bg-gray-800 dark:border-gray-600"
       >
-        {options.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => {
-              onChange(option.value);
-              setIsOpen(false);
-            }}
-            style={option.style}
-            className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700 ${
-              value === option.value
-                ? "text-(--brand-from)! font-medium"
-                : "text-gray-900! dark:text-gray-50!"
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
+        <div
+          ref={listRef}
+          className="min-h-0 flex-1 overflow-y-auto brand-scrollbar"
+          style={{
+            maxHeight:
+              options.length > FILTER_SCROLL_HINT_MIN_ITEMS
+                ? FILTER_LIST_MAX_HEIGHT_PX
+                : menuPosition.maxHeight,
+          }}
+        >
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                onChange(option.value);
+                setIsOpen(false);
+              }}
+              style={option.style}
+              className={`w-full px-3 py-2 text-left text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700 ${
+                value === option.value
+                  ? "text-(--brand-from)! font-medium"
+                  : "text-gray-900! dark:text-gray-50!"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <FilterScrollHint
+          show={showHint}
+          atBottom={atBottom}
+          onScrollClick={scrollList}
+        />
       </div>,
       document.body,
     );
