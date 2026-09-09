@@ -66,6 +66,7 @@ export const useLeadsPage = (
   const {
     users,
     isLoadingUsers,
+    isFetchingUsers,
     usersError,
     refetchUsers,
     statuses,
@@ -75,6 +76,7 @@ export const useLeadsPage = (
   } = useLeadsLookupQueries({
     isAuthenticated,
   });
+  const lastUsersErrorKeyRef = useRef<string | null>(null);
 
   // ===== OPTIMIZED MUTATIONS =====
   // Refs for closing dialogs from mutation onSuccess (setUiState is defined later in hook)
@@ -217,18 +219,26 @@ export const useLeadsPage = (
   }, [leadsError, toast]);
 
   useEffect(() => {
-    if (usersError) {
-      console.error("Users query error:", usersError);
-      toast({
-        title: "Error loading users",
-        description:
-          usersError instanceof Error
-            ? usersError.message
-            : "Failed to load users",
-        variant: "destructive",
-      });
+    if (!usersError) {
+      lastUsersErrorKeyRef.current = null;
+      return;
     }
-  }, [usersError, toast]);
+    // Avoid noisy reconnect toasts while offline/auto-retrying.
+    if (!isOnline || isFetchingUsers) return;
+
+    const description =
+      usersError instanceof Error ? usersError.message : "Failed to load users";
+    const errorKey = `users:${description}`;
+    if (lastUsersErrorKeyRef.current === errorKey) return;
+    lastUsersErrorKeyRef.current = errorKey;
+
+    console.error("Users query error:", usersError);
+    toast({
+      title: "Error loading users",
+      description,
+      variant: "destructive",
+    });
+  }, [usersError, isOnline, isFetchingUsers, toast]);
 
   useEffect(() => {
     if (statusesError) {

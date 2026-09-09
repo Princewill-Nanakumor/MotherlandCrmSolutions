@@ -13,6 +13,7 @@ export function useLeadsLookupQueries({
   const {
     data: users = [],
     isLoading: isLoadingUsers,
+    isFetching: isFetchingUsers,
     error: usersError,
     refetch: refetchUsers,
   } = useQuery({
@@ -42,6 +43,7 @@ export function useLeadsLookupQueries({
   return {
     users,
     isLoadingUsers,
+    isFetchingUsers,
     usersError,
     refetchUsers,
     statuses,
