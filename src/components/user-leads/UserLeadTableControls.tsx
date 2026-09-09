@@ -1,12 +1,6 @@
 // src/components/user-leads/UserLeadTableControls.tsx
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ColumnVisibilityToggle } from "@/components/dashboardComponents/ColumnVisibilityToggle";
+import { FilterSelect } from "@/components/dashboardComponents/leadsFilters/FilterSelect";
 import { Table } from "@tanstack/react-table";
 import { Lead } from "@/types/leads";
 
@@ -20,7 +14,11 @@ interface UserLeadTableControlsProps {
 
 const PAGE_SIZE_OPTIONS = [10, 15, 20, 30, 40, 50, 100, 150, 200, 250, 300];
 
-// Changed to default export
+const PAGE_SIZE_SELECT_OPTIONS = PAGE_SIZE_OPTIONS.map((size) => ({
+  value: size.toString(),
+  label: size.toString(),
+}));
+
 export default function UserLeadTableControls({
   pageSize,
   pageIndex,
@@ -32,21 +30,14 @@ export default function UserLeadTableControls({
     <div className="flex flex-col gap-3 p-4 min-w-0 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-wrap gap-2 items-center min-w-0">
         <span className="text-sm text-gray-600! dark:text-white!">Show</span>
-        <Select value={pageSize.toString()} onValueChange={onPageSizeChange}>
-          <SelectTrigger className="w-25 bg-white dark:bg-gray-800! border-gray-300 dark:border-gray-600">
-            <SelectValue placeholder={pageSize} />
-          </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-800! border-gray-200 dark:border-gray-700">
-            {PAGE_SIZE_OPTIONS.map((size) => (
-              <SelectItem
-                key={size}
-                value={size.toString()}
-              >
-                {size}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <FilterSelect
+          value={pageSize.toString()}
+          onChange={onPageSizeChange}
+          options={PAGE_SIZE_SELECT_OPTIONS}
+          placeholder={pageSize.toString()}
+          className="w-25"
+          showActiveHighlight={false}
+        />
         <span className="text-sm text-gray-600! dark:text-white!">entries</span>
         <ColumnVisibilityToggle table={table} tableId="userLeadsTable" />
       </div>

@@ -1,7 +1,7 @@
 // src/components/dashboardComponents/ColumnVisibilityToggle.tsx
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Table } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,13 +14,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Settings2, Eye, EyeOff } from "lucide-react";
 import { Lead } from "@/types/leads";
+import {
+  FilterScrollHint,
+  FILTER_LIST_MAX_HEIGHT_CLASS,
+  FILTER_SCROLL_HINT_MIN_ITEMS,
+  useFilterListScrollHint,
+} from "@/components/dashboardComponents/leadsFilters/FilterScrollHint";
 
 interface ColumnVisibilityToggleProps {
   table: Table<Lead>;
   tableId: "adminLeadsTable" | "userLeadsTable";
 }
 
-// Column labels mapping
 const getColumnLabels = (
   tableId: "adminLeadsTable" | "userLeadsTable",
 ): Record<string, string> => {
@@ -41,7 +46,6 @@ const getColumnLabels = (
     commentCount: "Timeline",
   };
 
-  // Remove "select" for user leads table
   if (tableId === "userLeadsTable") {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { select, ...rest } = baseLabels;
@@ -56,21 +60,37 @@ export function ColumnVisibilityToggle({
   tableId,
 }: ColumnVisibilityToggleProps) {
   const columnLabels = getColumnLabels(tableId);
-  const [showAllOptions, setShowAllOptions] = useState(false);
+  const [open, setOpen] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
 
-  // Get visible columns count
-  const visibleColumnsCount = table.getAllColumns().filter((column) => {
-    const isVisible = column.getIsVisible();
-    const isRequired = column.id === "select" || column.id === "actions";
-    return isVisible && !isRequired; // Don't count required columns
-  }).length;
+  const toggleableColumns = useMemo(
+    () =>
+      table
+        .getAllColumns()
+        .filter((column) => column.id !== "select" && column.id !== "actions")
+        .sort((a, b) => {
+          if (a.id === "leadId") return -1;
+          if (b.id === "leadId") return 1;
+          return a.id.localeCompare(b.id);
+        }),
+    [table],
+  );
 
-  const totalOptionalColumns = table.getAllColumns().filter((column) => {
-    return column.id !== "select" && column.id !== "actions";
-  }).length;
+  const { showHint, atBottom, scrollList } = useFilterListScrollHint(
+    listRef,
+    toggleableColumns.length,
+    open,
+  );
+
+  const visibleColumnsCount = toggleableColumns.filter((column) =>
+    column.getIsVisible(),
+  ).length;
+  const totalOptionalColumns = toggleableColumns.length;
+  const listScrollable =
+    toggleableColumns.length > FILTER_SCROLL_HINT_MIN_ITEMS;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
@@ -89,25 +109,21 @@ export function ColumnVisibilityToggle({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-50 bg-white! dark:bg-[#1f2937]! border-gray-200! dark:border-gray-700! text-gray-900! dark:text-gray-100!"
+        className="flex w-50 flex-col overflow-hidden p-0 bg-white! dark:bg-[#1f2937]! border-gray-200! dark:border-gray-700! text-gray-900! dark:text-gray-100!"
       >
-        <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {table
-          .getAllColumns()
-          .filter((column) => {
-            // Don't allow hiding required columns
-            // Include all columns except select and actions
-            return column.id !== "select" && column.id !== "actions";
-          })
-          .sort((a, b) => {
-            // Sort columns to ensure consistent order: ID first, then others
-            if (a.id === "leadId") return -1;
-            if (b.id === "leadId") return 1;
-            return a.id.localeCompare(b.id);
-          })
-          .slice(0, showAllOptions ? undefined : 5)
-          .map((column) => {
+        <DropdownMenuLabel className="px-2 py-1.5">
+          Toggle columns
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator className="my-0" />
+        <div
+          ref={listRef}
+          className={
+            listScrollable
+              ? `overflow-y-auto py-1 brand-scrollbar ${FILTER_LIST_MAX_HEIGHT_CLASS}`
+              : "overflow-y-auto py-1 brand-scrollbar"
+          }
+        >
+          {toggleableColumns.map((column) => {
             const label = columnLabels[column.id] || column.id;
             const isVisible = column.getIsVisible();
 
@@ -117,15 +133,12 @@ export function ColumnVisibilityToggle({
                 className="capitalize cursor-pointer dark:focus:bg-white/10 dark:focus:text-white"
                 checked={isVisible}
                 onCheckedChange={(value) => {
-                  // Use table.setColumnVisibility to ensure immediate update
                   const newVisibility = {
                     ...table.getState().columnVisibility,
                   };
                   if (value) {
-                    // Show column - remove from visibility state (undefined means visible)
                     delete newVisibility[column.id];
                   } else {
-                    // Hide column - set to false
                     newVisibility[column.id] = false;
                   }
                   table.setColumnVisibility(newVisibility);
@@ -145,26 +158,12 @@ export function ColumnVisibilityToggle({
               </DropdownMenuCheckboxItem>
             );
           })}
-        <DropdownMenuSeparator />
-        <div className="px-2 py-1.5">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start h-8 text-xs text-gray-900! dark:text-white! dark:hover:bg-white/10"
-            onClick={() => {
-              if (!showAllOptions) {
-                setShowAllOptions(true);
-                // When expanding, optionally ensure all columns are visible
-                table.setColumnVisibility({});
-              } else {
-                // When collapsing, just hide the extra options in the list
-                setShowAllOptions(false);
-              }
-            }}
-          >
-            {showAllOptions ? "Show fewer columns" : "Show all columns"}
-          </Button>
         </div>
+        <FilterScrollHint
+          show={showHint}
+          atBottom={atBottom}
+          onScrollClick={scrollList}
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   );

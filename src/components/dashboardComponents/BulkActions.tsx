@@ -3,13 +3,6 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -19,9 +12,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { FilterSelect } from "@/components/dashboardComponents/leadsFilters/FilterSelect";
 import { Lead } from "@/types/leads";
 import { Loader2, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { canDeleteLead, canEditAnyLeadStatus } from "@/lib/roles";
@@ -89,6 +83,17 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
 
   const statuses: StatusOption[] = propStatuses || fetchedStatuses;
   const isLoadingStatuses = propIsLoadingStatuses ?? isFetchingStatuses;
+
+  const statusSelectOptions = useMemo(() => {
+    if (statuses.length > 0) {
+      return statuses.map((status) => ({
+        value: status._id || status.id || "",
+        label: status.name,
+        swatchColor: status.color,
+      }));
+    }
+    return [{ value: "NEW", label: "New" }];
+  }, [statuses]);
 
   const handleAssign = async () => {
     setIsAssigning(true);
@@ -194,53 +199,18 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
         </Button>
       )}
       {showBulkStatus && (
-      <Select
-        value={selectedStatus}
-        onValueChange={handleStatusChange}
-        disabled={
-          isUpdating || isChangingStatus || isDeleting || isLoadingStatuses
-        }
-      >
-        <SelectTrigger className="w-full min-w-35 max-w-45 shrink-0 bg-white dark:bg-gray-800! border-gray-300 dark:border-gray-600">
-          <SelectValue placeholder="Change Status" />
-        </SelectTrigger>
-        <SelectContent className="max-h-64 overflow-y-auto bg-white dark:bg-gray-800! border-gray-200 dark:border-gray-700">
-          {isLoadingStatuses ? (
-            <SelectItem value="loading" disabled>
-              Loading statuses...
-            </SelectItem>
-          ) : statuses.length > 0 ? (
-            statuses.map(
-              (status: {
-                id: string;
-                name: string;
-                color?: string;
-                _id?: string;
-              }) => (
-                <SelectItem
-                  key={status._id || status.id}
-                  value={status._id || status.id || ""}
-                  className="cursor-pointer dark:focus:bg-gray-700 dark:hover:bg-gray-700"
-                >
-                  <div className="flex items-center gap-2">
-                    {status.color && (
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: status.color }}
-                      />
-                    )}
-                    <span>{status.name}</span>
-                  </div>
-                </SelectItem>
-              ),
-            )
-          ) : (
-            <SelectItem value="NEW" className="cursor-pointer">
-              New
-            </SelectItem>
-          )}
-        </SelectContent>
-      </Select>
+        <FilterSelect
+          value={selectedStatus}
+          onChange={handleStatusChange}
+          options={statusSelectOptions}
+          placeholder="Change Status"
+          disabled={
+            isUpdating || isChangingStatus || isDeleting || isLoadingStatuses
+          }
+          isLoading={isLoadingStatuses}
+          className="w-full min-w-35 max-w-45 shrink-0"
+          showActiveHighlight={false}
+        />
       )}
       {isChangingStatus && showBulkStatus && (
         <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 shrink-0">

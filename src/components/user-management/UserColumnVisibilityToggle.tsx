@@ -1,6 +1,7 @@
 // src/components/user-management/UserColumnVisibilityToggle.tsx
 "use client";
 
+import { useMemo, useRef, useState } from "react";
 import { Table } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,12 +14,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Settings2, Eye, EyeOff } from "lucide-react";
 import { User } from "./UserTableColumns";
+import {
+  FilterScrollHint,
+  FILTER_LIST_MAX_HEIGHT_CLASS,
+  FILTER_SCROLL_HINT_MIN_ITEMS,
+  useFilterListScrollHint,
+} from "@/components/dashboardComponents/leadsFilters/FilterScrollHint";
 
 interface UserColumnVisibilityToggleProps {
   table: Table<User>;
 }
 
-// Column labels mapping for user table
 const userColumnLabels: Record<string, string> = {
   name: "Name",
   email: "Email",
@@ -32,19 +38,33 @@ const userColumnLabels: Record<string, string> = {
 export function UserColumnVisibilityToggle({
   table,
 }: UserColumnVisibilityToggleProps) {
-  // Get visible columns count (excluding actions)
-  const visibleColumnsCount = table.getAllColumns().filter((column) => {
-    const isVisible = column.getIsVisible();
-    const isRequired = column.id === "actions";
-    return isVisible && !isRequired;
-  }).length;
+  const [open, setOpen] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
 
-  const totalOptionalColumns = table.getAllColumns().filter((column) => {
-    return column.id !== "actions";
-  }).length;
+  const toggleableColumns = useMemo(
+    () =>
+      table
+        .getAllColumns()
+        .filter((column) => column.id !== "actions")
+        .sort((a, b) => a.id.localeCompare(b.id)),
+    [table],
+  );
+
+  const { showHint, atBottom, scrollList } = useFilterListScrollHint(
+    listRef,
+    toggleableColumns.length,
+    open,
+  );
+
+  const visibleColumnsCount = toggleableColumns.filter((column) =>
+    column.getIsVisible(),
+  ).length;
+  const totalOptionalColumns = toggleableColumns.length;
+  const listScrollable =
+    toggleableColumns.length > FILTER_SCROLL_HINT_MIN_ITEMS;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
@@ -63,23 +83,21 @@ export function UserColumnVisibilityToggle({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-50 bg-white! dark:bg-[#1f2937]! border-gray-200! dark:border-gray-700! text-gray-900! dark:text-gray-100!"
+        className="flex w-50 flex-col overflow-hidden p-0 bg-white! dark:bg-[#1f2937]! border-gray-200! dark:border-gray-700! text-gray-900! dark:text-gray-100!"
       >
-        <DropdownMenuLabel className="text-gray-900! dark:text-white!">
+        <DropdownMenuLabel className="px-2 py-1.5 text-gray-900! dark:text-white!">
           Toggle columns
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {table
-          .getAllColumns()
-          .filter((column) => {
-            // Don't allow hiding actions column
-            return column.id !== "actions";
-          })
-          .sort((a, b) => {
-            // Sort columns in a consistent order
-            return a.id.localeCompare(b.id);
-          })
-          .map((column) => {
+        <DropdownMenuSeparator className="my-0" />
+        <div
+          ref={listRef}
+          className={
+            listScrollable
+              ? `overflow-y-auto py-1 brand-scrollbar ${FILTER_LIST_MAX_HEIGHT_CLASS}`
+              : "overflow-y-auto py-1 brand-scrollbar"
+          }
+        >
+          {toggleableColumns.map((column) => {
             const label = userColumnLabels[column.id] || column.id;
             const isVisible = column.getIsVisible();
 
@@ -114,19 +132,12 @@ export function UserColumnVisibilityToggle({
               </DropdownMenuCheckboxItem>
             );
           })}
-        <DropdownMenuSeparator />
-        <div className="px-2 py-1.5">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start h-8 text-xs text-gray-900! dark:text-white! dark:hover:bg-white/10"
-            onClick={() => {
-              table.setColumnVisibility({});
-            }}
-          >
-            Show all
-          </Button>
         </div>
+        <FilterScrollHint
+          show={showHint}
+          atBottom={atBottom}
+          onScrollClick={scrollList}
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   );

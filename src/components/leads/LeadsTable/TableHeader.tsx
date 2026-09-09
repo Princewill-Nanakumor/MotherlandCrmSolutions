@@ -2,14 +2,8 @@
 import { Table } from "@tanstack/react-table";
 import { Lead } from "@/types/leads";
 import { ColumnVisibilityToggle } from "@/components/dashboardComponents/ColumnVisibilityToggle";
+import { FilterSelect } from "@/components/dashboardComponents/leadsFilters/FilterSelect";
 import { Loader } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface TableHeaderProps {
   table: Table<Lead>;
@@ -24,6 +18,11 @@ interface TableHeaderProps {
 }
 
 const pageSizeOptions = [10, 15, 20, 30, 40, 50, 100, 150, 200, 250, 300, 500];
+
+const PAGE_SIZE_SELECT_OPTIONS = pageSizeOptions.map((size) => ({
+  value: size.toString(),
+  label: size.toString(),
+}));
 
 export function TableHeader({
   table,
@@ -49,24 +48,14 @@ export function TableHeader({
         <label className="text-sm font-medium text-gray-700! dark:text-white! ">
           Show
         </label>
-        <Select
+        <FilterSelect
           value={pageSize.toString()}
-          onValueChange={handlePageSizeChange}
-        >
-          <SelectTrigger className="w-25 bg-white dark:bg-gray-800! border-gray-300 dark:border-gray-600">
-            <SelectValue placeholder={pageSize} />
-          </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-800! border-gray-200 dark:border-gray-700">
-            {pageSizeOptions.map((size) => (
-              <SelectItem
-                key={size}
-                value={size.toString()}
-              >
-                {size}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onChange={handlePageSizeChange}
+          options={PAGE_SIZE_SELECT_OPTIONS}
+          placeholder={pageSize.toString()}
+          className="w-25"
+          showActiveHighlight={false}
+        />
         <span className="text-sm font-medium text-gray-700!  dark:text-white!">
           entries
         </span>

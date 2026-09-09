@@ -13,6 +13,7 @@ import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 import {
   FilterScrollHint,
+  FILTER_LIST_MAX_HEIGHT_CLASS,
   FILTER_LIST_MAX_HEIGHT_PX,
   FILTER_SCROLL_HINT_MIN_ITEMS,
   useFilterListScrollHint,
@@ -22,6 +23,8 @@ interface Option {
   value: string;
   label: string;
   style?: CSSProperties;
+  /** Optional color swatch shown before the label (e.g. lead statuses). */
+  swatchColor?: string;
 }
 
 interface FilterSelectProps {
@@ -69,10 +72,12 @@ export const FilterSelect = ({
     showActiveHighlight && value !== inactiveValue && value !== "";
   const showBrandBorder = isOpen || isActiveFilter;
 
+  // Wait until the portal menu is positioned so listRef is mounted before
+  // measuring overflow (otherwise the ↑/↓ hint never appears).
   const { showHint, atBottom, scrollList } = useFilterListScrollHint(
     listRef,
     options.length,
-    isOpen && !disabled,
+    isOpen && !disabled && menuPosition !== null,
   );
 
   const updateMenuPosition = useCallback(() => {
@@ -88,7 +93,7 @@ export const FilterSelect = ({
     // Reserve space for the scroll-hint strip when the list will overflow.
     const preferredMaxHeight =
       options.length > FILTER_SCROLL_HINT_MIN_ITEMS
-        ? listMaxHeight + 28
+        ? listMaxHeight + 36
         : listMaxHeight;
     const spaceBelow = window.innerHeight - rect.bottom - gap;
     const spaceAbove = rect.top - gap;
@@ -186,18 +191,24 @@ export const FilterSelect = ({
       >
         <div
           ref={listRef}
-          className="min-h-0 flex-1 overflow-y-auto brand-scrollbar"
-          style={{
-            maxHeight:
-              options.length > FILTER_SCROLL_HINT_MIN_ITEMS
-                ? FILTER_LIST_MAX_HEIGHT_PX
-                : menuPosition.maxHeight,
-          }}
+          role="listbox"
+          className={
+            options.length > FILTER_SCROLL_HINT_MIN_ITEMS
+              ? `overflow-y-auto py-1 brand-scrollbar ${FILTER_LIST_MAX_HEIGHT_CLASS}`
+              : "min-h-0 flex-1 overflow-y-auto py-1 brand-scrollbar"
+          }
+          style={
+            options.length > FILTER_SCROLL_HINT_MIN_ITEMS
+              ? undefined
+              : { maxHeight: menuPosition.maxHeight }
+          }
         >
           {options.map((option) => (
             <button
               key={option.value}
               type="button"
+              role="option"
+              aria-selected={value === option.value}
               onClick={() => {
                 onChange(option.value);
                 setIsOpen(false);
@@ -209,7 +220,16 @@ export const FilterSelect = ({
                   : "text-gray-900! dark:text-gray-50!"
               }`}
             >
-              {option.label}
+              <span className="flex items-center gap-2 min-w-0">
+                {option.swatchColor ? (
+                  <span
+                    className="w-3 h-3 rounded-full shrink-0"
+                    style={{ backgroundColor: option.swatchColor }}
+                    aria-hidden
+                  />
+                ) : null}
+                <span className="truncate">{option.label}</span>
+              </span>
             </button>
           ))}
         </div>
@@ -227,9 +247,11 @@ export const FilterSelect = ({
       <button
         ref={triggerRef}
         type="button"
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        aria-expanded={isOpen}
         className={`w-full h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-between gap-2 transition-[border-color,background-color] ${
           showBrandBorder
             ? "bg-white dark:bg-gray-800 border-(--brand-from)!"
@@ -237,10 +259,17 @@ export const FilterSelect = ({
         }`}
       >
         <span
-          className="truncate text-gray-900! dark:text-gray-50!"
+          className="truncate text-gray-900! dark:text-gray-50! flex items-center gap-2 min-w-0"
           style={currentOption?.style}
         >
-          {displayValue}
+          {currentOption?.swatchColor ? (
+            <span
+              className="w-3 h-3 rounded-full shrink-0"
+              style={{ backgroundColor: currentOption.swatchColor }}
+              aria-hidden
+            />
+          ) : null}
+          <span className="truncate">{displayValue}</span>
         </span>
         <ChevronDown
           className={`w-4 h-4 shrink-0 text-gray-500! dark:text-gray-400! transition-transform duration-200 ${

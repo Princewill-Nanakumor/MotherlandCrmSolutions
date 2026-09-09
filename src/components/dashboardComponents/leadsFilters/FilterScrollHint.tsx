@@ -72,22 +72,35 @@ export function useFilterListScrollHint(
       return;
     }
 
-    update();
-    const el = listRef.current;
-    if (!el) return;
+    let cancelled = false;
+    let el: HTMLElement | null = null;
+    let ro: ResizeObserver | null = null;
+    let raf2 = 0;
 
-    el.addEventListener("scroll", update, { passive: true });
-    const ro =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(() => update())
-        : null;
-    ro?.observe(el);
-    const raf = window.requestAnimationFrame(update);
+    const attach = () => {
+      if (cancelled) return;
+      el = listRef.current;
+      if (!el) {
+        raf2 = window.requestAnimationFrame(attach);
+        return;
+      }
+      update();
+      el.addEventListener("scroll", update, { passive: true });
+      ro =
+        typeof ResizeObserver !== "undefined"
+          ? new ResizeObserver(() => update())
+          : null;
+      ro?.observe(el);
+    };
+
+    const raf1 = window.requestAnimationFrame(attach);
 
     return () => {
-      el.removeEventListener("scroll", update);
+      cancelled = true;
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+      el?.removeEventListener("scroll", update);
       ro?.disconnect();
-      window.cancelAnimationFrame(raf);
     };
   }, [enabled, update, listRef, itemCount]);
 
@@ -118,7 +131,7 @@ export function FilterScrollHint({
   const direction = atBottom ? "up" : "down";
 
   return (
-    <div className="flex shrink-0 items-center justify-center border-t border-gray-200/80 bg-white py-1 dark:border-gray-700/80 dark:bg-gray-800">
+    <div className="flex shrink-0 items-center justify-center overflow-hidden border-t border-gray-200/80 bg-white py-1.5 dark:border-gray-700/80 dark:bg-gray-800">
       <button
         type="button"
         onClick={(e) => {
@@ -127,30 +140,32 @@ export function FilterScrollHint({
           onScrollClick(direction);
         }}
         aria-label={direction === "down" ? "Scroll down" : "Scroll up"}
-        className="inline-flex cursor-pointer items-center justify-center rounded-md px-3 py-1 hover:bg-[color-mix(in_srgb,var(--brand-from)_14%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-focus)"
+        className="inline-flex cursor-pointer items-center justify-center overflow-hidden rounded-md p-1 hover:bg-[color-mix(in_srgb,var(--brand-from)_14%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-focus)"
       >
-        <motion.span
-          key={direction}
-          initial={false}
-          animate={
-            reduceMotion
-              ? { y: 0 }
-              : { y: direction === "up" ? [0, -4, 0] : [0, 4, 0] }
-          }
-          transition={{
-            duration: 1.15,
-            repeat: reduceMotion ? 0 : Infinity,
-            ease: "easeInOut",
-          }}
-          className="inline-flex"
-          style={{ color: "var(--brand-from)" }}
-        >
-          {direction === "up" ? (
-            <ChevronUp className="h-4 w-4" strokeWidth={2.5} />
-          ) : (
-            <ChevronDown className="h-4 w-4" strokeWidth={2.5} />
-          )}
-        </motion.span>
+        <span className="inline-flex h-4 w-4 items-center justify-center overflow-hidden">
+          <motion.span
+            key={direction}
+            initial={false}
+            animate={
+              reduceMotion
+                ? { y: 0 }
+                : { y: direction === "up" ? [0, -1.5, 0] : [0, 1.5, 0] }
+            }
+            transition={{
+              duration: 1.15,
+              repeat: reduceMotion ? 0 : Infinity,
+              ease: "easeInOut",
+            }}
+            className="inline-flex"
+            style={{ color: "var(--brand-from)" }}
+          >
+            {direction === "up" ? (
+              <ChevronUp className="h-3.5 w-3.5" strokeWidth={2.5} />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" strokeWidth={2.5} />
+            )}
+          </motion.span>
+        </span>
       </button>
     </div>
   );

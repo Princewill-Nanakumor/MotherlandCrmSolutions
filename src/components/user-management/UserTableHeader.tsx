@@ -1,9 +1,9 @@
-// src/components/user-management/UserTableHeader.tsx
 "use client";
 
 import { Table } from "@tanstack/react-table";
 import { User } from "./UserTableColumns";
 import { UserColumnVisibilityToggle } from "./UserColumnVisibilityToggle";
+import { FilterSelect } from "@/components/dashboardComponents/leadsFilters/FilterSelect";
 
 interface UserTableHeaderProps {
   table: Table<User>;
@@ -13,6 +13,11 @@ interface UserTableHeaderProps {
 }
 
 const pageSizeOptions = [10, 15, 20, 30, 40, 50, 100];
+
+const PAGE_SIZE_SELECT_OPTIONS = pageSizeOptions.map((size) => ({
+  value: size.toString(),
+  label: size.toString(),
+}));
 
 export function UserTableHeader({
   table,
@@ -29,19 +34,14 @@ export function UserTableHeader({
         <label className="text-sm font-medium text-gray-700! dark:text-white!">
           Show
         </label>
-        <select
+        <FilterSelect
           value={pageSize.toString()}
-          onChange={(e) => {
-            table.setPageSize(Number(e.target.value));
-          }}
-          className="w-20 h-10 px-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900! dark:text-white! focus:outline-none focus:ring-0 focus:border-(--brand-focus) text-sm"
-        >
-          {pageSizeOptions.map((size) => (
-            <option key={size} value={size.toString()}>
-              {size}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => table.setPageSize(Number(value))}
+          options={PAGE_SIZE_SELECT_OPTIONS}
+          placeholder={pageSize.toString()}
+          className="w-25"
+          showActiveHighlight={false}
+        />
         <span className="text-sm font-medium text-gray-700! dark:text-white!">
           entries
         </span>

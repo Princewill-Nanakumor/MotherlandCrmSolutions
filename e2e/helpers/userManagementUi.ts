@@ -84,9 +84,16 @@ export async function expectUserRowVisible(
   timeoutMs = 60_000,
 ) {
   // Created users can land past the default 15-row page (name sort).
-  const pageSize = page.locator("select").filter({ has: page.locator('option[value="100"]') }).first();
-  if (await pageSize.count()) {
-    await pageSize.selectOption("100").catch(() => undefined);
+  const showHeader = page
+    .locator("label")
+    .filter({ hasText: /^Show$/ })
+    .locator("..");
+  if (await showHeader.count()) {
+    await showHeader.getByRole("combobox").click().catch(() => undefined);
+    await page
+      .getByRole("option", { name: "100", exact: true })
+      .click()
+      .catch(() => undefined);
   }
 
   const row = page.locator("table tbody tr").filter({ hasText: email }).first();
