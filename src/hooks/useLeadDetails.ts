@@ -94,6 +94,7 @@ export const useLeadDetails = (leadId: string | null | undefined) => {
     enabled: !!leadId,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
+    refetchOnMount: true,
     retry: 2,
   });
 

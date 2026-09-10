@@ -39,6 +39,7 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
     refetchOnWindowFocus: false,
+    refetchOnMount: "always",
   });
 
   const pendingRemindersCount = pendingReminderCount(reminders);

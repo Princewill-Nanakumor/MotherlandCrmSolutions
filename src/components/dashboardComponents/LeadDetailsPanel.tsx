@@ -241,7 +241,6 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         eventName: string,
         listener: (message: { data?: unknown }) => void,
       ) => void;
-      detach: () => Promise<void>;
     } | null = null;
     let adminChannelName: string | null = null;
     let adminMessageListener: ((message: { data?: unknown }) => void) | null =
@@ -395,16 +394,14 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
     return () => {
       isDisposed = true;
-      void (async () => {
-        if (adminSubscribed && adminChannel && adminMessageListener) {
-          adminChannel.unsubscribe(
-            ADMIN_LEADS_UPDATED_EVENT,
-            adminMessageListener,
-          );
-          await adminChannel.detach().catch(() => undefined);
-        }
-        // Do not release the shared tenant channel — dashboard layout owns it.
-      })();
+      if (adminSubscribed && adminChannel && adminMessageListener) {
+        adminChannel.unsubscribe(
+          ADMIN_LEADS_UPDATED_EVENT,
+          adminMessageListener,
+        );
+      }
+      // Do NOT detach/release — TenantLeadsRealtimeSync owns the shared
+      // tenant channel. Detaching here dropped remote comment events.
     };
   }, [isOpen, lead?._id, queryClient, session?.user?.id]);
 

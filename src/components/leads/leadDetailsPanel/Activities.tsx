@@ -44,7 +44,10 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
   } = useQuery<Activity[], Error>({
     queryKey: ["activities", leadId],
     queryFn: async (): Promise<Activity[]> => {
-      const response = await fetch(`/api/leads/${leadId}/activities`);
+      const response = await fetch(`/api/leads/${leadId}/activities?limit=100`, {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
       if (!response.ok) {
         throw new Error(`Failed to fetch activities: ${response.status}`);
       }
@@ -56,6 +59,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
     gcTime: 5 * 60 * 1000,
     retry: (failureCount) => failureCount < 2,
     refetchOnWindowFocus: false,
+    refetchOnMount: "always",
   });
 
   // Handle error - now using imported React

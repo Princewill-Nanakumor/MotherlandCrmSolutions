@@ -12,6 +12,8 @@ import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
 import { removeLeadsFromAssignedLeadsCaches } from "@/lib/leadsListCache";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import {
+  invalidateLeadActivitiesTimeline,
+  invalidateLeadRemindersTimeline,
   isActivityTimelineAdminEvent,
   isTimelineChurnAdminEvent,
   syncActivityTimelineFromAdminEvent,
@@ -79,6 +81,8 @@ export function TenantLeadsRealtimeSync() {
         const leadId = eventData.leadId;
         if (leadId) {
           if (eventType.startsWith("comment_")) {
+            // Seed cache via no-store fetch + setQueryData so open panels
+            // update live and closed panels reopen without a stale spinner.
             void syncCommentsFromAdminEvent(queryClient, {
               type: eventType,
               leadId,
@@ -87,32 +91,26 @@ export function TenantLeadsRealtimeSync() {
           }
           if (eventType.startsWith("reminder_")) {
             if (eventType === "reminder_deleted" && eventData.reminderId) {
+              void queryClient.cancelQueries({
+                queryKey: ["reminders", leadId],
+                exact: true,
+              });
               patchReminderDeletedInCache(
                 queryClient,
                 leadId,
                 eventData.reminderId,
               );
             } else {
-              void queryClient.invalidateQueries({
-                queryKey: ["reminders", leadId],
-                exact: true,
-                refetchType: "inactive",
-              });
+              void invalidateLeadRemindersTimeline(queryClient, leadId);
             }
-            void queryClient.invalidateQueries({
-              queryKey: ["activities", leadId],
-              refetchType: "active",
-            });
+            void invalidateLeadActivitiesTimeline(queryClient, leadId);
           }
           if (eventType === "call_initiated") {
-            void queryClient.invalidateQueries({
-              queryKey: ["activities", leadId],
-              refetchType: "active",
-            });
+            void invalidateLeadActivitiesTimeline(queryClient, leadId);
             void queryClient.invalidateQueries({
               queryKey: ["lead", leadId],
               exact: true,
-              refetchType: "active",
+              refetchType: "all",
             });
           }
         }

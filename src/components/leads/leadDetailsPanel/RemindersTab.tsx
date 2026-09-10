@@ -39,6 +39,7 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
     refetchOnWindowFocus: false,
+    refetchOnMount: "always",
   });
 
   // Add reminder mutation
@@ -196,10 +197,6 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
     },
     onSuccess: (_data, reminderId) => {
       patchReminderDeletedInCache(queryClient, leadId, reminderId);
-      queryClient.invalidateQueries({
-        queryKey: ["activities", leadId],
-        refetchType: "active",
-      });
       toast({
         title: "Success",
         description: "Reminder deleted",

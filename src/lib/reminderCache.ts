@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { upsertTimelineRowsById } from "@/lib/timelineCacheMerge";
 import type { Reminder } from "@/types/leads";
 
 export function reminderRecordId(reminder: {
@@ -61,4 +62,34 @@ export function patchReminderDeletedInCache(
   queryClient.setQueryData<Reminder[]>(["reminders", leadId], (old) =>
     removeReminderFromList(old, reminderId),
   );
+}
+
+/** Write fresh reminders into cache for open AND closed panels. */
+export async function refreshRemindersCacheForLead(
+  queryClient: QueryClient,
+  leadId: string,
+): Promise<Reminder[] | null> {
+  if (!leadId) return null;
+
+  try {
+    const response = await fetch(`/api/leads/${leadId}/reminders`, {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const reminders = (Array.isArray(data) ? data : []) as Reminder[];
+    let merged = reminders;
+    queryClient.setQueryData(
+      ["reminders", leadId],
+      (old: Reminder[] | undefined) => {
+        merged = upsertTimelineRowsById(old, reminders, reminderRecordId);
+        return merged;
+      },
+    );
+    return merged;
+  } catch {
+    return null;
+  }
 }

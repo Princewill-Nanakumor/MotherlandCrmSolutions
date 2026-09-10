@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { Comment } from "@/components/leads/leadDetailsPanel/commentsAndActivities/types";
 import { transformComment } from "@/components/leads/leadDetailsPanel/commentsAndActivities/utils";
+import { removeTimelineRowsById, timelineRowId, upsertTimelineRowsById } from "@/lib/timelineCacheMerge";
 import type { Lead } from "@/types/leads";
 
 /** Keep leads / assignedLeads list rows in sync when comment data changes. */
@@ -67,7 +68,23 @@ export function patchLeadListCachesFromComments(
   );
 }
 
-/** Fetch latest comments and push into React Query + list caches (works when query is inactive). */
+/** Drop a deleted comment immediately — do not refetch, which can restore it. */
+export function patchCommentDeletedInCache(
+  queryClient: QueryClient,
+  leadId: string,
+  commentId: string,
+): void {
+  if (!leadId || !commentId) return;
+  const nextComments = removeTimelineRowsById(
+    queryClient.getQueryData<Comment[]>(["comments", leadId]),
+    [commentId],
+    (comment) => timelineRowId(comment._id),
+  );
+  queryClient.setQueryData(["comments", leadId], nextComments);
+  patchLeadListCachesFromComments(queryClient, leadId, nextComments);
+}
+
+/** Fetch latest comments and upsert into React Query + list caches (open or closed panel). */
 export async function refreshCommentsCacheForLead(
   queryClient: QueryClient,
   leadId: string,
@@ -77,15 +94,52 @@ export async function refreshCommentsCacheForLead(
   try {
     const response = await fetch(`/api/leads/${leadId}/comments`, {
       cache: "no-store",
+      credentials: "same-origin",
     });
     if (!response.ok) return null;
 
     const data = await response.json();
     const comments = (Array.isArray(data) ? data : []).map(transformComment);
-    queryClient.setQueryData(["comments", leadId], comments);
-    patchLeadListCachesFromComments(queryClient, leadId, comments);
-    return comments;
+    let merged = comments;
+    queryClient.setQueryData(["comments", leadId], (old: Comment[] | undefined) => {
+      merged = upsertTimelineRowsById(
+        old,
+        comments,
+        (comment) => timelineRowId(comment._id),
+      );
+      return merged;
+    });
+    patchLeadListCachesFromComments(queryClient, leadId, merged);
+    return merged;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Write fresh comments into cache for open AND closed panels.
+ *
+ * Do not invalidateQueries here: a competing React Query refetch (queryFn
+ * without cache: "no-store") can overwrite this payload with a stale GET.
+ * setQueryData updates active observers immediately and leaves inactive
+ * cache ready so reopen skips the spinner and still shows the new row.
+ */
+export async function invalidateLeadCommentsTimeline(
+  queryClient: QueryClient,
+  leadId: string,
+): Promise<void> {
+  if (!leadId) return;
+
+  const comments = await refreshCommentsCacheForLead(queryClient, leadId);
+  if (!comments) {
+    await queryClient.refetchQueries({
+      queryKey: ["comments", leadId],
+      exact: true,
+      type: "all",
+    });
+    const cached = queryClient.getQueryData<Comment[]>(["comments", leadId]);
+    if (cached) {
+      patchLeadListCachesFromComments(queryClient, leadId, cached);
+    }
   }
 }

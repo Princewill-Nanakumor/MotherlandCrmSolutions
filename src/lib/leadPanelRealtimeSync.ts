@@ -1,13 +1,19 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { Comment } from "@/components/leads/leadDetailsPanel/commentsAndActivities/types";
 import {
-  patchLeadListCachesFromComments,
-  refreshCommentsCacheForLead,
+  invalidateLeadCommentsTimeline,
+  patchCommentDeletedInCache,
 } from "@/lib/commentCacheSync";
+import {
+  patchActivityDeletedInCache,
+  refreshActivitiesCacheForLead,
+} from "@/lib/leadActivitiesQuery";
 import { normalizeLeadStatusId } from "@/lib/leadClientUpdate";
 import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
 import type { Lead } from "@/types/leads";
-import { patchReminderDeletedInCache } from "@/lib/reminderCache";
+import {
+  patchReminderDeletedInCache,
+  refreshRemindersCacheForLead,
+} from "@/lib/reminderCache";
 
 export type AdminLeadPanelEvent = {
   type?: string;
@@ -81,15 +87,37 @@ export function adminEventTouchesLead(
   );
 }
 
-/** Refetch the activity timeline for one lead (status, assignment, deletes, etc.). */
+/** Refresh the activity timeline for one lead (open panel, closed cache, or reopen). */
 export async function invalidateLeadActivitiesTimeline(
   queryClient: QueryClient,
   leadId: string,
 ): Promise<void> {
   if (!leadId) return;
-  await queryClient.invalidateQueries({
+
+  const activities = await refreshActivitiesCacheForLead(queryClient, leadId);
+  if (activities) return;
+
+  await queryClient.refetchQueries({
     queryKey: ["activities", leadId],
     exact: true,
+    type: "all",
+  });
+}
+
+/** Refresh reminders for one lead whether the panel is open or closed. */
+export async function invalidateLeadRemindersTimeline(
+  queryClient: QueryClient,
+  leadId: string,
+): Promise<void> {
+  if (!leadId) return;
+
+  const reminders = await refreshRemindersCacheForLead(queryClient, leadId);
+  if (reminders) return;
+
+  await queryClient.refetchQueries({
+    queryKey: ["reminders", leadId],
+    exact: true,
+    type: "all",
   });
 }
 
@@ -122,6 +150,7 @@ export async function invalidateLeadDetailCache(
   await queryClient.invalidateQueries({
     queryKey: ["lead", leadId],
     exact: true,
+    refetchType: "all",
   });
 }
 
@@ -151,12 +180,8 @@ export async function syncLeadDetailFromAdminEvent(
 }
 
 /**
- * Targeted activity-timeline sync for Ably events — mirrors comment_created handling.
- * Patches list status when applicable and refetches activities for affected leads.
- */
-/**
- * Pull comment rows from the API and patch list/detail caches.
- * Used for remote comment_created / comment_updated / comment_deleted events.
+ * Pull comment rows from the API and upsert into list/detail caches.
+ * Create/update refetch; delete only patches so a GET cannot restore the row.
  */
 export async function syncCommentsFromAdminEvent(
   queryClient: QueryClient,
@@ -167,18 +192,15 @@ export async function syncCommentsFromAdminEvent(
   if (!leadId || !COMMENT_TIMELINE_EVENTS.has(type)) return;
 
   if (type === "comment_deleted" && event.commentId) {
-    const cached = queryClient.getQueryData<Comment[]>(["comments", leadId]);
-    if (cached) {
-      const nextComments = cached.filter(
-        (comment) => comment._id !== event.commentId,
-      );
-      queryClient.setQueryData(["comments", leadId], nextComments);
-      patchLeadListCachesFromComments(queryClient, leadId, nextComments);
-      return;
-    }
+    await queryClient.cancelQueries({
+      queryKey: ["comments", leadId],
+      exact: true,
+    });
+    patchCommentDeletedInCache(queryClient, leadId, event.commentId);
+    return;
   }
 
-  await refreshCommentsCacheForLead(queryClient, leadId);
+  await invalidateLeadCommentsTimeline(queryClient, leadId);
 
   if (type === "comment_created" || type === "comment_updated") {
     void invalidateLeadDetailCache(queryClient, leadId);
@@ -197,11 +219,11 @@ export async function syncActivityTimelineFromAdminEvent(
 
   if (type === "activity_deleted" && event.activityId) {
     for (const leadId of leadIds) {
-      queryClient.setQueryData(
-        ["activities", leadId],
-        (old: Array<{ _id: string }> | undefined) =>
-          (old ?? []).filter((activity) => activity._id !== event.activityId),
-      );
+      void queryClient.cancelQueries({
+        queryKey: ["activities", leadId],
+        exact: true,
+      });
+      patchActivityDeletedInCache(queryClient, leadId, event.activityId);
     }
     return;
   }
@@ -252,17 +274,16 @@ export async function handleAdminLeadPanelEvent(
 
   if (REMINDER_TIMELINE_EVENTS.has(type)) {
     if (type === "reminder_deleted" && event.reminderId) {
-      patchReminderDeletedInCache(queryClient, openLeadId, event.reminderId);
-    } else {
-      await queryClient.invalidateQueries({
+      await queryClient.cancelQueries({
         queryKey: ["reminders", openLeadId],
         exact: true,
       });
+      patchReminderDeletedInCache(queryClient, openLeadId, event.reminderId);
+      void invalidateLeadActivitiesTimeline(queryClient, openLeadId);
+      return;
     }
-    queryClient.invalidateQueries({
-      queryKey: ["activities", openLeadId],
-      refetchType: "active",
-    });
+    await invalidateLeadRemindersTimeline(queryClient, openLeadId);
+    await invalidateLeadActivitiesTimeline(queryClient, openLeadId);
     return;
   }
 

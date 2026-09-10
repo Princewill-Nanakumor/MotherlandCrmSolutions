@@ -16,7 +16,11 @@ import { Activity, Status } from "@/types/leads";
 import { isTaboolaLeadImportActivity } from "@/lib/leadActivityDisplay";
 import { Comment, CombinedItem } from "./commentsAndActivities/types";
 import { canDeleteComments } from "@/lib/roles";
-import { patchLeadListCachesFromComments } from "@/lib/commentCacheSync";
+import {
+  patchCommentDeletedInCache,
+  patchLeadListCachesFromComments,
+} from "@/lib/commentCacheSync";
+import { patchActivityDeletedInCache } from "@/lib/leadActivitiesQuery";
 import { callLogsKeys } from "@/components/user-management/CallLogsModal";
 import {
   transformComment,
@@ -161,7 +165,10 @@ export const CommentsAndActivitiesCombined: FC<
   } = useQuery<Comment[], Error>({
     queryKey: ["comments", leadId],
     queryFn: async (): Promise<Comment[]> => {
-      const response = await fetch(`/api/leads/${leadId}/comments`);
+      const response = await fetch(`/api/leads/${leadId}/comments`, {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
       if (!response.ok) {
         throw new Error(`Failed to fetch comments: ${response.status}`);
       }
@@ -173,6 +180,7 @@ export const CommentsAndActivitiesCombined: FC<
     gcTime: 5 * 60 * 1000,
     retry: (failureCount) => failureCount < 2,
     refetchOnWindowFocus: false,
+    refetchOnMount: "always",
   });
 
   // Fetch statuses for activities
@@ -204,6 +212,7 @@ export const CommentsAndActivitiesCombined: FC<
     queryFn: async (): Promise<Activity[]> => {
       const response = await fetch(
         `/api/leads/${leadId}/activities?limit=100`,
+        { cache: "no-store", credentials: "same-origin" },
       );
       if (!response.ok) {
         throw new Error(`Failed to fetch activities: ${response.status}`);
@@ -216,7 +225,7 @@ export const CommentsAndActivitiesCombined: FC<
     gcTime: 5 * 60 * 1000,
     retry: (failureCount) => failureCount < 2,
     refetchOnWindowFocus: false,
-    refetchOnMount: true,
+    refetchOnMount: "always",
   });
 
   // Combine and sort comments and activities by timestamp (newest first)
@@ -347,7 +356,7 @@ export const CommentsAndActivitiesCombined: FC<
     },
   });
 
-  // Delete comment mutation – clear deletingId only in onSettled so only one row shows spinner
+  // Delete comment — patch cache immediately; do not refetch (that restored rows).
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId: string) => {
       const response = await fetch(
@@ -362,25 +371,31 @@ export const CommentsAndActivitiesCombined: FC<
 
       return commentId;
     },
+    onMutate: async (commentId) => {
+      await queryClient.cancelQueries({
+        queryKey: ["comments", leadId],
+        exact: true,
+      });
+      const previousComments = queryClient.getQueryData<Comment[]>([
+        "comments",
+        leadId,
+      ]);
+      patchCommentDeletedInCache(queryClient, leadId, commentId);
+      return { previousComments };
+    },
     onSuccess: (deletedCommentId) => {
-      let nextComments: Comment[] = [];
-      queryClient.setQueryData(
-        ["comments", leadId],
-        (oldComments: Comment[] = []) => {
-          nextComments = oldComments.filter(
-            (comment) => comment._id !== deletedCommentId,
-          );
-          return nextComments;
-        },
-      );
-      patchLeadCachesFromComments(nextComments);
+      patchCommentDeletedInCache(queryClient, leadId, deletedCommentId);
       toast({
         title: "Success",
         description: "Comment deleted successfully",
         variant: "success",
       });
     },
-    onError: (error) => {
+    onError: (error, _commentId, context) => {
+      if (context?.previousComments) {
+        queryClient.setQueryData(["comments", leadId], context.previousComments);
+        patchLeadCachesFromComments(context.previousComments);
+      }
       console.error("Error deleting comment:", error);
       toast({
         title: "Error",
@@ -408,19 +423,33 @@ export const CommentsAndActivitiesCombined: FC<
 
       return activityId;
     },
+    onMutate: async (activityId) => {
+      await queryClient.cancelQueries({
+        queryKey: ["activities", leadId],
+        exact: true,
+      });
+      const previousActivities = queryClient.getQueryData<Activity[]>([
+        "activities",
+        leadId,
+      ]);
+      patchActivityDeletedInCache(queryClient, leadId, activityId);
+      return { previousActivities };
+    },
     onSuccess: (deletedActivityId) => {
-      queryClient.setQueryData(
-        ["activities", leadId],
-        (oldActivities: Activity[] = []) =>
-          oldActivities.filter((a) => a._id !== deletedActivityId),
-      );
+      patchActivityDeletedInCache(queryClient, leadId, deletedActivityId);
       toast({
         title: "Success",
         description: "Activity deleted successfully",
         variant: "success",
       });
     },
-    onError: (error) => {
+    onError: (error, _activityId, context) => {
+      if (context?.previousActivities) {
+        queryClient.setQueryData(
+          ["activities", leadId],
+          context.previousActivities,
+        );
+      }
       console.error("Error deleting activity:", error);
       toast({
         title: "Error",
