@@ -26,6 +26,7 @@ import { format, isValid } from "date-fns";
 import { Reminder } from "@/types/leads";
 import { formatTime24Hour } from "@/lib/utils";
 import { canManageReminders } from "@/lib/roles";
+import { EDIT_ICON_BUTTON_CLASS } from "@/lib/actionIconButtonStyles";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -204,7 +205,7 @@ export const ReminderCard: FC<ReminderCardProps> = ({
             size="sm"
             variant="ghost"
             onClick={() => onEdit(reminder)}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className={EDIT_ICON_BUTTON_CLASS}
             title="Edit reminder"
           >
             <Edit className="w-4 h-4" />

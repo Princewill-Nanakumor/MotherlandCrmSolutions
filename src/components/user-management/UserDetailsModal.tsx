@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Edit2 } from "lucide-react";
+import { EDIT_ICON_BUTTON_CLASS } from "@/lib/actionIconButtonStyles";
+import { cn } from "@/lib/utils";
 import { UserDetailsView } from "./UserDetailsView";
 import { UserDetailsEditForm } from "./UserDetailsEditForm";
 import { SelectOption, countryOptions } from "./CountrySelect";
@@ -219,8 +221,9 @@ export function UserDetailsModal({
             {!isEditing && (
               <Button
                 size="sm"
+                variant="outline"
                 onClick={handleEdit}
-                className="flex items-center gap-2 border-transparent brand-gradient text-white! hover:brightness-95"
+                className={cn("flex items-center gap-2", EDIT_ICON_BUTTON_CLASS)}
               >
                 <Edit2 className="w-4 h-4" />
                 Edit

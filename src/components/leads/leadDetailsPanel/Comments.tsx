@@ -22,6 +22,10 @@ import {
   loadCommentDraft,
   persistCommentDraft,
 } from "./commentsAndActivities/utils";
+import {
+  DELETE_ICON_BUTTON_CLASS,
+  EDIT_ICON_BUTTON_CLASS,
+} from "@/lib/actionIconButtonStyles";
 
 interface CommentsProps {
   comments: CommentType[];
@@ -369,18 +373,20 @@ const Comments: FC<CommentsProps> = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-gray-500! hover:text-(--brand-from)! dark:text-gray-400! dark:hover:text-(--brand-focus)!"
+                          className={EDIT_ICON_BUTTON_CLASS}
                           onClick={() => handleEdit(comment)}
                           disabled={isEditing}
+                          title="Edit comment"
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-gray-500! hover:text-red-500! dark:text-gray-400! dark:hover:text-red-400!"
+                          className={DELETE_ICON_BUTTON_CLASS}
                           onClick={() => handleDelete(comment._id)}
                           disabled={!!deletingCommentId}
+                          title="Delete comment"
                         >
                           {deletingCommentId === comment._id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />

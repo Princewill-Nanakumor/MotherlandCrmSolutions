@@ -14,6 +14,7 @@ import {
 } from "./ActivityHelpers";
 import { formatDate, getUserDisplayName } from "./utils";
 import { cn } from "@/lib/utils";
+import { DELETE_ICON_BUTTON_CLASS } from "@/lib/actionIconButtonStyles";
 
 interface ActivityItemProps {
   activity: Activity;
@@ -126,13 +127,15 @@ export const ActivityItem: FC<ActivityItemProps> = ({
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "transition-opacity duration-200 text-gray-500! hover:text-red-500! dark:text-gray-400! dark:hover:text-red-400!",
+                    "transition-opacity duration-200",
+                    DELETE_ICON_BUTTON_CLASS,
                     isDeleting
                       ? "opacity-100"
                       : "opacity-0 group-hover:opacity-100",
                   )}
                   onClick={() => onDelete(activity._id)}
                   disabled={isDeleting || isDeleteDisabled}
+                  title="Delete activity"
                 >
                   {isDeleting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

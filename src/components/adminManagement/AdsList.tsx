@@ -12,6 +12,11 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DELETE_ICON_BUTTON_CLASS,
+  EDIT_ICON_BUTTON_CLASS,
+} from "@/lib/actionIconButtonStyles";
+import { cn } from "@/lib/utils";
 
 interface Ad {
   _id: string;
@@ -156,14 +161,22 @@ export default function AdsList({ ads }: AdsListProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700 hover:bg-white/90 dark:hover:bg-gray-900/90"
+                      title="Edit ad"
+                      className={cn(
+                        "backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700",
+                        EDIT_ICON_BUTTON_CLASS,
+                      )}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700 hover:bg-white/90 dark:hover:bg-gray-900/90"
+                      title="Delete ad"
+                      className={cn(
+                        "backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700",
+                        DELETE_ICON_BUTTON_CLASS,
+                      )}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

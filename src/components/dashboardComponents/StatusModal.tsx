@@ -23,6 +23,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  DELETE_ICON_BUTTON_CLASS,
+  EDIT_ICON_BUTTON_CLASS,
+} from "@/lib/actionIconButtonStyles";
 import { useQueryClient } from "@tanstack/react-query";
 import { Status } from "@/types/leads";
 import { useStatuses } from "@/context/StatusContext";
@@ -451,6 +455,8 @@ const StatusModal = ({
                                   size="sm"
                                   disabled={!!deletingStatusId}
                                   onClick={() => handleEdit(status)}
+                                  title="Edit status"
+                                  className={EDIT_ICON_BUTTON_CLASS}
                                 >
                                   <Pencil className="w-4 h-4" />
                                 </Button>
@@ -461,11 +467,13 @@ const StatusModal = ({
                                   disabled={!!deletingStatusId}
                                   onClick={() => requestDelete(status)}
                                   aria-label={`Delete ${status.name}`}
+                                  title="Delete status"
+                                  className={DELETE_ICON_BUTTON_CLASS}
                                 >
                                   {isDeletingThis ? (
-                                    <Loader2 className="w-4 h-4 text-red-500 animate-spin" />
+                                    <Loader2 className="w-4 h-4 animate-spin" />
                                   ) : (
-                                    <Trash2 className="w-4 h-4 text-red-500" />
+                                    <Trash2 className="w-4 h-4" />
                                   )}
                                 </Button>
                               </>

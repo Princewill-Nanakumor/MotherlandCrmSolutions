@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { EDIT_ICON_BUTTON_CLASS } from "@/lib/actionIconButtonStyles";
 import { NameField } from "./NameField";
 import { EmailField } from "./EmailField";
 import { PhoneField } from "./PhoneField";
@@ -388,7 +389,8 @@ export const ContactSection: FC<ContactSectionProps> = ({
                 e.stopPropagation();
                 handleEdit();
               }}
-              className="h-8 px-2 transition-opacity duration-200 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+              title="Edit contact"
+              className={`h-8 px-2 transition-opacity duration-200 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 ${EDIT_ICON_BUTTON_CLASS}`}
             >
               <Edit2 className="w-4 h-4" />
             </Button>

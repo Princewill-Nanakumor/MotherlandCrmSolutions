@@ -8,6 +8,10 @@ import { Loader2, MessageSquare, Pencil, Save, Trash2, X } from "lucide-react";
 import { Comment } from "./types";
 import { formatDate, formatRelative } from "./utils";
 import { cn } from "@/lib/utils";
+import {
+  DELETE_ICON_BUTTON_CLASS,
+  EDIT_ICON_BUTTON_CLASS,
+} from "@/lib/actionIconButtonStyles";
 
 interface CommentItemProps {
   comment: Comment;
@@ -120,9 +124,10 @@ export const CommentItem: FC<CommentItemProps> = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-gray-500! hover:text-(--brand-from)! dark:text-gray-400! dark:hover:text-(--brand-focus)!"
+                className={EDIT_ICON_BUTTON_CLASS}
                 onClick={() => onEdit(comment)}
                 disabled={isEditingMutation}
+                title="Edit comment"
               >
                 <Pencil className="w-4 h-4" />
               </Button>
@@ -130,9 +135,10 @@ export const CommentItem: FC<CommentItemProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              className="text-gray-500! hover:text-red-500! dark:text-gray-400! dark:hover:text-red-400!"
+              className={DELETE_ICON_BUTTON_CLASS}
               onClick={() => onDelete(comment._id)}
               disabled={isDeleting || isDeleteDisabled}
+              title="Delete comment"
             >
               {isDeleting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
