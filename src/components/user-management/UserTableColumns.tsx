@@ -239,19 +239,6 @@ export function useUserTableColumns({
         const isAdmin = row.original.role === "ADMIN";
         return (
           <div className="flex items-center space-x-2">
-            {/* View Details - Always show */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewDetails?.(row.original);
-              }}
-              className="hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white"
-              title="View Details"
-            >
-              <Eye className="w-4 h-4" />
-            </Button>
             {/* View Call Logs - Always show */}
             <Button
               variant="outline"
@@ -264,6 +251,19 @@ export function useUserTableColumns({
               title="View Call Logs"
             >
               <PhoneCall className="w-4 h-4" />
+            </Button>
+            {/* View Details - Always show */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails?.(row.original);
+              }}
+              className="hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white"
+              title="View Details"
+            >
+              <Eye className="w-4 h-4" />
             </Button>
             {/* Reset Password - Hide for admin users */}
             {!isAdmin && (

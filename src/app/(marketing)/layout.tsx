@@ -9,8 +9,9 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  // Homepage already includes its own CTA band; contact has channel cards.
-  const showCta = pathname !== "/contact" && pathname !== "/";
+  // Homepage already includes its own CTA band; contact/terms skip the promo band.
+  const showCta =
+    pathname !== "/contact" && pathname !== "/" && pathname !== "/terms";
 
   return <MarketingPageShell showCta={showCta}>{children}</MarketingPageShell>;
 }

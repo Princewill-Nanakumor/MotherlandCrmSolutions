@@ -26,6 +26,7 @@ const PUBLIC_PAGES = [
   "/pricing",
   "/security",
   "/contact",
+  "/terms",
   "/test-performance",
   "/login",
   "/signup",

@@ -11,6 +11,7 @@ import {
   PricingSectionSeo,
   TimelineSectionSeo,
 } from "@/components/homepageComponents/HomepageSeoSections";
+import { TermsConsentBanner } from "@/components/homepageComponents/TermsConsentBanner";
 
 /**
  * Code-split below-fold sections into separate chunks.
@@ -59,6 +60,7 @@ export default function HomePageClient() {
   return (
     <>
       <HomepageHashScroll />
+      <TermsConsentBanner />
       <HeroSection />
       <StatsSection />
       <FeaturedCrmSection />
