@@ -142,9 +142,20 @@ export function resolveUiZoom(
   return getViewportUiZoom(getPlatformUiZoom(userAgent));
 }
 
-/** Marketing routes use native window scroll (no density transform). */
+/** Auth hero routes (login/signup/etc.) — no density transform. */
+export function isAuthHeroPath(pathname: string): boolean {
+  return (
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/forgot-password" ||
+    pathname.startsWith("/reset-password/") ||
+    pathname.startsWith("/verify-email/")
+  );
+}
+
+/** Marketing + auth hero: native window scroll, scale 1 (no density transform). */
 export function isPublicNativeScrollPath(pathname: string): boolean {
-  return isMarketingPath(pathname);
+  return isMarketingPath(pathname) || isAuthHeroPath(pathname);
 }
 
 export function isDashboardPath(pathname: string): boolean {
@@ -212,6 +223,7 @@ export function syncAppScrollMode(pathname: string): void {
 
   if (isPublic) {
     root.classList.add("public-native-scroll");
+    root.classList.toggle("auth-hero-page", isAuthHeroPath(pathname));
     root.classList.remove("app-density-lock");
     // Homepage must never inherit dashboard `html.dark` — translucent feature
     // cards would paint dark until PublicLightTheme's effect runs.
@@ -224,6 +236,7 @@ export function syncAppScrollMode(pathname: string): void {
   }
 
   root.classList.remove("public-native-scroll");
+  root.classList.remove("auth-hero-page");
   root.classList.toggle("app-density-lock", isDashboard);
   applyUiZoom();
 
@@ -240,10 +253,11 @@ export function syncAppScrollMode(pathname: string): void {
 
 /**
  * Inline boot logic kept in sync with resolveUiZoom / isPublicNativeScrollPath
- * (no module imports). On marketing routes, force scale 1 + `public-native-scroll`
- * before first paint so fixed chrome (scroll progress, scroll-to-top, navbar)
- * stays viewport-anchored. Also strip `html.dark` and lock `color-scheme: light`
- * so glass feature cards don't flash dark.
+ * (no module imports). On marketing + auth-hero routes, force scale 1 +
+ * `public-native-scroll` before first paint so fixed chrome stays viewport-
+ * anchored and Windows laptop density cannot shrink/offset auth forms.
+ * Marketing also strips `html.dark` and locks `color-scheme: light`.
+ * Auth routes set `auth-hero-page` so their dark photo backdrop is kept.
  * On `/dashboard*`, set `app-density-lock` before paint so the density root
  * cannot scroll the navbar out of view before React hydrates.
  */
@@ -252,5 +266,5 @@ const PUBLIC_NATIVE_BOOT_PATHS = JSON.stringify([
   ...MARKETING_NAV_LINKS.map((link) => link.href),
 ]);
 
-export const UI_ZOOM_BOOT_SCRIPT = `(function(){try{var KEY="motherland-ui-zoom";var ua=navigator.userAgent||"";var path=location.pathname||"/";var marketing=${PUBLIC_NATIVE_BOOT_PATHS};var isPublic=marketing.indexOf(path)>=0;var r=document.documentElement;if(isPublic){r.classList.add("public-native-scroll");r.classList.remove("app-density-lock");r.classList.remove("dark");r.style.colorScheme="light";r.style.setProperty("--app-ui-scale","1");r.dataset.uiZoom="1";r.style.removeProperty("zoom");return;}if(path==="/dashboard"||path.indexOf("/dashboard/")===0){r.classList.add("app-density-lock");}var w=window.innerWidth||document.documentElement.clientWidth||1440;var z;if(w<=768){z=1;}else{try{var s=localStorage.getItem(KEY);if(s){var p=parseFloat(s);if(isFinite(p)&&p>=0.7&&p<=1.1)z=p;}}catch(e){}if(z==null){var base=/Windows/i.test(ua)?0.8:(/Mac OS X|Macintosh/i.test(ua)?0.9:0.9);var h=window.innerHeight||document.documentElement.clientHeight||820;var clamp=function(n,a,b){return Math.min(b,Math.max(a,n));};var lerp=function(a,b,t){return a+(b-a)*clamp(t,0,1);};var scale;if(w<=1440)scale=base;else if(w>=2560)scale=1;else if(w>=1920){var mid=lerp(base,1,0.75);scale=lerp(mid,1,(w-1920)/(2560-1920));}else{var mid2=lerp(base,1,0.75);scale=lerp(base,mid2,(w-1440)/(1920-1440));}if(h<820)scale=Math.min(scale,base);z=Math.round(clamp(scale,0.75,1.05)*1000)/1000;}}r.style.setProperty("--app-ui-scale",String(z));r.dataset.uiZoom=String(z);r.style.removeProperty("zoom");}catch(e){}})();`;
+export const UI_ZOOM_BOOT_SCRIPT = `(function(){try{var KEY="motherland-ui-zoom";var ua=navigator.userAgent||"";var path=location.pathname||"/";var marketing=${PUBLIC_NATIVE_BOOT_PATHS};var isAuth=path==="/login"||path==="/signup"||path==="/forgot-password"||path.indexOf("/reset-password/")===0||path.indexOf("/verify-email/")===0;var isPublic=marketing.indexOf(path)>=0||isAuth;var r=document.documentElement;if(isPublic){r.classList.add("public-native-scroll");if(isAuth)r.classList.add("auth-hero-page");else r.classList.remove("auth-hero-page");r.classList.remove("app-density-lock");r.classList.remove("dark");r.style.colorScheme="light";r.style.setProperty("--app-ui-scale","1");r.dataset.uiZoom="1";r.style.removeProperty("zoom");return;}if(path==="/dashboard"||path.indexOf("/dashboard/")===0){r.classList.add("app-density-lock");}var w=window.innerWidth||document.documentElement.clientWidth||1440;var z;if(w<=768){z=1;}else{try{var s=localStorage.getItem(KEY);if(s){var p=parseFloat(s);if(isFinite(p)&&p>=0.7&&p<=1.1)z=p;}}catch(e){}if(z==null){var base=/Windows/i.test(ua)?0.8:(/Mac OS X|Macintosh/i.test(ua)?0.9:0.9);var h=window.innerHeight||document.documentElement.clientHeight||820;var clamp=function(n,a,b){return Math.min(b,Math.max(a,n));};var lerp=function(a,b,t){return a+(b-a)*clamp(t,0,1);};var scale;if(w<=1440)scale=base;else if(w>=2560)scale=1;else if(w>=1920){var mid=lerp(base,1,0.75);scale=lerp(mid,1,(w-1920)/(2560-1920));}else{var mid2=lerp(base,1,0.75);scale=lerp(base,mid2,(w-1440)/(1920-1440));}if(h<820)scale=Math.min(scale,base);z=Math.round(clamp(scale,0.75,1.05)*1000)/1000;}}r.style.setProperty("--app-ui-scale",String(z));r.dataset.uiZoom=String(z);r.style.removeProperty("zoom");}catch(e){}})();`;
 

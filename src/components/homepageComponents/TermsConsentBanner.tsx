@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
@@ -87,14 +86,6 @@ export function TermsConsentBanner() {
               >
                 Accept
               </Button>
-              <button
-                type="button"
-                onClick={() => dismiss("dismissed")}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800"
-                aria-label="Close terms notice"
-              >
-                <X className="h-4 w-4" />
-              </button>
             </div>
           </div>
         </motion.div>

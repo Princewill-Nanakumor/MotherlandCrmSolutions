@@ -34,8 +34,8 @@ export default function AuthLayout({
         <PublicLightTheme />
         <BrandThemeApplier />
         {isHeroAuthPage ? (
-          // Full-bleed hero + navbar (same shell as login); pages inject their own <style>
-          <div className="min-h-screen [font-family:var(--brand-font-body)]">
+          // Full-bleed hero + navbar; pages inject their own <style>
+          <div className="min-h-dvh [font-family:var(--brand-font-body)]">
             {children}
           </div>
         ) : (

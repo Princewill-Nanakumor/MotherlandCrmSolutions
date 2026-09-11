@@ -75,13 +75,15 @@ html.public-native-scroll body {
 }
 
 /* Lock light surfaces on the marketing homepage so dashboard `html.dark`
- * (or a late theme hydrate) cannot darken translucent glass cards. */
-html.public-native-scroll {
+ * (or a late theme hydrate) cannot darken translucent glass cards.
+ * Auth hero pages also use public-native-scroll (so Windows density 0.8
+ * does not shrink/offset the form) but keep their own dark photo backdrop. */
+html.public-native-scroll:not(.auth-hero-page) {
   color-scheme: light;
 }
 
-html.public-native-scroll body,
-html.public-native-scroll.dark body {
+html.public-native-scroll:not(.auth-hero-page) body,
+html.public-native-scroll.dark:not(.auth-hero-page) body {
   color: #0f172a !important;
   background-color: #ffffff !important;
 }

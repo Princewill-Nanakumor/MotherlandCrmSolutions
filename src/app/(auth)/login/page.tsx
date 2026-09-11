@@ -58,7 +58,7 @@ function LoadingScreen() {
 function RedirectingScreen() {
   // Auth layout forces light theme, but this screen sits on the dark hero photo.
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center gap-3">
+    <div className="flex h-dvh w-full flex-col items-center justify-center gap-3">
       <ShieldSpinnerGlyph />
       <p className="text-center text-base font-medium text-white drop-shadow-md">
         Redirecting to dashboard…
@@ -78,27 +78,19 @@ function LoginFormContent() {
     return null;
   }
   return (
-    <div
-      className="relative min-h-screen"
-      style={{
-        backgroundColor: "transparent",
-        background: "transparent",
-        position: "relative",
-        zIndex: 1,
-      }}
-    >
+    <div className="relative flex min-h-dvh flex-col">
       <motion.div
-        className="relative z-10 min-h-screen"
+        className="relative z-10 flex min-h-dvh flex-col"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
         style={{ backgroundColor: "transparent" }}
       >
-          <Navbar />
+        <Navbar />
         <motion.div
           variants={sectionVariants}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-8"
+          className="flex flex-1 items-center justify-center px-4 pb-8 pt-24 sm:pt-28"
         >
           <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
             <SignInForm />
@@ -364,9 +356,13 @@ export default function LoginPage() {
           html.is-login-page {
             background-color: #1a1a1a !important;
             background-image: none !important;
+            min-height: 100vh;
+            min-height: 100dvh;
           }
           body.is-login-page {
             background-color: #0f0f0f !important;
+            min-height: 100vh;
+            min-height: 100dvh;
             /* Dark overlay on top of hero image for readability */
             background-image:
               linear-gradient(
