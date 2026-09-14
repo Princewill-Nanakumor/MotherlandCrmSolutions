@@ -5,6 +5,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -230,6 +231,10 @@ export function UserDetailsModal({
               </Button>
             )}
           </div>
+          <DialogDescription className="sr-only">
+            View or edit this team member&apos;s profile, role, and lead contact
+            visibility.
+          </DialogDescription>
         </DialogHeader>
 
         {isEditing ? (

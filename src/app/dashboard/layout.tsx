@@ -459,6 +459,28 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   const showOfflineShell = showSessionRecovery && !isOnline;
 
+  // When the network returns (or we are stuck in recovery while online), keep
+  // asking NextAuth for the session so the spinner clears without a full reload.
+  useEffect(() => {
+    if (!showSessionRecovery || !isOnline) return;
+
+    let cancelled = false;
+    const tryRestore = () => {
+      if (cancelled) return;
+      void getSession();
+    };
+
+    tryRestore();
+    const id = window.setInterval(tryRestore, 2000);
+    window.addEventListener("online", tryRestore);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+      window.removeEventListener("online", tryRestore);
+    };
+  }, [showSessionRecovery, isOnline]);
+
   // Avoid full-page "reload" flash after profile save/session updates:
   // once user has already been authenticated in this layout, keep rendering
   // the current dashboard shell during short loading transitions.
@@ -485,7 +507,16 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         ) : (
           <>
             <LoadingSpinner />
-            <p className="text-sm text-muted-foreground">Reconnecting…</p>
+            <p className="text-sm text-muted-foreground">
+              Reconnecting… This should clear when your session restores.
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
+            >
+              Refresh
+            </button>
           </>
         )}
       </div>

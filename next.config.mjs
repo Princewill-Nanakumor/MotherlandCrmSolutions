@@ -115,7 +115,7 @@ const nextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               // Google Fonts not used — brand faces are self-hosted via next/font
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://*.cloudinary.com https://flagcdn.com",
+              "img-src 'self' data: blob: https://*.cloudinary.com https://flagcdn.com https://purecatamphetamine.github.io",
               "media-src 'self' blob:",
               "font-src 'self' data:",
               "connect-src 'self' https://*.cloudinary.com https://*.ably.io wss://*.ably.io https://*.ably.net wss://*.ably.net https://*.ably-realtime.com wss://*.ably-realtime.com",
