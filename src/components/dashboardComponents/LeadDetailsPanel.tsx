@@ -24,6 +24,8 @@ import { refetchLeadActivities } from "@/lib/leadActivitiesQuery";
 import {
   adminEventTouchesLead,
   handleAdminLeadPanelEvent,
+  isActivityTimelineAdminEvent,
+  isTimelineChurnAdminEvent,
   type AdminLeadPanelEvent,
 } from "@/lib/leadPanelRealtimeSync";
 import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
@@ -324,10 +326,20 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
         adminMessageListener = (message: { data?: unknown }) => {
           if (!eventTouchesOpenLead(message.data)) return;
+          const event = (message.data ?? {}) as AdminLeadPanelEvent;
+          const type = event.type ?? "";
+          // TenantLeadsRealtimeSync owns comment/reminder/call/activity cache
+          // updates for all leads (open + closed). Panel only fullSyncs unknowns.
+          if (
+            isTimelineChurnAdminEvent(type) ||
+            isActivityTimelineAdminEvent(type)
+          ) {
+            return;
+          }
           void handleAdminLeadPanelEvent(
             queryClient,
             openLeadId,
-            (message.data ?? {}) as AdminLeadPanelEvent,
+            event,
             syncLeadFromServer,
           );
         };

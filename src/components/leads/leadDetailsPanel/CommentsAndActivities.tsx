@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Reminder } from "@/types/leads";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { pendingReminderCount } from "@/lib/reminderCache";
+import { useAblyAwareRefetchInterval } from "@/hooks/useAblyAwareRefetchInterval";
 
 interface CommentsAndActivitiesProps {
   lead: Lead;
@@ -20,6 +21,8 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
   const [activeTab, setActiveTab] = useState<"comments" | "reminders">(
     "comments",
   );
+  // Same 60s → 12min pattern as due-reminders; Ably reminder_* refreshes the cache.
+  const remindersPollMs = useAblyAwareRefetchInterval(60_000);
 
   // Fetch reminders count for badge
   const { data: reminders = [] } = useQuery({
@@ -37,9 +40,9 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
     },
     enabled: !!lead._id,
     staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
+    refetchInterval: remindersPollMs,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
   });
 
   const pendingRemindersCount = pendingReminderCount(reminders);

@@ -43,6 +43,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useAblyConnectionHealthy } from "@/hooks/useAblyAwareRefetchInterval";
 
 function truncatePreview(text: string, max = 120): string {
   const trimmed = text.trim();
@@ -61,6 +62,7 @@ export const CommentsAndActivitiesCombined: FC<
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
+  const ablyHealthy = useAblyConnectionHealthy();
   const [commentDraft, setCommentDraft] = useState<CommentDraft>(() =>
     loadCommentDraft(leadId),
   );
@@ -138,10 +140,12 @@ export const CommentsAndActivitiesCombined: FC<
     persistCommentDraft(leadId, commentDraft);
   }, [commentDraft, leadId]);
 
-  // Keep timeline in sync when returning to this tab (multi-tab / background Ably).
+  // Keep timeline in sync when returning to this tab if realtime is down.
+  // When Ably is healthy, TenantLeadsRealtimeSync already upserts the cache.
   useEffect(() => {
     const refreshTimelineIfVisible = () => {
       if (document.visibilityState !== "visible" || !leadId) return;
+      if (ablyHealthy) return;
       void queryClient.invalidateQueries({
         queryKey: ["comments", leadId],
         exact: true,
@@ -155,7 +159,7 @@ export const CommentsAndActivitiesCombined: FC<
     document.addEventListener("visibilitychange", refreshTimelineIfVisible);
     return () =>
       document.removeEventListener("visibilitychange", refreshTimelineIfVisible);
-  }, [leadId, queryClient]);
+  }, [ablyHealthy, leadId, queryClient]);
 
   // Fetch comments
   const {
@@ -180,7 +184,7 @@ export const CommentsAndActivitiesCombined: FC<
     gcTime: 5 * 60 * 1000,
     retry: (failureCount) => failureCount < 2,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
   });
 
   // Fetch statuses for activities
@@ -225,7 +229,7 @@ export const CommentsAndActivitiesCombined: FC<
     gcTime: 5 * 60 * 1000,
     retry: (failureCount) => failureCount < 2,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
   });
 
   // Combine and sort comments and activities by timestamp (newest first)

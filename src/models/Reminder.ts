@@ -116,6 +116,7 @@ const reminderSchema = new Schema<IReminder>(
 
 // Indexes for better performance
 reminderSchema.index({ leadId: 1, assignedTo: 1 });
+reminderSchema.index({ leadId: 1, adminId: 1, createdAt: -1 });
 reminderSchema.index({ adminId: 1, status: 1 });
 reminderSchema.index({ assignedTo: 1, status: 1, reminderDate: 1 });
 reminderSchema.index({ reminderDate: 1, status: 1 });

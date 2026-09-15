@@ -109,6 +109,7 @@ export async function GET(request: Request) {
             $or: [{ adminId }, { adminId: { $exists: false } }, { adminId: null }],
           })
             .sort({ createdAt: -1 })
+            .limit(100)
             .lean<IComment[]>(),
         { collection: "comments", filter: { leadId: String(leadObjectId) } },
       );

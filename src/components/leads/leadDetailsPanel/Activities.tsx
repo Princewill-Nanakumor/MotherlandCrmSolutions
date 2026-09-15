@@ -59,7 +59,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
     gcTime: 5 * 60 * 1000,
     retry: (failureCount) => failureCount < 2,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
   });
 
   // Handle error - now using imported React

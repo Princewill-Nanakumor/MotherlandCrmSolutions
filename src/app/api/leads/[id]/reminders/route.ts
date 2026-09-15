@@ -83,6 +83,7 @@ export async function GET(
         .populate("assignedTo", "firstName lastName")
         .populate("createdBy", "firstName lastName")
         .sort({ createdAt: -1 })
+        .limit(50)
         .lean();
       perf.mark("fetchReminders");
 

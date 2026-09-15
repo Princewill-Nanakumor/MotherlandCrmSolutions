@@ -13,6 +13,7 @@ import {
   replaceReminderInList,
   upsertReminderInList,
 } from "@/lib/reminderCache";
+import { useAblyAwareRefetchInterval } from "@/hooks/useAblyAwareRefetchInterval";
 
 interface RemindersTabProps {
   leadId: string;
@@ -21,6 +22,7 @@ interface RemindersTabProps {
 export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const remindersPollMs = useAblyAwareRefetchInterval(60_000);
 
   // React Query for fetching reminders
   const { data: reminders = [], isLoading: isLoadingReminders } = useQuery({
@@ -37,9 +39,9 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
     },
     enabled: !!leadId,
     staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
+    refetchInterval: remindersPollMs,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
   });
 
   // Add reminder mutation

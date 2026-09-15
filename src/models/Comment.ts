@@ -52,8 +52,9 @@ const CommentSchema = new Schema<IComment>(
   }
 );
 
-// Add compound index for multi-tenancy queries
+// Multi-tenancy + lead timeline sort (GET /api/leads/[id]/comments)
 CommentSchema.index({ leadId: 1, adminId: 1 });
+CommentSchema.index({ leadId: 1, createdAt: -1 });
 
 const Comment =
   mongoose.models.Comment || mongoose.model<IComment>("Comment", CommentSchema);
