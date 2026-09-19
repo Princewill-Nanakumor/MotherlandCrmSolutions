@@ -59,7 +59,7 @@ const reminderSchema = new Schema<IReminder>(
     type: {
       type: String,
       enum: ["CALL", "EMAIL", "TASK", "MEETING"],
-      default: "TASK",
+      default: "CALL",
     },
     status: {
       type: String,

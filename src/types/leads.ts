@@ -107,6 +107,7 @@ export interface Activity {
     // Reminder-specific metadata
     reminderId?: string;
     reminderTitle?: string;
+    reminderDescription?: string;
     reminderType?: string;
     reminderDate?: string;
     reminderTime?: string;

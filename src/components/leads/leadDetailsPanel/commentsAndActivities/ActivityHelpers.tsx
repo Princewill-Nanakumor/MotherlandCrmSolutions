@@ -19,6 +19,11 @@ import {
   PhoneMissed,
 } from "lucide-react";
 import type { Activity, Status } from "@/types/leads";
+import { formatTime24Hour } from "@/lib/utils";
+import {
+  formatReminderTypeLabel,
+  reminderActivityDescriptionText,
+} from "@/lib/reminderDueAt";
 
 export function getActivityIcon(type: Activity["type"]): React.ReactElement {
   const iconSizeClass = "w-5 h-5";
@@ -262,4 +267,87 @@ export function getActivityDescription(activity: Activity): string {
     default:
       return activity.description;
   }
+}
+
+function ReminderMetaLine({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="text-xs">
+      <span className="font-medium">{label}:</span>{" "}
+      <span className="text-gray-700! dark:text-gray-200!">{children}</span>
+    </div>
+  );
+}
+
+export function ReminderActivityDetails({
+  metadata,
+  extras = false,
+}: {
+  metadata: NonNullable<Activity["metadata"]>;
+  extras?: boolean;
+}) {
+  const description = reminderActivityDescriptionText(
+    metadata.reminderDescription,
+    metadata.reminderTitle,
+  );
+  const typeLabel = formatReminderTypeLabel(metadata.reminderType);
+
+  return (
+    <div className="mt-2 text-sm text-gray-600! dark:text-gray-300!">
+      <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border-l-4 border-blue-300 dark:border-blue-500 shadow-sm">
+        <span className="font-semibold text-blue-700! dark:text-blue-300! uppercase tracking-wide text-xs mr-1">
+          Reminder Details:
+        </span>
+        <div className="mt-1 space-y-1">
+          {description ? (
+            <ReminderMetaLine label="Description">{description}</ReminderMetaLine>
+          ) : null}
+          {typeLabel ? (
+            <ReminderMetaLine label="Type">{typeLabel}</ReminderMetaLine>
+          ) : null}
+          {metadata.reminderDate && metadata.reminderTime ? (
+            <ReminderMetaLine label="Due">
+              {new Date(metadata.reminderDate).toLocaleDateString()} at{" "}
+              {formatTime24Hour(metadata.reminderTime)}
+            </ReminderMetaLine>
+          ) : null}
+          {extras && metadata.snoozedUntil ? (
+            <div className="text-xs">
+              <span className="font-medium">Snoozed Until:</span>{" "}
+              <span className="text-yellow-600 dark:text-yellow-400">
+                {new Date(metadata.snoozedUntil).toLocaleString()}
+              </span>
+            </div>
+          ) : null}
+          {extras && metadata.completedAt ? (
+            <div className="text-xs">
+              <span className="font-medium">Completed At:</span>{" "}
+              <span className="text-green-600 dark:text-green-400">
+                {new Date(metadata.completedAt).toLocaleString()}
+              </span>
+            </div>
+          ) : null}
+          {extras && metadata.soundEnabled !== undefined ? (
+            <div className="text-xs">
+              <span className="font-medium">Sound:</span>{" "}
+              <span
+                className={
+                  metadata.soundEnabled
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-gray-500"
+                }
+              >
+                {metadata.soundEnabled ? "Enabled" : "Muted"}
+              </span>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
 }

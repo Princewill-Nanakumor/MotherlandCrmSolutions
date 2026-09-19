@@ -13,7 +13,7 @@ import {
 } from "@/libs/ablyServer";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
-import { computeReminderDueAt } from "@/lib/reminderDueAt";
+import { computeReminderDueAt, reminderActivityDetailText } from "@/lib/reminderDueAt";
 import { canAccessAllLeads } from "@/lib/roles";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";
 import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
@@ -153,10 +153,19 @@ export async function POST(
       timezone,
     } = body;
 
+    const descriptionText =
+      typeof description === "string" ? description.trim() : "";
+
     // Validation
-    if (!title || !reminderDate || !reminderTime) {
+    if (!descriptionText || !reminderDate || !reminderTime) {
       return NextResponse.json(
-        { error: "Title, date, and time are required" },
+        { error: "Description, date, and time are required" },
+        { status: 400 }
+      );
+    }
+    if (!title) {
+      return NextResponse.json(
+        { error: "Title is required" },
         { status: 400 }
       );
     }
@@ -193,12 +202,12 @@ export async function POST(
 
     const reminderData = {
       title,
-      description,
+      description: descriptionText,
       reminderDate: new Date(`${dateYmd}T00:00:00.000Z`),
       reminderTime,
       dueAt: computeReminderDueAt(dateYmd, reminderTime, tz),
       timezone: tz,
-      type: type || "TASK",
+      type: type || "CALL",
       status: "PENDING",
       leadId: new mongoose.Types.ObjectId(id),
       createdBy: new mongoose.Types.ObjectId(session.user.id),
@@ -221,14 +230,18 @@ export async function POST(
       await Activity.create({
         type: "REMINDER_CREATED",
         userId: new mongoose.Types.ObjectId(session.user.id),
-        details: `Created reminder: ${title}`,
+        details: reminderActivityDetailText(
+          "Created reminder",
+          descriptionText,
+          type || "CALL",
+        ),
         leadId: new mongoose.Types.ObjectId(id),
         adminId: new mongoose.Types.ObjectId(adminId),
         timestamp: activityAt,
         metadata: {
           reminderId: reminder._id.toString(),
-          reminderTitle: title,
-          reminderType: type || "TASK",
+          reminderDescription: descriptionText,
+          reminderType: type || "CALL",
           reminderDate: reminderDate,
           reminderTime: reminderTime,
           reminderStatus: "PENDING",

@@ -14,6 +14,7 @@ import ReminderCard from "@/components/leads/leadDetailsPanel/ReminderCard";
 import RemindersList from "@/components/leads/leadDetailsPanel/RemindersList";
 import RemindersTab from "@/components/leads/leadDetailsPanel/RemindersTab";
 import { formatLocalDateYmd } from "@/lib/reminderDueAt";
+import { ReminderActivityDetails } from "@/components/leads/leadDetailsPanel/commentsAndActivities/ActivityHelpers";
 
 vi.mock("next-auth/react", () => ({
   useSession: () => ({
@@ -26,7 +27,7 @@ vi.mock("next-auth/react", () => ({
 
 vi.mock("@/lib/notificationSound", () => ({
   stopNotificationSound: vi.fn(),
-  alarmSound: { start: vi.fn(), stop: vi.fn() },
+  alarmSound: { start: vi.fn(), stop: vi.fn(), armUnlockFromUserGesture: vi.fn() },
 }));
 
 const toastMock = vi.fn();
@@ -81,7 +82,6 @@ function makeReminder(overrides: Partial<Reminder> = {}): Reminder {
 }
 
 const emptyForm = {
-  title: "",
   description: "",
   reminderDate: "2026-08-25",
   reminderTime: "09:00",
@@ -100,7 +100,7 @@ function reminderHandlers() {
 }
 
 describe("ReminderForm", () => {
-  it("keeps Create Reminder disabled until title and type are set", async () => {
+  it("keeps Create Reminder disabled until type and description are set", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
     const setFormData = vi.fn();
@@ -119,10 +119,26 @@ describe("ReminderForm", () => {
     const createBtn = screen.getByRole("button", { name: /create reminder/i });
     expect(createBtn).toBeDisabled();
 
+    const cancelBtn = screen.getByRole("button", { name: /^cancel$/i });
+    expect(cancelBtn.compareDocumentPosition(createBtn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
     rerender(
       <ReminderForm
         editingId={null}
-        formData={{ ...emptyForm, title: "Call back", type: "CALL" }}
+        formData={{ ...emptyForm, type: "CALL" }}
+        setFormData={setFormData}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+        isSaving={false}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /create reminder/i })).toBeDisabled();
+
+    rerender(
+      <ReminderForm
+        editingId={null}
+        formData={{ ...emptyForm, type: "CALL", description: "Call the client" }}
         setFormData={setFormData}
         onSubmit={onSubmit}
         onCancel={vi.fn()}
@@ -139,7 +155,7 @@ describe("ReminderForm", () => {
     render(
       <ReminderForm
         editingId="rem-1"
-        formData={{ ...emptyForm, title: "Call back", type: "CALL" }}
+        formData={{ ...emptyForm, type: "CALL", description: "Call the client" }}
         setFormData={vi.fn()}
         onSubmit={vi.fn()}
         onCancel={vi.fn()}
@@ -150,7 +166,7 @@ describe("ReminderForm", () => {
     expect(screen.getByText("Edit Reminder")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /update reminder/i }),
-    ).toBeInTheDocument();
+    ).toBeEnabled();
   });
 
   it("toggles notification sound", async () => {
@@ -176,6 +192,52 @@ describe("ReminderForm", () => {
       soundEnabled: false,
     });
   });
+
+  it("opens an in-app time picker with AM/PM", async () => {
+    const user = userEvent.setup();
+    const setFormData = vi.fn();
+
+    render(
+      <ReminderForm
+        editingId={null}
+        formData={emptyForm}
+        setFormData={setFormData}
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+        isSaving={false}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /reminder time/i }));
+    expect(screen.getByText("Period")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "PM" }));
+    expect(setFormData).toHaveBeenCalledWith({
+      ...emptyForm,
+      reminderTime: "21:00",
+    });
+  });
+});
+
+describe("ReminderActivityDetails", () => {
+  it("shows description instead of generated title", () => {
+    render(
+      <ReminderActivityDetails
+        metadata={{
+          reminderTitle: "Call",
+          reminderType: "CALL",
+          reminderDescription: "Ask about budget",
+          reminderDate: "2026-09-17",
+          reminderTime: "13:37",
+        }}
+      />,
+    );
+
+    expect(screen.queryByText("Title:")).not.toBeInTheDocument();
+    expect(screen.queryByText("CALL")).not.toBeInTheDocument();
+    expect(screen.getByText("Description:")).toBeInTheDocument();
+    expect(screen.getByText("Ask about budget")).toBeInTheDocument();
+    expect(screen.getByText("Call")).toBeInTheDocument();
+  });
 });
 
 describe("ReminderCard", () => {
@@ -199,9 +261,8 @@ describe("ReminderCard", () => {
       />,
     );
 
-    expect(screen.getByText("Follow-up call")).toBeInTheDocument();
     expect(screen.getByText("Ask about budget")).toBeInTheDocument();
-    expect(screen.getByText("CALL")).toBeInTheDocument();
+    expect(screen.getByText("Call")).toBeInTheDocument();
     expect(screen.getByText(/Created by Ada Lovelace/)).toBeInTheDocument();
 
     await user.click(screen.getByTitle("Mark as complete"));
@@ -290,6 +351,23 @@ describe("RemindersList", () => {
     expect(screen.getByText("No Reminders Set")).toBeInTheDocument();
   });
 
+  it("shows empty state when stored reminders are only dismissed", () => {
+    render(
+      <RemindersList
+        reminders={[makeReminder({ status: "DISMISSED" })]}
+        isLoading={false}
+        onCompleteReminder={vi.fn()}
+        onEditReminder={vi.fn()}
+        onToggleSound={vi.fn()}
+        onSnoozeReminder={vi.fn()}
+        onDeleteReminder={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("No Reminders Set")).toBeInTheDocument();
+    expect(screen.queryByText("Upcoming")).not.toBeInTheDocument();
+  });
+
   it("shows a create skeleton instead of empty state while creating", () => {
     render(
       <RemindersList
@@ -317,6 +395,7 @@ describe("RemindersList", () => {
           makeReminder({
             _id: "rem-2",
             title: "Done task",
+            description: "Done task",
             status: "COMPLETED",
             completedAt: "2026-08-24T12:00:00.000Z",
           }),
@@ -331,7 +410,7 @@ describe("RemindersList", () => {
     );
 
     expect(screen.getByText("Upcoming")).toBeInTheDocument();
-    expect(screen.getByText("Follow-up call")).toBeInTheDocument();
+    expect(screen.getByText("Ask about budget")).toBeInTheDocument();
     expect(screen.getByText("Completed")).toBeInTheDocument();
     expect(screen.getByText("Done task")).toBeInTheDocument();
   });
@@ -359,10 +438,6 @@ describe("Reminders create flow", () => {
     expect(screen.getByRole("button", { name: /create reminder/i })).toBeDisabled();
 
     await user.type(
-      screen.getByPlaceholderText("e.g., Call for follow-up"),
-      "Call the client",
-    );
-    await user.type(
       screen.getByPlaceholderText("Additional details..."),
       "Confirm next meeting",
     );
@@ -374,7 +449,7 @@ describe("Reminders create flow", () => {
     expect(handlers.onAddReminder).toHaveBeenCalledTimes(1);
     expect(handlers.onAddReminder).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: "Call the client",
+        title: "Call",
         description: "Confirm next meeting",
         type: "CALL",
         soundEnabled: true,
@@ -402,13 +477,13 @@ describe("Reminders create flow", () => {
 
     await user.click(screen.getByTitle("Edit reminder"));
     expect(screen.getByText("Edit Reminder")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Follow-up call")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Ask about budget")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /update reminder/i }));
     expect(handlers.onUpdateReminder).toHaveBeenCalledWith(
       "rem-1",
       expect.objectContaining({
-        title: "Follow-up call",
+        title: "Call",
         type: "CALL",
       }),
     );
@@ -435,7 +510,7 @@ describe("Reminders create flow", () => {
     expect(
       within(dialog).getByText("Delete this reminder?"),
     ).toBeInTheDocument();
-    expect(within(dialog).getByText("Follow-up call")).toBeInTheDocument();
+    expect(within(dialog).getByText("Ask about budget")).toBeInTheDocument();
     expect(handlers.onDeleteReminder).not.toHaveBeenCalled();
 
     await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
@@ -480,6 +555,7 @@ describe("Reminders create flow", () => {
           makeReminder({
             _id: "rem-done",
             title: "Done task",
+            description: "Done task",
             status: "COMPLETED",
             completedAt: "2026-08-24T12:00:00.000Z",
           }),
@@ -539,7 +615,11 @@ describe("RemindersTab", () => {
 
   it("loads reminders then creates one via the API", async () => {
     const user = userEvent.setup();
-    const created = makeReminder({ _id: "rem-new", title: "Call the client" });
+    const created = makeReminder({
+      _id: "rem-new",
+      title: "Call",
+      description: "Call the client",
+    });
 
     apiCallMock.mockImplementation(async (url: string, init?: RequestInit) => {
       if (init?.method === "POST") {
@@ -560,7 +640,7 @@ describe("RemindersTab", () => {
 
     await user.click(screen.getByRole("button", { name: /add reminder/i }));
     await user.type(
-      screen.getByPlaceholderText("e.g., Call for follow-up"),
+      screen.getByPlaceholderText("Additional details..."),
       "Call the client",
     );
     await user.click(screen.getByRole("combobox"));
@@ -581,7 +661,8 @@ describe("RemindersTab", () => {
     const body = JSON.parse(String((postCall![1] as RequestInit).body));
     expect(body).toEqual(
       expect.objectContaining({
-        title: "Call the client",
+        title: "Call",
+        description: "Call the client",
         type: "CALL",
         soundEnabled: true,
       }),
@@ -619,7 +700,7 @@ describe("RemindersTab", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByText("Follow-up call")).toBeInTheDocument();
+    expect(await screen.findByText("Ask about budget")).toBeInTheDocument();
 
     await user.click(screen.getByTitle("More actions"));
     await user.click(await screen.findByRole("menuitem", { name: /delete/i }));
@@ -629,7 +710,7 @@ describe("RemindersTab", () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByText("Follow-up call")).not.toBeInTheDocument();
+      expect(screen.queryByText("Ask about budget")).not.toBeInTheDocument();
     });
     expect(await screen.findByText("No Reminders Set")).toBeInTheDocument();
     expect(client.getQueryData(["reminders", "lead-1"])).toEqual([]);
@@ -662,7 +743,7 @@ describe("RemindersTab", () => {
     });
 
     renderTab();
-    expect(await screen.findByText("Follow-up call")).toBeInTheDocument();
+    expect(await screen.findByText("Ask about budget")).toBeInTheDocument();
 
     await user.click(screen.getByTitle("Mark as complete"));
     expect(await screen.findByTitle("Marking as complete")).toBeInTheDocument();

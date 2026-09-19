@@ -12,6 +12,7 @@ import {
   reminderRecordId,
   replaceReminderInList,
   upsertReminderInList,
+  refreshDueRemindersQuery,
 } from "@/lib/reminderCache";
 import { useAblyAwareRefetchInterval } from "@/hooks/useAblyAwareRefetchInterval";
 
@@ -35,7 +36,8 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
       if (!response.ok) {
         throw new Error(`Failed to fetch reminders: ${response.status}`);
       }
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!leadId,
     staleTime: 30 * 1000,
@@ -55,16 +57,19 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
       soundEnabled: boolean;
       timezone: string;
     }) => {
-      const response = await apiCallWithSessionRefresh(`/api/leads/${leadId}/reminders`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(reminderData),
-      });
+      const response = await apiCallWithSessionRefresh(
+        `/api/leads/${leadId}/reminders`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(reminderData),
+        },
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(
-          `Failed to create reminder: ${response.status} - ${errorText}`
+          `Failed to create reminder: ${response.status} - ${errorText}`,
         );
       }
 
@@ -74,6 +79,7 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
       queryClient.setQueryData<Reminder[]>(["reminders", leadId], (old) =>
         upsertReminderInList(old, created),
       );
+      refreshDueRemindersQuery(queryClient, created.dueAt);
       queryClient.invalidateQueries({
         queryKey: ["activities", leadId],
         refetchType: "active",
@@ -109,7 +115,7 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updates),
-        }
+        },
       );
       if (!response.ok) throw new Error("Failed to update reminder");
       return response.json();
@@ -142,7 +148,7 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
       if (context?.previousReminders) {
         queryClient.setQueryData(
           ["reminders", leadId],
-          context.previousReminders
+          context.previousReminders,
         );
       }
       console.error("Error updating reminder:", error);
@@ -163,6 +169,10 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
         );
       }
 
+      refreshDueRemindersQuery(
+        queryClient,
+        updated?.dueAt ?? variables.updates.dueAt,
+      );
       queryClient.invalidateQueries({
         queryKey: ["activities", leadId],
         refetchType: "active",
@@ -184,7 +194,7 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
     mutationFn: async (reminderId: string) => {
       const response = await apiCallWithSessionRefresh(
         `/api/leads/${leadId}/reminders/${reminderId}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
       if (!response.ok) throw new Error("Failed to delete reminder");
     },
@@ -199,6 +209,7 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
     },
     onSuccess: (_data, reminderId) => {
       patchReminderDeletedInCache(queryClient, leadId, reminderId);
+      refreshDueRemindersQuery(queryClient);
       toast({
         title: "Success",
         description: "Reminder deleted",
@@ -244,7 +255,7 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
         updates: { status: "COMPLETED" },
       });
     },
-    [updateReminderMutation]
+    [updateReminderMutation],
   );
 
   const handleSnoozeReminder = useCallback(
@@ -258,20 +269,20 @@ export const RemindersTab: FC<RemindersTabProps> = ({ leadId }) => {
         },
       });
     },
-    [updateReminderMutation]
+    [updateReminderMutation],
   );
 
   const handleDeleteReminder = useCallback(
     (reminderId: string) => {
       deleteReminderMutation.mutate(reminderId);
     },
-    [deleteReminderMutation]
+    [deleteReminderMutation],
   );
 
   return (
     <Reminders
       reminders={reminders}
-      isLoading={isLoadingReminders}
+      isLoading={isLoadingReminders && !!leadId}
       leadId={leadId}
       onAddReminder={handleAddReminder}
       onUpdateReminder={(id, updates) =>

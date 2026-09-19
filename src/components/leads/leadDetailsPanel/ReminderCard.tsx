@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format, isValid } from "date-fns";
 import { Reminder } from "@/types/leads";
 import { formatTime24Hour } from "@/lib/utils";
+import { formatReminderTypeLabel, reminderDisplayHeading } from "@/lib/reminderDueAt";
 import { canManageReminders } from "@/lib/roles";
 import { EDIT_ICON_BUTTON_CLASS } from "@/lib/actionIconButtonStyles";
 import {
@@ -128,6 +129,7 @@ export const ReminderCard: FC<ReminderCardProps> = ({
 
   const metadataChipClass =
     "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600";
+  const typeLabel = formatReminderTypeLabel(reminder.type);
   const snoozeMenuItemClass =
     "cursor-pointer text-gray-900! dark:text-gray-100! focus:bg-gray-100 dark:focus:bg-gray-700/80";
 
@@ -149,18 +151,19 @@ export const ReminderCard: FC<ReminderCardProps> = ({
           <div className="flex-1">
             <div className="mb-1">
               <h5 className="font-semibold text-gray-900! dark:text-gray-100!">
-                {reminder.title}
+                {reminderDisplayHeading(
+                  reminder.description,
+                  reminder.type,
+                  reminder.title,
+                )}
               </h5>
             </div>
-            {reminder.description && (
-              <p className="mb-2 text-sm text-gray-600! dark:text-gray-400!">
-                {reminder.description}
-              </p>
-            )}
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500! dark:text-gray-400!">
+              {typeLabel ? (
               <span className={`${metadataChipClass} ${getTypeTextColor(reminder.type)}`}>
-                {reminder.type}
+                {typeLabel}
               </span>
+              ) : null}
               <span className={metadataChipClass}>
                 <CalendarIcon className="w-3 h-3 shrink-0" />
                 {formatDate(reminder.reminderDate)}

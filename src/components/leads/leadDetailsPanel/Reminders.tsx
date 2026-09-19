@@ -20,6 +20,8 @@ import {
   formatLocalDateYmd,
   formatLocalTimeHm,
   isReminderDue,
+  reminderTitleFromType,
+  reminderDisplayHeading,
 } from "@/lib/reminderDueAt";
 import ReminderForm from "./ReminderForm";
 import RemindersList from "./RemindersList";
@@ -82,16 +84,14 @@ const Reminders: FC<RemindersProps> = ({
   };
 
   const [formData, setFormData] = useState<{
-    title: string;
     description: string;
     reminderDate: string;
     reminderTime: string;
-    type: "CALL" | "EMAIL" | "TASK" | "MEETING" | "";
+    type: "CALL" | "EMAIL" | "";
     soundEnabled: boolean;
   }>(() => {
     const { date, time } = getCurrentDateTime();
     return {
-      title: "",
       description: "",
       reminderDate: date,
       reminderTime: time,
@@ -102,7 +102,7 @@ const Reminders: FC<RemindersProps> = ({
 
   const handleSubmit = () => {
     if (
-      !formData.title ||
+      !formData.description.trim() ||
       !formData.reminderDate ||
       !formData.reminderTime ||
       !formData.type
@@ -112,11 +112,11 @@ const Reminders: FC<RemindersProps> = ({
 
     // Prepare data with validated type
     const reminderData = {
-      title: formData.title,
-      description: formData.description,
+      title: reminderTitleFromType(formData.type),
+      description: formData.description.trim(),
       reminderDate: formData.reminderDate,
       reminderTime: formData.reminderTime,
-      type: formData.type as "CALL" | "EMAIL" | "TASK" | "MEETING",
+      type: formData.type as "CALL" | "EMAIL",
       soundEnabled: formData.soundEnabled,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
@@ -133,7 +133,6 @@ const Reminders: FC<RemindersProps> = ({
     // Reset form with current date and time
     const { date, time } = getCurrentDateTime();
     setFormData({
-      title: "",
       description: "",
       reminderDate: date,
       reminderTime: time,
@@ -149,11 +148,10 @@ const Reminders: FC<RemindersProps> = ({
     const formattedDate = dateObj.toISOString().split("T")[0];
 
     setFormData({
-      title: reminder.title,
       description: reminder.description || "",
       reminderDate: formattedDate,
       reminderTime: reminder.reminderTime,
-      type: reminder.type,
+      type: reminder.type === "EMAIL" ? "EMAIL" : "CALL",
       soundEnabled: reminder.soundEnabled,
     });
     setEditingId(reminder._id);
@@ -166,7 +164,6 @@ const Reminders: FC<RemindersProps> = ({
     // Reset form with current date and time
     const { date, time } = getCurrentDateTime();
     setFormData({
-      title: "",
       description: "",
       reminderDate: date,
       reminderTime: time,
@@ -295,7 +292,7 @@ const Reminders: FC<RemindersProps> = ({
       className="flex-1 min-h-0 flex flex-col bg-gray-50 dark:bg-gray-800/50 p-6 border border-gray-200 dark:border-gray-700 shadow-sm"
       style={{ height: "100%" }}
     >
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 border border-gray-100 dark:border-gray-700 flex-1 min-h-0 flex flex-col overflow-y-auto space-y-4 pb-8 scroll-pb-16">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 border border-gray-100 dark:border-gray-700 flex-1 min-h-0 flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
             Reminders ({pendingReminders.length + (isCreatingNew ? 1 : 0)})
@@ -368,9 +365,16 @@ const Reminders: FC<RemindersProps> = ({
                   This cannot be undone. The reminder will be removed from this
                   lead.
                 </p>
-                {pendingDeleteReminder?.title ? (
+                {pendingDeleteReminder?.description ||
+                pendingDeleteReminder?.title ? (
                   <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-md border border-gray-200 dark:border-gray-600 dark:bg-transparent dark:text-gray-200">
-                    {truncatePreview(pendingDeleteReminder.title)}
+                    {truncatePreview(
+                      reminderDisplayHeading(
+                        pendingDeleteReminder.description,
+                        pendingDeleteReminder.type,
+                        pendingDeleteReminder.title,
+                      ),
+                    )}
                   </p>
                 ) : null}
               </div>

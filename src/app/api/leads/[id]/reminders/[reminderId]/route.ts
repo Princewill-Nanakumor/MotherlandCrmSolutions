@@ -14,7 +14,7 @@ import {
 } from "@/libs/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
-import { computeReminderDueAt, reminderDateToYmd } from "@/lib/reminderDueAt";
+import { computeReminderDueAt, reminderDateToYmd, reminderActivityDetailText } from "@/lib/reminderDueAt";
 import { canAccessAllLeads, canManageReminders } from "@/lib/roles";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";
 import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
@@ -30,6 +30,7 @@ type ReminderDeleteLean = {
   status: string;
   createdBy: mongoose.Types.ObjectId;
   title: string;
+  description?: string;
   type: string;
   reminderDate: Date;
   reminderTime: string;
@@ -118,7 +119,6 @@ export async function PUT(
     }
 
     const oldStatus = reminder.status;
-    const oldTitle = reminder.title;
 
     // Handle different update types
     if (body.status === "COMPLETED") {
@@ -131,6 +131,26 @@ export async function PUT(
     } else if (body.status === "DISMISSED") {
       reminder.status = "DISMISSED";
     } else {
+      const isContentUpdate =
+        body.description !== undefined ||
+        body.reminderDate !== undefined ||
+        body.reminderTime !== undefined ||
+        body.type !== undefined ||
+        body.title !== undefined;
+
+      if (isContentUpdate) {
+        const nextDescription =
+          body.description !== undefined
+            ? String(body.description)
+            : String(reminder.description ?? "");
+        if (!nextDescription.trim()) {
+          return NextResponse.json(
+            { error: "Description is required" },
+            { status: 400 },
+          );
+        }
+      }
+
       // Regular update - check if time/date changed
       const timeOrDateChanged =
         (body.reminderDate &&
@@ -140,7 +160,7 @@ export async function PUT(
 
       if (body.title) reminder.title = body.title;
       if (body.description !== undefined)
-        reminder.description = body.description;
+        reminder.description = String(body.description).trim();
       if (body.reminderDate) {
         const dateYmd =
           typeof body.reminderDate === "string" &&
@@ -186,9 +206,13 @@ export async function PUT(
       let activityDetails: string;
       const metadata: Partial<IActivity["metadata"]> = {
         reminderId: reminder._id.toString(),
-        reminderTitle: reminder.title,
+        reminderDescription: reminder.description,
         reminderType: reminder.type,
         reminderStatus: reminder.status,
+        reminderDate: reminder.reminderDate?.toISOString?.()
+          ? reminder.reminderDate.toISOString()
+          : String(reminder.reminderDate),
+        reminderTime: reminder.reminderTime,
         oldReminderStatus: oldStatus,
         performedBy: {
           id: session.user.id,
@@ -199,26 +223,46 @@ export async function PUT(
 
       if (body.status === "COMPLETED") {
         activityType = "REMINDER_COMPLETED";
-        activityDetails = `Marked reminder as completed: ${reminder.title}`;
+        activityDetails = reminderActivityDetailText(
+          "Marked reminder as completed",
+          reminder.description,
+          reminder.type,
+        );
         metadata.completedAt = reminder.completedAt?.toISOString();
       } else if (body.status === "SNOOZED" && body.snoozedUntil) {
         activityType = "REMINDER_SNOOZED";
-        activityDetails = `Snoozed reminder until ${new Date(body.snoozedUntil).toLocaleString()}: ${reminder.title}`;
+        activityDetails = reminderActivityDetailText(
+          `Snoozed reminder until ${new Date(body.snoozedUntil).toLocaleString()}`,
+          reminder.description,
+          reminder.type,
+        );
         metadata.snoozedUntil = reminder.snoozedUntil?.toISOString();
       } else if (body.status === "DISMISSED") {
         activityType = "REMINDER_DISMISSED";
-        activityDetails = `Dismissed reminder: ${reminder.title}`;
+        activityDetails = reminderActivityDetailText(
+          "Dismissed reminder",
+          reminder.description,
+          reminder.type,
+        );
       } else if (body.soundEnabled !== undefined) {
         // Handle mute/unmute
         activityType = body.soundEnabled
           ? "REMINDER_UNMUTED"
           : "REMINDER_MUTED";
-        activityDetails = `${body.soundEnabled ? "Unmuted" : "Muted"} reminder: ${reminder.title}`;
+        activityDetails = reminderActivityDetailText(
+          body.soundEnabled ? "Unmuted reminder" : "Muted reminder",
+          reminder.description,
+          reminder.type,
+        );
         metadata.soundEnabled = body.soundEnabled;
       } else {
         // Regular update
         activityType = "REMINDER_UPDATED";
-        activityDetails = `Updated reminder: ${reminder.title}`;
+        activityDetails = reminderActivityDetailText(
+          "Updated reminder",
+          reminder.description,
+          reminder.type,
+        );
 
         // Check if time/date changed
         const timeOrDateChanged =
@@ -231,10 +275,6 @@ export async function PUT(
           metadata.reminderDate = reminder.reminderDate.toISOString();
           metadata.reminderTime = reminder.reminderTime;
           activityDetails += ` (date/time changed)`;
-        }
-
-        if (body.title && body.title !== oldTitle) {
-          activityDetails += ` (title changed)`;
         }
       }
 
@@ -409,13 +449,17 @@ export async function DELETE(
           Activity.create({
             type: "REMINDER_DELETED",
             userId: new mongoose.Types.ObjectId(session.user.id),
-            details: `Deleted reminder: ${reminder.title}`,
+            details: reminderActivityDetailText(
+              "Deleted reminder",
+              reminder.description,
+              reminder.type,
+            ),
             leadId: leadObjectId,
             adminId: adminObjectId,
             timestamp: activityAt,
             metadata: {
               reminderId: String(reminder._id),
-              reminderTitle: reminder.title,
+              reminderDescription: reminder.description,
               reminderType: reminder.type,
               reminderStatus: reminder.status,
               reminderDate: new Date(reminder.reminderDate).toISOString(),

@@ -53,6 +53,24 @@ export function pendingReminderCount(reminders: Reminder[] | undefined): number 
   ).length;
 }
 
+const DUE_REMINDERS_REFETCH_MAX_MS = 24 * 60 * 60 * 1000;
+
+/** Refresh the in-app alarm list now, and again when `dueAt` is reached. */
+export function refreshDueRemindersQuery(
+  queryClient: QueryClient,
+  dueAt?: Date | string | null,
+): void {
+  queryClient.invalidateQueries({ queryKey: ["dueReminders"] });
+  if (!dueAt) return;
+  const delay = new Date(dueAt).getTime() - Date.now();
+  if (!Number.isFinite(delay) || delay <= 0 || delay > DUE_REMINDERS_REFETCH_MAX_MS) {
+    return;
+  }
+  globalThis.setTimeout(() => {
+    queryClient.invalidateQueries({ queryKey: ["dueReminders"] });
+  }, delay);
+}
+
 export function patchReminderDeletedInCache(
   queryClient: QueryClient,
   leadId: string,

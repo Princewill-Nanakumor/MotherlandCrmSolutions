@@ -379,7 +379,7 @@ export async function addReminderInPanel(page: Page, title: string) {
   await switchToRemindersTab(page);
   await panel.getByRole("button", { name: /add reminder/i }).click();
   await expect(panel.getByText("New Reminder")).toBeVisible({ timeout: 15_000 });
-  await panel.getByPlaceholder("e.g., Call for follow-up").fill(title);
+  await panel.getByPlaceholder("Additional details...").fill(title);
   await panel.getByRole("combobox").filter({ hasText: /select type/i }).click();
   await page.getByRole("option", { name: "Call" }).click();
   const created = page.waitForResponse(

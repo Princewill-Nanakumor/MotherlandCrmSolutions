@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   computeReminderDueAt,
   formatLocalDateYmd,
+  formatReminderTypeLabel,
   isReminderDue,
+  reminderActivityDescriptionText,
   reminderDateToYmd,
+  reminderDisplayHeading,
 } from "@/lib/reminderDueAt";
 
 describe("reminderDateToYmd", () => {
@@ -101,5 +104,25 @@ describe("isReminderDue", () => {
         },
       ),
     ).toBe(true);
+  });
+});
+
+describe("reminder display copy", () => {
+  it("labels Call and Email and hides Task/Meeting", () => {
+    expect(formatReminderTypeLabel("CALL")).toBe("Call");
+    expect(formatReminderTypeLabel("EMAIL")).toBe("Email");
+    expect(formatReminderTypeLabel("TASK")).toBeNull();
+    expect(formatReminderTypeLabel("MEETING")).toBeNull();
+  });
+
+  it("prefers description and ignores generated titles", () => {
+    expect(reminderActivityDescriptionText("Ask about budget", "Call")).toBe(
+      "Ask about budget",
+    );
+    expect(reminderActivityDescriptionText("", "Call")).toBeNull();
+    expect(reminderActivityDescriptionText("", "Follow-up call")).toBe(
+      "Follow-up call",
+    );
+    expect(reminderDisplayHeading("", "CALL", "Call")).toBe("Call");
   });
 });

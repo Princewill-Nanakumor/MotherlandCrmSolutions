@@ -99,7 +99,11 @@ const CommentsAndActivities: FC<CommentsAndActivitiesProps> = ({ lead }) => {
             leadCreatedAt={lead.createdAt}
           />
         </div>
-        {activeTab === "reminders" && <RemindersTab leadId={lead._id} />}
+        {activeTab === "reminders" && (
+          <div className="flex min-h-0 h-full w-full flex-col md:flex-1 md:overflow-hidden">
+            <RemindersTab leadId={lead._id} />
+          </div>
+        )}
       </div>
     </div>
   );

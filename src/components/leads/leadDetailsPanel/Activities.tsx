@@ -20,10 +20,10 @@ import {
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { Activity, Status } from "@/types/leads";
-import { formatTime24Hour } from "@/lib/utils";
 import { filterVisibleLeadActivities } from "@/lib/leadActivityDisplay";
 import { useQuery } from "@tanstack/react-query";
 import { useStatuses } from "@/context/StatusContext";
+import { ReminderActivityDetails } from "./commentsAndActivities/ActivityHelpers";
 
 interface ActivitiesProps {
   leadId: string;
@@ -476,82 +476,10 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
                   {/* Display reminder-specific metadata */}
                   {activity.type.startsWith("REMINDER_") &&
                     activity.metadata && (
-                      <div className="mt-2 text-sm text-gray-600! dark:text-gray-300!">
-                        <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border-l-4 border-blue-300 dark:border-blue-500 shadow-sm">
-                          <span className="font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide text-xs mr-1">
-                            Reminder Details:
-                          </span>
-                          <div className="mt-1 space-y-1">
-                            {activity.metadata.reminderTitle && (
-                              <div className="text-xs">
-                                <span className="font-medium">Title:</span>{" "}
-                                <span className="text-gray-700 dark:text-gray-200">
-                                  {activity.metadata.reminderTitle}
-                                </span>
-                              </div>
-                            )}
-                            {activity.metadata.reminderType && (
-                              <div className="text-xs">
-                                <span className="font-medium">Type:</span>{" "}
-                                <span className="text-gray-700 dark:text-gray-200">
-                                  {activity.metadata.reminderType}
-                                </span>
-                              </div>
-                            )}
-                            {activity.metadata.reminderDate &&
-                              activity.metadata.reminderTime && (
-                                <div className="text-xs">
-                                  <span className="font-medium">Due:</span>{" "}
-                                  <span className="text-gray-700 dark:text-gray-200">
-                                    {new Date(
-                                      activity.metadata.reminderDate
-                                    ).toLocaleDateString()}{" "}
-                                    at{" "}
-                                    {formatTime24Hour(
-                                      activity.metadata.reminderTime
-                                    )}
-                                  </span>
-                                </div>
-                              )}
-                            {activity.metadata.snoozedUntil && (
-                              <div className="text-xs">
-                                <span className="font-medium">
-                                  Snoozed Until:
-                                </span>{" "}
-                                <span className="text-yellow-600 dark:text-yellow-400">
-                                  {new Date(
-                                    activity.metadata.snoozedUntil
-                                  ).toLocaleString()}
-                                </span>
-                              </div>
-                            )}
-                            {activity.metadata.completedAt && (
-                              <div className="text-xs">
-                                <span className="font-medium">
-                                  Completed At:
-                                </span>{" "}
-                                <span className="text-green-600 dark:text-green-400">
-                                  {new Date(
-                                    activity.metadata.completedAt
-                                  ).toLocaleString()}
-                                </span>
-                              </div>
-                            )}
-                            {activity.metadata.soundEnabled !== undefined && (
-                              <div className="text-xs">
-                                <span className="font-medium">Sound:</span>{" "}
-                                <span
-                                  className={`${activity.metadata.soundEnabled ? "text-green-600 dark:text-green-400" : "text-gray-500"}`}
-                                >
-                                  {activity.metadata.soundEnabled
-                                    ? "Enabled"
-                                    : "Muted"}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                      <ReminderActivityDetails
+                        metadata={activity.metadata}
+                        extras
+                      />
                     )}
 
                   {/* Display additional metadata for other activity types */}

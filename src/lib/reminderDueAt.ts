@@ -16,6 +16,61 @@ export function formatLocalTimeHm(date: Date = new Date()): string {
   return `${h}:${m}`;
 }
 
+const GENERATED_REMINDER_TITLES = new Set([
+  "Call",
+  "Email",
+  "Reminder",
+  "Task",
+  "Meeting",
+  "CALL",
+  "EMAIL",
+  "TASK",
+  "MEETING",
+]);
+
+/** User-facing type label. Task/Meeting are no longer created and are hidden. */
+export function formatReminderTypeLabel(type?: string | null): string | null {
+  if (type === "CALL") return "Call";
+  if (type === "EMAIL") return "Email";
+  return null;
+}
+
+export function reminderTitleFromType(type: string): string {
+  return formatReminderTypeLabel(type) || "Reminder";
+}
+
+/** Description for cards/timeline. Ignores auto-generated titles like "Call". */
+export function reminderActivityDescriptionText(
+  description?: string | null,
+  storedTitle?: string | null,
+): string | null {
+  const desc = description?.trim();
+  if (desc) return desc;
+  const title = storedTitle?.trim();
+  if (title && !GENERATED_REMINDER_TITLES.has(title)) return title;
+  return null;
+}
+
+export function reminderDisplayHeading(
+  description?: string | null,
+  type?: string | null,
+  storedTitle?: string | null,
+): string {
+  return (
+    reminderActivityDescriptionText(description, storedTitle) ||
+    formatReminderTypeLabel(type) ||
+    "Reminder"
+  );
+}
+
+export function reminderActivityDetailText(
+  action: string,
+  description?: string | null,
+  type?: string | null,
+): string {
+  return `${action}: ${reminderDisplayHeading(description, type)}`;
+}
+
 /** Calendar date (YYYY-MM-DD) from a stored reminderDate value. */
 export function reminderDateToYmd(reminderDate: Date | string): string {
   const d = new Date(reminderDate);

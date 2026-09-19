@@ -5,12 +5,12 @@ import { FC } from "react";
 import { ArrowRight, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Activity, Status } from "@/types/leads";
-import { formatTime24Hour } from "@/lib/utils";
 import {
   getActivityIcon,
   getActivityBackground,
   getActivityDescription,
   getStatusColor,
+  ReminderActivityDetails,
 } from "./ActivityHelpers";
 import { formatDate, getUserDisplayName } from "./utils";
 import { cn } from "@/lib/utils";
@@ -149,43 +149,7 @@ export const ActivityItem: FC<ActivityItemProps> = ({
 
           {/* Reminder metadata */}
           {activity.type.startsWith("REMINDER_") && activity.metadata && (
-            <div className="mt-2 text-sm text-gray-600! dark:text-gray-300!">
-              <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border-l-4 border-blue-300 dark:border-blue-500 shadow-sm">
-                <span className="font-semibold text-blue-700! dark:text-blue-300! uppercase tracking-wide text-xs mr-1">
-                  Reminder Details:
-                </span>
-                <div className="mt-1 space-y-1">
-                  {activity.metadata.reminderTitle && (
-                    <div className="text-xs">
-                      <span className="font-medium">Title:</span>{" "}
-                      <span className="text-gray-700! dark:text-gray-200!">
-                        {activity.metadata.reminderTitle}
-                      </span>
-                    </div>
-                  )}
-                  {activity.metadata.reminderType && (
-                    <div className="text-xs">
-                      <span className="font-medium">Type:</span>{" "}
-                      <span className="text-gray-700! dark:text-gray-200!">
-                        {activity.metadata.reminderType}
-                      </span>
-                    </div>
-                  )}
-                  {activity.metadata.reminderDate &&
-                    activity.metadata.reminderTime && (
-                      <div className="text-xs">
-                        <span className="font-medium">Due:</span>{" "}
-                        <span className="text-gray-700! dark:text-gray-200!">
-                          {new Date(
-                            activity.metadata.reminderDate
-                          ).toLocaleDateString()}{" "}
-                          at {formatTime24Hour(activity.metadata.reminderTime)}
-                        </span>
-                      </div>
-                    )}
-                </div>
-              </div>
-            </div>
+            <ReminderActivityDetails metadata={activity.metadata} />
           )}
 
           {/* Changes metadata */}

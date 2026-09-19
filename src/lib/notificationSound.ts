@@ -7,18 +7,61 @@
 class AlarmSoundManager {
   private audioContext: AudioContext | null = null;
   private isPlaying: boolean = false;
-  private intervalId: NodeJS.Timeout | null = null;
+  private intervalId: ReturnType<typeof setInterval> | null = null;
+  private unlockBound = false;
+
+  /**
+   * Browsers suspend AudioContext until a user gesture. Keep listening so a
+   * later due reminder can beep even if the first click happened too early.
+   */
+  armUnlockFromUserGesture() {
+    if (this.unlockBound || typeof window === "undefined") return;
+    this.unlockBound = true;
+    const onGesture = () => {
+      this.unlock();
+      if (this.isPlaying) {
+        this.playAlarmCycle();
+      }
+    };
+    window.addEventListener("pointerdown", onGesture);
+    window.addEventListener("keydown", onGesture);
+  }
+
+  unlock() {
+    const ctx = this.ensureContext();
+    if (ctx?.state === "suspended") {
+      void ctx.resume().catch(() => {});
+    }
+  }
 
   /**
    * Start playing alarm sound (loops until stopped)
    */
   start() {
-    if (this.isPlaying) return;
+    const ctx = this.ensureContext();
+    if (this.isPlaying && this.intervalId) {
+      if (ctx?.state === "suspended") {
+        void ctx.resume().then(() => this.playAlarmCycle()).catch(() => {});
+      } else {
+        this.playAlarmCycle();
+      }
+      return;
+    }
 
     this.isPlaying = true;
-    this.playAlarmCycle();
+    const begin = () => {
+      if (!this.isPlaying) return;
+      this.playAlarmCycle();
+    };
 
-    // Repeat every 1 second for faster beeping
+    if (ctx?.state === "suspended") {
+      ctx.resume().then(begin).catch(() => {
+        // Next user click will unlock and play.
+      });
+    } else {
+      begin();
+    }
+
     this.intervalId = setInterval(() => {
       if (this.isPlaying) {
         this.playAlarmCycle();
@@ -35,16 +78,14 @@ class AlarmSoundManager {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
-    if (this.audioContext) {
-      this.audioContext.close().catch(() => {});
-      this.audioContext = null;
-    }
   }
 
-  /**
-   * Play one cycle of the alarm sound (beep pattern)
-   */
-  private playAlarmCycle() {
+  private ensureContext(): AudioContext | null {
+    if (typeof window === "undefined") return null;
+    if (this.audioContext && this.audioContext.state !== "closed") {
+      return this.audioContext;
+    }
+
     try {
       const AudioContextClass =
         window.AudioContext ||
@@ -53,24 +94,31 @@ class AlarmSoundManager {
             webkitAudioContext: typeof AudioContext;
           }
         ).webkitAudioContext;
+      this.audioContext = new AudioContextClass();
+      return this.audioContext;
+    } catch (error) {
+      console.error("Error creating audio context:", error);
+      return null;
+    }
+  }
 
-      // Create new context for each cycle
-      const audioContext = new AudioContextClass();
-      this.audioContext = audioContext;
+  /**
+   * Play one cycle of the alarm sound (beep pattern)
+   */
+  private playAlarmCycle() {
+    try {
+      const audioContext = this.ensureContext();
+      if (!audioContext) return;
+      if (audioContext.state === "suspended") {
+        void audioContext.resume();
+        return;
+      }
 
       const now = audioContext.currentTime;
 
-      // Create three short beeps in quick succession
-      this.createBeep(audioContext, now, 0, 900); // First beep at 900Hz
-      this.createBeep(audioContext, now, 0.15, 900); // Second beep
-      this.createBeep(audioContext, now, 0.3, 900); // Third beep
-
-      // Cleanup this cycle after it finishes
-      setTimeout(() => {
-        if (audioContext.state !== "closed") {
-          audioContext.close().catch(() => {});
-        }
-      }, 600);
+      this.createBeep(audioContext, now, 0, 900);
+      this.createBeep(audioContext, now, 0.15, 900);
+      this.createBeep(audioContext, now, 0.3, 900);
     } catch (error) {
       console.error("Error playing alarm cycle:", error);
     }
@@ -91,18 +139,16 @@ class AlarmSoundManager {
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
-    // Use square wave for classic beep sound
     oscillator.type = "square";
     oscillator.frequency.value = frequency;
 
-    // Sharp attack and release for beep effect
     const beepStart = startTime + offset;
-    const beepDuration = 0.1; // 100ms beep
+    const beepDuration = 0.1;
 
     gainNode.gain.setValueAtTime(0, beepStart);
-    gainNode.gain.linearRampToValueAtTime(0.3, beepStart + 0.01); // Quick attack
+    gainNode.gain.linearRampToValueAtTime(0.3, beepStart + 0.01);
     gainNode.gain.linearRampToValueAtTime(0.3, beepStart + beepDuration - 0.01);
-    gainNode.gain.linearRampToValueAtTime(0, beepStart + beepDuration); // Quick release
+    gainNode.gain.linearRampToValueAtTime(0, beepStart + beepDuration);
 
     oscillator.start(beepStart);
     oscillator.stop(beepStart + beepDuration);

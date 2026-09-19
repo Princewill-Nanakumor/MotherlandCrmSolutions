@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
 import type { Reminder } from "@/types/leads";
 import {
   patchReminderDeletedInCache,
   pendingReminderCount,
+  refreshDueRemindersQuery,
   reminderRecordId,
   removeReminderFromList,
   replaceReminderInList,
@@ -86,5 +87,17 @@ describe("reminderCache", () => {
         (row) => row._id,
       ),
     ).toEqual(["rem-2"]);
+  });
+
+  it("refreshes dueReminders now and when dueAt arrives", () => {
+    vi.useFakeTimers();
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    refreshDueRemindersQuery(queryClient, new Date(Date.now() + 5_000));
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["dueReminders"] });
+    expect(invalidate).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(5_000);
+    expect(invalidate).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
   });
 });

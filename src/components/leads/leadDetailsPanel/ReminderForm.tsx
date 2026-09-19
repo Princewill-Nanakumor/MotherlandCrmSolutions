@@ -11,7 +11,6 @@ import {
   VolumeX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -20,14 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatLocalDateYmd } from "@/lib/reminderDueAt";
+import { ReminderDateTimeFields } from "./ReminderDateTimeFields";
 
 interface ReminderFormData {
-  title: string;
   description: string;
   reminderDate: string;
   reminderTime: string;
-  type: "CALL" | "EMAIL" | "TASK" | "MEETING" | "";
+  type: "CALL" | "EMAIL" | "";
   soundEnabled: boolean;
 }
 
@@ -66,21 +64,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
       <div className="space-y-3">
         <div>
           <label className="block mb-1 text-sm font-medium text-gray-700! dark:text-gray-200!">
-            Title *
-          </label>
-          <Input
-            placeholder="e.g., Call for follow-up"
-            value={formData.title}
-            onChange={(e) =>
-              setFormData({ ...formData, title: e.target.value })
-            }
-            className="w-full"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700! dark:text-gray-200!">
-            Description
+            Description *
           </label>
           <Textarea
             placeholder="Additional details..."
@@ -93,36 +77,16 @@ export const ReminderForm: FC<ReminderFormProps> = ({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700! dark:text-gray-200!">
-              Date *
-            </label>
-            <Input
-              type="date"
-              value={formData.reminderDate}
-              onChange={(e) =>
-                setFormData({ ...formData, reminderDate: e.target.value })
-              }
-              min={formatLocalDateYmd()}
-              className="w-full"
-            />
-          </div>
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700! dark:text-gray-200!">
-              Time *
-            </label>
-            <Input
-              type="time"
-              value={formData.reminderTime}
-              onChange={(e) =>
-                setFormData({ ...formData, reminderTime: e.target.value })
-              }
-              className="w-full time-input-dark"
-              step="60"
-            />
-          </div>
-        </div>
+        <ReminderDateTimeFields
+          reminderDate={formData.reminderDate}
+          reminderTime={formData.reminderTime}
+          onDateChange={(reminderDate) =>
+            setFormData({ ...formData, reminderDate })
+          }
+          onTimeChange={(reminderTime) =>
+            setFormData({ ...formData, reminderTime })
+          }
+        />
 
         <div>
           <label className="block mb-1 text-sm font-medium text-gray-700! dark:text-gray-200!">
@@ -133,7 +97,7 @@ export const ReminderForm: FC<ReminderFormProps> = ({
             onValueChange={(value) =>
               setFormData({
                 ...formData,
-                type: value as "CALL" | "EMAIL" | "TASK" | "MEETING",
+                type: value as "CALL" | "EMAIL",
               })
             }
           >
@@ -141,10 +105,8 @@ export const ReminderForm: FC<ReminderFormProps> = ({
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="TASK">Task</SelectItem>
               <SelectItem value="CALL">Call</SelectItem>
               <SelectItem value="EMAIL">Email</SelectItem>
-              <SelectItem value="MEETING">Meeting</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -184,10 +146,17 @@ export const ReminderForm: FC<ReminderFormProps> = ({
 
         <div className="flex gap-2 pt-2">
           <Button
+            onClick={onCancel}
+            variant="outline"
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+          <Button
             onClick={onSubmit}
             disabled={
               isSaving ||
-              !formData.title ||
+              !formData.description.trim() ||
               !formData.reminderDate ||
               !formData.reminderTime ||
               !formData.type
@@ -204,13 +173,6 @@ export const ReminderForm: FC<ReminderFormProps> = ({
             <span className="ml-2 text-white">
               {editingId ? "Update Reminder" : "Create Reminder"}
             </span>
-          </Button>
-          <Button
-            onClick={onCancel}
-            variant="outline"
-            className="flex-1"
-          >
-            Cancel
           </Button>
         </div>
       </div>
