@@ -11,7 +11,7 @@ export function useLeadsLookupQueries({
   isAuthenticated,
 }: UseLeadsLookupQueriesParams) {
   const {
-    data: users = [],
+    data: users,
     isLoading: isLoadingUsers,
     isFetching: isFetchingUsers,
     error: usersError,
@@ -21,6 +21,7 @@ export function useLeadsLookupQueries({
     queryFn: async (): Promise<User[]> => {
       const response = await apiCallWithSessionRefresh("/api/users", {
         cache: "no-store",
+        timeoutMs: 15_000,
       });
       if (!response.ok) throw new Error("Failed to fetch users");
       const data = await response.json();
@@ -29,8 +30,10 @@ export function useLeadsLookupQueries({
     enabled: isAuthenticated,
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: 2,
+    retry: 3,
     refetchOnMount: false,
+    refetchOnReconnect: true,
+    placeholderData: (previous) => previous,
   });
 
   const {
@@ -41,7 +44,7 @@ export function useLeadsLookupQueries({
   } = useStatuses();
 
   return {
-    users,
+    users: users ?? [],
     isLoadingUsers,
     isFetchingUsers,
     usersError,

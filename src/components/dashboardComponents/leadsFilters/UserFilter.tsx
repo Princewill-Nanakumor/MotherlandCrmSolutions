@@ -5,6 +5,14 @@ import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { User } from "@/types/user.types";
 import { MultiSelectFilter } from "./MultiSelectFilter";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import {
+  filterCacheKey,
+  readFilterListCache,
+  writeFilterListCache,
+} from "@/lib/filterListCache";
+
+const EMPTY_USERS: User[] = [];
 
 interface UserFilterProps {
   value: string[];
@@ -61,27 +69,39 @@ export const UserFilter = ({
   const isAuthenticated = sessionStatus === "authenticated";
   const useProvidedUsers = providedUsers !== undefined;
 
-  const { data: fetchedUsers = [], isLoading: isFetchingUsers } = useQuery<
-    User[]
-  >({
+  const persistKey = currentUserId
+    ? filterCacheKey("users", currentUserId)
+    : null;
+  const cachedUsers = persistKey
+    ? readFilterListCache<User[]>(persistKey)
+    : null;
+
+  const { data: fetchedUsers, isLoading: isFetchingUsers } = useQuery<User[]>({
     queryKey: ["users"],
     queryFn: async () => {
-      const response = await fetch("/api/users", {
-        credentials: "include",
+      const response = await apiCallWithSessionRefresh("/api/users", {
+        cache: "no-store",
+        timeoutMs: 15_000,
       });
       if (!response.ok) throw new Error("Failed to fetch users");
       const data = await response.json();
-      return Array.isArray(data) ? data : (data?.users ?? []);
+      const list = Array.isArray(data) ? data : (data?.users ?? []);
+      if (persistKey) writeFilterListCache(persistKey, list);
+      return list;
     },
+    initialData: cachedUsers ?? undefined,
+    initialDataUpdatedAt: cachedUsers ? 1 : undefined,
+    placeholderData: (previous) => previous,
     staleTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    retry: 2,
+    refetchOnReconnect: true,
+    retry: 3,
     enabled: isAuthenticated && !useProvidedUsers,
   });
 
-  const users = useProvidedUsers ? providedUsers : fetchedUsers;
-  const usersLoading = useProvidedUsers ? isLoading : isFetchingUsers;
+  const users = (useProvidedUsers ? providedUsers : fetchedUsers) ?? EMPTY_USERS;
+  const stillWaitingForUsers = useProvidedUsers ? isLoading : isFetchingUsers;
 
   const options = useMemo(() => {
     const dropdownUsers = users.filter((user) => user.status === "ACTIVE");
@@ -101,6 +121,8 @@ export const UserFilter = ({
 
     return [{ value: "unassigned", label: "Unassigned Leads" }, ...userOptions];
   }, [users, currentUserId, session?.user?.role]);
+
+  const usersLoading = stillWaitingForUsers && users.length === 0;
 
   return (
     <MultiSelectFilter

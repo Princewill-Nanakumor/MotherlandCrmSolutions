@@ -28,7 +28,7 @@ export const useSubscriptionData = () => {
     queryFn: () => fetchSubscriptionStatus(role),
     staleTime: 30 * 1000,
     gcTime: 10 * 60 * 1000,
-    retry: 1,
+    retry: 3,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,

@@ -8,6 +8,12 @@ import { MultiSelectFilter } from "./MultiSelectFilter";
 import {
   LEAD_SOURCES_QUERY_KEY,
 } from "@/lib/leadFilterQueries";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import {
+  filterCacheKey,
+  readFilterListCache,
+  writeFilterListCache,
+} from "@/lib/filterListCache";
 
 interface SourceFilterProps {
   value: string[]; // Changed to array
@@ -16,7 +22,8 @@ interface SourceFilterProps {
   isLoading?: boolean;
   mode?: "include" | "exclude"; // Filter mode
   onModeChange?: (mode: "include" | "exclude") => void; // Mode change handler
-  availableSources?: string[]; // Optional: if provided, use these instead of fetching
+  /** Extra names from the current table; the API list is still fetched. */
+  availableSources?: string[];
 }
 
 export const SourceFilter = ({
@@ -60,35 +67,45 @@ export const SourceFilter = ({
       setInternalMode(newMode);
     }
   };
-  const { status: sessionStatus } = useSession();
+  const { status: sessionStatus, data: session } = useSession();
   const isAuthenticated = sessionStatus === "authenticated";
+  const userId = session?.user?.id;
+  const persistKey = userId ? filterCacheKey("sources", userId) : null;
+  const cachedSources = persistKey
+    ? readFilterListCache<string[]>(persistKey)
+    : null;
 
-  // If availableSources are provided, use them (e.g. user leads page).
-  // Otherwise fetch distinct sources from API so we get all sources, not just from first page.
-  const { data: fetchedSources = [], isLoading: isLoadingSources } = useQuery<
+  const { data: fetchedSources, isLoading: isLoadingSources } = useQuery<
     string[]
   >({
     queryKey: [...LEAD_SOURCES_QUERY_KEY],
     queryFn: async () => {
-      const response = await fetch("/api/leads/sources", {
-        credentials: "include",
+      const response = await apiCallWithSessionRefresh("/api/leads/sources", {
+        cache: "no-store",
+        timeoutMs: 15_000,
       });
       if (!response.ok) throw new Error("Failed to fetch sources");
       const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      const list = Array.isArray(data) ? data : [];
+      if (persistKey) writeFilterListCache(persistKey, list);
+      return list;
     },
+    initialData: cachedSources ?? undefined,
+    initialDataUpdatedAt: cachedSources ? 1 : undefined,
+    placeholderData: (previous) => previous,
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
-    retry: 2,
-    enabled: !providedSources && isAuthenticated,
+    refetchOnReconnect: true,
+    retry: 3,
+    enabled: isAuthenticated,
   });
 
   const sources = useMemo(() => {
-    const raw =
-      providedSources && providedSources.length > 0
-        ? providedSources
-        : fetchedSources.filter((s): s is string => Boolean(s));
+    const raw = [
+      ...(providedSources ?? []),
+      ...((fetchedSources ?? []).filter((s): s is string => Boolean(s))),
+    ];
     // Deduplicate by normalized name (trim + lowercase) so "Richer" and "richer" show once
     const byKey = new Map<string, string>();
     for (const s of raw) {
@@ -119,14 +136,16 @@ export const SourceFilter = ({
     [sources]
   );
 
+  const sourcesLoading = isLoadingSources && options.length === 0;
+
   return (
     <MultiSelectFilter
       value={value}
       onChange={onChange}
       options={options}
       placeholder="All Sources"
-      disabled={disabled || isLoadingSources}
-      isLoading={isLoading || isLoadingSources}
+      disabled={disabled || sourcesLoading}
+      isLoading={isLoading || sourcesLoading}
       mode={mode}
       onModeChange={handleModeToggle}
       itemNoun={{ singular: "source", plural: "sources" }}

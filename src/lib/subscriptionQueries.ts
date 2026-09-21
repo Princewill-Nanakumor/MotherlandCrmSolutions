@@ -7,6 +7,9 @@ export function subscriptionStatusQueryKey(role?: string) {
   return ["subscription-status", role ?? "unknown"] as const;
 }
 
+export const SUBSCRIPTION_SESSION_ERROR = "SUBSCRIPTION_SESSION";
+export const SUBSCRIPTION_NETWORK_ERROR = "SUBSCRIPTION_NETWORK";
+
 export function isSubscriptionStatusQuery(queryKey: readonly unknown[]): boolean {
   const root = queryKey[0];
   return (
@@ -24,15 +27,30 @@ export async function fetchSubscriptionStatus(
   const endpoint = isTenantStaff(role)
     ? "/api/subscription/agent-status"
     : "/api/subscription/status";
-  const response = await apiCallWithSessionRefresh(endpoint, {
-    cache: "no-store",
-  });
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch subscription status");
+  try {
+    const response = await apiCallWithSessionRefresh(endpoint, {
+      cache: "no-store",
+    });
+
+    if (response.status === 401) {
+      throw new Error(SUBSCRIPTION_SESSION_ERROR);
+    }
+    if (!response.ok) {
+      throw new Error(SUBSCRIPTION_NETWORK_ERROR);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (error.message === SUBSCRIPTION_SESSION_ERROR ||
+        error.message.toLowerCase().includes("session expired"))
+    ) {
+      throw new Error(SUBSCRIPTION_SESSION_ERROR);
+    }
+    throw new Error(SUBSCRIPTION_NETWORK_ERROR);
   }
-
-  return response.json();
 }
 
 /** Keep navbar dot, plan badge, and subscription page in sync after subscribe/pay. */

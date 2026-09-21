@@ -6,6 +6,13 @@ import { useQuery } from "@tanstack/react-query";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 import { LEAD_COUNTRIES_QUERY_KEY } from "@/lib/leadFilterQueries";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
+import { useSession } from "next-auth/react";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import {
+  filterCacheKey,
+  readFilterListCache,
+  writeFilterListCache,
+} from "@/lib/filterListCache";
 
 interface CountryFilterProps {
   value: string[]; // Changed to array
@@ -14,7 +21,8 @@ interface CountryFilterProps {
   isLoading?: boolean;
   mode?: "include" | "exclude"; // Filter mode
   onModeChange?: (mode: "include" | "exclude") => void; // Mode change handler
-  availableCountries?: string[]; // Optional: if provided, use these instead of fetching
+  /** Extra names from the current table; the API list is still fetched. */
+  availableCountries?: string[];
 }
 
 export const CountryFilter = ({
@@ -59,24 +67,37 @@ export const CountryFilter = ({
     }
   };
 
-  // If availableCountries are provided, use them directly (for user leads page)
-  // Otherwise, fetch distinct countries from API (for admin all-leads page)
-  const { data: fetchedCountries = [], isLoading: isLoadingCountries } =
+  const { data: session, status: sessionStatus } = useSession();
+  const isAuthenticated = sessionStatus === "authenticated";
+  const userId = session?.user?.id;
+  const persistKey = userId ? filterCacheKey("countries", userId) : null;
+  const cachedCountries = persistKey
+    ? readFilterListCache<string[]>(persistKey)
+    : null;
+
+  const { data: fetchedCountries, isLoading: isLoadingCountries } =
     useQuery<string[]>({
     queryKey: [...LEAD_COUNTRIES_QUERY_KEY],
     queryFn: async () => {
-      const response = await fetch("/api/leads/countries", {
-        credentials: "include",
+      const response = await apiCallWithSessionRefresh("/api/leads/countries", {
+        cache: "no-store",
+        timeoutMs: 15_000,
       });
       if (!response.ok) throw new Error("Failed to fetch countries");
       const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      const list = Array.isArray(data) ? data : [];
+      if (persistKey) writeFilterListCache(persistKey, list);
+      return list;
     },
+    initialData: cachedCountries ?? undefined,
+    initialDataUpdatedAt: cachedCountries ? 1 : undefined,
+    placeholderData: (previous) => previous,
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
-    retry: 2,
-    enabled: !providedCountries,
+    refetchOnReconnect: true,
+    retry: 3,
+    enabled: isAuthenticated,
   });
 
   const countries = useMemo(() => {
@@ -89,11 +110,8 @@ export const CountryFilter = ({
       if (!byKey.has(key)) byKey.set(key, canonical);
     };
 
-    if (providedCountries && providedCountries.length > 0) {
-      providedCountries.forEach(add);
-    } else {
-      fetchedCountries.forEach(add);
-    }
+    (providedCountries ?? []).forEach(add);
+    (fetchedCountries ?? []).forEach(add);
     value.forEach(add);
 
     return Array.from(byKey.values()).sort((a, b) => a.localeCompare(b));
@@ -108,7 +126,7 @@ export const CountryFilter = ({
     [countries]
   );
 
-  const countriesLoading = !providedCountries && isLoadingCountries;
+  const countriesLoading = isLoadingCountries && countries.length === 0;
 
   return (
     <MultiSelectFilter

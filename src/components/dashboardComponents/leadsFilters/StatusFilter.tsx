@@ -68,7 +68,8 @@ export const StatusFilter = ({
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [statuses]);
 
-  const filterLoading = isLoading || isLoadingStatuses;
+  const filterLoading =
+    (isLoading || isLoadingStatuses) && options.length === 0;
 
   return (
     <MultiSelectFilter

@@ -1,5 +1,6 @@
 // src/libs/dbConfig.ts
 import mongoose from "mongoose";
+import { friendlyDatabaseConnectMessage } from "@/lib/mongoConnectionError";
 
 interface CachedConnection {
   conn: typeof mongoose | null;
@@ -171,24 +172,8 @@ export const connectMongoDB = async (): Promise<typeof mongoose> => {
   } catch (error) {
     globalWithCache.mongooseCache.conn = null;
     globalWithCache.mongooseCache.promise = null;
-    throw new Error(getErrorMessage(error));
+    throw new Error(friendlyDatabaseConnectMessage(error));
   }
-};
-
-const getErrorMessage = (error: unknown): string => {
-  if (error instanceof Error) {
-    if (error.message.includes("ETIMEOUT")) {
-      return "Database connection timed out. Please check your network connection and try again.";
-    }
-    if (error.message.includes("Authentication failed")) {
-      return "Database authentication failed. Please check your credentials.";
-    }
-    if (error.message.includes("ECONNREFUSED")) {
-      return "Could not connect to database. Please check if the database server is running.";
-    }
-    return error.message;
-  }
-  return "An unexpected error occurred while connecting to the database.";
 };
 
 const handleShutdown = async (signal: string): Promise<void> => {

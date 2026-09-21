@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { isAdmin, isTenantStaff } from "@/lib/roles";
+import { SUBSCRIPTION_SESSION_ERROR } from "@/lib/subscriptionQueries";
 
 interface SubscriptionGuardProps {
   children: React.ReactNode;
@@ -17,7 +18,7 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
   children,
 }) => {
   const { status, data: session } = useSession();
-  const { subscriptionData, hasActiveSubscription, isLoading, error } =
+  const { subscriptionData, hasActiveSubscription, isLoading, error, refreshSubscriptionData } =
     useSubscriptionData();
 
   const staffUser = isTenantStaff(session?.user?.role);
@@ -31,8 +32,9 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
     return <>{children}</>;
   }
 
-  // Avoid "subscribe" messaging when the subscription API failed (e.g. stale session / 401)
+  // Weak connections often fail /api/subscription/status with 500, not 401.
   if (hasAuthorizedSession(status, session) && error && !isLoading) {
+    const sessionLooksStale = error.message === SUBSCRIPTION_SESSION_ERROR;
     return (
       <div className="flex flex-col justify-center items-center p-8 h-full rounded-lg border bg-background dark:bg-gray-800">
         <Card className="mx-auto max-w-md">
@@ -44,16 +46,27 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              Your session may be out of date. Refresh the page or sign out and
-              sign in again.
+              {sessionLooksStale
+                ? "Your session may be out of date. Refresh the page or sign in again."
+                : "This is usually a weak internet connection, not an expired session. Stay signed in and retry."}
             </p>
-            <Button
-              type="button"
-              onClick={() => window.location.reload()}
-              variant="outline"
-            >
-              Refresh page
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                onClick={() => {
+                  void refreshSubscriptionData();
+                }}
+              >
+                Retry
+              </Button>
+              <Button
+                type="button"
+                onClick={() => window.location.reload()}
+                variant="outline"
+              >
+                Refresh page
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

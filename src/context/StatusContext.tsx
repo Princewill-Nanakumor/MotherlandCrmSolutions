@@ -12,6 +12,13 @@ import {
 import { Status } from "@/types/leads";
 import { useSession } from "next-auth/react";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { hasRecentIntentionalSignOut } from "@/lib/sessionUtils";
+import {
+  filterCacheKey,
+  readFilterListCache,
+  writeFilterListCache,
+} from "@/lib/filterListCache";
+import { isRetryableFilterFetch } from "@/lib/mongoConnectionError";
 
 interface StatusContextType {
   statuses: Status[];
@@ -47,10 +54,12 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
   const fetchStatuses = useCallback(
     async (force = false) => {
       if (status === "unauthenticated") {
-        setStatuses([]);
+        if (hasRecentIntentionalSignOut()) {
+          setStatuses([]);
+          setError(null);
+          cacheRef.current = null;
+        }
         setIsLoading(false);
-        setError(null);
-        cacheRef.current = null;
         return;
       }
 
@@ -59,81 +68,115 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
       }
 
       const userId = session?.user?.id ?? null;
+      const persistKey = userId ? filterCacheKey("statuses", userId) : null;
 
       try {
-        const cached = cacheRef.current;
-        if (
-          !force &&
-          cached &&
-          cached.userId === userId &&
-          Date.now() - cached.timestamp < CACHE_DURATION
-        ) {
-          setStatuses(cached.statuses);
+        const memory = cacheRef.current;
+        const persisted =
+          persistKey ? readFilterListCache<Status[]>(persistKey) : null;
+        const seed =
+          memory?.userId === userId && memory.statuses.length > 0
+            ? memory.statuses
+            : persisted && persisted.length > 0
+              ? persisted
+              : null;
+
+        if (seed) {
+          setStatuses(seed);
           setIsLoading(false);
-          return;
-        }
-
-        const response = await apiCallWithSessionRefresh("/api/statuses", {
-          cache: "no-store",
-          headers: {
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-          },
-        });
-
-        if (response.status === 304) {
-          if (cacheRef.current?.userId === userId) {
-            setStatuses(cacheRef.current.statuses);
-            setError(null);
-          }
-          setIsLoading(false);
-          return;
-        }
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            setStatuses([]);
-            setError(null);
-            setIsLoading(false);
-            cacheRef.current = null;
+          if (
+            !force &&
+            memory?.userId === userId &&
+            Date.now() - memory.timestamp < CACHE_DURATION
+          ) {
             return;
           }
-          throw new Error(`Failed to fetch statuses (HTTP ${response.status})`);
         }
 
-        const data: Status[] = await response.json();
+        let lastError: unknown;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            const response = await apiCallWithSessionRefresh("/api/statuses", {
+              cache: "no-store",
+              timeoutMs: 15_000,
+              headers: {
+                "Cache-Control": "no-cache",
+                Pragma: "no-cache",
+              },
+            });
 
-        // Don't mutate the response array — produce a new one if "New" is missing.
-        const hasNewStatus = data.some(
-          (s) => s.name === "New" || s.name === "NEW" || s._id === "NEW",
+            if (response.status === 304) {
+              if (seed) {
+                setStatuses(seed);
+                setError(null);
+              }
+              setIsLoading(false);
+              return;
+            }
+
+            if (response.status === 401) {
+              if (!seed) {
+                setStatuses([]);
+                cacheRef.current = null;
+              }
+              setIsLoading(false);
+              return;
+            }
+
+            if (!response.ok) {
+              throw new Error(`Failed to fetch statuses (HTTP ${response.status})`);
+            }
+
+            const data: Status[] = await response.json();
+
+            const hasNewStatus = data.some(
+              (s) => s.name === "New" || s.name === "NEW" || s._id === "NEW",
+            );
+            const finalData = hasNewStatus
+              ? data
+              : [
+                  {
+                    id: "NEW",
+                    _id: "NEW",
+                    name: "New",
+                    color: "#3B82F6",
+                    adminId: "system",
+                    createdBy: "system",
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  } as Status,
+                  ...data,
+                ];
+
+            cacheRef.current = {
+              userId,
+              statuses: finalData,
+              timestamp: Date.now(),
+            };
+            if (persistKey) writeFilterListCache(persistKey, finalData);
+
+            setStatuses(finalData);
+            setError(null);
+            setIsLoading(false);
+            return;
+          } catch (err) {
+            lastError = err;
+            if (!isRetryableFilterFetch(err) || attempt === 3) break;
+            await new Promise((resolve) => setTimeout(resolve, 400 * attempt));
+          }
+        }
+
+        setError(
+          lastError instanceof Error ? lastError : new Error("Unknown error"),
         );
-        const finalData = hasNewStatus
-          ? data
-          : [
-              {
-                id: "NEW",
-                _id: "NEW",
-                name: "New",
-                color: "#3B82F6",
-                adminId: "system",
-                createdBy: "system",
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              } as Status,
-              ...data,
-            ];
-
-        cacheRef.current = {
-          userId,
-          statuses: finalData,
-          timestamp: Date.now(),
-        };
-
-        setStatuses(finalData);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error("Unknown error"));
-        cacheRef.current = null;
+        if (seed) {
+          setStatuses(seed);
+          cacheRef.current = {
+            userId,
+            statuses: seed,
+            timestamp: Date.now(),
+          };
+        }
       } finally {
         setIsLoading(false);
       }
@@ -144,12 +187,6 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     fetchStatuses();
   }, [fetchStatuses]);
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      cacheRef.current = null;
-    }
-  }, [status]);
 
   const contextValue = useMemo(
     () => ({

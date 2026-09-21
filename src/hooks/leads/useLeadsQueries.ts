@@ -61,7 +61,7 @@ export function useLeadsQueries(enabled: boolean) {
           description: error instanceof Error ? error.message : "An unknown error occurred.",
           variant: "destructive",
         });
-        return [];
+        throw error;
       } finally {
         setLoadingStatuses(false);
       }
@@ -77,6 +77,7 @@ export function useLeadsQueries(enabled: boolean) {
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     enabled,
+    placeholderData: (previous) => previous,
   });
 
   const usersQuery = useQuery({
@@ -98,7 +99,7 @@ export function useLeadsQueries(enabled: boolean) {
           description: error instanceof Error ? error.message : "An unknown error occurred.",
           variant: "destructive",
         });
-        return [];
+        throw error;
       } finally {
         setLoadingUsers(false);
       }
@@ -114,6 +115,7 @@ export function useLeadsQueries(enabled: boolean) {
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     enabled,
+    placeholderData: (previous) => previous,
   });
 
   const leadsQuery = useQuery({

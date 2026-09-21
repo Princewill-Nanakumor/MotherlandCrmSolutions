@@ -31,6 +31,10 @@ import {
   evaluateCaptchaCookie,
 } from "@/lib/serverCaptcha";
 import { getCookieHeaderFromNextAuthReq } from "@/lib/nextAuthCookieHeader";
+import {
+  DATABASE_UNREACHABLE_USER_MESSAGE,
+  isTlsOrNetworkFailure,
+} from "@/lib/mongoConnectionError";
 import { extractLoginInfoWithGeo } from "@/lib/loginInfo";
 import { getSuperAdminEmails } from "@/lib/notificationQuery";
 import type { JWT } from "next-auth/jwt";
@@ -275,6 +279,9 @@ export const authOptions: NextAuthOptions = {
           };
         } catch (error) {
           console.error("Auth error:", error);
+          if (isTlsOrNetworkFailure(error)) {
+            throw new Error(DATABASE_UNREACHABLE_USER_MESSAGE);
+          }
           throw error;
         }
       },

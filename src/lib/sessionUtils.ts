@@ -2,6 +2,7 @@
 
 import type { Session } from "next-auth";
 import { authDebug } from "@/lib/authDebug";
+import { clearLeadFilterCaches } from "@/lib/filterListCache";
 
 const INTENTIONAL_SIGN_OUT_SESSION_KEY = "auth:intentionalSignOut";
 const INTENTIONAL_SIGN_OUT_AT_KEY = "auth:intentionalSignOutAt";
@@ -85,6 +86,7 @@ export function markIntentionalSignOut(): void {
   } catch {
     /* ignore */
   }
+  clearLeadFilterCaches();
 }
 
 export function hasRecentIntentionalSignOut(): boolean {

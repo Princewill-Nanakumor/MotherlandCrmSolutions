@@ -20,6 +20,7 @@ import {
 } from "@/lib/credentialsEmailVerifyErrors";
 import { authDebug } from "@/lib/authDebug";
 import { clearSessionExpiryMarkers, waitForServerSessionUserId } from "@/lib/sessionUtils";
+import { humanizeSignInError } from "@/lib/mongoConnectionError";
 
 type LoginInput = z.infer<typeof LoginSchema>;
 
@@ -110,7 +111,7 @@ export default function SignInForm() {
           setFormError(humanMessageForCredEmailVerifyCode(err));
           setShowExpiredVerifyResend(isCredEmailVerifyExpiredAdmin(err));
         } else {
-          setFormError(err);
+          setFormError(humanizeSignInError(err));
           setShowExpiredVerifyResend(false);
         }
         refreshCaptchaOnError();
@@ -177,7 +178,7 @@ export default function SignInForm() {
       } catch {}
       setFormError(
         error instanceof Error
-          ? `An error occurred during sign in: ${error.message}`
+          ? humanizeSignInError(error.message)
           : "An unexpected error occurred during sign in",
       );
       refreshCaptchaOnError();
