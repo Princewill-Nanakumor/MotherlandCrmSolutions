@@ -1,13 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { usePathname, useSearchParams } from "next/navigation";
-
-const LeadDetailsPanel = dynamic(
-  () => import("@/components/dashboardComponents/LeadDetailsPanel"),
-  { ssr: false },
-);
 import { UserLeadsHeader } from "@/components/leads/UserLeadsHeader";
 import { UserLeadsFilterControls } from "@/components/leads/UserLeadsFilterControls";
 import { UserLeadsTableContainer } from "@/components/user-leads/UserLeadsTableContainer";
@@ -15,11 +8,15 @@ import { Lead } from "@/types/leads";
 import { CountsData } from "@/types/pagination.types";
 import { SortField, SortOrder } from "@/components/leads/userLeadsTypes";
 
+const LeadDetailsPanel = dynamic(
+  () => import("@/components/dashboardComponents/LeadDetailsPanel"),
+  { ssr: false },
+);
+
 interface UserLeadsMainContentProps {
   loading: boolean;
   shouldShowLoading: boolean;
   isDataReady: boolean;
-  filteredLeads: Lead[];
   sortedLeads: Lead[];
   availableCountries: string[];
   availableStatuses: string[];
@@ -35,6 +32,7 @@ interface UserLeadsMainContentProps {
   showControls: boolean;
   currentIndex: number;
   totalLeads: number;
+  leadsTotal: number;
   searchQuery?: string;
   handleCountryFilterChange: (countries: string[]) => void;
   handleStatusFilterChange: (statuses: string[]) => void;
@@ -54,6 +52,11 @@ interface UserLeadsMainContentProps {
     selectedLead: Lead,
     sortedLeads: Lead[],
   ) => void;
+  pageSize: number;
+  pageIndex: number;
+  onPageSizeChange: (value: string) => void;
+  onPageChange: (newPageIndex: number) => void;
+  isRefetching?: boolean;
 }
 
 function EmptyState({ searchQuery }: { searchQuery: string }) {
@@ -105,7 +108,6 @@ export function UserLeadsMainContent({
   loading,
   shouldShowLoading,
   isDataReady,
-  filteredLeads,
   sortedLeads,
   availableCountries,
   availableStatuses,
@@ -121,6 +123,7 @@ export function UserLeadsMainContent({
   showControls,
   currentIndex,
   totalLeads,
+  leadsTotal,
   searchQuery = "",
   handleCountryFilterChange,
   handleStatusFilterChange,
@@ -136,73 +139,18 @@ export function UserLeadsMainContent({
   handlePanelClose,
   handleLeadUpdated,
   handleNavigation,
+  pageSize,
+  pageIndex,
+  onPageSizeChange,
+  onPageChange,
+  isRefetching = false,
 }: UserLeadsMainContentProps) {
-  const searchParams = useSearchParams()!;
-  const pathname = usePathname() || "";
-  const createParams = useCallback(() => {
-    if (typeof window !== "undefined") {
-      return new URLSearchParams(window.location.search);
-    }
-    return new URLSearchParams(Array.from(searchParams.entries()));
-  }, [searchParams]);
-
-  const initialPageFromUrl = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const initialPageSizeFromUrl = Math.min(500, Math.max(1, parseInt(searchParams.get("pageSize") || "15", 10)));
-  const [pageSize, setPageSize] = useState<number>(initialPageSizeFromUrl);
-  const [pageIndex, setPageIndex] = useState<number>(initialPageFromUrl - 1);
-
-  // Keep local pagination state in sync when URL changes (e.g. filter change resets page=1).
-  useEffect(() => {
-    const nextPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const nextPageSize = Math.min(
-      500,
-      Math.max(1, parseInt(searchParams.get("pageSize") || "15", 10)),
-    );
-    setPageIndex(nextPage - 1);
-    setPageSize(nextPageSize);
-  }, [searchParams]);
-
-  const handlePageSizeChange = useCallback(
-    (value: string) => {
-      const newSize = parseInt(value, 10);
-      if (Number.isNaN(newSize) || newSize <= 0) return;
-      const size = Math.min(500, Math.max(1, newSize));
-      if (size === pageSize && pageIndex === 0) {
-        return;
-      }
-      setPageSize(size);
-      setPageIndex(0);
-      const params = createParams();
-      params.set("page", "1");
-      params.set("pageSize", String(size));
-      const query = params.toString();
-      const url = query ? `${pathname}?${query}` : pathname;
-      window.history.replaceState(null, "", url);
-    },
-    [createParams, pageIndex, pageSize, pathname],
-  );
-
-  const handlePageChange = useCallback(
-    (newPageIndex: number) => {
-      if (newPageIndex === pageIndex) {
-        return;
-      }
-      setPageIndex(newPageIndex);
-      const params = createParams();
-      params.set("page", String(newPageIndex + 1));
-      const query = params.toString();
-      const url = query ? `${pathname}?${query}` : pathname;
-      window.history.replaceState(null, "", url);
-    },
-    [createParams, pageIndex, pathname],
-  );
-
-  const totalPages = Math.max(1, Math.ceil(filteredLeads.length / pageSize) || 1);
+  const totalPages = Math.max(1, Math.ceil(leadsTotal / pageSize) || 1);
   const counts: CountsData = isDataReady
     ? {
         total: totalLeads,
-        filtered: filteredLeads.length,
-        currentPage: Math.min(pageSize, Math.max(filteredLeads.length - pageIndex * pageSize, 0)),
+        filtered: leadsTotal,
+        currentPage: Math.min(pageSize, sortedLeads.length),
         totalPages,
         countries: availableCountries.length,
         statuses: availableStatuses.length,
@@ -217,7 +165,7 @@ export function UserLeadsMainContent({
       };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 h-full min-w-0 max-w-full overflow-x-hidden border rounded-lg bg-background dark:bg-gray-800">
+    <div className="flex flex-col flex-1 min-h-0 h-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto border rounded-lg bg-background dark:bg-gray-800">
       <div
         className={`shrink-0 transition-opacity duration-300 ease-in-out ${showHeader ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         style={{ marginBottom: showHeader ? "0" : "-100px", transition: "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out" }}
@@ -250,44 +198,27 @@ export function UserLeadsMainContent({
       </div>
 
       <div className="flex-1 min-h-0 min-w-0 px-4 pb-4 overflow-auto sm:px-8">
-        {shouldShowLoading ? (
+        {shouldShowLoading || leadsTotal > 0 ? (
           <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
             <UserLeadsTableContainer
-              loading
-              leads={[]}
+              loading={shouldShowLoading || loading}
+              leads={shouldShowLoading ? [] : sortedLeads}
               pageSize={pageSize}
               pageIndex={pageIndex}
-              totalEntries={0}
-              totalPages={1}
-              selectedLead={null}
-              sortField={sortField}
-              sortOrder={sortOrder}
-              onLeadClick={handleLeadClick}
-              onSort={handleSort}
-              onPageSizeChange={handlePageSizeChange}
-              onPageChange={handlePageChange}
-            />
-          </div>
-        ) : filteredLeads.length === 0 ? (
-          <EmptyState searchQuery={searchQuery} />
-        ) : (
-          <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
-            <UserLeadsTableContainer
-              loading={loading}
-              leads={sortedLeads}
-              pageSize={pageSize}
-              pageIndex={pageIndex}
-              totalEntries={counts.filtered}
+              totalEntries={leadsTotal}
               totalPages={totalPages}
               selectedLead={selectedLead}
               sortField={sortField}
               sortOrder={sortOrder}
               onLeadClick={handleLeadClick}
               onSort={handleSort}
-              onPageSizeChange={handlePageSizeChange}
-              onPageChange={handlePageChange}
+              onPageSizeChange={onPageSizeChange}
+              onPageChange={onPageChange}
+              isRefetching={isRefetching}
             />
           </div>
+        ) : (
+          <EmptyState searchQuery={searchQuery} />
         )}
       </div>
 

@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/libs/dbConfig";
 import Activity from "@/models/Activity";
-import Lead from "@/models/Lead";
 import "@/models/User";
 import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
-import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
+import { findAccessibleLead } from "@/lib/leadAssignmentQuery";
 import { canAccessAllLeads, getTenantAdminId } from "@/lib/roles";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";
 import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
@@ -114,7 +113,10 @@ interface ActivityDocument {
   };
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const wallStart = Date.now();
   const [response] = await withMongoPerf(async () => {
     const perf = new ApiRoutePerf("GET /api/leads/[id]/activities");
@@ -128,9 +130,8 @@ export async function GET(request: NextRequest) {
       perf.mark("getServerSession");
       if (!session?.user) return unauthorizedResponse();
 
+      const { id: leadId } = await params;
       const url = new URL(request.url);
-      const pathParts = url.pathname.split("/");
-      const leadId = pathParts[pathParts.length - 2];
 
       if (!mongoose.Types.ObjectId.isValid(leadId)) {
         perf.finish({ status: 400 });
@@ -155,17 +156,13 @@ export async function GET(request: NextRequest) {
 
       const leadObjectId = new mongoose.Types.ObjectId(leadId);
 
-      const lead = await Lead.findOne(
-        singleLeadAccessFilter(
-          leadObjectId,
-          adminId,
-          session.user.role,
-          session.user.id,
-          canAccessAllLeads(session.user),
-        ),
-      )
-        .select({ _id: 1 })
-        .lean();
+      const lead = await findAccessibleLead(
+        leadObjectId,
+        adminId,
+        session.user.role,
+        session.user.id,
+        canAccessAllLeads(session.user),
+      );
       perf.mark("leadAccessCheck");
       if (!lead) {
         perf.finish({ status: 404 });

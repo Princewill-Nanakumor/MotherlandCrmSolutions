@@ -86,7 +86,10 @@ test.describe("agent assignment cap (500)", () => {
 
     const agentPage = await browser.newPage();
     await loginAs(agentPage, E2E_AGENT_EMAIL, E2E_PASSWORD);
-    const assigned = await apiJson(agentPage, "/api/leads/assigned");
+    const assigned = await apiJson(
+      agentPage,
+      `/api/leads/assigned?pageSize=${MAX_ASSIGNED_LEADS_PER_AGENT}`,
+    );
     expect(assigned.status).toBe(200);
     const assignedRows = Array.isArray(assigned.body)
       ? assigned.body
@@ -94,7 +97,6 @@ test.describe("agent assignment cap (500)", () => {
     expect(assignedRows.length).toBe(MAX_ASSIGNED_LEADS_PER_AGENT);
     await agentPage.close();
 
-    // eslint-disable-next-line no-console -- bench report
     console.log("\n=== Assignment cap report ===\n", {
       cap: MAX_ASSIGNED_LEADS_PER_AGENT,
       seeded: leadIds.length,

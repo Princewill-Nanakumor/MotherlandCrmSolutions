@@ -7,6 +7,7 @@ import {
   formatAssignmentCapacityError,
   getLeadAssigneeId,
   singleLeadAccessFilter,
+  agentAssignedToUserClause,
 } from "@/lib/leadAssignmentQuery";
 
 describe("getLeadAssigneeId", () => {
@@ -45,6 +46,26 @@ describe("countAssignmentsTowardCapacity", () => {
         target,
       ),
     ).toBe(2);
+  });
+});
+
+describe("agentAssignedToUserClause", () => {
+  it("matches ObjectId, string, and embedded assignee shapes", () => {
+    const agentId = new mongoose.Types.ObjectId();
+    const agentIdStr = agentId.toString();
+    const clause = agentAssignedToUserClause(agentIdStr);
+    const keys = clause.$or.flatMap((entry) => Object.keys(entry));
+    const values = clause.$or.flatMap((entry) =>
+      Object.values(entry).map((value) => String(value)),
+    );
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        "assignedTo",
+        "assignedTo._id",
+        "assignedTo.id",
+      ]),
+    );
+    expect(values).toContain(agentIdStr);
   });
 });
 

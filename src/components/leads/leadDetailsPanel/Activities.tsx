@@ -49,6 +49,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
         credentials: "same-origin",
       });
       if (!response.ok) {
+        if (response.status === 404) return [];
         throw new Error(`Failed to fetch activities: ${response.status}`);
       }
       const responseData = await response.json();
@@ -57,7 +58,8 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
     enabled: !!leadId,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
-    retry: (failureCount) => failureCount < 2,
+    retry: (failureCount, error) =>
+      failureCount < 2 && !error.message.includes("404"),
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });

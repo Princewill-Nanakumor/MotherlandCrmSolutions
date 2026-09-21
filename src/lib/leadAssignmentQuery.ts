@@ -1,26 +1,29 @@
 import mongoose from "mongoose";
 
-/** Agent leads page loads all assigned rows client-side — cap per assignee. */
+/** Agent assigned-lead cap (server paginates the My Leads list). */
 export const MAX_ASSIGNED_LEADS_PER_AGENT = 500;
 
 /**
  * Matches leads assigned to the given user across storage shapes:
- * ObjectId, string id, or populated `{ _id, ... }` from assign APIs.
+ * ObjectId, string id, or embedded `{ _id, firstName, lastName }` from assign APIs.
+ * Use with the native driver — Mongoose casts `assignedTo` as ObjectId and drops
+ * nested `"assignedTo._id"` matches on those embedded documents.
  */
 export function agentAssignedToUserClause(agentUserId: string) {
-  const hasValidObjectId = mongoose.Types.ObjectId.isValid(agentUserId);
-  const oid = hasValidObjectId
-    ? new mongoose.Types.ObjectId(agentUserId)
-    : null;
-  const objectIdClauses = oid
-    ? [{ "assignedTo._id": oid }, { assignedTo: oid }]
-    : [];
-  return {
-    $or: [
-      ...objectIdClauses,
-      { assignedTo: agentUserId },
-    ],
-  };
+  const clauses: Record<string, unknown>[] = [
+    { assignedTo: agentUserId },
+    { "assignedTo._id": agentUserId },
+    { "assignedTo.id": agentUserId },
+  ];
+  if (mongoose.Types.ObjectId.isValid(agentUserId)) {
+    const oid = new mongoose.Types.ObjectId(agentUserId);
+    clauses.push(
+      { assignedTo: oid },
+      { "assignedTo._id": oid },
+      { "assignedTo.id": oid },
+    );
+  }
+  return { $or: clauses };
 }
 
 /** Tenant + assignment filter for agents (use with Lead.find / countDocuments). */
@@ -53,6 +56,35 @@ export function singleLeadAccessFilter(
     };
   }
   return { _id: leadObjectId, adminId: tenantAdminId };
+}
+
+/**
+ * Native-driver existence check so bulk-assigned leads (embedded `assignedTo`)
+ * are visible the same way as GET /api/leads/[id] and the assigned list.
+ */
+export async function findAccessibleLead(
+  leadObjectId: mongoose.Types.ObjectId,
+  tenantAdminId: mongoose.Types.ObjectId,
+  role: string,
+  sessionUserId: string,
+  canSeeAllTenantLeads = false,
+): Promise<{ _id: mongoose.Types.ObjectId } | null> {
+  const db = mongoose.connection.db;
+  if (!db) {
+    throw new Error("Database connection not available");
+  }
+  const lead = await db.collection("leads").findOne(
+    singleLeadAccessFilter(
+      leadObjectId,
+      tenantAdminId,
+      role,
+      sessionUserId,
+      canSeeAllTenantLeads,
+    ),
+    { projection: { _id: 1 } },
+  );
+  if (!lead?._id) return null;
+  return { _id: lead._id as mongoose.Types.ObjectId };
 }
 
 export function getLeadAssigneeId(assignedTo: unknown): string | null {

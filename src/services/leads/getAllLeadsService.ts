@@ -13,7 +13,8 @@ import {
   expandCountryFilterValues,
   normalizeCountryInput,
 } from "@/lib/countryNormalize";
-import { canAccessAllLeads, getTenantAdminId, isTenantStaff } from "@/lib/roles";
+import { canAccessAllLeads, getTenantAdminId, isAdmin, isTenantStaff } from "@/lib/roles";
+import { agentAssignedToUserClause } from "@/lib/leadAssignmentQuery";
 import type { ApiRoutePerf } from "@/lib/apiRoutePerf";
 
 interface SessionUser {
@@ -167,10 +168,32 @@ function statusFilterValues(statusFilter: string[]): (string | ObjectId)[] {
   return result;
 }
 
+function buildAssignedLeadBaseQuery(sessionUser: SessionUser): LeadFilter | null {
+  const tenantId = isAdmin(sessionUser.role)
+    ? sessionUser.id
+    : sessionUser.adminId;
+  if (!tenantId) return null;
+  const scopedAdminId = new ObjectId(tenantId);
+  if (isAdmin(sessionUser.role)) {
+    return {
+      adminId: scopedAdminId,
+      $and: [
+        { assignedTo: { $exists: true } },
+        { assignedTo: { $ne: null } },
+      ],
+    };
+  }
+  return {
+    adminId: scopedAdminId,
+    ...agentAssignedToUserClause(sessionUser.id),
+  };
+}
+
 export async function getAllLeadsForSession(
   request: NextRequest,
   sessionUser: SessionUser,
   perf?: ApiRoutePerf,
+  options?: { assignedOnly?: boolean },
 ) {
   const url = new URL(request.url);
   const searchParams = url.searchParams;
@@ -209,10 +232,17 @@ export async function getAllLeadsForSession(
   }
   perf?.mark("agent-contact-visibility");
 
-  const baseQuery: LeadFilter = buildTenantLeadBaseQuery(sessionUser);
+  const assignedOnly = options?.assignedOnly === true;
+  const assignedBase = assignedOnly
+    ? buildAssignedLeadBaseQuery(sessionUser)
+    : null;
+  if (assignedOnly && !assignedBase) {
+    throw new Error("Admin scope unresolved");
+  }
+  const baseQuery: LeadFilter = assignedBase ?? buildTenantLeadBaseQuery(sessionUser);
 
   const filter: LeadFilter = { ...baseQuery };
-  if (canAccessAllLeads(sessionUser) && userFilter.length > 0) {
+  if (!assignedOnly && canAccessAllLeads(sessionUser) && userFilter.length > 0) {
     const hasUnassigned = userFilter.some((v) => String(v).toLowerCase() === "unassigned");
     const userIds = userFilter
       .filter((v) => String(v).toLowerCase() !== "unassigned")
@@ -292,9 +322,11 @@ export async function getAllLeadsForSession(
     filter.$and = filter.$and ? [...filter.$and, searchOr] : [searchOr];
   }
 
-  const countCacheKey = canAccessAllLeads(sessionUser)
-    ? `admin:${getTenantAdminId(sessionUser) || sessionUser.id}`
-    : `agent:${sessionUser.id}`;
+  const countCacheKey = assignedOnly
+    ? `assigned:${sessionUser.id}`
+    : canAccessAllLeads(sessionUser)
+      ? `admin:${getTenantAdminId(sessionUser) || sessionUser.id}`
+      : `agent:${sessionUser.id}`;
   let totalAllCount = getCachedTotalAll(countCacheKey);
   let totalCount: number;
   if (totalAllCount === null) {

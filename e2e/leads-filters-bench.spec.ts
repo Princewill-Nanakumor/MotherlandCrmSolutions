@@ -266,12 +266,12 @@ test.describe("leads filters bench", () => {
     expect(assignedRes.status).toBe(200);
     const assignedBody = assignedRes.body as
       | unknown[]
-      | { assignedLeads?: unknown[]; count?: number };
+      | { assignedLeads?: unknown[]; count?: number; total?: number };
     const agentAssignedRows = Array.isArray(assignedBody)
       ? assignedBody.length
-      : Array.isArray(assignedBody.assignedLeads)
-        ? assignedBody.assignedLeads.length
-        : assignedBody.count;
+      : (assignedBody.total ??
+        assignedBody.count ??
+        assignedBody.assignedLeads?.length);
 
     const allLeadsApiPath = `/api/leads/all?page=1&pageSize=15&search=${enc(search)}`;
     const allLeadsUiUrl = `/dashboard/all-leads?search=${enc(search)}&page=1&pageSize=15`;
@@ -378,9 +378,7 @@ test.describe("leads filters bench", () => {
       baseURL: page.url().split("/dashboard")[0],
     };
 
-    // eslint-disable-next-line no-console -- bench output
     console.log("\n=== Leads filters bench report ===\n", JSON.stringify(report, null, 2));
-    // eslint-disable-next-line no-console -- bench output
     console.log(
       "\n" +
         [

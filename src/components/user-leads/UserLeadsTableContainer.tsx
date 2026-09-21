@@ -45,6 +45,7 @@ interface UserLeadsTableContainerProps {
   onSort: (field: SortField) => void;
   onPageSizeChange: (value: string) => void;
   onPageChange: (newPageIndex: number) => void;
+  isRefetching?: boolean;
 }
 
 export const UserLeadsTableContainer: React.FC<
@@ -63,6 +64,7 @@ export const UserLeadsTableContainer: React.FC<
   onSort,
   onPageSizeChange,
   onPageChange,
+  isRefetching = false,
 }) => {
   // Column ordering with localStorage persistence (shared hook with all-leads; agents hide Assigned To)
   const { columnOrder: rawColumnOrder, setColumnOrder } = useColumnOrder();
@@ -116,7 +118,7 @@ export const UserLeadsTableContainer: React.FC<
     data: leads,
     columns,
     pageSize,
-    pageIndex,
+    pageIndex: 0,
     sorting,
     rowSelection: {},
     columnOrder,
@@ -142,6 +144,7 @@ export const UserLeadsTableContainer: React.FC<
         totalEntries={totalEntries}
         onPageSizeChange={onPageSizeChange}
         table={table}
+        isRefetching={isRefetching}
       />
 
       <UserLeadTable

@@ -11,7 +11,7 @@ import {
   publishLeadUpdatedEvent,
 } from "@/libs/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
-import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
+import { findAccessibleLead } from "@/lib/leadAssignmentQuery";
 import { canAccessAllLeads, getTenantAdminId } from "@/lib/roles";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";
 import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
@@ -76,19 +76,15 @@ export async function GET(request: Request) {
 
       const lead = await probeMongoQuery(
         "leadAccessCheck",
-        "mongoose",
+        "native",
         () =>
-          Lead.findOne(
-            singleLeadAccessFilter(
-              leadObjectId,
-              adminId,
-              session.user.role,
-              session.user.id,
-              canAccessAllLeads(session.user),
-            ),
-          )
-            .select({ _id: 1 })
-            .lean(),
+          findAccessibleLead(
+            leadObjectId,
+            adminId,
+            session.user.role,
+            session.user.id,
+            canAccessAllLeads(session.user),
+          ),
         { collection: "leads", filter: { _id: String(leadObjectId) } },
       );
       perf.mark("leadAccessCheck");
@@ -161,17 +157,13 @@ export async function POST(request: Request) {
     if (!adminId) return forbiddenResponse("Admin scope unresolved");
 
     const leadObjectId = new mongoose.Types.ObjectId(id);
-    const lead = await Lead.findOne(
-      singleLeadAccessFilter(
-        leadObjectId,
-        adminId,
-        session.user.role,
-        session.user.id,
-        canAccessAllLeads(session.user),
-      ),
-    )
-      .select({ _id: 1 })
-      .lean();
+    const lead = await findAccessibleLead(
+      leadObjectId,
+      adminId,
+      session.user.role,
+      session.user.id,
+      canAccessAllLeads(session.user),
+    );
     if (!lead) {
       return NextResponse.json(
         { message: "Lead not found or not authorized" },

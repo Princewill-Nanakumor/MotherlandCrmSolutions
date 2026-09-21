@@ -77,24 +77,39 @@ describe("applyRemoteLeadStatusToListCaches", () => {
 });
 
 describe("removeLeadsFromAssignedLeadsCaches", () => {
-  it("removes leads from per-user assignedLeads list caches", () => {
+  it("removes leads from paginated assignedLeads list caches", () => {
     const queryClient = new QueryClient();
     queryClient.setQueryData(
-      ["assignedLeads", "list", "agent-1"],
-      [
-        lead({ _id: "a", status: "NEW" }),
-        lead({ _id: "b", status: "NEW" }),
-      ],
+      ["assignedLeads", "list", "agent-1", 1, 20, [], [], [], "include", "include", "include", ""],
+      {
+        leads: [
+          lead({ _id: "a", status: "NEW" }),
+          lead({ _id: "b", status: "NEW" }),
+        ],
+        total: 2,
+        totalAll: 2,
+      },
     );
 
     removeLeadsFromAssignedLeadsCaches(queryClient, ["a"]);
 
-    const next = queryClient.getQueryData<Lead[]>([
+    const next = queryClient.getQueryData<{ leads: Lead[]; total: number; totalAll: number }>([
       "assignedLeads",
       "list",
       "agent-1",
+      1,
+      20,
+      [],
+      [],
+      [],
+      "include",
+      "include",
+      "include",
+      "",
     ]);
-    expect(next?.map((l) => l._id)).toEqual(["b"]);
+    expect(next?.leads.map((l) => l._id)).toEqual(["b"]);
+    expect(next?.total).toBe(1);
+    expect(next?.totalAll).toBe(1);
   });
 
   it("clears assignedTo on paginated all-leads caches", () => {

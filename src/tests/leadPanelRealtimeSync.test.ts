@@ -146,6 +146,38 @@ describe("leadPanelRealtimeSync", () => {
     fetchSpy.mockRestore();
   });
 
+  it("does not fetch activities for a lead this viewer has never opened or listed", async () => {
+    const queryClient = new QueryClient();
+    const fetchSpy = mockJsonFetch({
+      "/activities": [{ _id: "act-other", type: "STATUS_CHANGE" }],
+    });
+
+    await syncActivityTimelineFromAdminEvent(queryClient, {
+      type: "status_changed",
+      leadId: "someone-elses-lead",
+      status: "CONTACTED",
+    });
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it("does not fetch comments for a lead this viewer has never opened or listed", async () => {
+    const queryClient = new QueryClient();
+    const fetchSpy = mockJsonFetch({
+      "/comments": [{ _id: "c-other", content: "nope" }],
+    });
+
+    await syncCommentsFromAdminEvent(queryClient, {
+      type: "comment_created",
+      leadId: "someone-elses-lead",
+      commentId: "c-other",
+    });
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
   it("removes deleted activity rows from cache", async () => {
     const queryClient = new QueryClient();
     queryClient.setQueryData(

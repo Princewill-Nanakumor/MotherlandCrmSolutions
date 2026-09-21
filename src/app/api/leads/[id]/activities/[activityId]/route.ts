@@ -16,7 +16,7 @@ import {
   canDeleteActivities,
   getTenantAdminId,
 } from "@/lib/roles";
-import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
+import { findAccessibleLead } from "@/lib/leadAssignmentQuery";
 
 function extractParamsFromUrl(urlString: string): {
   id: string;
@@ -58,17 +58,13 @@ export async function DELETE(request: Request) {
     }
 
     const leadObjectId = new mongoose.Types.ObjectId(leadId);
-    const leadExists = await Lead.findOne(
-      singleLeadAccessFilter(
-        leadObjectId,
-        adminId,
-        session.user.role,
-        session.user.id,
-        canAccessAllLeads(session.user),
-      ),
-    )
-      .select({ _id: 1 })
-      .lean();
+    const leadExists = await findAccessibleLead(
+      leadObjectId,
+      adminId,
+      session.user.role,
+      session.user.id,
+      canAccessAllLeads(session.user),
+    );
     if (!leadExists) {
       return NextResponse.json(
         { message: "Lead not found or not authorized" },

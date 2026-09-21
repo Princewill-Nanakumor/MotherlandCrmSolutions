@@ -37,6 +37,8 @@ interface FilterLogicProps {
   sortOrder: SortOrder;
   isDataReady: boolean;
   searchQuery?: string;
+  /** When true, `leads` is already the current server page — only sort locally. */
+  serverFiltered?: boolean;
   children: (props: {
     filteredLeads: Lead[];
     sortedLeads: Lead[];
@@ -58,6 +60,7 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
   sortOrder,
   isDataReady,
   searchQuery = "",
+  serverFiltered = false,
   children,
 }) => {
   // Get available countries - filter out undefined values and ensure string type
@@ -89,6 +92,7 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
   // Filter leads by country, status, source, and search query
   const filteredLeads = useMemo(() => {
     if (!isDataReady) return [];
+    if (serverFiltered) return leads;
 
     let filtered = leads;
 
@@ -160,6 +164,7 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
     sourceFilterMode,
     searchQuery,
     isDataReady,
+    serverFiltered,
   ]);
 
   // Sort filtered leads

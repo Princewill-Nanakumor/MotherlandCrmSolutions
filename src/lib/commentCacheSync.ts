@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { Comment } from "@/components/leads/leadDetailsPanel/commentsAndActivities/types";
 import { transformComment } from "@/components/leads/leadDetailsPanel/commentsAndActivities/utils";
+import { viewerKnowsLead, type TimelineRefreshOptions } from "@/lib/leadTimelineAccess";
 import { removeTimelineRowsById, timelineRowId, upsertTimelineRowsById } from "@/lib/timelineCacheMerge";
 import type { Lead } from "@/types/leads";
 
@@ -45,10 +46,15 @@ export function patchLeadListCachesFromComments(
       const typed = oldData as {
         leads?: Lead[];
         data?: Lead[];
+        assignedLeads?: Lead[];
       };
 
       if (Array.isArray(typed.leads)) {
         return { ...typed, leads: patchLeadArray(typed.leads) };
+      }
+
+      if (Array.isArray(typed.assignedLeads)) {
+        return { ...typed, assignedLeads: patchLeadArray(typed.assignedLeads) };
       }
 
       if (Array.isArray(typed.data)) {
@@ -88,8 +94,10 @@ export function patchCommentDeletedInCache(
 export async function refreshCommentsCacheForLead(
   queryClient: QueryClient,
   leadId: string,
+  options?: TimelineRefreshOptions,
 ): Promise<Comment[] | null> {
   if (!leadId) return null;
+  if (!options?.force && !viewerKnowsLead(queryClient, leadId)) return null;
 
   try {
     const response = await fetch(`/api/leads/${leadId}/comments`, {
@@ -127,19 +135,8 @@ export async function refreshCommentsCacheForLead(
 export async function invalidateLeadCommentsTimeline(
   queryClient: QueryClient,
   leadId: string,
+  options?: TimelineRefreshOptions,
 ): Promise<void> {
   if (!leadId) return;
-
-  const comments = await refreshCommentsCacheForLead(queryClient, leadId);
-  if (!comments) {
-    await queryClient.refetchQueries({
-      queryKey: ["comments", leadId],
-      exact: true,
-      type: "all",
-    });
-    const cached = queryClient.getQueryData<Comment[]>(["comments", leadId]);
-    if (cached) {
-      patchLeadListCachesFromComments(queryClient, leadId, cached);
-    }
-  }
+  await refreshCommentsCacheForLead(queryClient, leadId, options);
 }

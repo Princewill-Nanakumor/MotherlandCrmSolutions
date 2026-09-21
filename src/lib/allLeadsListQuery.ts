@@ -1,5 +1,6 @@
 import { Lead } from "@/types/leads";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { parseLeadPageSizeOption } from "@/lib/leadPageSize";
 
 export const ALL_LEADS_QUERY_STALE_MS = 2 * 60 * 1000;
 export const ALL_LEADS_QUERY_TIMEOUT_MS = 90_000;
@@ -81,10 +82,7 @@ export function resolveAllLeadsQueryFilters(
   filterByUser: string,
 ): AllLeadsQueryFilters {
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const pageSize = Math.min(
-    500,
-    Math.max(1, parseInt(searchParams.get("pageSize") || "15", 10)),
-  );
+  const pageSize = parseLeadPageSizeOption(searchParams.get("pageSize"));
 
   return {
     page,

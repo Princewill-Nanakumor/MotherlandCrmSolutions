@@ -2,7 +2,7 @@
 "use client";
 
 import { Table as TanstackTable, flexRender } from "@tanstack/react-table";
-import { Lead, Status } from "@/types/leads";
+import { Lead } from "@/types/leads";
 import {
   TableBody,
   TableCell,
@@ -12,12 +12,12 @@ import {
 } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import {
   SortableContext,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { DraggableColumnHeader } from "@/components/dashboardComponents/DraggableColumnHeader";
+import { useTableStatuses } from "@/hooks/useTableStatuses";
 
 interface TableContentProps {
   table: TanstackTable<Lead>;
@@ -102,50 +102,8 @@ export function TableContent({
     .getAllColumns()
     .filter((col) => col.id !== "select")
     .map((col) => col.id);
-  // Use React Query for consistent status caching
-  const { data: statuses = [], isLoading: isStatusLoading } = useQuery<
-    Status[],
-    Error
-  >({
-    queryKey: ["statuses"],
-    queryFn: async (): Promise<Status[]> => {
-      const response = await fetch("/api/statuses", {
-        cache: "no-store",
-        headers: {
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch statuses");
-      const data = await response.json();
-
-      const hasNewStatus = data.some((status: Status) => status._id === "NEW");
-      if (!hasNewStatus) {
-        data.unshift({
-          _id: "NEW",
-          id: "NEW",
-          name: "New",
-          color: "#3B82F6",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
-      }
-
-      return data.sort((a: Status, b: Status) => {
-        if (a._id === "NEW") return -1;
-        if (b._id === "NEW") return 1;
-        return (
-          new Date(b.createdAt || new Date()).getTime() -
-          new Date(a.createdAt || new Date()).getTime()
-        );
-      });
-    },
-    staleTime: 30 * 1000,
-    gcTime: 30 * 60 * 1000, // 30 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: true,
-    retry: 2,
-  });
+  const { data: statuses = [], isLoading: isStatusLoading } =
+    useTableStatuses();
 
   const getStatusStyle = (leadStatus: string) => {
     const status = statuses.find((s) => s._id === leadStatus);

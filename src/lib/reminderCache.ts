@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { viewerKnowsLead, type TimelineRefreshOptions } from "@/lib/leadTimelineAccess";
 import { upsertTimelineRowsById } from "@/lib/timelineCacheMerge";
 import type { Reminder } from "@/types/leads";
 
@@ -86,8 +87,10 @@ export function patchReminderDeletedInCache(
 export async function refreshRemindersCacheForLead(
   queryClient: QueryClient,
   leadId: string,
+  options?: TimelineRefreshOptions,
 ): Promise<Reminder[] | null> {
   if (!leadId) return null;
+  if (!options?.force && !viewerKnowsLead(queryClient, leadId)) return null;
 
   try {
     const response = await fetch(`/api/leads/${leadId}/reminders`, {

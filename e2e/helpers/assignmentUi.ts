@@ -1,4 +1,8 @@
 import { expect, type Page } from "@playwright/test";
+import {
+  DEFAULT_LEAD_PAGE_SIZE,
+  LEAD_PAGE_SIZE_OPTIONS,
+} from "../../src/lib/leadPageSize";
 import { apiJson } from "./auth";
 
 export type UserRow = {
@@ -16,8 +20,6 @@ export type StatusRow = {
   name: string;
 };
 
-const PAGE_SIZE_OPTIONS = [10, 15, 20, 30, 40, 50, 100, 150, 200, 250, 300, 500];
-
 export function userId(u: UserRow | undefined): string {
   return String(u?.id || u?._id || "");
 }
@@ -27,8 +29,8 @@ export function statusId(s: StatusRow): string {
 }
 
 export function smallestPageSizeAtLeast(n: number): number {
-  const hit = PAGE_SIZE_OPTIONS.find((size) => size >= n);
-  return hit ?? PAGE_SIZE_OPTIONS[PAGE_SIZE_OPTIONS.length - 1];
+  const hit = LEAD_PAGE_SIZE_OPTIONS.find((size) => size >= n);
+  return hit ?? LEAD_PAGE_SIZE_OPTIONS[LEAD_PAGE_SIZE_OPTIONS.length - 1];
 }
 
 export async function listUsers(page: Page): Promise<UserRow[]> {
@@ -115,7 +117,7 @@ export async function gotoFilteredBenchLeads(
   await expect(page.getByText(search).first()).toBeVisible({ timeout: 60_000 });
 
   const pageSize = smallestPageSizeAtLeast(expectedCount);
-  if (pageSize > 15) {
+  if (pageSize > DEFAULT_LEAD_PAGE_SIZE) {
     await setTablePageSize(page, pageSize);
   }
 

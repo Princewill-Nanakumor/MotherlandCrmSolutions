@@ -15,7 +15,7 @@ import {
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { DraggableColumnHeader } from "@/components/dashboardComponents/DraggableColumnHeader";
-import { useStatuses } from "@/context/StatusContext";
+import { useTableStatuses } from "@/hooks/useTableStatuses";
 
 interface UserLeadsTableContentProps {
   table: TanstackTable<Lead>;
@@ -60,6 +60,9 @@ const TableRowSkeleton = ({ columnCount }: { columnCount: number }) => (
         `}
       >
         <div className="flex items-center space-x-2">
+          {index === 0 && (
+            <div className="w-4 h-4 bg-gray-200 rounded dark:bg-gray-700 animate-pulse"></div>
+          )}
           <div className="flex-1 h-4 bg-gray-200 rounded dark:bg-gray-700 animate-pulse"></div>
         </div>
       </TableCell>
@@ -96,18 +99,22 @@ export function UserLeadsTableContent({
   selectedLead,
   isLoading = false,
 }: UserLeadsTableContentProps) {
-  const { isLoading: isStatusLoading } = useStatuses();
   const columnIds = table
     .getAllColumns()
     .filter((col) => col.id !== "select")
     .map((col) => col.id);
 
+  const { isLoading: isStatusLoading } = useTableStatuses();
+
   const showLoadingState = isLoading || isStatusLoading;
   const columnCount = table.getAllColumns().length;
+  const rowCount = Math.min(
+    Math.max(table.getState().pagination.pageSize || 8, 5),
+    12,
+  );
 
-  // Show skeleton when loading
   if (showLoadingState) {
-    return <TableSkeleton columnCount={columnCount} rowCount={5} />;
+    return <TableSkeleton columnCount={columnCount} rowCount={rowCount} />;
   }
 
   const generateUniqueKey = (prefix: string, id: string, suffix?: string) => {

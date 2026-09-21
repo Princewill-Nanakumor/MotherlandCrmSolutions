@@ -10,6 +10,7 @@ import { TablePagination } from "@/components/leads/TablePagination";
 import { useUserTableConfiguration } from "./useUserTableConfiguration";
 import { useUserColumnOrder } from "@/hooks/useUserColumnOrder";
 import { useColumnVisibility } from "@/hooks/useColumnVisibility";
+import { DEFAULT_LEAD_PAGE_SIZE } from "@/lib/leadPageSize";
 import {
   DndContext,
   closestCenter,
@@ -54,7 +55,7 @@ export function UserTableDisplay({
 
   // Pagination state
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(15);
+  const [pageSize, setPageSize] = useState(DEFAULT_LEAD_PAGE_SIZE);
 
   // Sorting state - default to alphabetical by name (TanStack Table format)
   const [sorting, setSorting] = useState<Array<{ id: string; desc: boolean }>>(() => {

@@ -76,7 +76,7 @@ export const PhoneField: FC<PhoneFieldProps> = ({
         <p className="text-sm text-gray-500! dark:text-gray-400!">Phone</p>
         <div className="flex items-center justify-between gap-2 min-w-0">
           {isLoadingPermission ? (
-            <Skeleton className="w-32 h-5" />
+            <Skeleton className="w-32 h-5 bg-gray-200 dark:bg-gray-700" />
           ) : (
             <p className="text-gray-900! dark:text-white! break-all min-w-0">{displayPhone}</p>
           )}

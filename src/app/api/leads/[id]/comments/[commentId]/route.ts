@@ -11,7 +11,7 @@ import {
   publishLeadUpdatedEvent,
 } from "@/libs/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
-import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
+import { findAccessibleLead } from "@/lib/leadAssignmentQuery";
 import { canAccessAllLeads, canDeleteComments, getTenantAdminId } from "@/lib/roles";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";
 import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
@@ -90,17 +90,13 @@ async function authorizeAndResolveComment(
   const commentObjectId = new mongoose.Types.ObjectId(commentId);
 
   const [lead, comment] = await Promise.all([
-    Lead.findOne(
-      singleLeadAccessFilter(
-        leadObjectId,
-        scopedAdminId,
-        sessionUser.role,
-        sessionUser.id,
-        canAccessAllLeads(sessionUser),
-      ),
-    )
-      .select({ _id: 1 })
-      .lean(),
+    findAccessibleLead(
+      leadObjectId,
+      scopedAdminId,
+      sessionUser.role,
+      sessionUser.id,
+      canAccessAllLeads(sessionUser),
+    ),
     Comment.findOne({
       _id: commentObjectId,
       leadId: leadObjectId,

@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { viewerKnowsLead, type TimelineRefreshOptions } from "@/lib/leadTimelineAccess";
 import { removeTimelineRowsById, timelineRowId, upsertTimelineRowsById } from "@/lib/timelineCacheMerge";
 import type { Activity, Lead } from "@/types/leads";
 
@@ -23,8 +24,10 @@ export function assignedToEquals(
 export async function refreshActivitiesCacheForLead(
   queryClient: QueryClient,
   leadId: string,
+  options?: TimelineRefreshOptions,
 ): Promise<Activity[] | null> {
   if (!leadId) return null;
+  if (!options?.force && !viewerKnowsLead(queryClient, leadId)) return null;
 
   try {
     const response = await fetch(`/api/leads/${leadId}/activities?limit=100`, {

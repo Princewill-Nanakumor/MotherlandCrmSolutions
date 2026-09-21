@@ -3,6 +3,7 @@
 
 import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
+import { DEFAULT_LEAD_PAGE_SIZE } from "@/lib/leadPageSize";
 import { EmptyStateAdminLeadsTable } from "./EmptyStateAdminLeadsTable";
 import LeadDetailsPanel from "@/components/dashboardComponents/LeadDetailsPanel";
 import { Lead } from "@/types/leads";
@@ -140,8 +141,8 @@ export default function LeadsTable({
   // URL and pagination state (LOCAL ONLY - no store). When server-side, use serverPage prop so filter change shows page 1 immediately.
   const searchParams = useSearchParams()!;
   const [pageIndex, setPageIndex] = useState(0);
-  const [localPageSize, setLocalPageSize] = useState(15);
-  const pageSize = isServerPagination ? (serverPageSize ?? 15) : localPageSize;
+  const [localPageSize, setLocalPageSize] = useState(DEFAULT_LEAD_PAGE_SIZE);
+  const pageSize = isServerPagination ? (serverPageSize ?? DEFAULT_LEAD_PAGE_SIZE) : localPageSize;
   const effectivePageIndex =
     isServerPagination && typeof serverPageProp === "number"
       ? Math.max(0, serverPageProp - 1)

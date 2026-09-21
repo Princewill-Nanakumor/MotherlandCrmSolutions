@@ -7,7 +7,7 @@ import Reminder from "@/models/Reminder";
 import Activity, { type ActivityType, type IActivity } from "@/models/Activity";
 import Lead from "@/models/Lead";
 import mongoose from "mongoose";
-import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
+import { findAccessibleLead } from "@/lib/leadAssignmentQuery";
 import {
   publishAdminLeadsUpdatedEvent,
   publishLeadUpdatedEvent,
@@ -85,17 +85,13 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid lead id" }, { status: 400 });
     }
 
-    const leadAccess = await Lead.findOne(
-      singleLeadAccessFilter(
-        new mongoose.Types.ObjectId(id),
-        new mongoose.Types.ObjectId(adminId),
-        session.user.role,
-        session.user.id,
-        canAccessAllLeads(session.user),
-      ),
-    )
-      .select({ _id: 1 })
-      .lean();
+    const leadAccess = await findAccessibleLead(
+      new mongoose.Types.ObjectId(id),
+      new mongoose.Types.ObjectId(adminId),
+      session.user.role,
+      session.user.id,
+      canAccessAllLeads(session.user),
+    );
     if (!leadAccess) {
       return NextResponse.json(
         { error: "Lead not found or not authorized" },
@@ -371,17 +367,13 @@ export async function DELETE(
 
       const [reminder, delLeadAccess] = await Promise.all([
         Reminder.findOne({ _id: reminderId, adminId }).lean<ReminderDeleteLean>(),
-        Lead.findOne(
-          singleLeadAccessFilter(
-            leadObjectId,
-            adminObjectId,
-            session.user.role,
-            session.user.id,
-            canAccessAllLeads(session.user),
-          ),
-        )
-          .select({ _id: 1 })
-          .lean(),
+        findAccessibleLead(
+          leadObjectId,
+          adminObjectId,
+          session.user.role,
+          session.user.id,
+          canAccessAllLeads(session.user),
+        ),
       ]);
       perf.mark("loadReminderAndLead");
 

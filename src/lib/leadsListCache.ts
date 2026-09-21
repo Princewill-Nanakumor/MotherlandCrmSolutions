@@ -24,13 +24,26 @@ function getStatusFilterFromQueryKey(key: QueryKey): {
   ids: string[];
   mode: "include" | "exclude";
 } | null {
-  if (!Array.isArray(key) || key[0] !== "leads" || key.length < 9) return null;
-  const raw = key[5];
-  if (!Array.isArray(raw) || raw.length === 0) return null;
-  return {
-    ids: raw.map((value) => normalizeLeadStatusId(value)),
-    mode: key[8] === "exclude" ? "exclude" : "include",
-  };
+  if (!Array.isArray(key)) return null;
+  if (key[0] === "leads" && key.length >= 9) {
+    const raw = key[5];
+    if (!Array.isArray(raw) || raw.length === 0) return null;
+    return {
+      ids: raw.map((value) => normalizeLeadStatusId(value)),
+      mode: key[8] === "exclude" ? "exclude" : "include",
+    };
+  }
+  // ["assignedLeads", "list", userId, page, pageSize, country[], status[], source[],
+  //  countryMode, statusMode, sourceMode, search]
+  if (key[0] === "assignedLeads" && key[1] === "list" && key.length >= 10) {
+    const raw = key[6];
+    if (!Array.isArray(raw) || raw.length === 0) return null;
+    return {
+      ids: raw.map((value) => normalizeLeadStatusId(value)),
+      mode: key[9] === "exclude" ? "exclude" : "include",
+    };
+  }
+  return null;
 }
 
 function matchesStatusFilter(
@@ -289,8 +302,30 @@ export function removeLeadsFromAssignedLeadsCaches(
 
     if (key[0] === "assignedLeads" && key[1] === "list") {
       queryClient.setQueryData(key, (old: unknown) => {
-        if (!Array.isArray(old)) return old;
-        return (old as Lead[]).filter((lead) => !ids.has(lead._id));
+        const drop = (lead: Lead) => !ids.has(lead._id);
+        if (Array.isArray(old)) {
+          return (old as Lead[]).filter(drop);
+        }
+        if (old && typeof old === "object") {
+          const withLeads = old as { leads?: Lead[]; total?: number; totalAll?: number };
+          if (Array.isArray(withLeads.leads)) {
+            const nextLeads = withLeads.leads.filter(drop);
+            const removed = withLeads.leads.length - nextLeads.length;
+            return {
+              ...withLeads,
+              leads: nextLeads,
+              total:
+                typeof withLeads.total === "number"
+                  ? Math.max(0, withLeads.total - removed)
+                  : withLeads.total,
+              totalAll:
+                typeof withLeads.totalAll === "number"
+                  ? Math.max(0, withLeads.totalAll - removed)
+                  : withLeads.totalAll,
+            };
+          }
+        }
+        return old;
       });
       continue;
     }

@@ -65,7 +65,7 @@ describe("parseLeadListPagination", () => {
   it("defaults and clamps pageSize", () => {
     expect(parseLeadListPagination(new URLSearchParams())).toEqual({
       page: 1,
-      pageSize: 15,
+      pageSize: 20,
       skip: 0,
     });
     expect(

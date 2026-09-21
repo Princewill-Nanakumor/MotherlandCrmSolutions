@@ -26,25 +26,27 @@ export const FilterControlsLoadingShell = () => (
 );
 
 export const TableSkeleton = () => (
-  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+  <div
+    className="h-full min-h-65 overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700"
+    data-testid="user-leads-table-loading"
+    role="status"
+    aria-label="Loading table"
+  >
     <div className="animate-pulse">
-      {/* Table header skeleton */}
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+        <div className="h-4 bg-gray-200 rounded dark:bg-gray-700 w-1/4"></div>
       </div>
-
-      {/* Table rows skeleton */}
-      {Array.from({ length: 5 }).map((_, i) => (
+      {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}
           className="px-6 py-4 border-b border-gray-200 dark:border-gray-700"
         >
           <div className="flex items-center space-x-4">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/6"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/6"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/6"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/6"></div>
+            <div className="h-4 bg-gray-200 rounded dark:bg-gray-700 w-1/6"></div>
+            <div className="h-4 bg-gray-200 rounded dark:bg-gray-700 w-1/4"></div>
+            <div className="h-4 bg-gray-200 rounded dark:bg-gray-700 w-1/6"></div>
+            <div className="h-4 bg-gray-200 rounded dark:bg-gray-700 w-1/6"></div>
+            <div className="h-4 bg-gray-200 rounded dark:bg-gray-700 w-1/6"></div>
           </div>
         </div>
       ))}

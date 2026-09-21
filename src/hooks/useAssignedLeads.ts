@@ -1,16 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 import { useSession } from "next-auth/react";
 import { Lead } from "@/types/leads";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import {
   ASSIGNED_LEADS_QUERY_STALE_MS,
   assignedLeadsKeys,
-  fetchAssignedLeads,
+  buildAssignedLeadsQueryKey,
+  fetchAssignedLeadsPage,
+  type AssignedLeadsListResponse,
+  type AssignedLeadsQueryFilters,
 } from "@/lib/assignedLeadsQuery";
 
 export { assignedLeadsKeys } from "@/lib/assignedLeadsQuery";
 
-// Interface for API update payload - using the /api/leads endpoint format
 interface LeadUpdatePayload {
   id: string;
   firstName?: string;
@@ -75,28 +78,49 @@ const updateLead = async (
   return (await res.json()) as Lead;
 };
 
-export const useAssignedLeads = () => {
+function patchAssignedLeadsCache(
+  old: AssignedLeadsListResponse | Lead[] | undefined,
+  updatedLead: Partial<Lead> & { _id: string },
+): AssignedLeadsListResponse | Lead[] | undefined {
+  if (!old) return old;
+  const apply = (lead: Lead) =>
+    lead._id === updatedLead._id ? { ...lead, ...updatedLead } : lead;
+  if (Array.isArray(old)) {
+    return old.map(apply);
+  }
+  if (Array.isArray(old.leads)) {
+    return { ...old, leads: old.leads.map(apply) };
+  }
+  return old;
+}
+
+export const useAssignedLeads = (filters: AssignedLeadsQueryFilters) => {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const userId = session?.user?.id || "";
+  const queryKey = buildAssignedLeadsQueryKey(userId, filters);
+  const lastLeadsDataRef = useRef<AssignedLeadsListResponse | undefined>(
+    undefined,
+  );
 
   const {
-    data: leads = [],
+    data: leadsData,
     isLoading,
     isError,
     error,
     refetch,
     isFetching,
     isRefetching,
-  } = useQuery<Lead[], Error>({
-    queryKey: assignedLeadsKeys.list(userId),
-    queryFn: fetchAssignedLeads,
+  } = useQuery<AssignedLeadsListResponse, Error>({
+    queryKey,
+    queryFn: () => fetchAssignedLeadsPage(filters),
     enabled: !!userId,
     staleTime: ASSIGNED_LEADS_QUERY_STALE_MS,
     gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: "always",
     refetchOnMount: false,
     refetchOnReconnect: true,
+    placeholderData: (previousData) => previousData ?? lastLeadsDataRef.current,
     retry: (failureCount, err) => {
       if (err?.message?.includes("Unauthorized")) {
         return false;
@@ -105,6 +129,15 @@ export const useAssignedLeads = () => {
     },
   });
 
+  if (leadsData !== undefined) {
+    lastLeadsDataRef.current = leadsData;
+  }
+
+  const leads = leadsData?.leads ?? [];
+  const leadsTotal = leadsData?.total ?? 0;
+  const leadsTotalAll = leadsData?.totalAll ?? 0;
+  const hasLeadsData = leadsData !== undefined;
+
   const updateLeadMutation = useMutation({
     mutationFn: updateLead,
     onMutate: async (updatedLead) => {
@@ -112,27 +145,22 @@ export const useAssignedLeads = () => {
         queryKey: assignedLeadsKeys.list(userId),
       });
 
-      const previousLeads = queryClient.getQueryData<Lead[]>(
-        assignedLeadsKeys.list(userId),
+      const previous = queryClient.getQueriesData({
+        queryKey: assignedLeadsKeys.list(userId),
+      });
+
+      queryClient.setQueriesData(
+        { queryKey: assignedLeadsKeys.list(userId) },
+        (old: AssignedLeadsListResponse | Lead[] | undefined) =>
+          patchAssignedLeadsCache(old, updatedLead),
       );
 
-      queryClient.setQueryData<Lead[]>(
-        assignedLeadsKeys.list(userId),
-        (old = []) =>
-          old.map((lead) =>
-            lead._id === updatedLead._id ? { ...lead, ...updatedLead } : lead,
-          ),
-      );
-
-      return { previousLeads };
+      return { previous };
     },
     onError: (_err, _updatedLead, context) => {
-      if (context?.previousLeads) {
-        queryClient.setQueryData(
-          assignedLeadsKeys.list(userId),
-          context.previousLeads,
-        );
-      }
+      context?.previous?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
     },
     onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({
@@ -176,6 +204,9 @@ export const useAssignedLeads = () => {
 
   return {
     leads,
+    leadsTotal,
+    leadsTotalAll,
+    hasLeadsData,
     isLoading,
     isFetching,
     isRefetching,

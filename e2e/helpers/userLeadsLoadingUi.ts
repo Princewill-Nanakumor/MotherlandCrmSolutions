@@ -124,7 +124,7 @@ export async function inspectBootstrapShell(
 
     if (!tableLoadingVisible) {
       violations.push({
-        contract: "layered table skeleton while assigned leads load",
+        contract: "in-table cell skeleton while assigned leads load",
         expected: "visible",
         found: "not visible",
         checkpoint,
@@ -152,17 +152,6 @@ export async function inspectBootstrapShell(
         selector: FILTER_LOADING_SELECTOR,
       });
     }
-  }
-
-  const filterShellCount = await filterLoadingShell(page).count();
-  if (checkpoint === "subscription-resolved-leads-pending" && filterShellCount > 0) {
-    violations.push({
-      contract: "no generic filter shell after subscription resolves",
-      expected: "0",
-      found: String(filterShellCount),
-      checkpoint,
-      selector: FILTER_LOADING_SELECTOR,
-    });
   }
 
   const spinnerCount = await fullscreenLoadingSpinner(page).count();

@@ -1,8 +1,8 @@
 // src/components/leads/UserLeadsContent.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Lead } from "@/types/leads";
 import { FilterLogic } from "@/components/user-leads/FilterLogic";
 import { URLStateManager } from "../user-leads/URLStatemanager";
@@ -23,9 +23,11 @@ import {
 } from "@/lib/leadId";
 import { isStatusOnlyLeadUpdate } from "@/lib/leadClientUpdate";
 import { getLiveSearchParam } from "@/lib/liveSearchParams";
+import { parseLeadPageSize, snapLeadPageSize } from "@/lib/leadPageSize";
 
 export default function UserLeadsContent() {
   const searchParams = useSearchParams()!;
+  const pathname = usePathname() || "";
   const { searchQuery } = useSearchContext();
   const toggleContext = useToggleContext();
 
@@ -33,11 +35,13 @@ export default function UserLeadsContent() {
   const showHeader = toggleContext?.showHeader ?? true;
   const showControls = toggleContext?.showControls ?? true;
 
-  // React Query hook for leads data
-  const { leads, isLoading, isFetching, isError, error, updateLead, refetch } =
-    useAssignedLeads();
+  const [pageIndex, setPageIndex] = useState(() =>
+    Math.max(0, parseInt(searchParams.get("page") || "1", 10) - 1),
+  );
+  const [pageSize, setPageSize] = useState(() =>
+    parseLeadPageSize(searchParams.get("pageSize")),
+  );
 
-  // React Query hook for subscription (prevents flashing)
   const {
     subscriptionData,
     hasActiveSubscription,
@@ -77,6 +81,29 @@ export default function UserLeadsContent() {
   const [sortOrder, setSortOrder] = useState<SortOrder>(() => {
     const urlSortOrder = searchParams.get("sortOrder") as SortOrder;
     return urlSortOrder || "desc";
+  });
+
+  const {
+    leads,
+    leadsTotal,
+    leadsTotalAll,
+    hasLeadsData,
+    isFetching,
+    isRefetching,
+    isError,
+    error,
+    updateLead,
+    refetch,
+  } = useAssignedLeads({
+    page: pageIndex + 1,
+    pageSize,
+    filterByCountry,
+    filterByStatus,
+    filterBySource,
+    countryFilterMode,
+    statusFilterMode,
+    sourceFilterMode,
+    searchQuery,
   });
 
   // Helper to parse URL params into string arrays (JSON array or legacy string)
@@ -128,6 +155,9 @@ export default function UserLeadsContent() {
         | "include"
         | "exclude",
     );
+    const nextPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    setPageIndex(nextPage - 1);
+    setPageSize(parseLeadPageSize(searchParams.get("pageSize")));
   }, [searchParams]);
 
   // Custom hooks - called at component level (only for sort + filters on this page)
@@ -143,6 +173,55 @@ export default function UserLeadsContent() {
     handlePanelClose: handleURLPanelClose,
     handleNavigation: handleURLNavigation,
   } = useLeadsURLManagement();
+
+  const createParams = useCallback(() => {
+    if (typeof window !== "undefined") {
+      return new URLSearchParams(window.location.search);
+    }
+    return new URLSearchParams(Array.from(searchParams.entries()));
+  }, [searchParams]);
+
+  const handlePageSizeChange = useCallback(
+    (value: string) => {
+      const newSize = parseInt(value, 10);
+      if (Number.isNaN(newSize) || newSize <= 0) return;
+      const size = snapLeadPageSize(newSize);
+      if (size === pageSize && pageIndex === 0) {
+        return;
+      }
+      setPageSize(size);
+      setPageIndex(0);
+      const params = createParams();
+      params.set("page", "1");
+      params.set("pageSize", String(size));
+      const query = params.toString();
+      const url = query ? `${pathname}?${query}` : pathname;
+      window.history.replaceState(null, "", url);
+    },
+    [createParams, pageIndex, pageSize, pathname],
+  );
+
+  const handlePageChange = useCallback(
+    (newPageIndex: number) => {
+      if (newPageIndex === pageIndex) {
+        return;
+      }
+      setPageIndex(newPageIndex);
+      const params = createParams();
+      params.set("page", String(newPageIndex + 1));
+      const query = params.toString();
+      const url = query ? `${pathname}?${query}` : pathname;
+      window.history.replaceState(null, "", url);
+    },
+    [createParams, pageIndex, pathname],
+  );
+
+  const prevSearchRef = useRef(searchQuery);
+  useEffect(() => {
+    if (prevSearchRef.current === searchQuery) return;
+    prevSearchRef.current = searchQuery;
+    setPageIndex(0);
+  }, [searchQuery]);
 
   // Lead update handler with React Query mutation
   const handleLeadUpdated = useCallback(
@@ -187,6 +266,7 @@ export default function UserLeadsContent() {
   const handleCountryFilterChange = useCallback(
     (countries: string[]) => {
       setFilterByCountry(countries);
+      setPageIndex(0);
 
       // Persist the full selection in the URL using JSON arrays
       const urlValue =
@@ -199,6 +279,7 @@ export default function UserLeadsContent() {
   const handleStatusFilterChange = useCallback(
     (statuses: string[]) => {
       setFilterByStatus(statuses);
+      setPageIndex(0);
 
       // Persist the full selection in the URL using JSON arrays
       const urlValue = statuses.length === 0 ? "all" : JSON.stringify(statuses);
@@ -210,6 +291,7 @@ export default function UserLeadsContent() {
   const handleSourceFilterChange = useCallback(
     (sources: string[]) => {
       setFilterBySource(sources);
+      setPageIndex(0);
 
       // Persist the full selection in the URL using JSON arrays
       const urlValue = sources.length === 0 ? "all" : JSON.stringify(sources);
@@ -221,6 +303,7 @@ export default function UserLeadsContent() {
   const handleCountryFilterModeChange = useCallback(
     (mode: "include" | "exclude") => {
       setCountryFilterMode(mode);
+      setPageIndex(0);
       handleURLCountryModeChange(mode);
     },
     [handleURLCountryModeChange],
@@ -229,6 +312,7 @@ export default function UserLeadsContent() {
   const handleStatusFilterModeChange = useCallback(
     (mode: "include" | "exclude") => {
       setStatusFilterMode(mode);
+      setPageIndex(0);
       handleURLStatusModeChange(mode);
     },
     [handleURLStatusModeChange],
@@ -237,6 +321,7 @@ export default function UserLeadsContent() {
   const handleSourceFilterModeChange = useCallback(
     (mode: "include" | "exclude") => {
       setSourceFilterMode(mode);
+      setPageIndex(0);
       handleURLSourceModeChange(mode);
     },
     [handleURLSourceModeChange],
@@ -315,10 +400,12 @@ export default function UserLeadsContent() {
     [handleURLNavigation],
   );
 
-  // Loading states - Only show loading on first load, not on navigation back
-  const isDataReady = !isLoading || leads.length > 0;
-  const shouldShowLoading = isLoading && leads.length === 0;
-  // Match all-leads: full-page shell only while subscription resolves; leads load in layered UI.
+  // Keep last-good payload as ready data (placeholder / lastLeadsDataRef).
+  // Missing query data is loading — never treat total 0 as a real empty count.
+  const isDataReady = hasLeadsData;
+  const shouldShowLoading = !hasLeadsData && !isError;
+  // Full-page shell only while subscription resolves. After that the real table
+  // mounts so the in-table cell skeleton can show (same as all-leads).
   const isBootstrapping = subscriptionLoading;
 
   useEffect(() => {
@@ -385,9 +472,9 @@ export default function UserLeadsContent() {
             sortOrder={sortOrder}
             isDataReady={isDataReady}
             searchQuery={searchQuery}
+            serverFiltered
           >
             {({
-              filteredLeads,
               sortedLeads,
               availableCountries,
               availableStatuses,
@@ -398,7 +485,6 @@ export default function UserLeadsContent() {
                   loading={isFetching && !isDataReady}
                   shouldShowLoading={shouldShowLoading}
                   isDataReady={isDataReady}
-                  filteredLeads={filteredLeads}
                   sortedLeads={sortedLeads}
                   availableCountries={availableCountries}
                   availableStatuses={availableStatuses}
@@ -419,7 +505,8 @@ export default function UserLeadsContent() {
                         )
                       : -1
                   }
-                  totalLeads={leads.length}
+                  totalLeads={leadsTotalAll}
+                  leadsTotal={leadsTotal}
                   searchQuery={searchQuery}
                   handleCountryFilterChange={handleCountryFilterChange}
                   handleStatusFilterChange={handleStatusFilterChange}
@@ -435,6 +522,11 @@ export default function UserLeadsContent() {
                   handlePanelClose={handlePanelCloseLocal}
                   handleLeadUpdated={handleLeadUpdated}
                   handleNavigation={handlePanelNavigationLocal}
+                  pageSize={pageSize}
+                  pageIndex={pageIndex}
+                  onPageSizeChange={handlePageSizeChange}
+                  onPageChange={handlePageChange}
+                  isRefetching={isRefetching && isDataReady}
                 />
               );
             }}

@@ -4,6 +4,7 @@ import { Table } from "@tanstack/react-table";
 import { User } from "./UserTableColumns";
 import { UserColumnVisibilityToggle } from "./UserColumnVisibilityToggle";
 import { FilterSelect } from "@/components/dashboardComponents/leadsFilters/FilterSelect";
+import { LEAD_PAGE_SIZE_SELECT_OPTIONS } from "@/lib/leadPageSize";
 
 interface UserTableHeaderProps {
   table: Table<User>;
@@ -11,13 +12,6 @@ interface UserTableHeaderProps {
   pageIndex: number;
   totalRows: number;
 }
-
-const pageSizeOptions = [10, 15, 20, 30, 40, 50, 100];
-
-const PAGE_SIZE_SELECT_OPTIONS = pageSizeOptions.map((size) => ({
-  value: size.toString(),
-  label: size.toString(),
-}));
 
 export function UserTableHeader({
   table,
@@ -37,7 +31,7 @@ export function UserTableHeader({
         <FilterSelect
           value={pageSize.toString()}
           onChange={(value) => table.setPageSize(Number(value))}
-          options={PAGE_SIZE_SELECT_OPTIONS}
+          options={LEAD_PAGE_SIZE_SELECT_OPTIONS}
           placeholder={pageSize.toString()}
           className="w-25"
           showActiveHighlight={false}

@@ -6,7 +6,7 @@ import Reminder from "@/models/Reminder";
 import Activity from "@/models/Activity";
 import Lead from "@/models/Lead";
 import mongoose from "mongoose";
-import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
+import { findAccessibleLead } from "@/lib/leadAssignmentQuery";
 import {
   publishAdminLeadsUpdatedEvent,
   publishLeadUpdatedEvent,
@@ -56,17 +56,13 @@ export async function GET(
       const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
       perf.mark("adminScope");
 
-      const leadOk = await Lead.findOne(
-        singleLeadAccessFilter(
-          new mongoose.Types.ObjectId(id),
-          new mongoose.Types.ObjectId(adminId),
-          session.user.role,
-          session.user.id,
-          canAccessAllLeads(session.user),
-        ),
-      )
-        .select({ _id: 1 })
-        .lean();
+      const leadOk = await findAccessibleLead(
+        new mongoose.Types.ObjectId(id),
+        new mongoose.Types.ObjectId(adminId),
+        session.user.role,
+        session.user.id,
+        canAccessAllLeads(session.user),
+      );
       perf.mark("leadAccessCheck");
       if (!leadOk) {
         perf.finish({ status: 404 });
@@ -173,17 +169,13 @@ export async function POST(
     // Get adminId based on user role
     const adminId = await withAdminScope(session, async (adminScopeId) => adminScopeId);
 
-    const leadOk = await Lead.findOne(
-      singleLeadAccessFilter(
-        new mongoose.Types.ObjectId(id),
-        new mongoose.Types.ObjectId(adminId),
-        session.user.role,
-        session.user.id,
-        canAccessAllLeads(session.user),
-      ),
-    )
-      .select({ _id: 1 })
-      .lean();
+    const leadOk = await findAccessibleLead(
+      new mongoose.Types.ObjectId(id),
+      new mongoose.Types.ObjectId(adminId),
+      session.user.role,
+      session.user.id,
+      canAccessAllLeads(session.user),
+    );
     if (!leadOk) {
       return NextResponse.json(
         { error: "Lead not found or not authorized" },

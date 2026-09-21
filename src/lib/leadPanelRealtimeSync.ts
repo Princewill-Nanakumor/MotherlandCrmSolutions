@@ -9,6 +9,7 @@ import {
 } from "@/lib/leadActivitiesQuery";
 import { normalizeLeadStatusId } from "@/lib/leadClientUpdate";
 import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
+import type { TimelineRefreshOptions } from "@/lib/leadTimelineAccess";
 import type { Lead } from "@/types/leads";
 import {
   patchReminderDeletedInCache,
@@ -91,34 +92,20 @@ export function adminEventTouchesLead(
 export async function invalidateLeadActivitiesTimeline(
   queryClient: QueryClient,
   leadId: string,
+  options?: TimelineRefreshOptions,
 ): Promise<void> {
   if (!leadId) return;
-
-  const activities = await refreshActivitiesCacheForLead(queryClient, leadId);
-  if (activities) return;
-
-  await queryClient.refetchQueries({
-    queryKey: ["activities", leadId],
-    exact: true,
-    type: "all",
-  });
+  await refreshActivitiesCacheForLead(queryClient, leadId, options);
 }
 
 /** Refresh reminders for one lead whether the panel is open or closed. */
 export async function invalidateLeadRemindersTimeline(
   queryClient: QueryClient,
   leadId: string,
+  options?: TimelineRefreshOptions,
 ): Promise<void> {
   if (!leadId) return;
-
-  const reminders = await refreshRemindersCacheForLead(queryClient, leadId);
-  if (reminders) return;
-
-  await queryClient.refetchQueries({
-    queryKey: ["reminders", leadId],
-    exact: true,
-    type: "all",
-  });
+  await refreshRemindersCacheForLead(queryClient, leadId, options);
 }
 
 /** Keep /dashboard/leads/[id] and /dashboard/all-leads/[id] in sync across tabs. */
@@ -186,6 +173,7 @@ export async function syncLeadDetailFromAdminEvent(
 export async function syncCommentsFromAdminEvent(
   queryClient: QueryClient,
   event: AdminLeadPanelEvent,
+  options?: TimelineRefreshOptions,
 ): Promise<void> {
   const type = event.type ?? "";
   const leadId = event.leadId;
@@ -200,7 +188,7 @@ export async function syncCommentsFromAdminEvent(
     return;
   }
 
-  await invalidateLeadCommentsTimeline(queryClient, leadId);
+  await invalidateLeadCommentsTimeline(queryClient, leadId, options);
 
   if (type === "comment_created" || type === "comment_updated") {
     void invalidateLeadDetailCache(queryClient, leadId);
@@ -210,6 +198,7 @@ export async function syncCommentsFromAdminEvent(
 export async function syncActivityTimelineFromAdminEvent(
   queryClient: QueryClient,
   event: AdminLeadPanelEvent,
+  options?: TimelineRefreshOptions,
 ): Promise<void> {
   const type = event.type ?? "";
   if (!isActivityTimelineAdminEvent(type)) return;
@@ -247,7 +236,9 @@ export async function syncActivityTimelineFromAdminEvent(
   }
 
   await Promise.all(
-    leadIds.map((leadId) => invalidateLeadActivitiesTimeline(queryClient, leadId)),
+    leadIds.map((leadId) =>
+      invalidateLeadActivitiesTimeline(queryClient, leadId, options),
+    ),
   );
 }
 
@@ -265,10 +256,14 @@ export async function handleAdminLeadPanelEvent(
   const type = event.type ?? "";
 
   if (COMMENT_TIMELINE_EVENTS.has(type)) {
-    await syncCommentsFromAdminEvent(queryClient, {
-      ...event,
-      leadId: openLeadId,
-    });
+    await syncCommentsFromAdminEvent(
+      queryClient,
+      {
+        ...event,
+        leadId: openLeadId,
+      },
+      { force: true },
+    );
     return;
   }
 
@@ -279,22 +274,30 @@ export async function handleAdminLeadPanelEvent(
         exact: true,
       });
       patchReminderDeletedInCache(queryClient, openLeadId, event.reminderId);
-      void invalidateLeadActivitiesTimeline(queryClient, openLeadId);
+      void invalidateLeadActivitiesTimeline(queryClient, openLeadId, {
+        force: true,
+      });
       return;
     }
-    await invalidateLeadRemindersTimeline(queryClient, openLeadId);
-    await invalidateLeadActivitiesTimeline(queryClient, openLeadId);
+    await invalidateLeadRemindersTimeline(queryClient, openLeadId, {
+      force: true,
+    });
+    await invalidateLeadActivitiesTimeline(queryClient, openLeadId, {
+      force: true,
+    });
     return;
   }
 
   if (CALL_TIMELINE_EVENTS.has(type)) {
-    await invalidateLeadActivitiesTimeline(queryClient, openLeadId);
+    await invalidateLeadActivitiesTimeline(queryClient, openLeadId, {
+      force: true,
+    });
     void invalidateLeadDetailCache(queryClient, openLeadId);
     return;
   }
 
   if (isActivityTimelineAdminEvent(type) && adminEventTouchesLead(event, openLeadId)) {
-    await syncActivityTimelineFromAdminEvent(queryClient, event);
+    await syncActivityTimelineFromAdminEvent(queryClient, event, { force: true });
     return;
   }
 

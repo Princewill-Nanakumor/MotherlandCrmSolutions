@@ -3,6 +3,10 @@ import { Table } from "@tanstack/react-table";
 import { Lead } from "@/types/leads";
 import { ColumnVisibilityToggle } from "@/components/dashboardComponents/ColumnVisibilityToggle";
 import { FilterSelect } from "@/components/dashboardComponents/leadsFilters/FilterSelect";
+import {
+  LEAD_PAGE_SIZE_SELECT_OPTIONS,
+  leadEntriesRange,
+} from "@/lib/leadPageSize";
 import { Loader } from "lucide-react";
 
 interface TableHeaderProps {
@@ -17,13 +21,6 @@ interface TableHeaderProps {
   isRefetching?: boolean;
 }
 
-const pageSizeOptions = [10, 15, 20, 30, 40, 50, 100, 150, 200, 250, 300, 500];
-
-const PAGE_SIZE_SELECT_OPTIONS = pageSizeOptions.map((size) => ({
-  value: size.toString(),
-  label: size.toString(),
-}));
-
 export function TableHeader({
   table,
   pageSize,
@@ -33,8 +30,11 @@ export function TableHeader({
   onPageSizeChange,
   isRefetching = false,
 }: TableHeaderProps) {
-  const currentPageStart = totalRows === 0 ? 0 : pageIndex * pageSize + 1;
-  const currentPageEnd = Math.min((pageIndex + 1) * pageSize, totalRows);
+  const { start: currentPageStart, end: currentPageEnd } = leadEntriesRange(
+    pageIndex,
+    pageSize,
+    totalRows,
+  );
 
   const handlePageSizeChange = (value: string) => {
     const newSize = Number(value);
@@ -51,7 +51,7 @@ export function TableHeader({
         <FilterSelect
           value={pageSize.toString()}
           onChange={handlePageSizeChange}
-          options={PAGE_SIZE_SELECT_OPTIONS}
+          options={LEAD_PAGE_SIZE_SELECT_OPTIONS}
           placeholder={pageSize.toString()}
           className="w-25"
           showActiveHighlight={false}
