@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import User from "@/models/User";
 import { hashAuthTokenForStorage } from "@/lib/authEmailTokens";
 import { invalidatePasswordChangedAtCache } from "@/lib/authPasswordVersion";

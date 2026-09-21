@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/libs/auth";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { authOptions } from "@/lib/auth";
+import { connectMongoDB } from "@/lib/dbConfig";
 import User from "@/models/User";
 import { PasswordUpdateSchema } from "@/schemas";
 import { unauthorizedResponse } from "@/lib/apiResponses";

@@ -1,8 +1,8 @@
 "use client";
 
 import { getCsrfToken } from "next-auth/react";
-import { disconnectAblyRealtimeClient } from "@/libs/ablyClient";
-import { disconnectAblyLeadRealtimeClient } from "@/libs/ablyLeadClient";
+import { disconnectAblyRealtimeClient } from "@/lib/ablyClient";
+import { disconnectAblyLeadRealtimeClient } from "@/lib/ablyLeadClient";
 import { markIntentionalSignOut } from "@/lib/sessionUtils";
 
 type AppRouterLike = {

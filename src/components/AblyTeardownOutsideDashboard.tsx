@@ -2,8 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import { useLayoutEffect } from "react";
-import { disconnectAblyRealtimeClient } from "@/libs/ablyClient";
-import { disconnectAblyLeadRealtimeClient } from "@/libs/ablyLeadClient";
+import { disconnectAblyRealtimeClient } from "@/lib/ablyClient";
+import { disconnectAblyLeadRealtimeClient } from "@/lib/ablyLeadClient";
 
 /**
  * The dashboard keeps a module-scoped Ably Realtime client. If you leave

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import User from "@/models/User";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
 
 export const dynamic = "force-dynamic";

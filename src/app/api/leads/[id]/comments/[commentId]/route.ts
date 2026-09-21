@@ -1,15 +1,15 @@
 // app/api/leads/[id]/comments/[commentId]/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { connectMongoDB } from "@/libs/dbConfig";
-import { authOptions } from "@/libs/auth";
+import { connectMongoDB } from "@/lib/dbConfig";
+import { authOptions } from "@/lib/auth";
 import Comment from "@/models/Comment";
 import Lead from "@/models/Lead";
 import mongoose from "mongoose";
 import {
   publishAdminLeadsUpdatedEvent,
   publishLeadUpdatedEvent,
-} from "@/libs/ablyServer";
+} from "@/lib/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { findAccessibleLead } from "@/lib/leadAssignmentQuery";
 import { canAccessAllLeads, canDeleteComments, getTenantAdminId } from "@/lib/roles";

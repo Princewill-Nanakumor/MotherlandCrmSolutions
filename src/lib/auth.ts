@@ -1,4 +1,3 @@
-// /Users/safeconnection/Downloads/drivecrm/src/libs/auth.ts
 import type { Session } from "next-auth";
 import { NextAuthOptions } from "next-auth";
 import {

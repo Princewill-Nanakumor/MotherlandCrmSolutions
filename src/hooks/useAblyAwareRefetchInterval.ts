@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import {
   getAblyRealtimeClient,
   isAblyRealtimeConnected,
-} from "@/libs/ablyClient";
+} from "@/lib/ablyClient";
 
 /** Fallback poll when Ably is healthy (connected). */
 export const ABLY_HEALTHY_POLL_MS = 12 * 60 * 1000; // 12 minutes

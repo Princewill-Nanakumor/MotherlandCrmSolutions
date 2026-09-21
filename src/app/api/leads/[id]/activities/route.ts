@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import Activity from "@/models/Activity";
 import "@/models/User";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { findAccessibleLead } from "@/lib/leadAssignmentQuery";

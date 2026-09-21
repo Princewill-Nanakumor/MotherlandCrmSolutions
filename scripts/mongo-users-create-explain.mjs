@@ -23,7 +23,7 @@ function getDbName() {
   return match?.[1] || "your_default_db_name";
 }
 
-/** Same defaults as src/libs/dbConfig.ts */
+/** Same defaults as src/lib/dbConfig.ts */
 function getPoolOptions() {
   const maxPoolSize = Math.max(
     1,

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import {
   createUserForAdmin,
@@ -8,7 +8,7 @@ import {
   listUsersForSession,
   updateUserForAdmin,
 } from "@/services/users/userService";
-import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
+import { publishAdminLeadsUpdatedEvent } from "@/lib/ablyServer";
 import { canManageUsers, getTenantAdminId } from "@/lib/roles";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";
 import {

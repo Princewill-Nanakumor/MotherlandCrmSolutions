@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import { PanelLeft, PanelLeftClose } from "lucide-react";
-import { cn } from "@/libs/utils";
+import { cn } from "@/lib/utils";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { sidebarLogoSizeClass, SIDEBAR_TOOLTIP_CLASS, SIDEBAR_TOOLTIP_KBD_CLASS } from "./sidebarConfig";
 

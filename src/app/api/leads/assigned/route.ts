@@ -1,7 +1,7 @@
 // app/api/leads/assigned/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { isAdmin, isTenantStaff } from "@/lib/roles";
 import { getAllLeadsForSession } from "@/services/leads/getAllLeadsService";

@@ -2,7 +2,7 @@
 // This endpoint deletes call logs older than 3 days
 // Should be called by a cron job or scheduled task
 import { NextResponse } from "next/server";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import CallLog from "@/models/CallLog";
 
 export const dynamic = "force-dynamic";

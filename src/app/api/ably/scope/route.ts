@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import { getSuperAdminEmails } from "@/lib/notificationQuery";
 import { getTenantAdminId, isAdmin } from "@/lib/roles";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";

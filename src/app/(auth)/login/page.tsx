@@ -24,8 +24,8 @@ import {
 } from "@/lib/sessionUtils";
 import { getAuthHeroGlassFieldsCss } from "@/lib/authHeroGlassFieldsCss";
 import { authDebug, isAuthDebugEnabled } from "@/lib/authDebug";
-import { disconnectAblyRealtimeClient } from "@/libs/ablyClient";
-import { disconnectAblyLeadRealtimeClient } from "@/libs/ablyLeadClient";
+import { disconnectAblyRealtimeClient } from "@/lib/ablyClient";
+import { disconnectAblyLeadRealtimeClient } from "@/lib/ablyLeadClient";
 import { signOut } from "next-auth/react";
 
 // Animation variants

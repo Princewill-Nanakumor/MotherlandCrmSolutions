@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import mongoose from "mongoose";
 import { Db, ObjectId } from "mongodb";
 import {

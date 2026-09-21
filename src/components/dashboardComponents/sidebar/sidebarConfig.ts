@@ -10,7 +10,7 @@ import {
   Crown,
   type LucideIcon,
 } from "lucide-react";
-import { cn } from "@/libs/utils";
+import { cn } from "@/lib/utils";
 import {
   canAccessAllLeads,
   isAdmin,

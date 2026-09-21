@@ -9,7 +9,7 @@ import {
   getTenantChannelName,
   getUserNotificationsChannelName,
   getUserRemindersChannelName,
-} from "@/libs/realtime";
+} from "@/lib/realtime";
 
 describe("ably realtime channel names", () => {
   it("uses one tenant channel for leads, reminders, and notifications", () => {

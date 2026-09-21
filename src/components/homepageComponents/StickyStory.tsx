@@ -19,7 +19,7 @@ import {
   useTransform,
 } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
-import { cn } from "@/libs/utils";
+import { cn } from "@/lib/utils";
 
 export type StoryStep = {
   id: string;

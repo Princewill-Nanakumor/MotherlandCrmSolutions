@@ -29,7 +29,7 @@ import dynamic from "next/dynamic";
 import { Toaster } from "@/components/ui/toaster";
 import { SelectedLeadsBanner } from "@/components/dashboardComponents/SelectedLeadsBanner";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
-import { disconnectAblyRealtimeClient } from "@/libs/ablyClient";
+import { disconnectAblyRealtimeClient } from "@/lib/ablyClient";
 import { useDeferAfterPaint } from "@/hooks/useDeferAfterPaint";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { TenantLeadsRealtimeSync } from "@/components/dashboardComponents/TenantLeadsRealtimeSync";

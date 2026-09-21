@@ -1,8 +1,8 @@
 // src/app/api/imports/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { executeDbOperation } from "@/libs/dbConfig";
-import { authOptions } from "@/libs/auth";
+import { executeDbOperation } from "@/lib/dbConfig";
+import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
@@ -12,7 +12,7 @@ import {
   MAX_LEADS_PER_IMPORT,
   getPerImportLimitError,
 } from "@/lib/importBatchLimits";
-import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
+import { publishAdminLeadsUpdatedEvent } from "@/lib/ablyServer";
 
 // Define query types for MongoDB filters
 interface ImportQuery {

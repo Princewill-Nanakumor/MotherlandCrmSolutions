@@ -15,7 +15,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import { cn } from "@/libs/utils";
+import { cn } from "@/lib/utils";
 
 /**
  * Scroll-in reveal wrapper.

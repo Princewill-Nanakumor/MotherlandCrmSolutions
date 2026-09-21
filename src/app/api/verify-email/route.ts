@@ -1,7 +1,7 @@
 // src/app/api/verify-email/route.ts
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import User from "@/models/User";
 import { hashAuthTokenForStorage } from "@/lib/authEmailTokens";
 import { rateLimitEnhanced } from "@/lib/rateLimit";

@@ -6,7 +6,7 @@ import {
   REMINDER_DUE_EVENT,
   getSuperAdminNotificationsChannelName,
   getTenantChannelName,
-} from "@/libs/realtime";
+} from "@/lib/realtime";
 
 let ablyRestClient: Ably.Rest | null = null;
 

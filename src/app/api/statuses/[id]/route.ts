@@ -1,11 +1,11 @@
 // app/api/statuses/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import Status from "@/models/Status";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
-import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
+import { publishAdminLeadsUpdatedEvent } from "@/lib/ablyServer";
 import { canCreateStatus } from "@/lib/roles";
 
 // Helper to retry DB operation if connection fails

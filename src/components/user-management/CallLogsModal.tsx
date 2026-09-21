@@ -13,11 +13,11 @@ import { Button } from "@/components/ui/button";
 import { PhoneCall, Loader2, Calendar, Clock } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { getAblyRealtimeClient } from "@/libs/ablyClient";
+import { getAblyRealtimeClient } from "@/lib/ablyClient";
 import {
   CALL_LOG_CREATED_EVENT,
   getTenantChannelName,
-} from "@/libs/realtime";
+} from "@/lib/realtime";
 
 interface CallLog {
   id: string;

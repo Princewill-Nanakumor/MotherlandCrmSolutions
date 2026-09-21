@@ -1,8 +1,8 @@
 // src/app/api/notifications/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/libs/auth";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { authOptions } from "@/lib/auth";
+import { connectMongoDB } from "@/lib/dbConfig";
 import mongoose from "mongoose";
 import type { Session } from "next-auth";
 import { sendPaymentConfirmationEmail } from "@/lib/emailService";
@@ -11,7 +11,7 @@ import {
   notificationOwnerSelectors,
 } from "@/lib/notificationQuery";
 import { reconcileStalePendingApprovalNotifications } from "@/lib/resolvePendingApprovalNotifications";
-import { publishSuperAdminPaymentNotificationEvent } from "@/libs/ablyServer";
+import { publishSuperAdminPaymentNotificationEvent } from "@/lib/ablyServer";
 
 export async function GET() {
   try {

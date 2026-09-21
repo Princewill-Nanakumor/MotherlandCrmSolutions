@@ -5,7 +5,7 @@ import { useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { HelpCircle, Settings, type LucideIcon } from "lucide-react";
-import { cn } from "@/libs/utils";
+import { cn } from "@/lib/utils";
 import {
   SIDEBAR_ACTIVE_STYLE,
   SIDEBAR_TOOLTIP_CLASS,

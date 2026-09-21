@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/libs/auth";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { authOptions } from "@/lib/auth";
+import { connectMongoDB } from "@/lib/dbConfig";
 import mongoose from "mongoose";
 import { buildTenantLeadBaseQuery } from "@/lib/leadListQuery";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";

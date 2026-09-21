@@ -1,9 +1,9 @@
 //src/app/api/users/count/route.ts
 import { NextResponse } from "next/server";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import User from "@/models/User";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 

@@ -11,7 +11,7 @@ import {
   SUBSCRIPTION_TRIAL_DURATION_DAYS,
   formatSubscriptionPriceUsd,
 } from "@/lib/subscriptionPlanCatalog";
-import { cn } from "@/libs/utils";
+import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 
 function Eyebrow({ children }: { children: React.ReactNode }) {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/libs/auth";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { authOptions } from "@/lib/auth";
+import { connectMongoDB } from "@/lib/dbConfig";
 import Reminder from "@/models/Reminder";
 import Activity from "@/models/Activity";
 import Lead from "@/models/Lead";
@@ -10,7 +10,7 @@ import { findAccessibleLead } from "@/lib/leadAssignmentQuery";
 import {
   publishAdminLeadsUpdatedEvent,
   publishLeadUpdatedEvent,
-} from "@/libs/ablyServer";
+} from "@/lib/ablyServer";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { computeReminderDueAt, reminderActivityDetailText } from "@/lib/reminderDueAt";

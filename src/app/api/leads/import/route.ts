@@ -1,8 +1,8 @@
 // /src/app/api/leads/import/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/libs/auth";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { authOptions } from "@/lib/auth";
+import { connectMongoDB } from "@/lib/dbConfig";
 import mongoose from "mongoose";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
@@ -12,7 +12,7 @@ import {
   MAX_LEADS_PER_IMPORT,
   getPerImportLimitError,
 } from "@/lib/importBatchLimits";
-import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
+import { publishAdminLeadsUpdatedEvent } from "@/lib/ablyServer";
 import { canCreateLead } from "@/lib/roles";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
 

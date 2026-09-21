@@ -1,9 +1,9 @@
 // src/app/api/user/profile/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import User from "@/models/User";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import { Types } from "mongoose";
 import { getSuperAdminEmails } from "@/lib/notificationQuery";
 

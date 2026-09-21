@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import Ably from "ably";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import { getTenantAdminId } from "@/lib/roles";
-import { getTenantChannelName } from "@/libs/realtime";
+import { getTenantChannelName } from "@/lib/realtime";
 
 /**
  * Legacy lead-scoped token endpoint.

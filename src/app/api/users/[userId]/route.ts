@@ -1,8 +1,8 @@
 // app/api/users/[userId]/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { withDatabase, executeDbOperation } from "@/libs/dbConfig";
-import { authOptions } from "@/libs/auth";
+import { withDatabase, executeDbOperation } from "@/lib/dbConfig";
+import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
 import { ObjectId } from "mongodb";
 import { unauthorizedResponse } from "@/lib/apiResponses";

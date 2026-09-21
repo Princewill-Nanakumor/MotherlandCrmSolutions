@@ -1,9 +1,9 @@
 // src/app/api/subscription/subscribe/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import User from "@/models/User";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import { rateLimitEnhanced } from "@/lib/rateLimit";
 import {
   SUBSCRIPTION_PLAN_CATALOG,

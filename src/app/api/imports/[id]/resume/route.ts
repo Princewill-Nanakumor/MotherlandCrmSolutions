@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
-import { executeDbOperation } from "@/libs/dbConfig";
-import { authOptions } from "@/libs/auth";
+import { executeDbOperation } from "@/lib/dbConfig";
+import { authOptions } from "@/lib/auth";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { canCreateLead } from "@/lib/roles";

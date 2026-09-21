@@ -25,7 +25,7 @@ import {
 } from "@/components/homepageComponents/primitives";
 import { HOME_FEATURE_TABS } from "@/components/homepageComponents/homepageContent";
 import { MoreFeaturesMapBackground } from "@/components/homepageComponents/MoreFeaturesMapBackground";
-import { cn } from "@/libs/utils";
+import { cn } from "@/lib/utils";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 
 function StatusesVisual() {

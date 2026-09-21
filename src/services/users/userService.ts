@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
-import { executeDbOperation, withDatabase } from "@/libs/dbConfig";
+import { executeDbOperation, withDatabase } from "@/lib/dbConfig";
 import { encryptRecoverablePassword } from "@/lib/passwordRecovery";
 import {
   SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,

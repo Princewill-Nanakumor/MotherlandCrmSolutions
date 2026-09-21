@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import { findUserForResendVerificationByEmail } from "@/lib/authEmailUserLookup";
 import { Resend } from "resend";
 import { z } from "zod";

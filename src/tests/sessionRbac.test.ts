@@ -8,7 +8,7 @@ vi.mock("@/models/User", () => ({
   },
 }));
 
-vi.mock("@/libs/dbConfig", () => ({
+vi.mock("@/lib/dbConfig", () => ({
   connectMongoDB: vi.fn().mockResolvedValue(undefined),
 }));
 

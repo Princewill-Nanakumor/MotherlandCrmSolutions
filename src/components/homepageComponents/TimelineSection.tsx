@@ -17,7 +17,7 @@ import {
 } from "@/components/homepageComponents/primitives";
 import { HOME_JOURNEY } from "@/components/homepageComponents/homepageContent";
 import { TimelineMapBackground } from "@/components/homepageComponents/TimelineMapBackground";
-import { cn } from "@/libs/utils";
+import { cn } from "@/lib/utils";
 
 export default function TimelineSection() {
   const reduce = useReducedMotion();

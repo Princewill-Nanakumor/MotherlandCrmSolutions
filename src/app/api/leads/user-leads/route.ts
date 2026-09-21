@@ -1,8 +1,8 @@
 // /Users/safeconnection/Downloads/drivecrm/src/app/api/leads/user-leads/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/libs/auth";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { authOptions } from "@/lib/auth";
+import { connectMongoDB } from "@/lib/dbConfig";
 import Lead from "@/models/Lead";
 import mongoose from "mongoose";
 import { agentLeadsInTenantFilter } from "@/lib/leadAssignmentQuery";

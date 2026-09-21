@@ -2,8 +2,8 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
-import { connectMongoDB } from "@/libs/dbConfig";
-import { authOptions } from "@/libs/auth";
+import { connectMongoDB } from "@/lib/dbConfig";
+import { authOptions } from "@/lib/auth";
 import CallLog from "@/models/CallLog";
 import Activity from "@/models/Activity";
 import Lead from "@/models/Lead";
@@ -11,7 +11,7 @@ import {
   publishAdminLeadsUpdatedEvent,
   publishCallLogCreatedEvent,
   publishLeadUpdatedEvent,
-} from "@/libs/ablyServer";
+} from "@/lib/ablyServer";
 import { unauthorizedResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 

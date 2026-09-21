@@ -3,7 +3,7 @@
  * avoiding parallel pool cold-start (~1s) on back-to-back creates.
  */
 import User from "@/models/User";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import { probeMongoQuery } from "@/lib/mongoPerfProbe";
 import { sanitizeSubAdminPermissions } from "@/lib/roles";
 import {

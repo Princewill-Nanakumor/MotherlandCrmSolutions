@@ -2,8 +2,8 @@
 
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { executeDbOperation } from "@/libs/dbConfig";
-import { authOptions } from "@/libs/auth";
+import { executeDbOperation } from "@/lib/dbConfig";
+import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
 import Lead, { generateLeadId } from "@/models/Lead";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
@@ -27,7 +27,7 @@ import {
   MAX_LEADS_PER_IMPORT,
   getPerImportLimitError,
 } from "@/lib/importBatchLimits";
-import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
+import { publishAdminLeadsUpdatedEvent } from "@/lib/ablyServer";
 
 interface MongoDocument {
   _id: mongoose.Types.ObjectId;

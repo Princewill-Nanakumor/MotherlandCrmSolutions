@@ -27,16 +27,16 @@ vi.mock("next-auth", () => ({
   getServerSession: (...args: unknown[]) => getServerSession(...args),
 }));
 
-vi.mock("@/libs/auth", () => ({
+vi.mock("@/lib/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("@/libs/ablyServer", () => ({
+vi.mock("@/lib/ablyServer", () => ({
   publishAdminLeadsUpdatedEvent: (...args: unknown[]) =>
     publishAdminLeadsUpdatedEvent(...args),
 }));
 
-vi.mock("@/libs/dbConfig", () => ({
+vi.mock("@/lib/dbConfig", () => ({
   executeDbOperation: async <T>(operation: () => Promise<T>) => operation(),
   connectMongoDB: vi.fn(),
 }));

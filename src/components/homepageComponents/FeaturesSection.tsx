@@ -10,7 +10,7 @@ import {
 } from "@/components/homepageComponents/primitives";
 import { HOME_FEATURES } from "@/components/homepageComponents/homepageContent";
 import { FeatureCardMockup } from "@/components/homepageComponents/FeatureCardMockups";
-import { cn } from "@/libs/utils";
+import { cn } from "@/lib/utils";
 
 export default function FeaturesSection() {
   const reduceMotion = useReducedMotion();

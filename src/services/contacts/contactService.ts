@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { executeDbOperation } from "@/libs/dbConfig";
+import { executeDbOperation } from "@/lib/dbConfig";
 import Contact from "@/models/contact";
 import Activity from "@/models/Activity";
 import { MongoServerError } from "mongodb";

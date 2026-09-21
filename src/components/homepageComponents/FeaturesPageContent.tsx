@@ -12,7 +12,7 @@ import {
   HOME_FEATURE_TABS,
 } from "@/components/homepageComponents/homepageContent";
 import { MarketingPageHero } from "@/components/homepageComponents/MarketingPageHero";
-import { cn } from "@/libs/utils";
+import { cn } from "@/lib/utils";
 
 export default function FeaturesPageContent() {
   const reduce = useReducedMotion();

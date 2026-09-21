@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import Ably from "ably";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import { getTenantAdminId, isAdmin } from "@/lib/roles";
 import {
   getSuperAdminNotificationsChannelName,
   getTenantChannelName,
-} from "@/libs/realtime";
+} from "@/lib/realtime";
 import { getSuperAdminEmails } from "@/lib/notificationQuery";
 
 interface SessionUser {

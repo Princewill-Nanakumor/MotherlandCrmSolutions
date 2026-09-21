@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession, Session as NextAuthSession } from "next-auth";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import Lead from "@/models/Lead";
 import Activity from "@/models/Activity";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import {
   publishAdminLeadsUpdatedEvent,
   publishLeadUpdatedEvent,
-} from "@/libs/ablyServer";
+} from "@/lib/ablyServer";
 import mongoose from "mongoose";
 import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 import { canEditAnyLeadStatus, getTenantAdminId } from "@/lib/roles";

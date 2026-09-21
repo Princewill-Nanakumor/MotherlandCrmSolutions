@@ -1,11 +1,11 @@
 // app/api/admin/delete-admin/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import User from "@/models/User";
 import Lead from "@/models/Lead";
 import Status from "@/models/Status";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 
 // Force dynamic rendering - skip build-time analysis
 export const dynamic = "force-dynamic";

@@ -9,7 +9,7 @@ vi.mock("next-auth", () => ({
   getServerSession: (...args: unknown[]) => getServerSession(...args),
 }));
 
-vi.mock("@/libs/auth", () => ({
+vi.mock("@/lib/auth", () => ({
   authOptions: {},
 }));
 

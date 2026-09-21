@@ -21,13 +21,13 @@ describe("ablyServer publishers", () => {
 
   it("no-ops when ABLY_API_KEY is missing", async () => {
     delete process.env.ABLY_API_KEY;
-    const { publishAdminLeadsUpdatedEvent } = await import("@/libs/ablyServer");
+    const { publishAdminLeadsUpdatedEvent } = await import("@/lib/ablyServer");
     await publishAdminLeadsUpdatedEvent("admin1", { type: "ping" });
     expect(getChannel).not.toHaveBeenCalled();
   });
 
   it("publishes admin leads updated event on tenant channel", async () => {
-    const { publishAdminLeadsUpdatedEvent } = await import("@/libs/ablyServer");
+    const { publishAdminLeadsUpdatedEvent } = await import("@/lib/ablyServer");
     await publishAdminLeadsUpdatedEvent("admin1", {
       type: "status_changed",
       leadId: "lead1",
@@ -41,7 +41,7 @@ describe("ablyServer publishers", () => {
   });
 
   it("publishLeadUpdatedEvent is a no-op (avoids double-publish with admin event)", async () => {
-    const { publishLeadUpdatedEvent } = await import("@/libs/ablyServer");
+    const { publishLeadUpdatedEvent } = await import("@/lib/ablyServer");
     await publishLeadUpdatedEvent("admin1", "lead9", { type: "status_changed" });
 
     expect(getChannel).not.toHaveBeenCalled();
@@ -49,7 +49,7 @@ describe("ablyServer publishers", () => {
   });
 
   it("publishes reminders on the tenant channel with lean ids only", async () => {
-    const { publishReminderDueEvent } = await import("@/libs/ablyServer");
+    const { publishReminderDueEvent } = await import("@/lib/ablyServer");
     await publishReminderDueEvent("admin1", "user2", {
       reminderId: "r1",
       leadId: "lead9",

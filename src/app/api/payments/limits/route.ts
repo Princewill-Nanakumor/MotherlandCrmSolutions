@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import type { Session } from "next-auth";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import { forbiddenResponse } from "@/lib/apiResponses";
 import { canManagePayments } from "@/lib/paymentAccess";
 import { getServerPaymentLimits } from "@/lib/paymentLimits";

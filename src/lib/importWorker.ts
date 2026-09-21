@@ -7,7 +7,7 @@ import mongoose from "mongoose";
 import Import from "@/models/Import";
 import ImportStagingChunk from "@/models/ImportStagingChunk";
 import { bulkUpsertImportChunk } from "@/lib/importChunkBulk";
-import { publishAdminLeadsUpdatedEvent } from "@/libs/ablyServer";
+import { publishAdminLeadsUpdatedEvent } from "@/lib/ablyServer";
 import { IMPORT_WORKER_CHUNKS } from "@/lib/importPipelineConfig";
 import {
   getImportPerfStats,

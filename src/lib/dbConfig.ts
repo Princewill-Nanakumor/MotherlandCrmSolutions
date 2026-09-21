@@ -1,4 +1,3 @@
-// src/libs/dbConfig.ts
 import mongoose from "mongoose";
 import { friendlyDatabaseConnectMessage } from "@/lib/mongoConnectionError";
 

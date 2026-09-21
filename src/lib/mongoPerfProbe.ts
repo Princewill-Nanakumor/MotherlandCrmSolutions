@@ -4,7 +4,7 @@
  */
 import { AsyncLocalStorage } from "node:async_hooks";
 import mongoose from "mongoose";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import { isApiPerfTimingEnabled } from "@/lib/apiRoutePerf";
 import { sessionPerfMark } from "@/lib/sessionPerfProbe";
 

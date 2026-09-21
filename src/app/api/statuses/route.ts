@@ -1,9 +1,9 @@
 // app/api/statuses/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import Status from "@/models/Status";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
 import { canCreateStatus } from "@/lib/roles";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";

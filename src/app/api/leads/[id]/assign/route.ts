@@ -1,13 +1,13 @@
 // app/api/leads/[id]/assign/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { connectMongoDB } from "@/libs/dbConfig";
-import { authOptions } from "@/libs/auth";
+import { connectMongoDB } from "@/lib/dbConfig";
+import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
 import {
   publishAdminLeadsUpdatedEvent,
   publishLeadUpdatedEvent,
-} from "@/libs/ablyServer";
+} from "@/lib/ablyServer";
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { withAdminScope } from "@/lib/withAdminScope";
 import { canAssignLeads } from "@/lib/roles";

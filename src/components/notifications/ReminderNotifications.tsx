@@ -18,10 +18,10 @@ import {
   formatReminderTypeLabel,
 } from "@/lib/reminderDueAt";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
-import { getAblyRealtimeClient } from "@/libs/ablyClient";
+import { getAblyRealtimeClient } from "@/lib/ablyClient";
 import { useAblyAwareRefetchInterval } from "@/hooks/useAblyAwareRefetchInterval";
 import { useAblyChannelAttached } from "@/hooks/useAblyChannelAttached";
-import { REMINDER_DUE_EVENT, getTenantChannelName } from "@/libs/realtime";
+import { REMINDER_DUE_EVENT, getTenantChannelName } from "@/lib/realtime";
 import type { Connection, RealtimeChannel } from "ably";
 
 /** Stable fallback so “no data” is not a fresh [] every render (that retriggered useEffect → setState loop). */

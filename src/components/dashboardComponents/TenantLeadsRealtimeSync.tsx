@@ -3,11 +3,11 @@
 import { useEffect, useRef } from "react";
 import { useSession, getSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { getAblyRealtimeClient } from "@/libs/ablyClient";
+import { getAblyRealtimeClient } from "@/lib/ablyClient";
 import {
   ADMIN_LEADS_UPDATED_EVENT,
   getAdminLeadsChannelName,
-} from "@/libs/realtime";
+} from "@/lib/realtime";
 import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
 import { removeLeadsFromAssignedLeadsCaches } from "@/lib/leadsListCache";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";

@@ -17,8 +17,8 @@ import { useSession } from "next-auth/react";
 import {
   ADMIN_LEADS_UPDATED_EVENT,
   getTenantChannelName,
-} from "@/libs/realtime";
-import { getAblyRealtimeClient } from "@/libs/ablyClient";
+} from "@/lib/realtime";
+import { getAblyRealtimeClient } from "@/lib/ablyClient";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { refetchLeadActivities } from "@/lib/leadActivitiesQuery";
 import {

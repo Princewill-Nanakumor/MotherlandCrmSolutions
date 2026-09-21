@@ -8,7 +8,7 @@
  * want Redis-first; otherwise those variables are ignored.
  */
 import mongoose from "mongoose";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 
 const COLLECTION = "captcha_consumed";
 

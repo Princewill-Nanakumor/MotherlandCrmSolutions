@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import mongoose from "mongoose";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import Reminder from "@/models/Reminder";
-import { publishReminderDueEvent } from "@/libs/ablyServer";
+import { publishReminderDueEvent } from "@/lib/ablyServer";
 import { isReminderDue } from "@/lib/reminderDueAt";
 
 const BATCH_SIZE = 50;

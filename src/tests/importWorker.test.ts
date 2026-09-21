@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 const publishAdminLeadsUpdatedEvent = vi.fn().mockResolvedValue(undefined);
 const bulkUpsertImportChunk = vi.fn();
 
-vi.mock("@/libs/ablyServer", () => ({
+vi.mock("@/lib/ablyServer", () => ({
   publishAdminLeadsUpdatedEvent: (...args: unknown[]) =>
     publishAdminLeadsUpdatedEvent(...args),
 }));

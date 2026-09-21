@@ -2,7 +2,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { cn } from "@/libs/utils";
+import { cn } from "@/lib/utils";
 
 type Blob = {
   className: string;

@@ -17,14 +17,14 @@ import { Button } from "@/components/ui/button";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { notificationKeys } from "@/lib/notificationKeys";
 import { billingKeys } from "@/hooks/useBillingData";
-import { getAblyRealtimeClient } from "@/libs/ablyClient";
+import { getAblyRealtimeClient } from "@/lib/ablyClient";
 import { useAblyAwareRefetchInterval } from "@/hooks/useAblyAwareRefetchInterval";
 import { useAblyChannelAttached } from "@/hooks/useAblyChannelAttached";
 import {
   PAYMENT_NOTIFICATION_EVENT,
   getSuperAdminNotificationsChannelName,
   getTenantChannelName,
-} from "@/libs/realtime";
+} from "@/lib/realtime";
 import type { Connection, RealtimeChannel } from "ably";
 
 // Raw notification type from API (may have inconsistent id/_id)

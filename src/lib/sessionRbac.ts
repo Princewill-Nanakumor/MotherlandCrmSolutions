@@ -1,5 +1,5 @@
 import User from "@/models/User";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import { probeMongoQuery } from "@/lib/mongoPerfProbe";
 import { sanitizeSubAdminPermissions } from "@/lib/roles";
 import {

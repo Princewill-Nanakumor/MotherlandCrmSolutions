@@ -9,15 +9,15 @@ vi.mock("next-auth", () => ({
   getServerSession: (...args: unknown[]) => getServerSession(...args),
 }));
 
-vi.mock("@/libs/auth", () => ({
+vi.mock("@/lib/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("@/libs/dbConfig", () => ({
+vi.mock("@/lib/dbConfig", () => ({
   connectMongoDB: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/libs/ablyServer", () => ({
+vi.mock("@/lib/ablyServer", () => ({
   publishAdminLeadsUpdatedEvent: (...args: unknown[]) =>
     publishAdminLeadsUpdatedEvent(...args),
   publishLeadUpdatedEvent: (...args: unknown[]) =>

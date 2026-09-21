@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
-import { cn } from "@/libs/utils";
+import { cn } from "@/lib/utils";
 import {
   MARKETING_NAV_LINKS,
   isMarketingPath,

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, User } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { cn } from "@/libs/utils";
+import { cn } from "@/lib/utils";
 import {
   SIDEBAR_NAV_ITEMS,
   filterSidebarNavItems,

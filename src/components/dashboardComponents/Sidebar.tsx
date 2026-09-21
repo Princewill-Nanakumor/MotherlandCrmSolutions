@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { cn } from "@/libs/utils";
+import { cn } from "@/lib/utils";
 import { hasRecentIntentionalSignOut } from "@/lib/sessionUtils";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { SidebarBrandToggle } from "./sidebar/SidebarBrandToggle";

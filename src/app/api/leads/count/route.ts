@@ -1,9 +1,9 @@
 // src/app/api/leads/count/route.ts
 import { NextResponse } from "next/server";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import { agentLeadsInTenantFilter } from "@/lib/leadAssignmentQuery";
 import {
   canAccessAllLeads,

@@ -1,9 +1,9 @@
 // src/app/api/roles/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { connectMongoDB } from "@/libs/dbConfig";
+import { connectMongoDB } from "@/lib/dbConfig";
 import Role from "@/models/Role";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 
 export async function GET() {
   try {

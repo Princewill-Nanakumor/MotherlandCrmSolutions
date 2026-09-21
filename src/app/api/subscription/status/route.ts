@@ -1,8 +1,8 @@
 // src/app/api/subscription/status/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { connectMongoDB } from "@/libs/dbConfig";
-import { authOptions } from "@/libs/auth";
+import { connectMongoDB } from "@/lib/dbConfig";
+import { authOptions } from "@/lib/auth";
 import User from "@/models/User";
 
 export async function GET() {

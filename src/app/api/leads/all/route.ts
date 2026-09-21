@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/libs/auth";
+import { authOptions } from "@/lib/auth";
 import { getAllLeadsForSession } from "@/services/leads/getAllLeadsService";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";
 

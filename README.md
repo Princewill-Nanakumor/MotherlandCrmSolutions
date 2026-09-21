@@ -53,7 +53,7 @@ npm run build
 
 ## Environment variables
 
-Do **not** commit `.env`. Typical keys (confirm exact usage in `src/libs/**`, `src/lib/**`, and `src/app/api/**`):
+Do **not** commit `.env`. Typical keys (confirm exact usage in `src/lib/**` and `src/app/api/**`):
 
 ## Repository map
 
@@ -67,7 +67,7 @@ src/
     robots.ts / sitemap.ts  # Crawlability
   components/               # UI by domain (leads, billing, homepage, …)
   hooks/                    # React Query + page hooks
-  lib/ / libs/              # Branding, auth helpers, payments, Ably, DB
+  lib/                      # Branding, auth, payments, Ably, DB, helpers
   models/                   # Mongoose schemas
   services/                 # Server lead/query services
   context/                  # Status, dialer, search, toggles, …
