@@ -7,6 +7,10 @@ import {
   buildLeadSearchConditions,
   parseLeadListPagination,
 } from "@/lib/leadListQuery";
+import {
+  ALL_LEADS_MAX_PAGE_SIZE,
+  MAX_LEAD_PAGE_SIZE,
+} from "@/lib/leadPageSize";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
 import { getAgentContactVisibilityFromDb } from "@/lib/getAgentContactVisibilityFromDb";
 import {
@@ -197,7 +201,11 @@ export async function getAllLeadsForSession(
 ) {
   const url = new URL(request.url);
   const searchParams = url.searchParams;
-  const { page, pageSize } = parseLeadListPagination(searchParams);
+  const assignedOnly = options?.assignedOnly === true;
+  const { page, pageSize } = parseLeadListPagination(
+    searchParams,
+    assignedOnly ? MAX_LEAD_PAGE_SIZE : ALL_LEADS_MAX_PAGE_SIZE,
+  );
   const userFilter = parseStringArray(searchParams.get("user"));
   const countryFilter = parseStringArray(searchParams.get("country"));
   const statusFilter = parseStringArray(searchParams.get("status"));
@@ -232,7 +240,6 @@ export async function getAllLeadsForSession(
   }
   perf?.mark("agent-contact-visibility");
 
-  const assignedOnly = options?.assignedOnly === true;
   const assignedBase = assignedOnly
     ? buildAssignedLeadBaseQuery(sessionUser)
     : null;

@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import { canAccessAllLeads, getTenantAdminId } from "@/lib/roles";
-import { parseLeadPageSize } from "@/lib/leadPageSize";
+import { MAX_LEAD_PAGE_SIZE, parseLeadPageSize } from "@/lib/leadPageSize";
 
 /** Tenant base filter for all-leads / assigned-leads list queries. */
 export function buildTenantLeadBaseQuery(sessionUser: {
@@ -24,11 +24,14 @@ export function buildTenantLeadBaseQuery(sessionUser: {
   return { adminId: new ObjectId(sessionUser.id) };
 }
 
-export function parseLeadListPagination(searchParams: {
-  get: (key: string) => string | null;
-}): { page: number; pageSize: number; skip: number } {
+export function parseLeadListPagination(
+  searchParams: {
+    get: (key: string) => string | null;
+  },
+  maxPageSize: number = MAX_LEAD_PAGE_SIZE,
+): { page: number; pageSize: number; skip: number } {
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const pageSize = parseLeadPageSize(searchParams.get("pageSize"));
+  const pageSize = parseLeadPageSize(searchParams.get("pageSize"), maxPageSize);
   return { page, pageSize, skip: (page - 1) * pageSize };
 }
 

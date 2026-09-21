@@ -10,7 +10,7 @@ import {
   getLeadAssignedUserId,
   isLeadAssignedToActiveUser,
 } from "@/lib/leadAssignmentDisplay";
-import { parseLeadPageSizeOption } from "@/lib/leadPageSize";
+import { parseAllLeadsPageSizeOption } from "@/lib/leadPageSize";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { Lead } from "@/types/leads";
 import { useLeadsLookupQueries } from "@/hooks/leadsPage/useLeadsLookupQueries";
@@ -43,7 +43,7 @@ export const useLeadsPage = (
     1,
     parseInt(searchParams.get("page") || "1", 10)
   );
-  const pageSize = parseLeadPageSizeOption(searchParams.get("pageSize"));
+  const pageSize = parseAllLeadsPageSizeOption(searchParams.get("pageSize"));
   const [filterJustChanged, setFilterJustChanged] = useState(false);
   // Local page state so pagination updates immediately when user clicks Next/Prev
   // (useSearchParams can lag after router.replace, so query would stay on page 1 otherwise)

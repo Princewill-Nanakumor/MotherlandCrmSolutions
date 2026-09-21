@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { snapLeadPageSize } from "@/lib/leadPageSize";
+import { snapAllLeadsPageSize } from "@/lib/leadPageSize";
 
 const STORAGE_KEYS = {
   FILTER_BY_COUNTRY: "leads_filter_by_country",
@@ -546,7 +546,7 @@ export function useLeadsFilters({
 
   const handlePageSizeChange = useCallback(
     (newPageSize: number) => {
-      const size = snapLeadPageSize(newPageSize);
+      const size = snapAllLeadsPageSize(newPageSize);
       setFilterJustChanged(true);
       pendingPageFromPaginationRef.current = null;
       const params = new URLSearchParams(Array.from(searchParams.entries()));

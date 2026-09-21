@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ObjectId } from "mongodb";
+import { ALL_LEADS_MAX_PAGE_SIZE } from "@/lib/leadPageSize";
 import {
   buildLeadSearchConditions,
   buildTenantLeadBaseQuery,
@@ -74,6 +75,18 @@ describe("parseLeadListPagination", () => {
     expect(
       parseLeadListPagination(new URLSearchParams("page=1&pageSize=9999")),
     ).toEqual({ page: 1, pageSize: 500, skip: 0 });
+    expect(
+      parseLeadListPagination(
+        new URLSearchParams("page=1&pageSize=1000"),
+        ALL_LEADS_MAX_PAGE_SIZE,
+      ),
+    ).toEqual({ page: 1, pageSize: 1000, skip: 0 });
+    expect(
+      parseLeadListPagination(
+        new URLSearchParams("page=1&pageSize=9999"),
+        ALL_LEADS_MAX_PAGE_SIZE,
+      ),
+    ).toEqual({ page: 1, pageSize: 1000, skip: 0 });
   });
 });
 

@@ -4,7 +4,7 @@ import { Lead } from "@/types/leads";
 import { ColumnVisibilityToggle } from "@/components/dashboardComponents/ColumnVisibilityToggle";
 import { FilterSelect } from "@/components/dashboardComponents/leadsFilters/FilterSelect";
 import {
-  LEAD_PAGE_SIZE_SELECT_OPTIONS,
+  ALL_LEADS_PAGE_SIZE_SELECT_OPTIONS,
   leadEntriesRange,
 } from "@/lib/leadPageSize";
 import { Loader } from "lucide-react";
@@ -51,9 +51,9 @@ export function TableHeader({
         <FilterSelect
           value={pageSize.toString()}
           onChange={handlePageSizeChange}
-          options={LEAD_PAGE_SIZE_SELECT_OPTIONS}
+          options={ALL_LEADS_PAGE_SIZE_SELECT_OPTIONS}
           placeholder={pageSize.toString()}
-          className="w-25"
+          className="w-28"
           showActiveHighlight={false}
         />
         <span className="text-sm font-medium text-gray-700!  dark:text-white!">
