@@ -1,9 +1,10 @@
 // src/components/dashboardComponents/SubscriptionGuard.tsx
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
@@ -18,8 +19,16 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
   children,
 }) => {
   const { status, data: session } = useSession();
-  const { subscriptionData, hasActiveSubscription, isLoading, error, refreshSubscriptionData } =
-    useSubscriptionData();
+  const {
+    subscriptionData,
+    hasActiveSubscription,
+    isLoading,
+    isFetching,
+    error,
+    refreshSubscriptionData,
+  } = useSubscriptionData();
+  const [isRetrying, setIsRetrying] = useState(false);
+  const retryInFlight = isRetrying || isFetching;
 
   const staffUser = isTenantStaff(session?.user?.role);
   const ownerUser = isAdmin(session?.user?.role);
@@ -53,11 +62,23 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
+                disabled={retryInFlight}
                 onClick={() => {
-                  void refreshSubscriptionData();
+                  if (retryInFlight) return;
+                  setIsRetrying(true);
+                  void refreshSubscriptionData().finally(() => {
+                    setIsRetrying(false);
+                  });
                 }}
               >
-                Retry
+                {retryInFlight ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Retrying...
+                  </>
+                ) : (
+                  "Retry"
+                )}
               </Button>
               <Button
                 type="button"

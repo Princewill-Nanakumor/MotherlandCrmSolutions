@@ -21,6 +21,7 @@ export const useSubscriptionData = () => {
   const {
     data: subscriptionData,
     isLoading,
+    isFetching,
     error,
     refetch,
   } = useQuery<SubscriptionStatusData, Error>({
@@ -73,6 +74,7 @@ export const useSubscriptionData = () => {
     hasActiveSubscription,
     indicator,
     isLoading,
+    isFetching,
     error,
     refreshSubscriptionData: refetch,
   };
