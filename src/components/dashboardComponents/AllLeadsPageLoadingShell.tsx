@@ -21,14 +21,18 @@ export function AllLeadsPageLoadingShell({
 }: AllLeadsPageLoadingShellProps) {
   return (
     <div
-      className="flex flex-col h-full min-w-0 max-w-full overflow-x-hidden border rounded-lg bg-background dark:bg-gray-800"
+      className="flex flex-col h-full min-h-0 min-w-0 max-w-full overflow-x-hidden overflow-y-auto border rounded-lg bg-background dark:bg-gray-800"
       data-testid="all-leads-bootstrap-shell"
     >
       {showHeader && (
-        <LeadsHeader shouldShowLoading counts={EMPTY_COUNTS} />
+        <div className="shrink-0">
+          <LeadsHeader shouldShowLoading counts={EMPTY_COUNTS} />
+        </div>
       )}
-      <FilterControlsLoadingShell />
-      <div className="flex-1 min-w-0 px-4 pb-4 overflow-auto sm:px-8">
+      <div className="shrink-0">
+        <FilterControlsLoadingShell />
+      </div>
+      <div className="flex-1 min-h-65 min-w-0 px-4 pb-4 sm:px-8">
         <TableSkeleton />
       </div>
     </div>

@@ -174,10 +174,14 @@ export function TableContent({
 
   const showLoadingState = isLoading || isStatusLoading;
   const columnCount = table.getAllColumns().length;
+  const rowCount = Math.min(
+    Math.max(table.getState().pagination.pageSize || 8, 5),
+    12,
+  );
 
   // Show skeleton when loading
   if (showLoadingState) {
-    return <TableSkeleton columnCount={columnCount} rowCount={5} />;
+    return <TableSkeleton columnCount={columnCount} rowCount={rowCount} />;
   }
 
   return (

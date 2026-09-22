@@ -24,10 +24,12 @@ const AllLeadsPage: React.FC = () => {
   usePrefetchAllLeads(searchQuery);
 
   return (
-    <LeadsPageContent
-      searchQuery={searchQuery}
-      setLayoutLoading={setLayoutLoading}
-    />
+    <div className="h-full min-h-0">
+      <LeadsPageContent
+        searchQuery={searchQuery}
+        setLayoutLoading={setLayoutLoading}
+      />
+    </div>
   );
 };
 

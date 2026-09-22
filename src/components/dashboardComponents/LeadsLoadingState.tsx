@@ -6,14 +6,14 @@ import { RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 
 export const TableSkeleton = () => (
-  <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+  <div className="h-full min-h-65 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
     <div className="animate-pulse">
       {/* Table header skeleton */}
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <div className="w-1/4 h-4 bg-gray-200 rounded dark:bg-gray-700"></div>
       </div>
       {/* Table rows skeleton */}
-      {Array.from({ length: 5 }).map((_, i) => (
+      {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}
           className="px-6 py-4 border-b border-gray-200 dark:border-gray-700"

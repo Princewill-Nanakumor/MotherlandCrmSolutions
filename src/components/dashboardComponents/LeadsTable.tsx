@@ -485,8 +485,8 @@ export default function LeadsTable({
 
   return (
     <>
-      <div className="rounded-lg shadow dark:bg-gray-800 dark:text-white">
-        <div className="p-4">
+      <div className="flex flex-col h-full min-h-0 rounded-lg shadow dark:bg-gray-800 dark:text-white">
+        <div className="p-4 shrink-0">
           <CustomTableHeader
             table={table}
             pageSize={pageSize}
@@ -498,38 +498,40 @@ export default function LeadsTable({
           />
         </div>
 
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <Table>
-            {showEmptyState ? (
-              <EmptyStateAdminLeadsTable
-                searchQuery={searchQuery}
-                filterByUser={userFilter}
-                filterByCountry={countryFilter}
-                filterByStatus={statusFilter}
-                filterBySource={sourceFilter}
-                hasFilters={
-                  filterByUser !== "all" ||
-                  filterByCountry !== "all" ||
-                  filterByStatus !== "all" ||
-                  filterBySource !== "all"
-                }
-                users={users}
-              />
-            ) : (
-              <TableContent
-                table={table}
-                onRowClick={handleRowClick}
-                selectedLead={selectedLead}
-              />
-            )}
-          </Table>
-        </DndContext>
+        <div className="flex-1 min-h-0 overflow-auto">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <Table>
+              {showEmptyState ? (
+                <EmptyStateAdminLeadsTable
+                  searchQuery={searchQuery}
+                  filterByUser={userFilter}
+                  filterByCountry={countryFilter}
+                  filterByStatus={statusFilter}
+                  filterBySource={sourceFilter}
+                  hasFilters={
+                    filterByUser !== "all" ||
+                    filterByCountry !== "all" ||
+                    filterByStatus !== "all" ||
+                    filterBySource !== "all"
+                  }
+                  users={users}
+                />
+              ) : (
+                <TableContent
+                  table={table}
+                  onRowClick={handleRowClick}
+                  selectedLead={selectedLead}
+                />
+              )}
+            </Table>
+          </DndContext>
+        </div>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 shrink-0">
           <TablePagination
             pageIndex={effectivePageIndex}
             pageCount={pageCount}

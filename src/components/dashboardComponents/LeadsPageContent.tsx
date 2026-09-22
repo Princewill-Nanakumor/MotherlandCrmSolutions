@@ -161,7 +161,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
       {isBootstrapping ? (
         <AllLeadsPageLoadingShell showHeader={showHeader} />
       ) : (
-        <div className="flex flex-col h-full min-w-0 max-w-full overflow-x-hidden border rounded-lg bg-background dark:bg-gray-800">
+        <div className="flex flex-col flex-1 min-h-0 h-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto border rounded-lg bg-background dark:bg-gray-800">
           {isRefetchingLeads && (
             <div className="duration-200 animate-in slide-in-from-top-2">
               <RefetchIndicator />
@@ -169,7 +169,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
           )}
 
           <div
-            className={`transition-opacity duration-300 ease-in-out ${
+            className={`shrink-0 transition-opacity duration-300 ease-in-out ${
               showHeader ? "opacity-100" : "opacity-0 pointer-events-none"
             }`}
             style={{
@@ -181,7 +181,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
             <LeadsHeader shouldShowLoading={false} counts={counts} />
           </div>
 
-          <div className="transition-opacity duration-300 ease-in-out opacity-100">
+          <div className="shrink-0 transition-opacity duration-300 ease-in-out opacity-100">
             <LeadsFilterControls
               selectedLeads={selectedLeads}
               hasAssignedLeads={hasAssignedLeads}
@@ -220,7 +220,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
             />
           </div>
 
-          <div className="flex-1 min-w-0 px-4 pb-4 overflow-auto sm:px-8">
+          <div className="flex-1 min-h-0 min-w-0 px-4 pb-4 overflow-auto sm:px-8">
             <ErrorBoundary
               fallback={
                 <div className="p-4 text-center text-red-500">
@@ -254,7 +254,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                   </button>
                 </div>
               ) : showEmptyState ? (
-                <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                <div className="h-full min-h-65 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
                   <EmptyState
                     filterByUser={
                       filterByUser === "all" || !filterByUser
@@ -277,7 +277,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                   />
                 </div>
               ) : (
-                <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                <div className="h-full min-h-65 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
                   <LeadsTable
                     leads={filteredLeads}
                     totalRows={leadsTotal}
