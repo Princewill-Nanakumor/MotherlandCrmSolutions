@@ -20,7 +20,7 @@ import {
   patchCommentDeletedInCache,
   patchLeadListCachesFromComments,
 } from "@/lib/commentCacheSync";
-import { patchActivityDeletedInCache } from "@/lib/leadActivitiesQuery";
+import { patchActivityDeletedInCache, dropReplacedOptimisticStatusActivities } from "@/lib/leadActivitiesQuery";
 import { callLogsKeys } from "@/components/user-management/CallLogsModal";
 import {
   transformComment,
@@ -260,7 +260,7 @@ export const CommentsAndActivitiesCombined: FC<
     });
 
     // Add activities (excluding COMMENT type as they're now shown as comments)
-    activities.forEach((activity) => {
+    dropReplacedOptimisticStatusActivities(activities).forEach((activity) => {
       if (isTaboolaLeadImportActivity(activity)) return;
       if (seenActivityIds.has(activity._id)) return;
       seenActivityIds.add(activity._id);

@@ -60,22 +60,78 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
     "\n",
   );
   const seenIdsRef = useRef<Set<string> | null>(null);
+  const prevItemsRef = useRef<CombinedItem[]>([]);
+  /** Keep motion keys stable when optimistic status rows swap to real Mongo ids. */
+  const motionKeyAliasRef = useRef<Map<string, string>>(new Map());
   if (seenIdsRef.current === null) {
     seenIdsRef.current = new Set(knownKey ? knownKey.split("\n") : []);
   }
 
-  const enteringIds = useMemo(() => {
+  const { enteringIds, motionKeys } = useMemo(() => {
     const seen = seenIdsRef.current ?? new Set<string>();
-    return new Set(
-      combinedItems.filter((item) => !seen.has(item.id)).map((item) => item.id),
+    const aliases = motionKeyAliasRef.current;
+    const currentIds = new Set(combinedItems.map((item) => item.id));
+    // Status changes insert an optimistic row, then refetch/realtime swaps in the
+    // real Mongo id. Keep the optimistic motion key so Framer does not remount.
+    const leftOptimisticStatus = prevItemsRef.current.filter(
+      (item) =>
+        item.id.startsWith("activity-optimistic-") &&
+        !currentIds.has(item.id) &&
+        item.activity?.type === "STATUS_CHANGE",
     );
+    const liveOptimisticStatus = combinedItems.filter(
+      (item) =>
+        item.id.startsWith("activity-optimistic-") &&
+        item.activity?.type === "STATUS_CHANGE",
+    );
+    const replaceableOptimistic = [
+      ...leftOptimisticStatus,
+      ...liveOptimisticStatus,
+    ];
+
+    for (const item of combinedItems) {
+      if (
+        item.type !== "activity" ||
+        item.activity?.type !== "STATUS_CHANGE" ||
+        item.id.startsWith("activity-optimistic-") ||
+        aliases.has(item.id)
+      ) {
+        continue;
+      }
+      const oldStatusId = item.activity.metadata?.oldStatusId;
+      const newStatusId = item.activity.metadata?.newStatusId;
+      const match = replaceableOptimistic.find(
+        (optimistic) =>
+          optimistic.activity?.metadata?.oldStatusId === oldStatusId &&
+          optimistic.activity?.metadata?.newStatusId === newStatusId,
+      );
+      if (match) {
+        aliases.set(item.id, match.id);
+        seen.add(item.id);
+      }
+    }
+
+    // Drop aliases for ids no longer in the timeline
+    for (const id of aliases.keys()) {
+      if (!currentIds.has(id)) aliases.delete(id);
+    }
+
+    const keys = new Map<string, string>();
+    const nextEntering = new Set<string>();
+    for (const item of combinedItems) {
+      keys.set(item.id, aliases.get(item.id) ?? item.id);
+      if (seen.has(item.id)) continue;
+      nextEntering.add(item.id);
+    }
+    return { enteringIds: nextEntering, motionKeys: keys };
   }, [combinedItems]);
 
   useLayoutEffect(() => {
     const seen = seenIdsRef.current;
     if (!seen || !knownKey) return;
     for (const id of knownKey.split("\n")) seen.add(id);
-  }, [knownKey]);
+    prevItemsRef.current = combinedItems;
+  }, [knownKey, combinedItems]);
 
   const leadCreatedEntry = leadCreatedAt ? (() => {
     const date = new Date(leadCreatedAt);
@@ -132,6 +188,24 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
       }}
     >
       {combinedItems.map((item) => {
+        // Prefer the server STATUS_CHANGE over a still-cached optimistic twin.
+        if (
+          item.id.startsWith("activity-optimistic-") &&
+          item.activity?.type === "STATUS_CHANGE"
+        ) {
+          const oldStatusId = item.activity.metadata?.oldStatusId;
+          const newStatusId = item.activity.metadata?.newStatusId;
+          const hasRealTwin = combinedItems.some(
+            (other) =>
+              other.type === "activity" &&
+              other.activity?.type === "STATUS_CHANGE" &&
+              !other.id.startsWith("activity-optimistic-") &&
+              other.activity.metadata?.oldStatusId === oldStatusId &&
+              other.activity.metadata?.newStatusId === newStatusId,
+          );
+          if (hasRealTwin) return null;
+        }
+
         const isNew = enteringIds.has(item.id);
         const row = (() => {
           if (item.type === "comment" && item.comment) {
@@ -173,8 +247,7 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
 
         return (
           <motion.div
-            key={item.id}
-            layout={!reduceMotion}
+            key={motionKeys.get(item.id) ?? item.id}
             initial={
               isNew && !reduceMotion
                 ? { opacity: 0, y: -10, scale: 0.98 }
@@ -184,7 +257,6 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
             transition={{
               duration: 0.2,
               ease: [0.22, 1, 0.36, 1],
-              layout: { duration: 0.18 },
             }}
           >
             {row}

@@ -20,6 +20,36 @@ export function assignedToEquals(
   return getAssignedUserId(a) === getAssignedUserId(b);
 }
 
+function statusChangeKey(activity: Activity): string {
+  return `${activity.metadata?.oldStatusId ?? ""}→${activity.metadata?.newStatusId ?? ""}`;
+}
+
+/** Drop optimistic STATUS_CHANGE rows once the matching server row is present. */
+export function dropReplacedOptimisticStatusActivities(
+  activities: Activity[],
+): Activity[] {
+  const realKeys = new Set(
+    activities
+      .filter(
+        (activity) =>
+          activity.type === "STATUS_CHANGE" &&
+          !String(activity._id).startsWith("optimistic-"),
+      )
+      .map(statusChangeKey),
+  );
+  if (realKeys.size === 0) return activities;
+
+  return activities.filter((activity) => {
+    if (
+      activity.type !== "STATUS_CHANGE" ||
+      !String(activity._id).startsWith("optimistic-")
+    ) {
+      return true;
+    }
+    return !realKeys.has(statusChangeKey(activity));
+  });
+}
+
 /** Pull the activity timeline and write it into cache (open or closed panel). */
 export async function refreshActivitiesCacheForLead(
   queryClient: QueryClient,
@@ -44,8 +74,10 @@ export async function refreshActivitiesCacheForLead(
     queryClient.setQueryData(
       ["activities", leadId],
       (old: Activity[] | undefined) => {
-        merged = upsertTimelineRowsById(old, activities, (activity) =>
-          timelineRowId(activity._id),
+        merged = dropReplacedOptimisticStatusActivities(
+          upsertTimelineRowsById(old, activities, (activity) =>
+            timelineRowId(activity._id),
+          ),
         );
         return merged;
       },
