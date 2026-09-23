@@ -9,7 +9,7 @@ export function useLeadTabMotion() {
   return {
     pillTransition: reduceMotion
       ? { duration: 0 }
-      : { type: "spring" as const, stiffness: 700, damping: 42 },
+      : { type: "spring" as const, stiffness: 220, damping: 28, mass: 1.1 },
   };
 }
 

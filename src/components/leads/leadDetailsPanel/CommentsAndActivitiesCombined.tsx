@@ -20,7 +20,10 @@ import {
   patchCommentDeletedInCache,
   patchLeadListCachesFromComments,
 } from "@/lib/commentCacheSync";
-import { patchActivityDeletedInCache, dropReplacedOptimisticStatusActivities } from "@/lib/leadActivitiesQuery";
+import {
+  patchActivityDeletedInCache,
+  dropReplacedOptimisticStatusActivities,
+} from "@/lib/leadActivitiesQuery";
 import { callLogsKeys } from "@/components/user-management/CallLogsModal";
 import {
   transformComment,
@@ -52,8 +55,7 @@ function truncatePreview(text: string, max = 120): string {
   return `${trimmed.slice(0, max)}…`;
 }
 
-const TIMELINE_FILTERS = ["all", "comments", "status", "calls"] as const;
-type TimelineFilter = (typeof TIMELINE_FILTERS)[number];
+type TimelineFilter = "all" | "comments" | "status" | "calls";
 
 interface CommentsAndActivitiesCombinedProps {
   leadId: string;
@@ -696,6 +698,7 @@ export const CommentsAndActivitiesCombined: FC<
           <CombinedTimeline
             combinedItems={visibleTimelineItems}
             allItemIds={combinedItems.map((item) => item.id)}
+            filterKey={timelineFilter}
             statuses={statuses}
             editingId={editingId}
             editContent={editContent}
