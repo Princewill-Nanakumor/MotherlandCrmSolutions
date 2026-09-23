@@ -25,7 +25,7 @@ export default function UsageLimitsDisplay({
     <>
       {/* Usage Limits Display - Show skeleton while loading */}
       {usageDataLoading ? (
-        <Card className="border-gray-200 dark:border-gray-700">
+        <Card className="bg-gray-50 border-gray-200 dark:border-gray-700 dark:bg-gray-800">
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
@@ -64,7 +64,7 @@ export default function UsageLimitsDisplay({
               (userUsageData.currentUsers / userUsageData.maxUsers) * 100,
             );
         return (
-          <Card className="border-gray-200 dark:border-gray-700">
+          <Card className="bg-gray-50 border-gray-200 dark:border-gray-700 dark:bg-gray-800">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center space-x-2 text-sm text-gray-900 dark:text-white">
                 <Users className="h-4 w-4" />

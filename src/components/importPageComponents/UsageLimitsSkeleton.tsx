@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function UsageLimitsSkeleton() {
   return (
-    <Card className="mx-6 mt-6 bg-gray-50 border-gray-200 dark:border-gray-700 dark:bg-gray-900 mb-5">
+    <Card className="mx-6 mt-6 bg-gray-50 border-gray-200 dark:border-gray-700 dark:bg-gray-800 mb-5">
       <CardHeader className="pb-3">
         <div className="flex items-center space-x-2">
           <Skeleton className="h-4 w-4 rounded" />
@@ -21,7 +21,7 @@ export function UsageLimitsSkeleton() {
           </div>
           <Skeleton className="h-2 w-full rounded" />
           <Skeleton className="h-3 w-32 rounded" />
-          <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+          <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-800/40 rounded">
             <div className="flex items-center gap-1">
               <Skeleton className="h-3 w-3 rounded" />
               <Skeleton className="h-3 w-48 rounded" />

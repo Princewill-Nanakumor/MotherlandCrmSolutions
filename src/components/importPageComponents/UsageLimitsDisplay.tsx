@@ -22,7 +22,7 @@ export function UsageLimitsDisplay({ usageData }: { usageData: UsageData }) {
     maxLeads > 0 && usageData.currentLeads >= maxLeads * 0.8;
 
   return (
-    <Card className="mx-6 bg-gray-50 border-gray-200 dark:border-gray-700 dark:bg-gray-900 mb-5">
+    <Card className="mx-6 bg-gray-50 border-gray-200 dark:border-gray-700 dark:bg-gray-800 mb-5">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center space-x-2 text-sm">
           <FileText className="h-4 w-4" />
@@ -72,8 +72,8 @@ export function UsageLimitsDisplay({ usageData }: { usageData: UsageData }) {
           )}
           {/* L10: only show the "import up to N more" hint when N > 0. */}
           {usageData.maxLeads !== -1 && usageData.remainingLeads > 0 && (
-            <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
-              <div className="flex items-center gap-1 text-blue-700 dark:text-blue-300">
+            <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-800/40 rounded text-xs">
+              <div className="flex items-center gap-1 text-blue-700 dark:text-blue-200">
                 <Info className="h-3 w-3" />
                 <span>
                   You can import up to {usageData.remainingLeads} more leads
