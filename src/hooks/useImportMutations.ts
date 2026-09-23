@@ -146,7 +146,8 @@ async function waitForWorkerCompletion(options: {
 
   while (Date.now() < deadline) {
     // Keep draining while the tab is open; cron covers closed-tab case.
-    await apiCallWithSessionRefresh("/api/imports/run", {
+    // Do not await — a slow/hung tick must not freeze progress polling.
+    void apiCallWithSessionRefresh("/api/imports/run", {
       method: "POST",
     }).catch(() => null);
 
@@ -167,7 +168,16 @@ async function waitForWorkerCompletion(options: {
         );
         onImportProgress?.(progress);
 
-        if (progress.status === "completed") {
+        const recordsDone =
+          progress.recordCount > 0 &&
+          progress.processedCount >= progress.recordCount;
+
+        if (progress.status === "completed" || recordsDone) {
+          if (progress.status !== "completed") {
+            void apiCallWithSessionRefresh("/api/imports/run", {
+              method: "POST",
+            }).catch(() => null);
+          }
           return {
             successMessage: `Successfully imported ${progress.inserted} leads (${progress.duplicates} duplicates skipped${progress.errors ? `, ${progress.errors} failed` : ""})`,
             inserted: progress.inserted,

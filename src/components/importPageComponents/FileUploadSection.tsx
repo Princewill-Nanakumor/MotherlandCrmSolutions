@@ -264,7 +264,13 @@ ${
                 : "—"}
               {" · "}queued worker · 1,000 / stage batch
             </span>
-            <span>{eta ? `Est. remaining: ${eta}` : "Calculating ETA…"}</span>
+            <span>
+              {percent >= 100
+                ? "Finishing…"
+                : eta
+                  ? `Est. remaining: ${eta}`
+                  : "Calculating ETA…"}
+            </span>
           </div>
         </div>
       )}

@@ -44,12 +44,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAblyConnectionHealthy } from "@/hooks/useAblyAwareRefetchInterval";
+import { LeadPanelTabButton } from "./LeadPanelTabTransition";
 
 function truncatePreview(text: string, max = 120): string {
   const trimmed = text.trim();
   if (trimmed.length <= max) return trimmed;
   return `${trimmed.slice(0, max)}…`;
 }
+
+const TIMELINE_FILTERS = ["all", "comments", "status", "calls"] as const;
+type TimelineFilter = (typeof TIMELINE_FILTERS)[number];
 
 interface CommentsAndActivitiesCombinedProps {
   leadId: string;
@@ -80,9 +84,7 @@ export const CommentsAndActivitiesCombined: FC<
     string | null
   >(null);
   const [showTextarea, setShowTextarea] = useState<boolean>(true);
-  const [timelineFilter, setTimelineFilter] = useState<
-    "all" | "comments" | "status" | "calls"
-  >("all");
+  const [timelineFilter, setTimelineFilter] = useState<TimelineFilter>("all");
 
   const isAdmin = canDeleteComments(session?.user);
   const commentContent = commentDraft.content;
@@ -668,15 +670,12 @@ export const CommentsAndActivitiesCombined: FC<
               const isActive = timelineFilter === tab.key;
               const Icon = tab.icon;
               return (
-                <button
+                <LeadPanelTabButton
                   key={tab.key}
-                  type="button"
+                  layoutId="lead-details-timeline-tab"
+                  isActive={isActive}
                   onClick={() => setTimelineFilter(tab.key)}
-                  className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 transition-colors bg-transparent shadow-none ${
-                    isActive
-                      ? "brand-tab-active"
-                      : "font-medium text-gray-700! hover:bg-gray-100 dark:text-white! dark:hover:bg-gray-700/50"
-                  }`}
+                  className="px-3 py-1.5 text-sm"
                 >
                   <Icon className="w-4 h-4" />
                   {tab.label}
@@ -689,13 +688,14 @@ export const CommentsAndActivitiesCombined: FC<
                   >
                     {tab.count}
                   </span>
-                </button>
+                </LeadPanelTabButton>
               );
             })}
           </div>
 
           <CombinedTimeline
             combinedItems={visibleTimelineItems}
+            allItemIds={combinedItems.map((item) => item.id)}
             statuses={statuses}
             editingId={editingId}
             editContent={editContent}

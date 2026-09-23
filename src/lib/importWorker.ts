@@ -75,6 +75,71 @@ async function publishProgress(
   });
 }
 
+async function markImportCompleted(
+  jobId: unknown,
+  claimId: string,
+  adminId: string,
+  importId: string,
+  adminObjectId: ObjectId,
+): Promise<boolean> {
+  const completed = await Import.findOneAndUpdate(
+    { _id: jobId, workerClaimId: claimId },
+    {
+      $set: {
+        status: "completed",
+        completedAt: new Date(),
+        workerClaimedAt: null,
+        workerClaimId: null,
+        updatedAt: new Date(),
+      },
+    },
+    { new: true },
+  );
+  if (!completed) return false;
+
+  if (
+    getImportChunkQuotaMode() === "job" &&
+    mongoose.connection.db &&
+    typeof (mongoose.connection.db as { collection?: unknown }).collection ===
+      "function"
+  ) {
+    noteImportReconcile();
+    await enforceTenantLeadCapByNewest(mongoose.connection.db, {
+      adminObjectId,
+    });
+  }
+  void publishProgress(adminId, importId, completed).catch((err) => {
+    console.error("import progress publish failed:", err);
+  });
+  if ((completed.successCount ?? 0) > 0) {
+    void publishAdminLeadsUpdatedEvent(adminId, {
+      type: "leads_imported",
+      importId,
+      inserted: completed.successCount,
+    }).catch((err) => {
+      console.error("import complete publish failed:", err);
+    });
+  }
+  await ImportStagingChunk.deleteMany({ importId: jobId });
+  return true;
+}
+
+function importHasFinishedCursor(doc: {
+  nextChunkIndex?: number;
+  chunkTotal?: number;
+  processedCount?: number;
+  recordCount?: number;
+}): boolean {
+  const cursor = Number(doc.nextChunkIndex ?? 0);
+  const chunkTotal = Number(doc.chunkTotal ?? 0);
+  const processed = Number(doc.processedCount ?? 0);
+  const records = Number(doc.recordCount ?? 0);
+  return (
+    (chunkTotal > 0 && cursor >= chunkTotal) ||
+    (records > 0 && processed >= records)
+  );
+}
+
 async function claimNextImportJob(claimId: string) {
   const claimAt = new Date();
   const leaseExpiredBefore = new Date(claimAt.getTime() - WORKER_LEASE_MS);
@@ -192,42 +257,13 @@ async function processClaimedImport(
       }
 
       // No more chunks — complete (requires our claim still held)
-      const completed = await Import.findOneAndUpdate(
-        { _id: fresh._id, workerClaimId: claimId },
-        {
-          $set: {
-            status: "completed",
-            completedAt: new Date(),
-            workerClaimedAt: null,
-            workerClaimId: null,
-            updatedAt: new Date(),
-          },
-        },
-        { new: true },
+      await markImportCompleted(
+        fresh._id,
+        claimId,
+        adminId,
+        importId,
+        fresh.adminId as unknown as ObjectId,
       );
-      if (completed) {
-        if (
-          getImportChunkQuotaMode() === "job" &&
-          mongoose.connection.db &&
-          typeof (mongoose.connection.db as { collection?: unknown })
-            .collection === "function"
-        ) {
-          noteImportReconcile();
-          await enforceTenantLeadCapByNewest(mongoose.connection.db, {
-            adminObjectId: fresh.adminId as unknown as ObjectId,
-          });
-        }
-        await publishProgress(adminId, importId, completed);
-        if ((completed.successCount ?? 0) > 0) {
-          await publishAdminLeadsUpdatedEvent(adminId, {
-            type: "leads_imported",
-            importId,
-            inserted: completed.successCount,
-          });
-        }
-        // Cleanup staging docs
-        await ImportStagingChunk.deleteMany({ importId: fresh._id });
-      }
       done = true;
       break;
     }
@@ -281,11 +317,26 @@ async function processClaimedImport(
         break;
       }
 
-      await publishProgress(adminId, importId, {
+      void publishProgress(adminId, importId, {
         ...updated.toObject(),
         status: "processing",
+      }).catch((err) => {
+        console.error("import progress publish failed:", err);
       });
       chunks += 1;
+
+      // Finish in this tick — do not re-queue a fully processed job.
+      if (importHasFinishedCursor(updated)) {
+        await markImportCompleted(
+          fresh._id,
+          claimId,
+          adminId,
+          importId,
+          fresh.adminId as unknown as ObjectId,
+        );
+        done = true;
+        break;
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       // Roll back staging processed flag so resume can retry this chunk

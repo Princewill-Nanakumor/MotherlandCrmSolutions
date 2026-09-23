@@ -1,7 +1,8 @@
 // src/components/leads/leadDetailsPanel/commentsAndActivities/CombinedTimeline.tsx
 "use client";
 
-import { FC } from "react";
+import { FC, useLayoutEffect, useMemo, useRef } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Activity as ActivityIcon, CalendarPlus } from "lucide-react";
 import type { Status } from "@/types/leads";
 import { CombinedItem, Comment } from "./types";
@@ -11,6 +12,8 @@ import { useDateTimeSettings } from "@/context/DateTimeSettingsContext";
 
 interface CombinedTimelineProps {
   combinedItems: CombinedItem[];
+  /** Full timeline ids so filter changes do not replay enter animations. */
+  allItemIds?: string[];
   statuses: Status[];
   editingId: string | null;
   editContent: string;
@@ -33,6 +36,7 @@ interface CombinedTimelineProps {
 
 export const CombinedTimeline: FC<CombinedTimelineProps> = ({
   combinedItems,
+  allItemIds,
   statuses,
   editingId,
   editContent,
@@ -50,7 +54,28 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
   emptyTitle = "No Comments or Activities Yet",
   emptyDescription = "Add a comment or make changes to this lead to see activity here.",
 }) => {
+  const reduceMotion = useReducedMotion();
   const { timeFormat, dateFormat, timezone } = useDateTimeSettings();
+  const knownKey = (allItemIds ?? combinedItems.map((item) => item.id)).join(
+    "\n",
+  );
+  const seenIdsRef = useRef<Set<string> | null>(null);
+  if (seenIdsRef.current === null) {
+    seenIdsRef.current = new Set(knownKey ? knownKey.split("\n") : []);
+  }
+
+  const enteringIds = useMemo(() => {
+    const seen = seenIdsRef.current ?? new Set<string>();
+    return new Set(
+      combinedItems.filter((item) => !seen.has(item.id)).map((item) => item.id),
+    );
+  }, [combinedItems]);
+
+  useLayoutEffect(() => {
+    const seen = seenIdsRef.current;
+    if (!seen || !knownKey) return;
+    for (const id of knownKey.split("\n")) seen.add(id);
+  }, [knownKey]);
 
   const leadCreatedEntry = leadCreatedAt ? (() => {
     const date = new Date(leadCreatedAt);
@@ -100,48 +125,71 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
 
   return (
     <div
-      className="min-h-0 space-y-4 rounded-lg border border-gray-200 bg-white p-3 shadow-inner dark:bg-transparent dark:border-gray-700 sm:p-4 md:flex-1 md:min-h-0 md:overflow-y-auto lead-panel-scroll"
+      className="flex min-h-0 flex-col gap-4 rounded-lg border border-gray-200 bg-white p-3 shadow-inner dark:bg-transparent dark:border-gray-700 sm:p-4 md:flex-1 md:min-h-0 md:overflow-y-auto lead-panel-scroll"
       style={{
         scrollbarWidth: "thin",
         scrollbarColor: "var(--brand-from) #f3f4f6",
       }}
     >
-
       {combinedItems.map((item) => {
-        if (item.type === "comment" && item.comment) {
-          const comment = item.comment;
-          return (
-            <CommentItem
-              key={item.id}
-              comment={comment}
-              isEditing={editingId === comment._id}
-              editContent={editContent}
-              setEditContent={setEditContent}
-              isAdmin={isAdmin}
-              isDeleting={deletingCommentId === comment._id}
-              isDeleteDisabled={!!deletingCommentId}
-              isEditingMutation={isEditingMutation}
-              onEdit={onEdit}
-              onSaveEdit={onSaveEdit}
-              onCancelEdit={onCancelEdit}
-              onDelete={onDelete}
-            />
-          );
-        } else if (item.type === "activity" && item.activity) {
-          const activity = item.activity;
-          return (
-            <ActivityItem
-              key={item.id}
-              activity={activity}
-              statuses={statuses}
-              isAdmin={isAdmin}
-              isDeleting={deletingActivityId === activity._id}
-              isDeleteDisabled={!!deletingActivityId}
-              onDelete={onDeleteActivity}
-            />
-          );
-        }
-        return null;
+        const isNew = enteringIds.has(item.id);
+        const row = (() => {
+          if (item.type === "comment" && item.comment) {
+            const comment = item.comment;
+            return (
+              <CommentItem
+                comment={comment}
+                isEditing={editingId === comment._id}
+                editContent={editContent}
+                setEditContent={setEditContent}
+                isAdmin={isAdmin}
+                isDeleting={deletingCommentId === comment._id}
+                isDeleteDisabled={!!deletingCommentId}
+                isEditingMutation={isEditingMutation}
+                onEdit={onEdit}
+                onSaveEdit={onSaveEdit}
+                onCancelEdit={onCancelEdit}
+                onDelete={onDelete}
+              />
+            );
+          }
+          if (item.type === "activity" && item.activity) {
+            const activity = item.activity;
+            return (
+              <ActivityItem
+                activity={activity}
+                statuses={statuses}
+                isAdmin={isAdmin}
+                isDeleting={deletingActivityId === activity._id}
+                isDeleteDisabled={!!deletingActivityId}
+                onDelete={onDeleteActivity}
+              />
+            );
+          }
+          return null;
+        })();
+
+        if (!row) return null;
+
+        return (
+          <motion.div
+            key={item.id}
+            layout={!reduceMotion}
+            initial={
+              isNew && !reduceMotion
+                ? { opacity: 0, y: -10, scale: 0.98 }
+                : false
+            }
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{
+              duration: 0.2,
+              ease: [0.22, 1, 0.36, 1],
+              layout: { duration: 0.18 },
+            }}
+          >
+            {row}
+          </motion.div>
+        );
       })}
 
       {leadCreatedEntry}
