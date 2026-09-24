@@ -237,6 +237,11 @@ export function buildAppMetadata(branding: AppBranding): Metadata {
     icons: {
       icon: [
         {
+          url: "/favicon.ico",
+          type: "image/x-icon",
+          sizes: "16x16 32x32 48x48",
+        },
+        {
           url: "/motherland-favicon.svg",
           type: "image/svg+xml",
           sizes: "any",
@@ -244,15 +249,15 @@ export function buildAppMetadata(branding: AppBranding): Metadata {
       ],
       apple: [
         {
-          url: "/motherland-favicon.svg",
-          type: "image/svg+xml",
+          url: "/apple-touch-icon.png",
+          type: "image/png",
           sizes: "180x180",
         },
       ],
       shortcut: [
         {
-          url: "/motherland-favicon.svg",
-          type: "image/svg+xml",
+          url: "/favicon.ico",
+          type: "image/x-icon",
         },
       ],
     },
