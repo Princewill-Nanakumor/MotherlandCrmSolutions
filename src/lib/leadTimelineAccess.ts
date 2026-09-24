@@ -20,7 +20,26 @@ function leadRowsFromListData(
   return [];
 }
 
-/** True when this browser already has the lead on screen or in list/timeline cache. */
+/**
+ * True when the lead detail panel (or another subscriber) is currently
+ * observing the activities timeline — not merely that the lead sits on a list.
+ */
+export function isActivitiesQueryActive(
+  queryClient: QueryClient,
+  leadId: string,
+): boolean {
+  if (!leadId) return false;
+  const query = queryClient.getQueryCache().find({
+    queryKey: ["activities", leadId],
+    exact: true,
+  });
+  return Boolean(query?.isActive());
+}
+
+/**
+ * True when this browser already has the lead on screen or in list/timeline cache.
+ * Prefer {@link isActivitiesQueryActive} before downloading the activities timeline.
+ */
 export function viewerKnowsLead(
   queryClient: QueryClient,
   leadId: string,

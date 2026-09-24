@@ -8,7 +8,6 @@ import {
   ADMIN_LEADS_UPDATED_EVENT,
   getAdminLeadsChannelName,
 } from "@/lib/realtime";
-import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
 import { removeLeadsFromAssignedLeadsCaches } from "@/lib/leadsListCache";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import {
@@ -153,7 +152,6 @@ export function TenantLeadsRealtimeSync() {
             );
           },
         });
-        void refetchLeadFilterOptions(queryClient);
         return;
       }
 
@@ -214,24 +212,6 @@ export function TenantLeadsRealtimeSync() {
           );
         },
       });
-
-      void refetchLeadFilterOptions(queryClient);
-
-      if (eventData.leadId) {
-        void queryClient.invalidateQueries({
-          queryKey: ["activities", eventData.leadId],
-          exact: true,
-        });
-      }
-      if (Array.isArray(eventData.leadIds)) {
-        for (const leadId of eventData.leadIds) {
-          if (typeof leadId !== "string" || !leadId) continue;
-          void queryClient.invalidateQueries({
-            queryKey: ["activities", leadId],
-            exact: true,
-          });
-        }
-      }
     };
 
     void (async () => {

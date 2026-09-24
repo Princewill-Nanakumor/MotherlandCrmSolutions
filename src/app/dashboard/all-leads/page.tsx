@@ -7,8 +7,13 @@ import { AllLeadsPageLoadingShell } from "@/components/dashboardComponents/AllLe
 import { usePrefetchAllLeads } from "@/hooks/leadsPage/usePrefetchAllLeads";
 
 function AllLeadsPageDynamicFallback() {
-  const { showHeader } = useToggleContext();
-  return <AllLeadsPageLoadingShell showHeader={showHeader} />;
+  const { showHeader, showControls } = useToggleContext();
+  return (
+    <AllLeadsPageLoadingShell
+      showHeader={showHeader}
+      showControls={showControls}
+    />
+  );
 }
 
 const LeadsPageContent = dynamic(

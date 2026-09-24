@@ -8,7 +8,7 @@ import { MultiSelectFilter } from "./MultiSelectFilter";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import {
   filterCacheKey,
-  readFilterListCache,
+  readFilterListCacheEntry,
   writeFilterListCache,
 } from "@/lib/filterListCache";
 
@@ -73,7 +73,7 @@ export const UserFilter = ({
     ? filterCacheKey("users", currentUserId)
     : null;
   const cachedUsers = persistKey
-    ? readFilterListCache<User[]>(persistKey)
+    ? readFilterListCacheEntry<User[]>(persistKey)
     : null;
 
   const { data: fetchedUsers, isLoading: isFetchingUsers } = useQuery<User[]>({
@@ -89,8 +89,8 @@ export const UserFilter = ({
       if (persistKey) writeFilterListCache(persistKey, list);
       return list;
     },
-    initialData: cachedUsers ?? undefined,
-    initialDataUpdatedAt: cachedUsers ? 1 : undefined,
+    initialData: cachedUsers?.data,
+    initialDataUpdatedAt: cachedUsers?.updatedAt,
     placeholderData: (previous) => previous,
     staleTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,

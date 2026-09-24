@@ -1,5 +1,8 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { viewerKnowsLead, type TimelineRefreshOptions } from "@/lib/leadTimelineAccess";
+import {
+  isActivitiesQueryActive,
+  type TimelineRefreshOptions,
+} from "@/lib/leadTimelineAccess";
 import { removeTimelineRowsById, timelineRowId, upsertTimelineRowsById } from "@/lib/timelineCacheMerge";
 import type { Activity, Lead } from "@/types/leads";
 
@@ -50,14 +53,20 @@ export function dropReplacedOptimisticStatusActivities(
   });
 }
 
-/** Pull the activity timeline and write it into cache (open or closed panel). */
+/**
+ * Pull the activity timeline into cache.
+ * Skips the network unless the timeline is being viewed (`force` for the open panel).
+ * List membership alone does not trigger a download.
+ */
 export async function refreshActivitiesCacheForLead(
   queryClient: QueryClient,
   leadId: string,
   options?: TimelineRefreshOptions,
 ): Promise<Activity[] | null> {
   if (!leadId) return null;
-  if (!options?.force && !viewerKnowsLead(queryClient, leadId)) return null;
+  if (!options?.force && !isActivitiesQueryActive(queryClient, leadId)) {
+    return null;
+  }
 
   try {
     const response = await fetch(`/api/leads/${leadId}/activities?limit=100`, {
@@ -102,7 +111,7 @@ export function patchActivityDeletedInCache(
   );
 }
 
-/** Refetch activity timelines even when the details panel is on another tab. */
+/** Refetch only timelines that are currently on screen. */
 export async function refetchLeadActivities(
   queryClient: QueryClient,
   leadIds: string[],
@@ -111,7 +120,7 @@ export async function refetchLeadActivities(
     leadIds.map((leadId) =>
       queryClient.refetchQueries({
         queryKey: ["activities", leadId],
-        type: "all",
+        type: "active",
       }),
     ),
   );

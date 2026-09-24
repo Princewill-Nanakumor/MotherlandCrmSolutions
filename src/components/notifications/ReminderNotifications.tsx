@@ -45,7 +45,7 @@ export default function ReminderNotifications() {
   );
   const dueRemindersPollMs = useAblyAwareRefetchInterval(60_000, {
     channelReady: remindersChannelReady,
-    healthyMs: 60_000,
+    healthyMs: 5 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -68,8 +68,8 @@ export default function ReminderNotifications() {
     },
     enabled: hasAuthorizedSession(status, session),
     refetchInterval: dueRemindersPollMs,
-    refetchOnWindowFocus: true,
-    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+    staleTime: 60 * 1000,
     retry: 1,
   });
 
@@ -219,7 +219,10 @@ export default function ReminderNotifications() {
         if (response.ok) {
           queryClient.invalidateQueries({ queryKey: ["dueReminders"] });
           queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
-          queryClient.refetchQueries({ queryKey: ["activities", leadId] });
+          queryClient.refetchQueries({
+            queryKey: ["activities", leadId],
+            type: "active",
+          });
         }
       } catch (error) {
         console.error("Error dismissing reminder:", error);
@@ -277,7 +280,10 @@ export default function ReminderNotifications() {
           dismissNotification(reminder, { persistToDb: false });
           queryClient.invalidateQueries({ queryKey: ["dueReminders"] });
           queryClient.invalidateQueries({ queryKey: ["activities", leadId] });
-          queryClient.refetchQueries({ queryKey: ["activities", leadId] });
+          queryClient.refetchQueries({
+            queryKey: ["activities", leadId],
+            type: "active",
+          });
         }
       } catch (error) {
         console.error("Error marking reminder as complete:", error);

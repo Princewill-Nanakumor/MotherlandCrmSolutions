@@ -61,7 +61,7 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
     retry: (failureCount, error) =>
       failureCount < 2 && !error.message.includes("404"),
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
   });
 
   // Handle error - now using imported React

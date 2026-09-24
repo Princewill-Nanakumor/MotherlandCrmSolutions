@@ -34,7 +34,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
   const { isLoading: isSubscriptionLoading } = useSubscriptionData();
   const router = useRouter();
   const isOnline = useNetworkStatus();
-  const { showHeader } = useToggleContext();
+  const { showHeader, showControls } = useToggleContext();
   const { updateLeadAsync } = useUpdateLead();
 
   const {
@@ -159,7 +159,10 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
   return (
     <SubscriptionGuard>
       {isBootstrapping ? (
-        <AllLeadsPageLoadingShell showHeader={showHeader} />
+        <AllLeadsPageLoadingShell
+          showHeader={showHeader}
+          showControls={showControls}
+        />
       ) : (
         <div className="flex flex-col flex-1 min-h-0 h-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto border rounded-lg bg-background dark:bg-gray-800">
           {isRefetchingLeads && (
@@ -181,7 +184,16 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
             <LeadsHeader shouldShowLoading={false} counts={counts} />
           </div>
 
-          <div className="shrink-0 transition-opacity duration-300 ease-in-out opacity-100">
+          <div
+            className={`shrink-0 transition-opacity duration-300 ease-in-out ${
+              showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+            style={{
+              marginBottom: showControls ? "0" : "-80px",
+              transition:
+                "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out",
+            }}
+          >
             <LeadsFilterControls
               selectedLeads={selectedLeads}
               hasAssignedLeads={hasAssignedLeads}

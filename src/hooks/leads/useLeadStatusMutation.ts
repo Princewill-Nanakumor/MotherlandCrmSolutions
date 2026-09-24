@@ -198,8 +198,8 @@ export function useLeadStatusMutation({
     },
     onSuccess: async (updatedLeadPayload, _vars, context) => {
       const statusChanged = updatedLeadPayload.statusChanged !== false;
-      const { statusChanged: _statusChanged, ...updatedLead } =
-        updatedLeadPayload;
+      const updatedLead = { ...updatedLeadPayload };
+      delete (updatedLead as { statusChanged?: boolean }).statusChanged;
       const normalized: Lead = {
         ...updatedLead,
         status: normalizeLeadStatusId(updatedLead.status),
@@ -251,7 +251,7 @@ export function useLeadStatusMutation({
       if (statusChanged) {
         await queryClient.refetchQueries({
           queryKey: ["activities", normalized._id],
-          exact: false,
+          type: "active",
         });
 
         // The dashboard status distribution shifted by one lead.

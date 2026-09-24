@@ -31,7 +31,7 @@ describe("React Query cache behaviors", () => {
     expect(next.lastActivityAt).toBeTruthy();
   });
 
-  it("refetchLeadFilterOptions invalidates source/country keys", async () => {
+  it("refetchLeadFilterOptions invalidates source/country keys without forcing a double fetch", async () => {
     const qc = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
@@ -52,5 +52,6 @@ describe("React Query cache behaviors", () => {
 
     await refetchLeadFilterOptions(qc);
     expect(qc.getQueryState(["leads", "sources"])?.isInvalidated).toBe(true);
+    expect(sourcesFetches).toBe(1);
   });
 });

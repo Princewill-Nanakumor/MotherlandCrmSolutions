@@ -162,6 +162,23 @@ describe("leadPanelRealtimeSync", () => {
     fetchSpy.mockRestore();
   });
 
+  it("does not fetch activities when the lead is only on the list cache", async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(["leads"], [{ _id: "lead-1" }]);
+    const fetchSpy = mockJsonFetch({
+      "/activities": [{ _id: "act-status", type: "STATUS_CHANGE" }],
+    });
+
+    await syncActivityTimelineFromAdminEvent(queryClient, {
+      type: "status_changed",
+      leadId: "lead-1",
+      status: "CONTACTED",
+    });
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
   it("does not fetch comments for a lead this viewer has never opened or listed", async () => {
     const queryClient = new QueryClient();
     const fetchSpy = mockJsonFetch({

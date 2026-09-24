@@ -237,7 +237,8 @@ export const CommentsAndActivitiesCombined: FC<
     retry: (failureCount, error) =>
       failureCount < 2 && !error.message.includes("404"),
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    // Background Ably no longer prefetches for list-only viewers; remount if stale.
+    refetchOnMount: true,
   });
 
   // Combine and sort comments and activities by timestamp (newest first)

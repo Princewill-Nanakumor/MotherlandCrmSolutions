@@ -7,11 +7,13 @@ import { useSession } from "next-auth/react";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 import {
   LEAD_SOURCES_QUERY_KEY,
+  LEAD_FILTER_OPTIONS_GC_MS,
+  LEAD_FILTER_OPTIONS_STALE_MS,
 } from "@/lib/leadFilterQueries";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import {
   filterCacheKey,
-  readFilterListCache,
+  readFilterListCacheEntry,
   writeFilterListCache,
 } from "@/lib/filterListCache";
 
@@ -72,7 +74,7 @@ export const SourceFilter = ({
   const userId = session?.user?.id;
   const persistKey = userId ? filterCacheKey("sources", userId) : null;
   const cachedSources = persistKey
-    ? readFilterListCache<string[]>(persistKey)
+    ? readFilterListCacheEntry<string[]>(persistKey)
     : null;
 
   const { data: fetchedSources, isLoading: isLoadingSources } = useQuery<
@@ -90,10 +92,11 @@ export const SourceFilter = ({
       if (persistKey) writeFilterListCache(persistKey, list);
       return list;
     },
-    initialData: cachedSources ?? undefined,
-    initialDataUpdatedAt: cachedSources ? 1 : undefined,
+    initialData: cachedSources?.data,
+    initialDataUpdatedAt: cachedSources?.updatedAt,
     placeholderData: (previous) => previous,
-    staleTime: 60 * 1000,
+    staleTime: LEAD_FILTER_OPTIONS_STALE_MS,
+    gcTime: LEAD_FILTER_OPTIONS_GC_MS,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchOnReconnect: true,

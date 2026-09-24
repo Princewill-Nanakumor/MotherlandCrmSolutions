@@ -4,13 +4,17 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MultiSelectFilter } from "./MultiSelectFilter";
-import { LEAD_COUNTRIES_QUERY_KEY } from "@/lib/leadFilterQueries";
+import {
+  LEAD_COUNTRIES_QUERY_KEY,
+  LEAD_FILTER_OPTIONS_GC_MS,
+  LEAD_FILTER_OPTIONS_STALE_MS,
+} from "@/lib/leadFilterQueries";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
 import { useSession } from "next-auth/react";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import {
   filterCacheKey,
-  readFilterListCache,
+  readFilterListCacheEntry,
   writeFilterListCache,
 } from "@/lib/filterListCache";
 
@@ -72,7 +76,7 @@ export const CountryFilter = ({
   const userId = session?.user?.id;
   const persistKey = userId ? filterCacheKey("countries", userId) : null;
   const cachedCountries = persistKey
-    ? readFilterListCache<string[]>(persistKey)
+    ? readFilterListCacheEntry<string[]>(persistKey)
     : null;
 
   const { data: fetchedCountries, isLoading: isLoadingCountries } =
@@ -89,10 +93,11 @@ export const CountryFilter = ({
       if (persistKey) writeFilterListCache(persistKey, list);
       return list;
     },
-    initialData: cachedCountries ?? undefined,
-    initialDataUpdatedAt: cachedCountries ? 1 : undefined,
+    initialData: cachedCountries?.data,
+    initialDataUpdatedAt: cachedCountries?.updatedAt,
     placeholderData: (previous) => previous,
-    staleTime: 60 * 1000,
+    staleTime: LEAD_FILTER_OPTIONS_STALE_MS,
+    gcTime: LEAD_FILTER_OPTIONS_GC_MS,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchOnReconnect: true,
