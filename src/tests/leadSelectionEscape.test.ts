@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment jsdom
+ */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { isLeadSelectionEscapeBlocked } from "@/lib/leadSelectionEscape";
 
