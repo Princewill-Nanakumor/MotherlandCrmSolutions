@@ -187,7 +187,10 @@ export const FilterSelect = ({
     };
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsOpen(false);
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      setIsOpen(false);
     };
 
     document.addEventListener("mousedown", handleClickOutside);

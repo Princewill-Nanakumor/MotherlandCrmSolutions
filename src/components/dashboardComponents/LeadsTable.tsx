@@ -29,6 +29,7 @@ import { useTableColumns } from "./TableColumns";
 import { useTableConfiguration } from "./TableConfiguration";
 import { useColumnOrder } from "@/hooks/useColumnOrder";
 import { useColumnVisibility } from "@/hooks/useColumnVisibility";
+import { useClearLeadSelectionOnEscape } from "@/hooks/useClearLeadSelectionOnEscape";
 
 function leadRowNeedsPanelResync(prev: Lead, next: Lead): boolean {
   const prevAssignee =
@@ -240,6 +241,17 @@ export default function LeadsTable({
   // Use props selectedLeads if provided, otherwise use store
   const displaySelectedLeads =
     selectedLeads.length > 0 ? selectedLeads : storeSelectedLeads;
+
+  const clearCheckboxSelection = useCallback(() => {
+    setStoreSelectedLeads([]);
+    onSelectionChange?.([]);
+  }, [onSelectionChange, setStoreSelectedLeads]);
+
+  // Escape clears checkbox selection on the all-leads table.
+  useClearLeadSelectionOnEscape(
+    displaySelectedLeads.length > 0,
+    clearCheckboxSelection,
+  );
 
   // Custom hooks
   const { sortedLeads, handleSort } = useTableSorting({

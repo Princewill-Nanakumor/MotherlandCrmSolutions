@@ -11,7 +11,7 @@ import { canAccessAllLeads } from "@/lib/roles";
 
 /**
  * Shows a sticky banner on the all-leads page when leads are checkbox-selected.
- * Displays the count only; Cancel selection clears the selection.
+ * Displays the count only; Cancel selection (or Escape via LeadsTable) clears it.
  * Selection is also cleared when leaving the all-leads list page.
  */
 export function SelectedLeadsBanner() {

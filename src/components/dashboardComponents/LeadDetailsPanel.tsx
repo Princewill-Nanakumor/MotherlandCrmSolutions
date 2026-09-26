@@ -558,6 +558,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        event.preventDefault();
         handleRequestClose();
       }
     };
@@ -604,6 +605,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
   return (
     <motion.div
+      data-lead-details-panel=""
       className="fixed inset-x-0 top-18 bottom-0 z-50 flex w-full flex-col overflow-hidden bg-white dark:bg-gray-800 md:inset-x-auto md:right-0 md:bottom-13 md:w-[min(80%,1200px)] md:flex-row md:border-l-2 md:border-gray-200 dark:md:border-gray-700"
       initial={{ x: "100%" }}
       animate={{ x: isClosing ? "100%" : 0 }}
