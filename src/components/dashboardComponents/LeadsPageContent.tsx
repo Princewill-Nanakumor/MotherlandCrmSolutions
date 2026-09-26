@@ -20,6 +20,7 @@ import { Lead } from "@/types/leads";
 import { useUpdateLead } from "@/hooks/useLeadDetails";
 import { canAccessAllLeads } from "@/lib/roles";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
+import { humanizeDashboardFetchError } from "@/lib/mongoConnectionError";
 
 interface LeadsPageContentProps {
   searchQuery?: string;
@@ -247,22 +248,19 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
               }
             >
               {leadsError ? (
-                <div className="p-8 overflow-hidden text-center bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                  <p className="mb-2 text-red-500 dark:text-red-400">
-                    Failed to load leads. This can happen in production if the
-                    server is slow or the request timed out.
+                <div className="flex flex-col items-center justify-center gap-3 p-8 text-center bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                  <p className="text-base font-semibold text-gray-900 dark:text-white">
+                    Couldn&apos;t load leads
                   </p>
-                  <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                    {leadsError instanceof Error
-                      ? leadsError.message
-                      : "Unknown error"}
+                  <p className="max-w-md text-sm text-gray-600 dark:text-gray-300">
+                    {humanizeDashboardFetchError(leadsError)}
                   </p>
                   <button
                     type="button"
                     onClick={() => refetchAll()}
-                    className="px-4 py-2 text-white transition-colors bg-blue-500 rounded hover:bg-blue-600"
+                    className="px-4 py-2 mt-1 text-sm font-medium text-white transition-colors rounded-md bg-(--brand-from) hover:opacity-90"
                   >
-                    Retry
+                    Try again
                   </button>
                 </div>
               ) : showEmptyState ? (

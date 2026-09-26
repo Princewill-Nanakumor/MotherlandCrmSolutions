@@ -22,6 +22,7 @@ import {
   buildAllLeadsQueryKey,
   fetchAllLeadsPage,
 } from "@/lib/allLeadsListQuery";
+import { humanizeDashboardFetchError } from "@/lib/mongoConnectionError";
 
 export const useLeadsPage = (
   searchQuery: string,
@@ -206,11 +207,8 @@ export const useLeadsPage = (
     if (leadsError) {
       console.error("Leads query error:", leadsError);
       toast({
-        title: "Error loading leads",
-        description:
-          leadsError instanceof Error
-            ? leadsError.message
-            : "Failed to load leads",
+        title: "Couldn't load leads",
+        description: humanizeDashboardFetchError(leadsError),
         variant: "destructive",
       });
     }

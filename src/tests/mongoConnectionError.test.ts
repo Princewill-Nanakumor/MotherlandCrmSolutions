@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DATABASE_UNREACHABLE_USER_MESSAGE,
   friendlyDatabaseConnectMessage,
+  humanizeDashboardFetchError,
   humanizeSignInError,
   isRetryableFilterFetch,
   isTlsOrNetworkFailure,
@@ -44,6 +45,15 @@ describe("mongoConnectionError", () => {
 
   it("does not treat a blank sign-in error as a database outage", () => {
     expect(humanizeSignInError("")).toBe("Sign in failed. Please try again.");
+  });
+
+  it("hides browser Failed to fetch on dashboard loads", () => {
+    expect(humanizeDashboardFetchError(new Error("Failed to fetch"))).toBe(
+      "We couldn't reach the server. Check your connection and try again.",
+    );
+    expect(
+      humanizeDashboardFetchError(new Error("Request timed out. Please try again.")),
+    ).toBe("This is taking longer than expected. Please try again.");
   });
 
   it("retries filter fetches on abort and 5xx", () => {

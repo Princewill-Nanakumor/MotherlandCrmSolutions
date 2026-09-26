@@ -10,6 +10,7 @@ import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { isAdmin, isTenantStaff } from "@/lib/roles";
 import { SUBSCRIPTION_SESSION_ERROR } from "@/lib/subscriptionQueries";
+import { useToast } from "@/components/ui/use-toast";
 
 interface SubscriptionGuardProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ interface SubscriptionGuardProps {
 export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
   children,
 }) => {
+  const { toast } = useToast();
   const { status, data: session } = useSession();
   const {
     subscriptionData,
@@ -66,9 +68,18 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
                 onClick={() => {
                   if (retryInFlight) return;
                   setIsRetrying(true);
-                  void refreshSubscriptionData().finally(() => {
-                    setIsRetrying(false);
-                  });
+                  void refreshSubscriptionData()
+                    .then((result) => {
+                      if (result.error) return;
+                      toast({
+                        title: "Connected again",
+                        description: "Subscription loaded successfully.",
+                        variant: "success",
+                      });
+                    })
+                    .finally(() => {
+                      setIsRetrying(false);
+                    });
                 }}
               >
                 {retryInFlight ? (

@@ -109,9 +109,9 @@ export const useLeads = () => {
         leadsError.message.includes("timed out")
       ) {
         toast({
-          title: "Connection timeout",
+          title: "Couldn't load leads",
           description:
-            "Failed to load leads. Please check your connection and try again.",
+            "This is taking longer than expected. Please try again.",
           variant: "destructive",
         });
       }

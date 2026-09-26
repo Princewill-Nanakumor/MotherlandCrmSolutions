@@ -73,6 +73,36 @@ export function humanizeSignInError(raw: string): string {
   return text;
 }
 
+/** Dashboard list fetches: never show browser/API jargon like "Failed to fetch". */
+export function humanizeDashboardFetchError(error: unknown): string {
+  const text = errorText(error).trim();
+  const lower = text.toLowerCase();
+
+  if (
+    isTlsOrNetworkFailure(error) ||
+    lower.includes("failed to fetch") ||
+    lower.includes("networkerror") ||
+    lower.includes("load failed") ||
+    lower.includes("network request failed")
+  ) {
+    return "We couldn't reach the server. Check your connection and try again.";
+  }
+
+  if (lower.includes("timed out") || lower.includes("timeout")) {
+    return "This is taking longer than expected. Please try again.";
+  }
+
+  if (
+    lower.includes("503") ||
+    lower.includes("temporarily unavailable") ||
+    lower.includes("database connection")
+  ) {
+    return "The service is temporarily unavailable. Please try again in a moment.";
+  }
+
+  return "Something went wrong while loading your leads. Please try again.";
+}
+
 export function isRetryableFilterFetch(error: unknown): boolean {
   if (isTlsOrNetworkFailure(error)) return true;
   if (!(error instanceof Error)) return false;

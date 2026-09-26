@@ -24,6 +24,7 @@ import {
 import { isStatusOnlyLeadUpdate } from "@/lib/leadClientUpdate";
 import { getLiveSearchParam } from "@/lib/liveSearchParams";
 import { parseLeadPageSize, snapLeadPageSize } from "@/lib/leadPageSize";
+import { humanizeDashboardFetchError } from "@/lib/mongoConnectionError";
 
 export default function UserLeadsContent() {
   const searchParams = useSearchParams()!;
@@ -427,15 +428,19 @@ export default function UserLeadsContent() {
   if (isError) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-red-500! dark:text-red-400! mb-4">
-            Failed to load leads: {error?.message}
+        <div className="max-w-md px-4 text-center">
+          <p className="mb-2 text-base font-semibold text-gray-900 dark:text-white">
+            Couldn&apos;t load leads
+          </p>
+          <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+            {humanizeDashboardFetchError(error)}
           </p>
           <button
+            type="button"
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-500 text-white! rounded hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white transition-colors rounded-md bg-(--brand-from) hover:opacity-90"
           >
-            Retry
+            Try again
           </button>
         </div>
       </div>
