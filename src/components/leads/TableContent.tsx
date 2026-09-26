@@ -18,6 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import { DraggableColumnHeader } from "@/components/dashboardComponents/DraggableColumnHeader";
 import { useTableStatuses } from "@/hooks/useTableStatuses";
+import { isCheckboxEventTarget } from "@/lib/tableSelectHitTarget";
 
 interface TableContentProps {
   table: TanstackTable<Lead>;
@@ -213,7 +214,7 @@ export function TableContent({
                     }
                       ${
                         isSelectColumn
-                          ? "w-10 min-w-10 px-0 border-r border-gray-200 dark:border-gray-700"
+                          ? "relative w-10 min-w-10 px-0 border-r border-gray-200 dark:border-gray-700"
                           : isStatusColumn
                             ? "w-32 min-w-30 px-4"
                             : isLastCommentColumn
@@ -250,6 +251,14 @@ export function TableContent({
                 onClick={(event) => {
                   const target = event.target as HTMLElement | null;
                   if (!target) return;
+
+                  // Checkbox column: never open the details panel (padding or control).
+                  if (
+                    target.closest("[data-select-cell]") ||
+                    isCheckboxEventTarget(target)
+                  ) {
+                    return;
+                  }
 
                   // Prevent row "open panel" when the user clicks any interactive
                   // UI inside the row (checkbox, links, buttons, inputs, etc).
@@ -328,7 +337,7 @@ export function TableContent({
                         }
                         ${
                           isSelectCell
-                            ? "w-10 min-w-10 px-0 border-r border-gray-200 dark:border-gray-700"
+                            ? "relative w-10 min-w-10 px-0 border-r border-gray-200 dark:border-gray-700"
                             : isStatusCell
                               ? "w-32 min-w-30 px-4"
                               : isLastCommentCell
@@ -336,6 +345,13 @@ export function TableContent({
                                 : "px-4"
                         }
                       `}
+                      onClick={
+                        isSelectCell
+                          ? (e) => {
+                              e.stopPropagation();
+                            }
+                          : undefined
+                      }
                     >
                       {cell.column.id === "status"
                         ? renderStatus(lead.status)

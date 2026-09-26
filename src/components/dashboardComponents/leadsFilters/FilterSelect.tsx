@@ -67,6 +67,7 @@ export const FilterSelect = ({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const scrolledToSelectedRef = useRef(false);
   const listboxId = useId();
   const currentOption = options.find((option) => option.value === value);
   const displayValue = currentOption?.label || placeholder;
@@ -118,12 +119,20 @@ export const FilterSelect = ({
   useLayoutEffect(() => {
     if (!isOpen) {
       setMenuPosition(null);
+      scrolledToSelectedRef.current = false;
       return;
     }
 
     updateMenuPosition();
 
-    const handleReposition = () => updateMenuPosition();
+    const handleReposition = (event?: Event) => {
+      // List scrolling must not reposition the menu (or re-run scroll-to-selected).
+      const target = event?.target;
+      if (target instanceof Node && listRef.current?.contains(target)) {
+        return;
+      }
+      updateMenuPosition();
+    };
     window.addEventListener("resize", handleReposition);
     window.addEventListener("scroll", handleReposition, true);
 
@@ -132,6 +141,36 @@ export const FilterSelect = ({
       window.removeEventListener("scroll", handleReposition, true);
     };
   }, [isOpen, updateMenuPosition]);
+
+  // Once per open: keep the current value in view without using scrollIntoView
+  // (that scrolls ancestors and fights the list's own scrollbar).
+  useLayoutEffect(() => {
+    if (!isOpen || !menuPosition || scrolledToSelectedRef.current) return;
+
+    const list = listRef.current;
+    if (!list) return;
+
+    const selected = list.querySelector<HTMLElement>(
+      '[role="option"][aria-selected="true"]',
+    );
+    if (!selected) {
+      scrolledToSelectedRef.current = true;
+      return;
+    }
+
+    const optionTop = selected.offsetTop;
+    const optionBottom = optionTop + selected.offsetHeight;
+    const visibleTop = list.scrollTop;
+    const visibleBottom = visibleTop + list.clientHeight;
+
+    if (optionTop < visibleTop) {
+      list.scrollTop = optionTop;
+    } else if (optionBottom > visibleBottom) {
+      list.scrollTop = optionBottom - list.clientHeight;
+    }
+
+    scrolledToSelectedRef.current = true;
+  }, [isOpen, menuPosition, value]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -219,7 +258,7 @@ export const FilterSelect = ({
               style={option.style}
               className={`w-full px-3 py-2 text-left text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700 ${
                 value === option.value
-                  ? "text-(--brand-from)! font-medium"
+                  ? "bg-[color-mix(in_srgb,var(--brand-solid)_12%,white)] text-(--brand-from)! font-medium dark:bg-[color-mix(in_srgb,var(--brand-solid)_28%,#111827)] dark:text-white!"
                   : "text-gray-900! dark:text-gray-50!"
               }`}
             >

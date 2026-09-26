@@ -10,6 +10,16 @@ function errorText(error: unknown): string {
 /** MongoDB Atlas / Node OpenSSL failed the TLS handshake or the socket died. */
 export function isTlsOrNetworkFailure(error: unknown): boolean {
   const message = errorText(error).toLowerCase();
+  const name = error instanceof Error ? error.name.toLowerCase() : "";
+
+  if (
+    name.includes("mongonetwork") ||
+    name.includes("mongoserverselection") ||
+    name.includes("mongotimeout")
+  ) {
+    return true;
+  }
+
   return (
     message.includes("ssl alert number 80") ||
     message.includes("tlsv1 alert") ||
@@ -28,7 +38,13 @@ export function isTlsOrNetworkFailure(error: unknown): boolean {
     message.includes("mongoserverselectionerror") ||
     message.includes("server selection timed out") ||
     message.includes("connection timed out") ||
-    (message.includes("timed out") && message.includes("mongo"))
+    // Node Mongo driver: Socket 'secureConnect' timed out after 30002ms (connectTimeoutMS: 30000)
+    message.includes("secureconnect") ||
+    message.includes("connecttimeoutms") ||
+    (message.includes("timed out") &&
+      (message.includes("mongo") ||
+        message.includes("socket") ||
+        message.includes("connect")))
   );
 }
 

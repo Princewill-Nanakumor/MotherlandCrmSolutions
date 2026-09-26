@@ -33,6 +33,15 @@ describe("mongoConnectionError", () => {
     );
   });
 
+  it("maps Mongo secureConnect timeouts to the same retry message", () => {
+    const secureConnect =
+      "Socket 'secureConnect' timed out after 30002ms (connectTimeoutMS: 30000)";
+    expect(isTlsOrNetworkFailure(new Error(secureConnect))).toBe(true);
+    expect(humanizeSignInError(secureConnect)).toBe(
+      DATABASE_UNREACHABLE_USER_MESSAGE,
+    );
+  });
+
   it("does not treat a blank sign-in error as a database outage", () => {
     expect(humanizeSignInError("")).toBe("Sign in failed. Please try again.");
   });

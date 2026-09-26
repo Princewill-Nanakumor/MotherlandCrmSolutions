@@ -15,6 +15,7 @@ import {
   formatLeadDisplayName,
   formatLeadDetailEmail,
 } from "@/lib/leadDisplayFormat";
+import { isCheckboxEventTarget } from "@/lib/tableSelectHitTarget";
 
 export type SortField =
   | "leadId"
@@ -73,12 +74,21 @@ export function buildSelectionAndActionColumns(params: {
     {
       id: "select",
       header: () => (
-        <div className="flex items-center justify-center w-full">
+        <div
+          data-select-cell=""
+          className="absolute inset-0 flex items-center justify-center cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isCheckboxEventTarget(e.target)) return;
+            handleSelectAll(!allSelected);
+          }}
+        >
           <Checkbox
             checked={
               allSelected ? true : someSelected ? "indeterminate" : false
             }
             onCheckedChange={(value) => handleSelectAll(value === true)}
+            onClick={(e) => e.stopPropagation()}
             aria-label="Select all"
           />
         </div>
@@ -89,7 +99,16 @@ export function buildSelectionAndActionColumns(params: {
           ? selectedLeads.some((l) => l._id === lead._id)
           : false;
         return (
-          <div className="flex items-center justify-center w-full">
+          <div
+            data-select-cell=""
+            className="absolute inset-0 flex items-center justify-center cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              // Checkbox handles its own toggle; empty cell area toggles here.
+              if (isCheckboxEventTarget(e.target)) return;
+              handleRowSelection(lead, !isSelected);
+            }}
+          >
             <Checkbox
               checked={isSelected}
               onCheckedChange={(value) => {
