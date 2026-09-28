@@ -133,7 +133,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, users, onLeadUpdated }) =
             disabled={isUpdating}
           >
             <SelectTrigger
-              className="w-full max-w-full transition-all duration-200 ease-in-out border rounded-md cursor-pointer sm:w-50 dark:border-gray-600"
+              className="w-full max-w-full transition-all duration-200 ease-in-out border rounded-md cursor-pointer sm:w-50 dark:border-gray-600 text-white! [&_svg]:text-white! [&_svg]:opacity-100!"
               style={{
                 backgroundColor: triggerBg,
                 color: triggerTextColor,
@@ -186,7 +186,7 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, users, onLeadUpdated }) =
                     <SelectItem
                       key={status._id || status.id || `status-${status.name}`}
                       value={status._id || status.id || ""}
-                      className="my-1 font-medium transition-all duration-200 ease-in-out rounded-md cursor-pointer status-item"
+                      className="my-1 font-medium transition-all duration-200 ease-in-out rounded-md cursor-pointer status-item text-white! [&_svg]:text-white!"
                       style={{
                         backgroundColor: itemBg,
                         color: textColor,
