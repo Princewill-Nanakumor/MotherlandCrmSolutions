@@ -137,27 +137,31 @@ export const UserLeadsTableContainer: React.FC<
   });
 
   return (
-    <div>
-      <UserLeadTableControls
-        pageSize={pageSize}
-        pageIndex={pageIndex}
-        totalEntries={totalEntries}
-        onPageSizeChange={onPageSizeChange}
-        table={table}
-        isRefetching={isRefetching}
-      />
+    <div className="flex flex-col h-full min-h-0">
+      <div className="shrink-0">
+        <UserLeadTableControls
+          pageSize={pageSize}
+          pageIndex={pageIndex}
+          totalEntries={totalEntries}
+          onPageSizeChange={onPageSizeChange}
+          table={table}
+          isRefetching={isRefetching}
+        />
+      </div>
 
-      <UserLeadTable
-        loading={loading}
-        onLeadClick={onLeadClick}
-        selectedLead={selectedLead}
-        table={table}
-        columnOrder={columnOrder}
-        setColumnOrder={setColumnOrder}
-      />
+      <div className="min-h-[40vh] flex-1 overflow-auto sm:min-h-0">
+        <UserLeadTable
+          loading={loading}
+          onLeadClick={onLeadClick}
+          selectedLead={selectedLead}
+          table={table}
+          columnOrder={columnOrder}
+          setColumnOrder={setColumnOrder}
+        />
+      </div>
 
       {totalEntries > 0 && (
-        <div className="px-2 mb-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="px-2 mb-4 border-t border-gray-200 dark:border-gray-700 shrink-0">
           <TablePagination
             pageIndex={pageIndex}
             pageCount={totalPages}
