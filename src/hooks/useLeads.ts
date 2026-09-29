@@ -119,40 +119,16 @@ export const useLeads = () => {
   }, [leadsError, toast, handleUnauthorized]);
 
   useEffect(() => {
-    if (usersError) {
-      if (isUnauthorizedError(usersError)) {
-        void handleUnauthorized();
-      } else if (
-        usersError instanceof Error &&
-        usersError.message.includes("timed out")
-      ) {
-        toast({
-          title: "Connection timeout",
-          description:
-            "Failed to load users. Please check your connection and try again.",
-          variant: "destructive",
-        });
-      }
+    if (usersError && isUnauthorizedError(usersError)) {
+      void handleUnauthorized();
     }
-  }, [usersError, toast, handleUnauthorized]);
+  }, [usersError, handleUnauthorized]);
 
   useEffect(() => {
-    if (statusesError) {
-      if (isUnauthorizedError(statusesError)) {
-        void handleUnauthorized();
-      } else if (
-        statusesError instanceof Error &&
-        statusesError.message.includes("timed out")
-      ) {
-        toast({
-          title: "Connection timeout",
-          description:
-            "Failed to load statuses. Please check your connection and try again.",
-          variant: "destructive",
-        });
-      }
+    if (statusesError && isUnauthorizedError(statusesError)) {
+      void handleUnauthorized();
     }
-  }, [statusesError, toast, handleUnauthorized]);
+  }, [statusesError, handleUnauthorized]);
 
   const { assignLeadsMutation, unassignLeadsMutation } = useLeadsAssignments({
     users,

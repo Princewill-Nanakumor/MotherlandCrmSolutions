@@ -22,7 +22,10 @@ import {
   buildAllLeadsQueryKey,
   fetchAllLeadsPage,
 } from "@/lib/allLeadsListQuery";
-import { humanizeDashboardFetchError } from "@/lib/mongoConnectionError";
+import {
+  humanizeDashboardFetchError,
+  isRetryableFilterFetch,
+} from "@/lib/mongoConnectionError";
 
 export const useLeadsPage = (
   searchQuery: string,
@@ -219,35 +222,33 @@ export const useLeadsPage = (
       lastUsersErrorKeyRef.current = null;
       return;
     }
-    // Avoid noisy reconnect toasts while offline/auto-retrying.
-    if (!isOnline || isFetchingUsers) return;
+    // Skip while offline/retrying, and never toast transient network failures
+    // (common after leaving all-leads for a long time and coming back).
+    if (!isOnline || isFetchingUsers || isRetryableFilterFetch(usersError)) {
+      return;
+    }
 
-    const description =
-      usersError instanceof Error ? usersError.message : "Failed to load users";
+    const description = humanizeDashboardFetchError(usersError);
     const errorKey = `users:${description}`;
     if (lastUsersErrorKeyRef.current === errorKey) return;
     lastUsersErrorKeyRef.current = errorKey;
 
     console.error("Users query error:", usersError);
     toast({
-      title: "Error loading users",
+      title: "Couldn't load users",
       description,
       variant: "destructive",
     });
   }, [usersError, isOnline, isFetchingUsers, toast]);
 
   useEffect(() => {
-    if (statusesError) {
-      console.error("Statuses query error:", statusesError);
-      toast({
-        title: "Error loading statuses",
-        description:
-          statusesError instanceof Error
-            ? statusesError.message
-            : "Failed to load statuses",
-        variant: "destructive",
-      });
-    }
+    if (!statusesError || isRetryableFilterFetch(statusesError)) return;
+    console.error("Statuses query error:", statusesError);
+    toast({
+      title: "Couldn't load statuses",
+      description: humanizeDashboardFetchError(statusesError),
+      variant: "destructive",
+    });
   }, [statusesError, toast]);
 
   // Clear "filter just changed" when user navigates to another page (so we use URL page again)

@@ -28,7 +28,8 @@ export function useLeadsLookupQueries({
       return Array.isArray(data) ? data : data.users || [];
     },
     enabled: isAuthenticated,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 2 * 60 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 3,
     refetchOnMount: false,

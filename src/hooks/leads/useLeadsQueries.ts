@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { useToast } from "@/components/ui/use-toast";
 import { useLeadsStore } from "@/stores/leadsStore";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { Lead } from "@/types/leads";
@@ -40,7 +39,6 @@ const isUnauthorizedError = (error: unknown): boolean => {
 };
 
 export function useLeadsQueries(enabled: boolean) {
-  const { toast } = useToast();
   const { setLoadingLeads, setLoadingUsers, setUsers, setStatuses, setLoadingStatuses } =
     useLeadsStore();
 
@@ -55,13 +53,6 @@ export function useLeadsQueries(enabled: boolean) {
         const statusesArray = data.statuses || data || [];
         setStatuses(statusesArray);
         return statusesArray;
-      } catch (error) {
-        toast({
-          title: "Error loading statuses",
-          description: error instanceof Error ? error.message : "An unknown error occurred.",
-          variant: "destructive",
-        });
-        throw error;
       } finally {
         setLoadingStatuses(false);
       }
@@ -93,13 +84,6 @@ export function useLeadsQueries(enabled: boolean) {
         const activeUsers = usersArray.filter((u: User) => u.status === "ACTIVE");
         setUsers(activeUsers);
         return activeUsers;
-      } catch (error) {
-        toast({
-          title: "Error loading users",
-          description: error instanceof Error ? error.message : "An unknown error occurred.",
-          variant: "destructive",
-        });
-        throw error;
       } finally {
         setLoadingUsers(false);
       }
