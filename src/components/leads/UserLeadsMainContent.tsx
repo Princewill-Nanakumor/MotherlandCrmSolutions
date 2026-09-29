@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { UserLeadsHeader } from "@/components/leads/UserLeadsHeader";
 import { UserLeadsFilterControls } from "@/components/leads/UserLeadsFilterControls";
 import { UserLeadsTableContainer } from "@/components/user-leads/UserLeadsTableContainer";
+import { LeadsSectionCollapse } from "@/components/dashboardComponents/LeadsSectionCollapse";
 import { Lead } from "@/types/leads";
 import { CountsData } from "@/types/pagination.types";
 import { SortField, SortOrder } from "@/components/leads/userLeadsTypes";
@@ -166,17 +167,11 @@ export function UserLeadsMainContent({
 
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto border rounded-lg bg-background dark:bg-gray-800">
-      <div
-        className={`shrink-0 transition-opacity duration-300 ease-in-out ${showHeader ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        style={{ marginBottom: showHeader ? "0" : "-100px", transition: "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out" }}
-      >
+      <LeadsSectionCollapse open={showHeader}>
         <UserLeadsHeader shouldShowLoading={shouldShowLoading} counts={counts} />
-      </div>
+      </LeadsSectionCollapse>
 
-      <div
-        className={`shrink-0 transition-opacity duration-300 ease-in-out ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        style={{ marginBottom: showControls ? "0" : "-80px", transition: "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out" }}
-      >
+      <LeadsSectionCollapse open={showControls}>
         <UserLeadsFilterControls
           filterByCountry={filterByCountry}
           filterByStatus={filterByStatus}
@@ -194,10 +189,15 @@ export function UserLeadsMainContent({
           availableStatuses={availableStatuses}
           availableSources={availableSources}
           counts={counts}
+          compactTop={!showHeader}
         />
-      </div>
+      </LeadsSectionCollapse>
 
-      <div className="flex-1 min-h-0 min-w-0 px-4 pb-4 overflow-auto sm:px-8">
+      <div
+        className={`flex-1 min-h-0 min-w-0 px-4 pb-4 overflow-auto sm:px-8 ${
+          showControls ? "" : showHeader ? "pt-4" : "pt-6"
+        }`}
+      >
         {shouldShowLoading || leadsTotal > 0 ? (
           <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
             <UserLeadsTableContainer

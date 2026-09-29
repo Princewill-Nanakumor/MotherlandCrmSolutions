@@ -75,6 +75,8 @@ interface LeadsFilterControlsProps {
   statuses?: Array<{ id: string; name: string; color?: string; _id?: string }>;
   isLoadingStatuses?: boolean;
   onAddLead?: () => void;
+  /** Tighter top margin when the page header is minimized. */
+  compactTop?: boolean;
 }
 
 export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
@@ -106,6 +108,7 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
   isLoadingUsers = false,
   statuses,
   isLoadingStatuses = false,
+  compactTop = false,
 }) => {
   const [isAddLeadDialogOpen, setIsAddLeadDialogOpen] = useState(false);
   const { data: session } = useSession();
@@ -115,7 +118,11 @@ export const LeadsFilterControls: React.FC<LeadsFilterControlsProps> = ({
 
   return (
     <>
-      <div className="sticky top-0 z-10 px-4 pb-5 mt-8 bg-white sm:px-6 lg:px-8 dark:bg-gray-800">
+      <div
+        className={`sticky top-0 z-10 px-4 pb-5 bg-white sm:px-6 lg:px-8 dark:bg-gray-800 ${
+          compactTop ? "mt-3" : "mt-8"
+        }`}
+      >
         <div className="flex flex-col gap-4 px-3 py-4 rounded-xl border min-w-0 md:flex-row md:items-center md:justify-between sm:px-4">
           <div className="flex flex-wrap order-2 gap-2 items-center w-full min-w-0 md:w-auto md:order-1">
             <ErrorBoundary

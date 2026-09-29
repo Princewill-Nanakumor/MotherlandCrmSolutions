@@ -25,6 +25,8 @@ interface UserLeadsFilterControlsProps {
   availableStatuses: string[];
   availableSources: string[];
   counts: CountsData;
+  /** Tighter top margin when the page header is minimized. */
+  compactTop?: boolean;
 }
 
 export const UserLeadsFilterControls: React.FC<
@@ -44,6 +46,7 @@ export const UserLeadsFilterControls: React.FC<
   onSourceFilterModeChange,
   availableCountries,
   availableSources,
+  compactTop = false,
 }) => {
   const normalizeFilter = (filter: string | string[]): string[] => {
     if (Array.isArray(filter)) return filter;
@@ -55,7 +58,11 @@ export const UserLeadsFilterControls: React.FC<
   const sourceFilter = normalizeFilter(filterBySource);
 
   return (
-    <div className="sticky top-0 z-10 px-4 pb-5 mt-10 bg-white sm:px-6 lg:px-8 dark:bg-gray-800">
+    <div
+      className={`sticky top-0 z-10 px-4 pb-5 bg-white sm:px-6 lg:px-8 dark:bg-gray-800 ${
+        compactTop ? "mt-3" : "mt-10"
+      }`}
+    >
       <div className="flex flex-col gap-3 px-3 py-4 rounded-xl border min-w-0 md:flex-row md:items-center md:justify-end sm:px-4">
         <div className="flex flex-col gap-2 items-stretch w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3 md:w-auto">
           <StatusFilter

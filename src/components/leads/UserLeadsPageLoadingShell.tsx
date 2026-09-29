@@ -29,7 +29,7 @@ export function UserLeadsPageLoadingShell({
       {showHeader && (
         <UserLeadsHeader shouldShowLoading counts={EMPTY_COUNTS} />
       )}
-      {showControls && <FilterControlsLoadingShell />}
+      {showControls && <FilterControlsLoadingShell compactTop={!showHeader} />}
       <div className="flex-1 min-h-65 min-w-0 px-4 pb-4 sm:px-8">
         <TableSkeleton />
       </div>

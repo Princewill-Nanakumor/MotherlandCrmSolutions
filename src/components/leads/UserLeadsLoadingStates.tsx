@@ -6,9 +6,15 @@ import { RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { ShieldSpinnerGlyph } from "@/components/dashboardComponents/LeadsLoadingState";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 
-export const FilterControlsLoadingShell = () => (
+export const FilterControlsLoadingShell = ({
+  compactTop = false,
+}: {
+  compactTop?: boolean;
+}) => (
   <div
-    className="sticky top-0 z-10 px-4 pb-5 mt-10 bg-white sm:px-6 lg:px-8 dark:bg-gray-800"
+    className={`sticky top-0 z-10 px-4 pb-5 bg-white sm:px-6 lg:px-8 dark:bg-gray-800 ${
+      compactTop ? "mt-3" : "mt-10"
+    }`}
     role="status"
     aria-label="Loading filters"
   >

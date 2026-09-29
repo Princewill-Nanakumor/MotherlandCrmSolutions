@@ -33,7 +33,7 @@ export function AllLeadsPageLoadingShell({
       )}
       {showControls && (
         <div className="shrink-0">
-          <FilterControlsLoadingShell />
+          <FilterControlsLoadingShell compactTop={!showHeader} />
         </div>
       )}
       <div className="flex-1 min-h-65 min-w-0 px-4 pb-4 sm:px-8">

@@ -21,6 +21,7 @@ import { useUpdateLead } from "@/hooks/useLeadDetails";
 import { canAccessAllLeads } from "@/lib/roles";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { humanizeDashboardFetchError } from "@/lib/mongoConnectionError";
+import { LeadsSectionCollapse } from "./LeadsSectionCollapse";
 
 interface LeadsPageContentProps {
   searchQuery?: string;
@@ -172,29 +173,11 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
             </div>
           )}
 
-          <div
-            className={`shrink-0 transition-opacity duration-300 ease-in-out ${
-              showHeader ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
-            style={{
-              marginBottom: showHeader ? "0" : "-100px",
-              transition:
-                "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out",
-            }}
-          >
+          <LeadsSectionCollapse open={showHeader}>
             <LeadsHeader shouldShowLoading={false} counts={counts} />
-          </div>
+          </LeadsSectionCollapse>
 
-          <div
-            className={`shrink-0 transition-opacity duration-300 ease-in-out ${
-              showControls ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
-            style={{
-              marginBottom: showControls ? "0" : "-80px",
-              transition:
-                "opacity 300ms ease-in-out, margin-bottom 300ms ease-in-out",
-            }}
-          >
+          <LeadsSectionCollapse open={showControls}>
             <LeadsFilterControls
               selectedLeads={selectedLeads}
               hasAssignedLeads={hasAssignedLeads}
@@ -230,10 +213,15 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
               isLoadingUsers={isLoadingUsers}
               statuses={statuses}
               isLoadingStatuses={isLoadingStatuses}
+              compactTop={!showHeader}
             />
-          </div>
+          </LeadsSectionCollapse>
 
-          <div className="flex-1 min-h-0 min-w-0 px-4 pb-4 overflow-auto sm:px-8">
+          <div
+            className={`flex-1 min-h-0 min-w-0 px-4 pb-4 overflow-auto sm:px-8 ${
+              showControls ? "" : showHeader ? "pt-4" : "pt-6"
+            }`}
+          >
             <ErrorBoundary
               fallback={
                 <div className="p-4 text-center text-red-500">
