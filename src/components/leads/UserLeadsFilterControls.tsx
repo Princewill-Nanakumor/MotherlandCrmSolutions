@@ -59,7 +59,7 @@ export const UserLeadsFilterControls: React.FC<
 
   return (
     <div
-      className={`sticky top-0 z-10 px-4 pb-5 bg-white sm:px-6 lg:px-8 dark:bg-gray-800 ${
+      className={`sticky top-0 z-20 px-4 pb-5 bg-white sm:px-6 lg:px-8 dark:bg-gray-800 ${
         compactTop ? "mt-3" : "mt-10"
       }`}
     >

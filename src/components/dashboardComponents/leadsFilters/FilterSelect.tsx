@@ -41,6 +41,8 @@ interface FilterSelectProps {
   showActiveHighlight?: boolean;
   /** Value treated as "no filter" for highlight (leads use "all"). */
   inactiveValue?: string;
+  /** Accessible name when no visible label is rendered (e.g. mobile page size). */
+  ariaLabel?: string;
 }
 
 type MenuPosition = {
@@ -61,6 +63,7 @@ export const FilterSelect = ({
   className = "w-45",
   showActiveHighlight = true,
   inactiveValue = "all",
+  ariaLabel,
 }: FilterSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
@@ -293,6 +296,7 @@ export const FilterSelect = ({
         ref={triggerRef}
         type="button"
         role="combobox"
+        aria-label={ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls={listboxId}

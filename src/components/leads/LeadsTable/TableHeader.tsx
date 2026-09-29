@@ -35,6 +35,7 @@ export function TableHeader({
     pageSize,
     totalRows,
   );
+  const totalLabel = totalRows.toLocaleString();
 
   const handlePageSizeChange = (value: string) => {
     const newSize = Number(value);
@@ -43,9 +44,9 @@ export function TableHeader({
   };
 
   return (
-    <div className="flex items-center justify-between my-3 mb-4">
-      <div className="flex items-center space-x-2">
-        <label className="text-sm font-medium text-gray-700! dark:text-white! ">
+    <div className="flex items-center justify-between gap-2 my-3 mb-4 min-w-0">
+      <div className="flex items-center gap-1.5 min-w-0 sm:gap-2">
+        <label className="hidden text-sm font-medium text-gray-700! dark:text-white! sm:inline">
           Show
         </label>
         <FilterSelect
@@ -53,25 +54,31 @@ export function TableHeader({
           onChange={handlePageSizeChange}
           options={ALL_LEADS_PAGE_SIZE_SELECT_OPTIONS}
           placeholder={pageSize.toString()}
-          className="w-28"
+          className="w-20 sm:w-28"
           showActiveHighlight={false}
+          ariaLabel="Rows per page"
         />
-        <span className="text-sm font-medium text-gray-700!  dark:text-white!">
+        <span className="hidden text-sm font-medium text-gray-700! dark:text-white! sm:inline">
           entries
         </span>
         <ColumnVisibilityToggle table={table} tableId={tableId} />
       </div>
-      <div className="flex items-center gap-2 text-sm text-gray-700! dark:text-white!">
+      <div className="shrink-0 text-sm text-gray-700! dark:text-white! tabular-nums">
         {isRefetching ? (
           <span className="inline-flex items-center gap-1.5 text-brand">
             <Loader className="w-5 h-5 animate-spin shrink-0 brand-icon" />
-            <span>Updating</span>
+            <span className="hidden sm:inline">Updating</span>
           </span>
         ) : (
-          <span>
-            Showing {currentPageStart} to {currentPageEnd} of {totalRows}{" "}
-            entries
-          </span>
+          <>
+            <span className="sm:hidden">
+              {currentPageStart}–{currentPageEnd} of {totalLabel}
+            </span>
+            <span className="hidden sm:inline">
+              Showing {currentPageStart} to {currentPageEnd} of {totalLabel}{" "}
+              entries
+            </span>
+          </>
         )}
       </div>
     </div>

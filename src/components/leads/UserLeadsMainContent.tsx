@@ -199,7 +199,7 @@ export function UserLeadsMainContent({
         }`}
       >
         {shouldShowLoading || leadsTotal > 0 ? (
-          <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+          <div className="h-full min-h-[50vh] overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 sm:min-h-0">
             <UserLeadsTableContainer
               loading={shouldShowLoading || loading}
               leads={shouldShowLoading ? [] : sortedLeads}

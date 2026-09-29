@@ -252,7 +252,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                   </button>
                 </div>
               ) : showEmptyState ? (
-                <div className="h-full min-h-65 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                <div className="h-full min-h-[50vh] overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 sm:min-h-65">
                   <EmptyState
                     filterByUser={
                       filterByUser === "all" || !filterByUser
@@ -275,7 +275,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                   />
                 </div>
               ) : (
-                <div className="h-full min-h-65 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                <div className="h-full min-h-[50vh] overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 sm:min-h-65">
                   <LeadsTable
                     leads={filteredLeads}
                     totalRows={leadsTotal}

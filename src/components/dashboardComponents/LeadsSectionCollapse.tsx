@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 /**
  * Height-aware show/hide for leads header & filter bars.
  * Collapses to 0 height (no leftover gap) while animating opacity.
+ * Overflow stays clipped only while collapsed so sticky filters are not trapped.
  */
 export function LeadsSectionCollapse({
   open,
@@ -22,7 +23,9 @@ export function LeadsSectionCollapse({
       }`}
       aria-hidden={!open}
     >
-      <div className="min-h-0 overflow-hidden">{children}</div>
+      <div className={`min-h-0 ${open ? "overflow-visible" : "overflow-hidden"}`}>
+        {children}
+      </div>
     </div>
   );
 }

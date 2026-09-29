@@ -510,7 +510,7 @@ export default function LeadsTable({
           />
         </div>
 
-        <div className="flex-1 min-h-0 overflow-auto">
+        <div className="min-h-[40vh] flex-1 overflow-auto sm:min-h-0">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
