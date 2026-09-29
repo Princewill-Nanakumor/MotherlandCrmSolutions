@@ -48,34 +48,38 @@ export const DetailsSection: FC<DetailsSectionProps> = ({
         </div>
       </div>
       <div
-        className={`transition-all duration-300 ease-in-out overflow-hidden ${
-          isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
+          isExpanded
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0"
         }`}
       >
-        <div className="px-4 pb-4 space-y-3">
-          <div className="flex items-center gap-3 text-gray-700! dark:text-gray-300!">
-            <User className="w-5 h-5 text-gray-400! dark:text-gray-500!" />
-            <div>
-              <p className="text-sm text-gray-500! dark:text-gray-400!">
-                Assigned to
-              </p>
-              <p className="text-gray-900! dark:text-white!">
-                {assignedDisplayName}
-              </p>
+        <div className="min-h-0 overflow-hidden">
+          <div className="px-4 pb-4 space-y-3">
+            <div className="flex items-center gap-3 text-gray-700! dark:text-gray-300!">
+              <User className="w-5 h-5 text-gray-400! dark:text-gray-500!" />
+              <div>
+                <p className="text-sm text-gray-500! dark:text-gray-400!">
+                  Assigned to
+                </p>
+                <p className="text-gray-900! dark:text-white!">
+                  {assignedDisplayName}
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-3 text-gray-700! dark:text-gray-300!">
-            <Clock className="w-5 h-5 text-gray-400! dark:text-gray-500!" />
-            <div>
-              <p className="text-sm text-gray-500! dark:text-gray-400!">
-                Created
-              </p>
-              <p className="text-gray-900! dark:text-white!">
-                {formatDate(lead.createdAt)}
-              </p>
+            <div className="flex items-center gap-3 text-gray-700! dark:text-gray-300!">
+              <Clock className="w-5 h-5 text-gray-400! dark:text-gray-500!" />
+              <div>
+                <p className="text-sm text-gray-500! dark:text-gray-400!">
+                  Created
+                </p>
+                <p className="text-gray-900! dark:text-white!">
+                  {formatDate(lead.createdAt)}
+                </p>
+              </div>
             </div>
+            {/* Source moved to Contact Information */}
           </div>
-          {/* Source moved to Contact Information */}
         </div>
       </div>
     </div>

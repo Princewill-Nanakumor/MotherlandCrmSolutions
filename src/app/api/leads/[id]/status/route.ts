@@ -119,6 +119,18 @@ function isTransactionUnsupportedError(error: unknown): boolean {
   );
 }
 
+/** Escape a string for safe use inside a RegExp. */
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isMongoObjectIdString(value: string): boolean {
+  return (
+    mongoose.Types.ObjectId.isValid(value) &&
+    String(new mongoose.Types.ObjectId(value)) === value
+  );
+}
+
 /** Resolve status display names from DB (for activity log). */
 async function resolveStatusNames(
   previousStatus: string,
@@ -128,28 +140,35 @@ async function resolveStatusNames(
   let newStatusName = newStatus;
   try {
     const db = mongoose.connection.db;
-    if (db) {
-      const statusCollection = db.collection("status");
-      const statusesCollection = db.collection("statuses");
-      if (mongoose.Types.ObjectId.isValid(previousStatus)) {
-        const prevQuery = {
-          _id: new mongoose.Types.ObjectId(previousStatus),
-        };
-        const prev =
-          (await statusCollection.findOne(prevQuery)) ??
-          (await statusesCollection.findOne(prevQuery));
-        if (prev?.name) previousStatusName = prev.name;
+    if (!db) return { previousStatusName, newStatusName };
+
+    const statusCollection = db.collection("status");
+    const statusesCollection = db.collection("statuses");
+
+    const findStatusDoc = async (raw: string) => {
+      if (!raw) return null;
+      if (isMongoObjectIdString(raw)) {
+        const byId = { _id: new mongoose.Types.ObjectId(raw) };
+        return (
+          (await statusCollection.findOne(byId)) ??
+          (await statusesCollection.findOne(byId))
+        );
       }
-      if (mongoose.Types.ObjectId.isValid(newStatus)) {
-        const nextQuery = {
-          _id: new mongoose.Types.ObjectId(newStatus),
-        };
-        const next =
-          (await statusCollection.findOne(nextQuery)) ??
-          (await statusesCollection.findOne(nextQuery));
-        if (next?.name) newStatusName = next.name;
-      }
-    }
+      // Legacy lead.status values like "NEW" are not ObjectIds — match catalog
+      // names case-insensitively so the timeline shows "New" not "NEW".
+      const byName = {
+        name: { $regex: `^${escapeRegExp(raw)}$`, $options: "i" },
+      };
+      return (
+        (await statusCollection.findOne(byName)) ??
+        (await statusesCollection.findOne(byName))
+      );
+    };
+
+    const prev = await findStatusDoc(previousStatus);
+    if (prev?.name) previousStatusName = String(prev.name);
+    const next = await findStatusDoc(newStatus);
+    if (next?.name) newStatusName = String(next.name);
   } catch (e) {
     console.error("Status lookup error:", e);
   }

@@ -189,11 +189,27 @@ export function getStatusByName(
   statuses: Status[],
   statusName: string,
 ): Status | null {
-  return (
+  if (!statusName) return null;
+  const exact =
     statuses.find(
-      (status) => status.name === statusName || status._id === statusName,
-    ) || null
+      (status) =>
+        status.name === statusName ||
+        status._id === statusName ||
+        status.id === statusName,
+    ) || null;
+  if (exact) return exact;
+  const lower = statusName.toLowerCase();
+  return (
+    statuses.find((status) => status.name?.toLowerCase() === lower) || null
   );
+}
+
+/** Prefer catalog display name so legacy codes like "NEW" render as "New". */
+export function getStatusDisplayLabel(
+  statuses: Status[],
+  statusName: string,
+): string {
+  return getStatusByName(statuses, statusName)?.name || statusName;
 }
 
 export function getStatusColor(statuses: Status[], statusName: string): string {

@@ -53,8 +53,11 @@ export const AdsImageSlider: FC<AdsImageSliderProps> = ({
 
       {/* Toggle Button - Right side (identical styling) */}
       <button
+        type="button"
         onClick={onToggle}
         className="absolute z-10 px-3 py-1 text-xs font-medium transition-colors brand-gradient border border-transparent rounded-full shadow-lg top-2 right-2 hover:brightness-95 text-(--brand-navbar-text)"
+        aria-expanded={isExpanded}
+        aria-label={isExpanded ? "Minimize ads" : "Expand ads"}
       >
         {isExpanded ? (
           <ChevronUp className="w-3 h-3" />
@@ -63,77 +66,85 @@ export const AdsImageSlider: FC<AdsImageSliderProps> = ({
         )}
       </button>
 
-      {/* Ads Slider - Shows/hides based on isExpanded */}
+      {/* Height animates; keep both states mounted so the transition is visible */}
       <div
-        className={`relative group transition-all duration-300 ${
-          isExpanded ? "h-64 opacity-100" : "h-12 opacity-100"
+        className={`relative group overflow-hidden transition-[height] duration-300 ease-in-out ${
+          isExpanded ? "h-64" : "h-12"
         }`}
       >
-        {/* Collapsed State - Clickable area */}
-        {!isExpanded && (
-          <div
-            className="flex items-center justify-center h-full cursor-pointer"
-            onClick={onToggle}
-          >
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Click to view ads
-            </div>
+        <div
+          className={`absolute inset-0 z-1 flex items-center justify-center cursor-pointer transition-opacity duration-300 ${
+            isExpanded
+              ? "opacity-0 pointer-events-none"
+              : "opacity-100"
+          }`}
+          onClick={onToggle}
+        >
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Click to view ads
           </div>
-        )}
+        </div>
 
-        {/* Expanded State - Full ads content */}
-        {isExpanded && (
-          <>
-            {/* Main Slider */}
-            <div className="relative h-full overflow-hidden">
-              {motivationalAds.map((ad, index) => (
-                <div
-                  key={ad.id}
-                  className={`absolute inset-0 transition-opacity duration-500 ${
-                    index === currentSlide ? "opacity-100" : "opacity-0"
-                  }`}
-                >
-                  <div className="relative h-full brand-gradient">
-                    <div className="absolute inset-0 bg-black/10 dark:bg-black/20" />
+        <div
+          className={`relative h-full transition-opacity duration-300 ${
+            isExpanded
+              ? "opacity-100"
+              : "opacity-0 pointer-events-none"
+          }`}
+        >
+          <div className="relative h-full overflow-hidden">
+            {motivationalAds.map((ad, index) => (
+              <div
+                key={ad.id}
+                className={`absolute inset-0 transition-opacity duration-500 ${
+                  index === currentSlide ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                <div className="relative h-full brand-gradient">
+                  <div className="absolute inset-0 bg-black/10 dark:bg-black/20" />
 
-                    {/* Ad Content */}
-                    <div className="absolute inset-0 flex flex-col justify-center p-6 text-white">
-                      <h4 className="mb-2 text-lg font-semibold text-white!">
-                        {ad.title}
-                      </h4>
-                      <p className="mb-4 text-sm text-white opacity-90">
-                        {ad.description}
-                      </p>
-                      <button className="px-4 py-2 text-sm font-medium text-white transition-colors rounded-lg bg-white/20 hover:bg-white/30">
-                        {ad.cta}
-                      </button>
-                    </div>
+                  <div className="absolute inset-0 flex flex-col justify-center p-6 text-white">
+                    <h4 className="mb-2 text-lg font-semibold text-white!">
+                      {ad.title}
+                    </h4>
+                    <p className="mb-4 text-sm text-white opacity-90">
+                      {ad.description}
+                    </p>
+                    <button
+                      type="button"
+                      className="px-4 py-2 text-sm font-medium text-white transition-colors rounded-lg bg-white/20 hover:bg-white/30"
+                    >
+                      {ad.cta}
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
 
-            {/* Navigation Arrows - Only show on hover */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                prevSlide();
-              }}
-              className="absolute p-2 text-white transition-all duration-200 transform -translate-y-1/2 rounded-full opacity-0 left-2 top-1/2 bg-black/50 hover:bg-black/70 group-hover:opacity-100"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                nextSlide();
-              }}
-              className="absolute p-2 text-white transition-all duration-200 transform -translate-y-1/2 rounded-full opacity-0 right-2 top-1/2 bg-black/50 hover:bg-black/70 group-hover:opacity-100"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </>
-        )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              prevSlide();
+            }}
+            className="absolute p-2 text-white transition-all duration-200 transform -translate-y-1/2 rounded-full opacity-0 left-2 top-1/2 bg-black/50 hover:bg-black/70 group-hover:opacity-100"
+            aria-label="Previous ad"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              nextSlide();
+            }}
+            className="absolute p-2 text-white transition-all duration-200 transform -translate-y-1/2 rounded-full opacity-0 right-2 top-1/2 bg-black/50 hover:bg-black/70 group-hover:opacity-100"
+            aria-label="Next ad"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

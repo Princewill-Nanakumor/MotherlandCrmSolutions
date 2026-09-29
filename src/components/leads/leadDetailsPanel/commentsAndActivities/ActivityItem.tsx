@@ -10,6 +10,7 @@ import {
   getActivityBackground,
   getActivityDescription,
   getStatusColor,
+  getStatusDisplayLabel,
   ReminderActivityDetails,
 } from "./ActivityHelpers";
 import { formatDate, getUserDisplayName } from "./utils";
@@ -68,7 +69,10 @@ export const ActivityItem: FC<ActivityItemProps> = ({
                               border: `1px solid ${getStatusColor(statuses, activity.metadata.oldStatus)}30`,
                             }}
                           >
-                            {activity.metadata.oldStatus}
+                            {getStatusDisplayLabel(
+                              statuses,
+                              activity.metadata.oldStatus,
+                            )}
                           </span>
                           <ArrowRight className="inline w-3 h-3 mx-1 text-gray-500! dark:text-gray-400!" />
                           <span
@@ -82,7 +86,10 @@ export const ActivityItem: FC<ActivityItemProps> = ({
                               border: `1px solid ${getStatusColor(statuses, activity.metadata.newStatus)}30`,
                             }}
                           >
-                            {activity.metadata.newStatus}
+                            {getStatusDisplayLabel(
+                              statuses,
+                              activity.metadata.newStatus,
+                            )}
                           </span>
                         </>
                       )}

@@ -228,16 +228,24 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
     }
   };
 
-  // Get status by name or ID
+  // Get status by name or ID (case-insensitive name for legacy "NEW")
   const getStatusByName = useCallback(
     (statusName: string): Status | null => {
-      return (
+      if (!statusName) return null;
+      const exact =
         statuses.find(
-          (status) => status.name === statusName || status._id === statusName
-        ) || null
+          (status) =>
+            status.name === statusName ||
+            status._id === statusName ||
+            status.id === statusName,
+        ) || null;
+      if (exact) return exact;
+      const lower = statusName.toLowerCase();
+      return (
+        statuses.find((status) => status.name?.toLowerCase() === lower) || null
       );
     },
-    [statuses]
+    [statuses],
   );
 
   // Get status color
@@ -246,7 +254,14 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
       const status = getStatusByName(statusName);
       return status?.color || "#3B82F6";
     },
-    [getStatusByName]
+    [getStatusByName],
+  );
+
+  const getStatusDisplayLabel = useCallback(
+    (statusName: string): string => {
+      return getStatusByName(statusName)?.name || statusName;
+    },
+    [getStatusByName],
   );
 
   // Updated to handle both Date objects and strings
@@ -404,7 +419,9 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
                                       border: `1px solid ${getStatusColor(activity.metadata.oldStatus)}30`,
                                     }}
                                   >
-                                    {activity.metadata.oldStatus}
+                                    {getStatusDisplayLabel(
+                                      activity.metadata.oldStatus,
+                                    )}
                                   </span>
                                   <ArrowRight className="inline w-3 h-3 mx-1 text-gray-500 dark:text-gray-400" />
                                   <span
@@ -417,7 +434,9 @@ const Activities: FC<ActivitiesProps> = ({ leadId }) => {
                                       border: `1px solid ${getStatusColor(activity.metadata.newStatus)}30`,
                                     }}
                                   >
-                                    {activity.metadata.newStatus}
+                                    {getStatusDisplayLabel(
+                                      activity.metadata.newStatus,
+                                    )}
                                   </span>
                                 </>
                               )}

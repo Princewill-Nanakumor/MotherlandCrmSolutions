@@ -403,14 +403,17 @@ export const ContactSection: FC<ContactSectionProps> = ({
         </div>
       </div>
 
-      {/* Content with smooth transition */}
+      {/* Content with smooth height transition */}
       <div
-        className={`transition-all duration-300 ease-in-out overflow-hidden ${
-          isExpanded ? "max-h-[60]0px opacity-100" : "max-h-0 opacity-0"
+        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
+          isExpanded
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0"
         }`}
       >
-        <div className="px-4 pb-4 space-y-3">
-          {isEditing ? (
+        <div className="min-h-0 overflow-hidden">
+          <div className="px-4 pb-4 space-y-3">
+            {isEditing ? (
             // Edit Mode
             <>
               <div className="space-y-3">
@@ -586,6 +589,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
               )}
             </>
           )}
+          </div>
         </div>
       </div>
     </div>
