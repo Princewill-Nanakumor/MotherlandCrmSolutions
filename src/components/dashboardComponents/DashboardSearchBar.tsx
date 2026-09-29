@@ -23,6 +23,7 @@ interface DashboardSearchBarProps {
   searchQuery?: string;
   isLoading?: boolean;
   placeholder?: string;
+  className?: string;
 }
 
 export function DashboardSearchBar({
@@ -30,6 +31,7 @@ export function DashboardSearchBar({
   searchQuery = "",
   isLoading = false,
   placeholder = "Search...",
+  className = "relative w-full max-w-md",
 }: DashboardSearchBarProps) {
   const [inputValue, setInputValue] = useState(searchQuery);
   const debouncedValue = useDebounce(inputValue, 300);
@@ -70,7 +72,7 @@ export function DashboardSearchBar({
   }, [onSearch]);
 
   return (
-    <div className="relative w-full max-w-md" role="search">
+    <div className={className} role="search">
       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
         <Search
           className="h-5 w-5 text-gray-600! dark:text-gray-400!"
