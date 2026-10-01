@@ -66,7 +66,7 @@ import {
   isPrefixedLeadId,
   normalizeLeadId,
 } from "@/lib/leadId";
-import { getLiveSearchParam } from "@/lib/liveSearchParams";
+import { getLiveLeadParam } from "@/lib/liveSearchParams";
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -270,7 +270,7 @@ export default function LeadsTable({
 
   // Keep selectedLead in sync with full leads array (incl. assignment changes).
   useEffect(() => {
-    const leadIdParam = getLiveSearchParam("lead", searchParams);
+    const leadIdParam = getLiveLeadParam(searchParams);
 
     // If URL has lead parameter, NEVER close the panel (lead might be filtered out)
     if (leadIdParam && selectedLead) {
@@ -316,7 +316,11 @@ export default function LeadsTable({
   // ✅ FIX: Read lead parameter from URL and open panel automatically
   // ✅ FIX: Keep panel open even if lead is filtered out (only close if lead is deleted)
   useEffect(() => {
-    const leadIdParam = getLiveSearchParam("lead", searchParams);
+    // While a new search is in flight, `leads` is still the previous page.
+    // Opening from the URL here mounts the previous lead's panel again.
+    if (isRefetching) return;
+
+    const leadIdParam = getLiveLeadParam(searchParams);
 
     if (leadIdParam && leads.length > 0) {
       // Always search in full leads array (not filtered sortedLeads)
@@ -349,7 +353,7 @@ export default function LeadsTable({
       // (lead might be filtered out, not deleted - don't close panel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, leads]); // Depend on searchParams and leads
+  }, [searchParams, leads, isRefetching]);
 
   // ⚡ Adjust pageIndex when filtered results change (client-side only)
   useEffect(() => {

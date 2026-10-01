@@ -1,7 +1,7 @@
 // src/components/dashboardComponents/LeadsPageContent.tsx
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useLayoutEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import LeadsTable from "@/components/dashboardComponents/LeadsTable";
@@ -21,7 +21,13 @@ import { useUpdateLead } from "@/hooks/useLeadDetails";
 import { canAccessAllLeads } from "@/lib/roles";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { humanizeDashboardFetchError } from "@/lib/mongoConnectionError";
+import {
+  readLiveSearchQuery,
+  removeOpenLeadFromLiveUrl,
+  shouldDismissOpenLeadForSearchChange,
+} from "@/lib/leadListSearchParams";
 import { LeadsSectionCollapse } from "./LeadsSectionCollapse";
+import { useSetIsPanelOpen, useSetSelectedLead } from "@/stores/leadsStore";
 
 interface LeadsPageContentProps {
   searchQuery?: string;
@@ -38,6 +44,31 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
   const isOnline = useNetworkStatus();
   const { showHeader, showControls } = useToggleContext();
   const { updateLeadAsync } = useUpdateLead();
+  const setSelectedLead = useSetSelectedLead();
+  const setIsPanelOpen = useSetIsPanelOpen();
+  const prevSearchQueryRef = useRef(searchQuery);
+
+  // Close the open lead before paint when search changes. The table otherwise
+  // keeps that lead selected, and the URL `lead` param plus placeholder rows
+  // slide the same panel open again before a no-match result replaces the table.
+  useLayoutEffect(() => {
+    if (prevSearchQueryRef.current === searchQuery) return;
+    const previous = prevSearchQueryRef.current;
+    prevSearchQueryRef.current = searchQuery;
+    if (
+      !shouldDismissOpenLeadForSearchChange(
+        previous,
+        searchQuery,
+        readLiveSearchQuery(),
+      )
+    ) {
+      return;
+    }
+
+    setSelectedLead(null);
+    setIsPanelOpen(false);
+    removeOpenLeadFromLiveUrl();
+  }, [searchQuery, setIsPanelOpen, setSelectedLead]);
 
   const {
     users,

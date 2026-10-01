@@ -22,7 +22,12 @@ import {
   normalizeLeadId,
 } from "@/lib/leadId";
 import { isStatusOnlyLeadUpdate } from "@/lib/leadClientUpdate";
-import { getLiveSearchParam } from "@/lib/liveSearchParams";
+import { getLiveLeadParam } from "@/lib/liveSearchParams";
+import {
+  readLiveSearchQuery,
+  removeOpenLeadFromLiveUrl,
+  shouldDismissOpenLeadForSearchChange,
+} from "@/lib/leadListSearchParams";
 import { parseLeadPageSize, snapLeadPageSize } from "@/lib/leadPageSize";
 import { humanizeDashboardFetchError } from "@/lib/mongoConnectionError";
 
@@ -220,8 +225,21 @@ export default function UserLeadsContent() {
   const prevSearchRef = useRef(searchQuery);
   useEffect(() => {
     if (prevSearchRef.current === searchQuery) return;
+    const previous = prevSearchRef.current;
     prevSearchRef.current = searchQuery;
     setPageIndex(0);
+    if (
+      !shouldDismissOpenLeadForSearchChange(
+        previous,
+        searchQuery,
+        readLiveSearchQuery(),
+      )
+    ) {
+      return;
+    }
+    setSelectedLead(null);
+    setIsPanelOpen(false);
+    removeOpenLeadFromLiveUrl();
   }, [searchQuery]);
 
   // Lead update handler with React Query mutation
@@ -330,7 +348,11 @@ export default function UserLeadsContent() {
 
   // Keep selected lead/panel synced from URL like /dashboard/all-leads.
   useEffect(() => {
-    const leadIdParam = getLiveSearchParam("lead", searchParams);
+    // Previous rows stay mounted while the next search loads. Don't slide
+    // that lead's panel open again from a stale `lead` param.
+    if (isRefetching) return;
+
+    const leadIdParam = getLiveLeadParam(searchParams);
     if (!leadIdParam) {
       if (isPanelOpen || selectedLead) {
         setIsPanelOpen(false);
@@ -360,7 +382,7 @@ export default function UserLeadsContent() {
       }
       if (!isPanelOpen) setIsPanelOpen(true);
     }
-  }, [searchParams, leads, isPanelOpen, selectedLead]);
+  }, [searchParams, leads, isPanelOpen, selectedLead, isRefetching]);
 
   // Row click handler: open side panel and sync URL
   const handleRowClick = useCallback((lead: Lead) => {

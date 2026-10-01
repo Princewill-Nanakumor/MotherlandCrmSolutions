@@ -47,6 +47,7 @@ import { UserPresenceProvider } from "@/context/UserPresenceContext";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { dashboardPageTitle } from "@/lib/appBranding";
 import { syncAppScrollMode } from "@/lib/uiZoom";
+import { applySearchToLeadListParams } from "@/lib/leadListSearchParams";
 import { HolidayEffectsController } from "@/components/holidayEffects/HolidayEffectsController";
 
 const ReminderNotifications = dynamic(
@@ -191,14 +192,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     if (!showSearch) return;
     if (prevSearchQueryRef.current === searchQuery) return;
     prevSearchQueryRef.current = searchQuery;
-    const params = new URLSearchParams(searchParams?.toString());
-    if (searchQuery.trim()) {
-      params.set("search", searchQuery.trim());
-    } else {
-      params.delete("search");
-    }
-    params.set("page", "1");
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    const params = applySearchToLeadListParams(
+      new URLSearchParams(searchParams?.toString() ?? ""),
+      searchQuery,
+    );
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
   }, [searchQuery, showSearch, pathname, searchParams, router]);
 
   // Page title mapping

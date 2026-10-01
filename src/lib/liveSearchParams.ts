@@ -15,3 +15,18 @@ export function getLiveSearchParam(
   }
   return nextSearchParams?.get(key) ?? null;
 }
+
+/**
+ * Open-lead id from the address bar.
+ * Unlike `getLiveSearchParam`, a missing live value does not fall back to Next's
+ * snapshot. Next stays stale after `history.replaceState`, so that fallback
+ * would reopen a lead the search just removed from the URL.
+ */
+export function getLiveLeadParam(
+  nextSearchParams?: URLSearchParams | ReadonlyURLSearchParams | null,
+): string | null {
+  if (typeof window !== "undefined") {
+    return new URLSearchParams(window.location.search).get("lead");
+  }
+  return nextSearchParams?.get("lead") ?? null;
+}

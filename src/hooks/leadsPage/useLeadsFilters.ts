@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { snapAllLeadsPageSize } from "@/lib/leadPageSize";
+import { applySearchToLeadListParams } from "@/lib/leadListSearchParams";
 
 const STORAGE_KEYS = {
   FILTER_BY_COUNTRY: "leads_filter_by_country",
@@ -198,13 +199,15 @@ export function useLeadsFilters({
       setFilterJustChanged(true);
       setPageState(1);
       pendingPageFromPaginationRef.current = null;
-      const params = new URLSearchParams(Array.from(searchParams.entries()));
-      const currentSearch = params.get("search") || "";
-      if (searchQuery !== currentSearch) {
-        if (searchQuery) params.set("search", searchQuery);
-        else params.delete("search");
-        params.set("page", "1");
-        const url = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+      const params = new URLSearchParams(
+        typeof window !== "undefined"
+          ? window.location.search
+          : Array.from(searchParams.entries()),
+      );
+      const nextParams = applySearchToLeadListParams(params, searchQuery);
+      if (nextParams.toString() !== params.toString()) {
+        const query = nextParams.toString();
+        const url = query ? `${pathname}?${query}` : pathname;
         window.history.replaceState(null, "", url);
       }
     }
