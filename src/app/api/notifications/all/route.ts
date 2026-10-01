@@ -9,22 +9,24 @@ import {
   isSuperAdminSession,
   notificationOwnerSelectors,
 } from "@/lib/notificationQuery";
-import { reconcileStalePendingApprovalNotifications } from "@/lib/resolvePendingApprovalNotifications";
+import { ApiRoutePerf } from "@/lib/apiRoutePerf";
+import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
 
 export async function GET() {
+  const perf = new ApiRoutePerf("GET /api/notifications/all");
   try {
     const session = await getServerSession(authOptions);
+    perf.mark("getServerSession");
     if (!session?.user) {
+      perf.finish({ status: 401 });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectMongoDB();
+    perf.mark("connectMongoDB");
     if (!mongoose.connection.db) {
       throw new Error("Database connection not established");
     }
-
-    // Fix historical pending-approval rows whose payments already completed/failed
-    await reconcileStalePendingApprovalNotifications();
 
     const userRole = session.user.role;
     const userId = session.user.id;
@@ -57,10 +59,14 @@ export async function GET() {
       .sort({ createdAt: -1 })
       .limit(100) // Increased limit for all notifications
       .toArray();
+    perf.mark("notificationsFind");
 
-    return NextResponse.json(notifications);
+    return apiPerfJsonResponse(perf, notifications, {
+      extra: { count: notifications.length },
+    });
   } catch (error) {
     console.error("Error fetching all notifications:", error);
+    perf.finish({ error: true });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

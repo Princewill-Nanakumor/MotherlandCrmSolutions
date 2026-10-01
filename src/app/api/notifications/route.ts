@@ -10,7 +10,6 @@ import {
   isSuperAdminSession,
   notificationOwnerSelectors,
 } from "@/lib/notificationQuery";
-import { reconcileStalePendingApprovalNotifications } from "@/lib/resolvePendingApprovalNotifications";
 import { publishSuperAdminPaymentNotificationEvent } from "@/lib/ablyServer";
 
 export async function GET() {
@@ -24,9 +23,6 @@ export async function GET() {
     if (!mongoose.connection.db) {
       throw new Error("Database connection not established");
     }
-
-    // Keep bell in sync with payments that were already decided
-    await reconcileStalePendingApprovalNotifications();
 
     const userRole = session.user.role;
     const userId = session.user.id;

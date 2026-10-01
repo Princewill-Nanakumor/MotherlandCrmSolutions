@@ -1,4 +1,10 @@
 import mongoose from "mongoose";
+import type {
+  AnyBulkWriteOperation,
+  Document,
+  ObjectId,
+  WithId,
+} from "mongodb";
 
 export type PendingResolvedStatus = "APPROVED" | "REJECTED";
 
@@ -76,37 +82,41 @@ export async function resolvePendingApprovalNotifications(options: {
   return result.modifiedCount;
 }
 
+export type PendingNote = {
+  _id: ObjectId;
+  paymentId?: unknown;
+  amount?: unknown;
+  currency?: unknown;
+};
+
+export type PaymentLean = {
+  _id: ObjectId;
+  status?: unknown;
+  amount?: unknown;
+  currency?: unknown;
+};
+
 /**
- * For any still-pending approval notifications whose payment is already
- * COMPLETED/FAILED, rewrite them so history stays accurate.
+ * Build bulkWrite ops for pending-approval notifications whose payments are
+ * already COMPLETED/FAILED. Pure helper for tests + batched reconcile.
  */
-export async function reconcileStalePendingApprovalNotifications(): Promise<number> {
-  if (!mongoose.connection.db) return 0;
+export function buildStalePendingApprovalBulkOps(
+  pending: PendingNote[],
+  payments: PaymentLean[],
+  now: Date = new Date(),
+): AnyBulkWriteOperation<Document>[] {
+  const paymentMap = new Map(
+    payments.map((payment) => [String(payment._id), payment]),
+  );
 
-  const notificationsCol = mongoose.connection.db.collection("notifications");
-  const paymentsCol = mongoose.connection.db.collection("payments");
-
-  const pending = await notificationsCol
-    .find({ type: "PAYMENT_PENDING_APPROVAL" })
-    .project({ _id: 1, paymentId: 1, amount: 1, currency: 1 })
-    .limit(200)
-    .toArray();
-
-  if (pending.length === 0) return 0;
-
-  let updated = 0;
-  const now = new Date();
+  const ops: AnyBulkWriteOperation<Document>[] = [];
 
   for (const note of pending) {
-    const paymentIdRaw = note.paymentId;
-    if (paymentIdRaw == null) continue;
-    const paymentId = String(paymentIdRaw);
+    if (note.paymentId == null) continue;
+    const paymentId = String(note.paymentId);
     if (!mongoose.Types.ObjectId.isValid(paymentId)) continue;
 
-    const payment = await paymentsCol.findOne(
-      { _id: new mongoose.Types.ObjectId(paymentId) },
-      { projection: { status: 1, amount: 1, currency: 1 } },
-    );
+    const payment = paymentMap.get(paymentId);
     if (!payment) continue;
 
     const status = String(payment.status || "");
@@ -115,27 +125,76 @@ export async function reconcileStalePendingApprovalNotifications(): Promise<numb
     const resolved: PendingResolvedStatus =
       status === "COMPLETED" ? "APPROVED" : "REJECTED";
 
-    const result = await notificationsCol.updateOne(
-      { _id: note._id, type: "PAYMENT_PENDING_APPROVAL" },
-      {
-        $set: pendingApprovalResolutionFields(
-          resolved,
-          typeof payment.amount === "number"
-            ? payment.amount
-            : typeof note.amount === "number"
-              ? note.amount
-              : undefined,
-          typeof payment.currency === "string"
-            ? payment.currency
-            : typeof note.currency === "string"
-              ? note.currency
-              : undefined,
-          now,
-        ),
+    ops.push({
+      updateOne: {
+        filter: { _id: note._id, type: "PAYMENT_PENDING_APPROVAL" },
+        update: {
+          $set: pendingApprovalResolutionFields(
+            resolved,
+            typeof payment.amount === "number"
+              ? payment.amount
+              : typeof note.amount === "number"
+                ? note.amount
+                : undefined,
+            typeof payment.currency === "string"
+              ? payment.currency
+              : typeof note.currency === "string"
+                ? note.currency
+                : undefined,
+            now,
+          ),
+        },
       },
-    );
-    if (result.modifiedCount > 0) updated += 1;
+    });
   }
 
-  return updated;
+  return ops;
+}
+
+/**
+ * Safety-net cleanup for pending-approval rows whose payments already
+ * completed/failed (e.g. historical drift). Prefer event-driven
+ * resolvePendingApprovalNotifications on approve/reject; call this from a
+ * low-frequency cron — not from notification read paths.
+ */
+export async function reconcileStalePendingApprovalNotifications(): Promise<number> {
+  if (!mongoose.connection.db) return 0;
+
+  const notificationsCol = mongoose.connection.db.collection("notifications");
+  const paymentsCol = mongoose.connection.db.collection("payments");
+
+  const pending = (await notificationsCol
+    .find({ type: "PAYMENT_PENDING_APPROVAL" })
+    .project({ _id: 1, paymentId: 1, amount: 1, currency: 1 })
+    .limit(200)
+    .toArray()) as WithId<PendingNote>[];
+
+  if (pending.length === 0) return 0;
+
+  const paymentObjectIds: mongoose.Types.ObjectId[] = [];
+  const seen = new Set<string>();
+  for (const note of pending) {
+    if (note.paymentId == null) continue;
+    const paymentId = String(note.paymentId);
+    if (!mongoose.Types.ObjectId.isValid(paymentId) || seen.has(paymentId)) {
+      continue;
+    }
+    seen.add(paymentId);
+    paymentObjectIds.push(new mongoose.Types.ObjectId(paymentId));
+  }
+
+  if (paymentObjectIds.length === 0) return 0;
+
+  const payments = (await paymentsCol
+    .find(
+      { _id: { $in: paymentObjectIds } },
+      { projection: { status: 1, amount: 1, currency: 1 } },
+    )
+    .toArray()) as WithId<PaymentLean>[];
+
+  const ops = buildStalePendingApprovalBulkOps(pending, payments);
+  if (ops.length === 0) return 0;
+
+  const result = await notificationsCol.bulkWrite(ops, { ordered: false });
+  return result.modifiedCount;
 }
