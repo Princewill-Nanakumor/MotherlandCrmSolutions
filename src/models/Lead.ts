@@ -119,6 +119,15 @@ leadSchema.index({ leadId: 1 }, { unique: true, sparse: true });
 leadSchema.index({ adminId: 1, country: 1, createdAt: -1 });
 leadSchema.index({ adminId: 1, source: 1, createdAt: -1 });
 leadSchema.index({ adminId: 1, lastActivityAt: -1, updatedAt: -1 });
+// Default all-leads list: filter adminId + sort lastActivityAt/updatedAt/createdAt.
+// The 3-field index above cannot cover the createdAt sort key; keep both until
+// explain proves this 4-field index wins and nothing else needs the old one.
+leadSchema.index({
+  adminId: 1,
+  lastActivityAt: -1,
+  updatedAt: -1,
+  createdAt: -1,
+});
 
 // Generate collision-resistant public lead ID.
 export function generateLeadId(): string {

@@ -189,9 +189,9 @@ export const useLeadsPage = (
       }),
     enabled: isAuthenticated,
     staleTime: ALL_LEADS_QUERY_STALE_MS,
-    // Always refetch when the tab becomes visible again so missed Ably
-    // status events cannot leave a filtered table stale indefinitely.
-    refetchOnWindowFocus: "always",
+    // Refetch on focus only when stale (2m). "always" re-hit /api/leads/all on
+    // every tab switch even while fresh; Ably still covers live status/assign.
+    refetchOnWindowFocus: true,
     retry: 2,
     refetchOnMount: false,
     placeholderData: (previousData) => previousData ?? lastLeadsDataRef.current,

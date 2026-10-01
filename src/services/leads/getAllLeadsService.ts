@@ -41,7 +41,8 @@ interface UserData {
 type LeadFilter = Record<string, any>;
 
 const totalAllCache = new Map<string, { count: number; ts: number }>();
-const TOTAL_ALL_CACHE_TTL_MS = 60_000;
+/** totalAll changes rarely; multi-instance Vercel still benefits from longer process-local TTL. */
+const TOTAL_ALL_CACHE_TTL_MS = 5 * 60_000;
 
 const LEADS_LIST_PROJECTION = {
   _id: 1,
@@ -329,6 +330,14 @@ export async function getAllLeadsForSession(
     filter.$and = filter.$and ? [...filter.$and, searchOr] : [searchOr];
   }
 
+  // Unfiltered list: baseQuery === filter, so one count covers both total and totalAll.
+  const hasFilters =
+    userFilter.length > 0 ||
+    countryFilter.length > 0 ||
+    statusFilter.length > 0 ||
+    sourceFilter.length > 0 ||
+    searchConditions != null;
+
   const countCacheKey = assignedOnly
     ? `assigned:${sessionUser.id}`
     : canAccessAllLeads(sessionUser)
@@ -336,7 +345,17 @@ export async function getAllLeadsForSession(
       : `agent:${sessionUser.id}`;
   let totalAllCount = getCachedTotalAll(countCacheKey);
   let totalCount: number;
-  if (totalAllCount === null) {
+
+  if (!hasFilters) {
+    if (totalAllCount === null) {
+      totalAllCount = await db.collection("leads").countDocuments(baseQuery);
+      setCachedTotalAll(countCacheKey, totalAllCount);
+      perf?.mark("countDocuments(baseQuery)");
+    } else {
+      perf?.mark("countDocuments(cached-totalAll)");
+    }
+    totalCount = totalAllCount;
+  } else if (totalAllCount === null) {
     [totalAllCount, totalCount] = await Promise.all([
       db.collection("leads").countDocuments(baseQuery),
       db.collection("leads").countDocuments(filter),
