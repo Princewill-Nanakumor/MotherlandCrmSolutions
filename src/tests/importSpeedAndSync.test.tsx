@@ -42,6 +42,8 @@ vi.mock("next-auth/react", () => ({
 const pushMock = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock, replace: vi.fn(), prefetch: vi.fn() }),
+  usePathname: () => "/dashboard/import",
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 const apiCallMock = vi.fn();
