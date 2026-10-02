@@ -9,10 +9,12 @@ import { UsageLimitsDisplay } from "@/components/importPageComponents/UsageLimit
 import { UsageLimitsSkeleton } from "@/components/importPageComponents/UsageLimitsSkeleton";
 import { ImportHistorySection } from "@/components/importPageComponents/ImportHistorySection";
 import { ImportExportSection } from "@/components/importPageComponents/ImportExportSection";
+import { EmailCheckSection } from "@/components/importPageComponents/EmailCheckSection";
 import { ImportModalWrapper } from "@/components/importPageComponents/ImportModalWrapper";
 import { useImportManager } from "@/hooks/useImportManager";
 import { useImportUsageData } from "@/hooks/useUsageData";
 import { useImportExport } from "@/hooks/useImportExport";
+import { useEmailCheck } from "@/hooks/useEmailCheck";
 
 export const ImportManager = () => {
   const {
@@ -45,6 +47,8 @@ export const ImportManager = () => {
     exportingImportId,
     isExportingAll,
   } = useImportExport();
+
+  const emailCheck = useEmailCheck();
 
   // Use the import usage data hook
   const { importUsageData, isLoading: isUsageLoading } = useImportUsageData();
@@ -92,6 +96,16 @@ export const ImportManager = () => {
             missingFields={missingFields}
             usageData={importUsageData}
             importProgress={importProgress}
+          />
+
+          <EmailCheckSection
+            activeTab={activeTab}
+            fileInputRef={emailCheck.fileInputRef}
+            isChecking={emailCheck.isChecking}
+            error={emailCheck.error}
+            result={emailCheck.result}
+            handleFileUpload={emailCheck.handleFileUpload}
+            clearResult={emailCheck.clearResult}
           />
 
           {/* Import History Section */}

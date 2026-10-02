@@ -1,9 +1,11 @@
 // src/components/importPageComponents/ImportTabs.tsx
 import { FC } from "react";
 
+export type ImportPageTab = "new" | "history" | "export" | "check";
+
 interface ImportTabsProps {
-  activeTab: "new" | "history" | "export";
-  setActiveTab: (tab: "new" | "history" | "export") => void;
+  activeTab: ImportPageTab;
+  setActiveTab: (tab: ImportPageTab) => void;
 }
 
 export const ImportTabs: FC<ImportTabsProps> = ({
@@ -18,6 +20,12 @@ export const ImportTabs: FC<ImportTabsProps> = ({
           className={`shrink-0 px-1 py-4 font-medium transition-colors ${activeTab === "new" ? "border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400" : "text-gray-600! hover:text-gray-900! dark:text-gray-400! dark:hover:text-gray-200!" }`}
         >
           New import
+        </button>
+        <button
+          onClick={() => setActiveTab("check")}
+          className={`shrink-0 px-1 py-4 font-medium transition-colors ${activeTab === "check" ? "border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400" : "text-gray-600! hover:text-gray-900! dark:text-gray-400! dark:hover:text-gray-200!" }`}
+        >
+          Check emails
         </button>
         <button
           onClick={() => setActiveTab("history")}

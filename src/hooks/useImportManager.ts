@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProcessedLead, ImportProgressState } from "@/types/import";
@@ -13,6 +13,7 @@ import {
 import {
   getPerImportLimitError,
 } from "@/lib/importBatchLimits";
+import type { ImportPageTab } from "@/components/importPageComponents/ImportTabs";
 
 interface ImportLimitExceeded {
   attempted: number;
@@ -20,9 +21,20 @@ interface ImportLimitExceeded {
   remaining: number;
 }
 
+const IMPORT_TABS: ImportPageTab[] = ["new", "check", "history", "export"];
+
+function parseImportTab(value: string | null): ImportPageTab {
+  if (value && IMPORT_TABS.includes(value as ImportPageTab)) {
+    return value as ImportPageTab;
+  }
+  return "new";
+}
+
 export const useImportManager = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -33,12 +45,34 @@ export const useImportManager = () => {
   const [importProgress, setImportProgress] =
     useState<ImportProgressState | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<"new" | "history" | "export">(
-    "new",
+  const [activeTab, setActiveTabState] = useState<ImportPageTab>(() =>
+    parseImportTab(searchParams.get("tab")),
   );
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const [importLimitExceeded, setImportLimitExceeded] =
     useState<ImportLimitExceeded | null>(null);
+
+  const setActiveTab = useCallback(
+    (tab: ImportPageTab) => {
+      setActiveTabState(tab);
+      const params = new URLSearchParams(searchParams.toString());
+      if (tab === "new") {
+        params.delete("tab");
+      } else {
+        params.set("tab", tab);
+      }
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams],
+  );
+
+  useEffect(() => {
+    const fromUrl = parseImportTab(searchParams.get("tab"));
+    setActiveTabState((current) => (current === fromUrl ? current : fromUrl));
+  }, [searchParams]);
 
   const {
     importHistory,

@@ -17,7 +17,7 @@ export const headerMappings: Record<ContactField, string[]> = {
   name: ["name", "full name"],
   "first name": ["first name", "firstname", "given name"],
   "last name": ["last name", "lastname", "surname", "family name"],
-  email: ["email", "email address", "emails"],
+  email: ["email", "email address", "emails", "e-mail", "e-mails"],
   phone: ["phone", "phone number", "mobile", "cell"],
   source: ["source"],
   status: ["status"],
