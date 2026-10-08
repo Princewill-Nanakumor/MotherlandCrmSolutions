@@ -5,7 +5,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 import {
-  LEAD_COUNTRIES_QUERY_KEY,
+  leadFilterKeys,
   LEAD_FILTER_OPTIONS_GC_MS,
   LEAD_FILTER_OPTIONS_STALE_MS,
 } from "@/lib/leadFilterQueries";
@@ -81,7 +81,7 @@ export const CountryFilter = ({
 
   const { data: fetchedCountries, isLoading: isLoadingCountries } =
     useQuery<string[]>({
-    queryKey: [...LEAD_COUNTRIES_QUERY_KEY],
+    queryKey: [...leadFilterKeys.countries()],
     queryFn: async () => {
       const response = await apiCallWithSessionRefresh("/api/leads/countries", {
         cache: "no-store",

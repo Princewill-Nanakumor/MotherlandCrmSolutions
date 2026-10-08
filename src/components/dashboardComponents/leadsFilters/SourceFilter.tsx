@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 import {
-  LEAD_SOURCES_QUERY_KEY,
+  leadFilterKeys,
   LEAD_FILTER_OPTIONS_GC_MS,
   LEAD_FILTER_OPTIONS_STALE_MS,
 } from "@/lib/leadFilterQueries";
@@ -80,7 +80,7 @@ export const SourceFilter = ({
   const { data: fetchedSources, isLoading: isLoadingSources } = useQuery<
     string[]
   >({
-    queryKey: [...LEAD_SOURCES_QUERY_KEY],
+    queryKey: [...leadFilterKeys.sources()],
     queryFn: async () => {
       const response = await apiCallWithSessionRefresh("/api/leads/sources", {
         cache: "no-store",

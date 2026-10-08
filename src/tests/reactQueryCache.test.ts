@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
 import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
-import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
+import {
+  leadFilterKeys,
+  refetchLeadFilterOptions,
+} from "@/lib/leadFilterQueries";
 import type { Lead } from "@/types/leads";
 
 function lead(overrides: Partial<Lead> & { _id: string; status: string }): Lead {
@@ -36,22 +39,78 @@ describe("React Query cache behaviors", () => {
       defaultOptions: { queries: { retry: false } },
     });
     let sourcesFetches = 0;
-    qc.setQueryDefaults(["leads", "sources"], {
+    const sourcesKey = [...leadFilterKeys.sources()];
+    const countriesKey = [...leadFilterKeys.countries()];
+
+    qc.setQueryDefaults(sourcesKey, {
       queryFn: async () => {
         sourcesFetches += 1;
         return ["web"];
       },
     });
-    qc.setQueryDefaults(["leads", "countries"], {
+    qc.setQueryDefaults(countriesKey, {
       queryFn: async () => ["US"],
     });
 
-    await qc.fetchQuery({ queryKey: ["leads", "sources"] });
-    await qc.fetchQuery({ queryKey: ["leads", "countries"] });
+    await qc.fetchQuery({ queryKey: sourcesKey });
+    await qc.fetchQuery({ queryKey: countriesKey });
     expect(sourcesFetches).toBe(1);
 
     await refetchLeadFilterOptions(qc);
-    expect(qc.getQueryState(["leads", "sources"])?.isInvalidated).toBe(true);
+    expect(qc.getQueryState(sourcesKey)?.isInvalidated).toBe(true);
+    expect(qc.getQueryState(countriesKey)?.isInvalidated).toBe(true);
     expect(sourcesFetches).toBe(1);
+  });
+
+  it("invalidate ['leads'] does not invalidate leadFilterOptions sources/countries", async () => {
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const sourcesKey = [...leadFilterKeys.sources()];
+    const countriesKey = [...leadFilterKeys.countries()];
+    const leadsKey = ["leads", 1, 50] as const;
+
+    qc.setQueryDefaults([...leadsKey], {
+      queryFn: async () => ({ leads: [] }),
+    });
+    qc.setQueryDefaults(sourcesKey, {
+      queryFn: async () => ["web"],
+    });
+    qc.setQueryDefaults(countriesKey, {
+      queryFn: async () => ["US"],
+    });
+
+    await qc.fetchQuery({ queryKey: [...leadsKey] });
+    await qc.fetchQuery({ queryKey: sourcesKey });
+    await qc.fetchQuery({ queryKey: countriesKey });
+
+    await qc.invalidateQueries({ queryKey: ["leads"] });
+
+    expect(qc.getQueryState([...leadsKey])?.isInvalidated).toBe(true);
+    expect(qc.getQueryState(sourcesKey)?.isInvalidated).toBe(false);
+    expect(qc.getQueryState(countriesKey)?.isInvalidated).toBe(false);
+  });
+
+  it("invalidate ['leadFilterOptions'] marks sources and countries stale", async () => {
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const sourcesKey = [...leadFilterKeys.sources()];
+    const countriesKey = [...leadFilterKeys.countries()];
+
+    qc.setQueryDefaults(sourcesKey, {
+      queryFn: async () => ["web"],
+    });
+    qc.setQueryDefaults(countriesKey, {
+      queryFn: async () => ["US"],
+    });
+
+    await qc.fetchQuery({ queryKey: sourcesKey });
+    await qc.fetchQuery({ queryKey: countriesKey });
+
+    await qc.invalidateQueries({ queryKey: [...leadFilterKeys.all] });
+
+    expect(qc.getQueryState(sourcesKey)?.isInvalidated).toBe(true);
+    expect(qc.getQueryState(countriesKey)?.isInvalidated).toBe(true);
   });
 });
