@@ -11,6 +11,10 @@ import {
 import type { User } from "@/components/user-management/UserTableColumns";
 import type { UserFormCreateData, UserFormEditData } from "@/schemas/UserFormSchema";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import {
+  removeUserFromUsersCache,
+  upsertUserInUsersCache,
+} from "@/lib/usersQueryCache";
 
 export type UserUpdateBody = UserFormEditData & {
   canViewPhoneNumbers?: boolean;
@@ -62,6 +66,23 @@ export async function invalidateUserCachesAfterWrite(
     );
   }
   await Promise.all(tasks);
+}
+
+/** Background reconcile after an optimistic `["users"]` patch — never blocks UI. */
+function scheduleUsersCacheReconcile(
+  queryClient: QueryClient,
+  options?: {
+    includeCurrentUserPermission?: boolean;
+    onRefreshUsers?: () => void | Promise<void>;
+  },
+) {
+  void invalidateUserCachesAfterWrite(queryClient, {
+    includeCurrentUserPermission: options?.includeCurrentUserPermission,
+  })
+    .then(() => options?.onRefreshUsers?.())
+    .catch((err) => {
+      console.error("Post-write users cache refresh failed:", err);
+    });
 }
 
 export interface UseUserMutationsOptions {
@@ -133,23 +154,12 @@ export function useUserMutations({
     ...createUserMutation,
     mutateAsync: async (userData: UserFormCreateData) => {
       const created = await createUserMutation.mutateAsync(userData);
-      // Toast / UI first — don't block modal close on list refetch.
       onUserCreated?.(created);
-      // Optimistic row so the table updates without waiting on GET /api/users.
-      queryClient.setQueryData<User[]>(["users"], (prev) => {
-        const list = Array.isArray(prev) ? prev : [];
-        if (list.some((u) => u.id === created.id || u.email === created.email)) {
-          return list;
-        }
-        return [created, ...list];
+      upsertUserInUsersCache(queryClient, {
+        ...created,
+        id: String(created.id),
       });
-      void Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["user-usage-data"] }),
-        // Mark users stale; background refetch must not gate the create UX.
-        queryClient.invalidateQueries({ queryKey: ["users"] }),
-      ]).catch((err) => {
-        console.error("Post-create users cache refresh failed:", err);
-      });
+      scheduleUsersCacheReconcile(queryClient, { onRefreshUsers });
       return created;
     },
   } satisfies UseMutationResult<User, unknown, UserFormCreateData>;
@@ -164,11 +174,15 @@ export function useUserMutations({
     mutateAsync: async (variables: UpdateUserVariables) => {
       try {
         const updated = await updateUserMutation.mutateAsync(variables);
-        await invalidateUserCachesAfterWrite(queryClient, {
-          includeCurrentUserPermission: true,
+        upsertUserInUsersCache(queryClient, {
+          ...updated,
+          id: String(updated.id),
         });
-        await onRefreshUsers?.();
         onUserUpdated?.(updated);
+        scheduleUsersCacheReconcile(queryClient, {
+          includeCurrentUserPermission: true,
+          onRefreshUsers,
+        });
         return updated;
       } catch (error: unknown) {
         console.error("Update user error details:", error);
@@ -199,14 +213,14 @@ export function useUserMutations({
     mutateAsync: async (userId: string) => {
       try {
         await deleteUserMutation.mutateAsync(userId);
-        await invalidateUserCachesAfterWrite(queryClient);
-        await onRefreshUsers?.();
+        removeUserFromUsersCache(queryClient, userId);
+        onUserDeleted?.(userId);
         toast({
           title: "Success",
           description: "User permanently deleted successfully",
           variant: "success",
         });
-        onUserDeleted?.(userId);
+        scheduleUsersCacheReconcile(queryClient, { onRefreshUsers });
       } catch (error: unknown) {
         console.error("Error deleting user:", error);
         toast({

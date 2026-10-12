@@ -21,6 +21,10 @@ import {
   getMongoPerfProbe,
   withMongoPerf,
 } from "@/lib/mongoPerfProbe";
+import {
+  userFieldsForRealtimePublish,
+  type UserPublishSource,
+} from "@/lib/usersQueryCache";
 
 export async function POST(request: Request) {
   const wallStart = Date.now();
@@ -57,11 +61,13 @@ export async function POST(request: Request) {
 
       if (result.status >= 200 && result.status < 300) {
         // Realtime is best-effort — don't hold the create response on Ably.
+        const createdUser = (result.body as { user?: UserPublishSource })?.user;
         void publishAdminLeadsUpdatedEvent(
           getTenantAdminId(session.user) || session.user.id,
           {
             type: "user_created",
             actorId: session.user.id,
+            ...userFieldsForRealtimePublish(createdUser),
           },
         ).catch((publishError) => {
           console.error("Ably publish failed after user creation:", publishError);
@@ -157,13 +163,15 @@ export async function PUT(request: Request) {
     );
     if (result.status >= 200 && result.status < 300) {
       try {
+        const updatedUser = (result.body as { data?: UserPublishSource })?.data;
         await publishAdminLeadsUpdatedEvent(
           getTenantAdminId(session.user) || session.user.id,
           {
-          type: "user_updated",
-          actorId: session.user.id,
-          userId: requestData.id,
-        });
+            type: "user_updated",
+            actorId: session.user.id,
+            ...userFieldsForRealtimePublish(updatedUser, requestData.id),
+          },
+        );
       } catch (publishError) {
         console.error("Ably publish failed after user update:", publishError);
       }

@@ -19,6 +19,7 @@ import {
   syncCommentsFromAdminEvent,
 } from "@/lib/leadPanelRealtimeSync";
 import { patchReminderDeletedInCache } from "@/lib/reminderCache";
+import { applyUserRealtimeToUsersCache } from "@/lib/usersQueryCache";
 
 /**
  * Subscribes to tenant lead events after first paint so Ably scope/token
@@ -64,6 +65,12 @@ export function TenantLeadsRealtimeSync() {
         importId?: string;
         percent?: number;
         userId?: string;
+        firstName?: string;
+        lastName?: string;
+        email?: string;
+        role?: string;
+        phoneNumber?: string;
+        country?: string;
       };
       const eventType = eventData.type ?? "";
       const isUserEvent = eventType.startsWith("user_");
@@ -161,6 +168,18 @@ export function TenantLeadsRealtimeSync() {
       }
 
       if (isUserEvent) {
+        applyUserRealtimeToUsersCache(queryClient, {
+          type: eventType,
+          userId: eventData.userId,
+          firstName: eventData.firstName,
+          lastName: eventData.lastName,
+          email: eventData.email,
+          status: eventData.status,
+          role: eventData.role,
+          phoneNumber: eventData.phoneNumber,
+          country: eventData.country,
+        });
+
         void queryClient.invalidateQueries({
           predicate: (query) => {
             const root = Array.isArray(query.queryKey)
@@ -172,6 +191,7 @@ export function TenantLeadsRealtimeSync() {
               root === "admin-overview"
             );
           },
+          refetchType: "all",
         });
         if (
           eventData.userId &&
