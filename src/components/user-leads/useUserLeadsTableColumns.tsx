@@ -75,65 +75,68 @@ export const useUserLeadsTableColumns = ({
       />
     );
 
-    return [
-      {
-        id: "actions",
-        header: () => (
-          <div className="h-8 flex items-center justify-center w-full font-medium text-gray-900! dark:text-white!">
-            Actions
+    const headerLabelClass = (field: SortField) =>
+      `${sortField === field ? "font-bold!" : "font-medium"} text-gray-900! dark:text-white!`;
+
+    const headerButtonClass = (align: "start" | "center") =>
+      `h-8 flex items-center gap-1 justify-${align} w-full px-1.5 hover:bg-transparent! dark:hover:bg-transparent!`;
+
+    const actionsColumn: ColumnDef<Lead> = {
+      id: "actions",
+      header: () => (
+        <div className="h-8 flex items-center justify-center w-full font-medium text-gray-900! dark:text-white!">
+          Actions
+        </div>
+      ),
+      cell: ({ row }) => {
+        const lead = row.original;
+        // Use user-friendly leadId in the URL when available, fall back to database _id
+        const leadIdentifier = lead.leadId || lead._id;
+
+        // Preserve current filters and add lead + name params (similar to /dashboard/all-leads)
+        const params = new URLSearchParams(currentParams);
+        if (leadIdentifier) {
+          params.set("lead", String(leadIdentifier));
+        }
+        const fullName =
+          `${lead.firstName || ""}-${lead.lastName || ""}`.trim();
+        if (fullName && fullName !== "-") {
+          params.set("name", fullName);
+        }
+
+        const queryString = params.toString();
+        const detailUrl = queryString
+          ? `/dashboard/leads/${leadIdentifier}?${queryString}`
+          : `/dashboard/leads/${leadIdentifier}`;
+
+        return (
+          <div className="flex items-center justify-center">
+            <Link
+              href={detailUrl}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              className="inline-flex items-center justify-center w-8 h-8 transition-colors duration-200 bg-blue-100 rounded-full hover:bg-blue-200 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:border dark:border-gray-700"
+              title="View Details"
+            >
+              <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            </Link>
           </div>
-        ),
-        cell: ({ row }) => {
-          const lead = row.original;
-          // Use user-friendly leadId in the URL when available, fall back to database _id
-          const leadIdentifier = lead.leadId || lead._id;
-
-          // Preserve current filters and add lead + name params (similar to /dashboard/all-leads)
-          const params = new URLSearchParams(currentParams);
-          if (leadIdentifier) {
-            params.set("lead", String(leadIdentifier));
-          }
-          const fullName =
-            `${lead.firstName || ""}-${lead.lastName || ""}`.trim();
-          if (fullName && fullName !== "-") {
-            params.set("name", fullName);
-          }
-
-          const queryString = params.toString();
-          const detailUrl = queryString
-            ? `/dashboard/leads/${leadIdentifier}?${queryString}`
-            : `/dashboard/leads/${leadIdentifier}`;
-
-          return (
-            <div className="flex items-center justify-center">
-              <Link
-                href={detailUrl}
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-                className="inline-flex items-center justify-center w-8 h-8 transition-colors duration-200 bg-blue-100 rounded-full hover:bg-blue-200 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:border dark:border-gray-700"
-                title="View Details"
-              >
-                <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              </Link>
-            </div>
-          );
-        },
-        enableSorting: false,
+        );
       },
+      enableSorting: false,
+    };
+
+    return [
       {
         id: "leadId",
         header: () => (
           <Button
             variant="ghost"
             onClick={() => handleSort("leadId")}
-            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className={headerButtonClass("center")}
           >
-            <span
-              className={`${sortField === "leadId" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
-            >
-              ID
-            </span>
+            <span className={headerLabelClass("leadId")}>ID</span>
             {sortIcon("leadId")}
           </Button>
         ),
@@ -153,13 +156,9 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("name")}
-            className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className={headerButtonClass("start")}
           >
-            <span
-              className={`${sortField === "name" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
-            >
-              Name
-            </span>
+            <span className={headerLabelClass("name")}>Name</span>
             {sortIcon("name")}
           </Button>
         ),
@@ -229,13 +228,9 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("country")}
-            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className={headerButtonClass("center")}
           >
-            <span
-              className={`${sortField === "country" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
-            >
-              Country
-            </span>
+            <span className={headerLabelClass("country")}>Country</span>
             {sortIcon("country")}
           </Button>
         ),
@@ -254,13 +249,9 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("status")}
-            className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className={headerButtonClass("start")}
           >
-            <span
-              className={`${sortField === "status" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
-            >
-              Status
-            </span>
+            <span className={headerLabelClass("status")}>Status</span>
             {sortIcon("status")}
           </Button>
         ),
@@ -318,13 +309,9 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("source")}
-            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className={headerButtonClass("center")}
           >
-            <span
-              className={`${sortField === "source" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
-            >
-              Source
-            </span>
+            <span className={headerLabelClass("source")}>Source</span>
             {sortIcon("source")}
           </Button>
         ),
@@ -343,13 +330,9 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("createdAt")}
-            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className={headerButtonClass("center")}
           >
-            <span
-              className={`${sortField === "createdAt" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
-            >
-              Created At
-            </span>
+            <span className={headerLabelClass("createdAt")}>Created At</span>
             {sortIcon("createdAt")}
           </Button>
         ),
@@ -371,11 +354,9 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("statusChangedAt")}
-            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className={headerButtonClass("center")}
           >
-            <span
-              className={`${sortField === "statusChangedAt" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
-            >
+            <span className={headerLabelClass("statusChangedAt")}>
               Last status change
             </span>
             {sortIcon("statusChangedAt")}
@@ -399,13 +380,9 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("lastComment")}
-            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className={headerButtonClass("center")}
           >
-            <span
-              className={`${sortField === "lastComment" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
-            >
-              Last Comment
-            </span>
+            <span className={headerLabelClass("lastComment")}>Last Comment</span>
             {sortIcon("lastComment")}
           </Button>
         ),
@@ -441,11 +418,9 @@ export const useUserLeadsTableColumns = ({
           <Button
             variant="ghost"
             onClick={() => handleSort("lastCommentDate")}
-            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className={headerButtonClass("center")}
           >
-            <span
-              className={`${sortField === "lastCommentDate" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
-            >
+            <span className={headerLabelClass("lastCommentDate")}>
               Last Comment Date
             </span>
             {sortIcon("lastCommentDate")}
@@ -469,19 +444,16 @@ export const useUserLeadsTableColumns = ({
         },
         enableSorting: true,
       },
+      actionsColumn,
       {
         id: "commentCount",
         header: () => (
           <Button
             variant="ghost"
             onClick={() => handleSort("commentCount")}
-            className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+            className={headerButtonClass("center")}
           >
-            <span
-              className={`${sortField === "commentCount" ? "font-bold" : "font-medium"} text-gray-900! dark:text-white!`}
-            >
-              Timeline
-            </span>
+            <span className={headerLabelClass("commentCount")}>Timeline</span>
             {sortIcon("commentCount")}
           </Button>
         ),
@@ -496,15 +468,14 @@ export const useUserLeadsTableColumns = ({
         enableSorting: true,
       },
     ];
-  },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
+  }, [
       sortField,
       sortOrder,
       handleSort,
       statuses,
       statusesLoading,
       canViewPhoneNumbers,
+      canViewEmails,
       currentParams,
       timeFormat,
       dateFormat,

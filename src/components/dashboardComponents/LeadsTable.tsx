@@ -167,9 +167,11 @@ export default function LeadsTable({
   const { columnVisibility, setColumnVisibility } =
     useColumnVisibility("adminLeadsTable");
 
-  // DnD Kit sensors for drag and drop
+  // DnD Kit sensors for drag and drop (distance keeps click-to-sort working)
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
@@ -488,7 +490,7 @@ export default function LeadsTable({
 
         if (oldIndex !== -1 && newIndex !== -1) {
           const newColumnOrder = arrayMove(columnOrder, oldIndex, newIndex);
-          setColumnOrder(newColumnOrder);
+          setColumnOrder(newColumnOrder, { persist: true });
           // Update table column order
           table.setColumnOrder(newColumnOrder);
         }

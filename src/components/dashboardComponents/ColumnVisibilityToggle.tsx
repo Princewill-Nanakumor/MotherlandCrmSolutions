@@ -41,6 +41,7 @@ const getColumnLabels = (
     source: "Source",
     assignedTo: "Assigned To",
     createdAt: "Created At",
+    statusChangedAt: "Last status change",
     lastComment: "Last Comment",
     lastCommentDate: "Last Comment Date",
     commentCount: "Timeline",

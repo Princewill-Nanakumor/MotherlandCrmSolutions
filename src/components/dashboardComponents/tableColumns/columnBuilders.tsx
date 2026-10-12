@@ -38,6 +38,14 @@ const DEFAULT_STATUS_STYLE = {
   label: "New",
 };
 
+function headerLabelClass(sortField: SortField, field: SortField) {
+  return sortField === field ? "font-bold!" : "font-medium";
+}
+
+function headerButtonClass(align: "start" | "center") {
+  return `h-8 flex items-center gap-1 justify-${align} w-full px-1.5 hover:bg-transparent! dark:hover:bg-transparent!`;
+}
+
 const getStatusStyle = (
   status: string,
   statuses: Array<{ id: string; name: string; color?: string }> = [],
@@ -60,7 +68,6 @@ export function buildSelectionAndActionColumns(params: {
   selectedLeads: Lead[];
   handleSelectAll: (checked: boolean) => void;
   handleRowSelection: (lead: Lead, checked: boolean) => void;
-  currentParams: string;
 }): ColumnDef<Lead>[] {
   const {
     allSelected,
@@ -68,7 +75,6 @@ export function buildSelectionAndActionColumns(params: {
     selectedLeads,
     handleSelectAll,
     handleRowSelection,
-    currentParams,
   } = params;
   return [
     {
@@ -123,6 +129,14 @@ export function buildSelectionAndActionColumns(params: {
       enableSorting: false,
       size: 40,
     },
+  ];
+}
+
+export function buildActionsColumn(params: {
+  currentParams: string;
+}): ColumnDef<Lead>[] {
+  const { currentParams } = params;
+  return [
     {
       id: "actions",
       header: () => (
@@ -189,9 +203,9 @@ export function buildCoreColumns(params: {
         <Button
           variant="ghost"
           onClick={() => handleSort("leadId")}
-          className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+          className={headerButtonClass("center")}
         >
-          <span className={sortField === "leadId" ? "font-bold" : "font-medium"}>ID</span>
+          <span className={headerLabelClass(sortField, "leadId")}>ID</span>
           {sortIcon("leadId")}
         </Button>
       ),
@@ -207,9 +221,9 @@ export function buildCoreColumns(params: {
         <Button
           variant="ghost"
           onClick={() => handleSort("name")}
-          className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
+          className={headerButtonClass("start")}
         >
-          <span className={sortField === "name" ? "font-bold" : "font-medium"}>Name</span>
+          <span className={headerLabelClass(sortField, "name")}>Name</span>
           {sortIcon("name")}
         </Button>
       ),
@@ -248,9 +262,9 @@ export function buildCoreColumns(params: {
         <Button
           variant="ghost"
           onClick={() => handleSort("country")}
-          className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+          className={headerButtonClass("center")}
         >
-          <span className={sortField === "country" ? "font-bold" : "font-medium"}>Country</span>
+          <span className={headerLabelClass(sortField, "country")}>Country</span>
           {sortIcon("country")}
         </Button>
       ),
@@ -264,9 +278,9 @@ export function buildCoreColumns(params: {
         <Button
           variant="ghost"
           onClick={() => handleSort("status")}
-          className="h-8 flex items-center gap-1 justify-start w-full hover:bg-transparent! dark:hover:bg-transparent!"
+          className={headerButtonClass("start")}
         >
-          <span className={sortField === "status" ? "font-bold" : "font-medium"}>Status</span>
+          <span className={headerLabelClass(sortField, "status")}>Status</span>
           {sortIcon("status")}
         </Button>
       ),
@@ -298,9 +312,9 @@ export function buildCoreColumns(params: {
         <Button
           variant="ghost"
           onClick={() => handleSort("source")}
-          className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+          className={headerButtonClass("center")}
         >
-          <span className={sortField === "source" ? "font-bold" : "font-medium"}>Source</span>
+          <span className={headerLabelClass(sortField, "source")}>Source</span>
           {sortIcon("source")}
         </Button>
       ),
@@ -314,9 +328,9 @@ export function buildCoreColumns(params: {
         <Button
           variant="ghost"
           onClick={() => handleSort("assignedTo")}
-          className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+          className={headerButtonClass("center")}
         >
-          <span className={sortField === "assignedTo" ? "font-bold" : "font-medium"}>Assigned To</span>
+          <span className={headerLabelClass(sortField, "assignedTo")}>Assigned To</span>
           {sortIcon("assignedTo")}
         </Button>
       ),
@@ -340,9 +354,9 @@ export function buildCoreColumns(params: {
         <Button
           variant="ghost"
           onClick={() => handleSort("createdAt")}
-          className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+          className={headerButtonClass("center")}
         >
-          <span className={sortField === "createdAt" ? "font-bold" : "font-medium"}>Created</span>
+          <span className={headerLabelClass(sortField, "createdAt")}>Created</span>
           {sortIcon("createdAt")}
         </Button>
       ),
@@ -363,9 +377,11 @@ export function buildCoreColumns(params: {
         <Button
           variant="ghost"
           onClick={() => handleSort("statusChangedAt")}
-          className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+          className={headerButtonClass("center")}
         >
-          <span className={sortField === "statusChangedAt" ? "font-bold" : "font-medium"}>Last status change</span>
+          <span className={headerLabelClass(sortField, "statusChangedAt")}>
+            Last status change
+          </span>
           {sortIcon("statusChangedAt")}
         </Button>
       ),
@@ -415,9 +431,11 @@ export function buildTimelineColumns(params: {
         <Button
           variant="ghost"
           onClick={() => handleSort("lastComment")}
-          className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+          className={headerButtonClass("center")}
         >
-          <span className={sortField === "lastComment" ? "font-bold" : "font-medium"}>Last Comment</span>
+          <span className={headerLabelClass(sortField, "lastComment")}>
+            Last Comment
+          </span>
           {sortIcon("lastComment")}
         </Button>
       ),
@@ -447,9 +465,11 @@ export function buildTimelineColumns(params: {
         <Button
           variant="ghost"
           onClick={() => handleSort("lastCommentDate")}
-          className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+          className={headerButtonClass("center")}
         >
-          <span className={sortField === "lastCommentDate" ? "font-bold" : "font-medium"}>Last Comment Date</span>
+          <span className={headerLabelClass(sortField, "lastCommentDate")}>
+            Last Comment Date
+          </span>
           {sortIcon("lastCommentDate")}
         </Button>
       ),
@@ -464,15 +484,31 @@ export function buildTimelineColumns(params: {
         );
       },
     },
+  ];
+}
+
+export function buildCommentCountColumn(params: {
+  sortField: SortField;
+  sortOrder: "asc" | "desc";
+  handleSort: (field: SortField) => void;
+}): ColumnDef<Lead>[] {
+  const { sortField, sortOrder, handleSort } = params;
+  const sortIcon = (field: SortField) => (
+    <TableSortIcon active={sortField === field} direction={sortOrder} />
+  );
+
+  return [
     {
       id: "commentCount",
       header: () => (
         <Button
           variant="ghost"
           onClick={() => handleSort("commentCount")}
-          className="h-8 flex items-center gap-1 justify-center w-full hover:bg-transparent! dark:hover:bg-transparent!"
+          className={headerButtonClass("center")}
         >
-          <span className={sortField === "commentCount" ? "font-bold" : "font-medium"}>Timeline</span>
+          <span className={headerLabelClass(sortField, "commentCount")}>
+            Timeline
+          </span>
           {sortIcon("commentCount")}
         </Button>
       ),

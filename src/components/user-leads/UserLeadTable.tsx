@@ -23,7 +23,10 @@ interface UserLeadTableProps {
   selectedLead: Lead | null;
   table: TanstackTable<Lead>;
   columnOrder: string[];
-  setColumnOrder: (order: string[]) => void;
+  setColumnOrder: (
+    order: string[],
+    options?: { persist?: boolean },
+  ) => void;
 }
 
 export function UserLeadTable({
@@ -34,9 +37,11 @@ export function UserLeadTable({
   columnOrder,
   setColumnOrder,
 }: UserLeadTableProps) {
-  // DnD Kit sensors for drag and drop
+  // DnD Kit sensors for drag and drop (distance keeps click-to-sort working)
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -52,7 +57,7 @@ export function UserLeadTable({
 
       if (oldIndex !== -1 && newIndex !== -1) {
         const newColumnOrder = arrayMove(columnOrder, oldIndex, newIndex);
-        setColumnOrder(newColumnOrder);
+        setColumnOrder(newColumnOrder, { persist: true });
         // Update table column order
         table.setColumnOrder(newColumnOrder);
       }

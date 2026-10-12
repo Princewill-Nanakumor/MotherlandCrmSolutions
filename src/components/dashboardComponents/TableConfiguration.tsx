@@ -26,7 +26,10 @@ interface TableConfigurationProps {
   setSorting: (sorting: Array<{ id: string; desc: boolean }>) => void;
   setPageIndex: (pageIndex: number) => void;
   setPageSize: (pageSize: number) => void;
-  setColumnOrder: (columnOrder: ColumnOrderState) => void;
+  setColumnOrder: (
+    columnOrder: ColumnOrderState,
+    options?: { persist?: boolean },
+  ) => void;
   setColumnVisibility: (visibility: VisibilityState | ((prev: VisibilityState) => VisibilityState)) => void;
 }
 

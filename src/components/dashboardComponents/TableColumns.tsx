@@ -7,6 +7,8 @@ import { useSearchParams } from "next/navigation";
 import { Lead } from "@/types/leads";
 import { User } from "@/types/user.types";
 import {
+  buildActionsColumn,
+  buildCommentCountColumn,
   buildCoreColumns,
   buildSelectionAndActionColumns,
   buildTimelineColumns,
@@ -51,7 +53,6 @@ export const useTableColumns = ({
         selectedLeads,
         handleSelectAll,
         handleRowSelection,
-        currentParams,
       }),
       ...buildCoreColumns({
         sortField,
@@ -70,6 +71,12 @@ export const useTableColumns = ({
         timeFormat,
         dateFormat,
         timezone,
+      }),
+      ...buildActionsColumn({ currentParams }),
+      ...buildCommentCountColumn({
+        sortField,
+        sortOrder,
+        handleSort,
       }),
     ],
     [

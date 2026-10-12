@@ -141,7 +141,7 @@ export function UserLeadsTableContent({
                 return (
                   <TableHead
                     key={generateUniqueKey("header", header.id)}
-                    className={`text-gray-700! dark:text-gray-300! font-semibold${
+                    className={`group/th text-base text-gray-700! dark:text-gray-300! font-medium ${
                       isActionsColumn || isLeadIdColumn || isCommentCountColumn
                         ? "text-center"
                         : isStatusColumn
