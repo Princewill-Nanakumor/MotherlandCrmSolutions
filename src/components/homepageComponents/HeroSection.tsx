@@ -29,7 +29,7 @@ export default function HeroSection() {
 
   return (
     <section
-      className="flex overflow-hidden relative items-center pt-28 pb-16 min-h-screen bg-gray-50 hero-section sm:pt-32"
+      className="flex overflow-hidden relative items-center pt-28 pb-32 min-h-screen bg-gray-50 hero-section sm:pt-32 sm:pb-36"
       aria-labelledby="hero-heading"
     >
       {/* Alternate map backdrop (dot grid + routes + nodes) */}
