@@ -48,7 +48,7 @@ export function resendEmailFailureHint(
         msg.includes("your own email") ||
         msg.includes("verify a domain"))
     ) {
-      return "Resend is in test mode: verification email can only be sent to the email address on your Resend account. Either sign up with that address, or verify a domain at resend.com/domains and set RESEND_FROM to a sender on that domain.";
+      return "Resend is in test mode: verification email can only be sent to the email address on your Resend account. Either sign up with that address, or verify a domain at resend.com/domains and set RESEND_FROM_MOTHERLAND / RESEND_FROM_VERTEX.";
     }
     if (
       msg.includes("domain") &&
@@ -56,7 +56,7 @@ export function resendEmailFailureHint(
         msg.includes("unverified") ||
         msg.includes("verify"))
     ) {
-      return `Email sender domain is not verified in Resend. Verify your RESEND_FROM / RESEND_FROM_VERTEX domain at resend.com/domains, then retry. ${raw}`;
+      return `Email sender domain is not verified in Resend. Verify your RESEND_FROM_MOTHERLAND / RESEND_FROM_VERTEX domain at resend.com/domains, then retry. ${raw}`;
     }
     if (raw) {
       return `Verification email failed: ${raw} Fix mail settings, then try signing up again or contact support.`;

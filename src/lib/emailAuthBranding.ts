@@ -6,8 +6,8 @@
  * `resendEmailOk` from `@/lib/resendSend` after `emails.send`.
  *
  * Production senders:
- * - Motherland: `RESEND_FROM` (e.g. Motherland CRM <noreply@motherlandcrmsolutions.com>)
- * - Vertex: `RESEND_FROM_VERTEX` (e.g. Vertex CRM <noreply@vertexcrmsolution.com>)
+ * - Motherland: `RESEND_FROM_MOTHERLAND` (legacy alias: `RESEND_FROM`)
+ * - Vertex: `RESEND_FROM_VERTEX`
  * Each domain must be verified in Resend.
  */
 import {
@@ -46,7 +46,35 @@ export function getEmailBranding(host?: string | null): AppBranding {
 const PUBLIC_MAIL_UNAVAILABLE =
   "Email service is temporarily unavailable. Please try again later.";
 
-/** Returns an error message if outbound auth email cannot be sent, else null. */
+function envMotherlandFrom(): string | undefined {
+  return (
+    process.env.RESEND_FROM_MOTHERLAND?.trim() ||
+    process.env.RESEND_FROM?.trim() ||
+    undefined
+  );
+}
+
+function envVertexFrom(): string | undefined {
+  return process.env.RESEND_FROM_VERTEX?.trim() || undefined;
+}
+
+function envMotherlandReplyTo(): string | undefined {
+  return (
+    process.env.RESEND_REPLY_TO_MOTHERLAND?.trim() ||
+    process.env.RESEND_REPLY_TO?.trim() ||
+    undefined
+  );
+}
+
+function envVertexReplyTo(): string | undefined {
+  return process.env.RESEND_REPLY_TO_VERTEX?.trim() || undefined;
+}
+
+/**
+ * Hard-block signup only when the API key is missing.
+ * Missing RESEND_FROM_* is logged; send may still fail and surface as
+ * verify_failed — better than a 503 before the account is created.
+ */
 export function assertAuthEmailConfigured(host?: string | null): string | null {
   if (!process.env.RESEND_API_KEY?.trim()) {
     return isProductionDeployment()
@@ -54,21 +82,20 @@ export function assertAuthEmailConfigured(host?: string | null): string | null {
       : "Email service is not configured.";
   }
   if (!isProductionDeployment()) return null;
+
   const bare = resolveBrandHost(host);
   if (bare === "vertexcrmsolution.com") {
-    if (!process.env.RESEND_FROM_VERTEX?.trim()) {
-      console.error(
-        "assertAuthEmailConfigured: RESEND_FROM_VERTEX is not configured for Vertex.",
+    if (!envVertexFrom()) {
+      console.warn(
+        "assertAuthEmailConfigured: RESEND_FROM_VERTEX unset; using Vertex default from-address.",
       );
-      return PUBLIC_MAIL_UNAVAILABLE;
     }
     return null;
   }
-  if (!process.env.RESEND_FROM?.trim()) {
-    console.error(
-      "assertAuthEmailConfigured: RESEND_FROM is not configured for production.",
+  if (!envMotherlandFrom()) {
+    console.warn(
+      "assertAuthEmailConfigured: RESEND_FROM_MOTHERLAND unset; using Motherland default from-address.",
     );
-    return PUBLIC_MAIL_UNAVAILABLE;
   }
   return null;
 }
@@ -156,39 +183,26 @@ export function getResendFrom(host?: string | null): string {
   const bare = resolveBrandHost(host);
 
   if (bare === "vertexcrmsolution.com") {
-    const vertexFrom = process.env.RESEND_FROM_VERTEX?.trim();
-    if (vertexFrom) return vertexFrom;
-    if (isProductionDeployment()) {
-      throw new Error(
-        "RESEND_FROM_VERTEX must be set in production (verified Vertex domain in Resend).",
-      );
-    }
-    // Prefer the Vertex domain even on localhost when env is unset.
-    return `${branding.shortName} <noreply@vertexcrmsolution.com>`;
-  }
-
-  const from = process.env.RESEND_FROM?.trim();
-  if (from) return from;
-  if (isProductionDeployment()) {
-    throw new Error(
-      "RESEND_FROM must be set in production (verified domain in Resend).",
+    return (
+      envVertexFrom() ||
+      `${branding.shortName} <noreply@vertexcrmsolution.com>`
     );
   }
-  return `${branding.shortName} <onboarding@resend.dev>`;
+
+  return (
+    envMotherlandFrom() ||
+    (isProductionDeployment()
+      ? `${branding.shortName} <noreply@motherlandcrmsolutions.com>`
+      : `${branding.shortName} <onboarding@resend.dev>`)
+  );
 }
 
 export function getResendReplyTo(host?: string | null): string {
   const branding = getEmailBranding(host);
   if (resolveBrandHost(host) === "vertexcrmsolution.com") {
-    return (
-      process.env.RESEND_REPLY_TO_VERTEX?.trim() ||
-      branding.supportEmail
-    );
+    return envVertexReplyTo() || branding.supportEmail;
   }
-  return (
-    process.env.RESEND_REPLY_TO?.trim() ||
-    branding.supportEmail
-  );
+  return envMotherlandReplyTo() || branding.supportEmail;
 }
 
 export function hasResendApiKey(): boolean {
