@@ -155,15 +155,20 @@ export function isPrimaryProductionHost(host: string): boolean {
   );
 }
 
-/** Search / AI discovery phrases for Motherland + white-label hosts. */
+function isVertexBrand(branding: AppBranding): boolean {
+  const bare = normalizeAppHost(branding.host).replace(/^www\./, "");
+  return (
+    bare === "vertexcrmsolution.com" ||
+    branding.shortName.toLowerCase().includes("vertex") ||
+    branding.displayName.toLowerCase().includes("vertex")
+  );
+}
+
+/** Search / AI discovery phrases — brand-specific (no cross-brand names). */
 export function buildBrandKeywords(branding: AppBranding): string[] {
-  const base = [
+  const shared = [
     branding.displayName,
     branding.shortName,
-    "Motherland CRM",
-    "Motherlands CRM",
-    "Motherland CRM Solutions",
-    "Motherlands CRM Solutions",
     "CRM",
     "CRM software",
     "CRM solution",
@@ -177,13 +182,52 @@ export function buildBrandKeywords(branding: AppBranding): string[] {
     "crypto billing CRM",
   ];
 
-  return [...new Set(base.filter(Boolean))];
+  const brandExtra = isVertexBrand(branding)
+    ? ["Vertex CRM", "Vertex CRM Solution", "vertexcrmsolution"]
+    : [
+        "Motherland CRM",
+        "Motherlands CRM",
+        "Motherland CRM Solutions",
+        "Motherlands CRM Solutions",
+      ];
+
+  return [...new Set([...shared, ...brandExtra].filter(Boolean))];
+}
+
+function buildMetaDescription(branding: AppBranding): string {
+  if (isVertexBrand(branding)) {
+    return `${branding.displayName} is a modern CRM platform for sales teams. Import Excel & CSV leads, assign agents, track pipelines in real time, and close more deals.`;
+  }
+  return `${branding.displayName} (also known as ${branding.shortName} / Motherlands CRM) is a modern CRM platform for sales teams. Import Excel & CSV leads, assign agents, track pipelines in real time, and close more deals with Motherland CRM Solutions.`;
+}
+
+function buildMetaTitle(branding: AppBranding): string {
+  if (isVertexBrand(branding)) {
+    return `${branding.displayName} – Modern CRM Solutions`;
+  }
+  return `${branding.displayName} | Motherland CRM – Modern CRM Solutions`;
+}
+
+function brandAlternateNames(branding: AppBranding): string[] {
+  if (isVertexBrand(branding)) {
+    return [branding.shortName, "Vertex CRM", "Vertex CRM Solution"];
+  }
+  return [
+    branding.shortName,
+    "Motherland CRM",
+    "Motherlands CRM",
+    "Motherland CRM Solutions",
+    "Motherlands CRM Solutions",
+  ];
 }
 
 export function buildAppMetadata(branding: AppBranding): Metadata {
-  const description = `${branding.displayName} (also known as ${branding.shortName} / Motherlands CRM) is a modern CRM platform for sales teams. Import Excel & CSV leads, assign agents, track pipelines in real time, and close more deals with Motherland CRM Solutions.`;
+  const description = buildMetaDescription(branding);
   const keywords = buildBrandKeywords(branding);
-  const titleDefault = `${branding.displayName} | Motherland CRM – Modern CRM Solutions`;
+  const titleDefault = buildMetaTitle(branding);
+  const ogImageAlt = isVertexBrand(branding)
+    ? `${branding.shortName} – Modern CRM Solutions`
+    : `${branding.shortName} – Motherland CRM Solutions`;
 
   return {
     title: {
@@ -217,7 +261,7 @@ export function buildAppMetadata(branding: AppBranding): Metadata {
           url: "/Motherlandfav.png",
           width: 1200,
           height: 630,
-          alt: `${branding.shortName} – Motherland CRM Solutions`,
+          alt: ogImageAlt,
         },
       ],
     },
@@ -281,7 +325,10 @@ export function buildAppMetadata(branding: AppBranding): Metadata {
 
 export function buildStructuredData(branding: AppBranding) {
   const keywords = buildBrandKeywords(branding);
-  const description = `${branding.displayName} is a CRM software platform for lead management, Excel & CSV import, team assignment, and real-time sales pipelines. Also known as Motherland CRM and Motherlands CRM Solutions.`;
+  const description = isVertexBrand(branding)
+    ? `${branding.displayName} is a CRM software platform for lead management, Excel & CSV import, team assignment, and real-time sales pipelines.`
+    : `${branding.displayName} is a CRM software platform for lead management, Excel & CSV import, team assignment, and real-time sales pipelines. Also known as Motherland CRM and Motherlands CRM Solutions.`;
+  const alternateNames = brandAlternateNames(branding);
 
   return {
     "@context": "https://schema.org",
@@ -290,13 +337,7 @@ export function buildStructuredData(branding: AppBranding) {
         "@type": "Organization",
         "@id": `${branding.origin}/#organization`,
         name: branding.displayName,
-        alternateName: [
-          branding.shortName,
-          "Motherland CRM",
-          "Motherlands CRM",
-          "Motherland CRM Solutions",
-          "Motherlands CRM Solutions",
-        ],
+        alternateName: alternateNames,
         url: branding.origin,
         email: branding.supportEmail,
         logo: `${branding.origin}/Motherlandfav.png`,
@@ -305,7 +346,7 @@ export function buildStructuredData(branding: AppBranding) {
         "@type": "WebSite",
         "@id": `${branding.origin}/#website`,
         name: branding.displayName,
-        alternateName: ["Motherland CRM", "Motherlands CRM Solutions", "CRM"],
+        alternateName: [...alternateNames, "CRM"],
         url: branding.origin,
         description,
         publisher: { "@id": `${branding.origin}/#organization` },
@@ -315,13 +356,7 @@ export function buildStructuredData(branding: AppBranding) {
         "@type": "SoftwareApplication",
         "@id": `${branding.origin}/#app`,
         name: branding.shortName,
-        alternateName: [
-          branding.displayName,
-          "Motherland CRM",
-          "Motherlands CRM",
-          "Motherland CRM Solutions",
-          "Motherlands CRM Solutions",
-        ],
+        alternateName: [branding.displayName, ...alternateNames],
         description,
         url: branding.origin,
         applicationCategory: "BusinessApplication",
