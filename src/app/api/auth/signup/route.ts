@@ -263,10 +263,20 @@ export async function POST(req: Request) {
     if (mustVerify && rawVerificationToken) {
       const origin = getPublicAppOrigin(requestHost);
       const verificationUrl = `${origin}/verify-email/${rawVerificationToken}`;
+      const fromAddress = getResendFrom(requestHost);
+      const replyToAddress = getResendReplyTo(requestHost);
+      console.info("[signup-verification] sending", {
+        host: requestHost,
+        brand: emailBranding.displayName,
+        from: fromAddress,
+        replyTo: replyToAddress,
+        to: user.email,
+        origin,
+      });
       const resend = new Resend(process.env.RESEND_API_KEY);
       try {
         sendResult = await resend.emails.send({
-          from: getResendFrom(requestHost),
+          from: fromAddress,
           to: [user.email],
           subject: subjectUsed,
           html: createVerificationEmailHtml(
@@ -274,7 +284,7 @@ export async function POST(req: Request) {
             verificationUrl,
             requestHost,
           ),
-          replyTo: getResendReplyTo(requestHost),
+          replyTo: replyToAddress,
           tags: [{ name: "category", value: "email_verification" }],
         });
         if (resendEmailOk(sendResult)) {
@@ -285,7 +295,11 @@ export async function POST(req: Request) {
       } catch (emailError) {
         sendException =
           emailError instanceof Error ? emailError.message : String(emailError);
-        console.error("Failed to send verification email:", emailError);
+        console.error("Failed to send verification email:", {
+          error: emailError,
+          from: fromAddress,
+          host: requestHost,
+        });
       }
     }
 

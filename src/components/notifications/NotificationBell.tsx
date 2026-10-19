@@ -530,6 +530,19 @@ export function NotificationBell() {
                         >
                           {notification.message}
                         </p>
+                        {(notification.userDisplayName ||
+                          notification.userFirstName ||
+                          notification.userEmail) && (
+                          <p className="text-xs text-gray-500! dark:text-gray-400! mt-1 wrap-break-word">
+                            {[
+                              notification.userDisplayName ||
+                                `${notification.userFirstName ?? ""} ${notification.userLastName ?? ""}`.trim(),
+                              notification.userEmail,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
+                        )}
                         {notification.amount && (
                           <p className="text-xs text-gray-500! dark:text-gray-400! mt-1">
                             Amount: {notification.amount}{" "}

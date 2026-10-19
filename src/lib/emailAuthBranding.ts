@@ -46,28 +46,47 @@ export function getEmailBranding(host?: string | null): AppBranding {
 const PUBLIC_MAIL_UNAVAILABLE =
   "Email service is temporarily unavailable. Please try again later.";
 
+/** Strip accidental wrapping quotes from Vercel / .env values. */
+function cleanEnvValue(raw: string | undefined | null): string | undefined {
+  if (!raw) return undefined;
+  let v = raw.trim();
+  if (
+    (v.startsWith('"') && v.endsWith('"')) ||
+    (v.startsWith("'") && v.endsWith("'"))
+  ) {
+    v = v.slice(1, -1).trim();
+  }
+  return v || undefined;
+}
+
+function looksLikeEmailFrom(value: string): boolean {
+  return /<[^<>\s]+@[^<>\s]+>/.test(value) || /^[^\s<>]+@[^\s<>]+$/.test(value);
+}
+
 function envMotherlandFrom(): string | undefined {
-  return (
-    process.env.RESEND_FROM_MOTHERLAND?.trim() ||
-    process.env.RESEND_FROM?.trim() ||
-    undefined
-  );
+  const value =
+    cleanEnvValue(process.env.RESEND_FROM_MOTHERLAND) ||
+    cleanEnvValue(process.env.RESEND_FROM);
+  if (value && looksLikeEmailFrom(value)) return value;
+  return undefined;
 }
 
 function envVertexFrom(): string | undefined {
-  return process.env.RESEND_FROM_VERTEX?.trim() || undefined;
+  const value = cleanEnvValue(process.env.RESEND_FROM_VERTEX);
+  if (value && looksLikeEmailFrom(value)) return value;
+  return undefined;
 }
 
 function envMotherlandReplyTo(): string | undefined {
   return (
-    process.env.RESEND_REPLY_TO_MOTHERLAND?.trim() ||
-    process.env.RESEND_REPLY_TO?.trim() ||
+    cleanEnvValue(process.env.RESEND_REPLY_TO_MOTHERLAND) ||
+    cleanEnvValue(process.env.RESEND_REPLY_TO) ||
     undefined
   );
 }
 
 function envVertexReplyTo(): string | undefined {
-  return process.env.RESEND_REPLY_TO_VERTEX?.trim() || undefined;
+  return cleanEnvValue(process.env.RESEND_REPLY_TO_VERTEX) || undefined;
 }
 
 /**
@@ -189,11 +208,10 @@ export function getResendFrom(host?: string | null): string {
     );
   }
 
+  // Motherland: prefer RESEND_FROM_MOTHERLAND, never silently use Vertex from.
   return (
     envMotherlandFrom() ||
-    (isProductionDeployment()
-      ? `${branding.shortName} <noreply@motherlandcrmsolutions.com>`
-      : `${branding.shortName} <onboarding@resend.dev>`)
+    `${branding.shortName} <noreply@motherlandcrmsolutions.com>`
   );
 }
 

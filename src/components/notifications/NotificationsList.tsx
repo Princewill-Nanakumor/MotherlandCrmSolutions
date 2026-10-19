@@ -19,9 +19,21 @@ interface Notification {
   amount?: number;
   currency?: string;
   userId?: string;
+  userFirstName?: string;
+  userLastName?: string;
+  userEmail?: string;
+  userDisplayName?: string;
   createdAt: string;
   read: boolean;
   resolvedStatus?: "APPROVED" | "REJECTED" | string;
+}
+
+function notificationUserLabel(notification: Notification): string | null {
+  if (notification.userDisplayName?.trim()) {
+    return notification.userDisplayName.trim();
+  }
+  const name = `${notification.userFirstName ?? ""} ${notification.userLastName ?? ""}`.trim();
+  return name || null;
 }
 
 interface NotificationsListProps {
@@ -203,6 +215,27 @@ export default function NotificationsList({
                   <p className="mb-2 text-gray-900! wrap-break-word dark:text-white!">
                     {notification.message}
                   </p>
+                  {(notificationUserLabel(notification) ||
+                    notification.userEmail) && (
+                    <div className="mb-2 space-y-0.5 text-sm text-gray-600! dark:text-white!">
+                      {notificationUserLabel(notification) ? (
+                        <p>
+                          <span className="text-gray-500! dark:text-gray-400!">
+                            Name:{" "}
+                          </span>
+                          {notificationUserLabel(notification)}
+                        </p>
+                      ) : null}
+                      {notification.userEmail ? (
+                        <p className="break-all">
+                          <span className="text-gray-500! dark:text-gray-400!">
+                            Email:{" "}
+                          </span>
+                          {notification.userEmail}
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
                   {notification.amount && (
                     <p className="mb-2 text-sm text-gray-600! dark:text-white!">
                       Amount: {notification.amount} {notification.currency}

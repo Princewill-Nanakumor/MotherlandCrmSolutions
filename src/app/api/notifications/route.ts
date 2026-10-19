@@ -11,6 +11,7 @@ import {
   notificationOwnerSelectors,
 } from "@/lib/notificationQuery";
 import { publishSuperAdminPaymentNotificationEvent } from "@/lib/ablyServer";
+import { enrichNotificationsWithUsers } from "@/lib/enrichNotificationsWithUsers";
 
 export async function GET() {
   try {
@@ -57,7 +58,15 @@ export async function GET() {
       .limit(50)
       .toArray();
 
-    return NextResponse.json(notifications);
+    const enriched = await enrichNotificationsWithUsers(
+      notifications as Array<{
+        userId?: string;
+        userFirstName?: string;
+        userLastName?: string;
+        userEmail?: string;
+      }>,
+    );
+    return NextResponse.json(enriched);
   } catch (error) {
     console.error("Error fetching notifications:", error);
     return NextResponse.json(
@@ -178,6 +187,7 @@ export async function POST(request: NextRequest) {
     const firstName = session.user.firstName?.trim() || "Unknown";
     const lastName = session.user.lastName?.trim() || "User";
 
+    const userEmail = session.user.email?.trim() || "";
     const doc = {
       type: "PAYMENT_PENDING_APPROVAL" as const,
       message: `New payment confirmation submitted: ${amount} ${currency} (${network}) by ${firstName} ${lastName}`,
@@ -187,6 +197,9 @@ export async function POST(request: NextRequest) {
       amount,
       currency,
       userId: session.user.id,
+      userFirstName: firstName,
+      userLastName: lastName,
+      userEmail,
       createdAt: now.toISOString(),
       read: false,
       timestamp: now.getTime(),
@@ -207,7 +220,7 @@ export async function POST(request: NextRequest) {
         network: network === "—" ? "Unknown" : network,
         userFirstName: firstName,
         userLastName: lastName,
-        userEmail: session.user.email || "unknown@email.com",
+        userEmail: userEmail || "unknown@email.com",
         transactionId: String(payment.transactionId ?? ""),
       });
 

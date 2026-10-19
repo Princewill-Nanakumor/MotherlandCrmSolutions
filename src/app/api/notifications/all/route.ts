@@ -11,6 +11,7 @@ import {
 } from "@/lib/notificationQuery";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";
 import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
+import { enrichNotificationsWithUsers } from "@/lib/enrichNotificationsWithUsers";
 
 export async function GET() {
   const perf = new ApiRoutePerf("GET /api/notifications/all");
@@ -61,8 +62,18 @@ export async function GET() {
       .toArray();
     perf.mark("notificationsFind");
 
-    return apiPerfJsonResponse(perf, notifications, {
-      extra: { count: notifications.length },
+    const enriched = await enrichNotificationsWithUsers(
+      notifications as Array<{
+        userId?: string;
+        userFirstName?: string;
+        userLastName?: string;
+        userEmail?: string;
+      }>,
+    );
+    perf.mark("enrichNotificationsWithUsers");
+
+    return apiPerfJsonResponse(perf, enriched, {
+      extra: { count: enriched.length },
     });
   } catch (error) {
     console.error("Error fetching all notifications:", error);

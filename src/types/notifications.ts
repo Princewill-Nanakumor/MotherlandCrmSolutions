@@ -17,4 +17,8 @@ export interface Notification {
   createdAt: string;
   read: boolean;
   userId?: string;
+  userFirstName?: string;
+  userLastName?: string;
+  userEmail?: string;
+  userDisplayName?: string;
 }

@@ -20,6 +20,10 @@ interface Notification {
   amount?: number;
   currency?: string;
   userId?: string;
+  userFirstName?: string;
+  userLastName?: string;
+  userEmail?: string;
+  userDisplayName?: string;
   createdAt: string;
   read: boolean;
 }
@@ -35,6 +39,10 @@ interface RawNotification {
   amount?: number;
   currency?: string;
   userId?: string;
+  userFirstName?: string;
+  userLastName?: string;
+  userEmail?: string;
+  userDisplayName?: string;
   createdAt: string;
   read: boolean;
   [key: string]: unknown;

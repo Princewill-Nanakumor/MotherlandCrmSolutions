@@ -139,6 +139,12 @@ export async function POST(
       currency: payment.currency,
     });
 
+    const recipientAdmin = payment.adminId
+      ? ((await User.findById(payment.adminId)
+          .select("email firstName lastName")
+          .lean()) as UserDocument | null)
+      : null;
+
     const notificationDoc = {
       type: "PAYMENT_REJECTED",
       message: `Your payment of ${payment.amount} ${payment.currency} has been rejected`,
@@ -148,6 +154,9 @@ export async function POST(
       amount: payment.amount,
       currency: payment.currency,
       userId: payment.adminId?.toString(),
+      userFirstName: recipientAdmin?.firstName || undefined,
+      userLastName: recipientAdmin?.lastName || undefined,
+      userEmail: recipientAdmin?.email || undefined,
       createdAt: now.toISOString(),
       read: false,
       timestamp: now.getTime(),
