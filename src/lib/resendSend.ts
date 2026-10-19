@@ -1,5 +1,9 @@
 import type { CreateEmailResponse } from "resend";
 
+/** User-facing copy when verification mail fails (safe for production UI). */
+export const PUBLIC_VERIFICATION_EMAIL_FAILURE =
+  "Verification email could not be sent. Please try again later or contact support.";
+
 /** Resend returns `{ data, error }` and does not throw on 4xx API errors. */
 export function resendEmailOk(result: CreateEmailResponse): boolean {
   return result.error === null && Boolean(result.data?.id);
@@ -22,13 +26,18 @@ export function logResendFailure(
 }
 
 /**
- * Short hint for the client when verification (or similar) mail failed.
- * Always prefer Resend's own message so operators can see domain / from / key issues.
+ * Hint for the client when verification mail failed.
+ * Production always returns a generic message — Resend domain / API details
+ * stay in server logs only (`logResendFailure`).
  */
 export function resendEmailFailureHint(
   result: CreateEmailResponse | null,
   sendException: string | null,
-): string | null {
+): string {
+  if (process.env.NODE_ENV === "production") {
+    return PUBLIC_VERIFICATION_EMAIL_FAILURE;
+  }
+
   const err = result?.error;
   if (err) {
     const raw = (err.message ?? "").trim();
@@ -56,5 +65,5 @@ export function resendEmailFailureHint(
   if (sendException?.trim()) {
     return `The mail provider returned an unexpected error (${sendException.trim()}). Try again later or contact support.`;
   }
-  return "Verification email could not be sent. Check RESEND_API_KEY / RESEND_FROM on the server, or contact support.";
+  return PUBLIC_VERIFICATION_EMAIL_FAILURE;
 }

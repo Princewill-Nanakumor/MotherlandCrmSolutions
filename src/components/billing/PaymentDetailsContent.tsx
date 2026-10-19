@@ -49,6 +49,29 @@ export default function PaymentDetailsContent({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {(payment.tenantAccount || payment.submittedBy) && (
+                <>
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-sm shrink-0 text-gray-600! dark:text-white!">
+                      Name
+                    </span>
+                    <span className="text-sm font-medium text-right wrap-break-word text-gray-900! dark:text-white!">
+                      {(payment.tenantAccount || payment.submittedBy)
+                        ?.displayName}
+                    </span>
+                  </div>
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-sm shrink-0 text-gray-600! dark:text-white!">
+                      Email
+                    </span>
+                    <span className="text-sm text-right break-all text-gray-900! dark:text-white!">
+                      {(payment.tenantAccount || payment.submittedBy)?.email ||
+                        "—"}
+                    </span>
+                  </div>
+                </>
+              )}
+
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600! dark:text-white!">
                   Amount

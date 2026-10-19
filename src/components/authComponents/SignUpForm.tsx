@@ -173,7 +173,7 @@ export default function SignUpForm() {
       postSignup === "verify_sent"
         ? "A verification link has been sent to your email. Please confirm it to verify your account."
         : postSignup === "verify_failed"
-          ? "Your account was created, but we could not send the verification email. Check your spam folder, or contact support if the problem continues."
+          ? "Your account was created, but we could not send the verification email. Please try again later."
           : "Your account is ready. Sign in with your email and password.";
 
     return (
@@ -192,7 +192,7 @@ export default function SignUpForm() {
             {postSignup === "verify_failed" ? (
               <p className="px-3 py-2 mx-auto max-w-lg text-xs leading-snug text-left text-amber-100 rounded-lg border border-amber-400/50 bg-amber-500/10 sm:text-sm">
                 {emailSendHint ||
-                  "Verification email could not be sent. Contact support if you need a new link."}
+                  "Verification email could not be sent. Please try again later or contact support."}
               </p>
             ) : null}
           </div>

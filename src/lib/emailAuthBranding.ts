@@ -43,21 +43,32 @@ export function getEmailBranding(host?: string | null): AppBranding {
   return getBrandingForHost(host ?? null);
 }
 
+const PUBLIC_MAIL_UNAVAILABLE =
+  "Email service is temporarily unavailable. Please try again later.";
+
 /** Returns an error message if outbound auth email cannot be sent, else null. */
 export function assertAuthEmailConfigured(host?: string | null): string | null {
   if (!process.env.RESEND_API_KEY?.trim()) {
-    return "Email service is not configured.";
+    return isProductionDeployment()
+      ? PUBLIC_MAIL_UNAVAILABLE
+      : "Email service is not configured.";
   }
   if (!isProductionDeployment()) return null;
   const bare = resolveBrandHost(host);
   if (bare === "vertexcrmsolution.com") {
     if (!process.env.RESEND_FROM_VERTEX?.trim()) {
-      return "Email sender (RESEND_FROM_VERTEX) is not configured for Vertex.";
+      console.error(
+        "assertAuthEmailConfigured: RESEND_FROM_VERTEX is not configured for Vertex.",
+      );
+      return PUBLIC_MAIL_UNAVAILABLE;
     }
     return null;
   }
   if (!process.env.RESEND_FROM?.trim()) {
-    return "Email sender (RESEND_FROM) is not configured for production.";
+    console.error(
+      "assertAuthEmailConfigured: RESEND_FROM is not configured for production.",
+    );
+    return PUBLIC_MAIL_UNAVAILABLE;
   }
   return null;
 }
