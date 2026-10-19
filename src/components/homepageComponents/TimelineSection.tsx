@@ -104,10 +104,10 @@ export default function TimelineSection() {
                       </p>
                       <span
                         className={cn(
-                          "mt-4 inline-flex items-center gap-1 text-xs font-semibold text-(--brand-from) opacity-0 transition-all duration-300 group-hover:opacity-100",
+                          "mt-4 inline-flex items-center gap-1 text-xs font-semibold text-(--brand-from) opacity-100 transition-all duration-300 md:opacity-0 md:group-hover:opacity-100",
                           isRight
-                            ? "group-hover:translate-x-1"
-                            : "md:flex-row-reverse group-hover:md:-translate-x-1 group-hover:translate-x-1",
+                            ? "md:group-hover:translate-x-1"
+                            : "md:flex-row-reverse md:group-hover:md:-translate-x-1 md:group-hover:translate-x-1",
                         )}
                       >
                         <ArrowRight className="w-3.5 h-3.5" />

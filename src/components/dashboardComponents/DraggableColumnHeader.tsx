@@ -69,7 +69,7 @@ export function DraggableColumnHeader({
       )}
     >
       <span
-        className="pointer-events-none shrink-0 rounded p-0.5 opacity-0 transition-opacity group-hover/th:opacity-100"
+        className="pointer-events-none shrink-0 rounded p-0.5 opacity-100 transition-opacity md:opacity-0 md:group-hover/th:opacity-100"
         aria-hidden
       >
         <GripVertical className="h-3.5 w-3.5 text-current opacity-60" />

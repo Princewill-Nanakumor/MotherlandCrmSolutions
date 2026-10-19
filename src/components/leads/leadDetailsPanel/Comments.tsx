@@ -369,7 +369,7 @@ const Comments: FC<CommentsProps> = ({
                     </div>
 
                     {canModerateComments && editingId !== comment._id && (
-                      <div className="flex gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                      <div className="flex gap-1 opacity-100 transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
                         <Button
                           variant="ghost"
                           size="sm"

@@ -54,7 +54,7 @@ export function DraggableUserColumnHeader({
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded absolute left-1 top-1/2 -translate-y-1/2 z-10"
+        className="cursor-grab active:cursor-grabbing opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded absolute left-1 top-1/2 -translate-y-1/2 z-10"
         aria-label="Drag to reorder column"
       >
         <GripVertical className="w-4 h-4 text-gray-400 dark:text-gray-500" />

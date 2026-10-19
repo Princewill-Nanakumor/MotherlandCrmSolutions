@@ -166,7 +166,7 @@ function AdsVisual() {
               (prev) => (prev - 1 + ADS_SAMPLES.length) % ADS_SAMPLES.length,
             )
           }
-          className="absolute p-2 text-white transition-opacity -translate-y-1/2 rounded-full opacity-0 left-2 top-1/2 bg-black/50 group-hover:opacity-100"
+          className="absolute p-2 text-white transition-opacity -translate-y-1/2 rounded-full opacity-100 left-2 top-1/2 bg-black/50 md:opacity-0 md:group-hover:opacity-100"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -174,7 +174,7 @@ function AdsVisual() {
           type="button"
           aria-label="Next ad"
           onClick={() => setSlide((prev) => (prev + 1) % ADS_SAMPLES.length)}
-          className="absolute p-2 text-white transition-opacity -translate-y-1/2 rounded-full opacity-0 right-2 top-1/2 bg-black/50 group-hover:opacity-100"
+          className="absolute p-2 text-white transition-opacity -translate-y-1/2 rounded-full opacity-100 right-2 top-1/2 bg-black/50 md:opacity-0 md:group-hover:opacity-100"
         >
           <ChevronRight className="w-4 h-4" />
         </button>

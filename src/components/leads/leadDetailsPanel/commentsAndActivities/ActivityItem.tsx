@@ -138,7 +138,7 @@ export const ActivityItem: FC<ActivityItemProps> = ({
                     DELETE_ICON_BUTTON_CLASS,
                     isDeleting
                       ? "opacity-100"
-                      : "opacity-0 group-hover:opacity-100",
+                      : "opacity-100 md:opacity-0 md:group-hover:opacity-100",
                   )}
                   onClick={() => onDelete(activity._id)}
                   disabled={isDeleting || isDeleteDisabled}

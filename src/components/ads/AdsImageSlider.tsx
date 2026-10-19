@@ -128,7 +128,7 @@ export const AdsImageSlider: FC<AdsImageSliderProps> = ({
               e.stopPropagation();
               prevSlide();
             }}
-            className="absolute p-2 text-white transition-all duration-200 transform -translate-y-1/2 rounded-full opacity-0 left-2 top-1/2 bg-black/50 hover:bg-black/70 group-hover:opacity-100"
+            className="absolute p-2 text-white transition-all duration-200 transform -translate-y-1/2 rounded-full opacity-100 left-2 top-1/2 bg-black/50 hover:bg-black/70 md:opacity-0 md:group-hover:opacity-100"
             aria-label="Previous ad"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -139,7 +139,7 @@ export const AdsImageSlider: FC<AdsImageSliderProps> = ({
               e.stopPropagation();
               nextSlide();
             }}
-            className="absolute p-2 text-white transition-all duration-200 transform -translate-y-1/2 rounded-full opacity-0 right-2 top-1/2 bg-black/50 hover:bg-black/70 group-hover:opacity-100"
+            className="absolute p-2 text-white transition-all duration-200 transform -translate-y-1/2 rounded-full opacity-100 right-2 top-1/2 bg-black/50 hover:bg-black/70 md:opacity-0 md:group-hover:opacity-100"
             aria-label="Next ad"
           >
             <ChevronRight className="w-4 h-4" />

@@ -36,7 +36,8 @@ export function SidebarBrandToggle({
         className={cn(
           "absolute inset-0 flex items-center justify-center overflow-hidden rounded-2xl",
           "transition-opacity duration-300 ease-in-out",
-          "group-hover/sidebar:opacity-0 group-hover/sidebar:pointer-events-none",
+          // Touch: keep logo; desktop: hide logo when sidebar hover reveals toggle
+          "md:group-hover/sidebar:opacity-0 md:group-hover/sidebar:pointer-events-none",
         )}
         aria-label="Home"
       >
@@ -60,8 +61,10 @@ export function SidebarBrandToggle({
           "dark:border-[color-mix(in_srgb,var(--brand-from)_45%,transparent)] dark:bg-gray-800",
           "dark:hover:bg-[color-mix(in_srgb,var(--brand-from)_18%,#1f2937)]",
           "transition-all duration-300 ease-in-out",
-          "opacity-0 pointer-events-none scale-95",
-          "group-hover/sidebar:opacity-100 group-hover/sidebar:pointer-events-auto group-hover/sidebar:scale-100",
+          // Always tappable below md (no hover on phones); hover-reveal from md up
+          "opacity-100 pointer-events-auto scale-100",
+          "md:opacity-0 md:pointer-events-none md:scale-95",
+          "md:group-hover/sidebar:opacity-100 md:group-hover/sidebar:pointer-events-auto md:group-hover/sidebar:scale-100",
         )}
         aria-label="Toggle sidebar"
       >
