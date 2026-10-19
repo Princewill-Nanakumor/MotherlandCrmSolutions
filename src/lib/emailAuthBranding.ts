@@ -5,11 +5,13 @@
  * Resend returns `{ data, error }` (no throw on API errors) — use
  * `resendEmailOk` from `@/lib/resendSend` after `emails.send`.
  *
- * Production senders:
- * - Motherland: `RESEND_FROM_MOTHERLAND` (legacy alias: `RESEND_FROM`)
- * - Vertex: `RESEND_FROM_VERTEX`
- * Each domain must be verified in Resend.
+ * Production:
+ * - Motherland: `RESEND_API_KEY_MOTHERLAND` + `RESEND_FROM_MOTHERLAND`
+ *   (aliases: `MotherlandresendApiKey`, `RESEND_FROM`)
+ * - Vertex: `RESEND_API_KEY_VERTEX` or shared `RESEND_API_KEY` + `RESEND_FROM_VERTEX`
+ * Each domain must be verified in the matching Resend account.
  */
+import { Resend } from "resend";
 import {
   getBrandingForHost,
   getServerAppBranding,
@@ -90,12 +92,39 @@ function envVertexReplyTo(): string | undefined {
 }
 
 /**
- * Hard-block signup only when the API key is missing.
+ * API key for the brand's Resend account.
+ * Motherland and Vertex may use different Resend projects/keys.
+ */
+export function getResendApiKey(host?: string | null): string | undefined {
+  const bare = resolveBrandHost(host);
+  if (bare === "vertexcrmsolution.com") {
+    return (
+      cleanEnvValue(process.env.RESEND_API_KEY_VERTEX) ||
+      cleanEnvValue(process.env.RESEND_API_KEY) ||
+      undefined
+    );
+  }
+  return (
+    cleanEnvValue(process.env.RESEND_API_KEY_MOTHERLAND) ||
+    cleanEnvValue(process.env.MotherlandresendApiKey) ||
+    cleanEnvValue(process.env.RESEND_API_KEY) ||
+    undefined
+  );
+}
+
+export function createResendClient(host?: string | null): Resend | null {
+  const key = getResendApiKey(host);
+  if (!key) return null;
+  return new Resend(key);
+}
+
+/**
+ * Hard-block signup only when the brand API key is missing.
  * Missing RESEND_FROM_* is logged; send may still fail and surface as
  * verify_failed — better than a 503 before the account is created.
  */
 export function assertAuthEmailConfigured(host?: string | null): string | null {
-  if (!process.env.RESEND_API_KEY?.trim()) {
+  if (!getResendApiKey(host)) {
     return isProductionDeployment()
       ? PUBLIC_MAIL_UNAVAILABLE
       : "Email service is not configured.";
@@ -223,8 +252,8 @@ export function getResendReplyTo(host?: string | null): string {
   return envMotherlandReplyTo() || branding.supportEmail;
 }
 
-export function hasResendApiKey(): boolean {
-  return Boolean(process.env.RESEND_API_KEY?.trim());
+export function hasResendApiKey(host?: string | null): boolean {
+  return Boolean(getResendApiKey(host));
 }
 
 function brandNameHtml(branding: AppBranding): string {

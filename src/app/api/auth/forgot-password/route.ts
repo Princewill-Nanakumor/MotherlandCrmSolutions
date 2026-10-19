@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { connectMongoDB } from "@/lib/dbConfig";
 import { findUserForPasswordResetByEmail } from "@/lib/authEmailUserLookup";
-import { Resend } from "resend";
 import { z } from "zod";
 import { hashAuthTokenForStorage } from "@/lib/authEmailTokens";
 import {
   assertAuthEmailConfigured,
   createPasswordResetEmailHtml,
+  createResendClient,
   getEmailBranding,
   getPublicAppOrigin,
   getRequestHost,
@@ -120,23 +120,27 @@ export async function POST(req: Request) {
         await user.save();
 
         const resetUrl = `${getPublicAppOrigin(requestHost)}/reset-password/${resetToken}`;
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        const resend = createResendClient(requestHost);
         const brandName = getEmailBranding(requestHost).displayName;
 
-        const sendResult = await resend.emails.send({
-          from: getResendFrom(requestHost),
-          to: [user.email],
-          subject: `${brandName} - reset your password`,
-          html: createPasswordResetEmailHtml(
-            user.firstName || "there",
-            resetUrl,
-            requestHost,
-          ),
-          replyTo: getResendReplyTo(requestHost),
-          tags: [{ name: "category", value: "password_reset" }],
-        });
-        if (!resendEmailOk(sendResult)) {
-          logResendFailure("forgot-password", sendResult);
+        if (!resend) {
+          console.error("forgot-password: missing API key for host", requestHost);
+        } else {
+          const sendResult = await resend.emails.send({
+            from: getResendFrom(requestHost),
+            to: [user.email],
+            subject: `${brandName} - reset your password`,
+            html: createPasswordResetEmailHtml(
+              user.firstName || "there",
+              resetUrl,
+              requestHost,
+            ),
+            replyTo: getResendReplyTo(requestHost),
+            tags: [{ name: "category", value: "password_reset" }],
+          });
+          if (!resendEmailOk(sendResult)) {
+            logResendFailure("forgot-password", sendResult);
+          }
         }
       } catch (emailError) {
         console.error("Failed to send reset email:", emailError);

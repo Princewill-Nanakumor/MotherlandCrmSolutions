@@ -1,9 +1,9 @@
 // src/lib/emailService.ts
-import { Resend } from "resend";
 import {
   createPasswordChangedEmailHtml,
   createPaymentApprovedEmailHtml,
   createPaymentRejectedEmailHtml,
+  createResendClient,
   getEmailBranding,
   getPublicAppOrigin,
   getResendFrom,
@@ -81,9 +81,9 @@ export async function sendPasswordChangedEmail(
     return { success: false, skipped: true };
   }
 
-  if (!hasResendApiKey()) {
+  if (!hasResendApiKey(data.requestHost)) {
     console.warn(
-      "sendPasswordChangedEmail: RESEND_API_KEY not configured; skipping",
+      "sendPasswordChangedEmail: Resend API key not configured; skipping",
       { to },
     );
     return { success: false, skipped: true };
@@ -91,9 +91,12 @@ export async function sendPasswordChangedEmail(
 
   const loginUrl = `${getPublicAppOrigin(data.requestHost)}/login`;
   const brandName = getEmailBranding(data.requestHost).displayName;
+  const resend = createResendClient(data.requestHost);
+  if (!resend) {
+    return { success: false, skipped: true };
+  }
 
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
     const sendResult = await resend.emails.send({
       from: getResendFrom(data.requestHost),
       to: [to],
@@ -134,9 +137,9 @@ export async function sendPaymentDecisionEmail(
     return { success: false, skipped: true };
   }
 
-  if (!hasResendApiKey()) {
+  if (!hasResendApiKey(data.requestHost)) {
     console.warn(
-      "sendPaymentDecisionEmail: RESEND_API_KEY not configured; skipping",
+      "sendPaymentDecisionEmail: Resend API key not configured; skipping",
       { paymentId: data.paymentId, decision: data.decision },
     );
     return { success: false, skipped: true };
@@ -161,8 +164,12 @@ export async function sendPaymentDecisionEmail(
     ? createPaymentApprovedEmailHtml(htmlParams, data.requestHost)
     : createPaymentRejectedEmailHtml(htmlParams, data.requestHost);
 
+  const resend = createResendClient(data.requestHost);
+  if (!resend) {
+    return { success: false, skipped: true };
+  }
+
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
     const sendResult = await resend.emails.send({
       from: getResendFrom(data.requestHost),
       to: [to],

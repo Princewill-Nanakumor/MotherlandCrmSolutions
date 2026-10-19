@@ -6,6 +6,7 @@ import User from "@/models/User";
 import { hashAuthTokenForStorage } from "@/lib/authEmailTokens";
 import {
   assertAuthEmailConfigured,
+  createResendClient,
   createVerificationEmailHtml,
   getEmailBranding,
   getPublicAppOrigin,
@@ -15,7 +16,6 @@ import {
 } from "@/lib/emailAuthBranding";
 import { rateLimitEnhanced } from "@/lib/rateLimit";
 import { logResendFailure, resendEmailOk } from "@/lib/resendSend";
-import { Resend } from "resend";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -110,8 +110,19 @@ export async function POST(req: Request) {
 
     const origin = getPublicAppOrigin(requestHost);
     const verificationUrl = `${origin}/verify-email/${rawToken}`;
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    const resend = createResendClient(requestHost);
     const brandName = getEmailBranding(requestHost).displayName;
+
+    if (!resend) {
+      return NextResponse.json(
+        {
+          status: "send_failed",
+          message:
+            "We updated your verification request but could not send email. Try again later or contact support.",
+        },
+        { status: 503 },
+      );
+    }
 
     try {
       const sendResult = await resend.emails.send({

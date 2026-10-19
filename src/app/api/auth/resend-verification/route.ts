@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { connectMongoDB } from "@/lib/dbConfig";
 import { findUserForResendVerificationByEmail } from "@/lib/authEmailUserLookup";
-import { Resend } from "resend";
 import { z } from "zod";
 import { hashAuthTokenForStorage } from "@/lib/authEmailTokens";
 import {
   assertAuthEmailConfigured,
+  createResendClient,
   createVerificationEmailHtml,
   getEmailBranding,
   getPublicAppOrigin,
@@ -129,29 +129,33 @@ export async function POST(req: Request) {
 
       const origin = getPublicAppOrigin(requestHost);
       const verificationUrl = `${origin}/verify-email/${rawToken}`;
-      const resend = new Resend(process.env.RESEND_API_KEY);
+      const resend = createResendClient(requestHost);
       const brandName = getEmailBranding(requestHost).displayName;
 
-      try {
-        const sendResult = await resend.emails.send({
-          from: getResendFrom(requestHost),
-          to: [user.email],
-          subject: `${brandName} - verify your email`,
-          html: createVerificationEmailHtml(
-            user.firstName,
-            verificationUrl,
-            requestHost,
-          ),
-          replyTo: getResendReplyTo(requestHost),
-          tags: [{ name: "category", value: "email_verification_resend" }],
-        });
-        if (!resendEmailOk(sendResult)) {
-          logResendFailure("resend-verification", sendResult);
+      if (!resend) {
+        console.error("resend-verification: missing API key for host", requestHost);
+      } else {
+        try {
+          const sendResult = await resend.emails.send({
+            from: getResendFrom(requestHost),
+            to: [user.email],
+            subject: `${brandName} - verify your email`,
+            html: createVerificationEmailHtml(
+              user.firstName,
+              verificationUrl,
+              requestHost,
+            ),
+            replyTo: getResendReplyTo(requestHost),
+            tags: [{ name: "category", value: "email_verification_resend" }],
+          });
+          if (!resendEmailOk(sendResult)) {
+            logResendFailure("resend-verification", sendResult);
+          }
+        } catch (emailError) {
+          // Token is rotated even on failure so the next click is a fresh
+          // attempt. Log loudly so Resend outages are visible in monitoring.
+          console.error("Resend verification email failed:", emailError);
         }
-      } catch (emailError) {
-        // Token is rotated even on failure so the next click is a fresh
-        // attempt. Log loudly so Resend outages are visible in monitoring.
-        console.error("Resend verification email failed:", emailError);
       }
     }
 

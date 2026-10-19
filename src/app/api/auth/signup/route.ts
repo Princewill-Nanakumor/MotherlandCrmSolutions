@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { connectMongoDB } from "@/lib/dbConfig";
 import User from "@/models/User";
-import { Resend, type CreateEmailResponse } from "resend";
+import type { CreateEmailResponse } from "resend";
 import { z } from "zod";
 import { hashAuthTokenForStorage } from "@/lib/authEmailTokens";
 import {
@@ -13,6 +13,7 @@ import {
   getEmailBranding,
   getPublicAppOrigin,
   getRequestHost,
+  createResendClient,
   getResendFrom,
   getResendReplyTo,
   shouldRequireEmailVerification,
@@ -273,33 +274,43 @@ export async function POST(req: Request) {
         to: user.email,
         origin,
       });
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      try {
-        sendResult = await resend.emails.send({
-          from: fromAddress,
-          to: [user.email],
-          subject: subjectUsed,
-          html: createVerificationEmailHtml(
-            user.firstName,
-            verificationUrl,
-            requestHost,
-          ),
-          replyTo: replyToAddress,
-          tags: [{ name: "category", value: "email_verification" }],
-        });
-        if (resendEmailOk(sendResult)) {
-          emailSent = true;
-        } else {
-          logResendFailure("signup-verification", sendResult);
-        }
-      } catch (emailError) {
-        sendException =
-          emailError instanceof Error ? emailError.message : String(emailError);
-        console.error("Failed to send verification email:", {
-          error: emailError,
-          from: fromAddress,
+      const resend = createResendClient(requestHost);
+      if (!resend) {
+        sendException = "Resend API key is not configured for this brand.";
+        console.error("[signup-verification] missing API key", {
           host: requestHost,
+          brand: emailBranding.displayName,
         });
+      } else {
+        try {
+          sendResult = await resend.emails.send({
+            from: fromAddress,
+            to: [user.email],
+            subject: subjectUsed,
+            html: createVerificationEmailHtml(
+              user.firstName,
+              verificationUrl,
+              requestHost,
+            ),
+            replyTo: replyToAddress,
+            tags: [{ name: "category", value: "email_verification" }],
+          });
+          if (resendEmailOk(sendResult)) {
+            emailSent = true;
+          } else {
+            logResendFailure("signup-verification", sendResult);
+          }
+        } catch (emailError) {
+          sendException =
+            emailError instanceof Error
+              ? emailError.message
+              : String(emailError);
+          console.error("Failed to send verification email:", {
+            error: emailError,
+            from: fromAddress,
+            host: requestHost,
+          });
+        }
       }
     }
 
