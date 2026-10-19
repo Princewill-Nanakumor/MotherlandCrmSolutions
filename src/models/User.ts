@@ -62,6 +62,12 @@ export interface IUser extends Document {
   canViewPhoneNumbers?: boolean; // Whether user can view phone numbers in leads
   canViewEmails?: boolean; // Whether user can view email addresses in leads
 
+  /**
+   * Public signup origin for ADMIN accounts (which white-label host they used).
+   * Agents created later may inherit the host they were created from.
+   */
+  signupBrand?: "motherland" | "vertex";
+
   /** ADMIN-only tenant appearance (agents inherit via adminId). */
   brandTheme?: {
     primary?: string;
@@ -237,6 +243,10 @@ const userSchema = new Schema<IUser>(
     canViewEmails: {
       type: Boolean,
       default: false, // Default to false - emails are masked by default
+    },
+    signupBrand: {
+      type: String,
+      enum: ["motherland", "vertex"],
     },
     brandTheme: {
       type: {

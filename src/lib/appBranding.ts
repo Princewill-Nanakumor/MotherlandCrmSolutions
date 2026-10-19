@@ -43,43 +43,58 @@ export function normalizeAppHost(host: string | null | undefined): string {
   return host.split(",")[0]?.trim().split(":")[0]?.toLowerCase().replace(/\.$/, "") ?? "";
 }
 
-function presetForHost(host: string): BrandPreset {
-  const normalized = normalizeAppHost(host);
-  if (!normalized) return DEFAULT_PRESET;
+export function isLocalAppHostname(hostname: string): boolean {
+  const host = hostname.trim().toLowerCase();
+  return (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "::1" ||
+    host === "0.0.0.0"
+  );
+}
 
-  if (HOST_PRESETS[normalized]) {
-    return HOST_PRESETS[normalized];
+/**
+ * Canonical white-label host for branding / signup / Resend.
+ * Production hosts win; on localhost (or unknown) use
+ * `NEXT_PUBLIC_APP_BRAND` / `APP_BRAND` = `vertex` | `motherland`.
+ */
+export function resolveBrandHost(
+  host?: string | null,
+): "motherlandcrmsolutions.com" | "vertexcrmsolution.com" {
+  const bare = normalizeAppHost(host).replace(/^www\./, "");
+  if (bare === "vertexcrmsolution.com") return "vertexcrmsolution.com";
+  if (bare === "motherlandcrmsolutions.com") {
+    return "motherlandcrmsolutions.com";
   }
 
-  if (normalized.startsWith("www.")) {
-    const bare = normalized.slice(4);
-    if (HOST_PRESETS[bare]) return HOST_PRESETS[bare];
-  }
+  const override = (
+    process.env.NEXT_PUBLIC_APP_BRAND ||
+    process.env.APP_BRAND ||
+    ""
+  )
+    .trim()
+    .toLowerCase();
+  if (override === "vertex") return "vertexcrmsolution.com";
+  if (override === "motherland") return "motherlandcrmsolutions.com";
 
-  const envName = process.env.NEXT_PUBLIC_APP_NAME?.trim();
-  if (envName) {
-    return {
-      displayName: envName,
-      shortName: envName,
-      supportEmail:
-        process.env.RESEND_REPLY_TO?.trim() ||
-        DEFAULT_PRESET.supportEmail,
-      logoLetter: envName.charAt(0).toUpperCase() || "C",
-    };
-  }
-
-  return DEFAULT_PRESET;
+  return "motherlandcrmsolutions.com";
 }
 
 export function getBrandingForHost(host: string | null | undefined): AppBranding {
-  const normalized = normalizeAppHost(host) || "motherlandcrmsolutions.com";
-  const preset = presetForHost(normalized);
+  const normalized = normalizeAppHost(host);
+  const brandHost = resolveBrandHost(host);
+  const preset = HOST_PRESETS[brandHost] ?? DEFAULT_PRESET;
   const protocol =
     process.env.NODE_ENV === "production" ? "https" : "http";
 
+  // Keep localhost as the request host so local origins stay correct;
+  // brandHost drives display name / support email / signup stamp.
+  const effectiveHost =
+    normalized && !isLocalAppHostname(normalized) ? brandHost : normalized || brandHost;
+
   return {
-    host: normalized,
-    origin: `${protocol}://${normalized}`,
+    host: effectiveHost,
+    origin: `${protocol}://${effectiveHost}`,
     ...preset,
   };
 }
@@ -353,4 +368,19 @@ export function getServerAppBranding(): AppBranding {
 
 export function dashboardPageTitle(shortName: string, page: string): string {
   return `${shortName} - ${page}`;
+}
+
+/** Which white-label site an ADMIN registered on (stored on the user doc). */
+export type SignupBrand = "motherland" | "vertex";
+
+export function resolveSignupBrand(host?: string | null): SignupBrand {
+  return resolveBrandHost(host) === "vertexcrmsolution.com"
+    ? "vertex"
+    : "motherland";
+}
+
+export function signupBrandLabel(brand?: SignupBrand | string | null): string {
+  if (brand === "vertex") return "Vertex";
+  if (brand === "motherland") return "Motherland";
+  return "Unknown";
 }

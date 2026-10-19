@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { AdminStats } from "@/types/adminManagement";
+import { signupBrandLabel } from "@/lib/appBranding";
 
 interface AdminCardProps {
   admin: AdminStats;
@@ -86,6 +87,16 @@ export function AdminCard({
     }).format(balance);
   };
 
+  const getSignupBrandColor = (brand?: string) => {
+    if (brand === "vertex") {
+      return "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-900/20 dark:text-sky-300 dark:border-sky-800";
+    }
+    if (brand === "motherland") {
+      return "bg-amber-100 text-amber-900 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800";
+    }
+    return "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800";
+  };
+
   return (
     <div className="flex flex-col gap-3 p-4 transition-all duration-200 border border-gray-200 rounded-lg min-w-0 sm:flex-row sm:items-center sm:justify-between dark:border-gray-700 backdrop-blur-lg bg-white/50 dark:bg-gray-800/50 hover:bg-white/70 dark:hover:bg-gray-800/70">
       <div className="flex items-start gap-3 min-w-0 sm:items-center sm:gap-4 sm:space-x-0">
@@ -103,6 +114,9 @@ export function AdminCard({
             </h3>
             <Badge className={getStatusColor(admin.status)}>
               {admin.status}
+            </Badge>
+            <Badge className={getSignupBrandColor(admin.signupBrand)}>
+              {signupBrandLabel(admin.signupBrand)}
             </Badge>
             {admin.subscription && (
               <Badge className={getPlanColor(admin.subscription.plan)}>

@@ -4,7 +4,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
-import { billingKeys } from "./useBillingData";
+import { billingKeys, invalidateBalanceCaches } from "./useBillingData";
 import { notificationKeys } from "@/lib/notificationKeys";
 import {
   Payment,
@@ -61,19 +61,11 @@ export const useCreatePayment = () => {
         queryKey: billingKeys.paymentsRoot(),
       });
 
-      // Invalidate balance query
-      queryClient.invalidateQueries({
-        queryKey: billingKeys.balance(),
-      });
+      await invalidateBalanceCaches(queryClient, { refetch: true });
 
       // Force immediate refetch of the payments query used by useBillingSummary (limit: 10)
       await queryClient.refetchQueries({
         queryKey: billingKeys.payments(10),
-      });
-
-      // Force immediate refetch of balance
-      await queryClient.refetchQueries({
-        queryKey: billingKeys.balance(),
       });
 
       toast({
@@ -201,10 +193,9 @@ export const useApprovePayment = () => {
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: billingKeys.paymentsRoot() }),
-        queryClient.invalidateQueries({ queryKey: billingKeys.balance() }),
+        invalidateBalanceCaches(queryClient, { refetch: true }),
         queryClient.invalidateQueries({ queryKey: notificationKeys.all }),
         queryClient.refetchQueries({ queryKey: billingKeys.payments(10) }),
-        queryClient.refetchQueries({ queryKey: billingKeys.balance() }),
         queryClient.refetchQueries({ queryKey: notificationKeys.all }),
       ]);
 
@@ -338,9 +329,7 @@ export const useRejectPayment = () => {
         queryClient.invalidateQueries({
           queryKey: billingKeys.paymentsRoot(),
         }),
-        queryClient.invalidateQueries({
-          queryKey: billingKeys.balance(),
-        }),
+        invalidateBalanceCaches(queryClient),
         queryClient.invalidateQueries({ queryKey: notificationKeys.all }),
         queryClient.refetchQueries({ queryKey: billingKeys.payments(10) }),
         queryClient.refetchQueries({ queryKey: notificationKeys.all }),

@@ -8,9 +8,9 @@ import { Resend, type CreateEmailResponse } from "resend";
 import { z } from "zod";
 import { hashAuthTokenForStorage } from "@/lib/authEmailTokens";
 import {
-  APP_DISPLAY_NAME,
   assertAuthEmailConfigured,
   createVerificationEmailHtml,
+  getEmailBranding,
   getPublicAppOrigin,
   getRequestHost,
   getResendFrom,
@@ -32,6 +32,10 @@ import {
   SUBSCRIPTION_TRIAL_DEFAULT_MAX_LEADS,
   SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
 } from "@/lib/subscriptionPlanCatalog";
+import {
+  resolveSignupBrand,
+  type SignupBrand,
+} from "@/lib/appBranding";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -108,6 +112,7 @@ interface UserDataToSave {
   subscriptionEndDate?: Date;
   maxLeads: number;
   maxUsers: number;
+  signupBrand: SignupBrand;
 }
 
 function isDuplicateKeyError(error: unknown): boolean {
@@ -173,9 +178,11 @@ export async function POST(req: Request) {
   try {
     const validatedData = SignUpSchema.parse(userData);
 
+    const requestHost = getRequestHost(req);
+    const emailBranding = getEmailBranding(requestHost);
     const mustVerify = shouldRequireEmailVerification();
     if (mustVerify) {
-      const mailErr = assertAuthEmailConfigured();
+      const mailErr = assertAuthEmailConfigured(requestHost);
       if (mailErr) {
         return NextResponse.json({ message: mailErr }, { status: 503 });
       }
@@ -231,6 +238,7 @@ export async function POST(req: Request) {
       subscriptionEndDate: undefined,
       maxLeads: SUBSCRIPTION_TRIAL_DEFAULT_MAX_LEADS,
       maxUsers: SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
+      signupBrand: resolveSignupBrand(requestHost),
     };
 
     // Token only needed when verification is on; allocate inside the branch
@@ -251,18 +259,22 @@ export async function POST(req: Request) {
     let emailSent = false;
     let sendResult: CreateEmailResponse | null = null;
     let sendException: string | null = null;
-    const subjectUsed = `${APP_DISPLAY_NAME} - verify your email`;
+    const subjectUsed = `${emailBranding.displayName} - verify your email`;
     if (mustVerify && rawVerificationToken) {
-      const origin = getPublicAppOrigin(getRequestHost(req));
+      const origin = getPublicAppOrigin(requestHost);
       const verificationUrl = `${origin}/verify-email/${rawVerificationToken}`;
       const resend = new Resend(process.env.RESEND_API_KEY);
       try {
         sendResult = await resend.emails.send({
-          from: getResendFrom(),
+          from: getResendFrom(requestHost),
           to: [user.email],
           subject: subjectUsed,
-          html: createVerificationEmailHtml(user.firstName, verificationUrl),
-          replyTo: getResendReplyTo(),
+          html: createVerificationEmailHtml(
+            user.firstName,
+            verificationUrl,
+            requestHost,
+          ),
+          replyTo: getResendReplyTo(requestHost),
           tags: [{ name: "category", value: "email_verification" }],
         });
         if (resendEmailOk(sendResult)) {
@@ -289,7 +301,7 @@ export async function POST(req: Request) {
         message: emailSent
           ? "User created successfully. Please sign in."
           : mustVerify
-            ? "User created but verification email could not be sent. Use resend verification from the sign-in page."
+            ? "User created but verification email could not be sent. Contact support if you need a new verification link."
             : "User created successfully. Please sign in.",
         user: user.toJSON(),
         isFirstUser,

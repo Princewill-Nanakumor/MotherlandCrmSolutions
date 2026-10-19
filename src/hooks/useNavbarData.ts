@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
+import { userProfileDataKey } from "@/hooks/useBillingData";
 
 interface UserProfile {
   _id: string;
@@ -45,14 +46,14 @@ export const useUserProfileData = () => {
     error,
     refetch,
   } = useQuery<UserProfile, Error>({
-    queryKey: ["user-profile-data"],
+    queryKey: userProfileDataKey,
     queryFn: fetchUserProfile,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000, // match billing balance freshness
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 1,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     enabled: hasAuthorizedSession(status, session),
   });
 

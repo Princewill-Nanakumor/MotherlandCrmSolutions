@@ -91,6 +91,7 @@ export function useAdminOverview() {
           balance: admin.balance || 0,
           lastLogin: admin.lastLogin,
           createdAt: admin.createdAt,
+          signupBrand: admin.signupBrand,
           recentActivity: Array.isArray(admin.recentActivity)
             ? admin.recentActivity
             : [],

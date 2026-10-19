@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
+import { signupBrandLabel } from "@/lib/appBranding";
 
 interface AdminDetails {
   _id: string;
@@ -18,6 +19,7 @@ interface AdminDetails {
   lastLogin?: string;
   createdAt: string;
   balance?: number;
+  signupBrand?: "motherland" | "vertex";
 }
 
 interface Subscription {
@@ -65,9 +67,20 @@ export default function AdminInfoCard({
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {admin.firstName} {admin.lastName}
               </h3>
-              <div className="flex items-center mt-1 space-x-2">
+              <div className="flex flex-wrap items-center mt-1 gap-2">
                 <Badge className={getStatusColor(admin.status)}>
                   {admin.status}
+                </Badge>
+                <Badge
+                  className={
+                    admin.signupBrand === "vertex"
+                      ? "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-900/20 dark:text-sky-300 dark:border-sky-800"
+                      : admin.signupBrand === "motherland"
+                        ? "bg-amber-100 text-amber-900 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800"
+                        : "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800"
+                  }
+                >
+                  {signupBrandLabel(admin.signupBrand)}
                 </Badge>
                 {subscription && ( // Only show if subscription exists
                   <Badge className="text-purple-800 bg-purple-100 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800">

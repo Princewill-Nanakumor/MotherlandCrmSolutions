@@ -83,6 +83,22 @@ async function loadPartyMap(
   return map;
 }
 
+function resolveDepositWalletAddress(
+  payment: PaymentLike,
+): string | undefined {
+  const stored = payment.walletAddress?.trim();
+  if (stored) return stored;
+
+  if (payment.method !== "CRYPTO") return undefined;
+  if (payment.network === "TRC20") {
+    return process.env.TRC20_WALLET_ADDRESS?.trim() || undefined;
+  }
+  if (payment.network === "ERC20") {
+    return process.env.ERC20_WALLET_ADDRESS?.trim() || undefined;
+  }
+  return undefined;
+}
+
 export async function enrichPaymentForResponse<T extends PaymentLike>(
   payment: T,
 ): Promise<
@@ -91,6 +107,7 @@ export async function enrichPaymentForResponse<T extends PaymentLike>(
     createdBy?: string;
     approvedBy?: string;
     adminId?: string;
+    walletAddress?: string;
     submittedBy: PaymentPartySummary | null;
     tenantAccount: PaymentPartySummary | null;
     approvedByUser: PaymentPartySummary | null;
@@ -112,6 +129,7 @@ export async function enrichPaymentForResponse<T extends PaymentLike>(
     createdBy: createdById || undefined,
     approvedBy: approvedById || undefined,
     adminId: adminId || undefined,
+    walletAddress: resolveDepositWalletAddress(payment),
     submittedBy: createdById ? partyMap.get(createdById) ?? null : null,
     tenantAccount: adminId ? partyMap.get(adminId) ?? null : null,
     approvedByUser: approvedById ? partyMap.get(approvedById) ?? null : null,

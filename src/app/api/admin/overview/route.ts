@@ -29,6 +29,7 @@ interface UserDocument {
   subscriptionEndDate?: Date;
   maxLeads?: number;
   maxUsers?: number;
+  signupBrand?: "motherland" | "vertex";
 }
 
 // Define proper types for the subscription
@@ -124,6 +125,7 @@ export async function GET() {
         firstName lastName email status lastLogin createdAt balance
         isOnTrial trialEndsAt currentPlan subscriptionStatus 
         subscriptionStartDate subscriptionEndDate maxLeads maxUsers
+        signupBrand
       `
       )
       .lean<UserDocument[]>();

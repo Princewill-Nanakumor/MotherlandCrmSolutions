@@ -12,20 +12,20 @@ import { z } from "zod";
 import { FormError } from "./FormError";
 import { FormSuccess } from "./FormSucess";
 import { LoginCaptcha, RobotVerifyButton } from "./LoginCaptcha";
-import { LoginVerificationResendBlock } from "./LoginVerificationResendBlock";
 import {
   humanMessageForCredEmailVerifyCode,
   isCredEmailVerifyCode,
-  isCredEmailVerifyExpiredAdmin,
 } from "@/lib/credentialsEmailVerifyErrors";
 import { authDebug } from "@/lib/authDebug";
 import { clearSessionExpiryMarkers, waitForServerSessionUserId } from "@/lib/sessionUtils";
 import { humanizeSignInError } from "@/lib/mongoConnectionError";
+import { useAppBranding } from "@/components/AppBrandingProvider";
 
 type LoginInput = z.infer<typeof LoginSchema>;
 
 export default function SignInForm() {
   const { update } = useSession();
+  const { displayName } = useAppBranding();
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,7 +36,6 @@ export default function SignInForm() {
   >("idle");
   const [loginCaptchaEnabled, setLoginCaptchaEnabled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showExpiredVerifyResend, setShowExpiredVerifyResend] = useState(false);
 
   const refreshCaptchaOnError = () => {
     setCaptchaInput("");
@@ -67,7 +66,6 @@ export default function SignInForm() {
   const onSubmit: SubmitHandler<LoginInput> = async (data) => {
     setFormError("");
     setFormSuccess("");
-    setShowExpiredVerifyResend(false);
 
     if (!loginCaptchaEnabled) {
       setFormError("Please confirm you are not a robot first.");
@@ -108,11 +106,9 @@ export default function SignInForm() {
         } catch {}
         const err = result.error;
         if (isCredEmailVerifyCode(err)) {
-          setFormError(humanMessageForCredEmailVerifyCode(err));
-          setShowExpiredVerifyResend(isCredEmailVerifyExpiredAdmin(err));
+          setFormError(humanMessageForCredEmailVerifyCode(err, displayName));
         } else {
           setFormError(humanizeSignInError(err));
-          setShowExpiredVerifyResend(false);
         }
         refreshCaptchaOnError();
         setLoading(false);
@@ -205,12 +201,6 @@ export default function SignInForm() {
             formError || errors.email?.message || errors.password?.message
           }
         />
-        {showExpiredVerifyResend ? (
-          <LoginVerificationResendBlock
-            email={(watchedEmail || "").trim()}
-            disabled={isFormDisabled}
-          />
-        ) : null}
         <FormSuccess message={formSuccess} />
 
         <div data-auth-glass-fields className="space-y-4 sm:space-y-6">

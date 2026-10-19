@@ -10,7 +10,10 @@ import UsdtDepositSection from "./UsdtDepositSection";
 import CardDepositSection from "./CardDepositSection";
 import PaymentDetailsModal from "./PaymentDetailsModal";
 import BillingHeader from "./BillingHeader";
-import PaymentStorageManager from "./PaymentStorageManager";
+import PaymentStorageManager, {
+  clearNotificationLockForPayment,
+  clearPaymentStorage,
+} from "./PaymentStorageManager";
 import { useBillingSummary } from "@/hooks/useBillingData";
 import { useCreatePayment } from "@/hooks/usePaymentMutations";
 import { Payment } from "@/types/payment.types";
@@ -33,10 +36,29 @@ export default function BillingManager() {
   // React Query hooks
   const {
     billingData,
+    payments,
     isLoading: isBillingLoading,
     refetch: refetchBillingData,
   } = useBillingSummary();
   const createPaymentMutation = useCreatePayment();
+
+  // When a deposit is approved/rejected, drop the "confirmation submitted" panel
+  // so Deposit Funds returns to the create-deposit form.
+  useEffect(() => {
+    if (!currentPayment?._id || payments.length === 0) return;
+    const fresh = payments.find(
+      (p) => String(p._id) === String(currentPayment._id),
+    );
+    if (!fresh) return;
+    if (fresh.status !== "COMPLETED" && fresh.status !== "FAILED") return;
+
+    setCurrentPayment(null);
+    setPaymentConfirmed(false);
+    setAmount("");
+    setError(null);
+    clearPaymentStorage();
+    clearNotificationLockForPayment(String(currentPayment._id));
+  }, [payments, currentPayment]);
 
   // Payment storage manager - memoized to prevent recreating on every render
   const paymentStorageManager = useMemo(

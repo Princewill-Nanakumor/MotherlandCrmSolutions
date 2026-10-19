@@ -40,7 +40,7 @@ export default function PaymentDetailsContent({
         />
 
         {/* Payment Status Card */}
-        <Card className="bg-white border border-gray-200 shadow-xl dark:bg-gray-900 dark:border-gray-700">
+        <Card className="border border-gray-200 shadow-xl backdrop-blur-lg bg-white/70 dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-gray-900! dark:text-white!">
               <DollarSign className="w-5 h-5" />
@@ -84,6 +84,17 @@ export default function PaymentDetailsContent({
                   <span className="text-sm font-medium text-gray-900! dark:text-white!">
                     {payment.network}
                   </span>
+                </div>
+              )}
+
+              {payment.walletAddress && (
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-600! dark:text-white!">
+                    Wallet address
+                  </span>
+                  <p className="font-mono text-sm break-all text-gray-900! dark:text-white!">
+                    {payment.walletAddress}
+                  </p>
                 </div>
               )}
 

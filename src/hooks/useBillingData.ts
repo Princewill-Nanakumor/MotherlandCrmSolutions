@@ -1,7 +1,11 @@
 // src/hooks/useBillingData.ts
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
@@ -48,6 +52,27 @@ export const billingKeys = {
   balance: () => ["billing", "balance"] as const,
   summary: () => ["billing", "summary"] as const,
 };
+
+/** Navbar dropdown balance (`useUserProfileData`) — must invalidate with billing balance. */
+export const userProfileDataKey = ["user-profile-data"] as const;
+
+/** Refresh billing page balance + navbar dropdown balance together. */
+export function invalidateBalanceCaches(
+  queryClient: QueryClient,
+  options?: { refetch?: boolean },
+): Promise<unknown> {
+  const tasks: Array<Promise<unknown>> = [
+    queryClient.invalidateQueries({ queryKey: billingKeys.balance() }),
+    queryClient.invalidateQueries({ queryKey: userProfileDataKey }),
+  ];
+  if (options?.refetch) {
+    tasks.push(
+      queryClient.refetchQueries({ queryKey: billingKeys.balance() }),
+      queryClient.refetchQueries({ queryKey: userProfileDataKey, type: "all" }),
+    );
+  }
+  return Promise.all(tasks);
+}
 
 /**
  * Fetch payments with pagination
@@ -182,9 +207,7 @@ export const usePayment = (paymentId: string | null) => {
         statusChanged &&
         (payment.status === "COMPLETED" || payment.status === "FAILED")
       ) {
-        void queryClient.invalidateQueries({
-          queryKey: billingKeys.balance(),
-        });
+        void invalidateBalanceCaches(queryClient);
         void queryClient.invalidateQueries({
           queryKey: notificationKeys.all,
         });
@@ -272,6 +295,7 @@ export const useBillingSummary = () => {
 
   return {
     billingData,
+    payments: paymentsData?.payments ?? [],
     isLoading: isLoadingPayments || isLoadingBalance,
     error: paymentsError || balanceError,
     refetch: async () => {

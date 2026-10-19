@@ -10,6 +10,8 @@ export interface AdminDetails {
   lastLogin?: string;
   createdAt: string;
   balance?: number;
+  /** White-label host the admin registered on. */
+  signupBrand?: "motherland" | "vertex";
 }
 
 export interface Agent {
@@ -126,6 +128,8 @@ export interface AdminStats {
   balance: number;
   lastLogin?: string;
   createdAt: string;
+  /** White-label host the admin registered on. */
+  signupBrand?: "motherland" | "vertex";
   recentActivity: ActivityData[];
   subscription?: {
     _id: string;
@@ -159,6 +163,7 @@ export interface RawAdminData {
   balance?: number;
   lastLogin?: string;
   createdAt: string;
+  signupBrand?: "motherland" | "vertex";
   recentActivity?: string | ActivityData[];
   subscription?: {
     _id: string;

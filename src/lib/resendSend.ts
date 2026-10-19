@@ -23,7 +23,7 @@ export function logResendFailure(
 
 /**
  * Short hint for the client when verification (or similar) mail failed.
- * Covers Resend sandbox: test `from` only allows the account owner inbox.
+ * Always prefer Resend's own message so operators can see domain / from / key issues.
  */
 export function resendEmailFailureHint(
   result: CreateEmailResponse | null,
@@ -31,7 +31,8 @@ export function resendEmailFailureHint(
 ): string | null {
   const err = result?.error;
   if (err) {
-    const msg = (err.message ?? "").toLowerCase();
+    const raw = (err.message ?? "").trim();
+    const msg = raw.toLowerCase();
     if (
       err.name === "validation_error" &&
       (msg.includes("only send testing") ||
@@ -40,9 +41,20 @@ export function resendEmailFailureHint(
     ) {
       return "Resend is in test mode: verification email can only be sent to the email address on your Resend account. Either sign up with that address, or verify a domain at resend.com/domains and set RESEND_FROM to a sender on that domain.";
     }
+    if (
+      msg.includes("domain") &&
+      (msg.includes("not verified") ||
+        msg.includes("unverified") ||
+        msg.includes("verify"))
+    ) {
+      return `Email sender domain is not verified in Resend. Verify your RESEND_FROM / RESEND_FROM_VERTEX domain at resend.com/domains, then retry. ${raw}`;
+    }
+    if (raw) {
+      return `Verification email failed: ${raw} Fix mail settings, then try signing up again or contact support.`;
+    }
   }
   if (sendException?.trim()) {
-    return "The mail provider returned an unexpected error. Use “Resend verification” on the sign-in page, or try again later.";
+    return `The mail provider returned an unexpected error (${sendException.trim()}). Try again later or contact support.`;
   }
-  return null;
+  return "Verification email could not be sent. Check RESEND_API_KEY / RESEND_FROM on the server, or contact support.";
 }

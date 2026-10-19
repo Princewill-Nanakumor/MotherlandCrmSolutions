@@ -20,7 +20,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import PaymentPartyInfo from "@/components/billing/PaymentPartyInfo";
 import type { Payment } from "@/types/payment.types";
-import { billingKeys } from "@/hooks/useBillingData";
+import {
+  billingKeys,
+  invalidateBalanceCaches,
+} from "@/hooks/useBillingData";
 import { notificationKeys } from "@/lib/notificationKeys";
 
 type PaymentDetailsPayment = Payment;
@@ -113,13 +116,12 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
         setPayment(data.payment);
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: billingKeys.paymentsRoot() }),
-          queryClient.invalidateQueries({ queryKey: billingKeys.balance() }),
+          invalidateBalanceCaches(queryClient, { refetch: true }),
           queryClient.invalidateQueries({
             queryKey: billingKeys.payment(data.payment._id),
           }),
           queryClient.invalidateQueries({ queryKey: notificationKeys.all }),
           queryClient.refetchQueries({ queryKey: billingKeys.payments(10) }),
-          queryClient.refetchQueries({ queryKey: billingKeys.balance() }),
           queryClient.refetchQueries({ queryKey: notificationKeys.all }),
         ]);
         alert("Payment approved successfully! Balance has been updated.");
@@ -399,6 +401,17 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
                     </div>
                   )}
 
+                  {payment.walletAddress && (
+                    <div className="space-y-1">
+                      <span className="text-sm text-gray-600! dark:text-white!">
+                        Wallet address
+                      </span>
+                      <p className="font-mono text-sm break-all text-gray-900! dark:text-white!">
+                        {payment.walletAddress}
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600! dark:text-white!">
                       Created
@@ -450,6 +463,17 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
                       {payment.transactionId}
                     </p>
                   </div>
+
+                  {payment.walletAddress && (
+                    <div>
+                      <span className="text-sm text-gray-600! dark:text-white!">
+                        Wallet address
+                      </span>
+                      <p className="font-mono text-sm break-all text-gray-900! dark:text-white! mt-1">
+                        {payment.walletAddress}
+                      </p>
+                    </div>
+                  )}
 
                   {payment.description && (
                     <div>

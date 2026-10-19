@@ -16,7 +16,11 @@ import { Notification } from "@/types/notifications";
 import { Button } from "@/components/ui/button";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { notificationKeys } from "@/lib/notificationKeys";
-import { billingKeys } from "@/hooks/useBillingData";
+import {
+  billingKeys,
+  invalidateBalanceCaches,
+} from "@/hooks/useBillingData";
+import { clearStoredPaymentIfMatches } from "@/components/billing/PaymentStorageManager";
 import { getAblyRealtimeClient } from "@/lib/ablyClient";
 import { useAblyAwareRefetchInterval } from "@/hooks/useAblyAwareRefetchInterval";
 import { useAblyChannelAttached } from "@/hooks/useAblyChannelAttached";
@@ -208,8 +212,9 @@ export function NotificationBell() {
       void queryClient.invalidateQueries({
         queryKey: billingKeys.paymentsRoot(),
       });
-      void queryClient.invalidateQueries({ queryKey: billingKeys.balance() });
+      void invalidateBalanceCaches(queryClient);
       if (paymentId) {
+        clearStoredPaymentIfMatches(paymentId);
         void queryClient.invalidateQueries({
           queryKey: billingKeys.payment(paymentId),
         });

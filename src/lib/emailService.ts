@@ -1,10 +1,10 @@
 // src/lib/emailService.ts
 import { Resend } from "resend";
 import {
-  APP_DISPLAY_NAME,
   createPasswordChangedEmailHtml,
   createPaymentApprovedEmailHtml,
   createPaymentRejectedEmailHtml,
+  getEmailBranding,
   getPublicAppOrigin,
   getResendFrom,
   getResendReplyTo,
@@ -90,15 +90,20 @@ export async function sendPasswordChangedEmail(
   }
 
   const loginUrl = `${getPublicAppOrigin(data.requestHost)}/login`;
+  const brandName = getEmailBranding(data.requestHost).displayName;
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const sendResult = await resend.emails.send({
-      from: getResendFrom(),
+      from: getResendFrom(data.requestHost),
       to: [to],
-      subject: `${APP_DISPLAY_NAME} — password changed`,
-      html: createPasswordChangedEmailHtml(data.firstName || "there", loginUrl),
-      replyTo: getResendReplyTo(),
+      subject: `${brandName} — password changed`,
+      html: createPasswordChangedEmailHtml(
+        data.firstName || "there",
+        loginUrl,
+        data.requestHost,
+      ),
+      replyTo: getResendReplyTo(data.requestHost),
       tags: [{ name: "category", value: "password_changed" }],
     });
 
@@ -148,21 +153,22 @@ export async function sendPaymentDecisionEmail(
   };
 
   const isApproved = data.decision === "APPROVED";
+  const brandName = getEmailBranding(data.requestHost).displayName;
   const subject = isApproved
-    ? `${APP_DISPLAY_NAME} — payment approved`
-    : `${APP_DISPLAY_NAME} — payment not approved`;
+    ? `${brandName} — payment approved`
+    : `${brandName} — payment not approved`;
   const html = isApproved
-    ? createPaymentApprovedEmailHtml(htmlParams)
-    : createPaymentRejectedEmailHtml(htmlParams);
+    ? createPaymentApprovedEmailHtml(htmlParams, data.requestHost)
+    : createPaymentRejectedEmailHtml(htmlParams, data.requestHost);
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const sendResult = await resend.emails.send({
-      from: getResendFrom(),
+      from: getResendFrom(data.requestHost),
       to: [to],
       subject,
       html,
-      replyTo: getResendReplyTo(),
+      replyTo: getResendReplyTo(data.requestHost),
       tags: [
         {
           name: "category",

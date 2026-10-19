@@ -5,9 +5,9 @@ import { connectMongoDB } from "@/lib/dbConfig";
 import User from "@/models/User";
 import { hashAuthTokenForStorage } from "@/lib/authEmailTokens";
 import {
-  APP_DISPLAY_NAME,
   assertAuthEmailConfigured,
   createVerificationEmailHtml,
+  getEmailBranding,
   getPublicAppOrigin,
   getRequestHost,
   getResendFrom,
@@ -60,7 +60,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const mailErr = assertAuthEmailConfigured();
+  const requestHost = getRequestHost(req);
+  const mailErr = assertAuthEmailConfigured(requestHost);
   if (mailErr) {
     await timingDelay();
     return NextResponse.json(
@@ -107,17 +108,22 @@ export async function POST(req: Request) {
     user.verificationExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     await user.save();
 
-    const origin = getPublicAppOrigin(getRequestHost(req));
+    const origin = getPublicAppOrigin(requestHost);
     const verificationUrl = `${origin}/verify-email/${rawToken}`;
     const resend = new Resend(process.env.RESEND_API_KEY);
+    const brandName = getEmailBranding(requestHost).displayName;
 
     try {
       const sendResult = await resend.emails.send({
-        from: getResendFrom(),
+        from: getResendFrom(requestHost),
         to: [user.email],
-        subject: `${APP_DISPLAY_NAME} - verify your email`,
-        html: createVerificationEmailHtml(user.firstName, verificationUrl),
-        replyTo: getResendReplyTo(),
+        subject: `${brandName} - verify your email`,
+        html: createVerificationEmailHtml(
+          user.firstName,
+          verificationUrl,
+          requestHost,
+        ),
+        replyTo: getResendReplyTo(requestHost),
         tags: [{ name: "category", value: "email_verification_reissue" }],
       });
       if (!resendEmailOk(sendResult)) {

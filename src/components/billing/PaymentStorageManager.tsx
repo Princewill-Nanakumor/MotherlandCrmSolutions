@@ -41,6 +41,22 @@ export function clearNotificationLockForPayment(paymentId: string): void {
   }
 }
 
+/** Clear in-progress deposit UI if it matches this payment (e.g. after approve). */
+export function clearStoredPaymentIfMatches(paymentId: string): boolean {
+  if (typeof window === "undefined" || !paymentId) return false;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.CURRENT_PAYMENT);
+    if (!raw) return false;
+    const stored = JSON.parse(raw) as { _id?: string };
+    if (String(stored._id) !== String(paymentId)) return false;
+    clearPaymentStorage();
+    clearNotificationLockForPayment(paymentId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 interface PaymentStorageManagerProps {
   currentPayment: Payment | null;
   network: "TRC20" | "ERC20";

@@ -23,6 +23,8 @@ export interface AdminStats {
   balance: number;
   lastLogin?: string;
   createdAt: string;
+  /** White-label host the admin registered on. */
+  signupBrand?: "motherland" | "vertex";
   recentActivity: ActivityData[];
   subscription?: {
     _id: string;

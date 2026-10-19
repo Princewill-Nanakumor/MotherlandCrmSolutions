@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import type { SubscriptionStatusData } from "@/lib/subscriptionIndicator";
 import { isTenantStaff } from "@/lib/roles";
+import { invalidateBalanceCaches } from "@/hooks/useBillingData";
 
 export function subscriptionStatusQueryKey(role?: string) {
   return ["subscription-status", role ?? "unknown"] as const;
@@ -64,9 +65,5 @@ export async function syncSubscriptionQueries(
     predicate: (query) => isSubscriptionStatusQuery(query.queryKey),
     type: "all",
   });
-  await queryClient.invalidateQueries({ queryKey: ["user-profile-data"] });
-  await queryClient.refetchQueries({
-    queryKey: ["user-profile-data"],
-    type: "all",
-  });
+  await invalidateBalanceCaches(queryClient, { refetch: true });
 }

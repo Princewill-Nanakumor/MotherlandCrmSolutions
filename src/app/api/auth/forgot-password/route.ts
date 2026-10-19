@@ -6,9 +6,9 @@ import { Resend } from "resend";
 import { z } from "zod";
 import { hashAuthTokenForStorage } from "@/lib/authEmailTokens";
 import {
-  APP_DISPLAY_NAME,
   assertAuthEmailConfigured,
   createPasswordResetEmailHtml,
+  getEmailBranding,
   getPublicAppOrigin,
   getRequestHost,
   getResendFrom,
@@ -91,8 +91,9 @@ export async function POST(req: Request) {
   }
 
   const normalizedEmail = parsed.data.email.trim().toLowerCase();
+  const requestHost = getRequestHost(req);
 
-  const mailErr = assertAuthEmailConfigured();
+  const mailErr = assertAuthEmailConfigured(requestHost);
   if (mailErr) {
     console.warn("forgot-password:", mailErr);
     await timingDelay();
@@ -118,18 +119,20 @@ export async function POST(req: Request) {
         user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
         await user.save();
 
-        const resetUrl = `${getPublicAppOrigin(getRequestHost(req))}/reset-password/${resetToken}`;
+        const resetUrl = `${getPublicAppOrigin(requestHost)}/reset-password/${resetToken}`;
         const resend = new Resend(process.env.RESEND_API_KEY);
+        const brandName = getEmailBranding(requestHost).displayName;
 
         const sendResult = await resend.emails.send({
-          from: getResendFrom(),
+          from: getResendFrom(requestHost),
           to: [user.email],
-          subject: `${APP_DISPLAY_NAME} - reset your password`,
+          subject: `${brandName} - reset your password`,
           html: createPasswordResetEmailHtml(
             user.firstName || "there",
             resetUrl,
+            requestHost,
           ),
-          replyTo: getResendReplyTo(),
+          replyTo: getResendReplyTo(requestHost),
           tags: [{ name: "category", value: "password_reset" }],
         });
         if (!resendEmailOk(sendResult)) {

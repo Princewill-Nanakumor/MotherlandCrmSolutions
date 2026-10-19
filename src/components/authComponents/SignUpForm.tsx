@@ -189,9 +189,10 @@ export default function SignUpForm() {
             <p className="mx-auto max-w-md text-sm text-white/90 sm:text-base">
               {body}
             </p>
-            {postSignup === "verify_failed" && emailSendHint ? (
+            {postSignup === "verify_failed" ? (
               <p className="px-3 py-2 mx-auto max-w-lg text-xs leading-snug text-left text-amber-100 rounded-lg border border-amber-400/50 bg-amber-500/10 sm:text-sm">
-                {emailSendHint}
+                {emailSendHint ||
+                  "Verification email could not be sent. Contact support if you need a new link."}
               </p>
             ) : null}
           </div>
@@ -199,7 +200,7 @@ export default function SignUpForm() {
             href="/login"
             className="flex w-full items-center justify-center space-x-2 rounded-lg brand-gradient px-4 py-3 font-medium text-white transition-all duration-200 hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-focus) focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
           >
-            <span>Sign in</span>
+            <span className="text-white!">Sign in</span>
             <ArrowRight className="w-5 h-5" aria-hidden />
           </Link>
         </div>

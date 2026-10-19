@@ -42,7 +42,7 @@ function PaymentDetailsSkeleton() {
           <Skeleton className="w-56 h-4 bg-gray-200 dark:bg-gray-700" />
         </div>
 
-        <div className="p-6 bg-white rounded-xl border border-gray-200 shadow-xl dark:border-gray-700 dark:bg-gray-900">
+        <div className="p-6 rounded-xl border border-gray-200 shadow-xl backdrop-blur-lg bg-white/70 dark:border-gray-700 dark:bg-gray-800">
           <div className="flex gap-2 items-center mb-6">
             <Skeleton className="w-5 h-5 bg-gray-200 rounded dark:bg-gray-700" />
             <Skeleton className="w-44 h-5 bg-gray-200 dark:bg-gray-700" />

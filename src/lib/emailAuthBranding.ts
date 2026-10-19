@@ -1,16 +1,24 @@
 /**
  * Shared branding and URLs for auth-related emails (Resend).
- * Override via env in production (verified sender domain, public URL).
+ * Branding follows the request Host (Motherland vs Vertex), not a single env default.
  *
  * Resend returns `{ data, error }` (no throw on API errors) — use
  * `resendEmailOk` from `@/lib/resendSend` after `emails.send`.
  *
- * With the default dev sender `onboarding@resend.dev`, Resend only delivers
- * to addresses you are allowed to test with (see Resend dashboard / docs).
- * Production needs `RESEND_FROM` on a verified domain.
+ * Production senders:
+ * - Motherland: `RESEND_FROM` (e.g. Motherland CRM <noreply@motherlandcrmsolutions.com>)
+ * - Vertex: `RESEND_FROM_VERTEX` (e.g. Vertex CRM <noreply@vertexcrmsolution.com>)
+ * Each domain must be verified in Resend.
  */
-import { getBrandingForHost, getServerAppBranding } from "@/lib/appBranding";
+import {
+  getBrandingForHost,
+  getServerAppBranding,
+  isLocalAppHostname,
+  resolveBrandHost,
+  type AppBranding,
+} from "@/lib/appBranding";
 
+/** @deprecated Prefer {@link getEmailBranding} with the request host. */
 export const APP_DISPLAY_NAME = getServerAppBranding().displayName;
 
 export function isProductionDeployment(): boolean {
@@ -30,32 +38,35 @@ export function shouldRequireEmailVerification(): boolean {
   return true;
 }
 
+/** Branding for emails / subjects based on the inbound Host (or server default). */
+export function getEmailBranding(host?: string | null): AppBranding {
+  return getBrandingForHost(host ?? null);
+}
+
 /** Returns an error message if outbound auth email cannot be sent, else null. */
-export function assertAuthEmailConfigured(): string | null {
+export function assertAuthEmailConfigured(host?: string | null): string | null {
   if (!process.env.RESEND_API_KEY?.trim()) {
     return "Email service is not configured.";
   }
-  if (isProductionDeployment() && !process.env.RESEND_FROM?.trim()) {
+  if (!isProductionDeployment()) return null;
+  const bare = resolveBrandHost(host);
+  if (bare === "vertexcrmsolution.com") {
+    if (!process.env.RESEND_FROM_VERTEX?.trim()) {
+      return "Email sender (RESEND_FROM_VERTEX) is not configured for Vertex.";
+    }
+    return null;
+  }
+  if (!process.env.RESEND_FROM?.trim()) {
     return "Email sender (RESEND_FROM) is not configured for production.";
   }
   return null;
-}
-
-function isLocalHostname(hostname: string): boolean {
-  const host = hostname.trim().toLowerCase();
-  return (
-    host === "localhost" ||
-    host === "127.0.0.1" ||
-    host === "::1" ||
-    host === "0.0.0.0"
-  );
 }
 
 function isUsablePublicOrigin(raw: string): boolean {
   try {
     const url = new URL(raw);
     if (url.protocol !== "http:" && url.protocol !== "https:") return false;
-    if (isProductionDeployment() && isLocalHostname(url.hostname)) return false;
+    if (isProductionDeployment() && isLocalAppHostname(url.hostname)) return false;
     return true;
   } catch {
     return false;
@@ -69,7 +80,7 @@ function isUsablePublicOrigin(raw: string): boolean {
  */
 export function getPublicAppOrigin(requestHost?: string | null): string {
   const host = requestHost?.split(",")[0]?.trim();
-  if (host && !isLocalHostname(host.split(":")[0] ?? "")) {
+  if (host && !isLocalAppHostname(host.split(":")[0] ?? "")) {
     const protocol = isProductionDeployment() ? "https" : "http";
     return `${protocol}://${host.split(":")[0]}`;
   }
@@ -129,7 +140,22 @@ export function safeEmailHttpUrl(url: string): string {
   }
 }
 
-export function getResendFrom(): string {
+export function getResendFrom(host?: string | null): string {
+  const branding = getEmailBranding(host);
+  const bare = resolveBrandHost(host);
+
+  if (bare === "vertexcrmsolution.com") {
+    const vertexFrom = process.env.RESEND_FROM_VERTEX?.trim();
+    if (vertexFrom) return vertexFrom;
+    if (isProductionDeployment()) {
+      throw new Error(
+        "RESEND_FROM_VERTEX must be set in production (verified Vertex domain in Resend).",
+      );
+    }
+    // Prefer the Vertex domain even on localhost when env is unset.
+    return `${branding.shortName} <noreply@vertexcrmsolution.com>`;
+  }
+
   const from = process.env.RESEND_FROM?.trim();
   if (from) return from;
   if (isProductionDeployment()) {
@@ -137,13 +163,20 @@ export function getResendFrom(): string {
       "RESEND_FROM must be set in production (verified domain in Resend).",
     );
   }
-  return `${getServerAppBranding().shortName} <onboarding@resend.dev>`;
+  return `${branding.shortName} <onboarding@resend.dev>`;
 }
 
-export function getResendReplyTo(): string {
+export function getResendReplyTo(host?: string | null): string {
+  const branding = getEmailBranding(host);
+  if (resolveBrandHost(host) === "vertexcrmsolution.com") {
+    return (
+      process.env.RESEND_REPLY_TO_VERTEX?.trim() ||
+      branding.supportEmail
+    );
+  }
   return (
     process.env.RESEND_REPLY_TO?.trim() ||
-    getServerAppBranding().supportEmail
+    branding.supportEmail
   );
 }
 
@@ -151,8 +184,8 @@ export function hasResendApiKey(): boolean {
   return Boolean(process.env.RESEND_API_KEY?.trim());
 }
 
-function brandNameHtml(): string {
-  return escapeHtml(APP_DISPLAY_NAME);
+function brandNameHtml(branding: AppBranding): string {
+  return escapeHtml(branding.displayName);
 }
 
 const EMAIL_STYLES = {
@@ -167,23 +200,25 @@ const EMAIL_STYLES = {
   button: `background: linear-gradient(to right, #2d6f8b, #2e8eb8); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-size: 16px; font-weight: 500; box-shadow: 0 4px 6px rgba(45, 111, 139, 0.15);`,
 };
 
-function emailShell(inner: string): string {
+function emailShell(inner: string, branding: AppBranding): string {
   const year = new Date().getFullYear();
+  const letter = escapeHtml(branding.logoLetter || branding.shortName.charAt(0) || "C");
+  const name = brandNameHtml(branding);
   return `
 <div style="${EMAIL_STYLES.wrap}">
   <div style="${EMAIL_STYLES.card}">
     <div style="${EMAIL_STYLES.logoRow}">
       <div style="display: inline-flex; align-items: center; gap: 12px;">
         <div style="padding: 8px; ${EMAIL_STYLES.brandGradient}; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);">
-          <span style="color: white; font-size: 20px; font-weight: 700; letter-spacing: -0.02em;">M</span>
+          <span style="color: white; font-size: 20px; font-weight: 700; letter-spacing: -0.02em;">${letter}</span>
         </div>
-        <div style="${EMAIL_STYLES.brandText}">${brandNameHtml()}</div>
+        <div style="${EMAIL_STYLES.brandText}">${name}</div>
       </div>
     </div>
     ${inner}
     <div style="border-top: 1px solid #e5e5e5; margin-top: 32px; padding-top: 20px; text-align: center;">
       <p style="color: #888888; font-size: 12px; line-height: 18px;">
-        © ${year} ${brandNameHtml()}
+        © ${year} ${name}
       </p>
     </div>
   </div>
@@ -193,11 +228,14 @@ function emailShell(inner: string): string {
 export function createVerificationEmailHtml(
   name: string,
   verificationUrl: string,
+  host?: string | null,
 ): string {
+  const branding = getEmailBranding(host);
+  const brand = brandNameHtml(branding);
   const safeName = escapeHtml(name);
   const href = safeEmailHttpUrl(verificationUrl);
   const body = `
-    <h1 style="${EMAIL_STYLES.h1}">Welcome to ${brandNameHtml()}</h1>
+    <h1 style="${EMAIL_STYLES.h1}">Welcome to ${brand}</h1>
     <p style="${EMAIL_STYLES.p}">
       Hello ${safeName},<br>
       Thank you for signing up. Confirm your account by clicking the button below:
@@ -208,17 +246,20 @@ export function createVerificationEmailHtml(
     <div style="border-top: 1px solid #e5e5e5; margin-top: 24px; padding-top: 16px;">
       <p style="${EMAIL_STYLES.muted} margin-bottom: 12px;">This link expires in 7 days.</p>
       <p style="${EMAIL_STYLES.muted}">
-        If you did not create an account with ${brandNameHtml()}, you can ignore this email.
+        If you did not create an account with ${brand}, you can ignore this email.
       </p>
     </div>
   `;
-  return emailShell(body);
+  return emailShell(body, branding);
 }
 
 export function createPasswordResetEmailHtml(
   firstName: string,
   resetUrl: string,
+  host?: string | null,
 ): string {
+  const branding = getEmailBranding(host);
+  const brand = brandNameHtml(branding);
   const safeFirst = escapeHtml(
     String(firstName ?? "")
       .trim() || "there",
@@ -229,7 +270,7 @@ export function createPasswordResetEmailHtml(
     <h1 style="${EMAIL_STYLES.h1}">Reset your password</h1>
     <p style="${EMAIL_STYLES.p}">Hello ${safeFirst},</p>
     <p style="${EMAIL_STYLES.p}">
-      We received a request to reset the password for your ${brandNameHtml()} account.
+      We received a request to reset the password for your ${brand} account.
       Use the button below to choose a new password:
     </p>
     <div style="text-align: center; margin: 28px 0;">
@@ -246,13 +287,16 @@ export function createPasswordResetEmailHtml(
       </p>
     </div>
   `;
-  return emailShell(body);
+  return emailShell(body, branding);
 }
 
 export function createPasswordChangedEmailHtml(
   firstName: string,
   loginUrl: string,
+  host?: string | null,
 ): string {
+  const branding = getEmailBranding(host);
+  const brand = brandNameHtml(branding);
   const safeFirst = escapeHtml(
     String(firstName ?? "")
       .trim() || "there",
@@ -262,7 +306,7 @@ export function createPasswordChangedEmailHtml(
     <h1 style="${EMAIL_STYLES.h1}">Password changed successfully</h1>
     <p style="${EMAIL_STYLES.p}">Hello ${safeFirst},</p>
     <p style="${EMAIL_STYLES.p}">
-      Your ${brandNameHtml()} account password was changed successfully.
+      Your ${brand} account password was changed successfully.
       You can sign in with your new password using the button below.
     </p>
     <div style="text-align: center; margin: 28px 0;">
@@ -274,7 +318,7 @@ export function createPasswordChangedEmailHtml(
       </p>
     </div>
   `;
-  return emailShell(body);
+  return emailShell(body, branding);
 }
 
 export type PaymentDecisionEmailParams = {
@@ -305,7 +349,10 @@ function paymentDecisionDetailsBlock(params: PaymentDecisionEmailParams): string
 
 export function createPaymentApprovedEmailHtml(
   params: PaymentDecisionEmailParams,
+  host?: string | null,
 ): string {
+  const branding = getEmailBranding(host);
+  const brand = brandNameHtml(branding);
   const safeFirst = escapeHtml(String(params.firstName ?? "").trim() || "there");
   const href = safeEmailHttpUrl(params.detailsUrl);
   const body = `
@@ -313,7 +360,7 @@ export function createPaymentApprovedEmailHtml(
     <p style="${EMAIL_STYLES.p}">Hello ${safeFirst},</p>
     <p style="${EMAIL_STYLES.p}">
       Good news — your deposit has been reviewed and <strong>approved</strong>.
-      The funds have been credited to your ${brandNameHtml()} account balance.
+      The funds have been credited to your ${brand} account balance.
     </p>
     ${paymentDecisionDetailsBlock(params)}
     <div style="text-align: center; margin: 28px 0;">
@@ -323,12 +370,14 @@ export function createPaymentApprovedEmailHtml(
       If you have questions about this deposit, reply to this email or contact support.
     </p>
   `;
-  return emailShell(body);
+  return emailShell(body, branding);
 }
 
 export function createPaymentRejectedEmailHtml(
   params: PaymentDecisionEmailParams,
+  host?: string | null,
 ): string {
+  const branding = getEmailBranding(host);
   const safeFirst = escapeHtml(String(params.firstName ?? "").trim() || "there");
   const href = safeEmailHttpUrl(params.detailsUrl);
   const body = `
@@ -346,5 +395,5 @@ export function createPaymentRejectedEmailHtml(
       If you believe this is a mistake or already sent funds, contact support with your transaction ID.
     </p>
   `;
-  return emailShell(body);
+  return emailShell(body, branding);
 }
