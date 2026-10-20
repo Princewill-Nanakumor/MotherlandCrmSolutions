@@ -14,7 +14,6 @@ import { DashboardSearchBar } from "./DashboardSearchBar";
 import ThemeToggle from "./ThemeToggle";
 import { DateTimeDisplay } from "./DateTimeDisplay";
 import { UserDropdownMenu, UserDropdownMenuProps } from "./UserDropdownMenu";
-import { NotificationBell } from "../notifications/NotificationBell";
 import { useUserProfileData } from "@/hooks/useNavbarData";
 
 interface DashboardNavbarProps {
@@ -129,7 +128,6 @@ export default function DashboardNavbar({
   const rightControls = (
     <div className="flex items-center gap-2 shrink-0 sm:gap-4">
       <DateTimeDisplay />
-      {session?.user?.id ? <NotificationBell /> : null}
       <ThemeToggle isLoading={isLoading} />
       <UserDropdownMenu
         session={session}

@@ -2,7 +2,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
-import { UserCircle, LogOut, User, Settings, Bell } from "lucide-react";
+import { UserCircle, LogOut, User, Settings } from "lucide-react";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { useRouter } from "next/navigation";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
@@ -76,11 +76,6 @@ export function UserDropdownMenu({
   const handleSettings = () => {
     setDropdownOpen(false);
     router.push("/dashboard/settings");
-  };
-
-  const handleNotifications = () => {
-    setDropdownOpen(false);
-    router.push("/dashboard/notifications");
   };
 
   const handleAdminManagement = () => {
@@ -210,17 +205,6 @@ export function UserDropdownMenu({
               <Settings className="w-4 h-4 mr-3 text-blue-500 dark:text-blue-400" />
               Settings
             </button>
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={handleNotifications}
-                disabled={logoutLoading}
-                className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out disabled:pointer-events-none disabled:opacity-50"
-              >
-                <Bell className="w-4 h-4 mr-3 text-emerald-500 dark:text-emerald-400" />
-                Notifications
-              </button>
-            )}
             {isSuperAdmin ? (
               <button
                 type="button"

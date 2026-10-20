@@ -33,6 +33,7 @@ import { disconnectAblyRealtimeClient } from "@/lib/ablyClient";
 import { useDeferAfterPaint } from "@/hooks/useDeferAfterPaint";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { TenantLeadsRealtimeSync } from "@/components/dashboardComponents/TenantLeadsRealtimeSync";
+import { PaymentNotificationsRealtimeSync } from "@/components/notifications/PaymentNotificationsRealtimeSync";
 import { getDashboardRoleRedirect } from "@/lib/dashboardAccess";
 import { canAccessAllLeads } from "@/lib/roles";
 import { authDebug } from "@/lib/authDebug";
@@ -565,6 +566,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             {deferNonCriticalShell && sessionReady && (
               <>
                 <TenantLeadsRealtimeSync />
+                <PaymentNotificationsRealtimeSync />
                 <ReminderNotifications />
               </>
             )}
