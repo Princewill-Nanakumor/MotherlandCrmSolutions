@@ -193,8 +193,8 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen border dark:bg-gray-800 rounded-xl">
-      <div className="container px-4 py-8 mx-auto">
+    <div className="min-h-screen min-w-0 max-w-full overflow-x-hidden">
+      <div className="w-full min-w-0 max-w-full px-3 py-4 border rounded-lg sm:px-4 sm:py-6 dark:bg-gray-800">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900! dark:text-white! mb-2">
             Notifications

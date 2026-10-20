@@ -218,13 +218,7 @@ export default function SubscriptionManager() {
         type: "all",
       }),
     ]);
-
-    toast({
-      title: "Success",
-      description: "Subscription activated successfully!",
-      variant: "success",
-    });
-  }, [queryClient, toast]);
+  }, [queryClient]);
 
   const handleCloseModal = useCallback(() => {
     setShowSubscriptionModal(false);

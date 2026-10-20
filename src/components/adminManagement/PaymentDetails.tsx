@@ -1,4 +1,6 @@
 // src/components/adminManagement/PaymentDetails.tsx
+"use client";
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +15,7 @@ import {
   X,
   Wallet,
 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Payment {
   _id: string;
@@ -35,6 +38,7 @@ interface PaymentDetailsProps {
 }
 
 export default function PaymentDetails({ payments }: PaymentDetailsProps) {
+  const { toast } = useToast();
   const [approvingPayment, setApprovingPayment] = useState<string | null>(null);
   const [rejectingPayment, setRejectingPayment] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -130,13 +134,22 @@ export default function PaymentDetails({ payments }: PaymentDetailsProps) {
       const data = await response.json();
 
       if (data.success) {
-        // Refresh the page or update the payment list
+        toast({
+          title: "Payment approved",
+          description: "Balance has been updated successfully.",
+          variant: "success",
+        });
         window.location.reload();
       }
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to approve payment"
-      );
+      const message =
+        error instanceof Error ? error.message : "Failed to approve payment";
+      setError(message);
+      toast({
+        title: "Approval failed",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setApprovingPayment(null);
     }
@@ -162,13 +175,22 @@ export default function PaymentDetails({ payments }: PaymentDetailsProps) {
       const data = await response.json();
 
       if (data.success) {
-        // Refresh the page or update the payment list
+        toast({
+          title: "Payment rejected",
+          description: "The payment request has been rejected.",
+          variant: "success",
+        });
         window.location.reload();
       }
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to reject payment"
-      );
+      const message =
+        error instanceof Error ? error.message : "Failed to reject payment";
+      setError(message);
+      toast({
+        title: "Rejection failed",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setRejectingPayment(null);
     }

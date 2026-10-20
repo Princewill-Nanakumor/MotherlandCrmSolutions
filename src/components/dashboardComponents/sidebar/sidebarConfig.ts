@@ -8,6 +8,8 @@ import {
   CreditCard,
   ShieldUser,
   Crown,
+  Bell,
+  UserCog,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,8 +26,12 @@ export interface SidebarNavItem {
   icon: LucideIcon;
   label: string;
   ownerOnly?: boolean;
+  /** Only platform super admins (SUPER_ADMIN_EMAILS). */
+  superAdminOnly?: boolean;
   requiredPermission?: "ASSIGN_LEADS";
   userOnly?: boolean;
+  /** Show unread notification badge (same source as navbar bell). */
+  showNotificationBadge?: boolean;
 }
 
 export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
@@ -67,6 +73,19 @@ export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
     href: "/dashboard/subscription",
     label: "Subscription",
     ownerOnly: true,
+  },
+  {
+    icon: Bell,
+    href: "/dashboard/notifications",
+    label: "Notifications",
+    ownerOnly: true,
+    showNotificationBadge: true,
+  },
+  {
+    icon: UserCog,
+    href: "/dashboard/admin-management",
+    label: "Admins",
+    superAdminOnly: true,
   },
 ];
 
@@ -133,9 +152,16 @@ export const SIDEBAR_TOOLTIP_KBD_CLASS =
 
 export function filterSidebarNavItems(
   items: SidebarNavItem[],
-  access: { role?: string; permissions?: string[] },
+  access: {
+    role?: string;
+    permissions?: string[];
+    isSuperAdmin?: boolean;
+  },
 ) {
   return items.filter((item) => {
+    if (item.superAdminOnly) {
+      return isAdmin(access.role) && access.isSuperAdmin === true;
+    }
     if (item.ownerOnly) return isAdmin(access.role);
     if (item.requiredPermission === "ASSIGN_LEADS") {
       return canAccessAllLeads(access);

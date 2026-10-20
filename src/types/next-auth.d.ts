@@ -12,6 +12,8 @@ declare module "next-auth" {
       email: string;
       permissions: string[];
       status: string;
+      /** True when ADMIN email is listed in SUPER_ADMIN_EMAILS. */
+      isSuperAdmin?: boolean;
     } & DefaultSession["user"];
   }
 
@@ -22,6 +24,7 @@ declare module "next-auth" {
     firstName: string;
     lastName: string;
     status: string;
+    isSuperAdmin?: boolean;
   }
 }
 
@@ -33,6 +36,7 @@ declare module "next-auth/jwt" {
     firstName: string;
     lastName: string;
     status: string;
+    isSuperAdmin?: boolean;
   }
 }
 
@@ -45,5 +49,6 @@ export interface CustomSession {
     role: string;
     permissions: string[];
     status: string;
+    isSuperAdmin?: boolean;
   };
 }

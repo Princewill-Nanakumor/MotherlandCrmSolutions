@@ -90,9 +90,12 @@ export default function Sidebar() {
   }, [status, session?.user?.id, session?.user?.role]);
 
   const isAdmin = session?.user?.role === "ADMIN";
+  const isSuperAdmin =
+    isAdmin && session?.user?.isSuperAdmin === true;
   const filteredNavItems = filterSidebarNavItems(SIDEBAR_NAV_ITEMS, {
     role: session?.user?.role,
     permissions: session?.user?.permissions,
+    isSuperAdmin,
   });
 
   useEffect(() => {

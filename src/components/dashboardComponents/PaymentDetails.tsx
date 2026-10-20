@@ -27,6 +27,7 @@ import {
   invalidateBalanceCaches,
 } from "@/hooks/useBillingData";
 import { notificationKeys } from "@/lib/notificationKeys";
+import { useToast } from "@/components/ui/use-toast";
 
 type PaymentDetailsPayment = Payment;
 
@@ -37,6 +38,7 @@ interface PaymentDetailsProps {
 export default function PaymentDetails({ params }: PaymentDetailsProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [paymentId, setPaymentId] = useState<string>("");
   const [payment, setPayment] = useState<PaymentDetailsPayment | null>(null);
   const [loading, setLoading] = useState(true);
@@ -126,12 +128,21 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
           queryClient.refetchQueries({ queryKey: billingKeys.payments(10) }),
           queryClient.refetchQueries({ queryKey: notificationKeys.all }),
         ]);
-        alert("Payment approved successfully! Balance has been updated.");
+        toast({
+          title: "Payment approved",
+          description: "Balance has been updated successfully.",
+          variant: "success",
+        });
       }
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to approve payment"
-      );
+      const message =
+        error instanceof Error ? error.message : "Failed to approve payment";
+      setError(message);
+      toast({
+        title: "Approval failed",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setApproving(false);
     }
@@ -167,12 +178,21 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
           queryClient.refetchQueries({ queryKey: billingKeys.payments(10) }),
           queryClient.refetchQueries({ queryKey: notificationKeys.all }),
         ]);
-        alert("Payment rejected successfully.");
+        toast({
+          title: "Payment rejected",
+          description: "The payment request has been rejected.",
+          variant: "success",
+        });
       }
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to reject payment"
-      );
+      const message =
+        error instanceof Error ? error.message : "Failed to reject payment";
+      setError(message);
+      toast({
+        title: "Rejection failed",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setRejecting(false);
     }
@@ -228,8 +248,8 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
   // Show loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-800 border rounded-xl">
-        <div className="container mx-auto px-4 py-8">
+      <div className="min-h-screen min-w-0 max-w-full overflow-x-hidden bg-gray-50 dark:bg-gray-800">
+        <div className="w-full min-w-0 max-w-full px-3 py-4 border rounded-lg sm:px-4 sm:py-6">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4 mx-auto"></div>
@@ -246,8 +266,8 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
   // Show error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-800 border rounded-xl">
-        <div className="container mx-auto px-4 py-8">
+      <div className="min-h-screen min-w-0 max-w-full overflow-x-hidden bg-gray-50 dark:bg-gray-800">
+        <div className="w-full min-w-0 max-w-full px-3 py-4 border rounded-lg sm:px-4 sm:py-6">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -291,8 +311,8 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
   // Show payment not found
   if (!payment) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-800 border rounded-xl">
-        <div className="container mx-auto px-4 py-8">
+      <div className="min-h-screen min-w-0 max-w-full overflow-x-hidden bg-gray-50 dark:bg-gray-800">
+        <div className="w-full min-w-0 max-w-full px-3 py-4 border rounded-lg sm:px-4 sm:py-6">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -324,8 +344,8 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
   const displayParty = getPaymentDisplayParty(payment);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 border rounded-xl">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen min-w-0 max-w-full overflow-x-hidden bg-gray-50 dark:bg-gray-800">
+      <div className="w-full min-w-0 max-w-full px-3 py-4 border rounded-lg sm:px-4 sm:py-6">
         {/* Header */}
         <div className="flex flex-col gap-3 mb-8 min-w-0 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-3 min-w-0 sm:flex-row sm:items-center sm:gap-4">

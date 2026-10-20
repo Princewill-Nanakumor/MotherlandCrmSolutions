@@ -250,8 +250,8 @@ export default function NotificationsList({
   const pendingCount = pendingDeleteIds?.length ?? 0;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40 px-4 py-3">
+    <div className={`space-y-4 ${selectedCount > 0 ? "pb-24" : ""}`}>
+      <div className="sticky top-0 z-20 flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm px-4 py-3 shadow-sm">
         <label className="flex items-center gap-2 text-sm text-gray-700! dark:text-white! cursor-pointer select-none">
           <Checkbox
             checked={allSelected ? true : someSelected ? "indeterminate" : false}
@@ -265,16 +265,6 @@ export default function NotificationsList({
               : "Select all"}
           </span>
         </label>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={selectedCount === 0 || isDeleting}
-          onClick={() => requestDelete([...selectedIds])}
-          className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-        >
-          <Trash2 className="w-4 h-4 mr-1.5" />
-          Delete selected
-        </Button>
       </div>
 
       {notifications.map((notification) => {
@@ -426,6 +416,29 @@ export default function NotificationsList({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {selectedCount > 0 ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center p-4 pointer-events-none">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg px-4 py-2.5">
+            <span className="text-sm font-medium text-gray-700! dark:text-white!">
+              {selectedCount} selected
+            </span>
+            <Button
+              size="sm"
+              disabled={isDeleting}
+              onClick={() => requestDelete([...selectedIds])}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isDeleting ? (
+                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4 mr-1.5" />
+              )}
+              Delete
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

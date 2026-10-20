@@ -4,8 +4,11 @@
 import { useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
 import { HelpCircle, Settings, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { notificationKeys } from "@/lib/notificationKeys";
 import {
   SIDEBAR_ACTIVE_STYLE,
   SIDEBAR_TOOLTIP_CLASS,
@@ -56,6 +59,28 @@ function SidebarHoverTip({
   );
 }
 
+function useUnreadNotificationCount(enabled: boolean) {
+  const { data: session } = useSession();
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: notificationKeys.all,
+    queryFn: async () => {
+      const response = await fetch("/api/notifications/all", {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch notifications");
+      }
+      return response.json() as Promise<Array<{ read?: boolean }>>;
+    },
+    select: (items) =>
+      Array.isArray(items) ? items.filter((n) => !n.read).length : 0,
+    enabled: enabled && !!session?.user,
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
+  });
+  return unreadCount;
+}
+
 type SidebarNavProps = {
   pathname: string | null;
   collapsed: boolean;
@@ -69,19 +94,27 @@ export function SidebarNav({
   isAdmin,
   items,
 }: SidebarNavProps) {
+  const needsNotificationBadge = items.some(
+    (item) => item.showNotificationBadge,
+  );
+  const unreadCount = useUnreadNotificationCount(needsNotificationBadge);
+
   const renderNavLink = (item: SidebarNavItem) => {
     const isActive =
       pathname === item.href ||
       (item.href !== "/dashboard" &&
         Boolean(pathname?.startsWith(item.href + "/")));
+    const badgeCount =
+      item.showNotificationBadge && unreadCount > 0 ? unreadCount : 0;
 
     return (
       <SidebarHoverTip key={item.href} label={item.label} collapsed={collapsed}>
         <Link
           href={item.href}
           className={cn(
-            "flex relative flex-col items-center w-full rounded-xl transition-all duration-500 ease-in-out group shrink-0 overflow-hidden",
-            collapsed ? "py-1.5" : "py-2",
+            "flex relative flex-col items-center w-full rounded-xl transition-all duration-500 ease-in-out group shrink-0",
+            // Allow unread badge to paint outside the icon box; only clip label when collapsed.
+            collapsed ? "py-1.5 overflow-hidden" : "py-2 overflow-visible",
             isActive
               ? "text-white shadow-md active-nav-link brand-gradient"
               : "brand-icon hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,transparent)] dark:hover:bg-gray-700 dark:hover:text-white!",
@@ -89,7 +122,11 @@ export function SidebarNav({
           style={isActive ? SIDEBAR_ACTIVE_STYLE : undefined}
           data-active={isActive ? "true" : undefined}
           aria-current={isActive ? "page" : undefined}
-          aria-label={item.label}
+          aria-label={
+            badgeCount > 0
+              ? `${item.label}, ${badgeCount} unread`
+              : item.label
+          }
         >
           <span
             className={cn(
@@ -99,10 +136,19 @@ export function SidebarNav({
             )}
             aria-hidden="true"
           />
-          <item.icon
-            size={22}
-            className={isActive ? "text-white" : "brand-icon dark:text-white!"}
-          />
+          <span className="relative inline-flex">
+            <item.icon
+              size={22}
+              className={
+                isActive ? "text-white" : "brand-icon dark:text-white!"
+              }
+            />
+            {badgeCount > 0 ? (
+              <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-0.5 flex items-center justify-center rounded-full bg-red-600 text-[9px] font-bold leading-none text-white">
+                {badgeCount > 99 ? "99+" : badgeCount}
+              </span>
+            ) : null}
+          </span>
           <span
             className={cn(
               "text-[11px] font-medium leading-tight text-center px-0.5 transition-all duration-500 ease-in-out",

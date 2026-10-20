@@ -35,10 +35,15 @@ export function HomepageDashboardMenu({
   const items = useMemo(
     () =>
       filterSidebarNavItems(SIDEBAR_NAV_ITEMS, {
+        isSuperAdmin: session?.user?.isSuperAdmin === true,
         role: session?.user?.role,
         permissions: session?.user?.permissions,
       }),
-    [session?.user?.role, session?.user?.permissions],
+    [
+      session?.user?.role,
+      session?.user?.permissions,
+      session?.user?.isSuperAdmin,
+    ],
   );
 
   if (variant === "mobile") {
