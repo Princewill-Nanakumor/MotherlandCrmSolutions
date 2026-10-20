@@ -14,6 +14,14 @@ import { useToast } from "@/components/ui/use-toast";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import {
+  DASHBOARD_PAGE_SUBTITLE_CLASS,
+  DASHBOARD_PAGE_TITLE_CLASS,
+} from "@/lib/dashboardPageHeading";
+import {
+  DASHBOARD_PAGE_HEADER_CLASS,
+  DASHBOARD_PAGE_SHELL_CLASS,
+} from "@/lib/dashboardPageShell";
+import {
   SUBSCRIPTION_PLAN_ORDER,
   toDashboardSubscriptionPlan,
 } from "@/lib/subscriptionPlanCatalog";
@@ -249,67 +257,58 @@ export default function SubscriptionManager() {
   }
 
   return (
-    <div className="min-h-screen border bg-gray-50 rounded-xl dark:bg-gray-800">
-      <div className="container px-4 py-8 mx-auto">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900! dark:text-white! mb-2">
-            Subscription Plans
-          </h1>
-          <p className="text-gray-600! dark:text-gray-400!">
-            Choose the perfect plan for your CRM needs
-          </p>
-        </div>
+    <div className={DASHBOARD_PAGE_SHELL_CLASS}>
+      <div className={DASHBOARD_PAGE_HEADER_CLASS}>
+        <h1 className={DASHBOARD_PAGE_TITLE_CLASS}>Subscription Plans</h1>
+        <p className={DASHBOARD_PAGE_SUBTITLE_CLASS}>
+          Choose the perfect plan for your CRM needs
+        </p>
+      </div>
 
-        {/* Trial Status */}
-        {subscriptionData && (
-          <TrialStatus
-            subscriptionData={subscriptionData}
+      {subscriptionData && (
+        <TrialStatus
+          subscriptionData={subscriptionData}
+          onSubscribe={handleSubscribe}
+        />
+      )}
+
+      {subscriptionData && (
+        <div id="subscription-plans">
+          <SubscriptionPlans
+            plans={SUBSCRIPTION_PLANS}
+            currentPlan={subscriptionData.currentPlan}
+            balance={subscriptionData.balance}
+            subscriptionStatus={subscriptionData.subscriptionStatus}
+            usageData={usageData}
             onSubscribe={handleSubscribe}
           />
-        )}
+        </div>
+      )}
 
-        {/* Subscription Plans */}
-        {subscriptionData && (
-          <div id="subscription-plans">
-            <SubscriptionPlans
-              plans={SUBSCRIPTION_PLANS}
-              currentPlan={subscriptionData.currentPlan}
-              balance={subscriptionData.balance}
-              subscriptionStatus={subscriptionData.subscriptionStatus}
-              usageData={usageData}
-              onSubscribe={handleSubscribe}
-            />
-          </div>
-        )}
+      {selectedPlan && subscriptionData && (
+        <SubscriptionModal
+          plan={selectedPlan}
+          isOpen={showSubscriptionModal}
+          onClose={handleCloseModal}
+          onSuccess={handleSubscriptionSuccess}
+          balance={subscriptionData.balance}
+        />
+      )}
 
-        {/* Subscription Modal */}
-        {selectedPlan && subscriptionData && (
-          <SubscriptionModal
-            plan={selectedPlan}
-            isOpen={showSubscriptionModal}
-            onClose={handleCloseModal}
-            onSuccess={handleSubscriptionSuccess}
-            balance={subscriptionData.balance}
-          />
-        )}
-
-        {/* Downgrade Warning Modal */}
-        {selectedPlan && subscriptionData && usageData && (
-          <DowngradeWarningModal
-            isOpen={showDowngradeModal}
-            onClose={handleCloseDowngradeModal}
-            selectedPlan={selectedPlan}
-            currentPlan={
-              SUBSCRIPTION_PLANS.find(
-                (p) => p.id === subscriptionData.currentPlan,
-              ) || null
-            }
-            usageData={usageData}
-            onUpgrade={handleUpgradeFromDowngrade}
-          />
-        )}
-      </div>
+      {selectedPlan && subscriptionData && usageData && (
+        <DowngradeWarningModal
+          isOpen={showDowngradeModal}
+          onClose={handleCloseDowngradeModal}
+          selectedPlan={selectedPlan}
+          currentPlan={
+            SUBSCRIPTION_PLANS.find(
+              (p) => p.id === subscriptionData.currentPlan,
+            ) || null
+          }
+          usageData={usageData}
+          onUpgrade={handleUpgradeFromDowngrade}
+        />
+      )}
     </div>
   );
 }

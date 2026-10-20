@@ -29,6 +29,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DASHBOARD_PAGE_SUBTITLE_CLASS,
+  DASHBOARD_PAGE_TITLE_CLASS,
+} from "@/lib/dashboardPageHeading";
+import { DASHBOARD_PAGE_SHELL_CLASS } from "@/lib/dashboardPageShell";
 
 interface UsersManagementProps {
   onUserDeleted?: (userId: string) => void;
@@ -157,13 +162,11 @@ export default function UsersManagement({
           };
 
           return (
-          <div className="p-4 space-y-6 border rounded min-w-0 max-w-full overflow-x-hidden bg-background sm:p-6 dark:bg-gray-800">
+          <div className={`${DASHBOARD_PAGE_SHELL_CLASS} space-y-6`}>
             <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <h1 className="text-2xl font-bold text-gray-900! wrap-break-word dark:text-white!">
-                  User Management
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <h1 className={DASHBOARD_PAGE_TITLE_CLASS}>User Management</h1>
+                <p className={DASHBOARD_PAGE_SUBTITLE_CLASS}>
                   Create and manage user accounts for your organization
                 </p>
               </div>

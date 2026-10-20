@@ -2,6 +2,11 @@
 "use client";
 
 import { Users, Globe } from "lucide-react";
+import {
+  DASHBOARD_PAGE_SUBTITLE_CLASS,
+  DASHBOARD_PAGE_TITLE_CLASS,
+} from "@/lib/dashboardPageHeading";
+import { DASHBOARD_PAGE_INSET_HEADER_CLASS } from "@/lib/dashboardPageShell";
 
 interface UserLeadsHeaderProps {
   shouldShowLoading: boolean;
@@ -36,14 +41,16 @@ export const UserLeadsHeader: React.FC<UserLeadsHeaderProps> = ({
   counts,
 }) => {
   return (
-    <div className="px-4 pt-6 bg-white rounded-t-xl sm:px-8 dark:bg-gray-800 dark:border-gray-700">
+    <div className={DASHBOARD_PAGE_INSET_HEADER_CLASS}>
       <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className="flex flex-wrap items-center gap-2 text-xl font-bold text-gray-900! wrap-break-word sm:gap-3 sm:text-2xl dark:text-white!">
-            <Users className="h-6 w-6 shrink-0 text-blue-600! dark:text-blue-400!" />
+          <h1
+            className={`flex flex-wrap items-center gap-2 sm:gap-3 ${DASHBOARD_PAGE_TITLE_CLASS}`}
+          >
+            <Users className="h-7 w-7 shrink-0 text-blue-600! dark:text-blue-400!" />
             My Leads
           </h1>
-          <p className="text-sm text-gray-600! dark:text-gray-400!">
+          <p className={DASHBOARD_PAGE_SUBTITLE_CLASS}>
             View and manage your assigned leads
           </p>
         </div>

@@ -69,7 +69,7 @@ export const FileUploadSection = ({
   const eta = formatEta(importProgress?.estimatedRemainingMs);
 
   return (
-    <div className="px-6 pb-6 mt-4">
+    <div className="pb-2 mt-4">
       {usageData && !usageData.canImport && (
         <Card className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
           <CardHeader>

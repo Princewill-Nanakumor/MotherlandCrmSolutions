@@ -17,6 +17,11 @@ import UserCreationHelp from "./UserCreationHelp";
 import ImportHelp from "./ImportHelp";
 import BillingSubscriptionHelp from "./BillingSubscriptionHelp";
 import { useAppBranding } from "@/components/AppBrandingProvider";
+import {
+  DASHBOARD_PAGE_SUBTITLE_CLASS,
+  DASHBOARD_PAGE_TITLE_CLASS,
+} from "@/lib/dashboardPageHeading";
+import { DASHBOARD_PAGE_SHELL_CLASS } from "@/lib/dashboardPageShell";
 
 type HelpSection = "overview" | "status" | "users" | "import" | "billing";
 
@@ -80,10 +85,8 @@ const HelpPage: React.FC = () => {
         <div className="flex items-center justify-center w-16 h-16 brand-gradient rounded-full mx-auto mb-4">
           <HelpCircle className="w-8 h-8 text-white" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900! dark:text-white! mb-2">
-          Help Center
-        </h1>
-        <p className="text-lg text-gray-600! dark:text-gray-400! max-w-2xl mx-auto">
+        <h1 className={DASHBOARD_PAGE_TITLE_CLASS}>Help Center</h1>
+        <p className={`${DASHBOARD_PAGE_SUBTITLE_CLASS} max-w-2xl mx-auto`}>
           Learn how to use the features of {shortName}
         </p>
       </div>
@@ -230,8 +233,7 @@ const HelpPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 border rounded-lg">
-      <div className="w-full mx-auto p-6">
+    <div className={DASHBOARD_PAGE_SHELL_CLASS}>
         {activeSection === "overview" ? (
           <>
             {/* Back button for overview */}
@@ -262,7 +264,6 @@ const HelpPage: React.FC = () => {
             }
           </>
         )}
-      </div>
     </div>
   );
 };

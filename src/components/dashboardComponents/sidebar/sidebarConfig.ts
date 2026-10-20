@@ -30,6 +30,8 @@ export interface SidebarNavItem {
   superAdminOnly?: boolean;
   requiredPermission?: "ASSIGN_LEADS";
   userOnly?: boolean;
+  /** Temporarily hide from the sidebar (route may still exist). */
+  hidden?: boolean;
   /** Show unread notification badge (same source as navbar bell). */
   showNotificationBadge?: boolean;
 }
@@ -61,6 +63,8 @@ export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
     href: "/dashboard/adsManager",
     label: "Ads",
     ownerOnly: true,
+    // Coming soon — hide from nav until Ads ships.
+    hidden: true,
   },
   {
     icon: CreditCard,
@@ -159,6 +163,7 @@ export function filterSidebarNavItems(
   },
 ) {
   return items.filter((item) => {
+    if (item.hidden) return false;
     if (item.superAdminOnly) {
       return isAdmin(access.role) && access.isSuperAdmin === true;
     }

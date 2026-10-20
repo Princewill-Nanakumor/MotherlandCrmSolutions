@@ -596,7 +596,7 @@ const BillingSubscriptionHelp: React.FC = () => {
           <div className="flex items-center space-x-3">
             <CreditCard className="w-8 h-8" />
             <div>
-              <h1 className="text-2xl font-bold">
+              <h1 className="mb-2 text-2xl! font-bold text-white!">
                 Billing & Subscription Guide
               </h1>
               <p className="mt-1 text-white/80">

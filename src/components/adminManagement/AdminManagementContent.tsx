@@ -13,6 +13,13 @@ import AdminStats from "./AdminStats";
 import AdminList from "./AdminList";
 import { useAdminOverview, useDeleteAdmin } from "@/hooks/useAdminData";
 import type { AdminStats as TenantAdminStats } from "@/types/adminTypes";
+import {
+  DASHBOARD_PAGE_SUBTITLE_CLASS,
+  DASHBOARD_PAGE_TITLE_CLASS,
+} from "@/lib/dashboardPageHeading";
+import { DASHBOARD_PAGE_SHELL_CLASS } from "@/lib/dashboardPageShell";
+import { LoadingSpinner } from "@/components/dashboardComponents/LeadsLoadingState";
+import { AdminManagementPageSkeleton } from "./AdminManagementPageSkeleton";
 
 export default function AdminManagementContent() {
   const { data: session, status } = useSession();
@@ -103,15 +110,12 @@ export default function AdminManagementContent() {
     }
   };
 
-  // Loading state
-  if (status === "loading" || isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-        </div>
-      </div>
-    );
+  if (status === "loading") {
+    return <LoadingSpinner />;
+  }
+
+  if (isLoading) {
+    return <AdminManagementPageSkeleton />;
   }
 
   // Error state
@@ -136,13 +140,11 @@ export default function AdminManagementContent() {
   }
 
   return (
-    <div className="space-y-6 p-4 border rounded-lg min-w-0 max-w-full overflow-x-hidden sm:p-6">
+    <div className={`${DASHBOARD_PAGE_SHELL_CLASS} space-y-6`}>
       <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-gray-900 wrap-break-word sm:text-3xl dark:text-white">
-            Admin Management
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+          <h1 className={DASHBOARD_PAGE_TITLE_CLASS}>Admin Management</h1>
+          <p className={DASHBOARD_PAGE_SUBTITLE_CLASS}>
             Manage all administrators and monitor their activities
           </p>
         </div>

@@ -8,6 +8,10 @@ import { LeadsSectionCollapse } from "@/components/dashboardComponents/LeadsSect
 import { Lead } from "@/types/leads";
 import { CountsData } from "@/types/pagination.types";
 import { SortField, SortOrder } from "@/components/leads/userLeadsTypes";
+import {
+  DASHBOARD_PAGE_INSET_BODY_CLASS,
+  DASHBOARD_PAGE_SHELL_FILL_CLASS,
+} from "@/lib/dashboardPageShell";
 
 const LeadDetailsPanel = dynamic(
   () => import("@/components/dashboardComponents/LeadDetailsPanel"),
@@ -166,7 +170,7 @@ export function UserLeadsMainContent({
       };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 h-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto border rounded-lg bg-background dark:bg-gray-800">
+    <div className={DASHBOARD_PAGE_SHELL_FILL_CLASS}>
       <LeadsSectionCollapse open={showHeader}>
         <UserLeadsHeader shouldShowLoading={shouldShowLoading} counts={counts} />
       </LeadsSectionCollapse>
@@ -194,7 +198,7 @@ export function UserLeadsMainContent({
       </LeadsSectionCollapse>
 
       <div
-        className={`flex-1 min-h-0 min-w-0 px-4 pb-4 overflow-auto sm:px-8 ${
+        className={`flex-1 min-h-0 min-w-0 overflow-auto ${DASHBOARD_PAGE_INSET_BODY_CLASS} ${
           showControls ? "" : showHeader ? "pt-4" : "pt-6"
         }`}
       >

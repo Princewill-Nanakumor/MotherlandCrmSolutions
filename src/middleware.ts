@@ -10,6 +10,7 @@ import {
   canAccessAdminManagement,
 } from "@/lib/dashboardAccess";
 import {
+  isHiddenDashboardPath,
   isOwnerOnlyDashboardPath,
   isUsersDashboardPath,
 } from "@/lib/dashboardAdminOnlyPaths";
@@ -108,6 +109,9 @@ export default withAuth(
       const staffHome = canAccessAllLeads({ role, permissions })
         ? "/dashboard/all-leads"
         : "/dashboard/leads";
+      if (isHiddenDashboardPath(path)) {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
       if (isOwnerOnlyDashboardPath(path) && !isAdmin(role)) {
         return NextResponse.redirect(new URL(staffHome, request.url));
       }

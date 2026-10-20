@@ -118,7 +118,7 @@ export default function LeadStatusStats({
 
   // Only skeleton on the true first fetch — cached counts paint immediately.
   const showSkeleton = isPending && !hasData;
-  // Hold the last painted status count so a brief pending blip never shows "—".
+  // Hold the last painted status count so a brief pending blip keeps the number.
   const statusCountDisplayRef = useRef<number | null>(null);
   if (!showSkeleton) {
     statusCountDisplayRef.current = rows.length;
@@ -126,7 +126,7 @@ export default function LeadStatusStats({
   const statusCountDisplay =
     statusCountDisplayRef.current !== null
       ? statusCountDisplayRef.current.toLocaleString()
-      : "—";
+      : null;
   const heading = isAdmin ? "Leads by Status" : "My Leads by Status";
   const subheading = isAdmin
     ? "How every lead in your CRM is distributed across your statuses"
@@ -155,9 +155,16 @@ export default function LeadStatusStats({
           <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
             All statuses
           </p>
-          <p className="text-xl font-bold text-gray-900 dark:text-white">
-            {statusCountDisplay}
-          </p>
+          {statusCountDisplay === null ? (
+            <div
+              className="ml-auto mt-1 h-7 w-10 animate-pulse rounded bg-gray-200 dark:bg-gray-700"
+              aria-hidden
+            />
+          ) : (
+            <p className="text-xl font-bold text-gray-900 dark:text-white">
+              {statusCountDisplay}
+            </p>
+          )}
         </div>
       </div>
 

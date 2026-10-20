@@ -1,13 +1,15 @@
 // src/components/importPageComponents/ImportContent.tsx
 
+import {
+  DASHBOARD_PAGE_SUBTITLE_CLASS,
+  DASHBOARD_PAGE_TITLE_CLASS,
+} from "@/lib/dashboardPageHeading";
+import { DASHBOARD_PAGE_HEADER_CLASS } from "@/lib/dashboardPageShell";
+
 export const ImportContent = () => (
-  <div className="px-6 pt-6">
-    <div className="flex items-center justify-between">
-      <h1 className="text-2xl font-semibold text-gray-900! dark:text-white!">
-        Import data
-      </h1>
-    </div>
-    <p className="mb-6 text-gray-600 dark:text-gray-300">
+  <div className={DASHBOARD_PAGE_HEADER_CLASS}>
+    <h1 className={DASHBOARD_PAGE_TITLE_CLASS}>Import data</h1>
+    <p className={DASHBOARD_PAGE_SUBTITLE_CLASS}>
       Choose how you like to import people, organizations, deals, leads, notes
       and activities.
     </p>

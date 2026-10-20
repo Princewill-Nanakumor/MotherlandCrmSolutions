@@ -31,17 +31,13 @@ export default function AdminStats({ platformStats }: AdminStatsProps) {
         {[...Array(5)].map((_, index) => (
           <Card
             key={index}
-            className="backdrop-blur-lg bg-white/70 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl"
+            className="animate-pulse border-gray-200 bg-white/70 shadow-xl backdrop-blur-lg dark:border-gray-700 dark:bg-gray-800"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">
-                Loading...
-              </CardTitle>
+              <div className="h-4 w-24 rounded bg-gray-200 dark:bg-gray-700" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                -
-              </div>
+              <div className="h-8 w-16 rounded bg-gray-200 dark:bg-gray-700" />
             </CardContent>
           </Card>
         ))}

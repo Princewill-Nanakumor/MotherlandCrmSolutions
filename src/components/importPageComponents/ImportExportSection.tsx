@@ -39,7 +39,7 @@ export const ImportExportSection: FC<ImportExportSectionProps> = ({
   }, [isExporting]);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <Card className="border border-gray-200 dark:border-gray-700 dark:bg-gray-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-gray-900! dark:text-white!">

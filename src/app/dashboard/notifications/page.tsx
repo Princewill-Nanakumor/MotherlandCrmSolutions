@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LoadingSpinner } from "@/components/dashboardComponents/LeadsLoadingState";
+import { ShieldSpinnerGlyph } from "@/components/dashboardComponents/LeadsLoadingState";
 import NotificationsList from "@/components/notifications/NotificationsList";
 import { notificationKeys } from "@/lib/notificationKeys";
 import {
@@ -17,6 +17,14 @@ import {
 import { useAblyAwareRefetchInterval } from "@/hooks/useAblyAwareRefetchInterval";
 import { useToast } from "@/components/ui/use-toast";
 import type { Notification } from "@/types/notifications";
+import {
+  DASHBOARD_PAGE_SUBTITLE_CLASS,
+  DASHBOARD_PAGE_TITLE_CLASS,
+} from "@/lib/dashboardPageHeading";
+import {
+  DASHBOARD_PAGE_HEADER_CLASS,
+  DASHBOARD_PAGE_SHELL_CLASS,
+} from "@/lib/dashboardPageShell";
 
 export default function NotificationsPage() {
   const { data: session, status } = useSession();
@@ -129,7 +137,11 @@ export default function NotificationsPage() {
   }, [status, session?.user?.role, router]);
 
   if (status === "loading") {
-    return <LoadingSpinner />;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <ShieldSpinnerGlyph />
+      </div>
+    );
   }
 
   if (
@@ -140,26 +152,22 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen min-w-0 max-w-full overflow-x-hidden">
-      <div className="w-full min-w-0 max-w-full px-3 py-4 border rounded-lg sm:px-4 sm:py-6 dark:bg-gray-800">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900! dark:text-white! mb-2">
-            Notifications
-          </h1>
-          <p className="text-gray-600! dark:text-white!">
-            View all your payment and subscription notifications
-          </p>
-        </div>
-
-        <NotificationsList
-          notifications={notifications}
-          loading={isLoading}
-          error={error?.message ?? null}
-          onDeleteNotifications={handleDeleteNotifications}
-          isDeleting={deleteMutation.isPending}
-          onRetry={() => void refetch()}
-        />
+    <div className={DASHBOARD_PAGE_SHELL_CLASS}>
+      <div className={DASHBOARD_PAGE_HEADER_CLASS}>
+        <h1 className={DASHBOARD_PAGE_TITLE_CLASS}>Notifications</h1>
+        <p className={DASHBOARD_PAGE_SUBTITLE_CLASS}>
+          View all your payment and subscription notifications
+        </p>
       </div>
+
+      <NotificationsList
+        notifications={notifications}
+        loading={isLoading}
+        error={error?.message ?? null}
+        onDeleteNotifications={handleDeleteNotifications}
+        isDeleting={deleteMutation.isPending}
+        onRetry={() => void refetch()}
+      />
     </div>
   );
 }

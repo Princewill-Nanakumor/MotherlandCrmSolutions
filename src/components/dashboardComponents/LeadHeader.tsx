@@ -2,6 +2,11 @@
 "use client";
 
 import { Globe } from "lucide-react";
+import {
+  DASHBOARD_PAGE_SUBTITLE_CLASS,
+  DASHBOARD_PAGE_TITLE_CLASS,
+} from "@/lib/dashboardPageHeading";
+import { DASHBOARD_PAGE_INSET_HEADER_CLASS } from "@/lib/dashboardPageShell";
 
 interface Lead {
   _id: string;
@@ -68,13 +73,11 @@ export const LeadsHeader: React.FC<LeadsHeaderProps> = ({
   const isLoading = shouldShowLoading;
 
   return (
-    <div className="px-4 pt-6 bg-white rounded-t-xl sm:px-8 dark:bg-gray-800 dark:border-gray-700">
+    <div className={DASHBOARD_PAGE_INSET_HEADER_CLASS}>
       <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold wrap-break-word sm:text-3xl">
-            Leads Management
-          </h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          <h1 className={DASHBOARD_PAGE_TITLE_CLASS}>Leads Management</h1>
+          <p className={DASHBOARD_PAGE_SUBTITLE_CLASS}>
             Manage and track all your leads in one centralized dashboard
           </p>
         </div>

@@ -15,6 +15,14 @@ import { PasswordInput } from "./PasswordInput";
 import { DateTimeSettingsSection } from "./DateTimeSettingsSection";
 import { DialerSettingsSection } from "./DialerSettingsSection";
 import { AppearanceSettingsSection } from "./AppearanceSettingsSection";
+import {
+  DASHBOARD_PAGE_SUBTITLE_CLASS,
+  DASHBOARD_PAGE_TITLE_CLASS,
+} from "@/lib/dashboardPageHeading";
+import {
+  DASHBOARD_PAGE_HEADER_CLASS,
+  DASHBOARD_PAGE_SHELL_CLASS,
+} from "@/lib/dashboardPageShell";
 
 export function SettingsContent() {
   const { data: session } = useSession();
@@ -156,25 +164,22 @@ export function SettingsContent() {
 
   if (userRole !== "ADMIN") {
     return (
-      <div className="min-h-screen">
-        <div className="w-full px-4 py-6 border rounded-lg">
-          <DateTimeSettingsSection />
-          <DialerSettingsSection />
-        </div>
+      <div className={DASHBOARD_PAGE_SHELL_CLASS}>
+        <DateTimeSettingsSection />
+        <DialerSettingsSection />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="w-full px-4 py-6 border rounded-lg">
+    <div className={DASHBOARD_PAGE_SHELL_CLASS}>
         {/* Header Section */}
-        <div className="flex flex-col items-start mb-8 md:flex-row md:items-center">
+        <div
+          className={`flex flex-col items-start md:flex-row md:items-center ${DASHBOARD_PAGE_HEADER_CLASS}`}
+        >
           <div>
-            <h1 className="mb-2 text-3xl font-bold text-gray-900! dark:text-white!">
-              Account Settings
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
+            <h1 className={DASHBOARD_PAGE_TITLE_CLASS}>Account Settings</h1>
+            <p className={DASHBOARD_PAGE_SUBTITLE_CLASS}>
               Manage your password and account security
             </p>
           </div>
@@ -266,7 +271,6 @@ export function SettingsContent() {
           deleteError={deleteError}
           PasswordInput={PasswordInput}
         />
-      </div>
     </div>
   );
 }

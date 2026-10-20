@@ -23,7 +23,7 @@ export function AllLeadsPageLoadingShell({
 }: AllLeadsPageLoadingShellProps) {
   return (
     <div
-      className="flex flex-col h-full min-h-0 min-w-0 max-w-full overflow-x-hidden overflow-y-auto border rounded-lg bg-background dark:bg-gray-800"
+      className="flex h-full min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-x-hidden overflow-y-auto rounded-lg border bg-background dark:bg-gray-800"
       data-testid="all-leads-bootstrap-shell"
     >
       {showHeader && (
@@ -36,7 +36,7 @@ export function AllLeadsPageLoadingShell({
           <FilterControlsLoadingShell compactTop={!showHeader} />
         </div>
       )}
-      <div className="flex-1 min-h-65 min-w-0 px-4 pb-4 sm:px-8">
+      <div className="min-h-65 min-w-0 flex-1 px-4 pb-4 sm:px-6">
         <TableSkeleton />
       </div>
     </div>

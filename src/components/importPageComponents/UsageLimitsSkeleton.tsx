@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function UsageLimitsSkeleton() {
   return (
-    <Card className="mx-6 mt-6 bg-gray-50 border-gray-200 dark:border-gray-700 dark:bg-gray-800 mb-5">
+    <Card className="mb-5 bg-gray-50 border-gray-200 dark:border-gray-700 dark:bg-gray-800">
       <CardHeader className="pb-3">
         <div className="flex items-center space-x-2">
           <Skeleton className="h-4 w-4 rounded" />

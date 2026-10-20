@@ -28,6 +28,14 @@ import {
 } from "@/hooks/useBillingData";
 import { notificationKeys } from "@/lib/notificationKeys";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  DASHBOARD_PAGE_SUBTITLE_CLASS,
+  DASHBOARD_PAGE_TITLE_CLASS,
+} from "@/lib/dashboardPageHeading";
+import {
+  DASHBOARD_PAGE_HEADER_CLASS,
+  DASHBOARD_PAGE_SHELL_CLASS,
+} from "@/lib/dashboardPageShell";
 
 type PaymentDetailsPayment = Payment;
 
@@ -248,15 +256,13 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
   // Show loading state
   if (loading) {
     return (
-      <div className="min-h-screen min-w-0 max-w-full overflow-x-hidden bg-gray-50 dark:bg-gray-800">
-        <div className="w-full min-w-0 max-w-full px-3 py-4 border rounded-lg sm:px-4 sm:py-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4 mx-auto"></div>
-              <p className="text-gray-600! dark:text-white!">
-                Loading payment details...
-              </p>
-            </div>
+      <div className={DASHBOARD_PAGE_SHELL_CLASS}>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4 mx-auto"></div>
+            <p className="text-gray-600! dark:text-white!">
+              Loading payment details...
+            </p>
           </div>
         </div>
       </div>
@@ -266,41 +272,39 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
   // Show error state
   if (error) {
     return (
-      <div className="min-h-screen min-w-0 max-w-full overflow-x-hidden bg-gray-50 dark:bg-gray-800">
-        <div className="w-full min-w-0 max-w-full px-3 py-4 border rounded-lg sm:px-4 sm:py-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-900! dark:text-white! mb-2">
-                {accessDenied ? "Access Denied" : "Error Loading Payment"}
-              </h2>
-              <p className="text-red-500! dark:text-red-400! mb-4">{error}</p>
-              <div className="space-x-2">
-                {accessDenied ? (
-                  <>
-                    <Button onClick={() => router.push("/dashboard")}>
-                      Back to Dashboard
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => router.push("/dashboard/billing")}
-                    >
-                      View Billing
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      onClick={() => router.push("/dashboard/notifications")}
-                    >
-                      View Notifications
-                    </Button>
-                    <Button variant="outline" onClick={fetchPaymentDetails}>
-                      Retry
-                    </Button>
-                  </>
-                )}
-              </div>
+      <div className={DASHBOARD_PAGE_SHELL_CLASS}>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900! dark:text-white! mb-2">
+              {accessDenied ? "Access Denied" : "Error Loading Payment"}
+            </h2>
+            <p className="text-red-500! dark:text-red-400! mb-4">{error}</p>
+            <div className="space-x-2">
+              {accessDenied ? (
+                <>
+                  <Button onClick={() => router.push("/dashboard")}>
+                    Back to Dashboard
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push("/dashboard/billing")}
+                  >
+                    View Billing
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={() => router.push("/dashboard/notifications")}
+                  >
+                    View Notifications
+                  </Button>
+                  <Button variant="outline" onClick={fetchPaymentDetails}>
+                    Retry
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -311,29 +315,27 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
   // Show payment not found
   if (!payment) {
     return (
-      <div className="min-h-screen min-w-0 max-w-full overflow-x-hidden bg-gray-50 dark:bg-gray-800">
-        <div className="w-full min-w-0 max-w-full px-3 py-4 border rounded-lg sm:px-4 sm:py-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-900! dark:text-white! mb-2">
-                Payment Not Found
-              </h2>
-              <p className="text-gray-500! dark:text-white! mb-4">
-                The payment you are looking for does not exist or has been
-                removed.
-              </p>
-              <div className="flex flex-col gap-2 sm:flex-row sm:space-x-2">
-                <Button onClick={() => router.push("/dashboard/notifications")}>
-                  Back to Notifications
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => router.push("/dashboard/billing")}
-                >
-                  View Billing
-                </Button>
-              </div>
+      <div className={DASHBOARD_PAGE_SHELL_CLASS}>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900! dark:text-white! mb-2">
+              Payment Not Found
+            </h2>
+            <p className="text-gray-500! dark:text-white! mb-4">
+              The payment you are looking for does not exist or has been
+              removed.
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:space-x-2">
+              <Button onClick={() => router.push("/dashboard/notifications")}>
+                Back to Notifications
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push("/dashboard/billing")}
+              >
+                View Billing
+              </Button>
             </div>
           </div>
         </div>
@@ -344,10 +346,11 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
   const displayParty = getPaymentDisplayParty(payment);
 
   return (
-    <div className="min-h-screen min-w-0 max-w-full overflow-x-hidden bg-gray-50 dark:bg-gray-800">
-      <div className="w-full min-w-0 max-w-full px-3 py-4 border rounded-lg sm:px-4 sm:py-6">
+    <div className={DASHBOARD_PAGE_SHELL_CLASS}>
         {/* Header */}
-        <div className="flex flex-col gap-3 mb-8 min-w-0 sm:flex-row sm:items-center sm:justify-between">
+        <div
+          className={`flex flex-col gap-3 min-w-0 sm:flex-row sm:items-center sm:justify-between ${DASHBOARD_PAGE_HEADER_CLASS}`}
+        >
           <div className="flex flex-col gap-3 min-w-0 sm:flex-row sm:items-center sm:gap-4">
             <Button
               variant="outline"
@@ -359,10 +362,8 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
               Back
             </Button>
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900! wrap-break-word sm:text-3xl dark:text-white!">
-                Payment Details
-              </h1>
-              <p className="text-sm text-gray-600! break-all dark:text-white!">
+              <h1 className={DASHBOARD_PAGE_TITLE_CLASS}>Payment Details</h1>
+              <p className={`${DASHBOARD_PAGE_SUBTITLE_CLASS} break-all`}>
                 Transaction ID: {payment.transactionId}
               </p>
             </div>
@@ -652,7 +653,6 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
             </Card>
           </div>
         </div>
-      </div>
     </div>
   );
 }

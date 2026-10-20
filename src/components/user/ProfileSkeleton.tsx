@@ -1,17 +1,24 @@
 // src/components/user/ProfileSkeleton.tsx
 import React from "react";
+import {
+  DASHBOARD_PAGE_SUBTITLE_CLASS,
+  DASHBOARD_PAGE_TITLE_CLASS,
+} from "@/lib/dashboardPageHeading";
+import {
+  DASHBOARD_PAGE_HEADER_CLASS,
+  DASHBOARD_PAGE_SHELL_CLASS,
+} from "@/lib/dashboardPageShell";
 
 export function ProfileSkeleton({ className = "" }: { className?: string }) {
   return (
-    <div className={`min-h-screen ${className}`}>
-      <div className="w-full px-4 py-6 border rounded-lg">
+    <div className={`${DASHBOARD_PAGE_SHELL_CLASS} ${className}`}>
         {/* Header */}
-        <div className="flex flex-col items-start mb-8 md:flex-row md:items-center">
+        <div
+          className={`flex flex-col items-start md:flex-row md:items-center ${DASHBOARD_PAGE_HEADER_CLASS}`}
+        >
           <div>
-            <h1 className="text-3xl font-bold dark:text-white! text-gray-900! mb-2">
-              Your Profile
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
+            <h1 className={DASHBOARD_PAGE_TITLE_CLASS}>Your Profile</h1>
+            <p className={DASHBOARD_PAGE_SUBTITLE_CLASS}>
               Manage your account settings
             </p>
           </div>
@@ -90,7 +97,6 @@ export function ProfileSkeleton({ className = "" }: { className?: string }) {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

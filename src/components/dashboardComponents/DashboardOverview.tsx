@@ -7,6 +7,11 @@ import { useSession } from "next-auth/react";
 import { useUsersData, useLeadsStats } from "@/hooks/useDashboardData";
 import LeadStatusStats from "@/components/dashboardComponents/LeadStatusStats";
 import { canAccessAllLeads } from "@/lib/roles";
+import {
+  DASHBOARD_PAGE_SUBTITLE_CLASS,
+  DASHBOARD_PAGE_TITLE_CLASS,
+} from "@/lib/dashboardPageHeading";
+import { DASHBOARD_PAGE_SHELL_CLASS } from "@/lib/dashboardPageShell";
 
 // Loading skeleton for stat cards
 const StatCardSkeleton = () => (
@@ -57,16 +62,14 @@ export default function DashboardOverview({
   const shouldShowStatsSkeleton = isLoadingStats || !hasData;
 
   return (
-    <div
-      className={`w-full p-6 space-y-8 bg-background dark:bg-gray-800 rounded-md border ${className}`}
-    >
+    <div className={`${DASHBOARD_PAGE_SHELL_CLASS} space-y-8 ${className}`}>
       {/* Dashboard Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900! dark:text-white!">
+          <h1 className={DASHBOARD_PAGE_TITLE_CLASS}>
             Dashboard Overview
           </h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          <p className={DASHBOARD_PAGE_SUBTITLE_CLASS}>
             Welcome back, {session?.user?.firstName || "User"}
           </p>
         </div>

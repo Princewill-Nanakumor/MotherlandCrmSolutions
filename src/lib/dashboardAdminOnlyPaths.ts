@@ -4,7 +4,6 @@
  */
 
 const OWNER_ONLY_PREFIXES = [
-  "/dashboard/adsManager",
   "/dashboard/billing",
   "/dashboard/subscription",
   "/dashboard/help",
@@ -14,8 +13,18 @@ const OWNER_ONLY_PREFIXES = [
   "/dashboard/payment-details",
 ] as const;
 
+/** Routes temporarily unavailable to everyone (e.g. coming-soon features). */
+const HIDDEN_DASHBOARD_PREFIXES = ["/dashboard/adsManager"] as const;
+
 function matchesPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+export function isHiddenDashboardPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return HIDDEN_DASHBOARD_PREFIXES.some((prefix) =>
+    matchesPrefix(pathname, prefix),
+  );
 }
 
 export function isOwnerOnlyDashboardPath(pathname: string | null): boolean {

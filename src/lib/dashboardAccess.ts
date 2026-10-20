@@ -1,6 +1,7 @@
 import {
   isAgentLeadsDashboardPath,
   isAllLeadsDashboardPath,
+  isHiddenDashboardPath,
   isOwnerOnlyDashboardPath,
   isUsersDashboardPath,
 } from "./dashboardAdminOnlyPaths";
@@ -26,6 +27,11 @@ export function getDashboardRoleRedirect(
   permissions: string[] = [],
 ): string | null {
   const user = { role, permissions };
+
+  // Coming-soon / temporarily disabled routes — hide for everyone.
+  if (isHiddenDashboardPath(path)) {
+    return "/dashboard";
+  }
 
   if (isOwnerOnlyDashboardPath(path) && role !== "ADMIN") {
     return staffHome(role, permissions);

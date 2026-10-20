@@ -15,6 +15,13 @@ import ActivitiesList from "@/components/adminManagement/ActivitiesList";
 import AgentsList from "@/components/adminManagement/AgentsList";
 import PaymentDetails from "@/components/adminManagement/PaymentDetails";
 import { useAdminDetails } from "@/hooks/useAdminData";
+import {
+  DASHBOARD_PAGE_SUBTITLE_CLASS,
+  DASHBOARD_PAGE_TITLE_CLASS,
+} from "@/lib/dashboardPageHeading";
+import { DASHBOARD_PAGE_SHELL_CLASS } from "@/lib/dashboardPageShell";
+import { LoadingSpinner } from "@/components/dashboardComponents/LeadsLoadingState";
+import { AdminDetailsPageSkeleton } from "./AdminDetailsPageSkeleton";
 
 export default function AdminDetailsContent() {
   const { data: session, status } = useSession();
@@ -119,15 +126,12 @@ export default function AdminDetailsContent() {
     }).format(balance);
   };
 
-  // Loading state
-  if (status === "loading" || isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-        </div>
-      </div>
-    );
+  if (status === "loading") {
+    return <LoadingSpinner />;
+  }
+
+  if (isLoading) {
+    return <AdminDetailsPageSkeleton />;
   }
 
   // Error state
@@ -179,7 +183,7 @@ export default function AdminDetailsContent() {
   }
 
   return (
-    <div className="space-y-6 p-4 rounded-lg border min-w-0 max-w-full overflow-x-hidden sm:p-6">
+    <div className={`${DASHBOARD_PAGE_SHELL_CLASS} space-y-6`}>
       <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col gap-3 min-w-0 sm:flex-row sm:items-center sm:gap-4">
           <Button
@@ -192,10 +196,10 @@ export default function AdminDetailsContent() {
             Back
           </Button>
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-gray-900 wrap-break-word sm:text-3xl dark:text-white">
+            <h1 className={DASHBOARD_PAGE_TITLE_CLASS}>
               {admin.firstName} {admin.lastName}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className={DASHBOARD_PAGE_SUBTITLE_CLASS}>
               Administrator Details
             </p>
           </div>

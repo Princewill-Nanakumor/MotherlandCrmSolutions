@@ -15,6 +15,7 @@ import { useImportManager } from "@/hooks/useImportManager";
 import { useImportUsageData } from "@/hooks/useUsageData";
 import { useImportExport } from "@/hooks/useImportExport";
 import { useEmailCheck } from "@/hooks/useEmailCheck";
+import { DASHBOARD_PAGE_SHELL_CLASS } from "@/lib/dashboardPageShell";
 
 export const ImportManager = () => {
   const {
@@ -65,84 +66,77 @@ export const ImportManager = () => {
   if (!session?.user || session.user.role !== "ADMIN") return null;
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-800 rounded">
-      <div className="flex-1 flex flex-col">
-        <div className="bg-white dark:text-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <ImportContent />
+    <div className={DASHBOARD_PAGE_SHELL_CLASS}>
+      <ImportContent />
 
-          {/* Usage Limits Display - Above the tabs */}
-          {activeTab === "new" && (
-            <div>
-              {isUsageLoading ? (
-                <UsageLimitsSkeleton />
-              ) : importUsageData ? (
-                <UsageLimitsDisplay usageData={importUsageData} />
-              ) : null}
-            </div>
-          )}
-
-          <ImportTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-
-          <FileUploadSection
-            activeTab={activeTab}
-            fileInputRef={fileInputRef}
-            isLoading={isLoading}
-            error={error}
-            successMessage={successMessage}
-            handleFileUpload={handleFileUpload}
-            importHistory={importHistory}
-            onDelete={handleDeleteImport}
-            setShowModal={setShowModal}
-            missingFields={missingFields}
-            usageData={importUsageData}
-            importProgress={importProgress}
-          />
-
-          <EmailCheckSection
-            activeTab={activeTab}
-            fileInputRef={emailCheck.fileInputRef}
-            isChecking={emailCheck.isChecking}
-            error={emailCheck.error}
-            result={emailCheck.result}
-            handleFileUpload={emailCheck.handleFileUpload}
-            clearResult={emailCheck.clearResult}
-          />
-
-          {/* Import History Section */}
-          <ImportHistorySection
-            importHistory={importHistory}
-            onDelete={handleDeleteImport}
-            onExport={exportImport}
-            exportingImportId={exportingImportId}
-            activeTab={activeTab}
-            isLoading={isInitialLoading}
-            isDeleting={isDeletingImport}
-          />
-
-          {activeTab === "export" && (
-            <ImportExportSection
-              onExportAll={exportAllLeads}
-              isExporting={isExportingAll}
-              hasLeads={(importUsageData?.currentLeads ?? 0) > 0}
-              isCheckingLeads={isUsageLoading}
-            />
-          )}
-
-          {/* Modal */}
-          <ImportModalWrapper
-            isOpen={showModal}
-            onClose={() => {
-              setShowModal(false);
-              setError(null);
-              setMissingFields([]);
-              setImportLimitExceeded(null);
-            }}
-            missingFields={missingFields}
-            errorMessage={error ?? undefined}
-            importLimitExceeded={importLimitExceeded}
-          />
+      {activeTab === "new" && (
+        <div>
+          {isUsageLoading ? (
+            <UsageLimitsSkeleton />
+          ) : importUsageData ? (
+            <UsageLimitsDisplay usageData={importUsageData} />
+          ) : null}
         </div>
-      </div>
+      )}
+
+      <ImportTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+
+      <FileUploadSection
+        activeTab={activeTab}
+        fileInputRef={fileInputRef}
+        isLoading={isLoading}
+        error={error}
+        successMessage={successMessage}
+        handleFileUpload={handleFileUpload}
+        importHistory={importHistory}
+        onDelete={handleDeleteImport}
+        setShowModal={setShowModal}
+        missingFields={missingFields}
+        usageData={importUsageData}
+        importProgress={importProgress}
+      />
+
+      <EmailCheckSection
+        activeTab={activeTab}
+        fileInputRef={emailCheck.fileInputRef}
+        isChecking={emailCheck.isChecking}
+        error={emailCheck.error}
+        result={emailCheck.result}
+        handleFileUpload={emailCheck.handleFileUpload}
+        clearResult={emailCheck.clearResult}
+      />
+
+      <ImportHistorySection
+        importHistory={importHistory}
+        onDelete={handleDeleteImport}
+        onExport={exportImport}
+        exportingImportId={exportingImportId}
+        activeTab={activeTab}
+        isLoading={isInitialLoading}
+        isDeleting={isDeletingImport}
+      />
+
+      {activeTab === "export" && (
+        <ImportExportSection
+          onExportAll={exportAllLeads}
+          isExporting={isExportingAll}
+          hasLeads={(importUsageData?.currentLeads ?? 0) > 0}
+          isCheckingLeads={isUsageLoading}
+        />
+      )}
+
+      <ImportModalWrapper
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false);
+          setError(null);
+          setMissingFields([]);
+          setImportLimitExceeded(null);
+        }}
+        missingFields={missingFields}
+        errorMessage={error ?? undefined}
+        importLimitExceeded={importLimitExceeded}
+      />
     </div>
   );
 };

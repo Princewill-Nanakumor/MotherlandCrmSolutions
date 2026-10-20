@@ -2,6 +2,11 @@
 "use client";
 
 import React from "react";
+import {
+  DASHBOARD_PAGE_SUBTITLE_CLASS,
+  DASHBOARD_PAGE_TITLE_CLASS,
+} from "@/lib/dashboardPageHeading";
+import { DASHBOARD_PAGE_HEADER_CLASS } from "@/lib/dashboardPageShell";
 
 interface ProfileHeaderProps {
   className?: string;
@@ -12,13 +17,11 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 }) => {
   return (
     <div
-      className={`flex flex-col md:flex-row items-start md:items-center mb-8 ${className}`}
+      className={`flex flex-col md:flex-row items-start md:items-center ${DASHBOARD_PAGE_HEADER_CLASS} ${className}`}
     >
       <div>
-        <h1 className="text-3xl font-bold dark:text-white! text-gray-900! mb-2">
-          Your Profile
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300">
+        <h1 className={DASHBOARD_PAGE_TITLE_CLASS}>Your Profile</h1>
+        <p className={DASHBOARD_PAGE_SUBTITLE_CLASS}>
           Manage your account settings
         </p>
       </div>

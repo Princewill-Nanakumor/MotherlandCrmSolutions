@@ -6,6 +6,7 @@ import { ProfileHeader } from "./ProfileHeader";
 import { ProfileForm } from "./ProfileForm";
 import { ProfileActions } from "./ProfileActions";
 import { getRoleLabel, getStatusLabel } from "@/constants/profileLabels";
+import { DASHBOARD_PAGE_SHELL_CLASS } from "@/lib/dashboardPageShell";
 
 interface UserProfile {
   id: string;
@@ -65,44 +66,37 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
   };
 
   return (
-    <div className={`min-h-screen ${className}`}>
-      <div className="w-full px-4 py-6 rounded-lg border">
-        {/* Header */}
-        <ProfileHeader />
+    <div className={`${DASHBOARD_PAGE_SHELL_CLASS} ${className}`}>
+      <ProfileHeader />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Profile Card */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="dark:backdrop-blur-lg dark:bg-white/5 rounded-2xl p-6 shadow-lg dark:border dark:border-white/10 bg-white border border-gray-200">
-              {/* Actions */}
-              <ProfileActions
-                profile={profile}
-                isEditing={isEditing}
-                onEdit={onEdit}
-                onSave={onSave}
-                onCancel={onCancel}
-              />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg dark:border dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-lg">
+            <ProfileActions
+              profile={profile}
+              isEditing={isEditing}
+              onEdit={onEdit}
+              onSave={onSave}
+              onCancel={onCancel}
+            />
 
-              {/* Form */}
-              <ProfileForm
-                profile={profile}
-                isEditing={isEditing}
-                editedProfile={editedProfile}
-                onInputChange={onInputChange}
-                inputClass={inputClass}
-                formErrors={formErrors}
-              />
-            </div>
+            <ProfileForm
+              profile={profile}
+              isEditing={isEditing}
+              editedProfile={editedProfile}
+              onInputChange={onInputChange}
+              inputClass={inputClass}
+              formErrors={formErrors}
+            />
           </div>
-
-          {/* Right Column */}
-          <ProfileSidebar
-            profile={profile}
-            getRoleDisplayName={getRoleLabel}
-            getStatusDisplayName={getStatusLabel}
-            formatDate={formatDate}
-          />
         </div>
+
+        <ProfileSidebar
+          profile={profile}
+          getRoleDisplayName={getRoleLabel}
+          getStatusDisplayName={getStatusLabel}
+          formatDate={formatDate}
+        />
       </div>
     </div>
   );

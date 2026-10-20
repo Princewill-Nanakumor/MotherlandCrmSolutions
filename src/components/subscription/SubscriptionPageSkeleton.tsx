@@ -2,15 +2,18 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DASHBOARD_PAGE_HEADER_CLASS,
+  DASHBOARD_PAGE_SHELL_CLASS,
+} from "@/lib/dashboardPageShell";
 
 export function SubscriptionPageSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50 rounded-xl border dark:bg-gray-800">
-      <div className="container px-4 py-8 mx-auto">
+    <div className={DASHBOARD_PAGE_SHELL_CLASS}>
         {/* Header skeleton */}
-        <div className="mb-8 text-center">
-          <Skeleton className="mx-auto mb-2 h-9 w-64 bg-gray-200 dark:bg-gray-700" />
-          <Skeleton className="mx-auto h-5 w-80 bg-gray-200 dark:bg-gray-700" />
+        <div className={DASHBOARD_PAGE_HEADER_CLASS}>
+          <Skeleton className="mb-2 h-8 w-64 bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="h-5 w-80 max-w-full bg-gray-200 dark:bg-gray-700" />
         </div>
 
         {/* Trial status card skeleton */}
@@ -43,7 +46,6 @@ export function SubscriptionPageSkeleton() {
             </div>
           ))}
         </div>
-      </div>
     </div>
   );
 }

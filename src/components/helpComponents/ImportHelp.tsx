@@ -368,7 +368,7 @@ Jane Smith,jane@email.com,+1987654321,Canada,Referral,`}
           <div className="flex items-center space-x-3">
             <Upload className="w-8 h-8" />
             <div>
-              <h1 className="text-2xl font-bold text-white!">
+              <h1 className="mb-2 text-2xl! font-bold text-white!">
                 Import Guide
               </h1>
               <p className="mt-1 text-white/80">

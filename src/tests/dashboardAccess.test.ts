@@ -43,6 +43,15 @@ describe("getDashboardRoleRedirect", () => {
     ).toBe("/dashboard/leads");
   });
 
+  it("hides Ads Manager for everyone until the feature ships", () => {
+    expect(getDashboardRoleRedirect("/dashboard/adsManager", "ADMIN")).toBe(
+      "/dashboard",
+    );
+    expect(getDashboardRoleRedirect("/dashboard/adsManager", "AGENT")).toBe(
+      "/dashboard",
+    );
+  });
+
   it("blocks SUBADMIN from Users, billing, and other owner pages", () => {
     expect(
       getDashboardRoleRedirect("/dashboard/users", "SUBADMIN", [
