@@ -15,6 +15,8 @@ import {
   SUBSCRIPTION_TRIAL_DEFAULT_MAX_LEADS,
   SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
 } from "@/lib/subscriptionPlanCatalog";
+import { PRICING_VOXEL_SPLITS } from "@/components/homepageComponents/homepageContent";
+import { VoxelSplitStack } from "@/components/homepageComponents/VoxelSplitBand";
 
 const PRICING_NOTES = [
   {
@@ -44,6 +46,8 @@ export default function PricingPageContent() {
       />
 
       <SubscriptionPlansSection className="bg-white" />
+
+      <VoxelSplitStack splits={PRICING_VOXEL_SPLITS} />
 
       <section className="px-6 py-20 bg-gray-50 sm:py-28">
         <div className="mx-auto max-w-6xl">

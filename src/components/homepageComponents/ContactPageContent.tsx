@@ -11,6 +11,8 @@ import {
   revealItem,
 } from "@/components/homepageComponents/primitives";
 import { CONTACT_CHANNELS } from "@/components/homepageComponents/marketingPagesContent";
+import { CONTACT_VOXEL_SPLITS } from "@/components/homepageComponents/homepageContent";
+import { VoxelSplitStack } from "@/components/homepageComponents/VoxelSplitBand";
 
 export default function ContactPageContent() {
   const { supportEmail, telegramHandle, telegramUrl } = useAppBranding();
@@ -24,6 +26,8 @@ export default function ContactPageContent() {
         accent="behind the CRM."
         description="Whether you are migrating a spreadsheet book or already on a trial, we answer on Telegram and email."
       />
+
+      <VoxelSplitStack splits={CONTACT_VOXEL_SPLITS} />
 
       <section className="px-6 py-20 sm:py-28 bg-white">
         <div className="mx-auto max-w-6xl">

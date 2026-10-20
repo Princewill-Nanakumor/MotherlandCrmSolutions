@@ -41,7 +41,7 @@ function useShouldAnimateEntrance(ref: RefObject<HTMLElement | null>) {
       return;
     }
 
-    // display:none / zero-box → don't opacity-hide (StickyStory dual layout)
+    // display:none / zero-box → don't opacity-hide (hidden dual layouts)
     const style = window.getComputedStyle(el);
     if (style.display === "none" || style.visibility === "hidden") {
       setPhase("skip");

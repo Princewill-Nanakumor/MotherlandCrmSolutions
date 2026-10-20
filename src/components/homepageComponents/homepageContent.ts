@@ -327,16 +327,33 @@ export const ABOUT_VOXEL_SPLITS: MarketingVoxelSplit[] = [
     ctaHref: "/features",
     imageRight: true,
   },
+];
+
+const CLOSE_TOGETHER_VOXEL = {
+  src: "/twopeople.png",
+  alt: "Two teammates collaborating on deals",
+  title: "Made for people who close together",
+  description:
+    "Managers see the whole book. Agents work assigned leads. Everyone shares the same source of truth when a deal moves.",
+  imageRight: false as const,
+};
+
+export const PRICING_VOXEL_SPLITS: MarketingVoxelSplit[] = [
   {
-    id: "about-pair",
-    src: "/twopeople.png",
-    alt: "Two teammates collaborating on deals",
-    title: "Made for people who close together",
-    description:
-      "Managers see the whole book. Agents work assigned leads. Everyone shares the same source of truth when a deal moves.",
+    id: "pricing-pair",
+    ...CLOSE_TOGETHER_VOXEL,
     ctaLabel: "Contact us",
     ctaHref: "/contact",
-    imageRight: false,
+  },
+];
+
+export const CONTACT_VOXEL_SPLITS: MarketingVoxelSplit[] = [
+  {
+    id: "contact-pair",
+    ...CLOSE_TOGETHER_VOXEL,
+    src: "/contact1.png",
+    ctaLabel: "Start free trial",
+    ctaHref: "/signup",
   },
 ];
 
@@ -349,7 +366,7 @@ export const FEATURES_VOXEL_SPLITS: MarketingVoxelSplit[] = [
     description:
       "Agents open their leads, update status, leave notes, and place calls — without drowning in the full company list.",
     ctaLabel: "Explore product",
-    ctaHref: "/features#core",
+    ctaHref: "/features",
     imageRight: true,
   },
 ];
@@ -357,13 +374,13 @@ export const FEATURES_VOXEL_SPLITS: MarketingVoxelSplit[] = [
 export const SECURITY_VOXEL_SPLITS: MarketingVoxelSplit[] = [
   {
     id: "security-desk",
-    src: "/holdinglaptop.png",
+    src: "/securityimage.png",
     alt: "Admin reviewing access from a secure workspace",
     title: "Your book stays in your workspace",
     description:
       "Role-based access, tenant-scoped data, and an activity trail on every lead — built for teams that cannot leak a contact list.",
-    ctaLabel: "Learn more",
-    ctaHref: "/security",
+    ctaLabel: "Start free trial",
+    ctaHref: "/signup",
     imageRight: true,
   },
 ];

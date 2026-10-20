@@ -14,13 +14,8 @@ import {
   ABOUT_VALUES,
 } from "@/components/homepageComponents/marketingPagesContent";
 import { ABOUT_VOXEL_SPLITS } from "@/components/homepageComponents/homepageContent";
-import {
-  VoxelSplitBand,
-  VoxelSplitStack,
-} from "@/components/homepageComponents/VoxelSplitBand";
+import { VoxelSplitStack } from "@/components/homepageComponents/VoxelSplitBand";
 import { useAppBranding } from "@/components/AppBrandingProvider";
-
-const [ABOUT_VOXEL_DESK, ...ABOUT_VOXEL_REST] = ABOUT_VOXEL_SPLITS;
 
 export default function AboutPageContent() {
   const { displayName } = useAppBranding();
@@ -35,7 +30,7 @@ export default function AboutPageContent() {
         description={`${displayName} — a real-time workspace for importing leads, assigning agents, and following every deal from first touch to won.`}
       />
 
-      {ABOUT_VOXEL_DESK ? <VoxelSplitBand split={ABOUT_VOXEL_DESK} /> : null}
+      <VoxelSplitStack splits={ABOUT_VOXEL_SPLITS} />
 
       <section className="px-6 py-20 sm:py-28">
         <div className="mx-auto max-w-6xl">
@@ -71,10 +66,6 @@ export default function AboutPageContent() {
           </RevealGroup>
         </div>
       </section>
-
-      {ABOUT_VOXEL_REST.length > 0 ? (
-        <VoxelSplitStack splits={ABOUT_VOXEL_REST} />
-      ) : null}
 
       <section className="px-6 py-20 bg-gray-50 sm:py-28">
         <div className="mx-auto max-w-4xl">
