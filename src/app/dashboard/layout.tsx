@@ -17,6 +17,7 @@ import { StatusProvider } from "@/context/StatusContext";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/dashboardComponents/Sidebar";
 import DashboardNavbar from "@/components/dashboardComponents/DashboardNavbar";
+import { SidebarMobileProvider } from "@/components/dashboardComponents/sidebar/SidebarMobileContext";
 import { SearchProvider, useSearchContext } from "@/context/SearchContext";
 import Footer from "@/components/dashboardComponents/Footer";
 import { LoadingSpinner } from "@/components/dashboardComponents/LeadsLoadingState";
@@ -538,41 +539,43 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   return (
     <UserPresenceProvider enabled={sessionReady}>
       <ToggleProvider value={showLeadsToggles ? toggleContextValue : null}>
-        <div className="dashboard-app flex h-full max-h-full bg-background text-foreground overflow-hidden">
-          <Sidebar />
-          <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-            <DashboardNavbar
-              onSearch={setSearchQuery}
-              searchQuery={searchQuery}
-              isLoading={isLoading}
-              showLeadsToggles={showLeadsToggles}
-              showHeader={showHeader}
-              showControls={showControls}
-              onToggleHeader={handleToggleHeader}
-              onToggleControls={handleToggleControls}
-              showSearch={showSearch}
-            />
-            <SelectedLeadsBanner />
-            <main
-              className={`flex-1 min-h-0 bg-background text-foreground ${
-                isLeadDetailPage
-                  ? "overflow-hidden p-0"
-                  : "overflow-auto p-4 md:p-6"
-              }`}
-            >
-              {children}
-            </main>
-            <Footer />
-            {deferNonCriticalShell && sessionReady && (
-              <>
-                <TenantLeadsRealtimeSync />
-                <PaymentNotificationsRealtimeSync />
-                <ReminderNotifications />
-              </>
-            )}
-            <Toaster />
+        <SidebarMobileProvider>
+          <div className="dashboard-app flex h-full max-h-full bg-background text-foreground overflow-hidden">
+            <Sidebar />
+            <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
+              <DashboardNavbar
+                onSearch={setSearchQuery}
+                searchQuery={searchQuery}
+                isLoading={isLoading}
+                showLeadsToggles={showLeadsToggles}
+                showHeader={showHeader}
+                showControls={showControls}
+                onToggleHeader={handleToggleHeader}
+                onToggleControls={handleToggleControls}
+                showSearch={showSearch}
+              />
+              <SelectedLeadsBanner />
+              <main
+                className={`flex-1 min-h-0 bg-background text-foreground ${
+                  isLeadDetailPage
+                    ? "overflow-hidden p-0"
+                    : "overflow-auto p-4 md:p-6"
+                }`}
+              >
+                {children}
+              </main>
+              <Footer />
+              {deferNonCriticalShell && sessionReady && (
+                <>
+                  <TenantLeadsRealtimeSync />
+                  <PaymentNotificationsRealtimeSync />
+                  <ReminderNotifications />
+                </>
+              )}
+              <Toaster />
+            </div>
           </div>
-        </div>
+        </SidebarMobileProvider>
       </ToggleProvider>
     </UserPresenceProvider>
   );

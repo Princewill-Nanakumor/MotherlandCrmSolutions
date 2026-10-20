@@ -9,12 +9,15 @@ import {
   ChevronDown,
   LayoutDashboard,
   Filter,
+  Menu,
 } from "lucide-react";
 import { DashboardSearchBar } from "./DashboardSearchBar";
 import ThemeToggle from "./ThemeToggle";
 import { DateTimeDisplay } from "./DateTimeDisplay";
 import { UserDropdownMenu, UserDropdownMenuProps } from "./UserDropdownMenu";
 import { useUserProfileData } from "@/hooks/useNavbarData";
+import { useSidebarMobile } from "./sidebar/SidebarMobileContext";
+import { MobileNotificationBell } from "@/components/notifications/MobileNotificationBell";
 
 interface DashboardNavbarProps {
   onSearch: (query: string) => void;
@@ -46,9 +49,22 @@ export default function DashboardNavbar({
   showSearch = false,
 }: DashboardNavbarProps) {
   const { data: session } = useSession();
+  const { open: mobileNavOpen, toggle: toggleMobileNav } = useSidebarMobile();
   const [mounted, setMounted] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const hamburgerButton = (
+    <button
+      type="button"
+      onClick={toggleMobileNav}
+      className="inline-flex md:hidden items-center justify-center rounded-md p-2 border border-white/20 dark:border-gray-600/50 brand-navbar-text bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20"
+      aria-label={mobileNavOpen ? "Close navigation menu" : "Open navigation menu"}
+      aria-expanded={mobileNavOpen}
+    >
+      <Menu className="h-5 w-5" />
+    </button>
+  );
 
   // Use React Query for user profile data
   const { userProfile, isLoading: profileLoading } = useUserProfileData();
@@ -128,6 +144,7 @@ export default function DashboardNavbar({
   const rightControls = (
     <div className="flex items-center gap-2 shrink-0 sm:gap-4">
       <DateTimeDisplay />
+      {session?.user?.id ? <MobileNotificationBell /> : null}
       <ThemeToggle isLoading={isLoading} />
       <UserDropdownMenu
         session={session}
@@ -160,7 +177,9 @@ export default function DashboardNavbar({
             : "flex items-center justify-between"
         }`}
       >
-        <div className="col-start-1 row-start-1 w-16 shrink-0 sm:w-32" />
+        <div className="col-start-1 row-start-1 flex items-center gap-2 shrink-0">
+          {hamburgerButton}
+        </div>
         {showSearch && (
           <div className="col-span-3 row-start-2 min-w-0 sm:row-start-auto sm:flex-1 sm:mx-4">
             <div className="relative w-full max-w-none sm:mx-auto sm:max-w-md">
@@ -190,12 +209,13 @@ export default function DashboardNavbar({
     );
   }
 
-  // Leads pages: mobile = row1 toggles+actions, row2 full-width search.
+  // Leads pages: mobile = row1 menu+toggles+actions, row2 full-width search.
   // Desktop (sm+): single row with search in the middle.
   if (showSearch) {
     return (
       <nav className="brand-navbar grid grid-cols-[auto_minmax(0,1fr)_auto] gap-x-2 gap-y-2 px-3 py-3 shadow-lg border-b border-transparent sm:flex sm:items-center sm:justify-between sm:gap-2 sm:px-6">
-        <div className="col-start-1 row-start-1 flex items-center shrink-0">
+        <div className="col-start-1 row-start-1 flex items-center gap-2 shrink-0">
+          {hamburgerButton}
           {leadsToggles}
         </div>
 
@@ -212,7 +232,10 @@ export default function DashboardNavbar({
 
   return (
     <nav className="brand-navbar flex items-center justify-between gap-2 px-3 py-3 shadow-lg border-b border-transparent sm:px-6">
-      <div className="flex items-center gap-2 shrink-0">{leadsToggles}</div>
+      <div className="flex items-center gap-2 shrink-0">
+        {hamburgerButton}
+        {leadsToggles}
+      </div>
       <div className="flex-1" />
       {rightControls}
     </nav>

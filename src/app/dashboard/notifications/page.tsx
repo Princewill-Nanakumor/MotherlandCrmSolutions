@@ -8,60 +8,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoadingSpinner } from "@/components/dashboardComponents/LeadsLoadingState";
 import NotificationsList from "@/components/notifications/NotificationsList";
 import { notificationKeys } from "@/lib/notificationKeys";
+import {
+  fetchAllNotifications,
+  normalizeNotifications,
+  notificationRawId,
+  type RawNotification,
+} from "@/lib/notificationList";
 import { useAblyAwareRefetchInterval } from "@/hooks/useAblyAwareRefetchInterval";
 import { useToast } from "@/components/ui/use-toast";
-
-interface Notification {
-  id: string;
-  type: string;
-  message: string;
-  role: string;
-  link?: string;
-  paymentId?: string;
-  amount?: number;
-  currency?: string;
-  userId?: string;
-  userFirstName?: string;
-  userLastName?: string;
-  userEmail?: string;
-  userDisplayName?: string;
-  createdAt: string;
-  read: boolean;
-}
-
-interface RawNotification {
-  id?: string;
-  _id?: string;
-  type: string;
-  message: string;
-  role: string;
-  link?: string;
-  paymentId?: string;
-  amount?: number;
-  currency?: string;
-  userId?: string;
-  userFirstName?: string;
-  userLastName?: string;
-  userEmail?: string;
-  userDisplayName?: string;
-  createdAt: string;
-  read: boolean;
-  [key: string]: unknown;
-}
-
-function notificationRawId(n: RawNotification, idx = 0): string {
-  return String(
-    n.id ||
-      n._id ||
-      `${n.type || "unknown"}-${n.paymentId || "na"}-${n.createdAt || idx}`,
-  );
-}
-
-function normalizeNotifications(items: RawNotification[]): Notification[] {
-  return (items || []).map((n, idx) => {
-    return { ...n, id: notificationRawId(n, idx) } as Notification;
-  });
-}
+import type { Notification } from "@/types/notifications";
 
 export default function NotificationsPage() {
   const { data: session, status } = useSession();
@@ -78,15 +33,7 @@ export default function NotificationsPage() {
     refetch,
   } = useQuery<RawNotification[], Error, Notification[]>({
     queryKey: notificationKeys.all,
-    queryFn: async () => {
-      const response = await fetch("/api/notifications/all", {
-        credentials: "include",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch notifications");
-      }
-      return response.json();
-    },
+    queryFn: fetchAllNotifications,
     select: normalizeNotifications,
     enabled: status === "authenticated" && !!userId,
     staleTime: 15_000,
