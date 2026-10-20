@@ -12,6 +12,8 @@ import {
   SECURITY_PILLARS,
   SECURITY_PRACTICES,
 } from "@/components/homepageComponents/marketingPagesContent";
+import { SECURITY_VOXEL_SPLITS } from "@/components/homepageComponents/homepageContent";
+import { VoxelSplitStack } from "@/components/homepageComponents/VoxelSplitBand";
 
 export default function SecurityPageContent() {
   const reduce = useReducedMotion();
@@ -57,6 +59,8 @@ export default function SecurityPageContent() {
           </RevealGroup>
         </div>
       </section>
+
+      <VoxelSplitStack splits={SECURITY_VOXEL_SPLITS} />
 
       <section className="px-6 py-20 bg-gray-50 sm:py-28">
         <div className="mx-auto max-w-5xl">

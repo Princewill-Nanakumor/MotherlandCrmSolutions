@@ -8,10 +8,12 @@ import {
   revealItem,
 } from "@/components/homepageComponents/primitives";
 import {
+  FEATURES_VOXEL_SPLITS,
   HOME_FEATURES,
   HOME_FEATURE_TABS,
 } from "@/components/homepageComponents/homepageContent";
 import { MarketingPageHero } from "@/components/homepageComponents/MarketingPageHero";
+import { VoxelSplitStack } from "@/components/homepageComponents/VoxelSplitBand";
 import { cn } from "@/lib/utils";
 
 export default function FeaturesPageContent() {
@@ -64,6 +66,8 @@ export default function FeaturesPageContent() {
           </RevealGroup>
         </div>
       </section>
+
+      <VoxelSplitStack splits={FEATURES_VOXEL_SPLITS} />
 
       <section className="px-6 py-20 bg-gray-50 sm:py-28">
         <div className="mx-auto max-w-6xl">

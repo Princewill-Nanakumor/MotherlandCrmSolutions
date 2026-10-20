@@ -263,6 +263,111 @@ export type HomeJourneyMilestone = {
   description: string;
 };
 
+/**
+ * Clean split bands (copy + voxel art) for marketing pages.
+ * Image sits left or right; copy is headline + body + CTA.
+ */
+export type MarketingVoxelSplit = {
+  id: string;
+  src: string;
+  alt: string;
+  title: string;
+  description: string;
+  ctaLabel: string;
+  ctaHref: string;
+  /** When true, image is on the right (copy left). Default true. */
+  imageRight?: boolean;
+};
+
+export const HOME_VOXEL_SPLITS: MarketingVoxelSplit[] = [
+  {
+    id: "home-team",
+    src: "/motherland_voxel_characters_1536x1192.png",
+    alt: "Admin, support, and sales roles working from their phones",
+    title: "Your team’s shared workspace",
+    description:
+      "Admins, agents, and field reps stay aligned in real time — from first import to closed deal, without chasing updates in chat.",
+    ctaLabel: "Learn more",
+    ctaHref: "/features",
+    imageRight: true,
+  },
+  {
+    id: "home-desk",
+    src: "/holdinglaptop.png",
+    alt: "Operator reviewing the CRM on a laptop",
+    title: "One desk for the whole pipeline",
+    description:
+      "Import Excel or CSV, assign leads, and track every status change from a single screen built for sales floors.",
+    ctaLabel: "See features",
+    ctaHref: "/features",
+    imageRight: false,
+  },
+  {
+    id: "home-pair",
+    src: "/twopeople.png",
+    alt: "Two teammates collaborating on deals",
+    title: "Live updates for the whole floor",
+    description:
+      "When someone moves a deal, the rest of the team sees it instantly — so you never double-work a lead.",
+    ctaLabel: "Talk to us",
+    ctaHref: "/contact",
+    imageRight: false,
+  },
+];
+
+export const ABOUT_VOXEL_SPLITS: MarketingVoxelSplit[] = [
+  {
+    id: "about-desk",
+    src: "/holdinglaptop.png",
+    alt: "Operator managing the CRM workspace on a laptop",
+    title: "Built for desks that actually perform",
+    description:
+      "Spreadsheets stall. Live pipelines don’t. Motherland CRM keeps import, assignment, and follow-ups in one real-time workspace.",
+    ctaLabel: "Learn more",
+    ctaHref: "/features",
+    imageRight: true,
+  },
+  {
+    id: "about-pair",
+    src: "/twopeople.png",
+    alt: "Two teammates collaborating on deals",
+    title: "Made for people who close together",
+    description:
+      "Managers see the whole book. Agents work assigned leads. Everyone shares the same source of truth when a deal moves.",
+    ctaLabel: "Contact us",
+    ctaHref: "/contact",
+    imageRight: false,
+  },
+];
+
+export const FEATURES_VOXEL_SPLITS: MarketingVoxelSplit[] = [
+  {
+    id: "features-agent",
+    src: "/imagesingle.png",
+    alt: "Agent working assigned leads",
+    title: "A clean queue. Nothing extra.",
+    description:
+      "Agents open their leads, update status, leave notes, and place calls — without drowning in the full company list.",
+    ctaLabel: "Explore product",
+    ctaHref: "/features#core",
+    imageRight: true,
+  },
+];
+
+export const SECURITY_VOXEL_SPLITS: MarketingVoxelSplit[] = [
+  {
+    id: "security-desk",
+    src: "/holdinglaptop.png",
+    alt: "Admin reviewing access from a secure workspace",
+    title: "Your book stays in your workspace",
+    description:
+      "Role-based access, tenant-scoped data, and an activity trail on every lead — built for teams that cannot leak a contact list.",
+    ctaLabel: "Learn more",
+    ctaHref: "/security",
+    imageRight: true,
+  },
+];
+
 /** Onboarding journey rendered as an animated vertical timeline. */
 export const HOME_JOURNEY: HomeJourneyMilestone[] = [
   {

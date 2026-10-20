@@ -12,6 +12,18 @@ import {
   TimelineSectionSeo,
 } from "@/components/homepageComponents/HomepageSeoSections";
 import { TermsConsentBanner } from "@/components/homepageComponents/TermsConsentBanner";
+import { HOME_VOXEL_SPLITS } from "@/components/homepageComponents/homepageContent";
+import {
+  VoxelSplitBand,
+  VoxelSplitStack,
+} from "@/components/homepageComponents/VoxelSplitBand";
+
+const voxelById = (id: string) => HOME_VOXEL_SPLITS.find((s) => s.id === id);
+const HOME_VOXEL_TEAM = voxelById("home-team");
+const HOME_VOXEL_DESK = voxelById("home-desk");
+const HOME_VOXEL_TAIL = HOME_VOXEL_SPLITS.filter(
+  (s) => s.id !== "home-team" && s.id !== "home-desk",
+);
 
 /**
  * Code-split below-fold sections into separate chunks.
@@ -22,11 +34,6 @@ import { TermsConsentBanner } from "@/components/homepageComponents/TermsConsent
  * Shell chrome (nav/footer/providers/route progress) lives in MarketingPageShell
  * so navigating between `/` and other marketing routes does not remount it.
  */
-const FeaturedCrmSection = dynamic(
-  () => import("@/components/homepageComponents/FeaturedCrmSection"),
-  // Sticky story is tall; reserve a viewport so late chunk mount doesn't shove CLS.
-  { loading: () => <div className="min-h-screen" aria-hidden /> },
-);
 const ArchitectureSection = dynamic(
   () => import("@/components/homepageComponents/ArchitectureSection"),
   { loading: () => <div className="min-h-112" aria-hidden /> },
@@ -63,14 +70,23 @@ export default function HomePageClient() {
       <TermsConsentBanner />
       <HeroSection />
       <StatsSection />
-      <FeaturedCrmSection />
+      {HOME_VOXEL_TEAM ? <VoxelSplitBand split={HOME_VOXEL_TEAM} /> : null}
       <ArchitectureSection />
       <InViewSwap fallback={<FeaturesSectionSeo />}>
         <FeaturesSection />
       </InViewSwap>
+      {HOME_VOXEL_DESK ? <VoxelSplitBand split={HOME_VOXEL_DESK} /> : null}
       <InViewSwap fallback={<TimelineSectionSeo />}>
         <TimelineSection />
       </InViewSwap>
+      {HOME_VOXEL_TAIL.length > 0 ? (
+        <InViewSwap
+          fallback={<div className="min-h-144 bg-white" aria-hidden />}
+          rootMargin="400px 0px"
+        >
+          <VoxelSplitStack splits={HOME_VOXEL_TAIL} />
+        </InViewSwap>
+      ) : null}
       <InViewSwap
         // Reserve roughly the live section height so swap doesn't spike CLS.
         fallback={
