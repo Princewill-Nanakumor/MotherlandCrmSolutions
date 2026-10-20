@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
+import { invalidateAndRefetchLeadLists } from "@/lib/leadsListQuerySync";
 import { useToast } from "@/components/ui/use-toast";
 import { useStatuses } from "@/context/StatusContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -141,10 +141,10 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
 
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      queryClient.invalidateQueries({ queryKey: ["leads", "all"] });
-      void refetchLeadFilterOptions(queryClient);
+    onSuccess: async () => {
+      // Invalidate alone is not enough: all-leads uses refetchOnMount:false +
+      // placeholderData, so force a refetch so the new row appears immediately.
+      await invalidateAndRefetchLeadLists(queryClient);
 
       toast({
         title: "Success!",

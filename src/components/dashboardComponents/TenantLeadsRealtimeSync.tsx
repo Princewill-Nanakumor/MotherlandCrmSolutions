@@ -20,6 +20,7 @@ import {
 } from "@/lib/leadPanelRealtimeSync";
 import { patchReminderDeletedInCache } from "@/lib/reminderCache";
 import { applyUserRealtimeToUsersCache } from "@/lib/usersQueryCache";
+import { invalidateAndRefetchLeadLists } from "@/lib/leadsListQuerySync";
 
 /**
  * Subscribes to tenant lead events after first paint so Ably scope/token
@@ -212,6 +213,33 @@ export function TenantLeadsRealtimeSync() {
               root === "import-history" ||
               root === "import-usage-data" ||
               root === "admin-overview"
+            );
+          },
+        });
+        return;
+      }
+
+      // Membership-changing events (create/import/delete) need a forced refetch —
+      // invalidate alone leaves all-leads on stale placeholderData.
+      if (
+        eventType === "lead_created" ||
+        eventType === "leads_imported" ||
+        eventType === "lead_deleted" ||
+        eventType === "leads_deleted"
+      ) {
+        void invalidateAndRefetchLeadLists(queryClient, {
+          includeFilterOptions: eventType !== "lead_deleted" && eventType !== "leads_deleted",
+        });
+        void queryClient.invalidateQueries({
+          predicate: (query) => {
+            const root = Array.isArray(query.queryKey)
+              ? query.queryKey[0]
+              : null;
+            return (
+              root === "admin-overview" ||
+              root === "users" ||
+              root === "import-history" ||
+              root === "import-usage-data"
             );
           },
         });

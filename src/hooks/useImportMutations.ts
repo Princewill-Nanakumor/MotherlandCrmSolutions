@@ -11,7 +11,7 @@ import {
   ProcessedLead,
 } from "@/types/import";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
-import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
+import { invalidateAndRefetchLeadLists } from "@/lib/leadsListQuerySync";
 import { getPerImportLimitError } from "@/lib/importBatchLimits";
 import { IMPORT_CLIENT_CHUNK_SIZE } from "@/lib/importPipelineConfig";
 
@@ -49,28 +49,16 @@ async function invalidateAfterImport(queryClient: QueryClient) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: ["import-usage-data"] }),
     queryClient.invalidateQueries({ queryKey: ["import-history"] }),
-    queryClient.invalidateQueries({ queryKey: ["leads-stats"], exact: false }),
     queryClient.invalidateQueries({
       predicate: (query) => {
         const root = Array.isArray(query.queryKey) ? query.queryKey[0] : null;
-        return (
-          root === "leads" ||
-          root === "users" ||
-          root === "assignedLeads" ||
-          root === "admin-overview"
-        );
+        return root === "users" || root === "admin-overview";
       },
     }),
   ]);
   await Promise.all([
-    queryClient.refetchQueries({ queryKey: ["leads"], type: "all" }),
+    invalidateAndRefetchLeadLists(queryClient),
     queryClient.refetchQueries({ queryKey: ["users"], type: "all" }),
-    queryClient.refetchQueries({
-      queryKey: ["leads-stats"],
-      exact: false,
-      type: "all",
-    }),
-    refetchLeadFilterOptions(queryClient),
   ]);
 }
 

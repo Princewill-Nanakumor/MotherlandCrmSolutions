@@ -8,6 +8,7 @@ import type { Session } from "next-auth";
 import { sendPaymentConfirmationEmail } from "@/lib/emailService";
 import {
   isSuperAdminSession,
+  notificationIdSelectors,
   notificationOwnerSelectors,
 } from "@/lib/notificationQuery";
 import { publishSuperAdminPaymentNotificationEvent } from "@/lib/ablyServer";
@@ -248,6 +249,70 @@ export async function POST(request: NextRequest) {
     console.error("Error creating notification:", error);
     return NextResponse.json(
       { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
+/** Bulk-delete notifications by id. Body: `{ ids: string[] }` (max 100). */
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = (await request.json().catch(() => null)) as {
+      ids?: unknown;
+    } | null;
+    const rawIds = Array.isArray(body?.ids) ? body.ids : [];
+    const ids = [
+      ...new Set(
+        rawIds
+          .filter((id): id is string => typeof id === "string")
+          .map((id) => id.trim())
+          .filter(Boolean),
+      ),
+    ].slice(0, 100);
+
+    if (ids.length === 0) {
+      return NextResponse.json(
+        { error: "No notification ids provided" },
+        { status: 400 },
+      );
+    }
+
+    await connectMongoDB();
+    const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error("Database connection not established");
+    }
+
+    const sessionTyped = session as Session;
+    const idOrClauses = ids.flatMap((id) => notificationIdSelectors(id));
+    const filter = isSuperAdminSession(sessionTyped)
+      ? { $or: idOrClauses }
+      : {
+          $and: [
+            { $or: idOrClauses },
+            { $or: notificationOwnerSelectors(sessionTyped) },
+          ],
+        };
+
+    const result = await db.collection("notifications").deleteMany(filter);
+
+    return NextResponse.json({
+      success: true,
+      deletedCount: result.deletedCount,
+      message:
+        result.deletedCount === 1
+          ? "Notification deleted successfully"
+          : `${result.deletedCount} notifications deleted successfully`,
+    });
+  } catch (error) {
+    console.error("Error bulk-deleting notifications:", error);
+    return NextResponse.json(
+      { error: "Failed to delete notifications" },
       { status: 500 },
     );
   }

@@ -1,12 +1,32 @@
 // src/components/notifications/NotificationsList.tsx
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, CheckCircle, XCircle, Clock, ExternalLink } from "lucide-react";
+import {
+  Bell,
+  CheckCircle,
+  XCircle,
+  Clock,
+  ExternalLink,
+  Trash2,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { DELETE_ICON_BUTTON_CLASS } from "@/lib/actionIconButtonStyles";
 
 interface Notification {
   id: string;
@@ -32,7 +52,8 @@ function notificationUserLabel(notification: Notification): string | null {
   if (notification.userDisplayName?.trim()) {
     return notification.userDisplayName.trim();
   }
-  const name = `${notification.userFirstName ?? ""} ${notification.userLastName ?? ""}`.trim();
+  const name =
+    `${notification.userFirstName ?? ""} ${notification.userLastName ?? ""}`.trim();
   return name || null;
 }
 
@@ -40,7 +61,8 @@ interface NotificationsListProps {
   notifications: Notification[];
   loading: boolean;
   error: string | null;
-  onDeleteNotification: (notificationId: string) => void;
+  onDeleteNotifications: (notificationIds: string[]) => Promise<void>;
+  isDeleting?: boolean;
   onRetry: () => void;
 }
 
@@ -56,32 +78,24 @@ function displayNotificationLabel(type: string): string {
   return type.replace(/_/g, " ");
 }
 
-// Loading skeleton component for notifications - matches actual card structure
 const NotificationSkeleton = () => (
   <Card className="transition-all bg-gray-50 dark:bg-gray-800 animate-pulse">
     <CardContent className="p-6">
       <div className="flex items-start justify-between">
         <div className="flex items-start flex-1 space-x-4">
-          {/* Icon skeleton */}
           <div className="w-5 h-5 bg-gray-200 rounded-full dark:bg-gray-700 shrink-0"></div>
           <div className="flex-1 min-w-0">
-            {/* Badges skeleton */}
             <div className="flex items-center mb-2 space-x-2">
               <div className="w-32 h-6 bg-gray-200 rounded-full dark:bg-gray-700"></div>
               <div className="w-12 h-6 bg-gray-200 rounded-full dark:bg-gray-700"></div>
             </div>
-            {/* Message skeleton - multiple lines */}
             <div className="mb-2 space-y-2"></div>
-            {/* Amount skeleton */}
             <div className="h-4 mb-2 bg-gray-200 rounded dark:bg-gray-700 w-36"></div>
-            {/* Date skeleton */}
             <div className="w-40 h-3 bg-gray-200 rounded dark:bg-gray-700"></div>
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          {/* View button skeleton */}
           <div className="w-16 h-8 bg-gray-200 rounded dark:bg-gray-700"></div>
-          {/* Delete button skeleton */}
           <div className="w-8 h-8 bg-gray-200 rounded dark:bg-gray-700"></div>
         </div>
       </div>
@@ -93,9 +107,24 @@ export default function NotificationsList({
   notifications,
   loading,
   error,
+  onDeleteNotifications,
+  isDeleting = false,
   onRetry,
 }: NotificationsListProps) {
   const router = useRouter();
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<string[] | null>(
+    null,
+  );
+
+  const allIds = useMemo(
+    () => notifications.map((n) => n.id),
+    [notifications],
+  );
+  const selectedCount = selectedIds.size;
+  const allSelected =
+    allIds.length > 0 && allIds.every((id) => selectedIds.has(id));
+  const someSelected = selectedCount > 0 && !allSelected;
 
   const getNotificationIcon = useCallback((type: string) => {
     switch (type) {
@@ -125,7 +154,6 @@ export default function NotificationsList({
 
   const handleViewNotification = useCallback(
     (notification: Notification) => {
-      // Prefer backend-provided explicit target path; fallback to known id fields.
       if (notification.targetPath) {
         router.push(notification.targetPath);
         return;
@@ -140,6 +168,43 @@ export default function NotificationsList({
     },
     [router],
   );
+
+  const toggleSelect = useCallback((id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(
+    (checked: boolean) => {
+      setSelectedIds(checked ? new Set(allIds) : new Set());
+    },
+    [allIds],
+  );
+
+  const requestDelete = useCallback((ids: string[]) => {
+    if (ids.length === 0) return;
+    setPendingDeleteIds(ids);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!pendingDeleteIds?.length) return;
+    const ids = pendingDeleteIds;
+    try {
+      await onDeleteNotifications(ids);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        for (const id of ids) next.delete(id);
+        return next;
+      });
+      setPendingDeleteIds(null);
+    } catch {
+      // Parent shows toast; keep dialog open so user can retry or cancel.
+    }
+  }, [onDeleteNotifications, pendingDeleteIds]);
 
   if (loading) {
     return (
@@ -182,87 +247,185 @@ export default function NotificationsList({
     );
   }
 
+  const pendingCount = pendingDeleteIds?.length ?? 0;
+
   return (
     <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40 px-4 py-3">
+        <label className="flex items-center gap-2 text-sm text-gray-700! dark:text-white! cursor-pointer select-none">
+          <Checkbox
+            checked={allSelected ? true : someSelected ? "indeterminate" : false}
+            onCheckedChange={(value) => toggleSelectAll(value === true)}
+            disabled={isDeleting}
+            aria-label="Select all notifications"
+          />
+          <span>
+            {selectedCount > 0
+              ? `${selectedCount} selected`
+              : "Select all"}
+          </span>
+        </label>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={selectedCount === 0 || isDeleting}
+          onClick={() => requestDelete([...selectedIds])}
+          className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+        >
+          <Trash2 className="w-4 h-4 mr-1.5" />
+          Delete selected
+        </Button>
+      </div>
+
       {notifications.map((notification) => {
         const displayType = displayNotificationType(notification);
+        const isSelected = selectedIds.has(notification.id);
+        const userLabel = notificationUserLabel(notification);
+        const canView = Boolean(
+          notification.link ||
+            notification.targetPath ||
+            notification.paymentId,
+        );
         return (
-        <Card
-          key={notification.id}
-          className={`transition-all bg-gray-50 dark:bg-gray-800 ${
-            !notification.read
-              ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
-              : ""
-          }`}
-        >
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col gap-3 min-w-0 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex items-start flex-1 min-w-0 gap-3 sm:gap-4">
-                {getNotificationIcon(displayType)}
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <Badge
-                      className={getNotificationTypeColor(displayType)}
-                    >
-                      {displayNotificationLabel(displayType)}
-                    </Badge>
-                    {!notification.read && (
-                      <Badge className="text-blue-800 bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300">
-                        New
+          <Card
+            key={notification.id}
+            className={`transition-all bg-gray-50 dark:bg-gray-800 ${
+              !notification.read
+                ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                : ""
+            } ${isSelected ? "ring-1 ring-(--brand-from)/40" : ""}`}
+          >
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col gap-3 min-w-0 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-start flex-1 min-w-0 gap-3 sm:gap-4">
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={(value) =>
+                      toggleSelect(notification.id, value === true)
+                    }
+                    disabled={isDeleting}
+                    aria-label={`Select notification ${notification.id}`}
+                    className="mt-1"
+                  />
+                  {getNotificationIcon(displayType)}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <Badge className={getNotificationTypeColor(displayType)}>
+                        {displayNotificationLabel(displayType)}
                       </Badge>
-                    )}
-                  </div>
-                  <p className="mb-2 text-gray-900! wrap-break-word dark:text-white!">
-                    {notification.message}
-                  </p>
-                  {(notificationUserLabel(notification) ||
-                    notification.userEmail) && (
-                    <div className="mb-2 space-y-0.5 text-sm text-gray-600! dark:text-white!">
-                      {notificationUserLabel(notification) ? (
-                        <p>
-                          <span className="text-gray-500! dark:text-gray-400!">
-                            Name:{" "}
-                          </span>
-                          {notificationUserLabel(notification)}
-                        </p>
-                      ) : null}
-                      {notification.userEmail ? (
-                        <p className="break-all">
-                          <span className="text-gray-500! dark:text-gray-400!">
-                            Email:{" "}
-                          </span>
-                          {notification.userEmail}
-                        </p>
-                      ) : null}
+                      {!notification.read && (
+                        <Badge className="text-blue-800 bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300">
+                          New
+                        </Badge>
+                      )}
                     </div>
-                  )}
-                  {notification.amount && (
-                    <p className="mb-2 text-sm text-gray-600! dark:text-white!">
-                      Amount: {notification.amount} {notification.currency}
+                    <p className="mb-2 text-gray-900! wrap-break-word dark:text-white!">
+                      {notification.message}
                     </p>
-                  )}
-                  <p className="text-xs text-gray-500! dark:text-white!">
-                    {new Date(notification.createdAt).toLocaleString()}
-                  </p>
+                    {(userLabel || notification.userEmail) && (
+                      <div className="mb-2 space-y-0.5 text-sm text-gray-600! dark:text-white!">
+                        {userLabel ? (
+                          <p>
+                            <span className="text-gray-500! dark:text-gray-400!">
+                              Name:{" "}
+                            </span>
+                            {userLabel}
+                          </p>
+                        ) : null}
+                        {notification.userEmail ? (
+                          <p className="break-all">
+                            <span className="text-gray-500! dark:text-gray-400!">
+                              Email:{" "}
+                            </span>
+                            {notification.userEmail}
+                          </p>
+                        ) : null}
+                      </div>
+                    )}
+                    {notification.amount ? (
+                      <p className="mb-2 text-sm text-gray-600! dark:text-white!">
+                        Amount: {notification.amount} {notification.currency}
+                      </p>
+                    ) : null}
+                    <p className="text-xs text-gray-500! dark:text-white!">
+                      {new Date(notification.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-start">
+                  {canView ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewNotification(notification)}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-1" />
+                      View
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={DELETE_ICON_BUTTON_CLASS}
+                    disabled={isDeleting}
+                    aria-label="Delete notification"
+                    onClick={() => requestDelete([notification.id])}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0 self-end sm:self-start">
-                {notification.link && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleViewNotification(notification)}
-                  >
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    View
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
         );
       })}
+
+      <AlertDialog
+        open={pendingDeleteIds !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setPendingDeleteIds(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingCount === 1
+                ? "Delete this notification?"
+                : `Delete ${pendingCount} notifications?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This cannot be undone.{" "}
+              {pendingCount === 1
+                ? "The notification will be permanently removed."
+                : "The selected notifications will be permanently removed."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="text-white bg-red-600 hover:bg-red-700 hover:text-white focus:ring-red-600"
+              disabled={isDeleting}
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmDelete();
+              }}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                  Deleting…
+                </>
+              ) : pendingCount === 1 ? (
+                "Delete notification"
+              ) : (
+                `Delete ${pendingCount}`
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -4,8 +4,32 @@ import { isSuperAdminSession } from "@/lib/notificationQuery";
 
 export interface PaymentTenantFields {
   _id?: mongoose.Types.ObjectId | string;
-  adminId?: mongoose.Types.ObjectId | { toString: () => string } | null;
-  createdBy?: mongoose.Types.ObjectId | { toString: () => string } | null;
+  adminId?:
+    | mongoose.Types.ObjectId
+    | string
+    | { _id?: mongoose.Types.ObjectId | string; toString?: () => string }
+    | null;
+  createdBy?:
+    | mongoose.Types.ObjectId
+    | string
+    | { _id?: mongoose.Types.ObjectId | string; toString?: () => string }
+    | null;
+}
+
+function partyRefId(value: PaymentTenantFields["adminId"]): string {
+  if (value == null) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && "_id" in value && value._id != null) {
+    return String(value._id);
+  }
+  if (
+    typeof value === "object" &&
+    typeof value.toString === "function"
+  ) {
+    const asString = value.toString();
+    if (asString && asString !== "[object Object]") return asString;
+  }
+  return String(value);
 }
 
 /** Only tenant admins (and super admins) may create or list payments. */
@@ -29,8 +53,7 @@ export function canReadPayment(
 
   if (session.user.role !== "ADMIN") return false;
 
-  const tenantId =
-    payment.adminId != null ? String(payment.adminId) : "";
+  const tenantId = partyRefId(payment.adminId);
 
   return tenantId !== "" && tenantId === session.user.id;
 }

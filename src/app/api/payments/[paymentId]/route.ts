@@ -57,10 +57,13 @@ export async function GET(
       return NextResponse.json({ error: "Invalid payment ID" }, { status: 400 });
     }
 
-    // Find the payment
-    const payment = (await Payment.findById(
-      paymentId
-    ).lean()) as PaymentDocument | null;
+    // Find the payment (populate party refs so name/email survive even if
+    // a later expire update returns a plain lean doc without joins).
+    const payment = (await Payment.findById(paymentId)
+      .populate("createdBy", "firstName lastName email role")
+      .populate("adminId", "firstName lastName email role")
+      .populate("approvedBy", "firstName lastName email role")
+      .lean()) as PaymentDocument | null;
 
     if (!payment) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 });
@@ -71,8 +74,18 @@ export async function GET(
     }
 
     const maybeExpired = await expireUnconfirmedPaymentIfNeeded(payment);
+    // Prefer the pre-populated party fields when expire did not rewrite the doc.
+    const paymentForEnrich =
+      maybeExpired === payment
+        ? payment
+        : {
+            ...maybeExpired,
+            createdBy: payment.createdBy,
+            adminId: payment.adminId,
+            approvedBy: payment.approvedBy,
+          };
     const paymentResponse = await enrichPaymentForResponse(
-      maybeExpired as PaymentDocument,
+      paymentForEnrich as PaymentDocument,
     );
 
     return NextResponse.json({

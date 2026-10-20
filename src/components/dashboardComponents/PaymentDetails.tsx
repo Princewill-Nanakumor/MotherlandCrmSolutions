@@ -18,8 +18,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import PaymentPartyInfo from "@/components/billing/PaymentPartyInfo";
-import type { Payment } from "@/types/payment.types";
+import {
+  getPaymentDisplayParty,
+  type Payment,
+} from "@/types/payment.types";
 import {
   billingKeys,
   invalidateBalanceCaches,
@@ -319,6 +321,8 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
     );
   }
 
+  const displayParty = getPaymentDisplayParty(payment);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-800 border rounded-xl">
       <div className="container mx-auto px-4 py-8">
@@ -348,11 +352,6 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            <PaymentPartyInfo
-              tenantAccount={payment.tenantAccount}
-              submittedBy={payment.submittedBy}
-            />
-
             {/* Payment Status Card */}
             <Card className="backdrop-blur-lg bg-white/70 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl">
               <CardHeader>
@@ -363,28 +362,22 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {(payment.tenantAccount || payment.submittedBy) && (
-                    <>
-                      <div className="flex items-start justify-between gap-4">
-                        <span className="text-sm shrink-0 text-gray-600! dark:text-white!">
-                          Name
-                        </span>
-                        <span className="text-sm font-medium text-right wrap-break-word text-gray-900! dark:text-white!">
-                          {(payment.tenantAccount || payment.submittedBy)
-                            ?.displayName}
-                        </span>
-                      </div>
-                      <div className="flex items-start justify-between gap-4">
-                        <span className="text-sm shrink-0 text-gray-600! dark:text-white!">
-                          Email
-                        </span>
-                        <span className="text-sm text-right break-all text-gray-900! dark:text-white!">
-                          {(payment.tenantAccount || payment.submittedBy)
-                            ?.email || "—"}
-                        </span>
-                      </div>
-                    </>
-                  )}
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-sm shrink-0 text-gray-600! dark:text-white!">
+                      Name
+                    </span>
+                    <span className="text-sm font-medium text-right wrap-break-word text-gray-900! dark:text-white!">
+                      {displayParty?.displayName || "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-sm shrink-0 text-gray-600! dark:text-white!">
+                      Email
+                    </span>
+                    <span className="text-sm text-right break-all text-gray-900! dark:text-white!">
+                      {displayParty?.email || "—"}
+                    </span>
+                  </div>
 
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600! dark:text-white!">

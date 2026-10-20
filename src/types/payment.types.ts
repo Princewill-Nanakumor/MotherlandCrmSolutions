@@ -33,6 +33,14 @@ export interface PaymentPartySummary {
   displayName: string;
 }
 
+/** Prefer tenant account holder, else the user who submitted the payment. */
+export function getPaymentDisplayParty(payment: {
+  tenantAccount?: PaymentPartySummary | null;
+  submittedBy?: PaymentPartySummary | null;
+}): PaymentPartySummary | null {
+  return payment.tenantAccount ?? payment.submittedBy ?? null;
+}
+
 export interface CreatePaymentData {
   amount: number;
   currency: string;

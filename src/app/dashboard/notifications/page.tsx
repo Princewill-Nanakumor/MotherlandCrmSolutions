@@ -9,6 +9,7 @@ import { LoadingSpinner } from "@/components/dashboardComponents/LeadsLoadingSta
 import NotificationsList from "@/components/notifications/NotificationsList";
 import { notificationKeys } from "@/lib/notificationKeys";
 import { useAblyAwareRefetchInterval } from "@/hooks/useAblyAwareRefetchInterval";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Notification {
   id: string;
@@ -48,13 +49,17 @@ interface RawNotification {
   [key: string]: unknown;
 }
 
+function notificationRawId(n: RawNotification, idx = 0): string {
+  return String(
+    n.id ||
+      n._id ||
+      `${n.type || "unknown"}-${n.paymentId || "na"}-${n.createdAt || idx}`,
+  );
+}
+
 function normalizeNotifications(items: RawNotification[]): Notification[] {
   return (items || []).map((n, idx) => {
-    const safeId =
-      n.id ||
-      n._id ||
-      `${n.type || "unknown"}-${n.paymentId || "na"}-${n.createdAt || idx}`;
-    return { ...n, id: String(safeId) } as Notification;
+    return { ...n, id: notificationRawId(n, idx) } as Notification;
   });
 }
 
@@ -62,6 +67,7 @@ export default function NotificationsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const userId = session?.user?.id;
   const notificationsPollMs = useAblyAwareRefetchInterval(60_000);
 
@@ -90,44 +96,75 @@ export default function NotificationsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (notificationId: string) => {
-      const response = await fetch(`/api/notifications/${notificationId}`, {
+    mutationFn: async (notificationIds: string[]) => {
+      const ids = [...new Set(notificationIds.filter(Boolean))];
+      if (ids.length === 0) {
+        throw new Error("No notifications selected");
+      }
+
+      const response = await fetch("/api/notifications", {
         method: "DELETE",
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
       });
       if (!response.ok) {
-        throw new Error("Failed to delete notification");
+        const data = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(
+          data?.error ||
+            (ids.length === 1
+              ? "Failed to delete notification"
+              : "Failed to delete notifications"),
+        );
       }
+      const data = (await response.json()) as { deletedCount?: number };
+      return { deletedCount: data.deletedCount ?? ids.length };
     },
-    onMutate: async (notificationId) => {
+    onMutate: async (notificationIds) => {
+      const idSet = new Set(notificationIds);
       await queryClient.cancelQueries({ queryKey: notificationKeys.all });
       const previous = queryClient.getQueryData<RawNotification[]>(
         notificationKeys.all,
       );
       queryClient.setQueryData<RawNotification[]>(notificationKeys.all, (old) =>
-        (old ?? []).filter((n) => {
-          const id =
-            n.id ||
-            n._id ||
-            `${n.type}-${n.paymentId ?? "na"}-${n.createdAt}`;
-          return String(id) !== notificationId;
-        }),
+        (old ?? []).filter((n, idx) => !idSet.has(notificationRawId(n, idx))),
       );
       return { previous };
     },
-    onError: (_err, _id, context) => {
+    onSuccess: (result) => {
+      const count = result.deletedCount;
+      toast({
+        title: "Deleted",
+        description:
+          count === 1
+            ? "Notification deleted successfully."
+            : `${count} notifications deleted successfully.`,
+        variant: "success",
+      });
+    },
+    onError: (err, _ids, context) => {
       if (context?.previous) {
         queryClient.setQueryData(notificationKeys.all, context.previous);
       }
+      toast({
+        title: "Error",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Failed to delete notifications",
+        variant: "destructive",
+      });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 
-  const handleDeleteNotification = useCallback(
-    (notificationId: string) => {
-      deleteMutation.mutate(notificationId);
+  const handleDeleteNotifications = useCallback(
+    async (notificationIds: string[]) => {
+      await deleteMutation.mutateAsync(notificationIds);
     },
     [deleteMutation],
   );
@@ -171,7 +208,8 @@ export default function NotificationsPage() {
           notifications={notifications}
           loading={isLoading}
           error={error?.message ?? null}
-          onDeleteNotification={handleDeleteNotification}
+          onDeleteNotifications={handleDeleteNotifications}
+          isDeleting={deleteMutation.isPending}
           onRetry={() => void refetch()}
         />
       </div>
