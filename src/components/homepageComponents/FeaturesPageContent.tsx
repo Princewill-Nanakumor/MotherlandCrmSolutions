@@ -28,6 +28,8 @@ export default function FeaturesPageContent() {
         description="Lead import, assignment, live comments, reminders, calling, filters, branding, and crypto billing — the same toolkit waiting in the dashboard."
       />
 
+      <VoxelSplitStack splits={FEATURES_VOXEL_SPLITS} />
+
       <section className="px-6 py-20 sm:py-28">
         <div className="mx-auto max-w-6xl">
           <SectionHeading
@@ -66,8 +68,6 @@ export default function FeaturesPageContent() {
           </RevealGroup>
         </div>
       </section>
-
-      <VoxelSplitStack splits={FEATURES_VOXEL_SPLITS} />
 
       <section className="px-6 py-20 bg-gray-50 sm:py-28">
         <div className="mx-auto max-w-6xl">

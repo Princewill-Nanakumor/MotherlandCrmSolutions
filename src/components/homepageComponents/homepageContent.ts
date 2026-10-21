@@ -318,14 +318,14 @@ export const HOME_VOXEL_SPLITS: MarketingVoxelSplit[] = [
 export const ABOUT_VOXEL_SPLITS: MarketingVoxelSplit[] = [
   {
     id: "about-desk",
-    src: "/holdinglaptop.png",
+    src: "/motherland_crm_redesigned_exact_1536x1192.png",
     alt: "Operator managing the CRM workspace on a laptop",
     title: "Built for desks that actually perform",
     description:
       "Spreadsheets stall. Live pipelines don’t. Motherland CRM keeps import, assignment, and follow-ups in one real-time workspace.",
     ctaLabel: "Learn more",
     ctaHref: "/features",
-    imageRight: true,
+    imageRight: false,
   },
 ];
 
@@ -341,9 +341,14 @@ const CLOSE_TOGETHER_VOXEL = {
 export const PRICING_VOXEL_SPLITS: MarketingVoxelSplit[] = [
   {
     id: "pricing-pair",
-    ...CLOSE_TOGETHER_VOXEL,
-    ctaLabel: "Contact us",
-    ctaHref: "/contact",
+    src: "/motherland_crm_lego_pricing_first_1536x119223.png",
+    alt: "Team reviewing subscription and payment options",
+    title: "Pay with crypto. Scale when ready.",
+    description:
+      "Start with a free trial — no card. Deposit USDT (TRC20 or ERC20), pick a monthly plan, and upgrade seats or lead caps whenever the book grows.",
+    ctaLabel: "Start free trial",
+    ctaHref: "/signup",
+    imageRight: true,
   },
 ];
 
@@ -354,20 +359,21 @@ export const CONTACT_VOXEL_SPLITS: MarketingVoxelSplit[] = [
     src: "/contact1.png",
     ctaLabel: "Start free trial",
     ctaHref: "/signup",
+    imageRight: true,
   },
 ];
 
 export const FEATURES_VOXEL_SPLITS: MarketingVoxelSplit[] = [
   {
     id: "features-agent",
-    src: "/imagesingle.png",
+    src: "/imagesinglee3.png",
     alt: "Agent working assigned leads",
     title: "A clean queue. Nothing extra.",
     description:
       "Agents open their leads, update status, leave notes, and place calls — without drowning in the full company list.",
     ctaLabel: "Explore product",
     ctaHref: "/features",
-    imageRight: true,
+    imageRight: false,
   },
 ];
 

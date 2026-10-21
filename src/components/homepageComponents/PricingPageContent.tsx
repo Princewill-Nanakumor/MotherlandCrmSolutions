@@ -45,9 +45,9 @@ export default function PricingPageContent() {
         description={`Start with a ${SUBSCRIPTION_TRIAL_DURATION_DAYS}-day trial, then subscribe monthly. Pick the seat and lead cap that matches your team.`}
       />
 
-      <SubscriptionPlansSection className="bg-white" />
-
       <VoxelSplitStack splits={PRICING_VOXEL_SPLITS} />
+
+      <SubscriptionPlansSection className="bg-white" />
 
       <section className="px-6 py-20 bg-gray-50 sm:py-28">
         <div className="mx-auto max-w-6xl">

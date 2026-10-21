@@ -27,6 +27,8 @@ export default function SecurityPageContent() {
         description="Role-based access, tenant-scoped data, and an activity trail on every lead. Built for teams that cannot leak a contact list."
       />
 
+      <VoxelSplitStack splits={SECURITY_VOXEL_SPLITS} />
+
       <section className="px-6 py-20 sm:py-28">
         <div className="mx-auto max-w-6xl">
           <SectionHeading
@@ -59,8 +61,6 @@ export default function SecurityPageContent() {
           </RevealGroup>
         </div>
       </section>
-
-      <VoxelSplitStack splits={SECURITY_VOXEL_SPLITS} />
 
       <section className="px-6 py-20 bg-gray-50 sm:py-28">
         <div className="mx-auto max-w-5xl">
