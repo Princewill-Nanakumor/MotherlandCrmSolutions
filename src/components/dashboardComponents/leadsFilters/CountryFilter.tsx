@@ -111,6 +111,7 @@ export const CountryFilter = ({
       const t = String(raw).trim();
       if (!t) return;
       const canonical = normalizeCountryInput(t);
+      if (!canonical) return;
       const key = canonical.toLowerCase();
       if (!byKey.has(key)) byKey.set(key, canonical);
     };

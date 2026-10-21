@@ -1,4 +1,5 @@
 import { countryOptions } from "@/components/authComponents/CountryData";
+import { capitalizeWords } from "@/lib/leadDisplayFormat";
 
 function normKey(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
@@ -46,12 +47,14 @@ for (const [label, extras] of EXTRA_ALIASES) {
 /**
  * Maps ISO codes, names, and common variants to the CRM display name
  * (e.g. "US", "usa", "United States" → "United States").
- * Unknown values are returned trimmed as-is.
+ * Unknown values are title-cased (e.g. "south sudan" → "South Sudan").
  */
 export function normalizeCountryInput(raw: string | null | undefined): string {
   const trimmed = String(raw ?? "").trim();
   if (!trimmed) return "";
-  return aliasToCanonicalLabel.get(normKey(trimmed)) ?? trimmed;
+  return (
+    aliasToCanonicalLabel.get(normKey(trimmed)) ?? capitalizeWords(trimmed)
+  );
 }
 
 /** All stored spellings that should match a filter selection or canonical name. */

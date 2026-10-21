@@ -16,6 +16,7 @@ import {
   readFilterListCacheEntry,
   writeFilterListCache,
 } from "@/lib/filterListCache";
+import { formatLeadDetailSource } from "@/lib/leadDisplayFormat";
 
 interface SourceFilterProps {
   value: string[]; // Changed to array
@@ -109,16 +110,16 @@ export const SourceFilter = ({
       ...(providedSources ?? []),
       ...((fetchedSources ?? []).filter((s): s is string => Boolean(s))),
     ];
-    // Deduplicate by normalized name (trim + lowercase) so "Richer" and "richer" show once
+    // Deduplicate by normalized name; always show title case ("facebook ads" → "Facebook Ads")
     const byKey = new Map<string, string>();
     for (const s of raw) {
-      const t = String(s).trim();
+      const t = formatLeadDetailSource(s);
       if (!t) continue;
       const key = t.toLowerCase();
       if (!byKey.has(key)) byKey.set(key, t);
     }
     for (const selected of value) {
-      const t = String(selected).trim();
+      const t = formatLeadDetailSource(selected);
       if (!t) continue;
       const key = t.toLowerCase();
       if (!byKey.has(key)) byKey.set(key, t);

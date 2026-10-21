@@ -20,6 +20,7 @@ import {
   getLeadAssignedDisplayName,
   isLeadAssignedToActiveUser,
 } from "@/lib/leadAssignmentDisplay";
+import { capitalizeWords } from "@/lib/leadDisplayFormat";
 
 interface LeadStatusProps {
   lead: Lead;
@@ -84,17 +85,15 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, users, onLeadUpdated }) =
     (statusId: string) => {
       const status = findStatusByIdOrName(statusId);
       if (status) {
-        return status.name;
+        return capitalizeWords(status.name);
       }
       // Orphaned custom status id (status was deleted) — show default New.
       if (/^[a-f0-9]{24}$/i.test(statusId)) {
         return "New";
       }
-      // Capitalize fallback status name (e.g., "NEW" -> "New")
+      // Title-case fallback status name (e.g., "IN PROGRESS" → "In Progress")
       if (statusId) {
-        return (
-          statusId.charAt(0).toUpperCase() + statusId.slice(1).toLowerCase()
-        );
+        return capitalizeWords(statusId);
       }
       return "Unknown";
     },
@@ -200,7 +199,9 @@ const LeadStatus: React.FC<LeadStatusProps> = ({ lead, users, onLeadUpdated }) =
                             border: `2px solid ${statusColor}`,
                           }}
                         />
-                        <span style={{ color: textColor }}>{status.name}</span>
+                        <span style={{ color: textColor }}>
+                          {capitalizeWords(status.name)}
+                        </span>
                       </div>
                     </SelectItem>
                   );

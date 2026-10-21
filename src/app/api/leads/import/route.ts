@@ -15,6 +15,7 @@ import {
 import { publishAdminLeadsUpdatedEvent } from "@/lib/ablyServer";
 import { canCreateLead } from "@/lib/roles";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
+import { normalizeLeadSource } from "@/lib/leadDisplayFormat";
 
 // Define interface for imported lead data
 interface ImportedLead {
@@ -111,7 +112,7 @@ export async function POST(request: Request) {
           email: lead.email.trim().toLowerCase(),
           phone: lead.phone || "",
           country: normalizeCountryInput(lead.country || ""),
-          source: lead.source && lead.source !== "-" && lead.source.trim() !== "" ? lead.source : "—",
+          source: normalizeLeadSource(lead.source),
           status: "NEW",
           createdBy: userObjectId,
           adminId: adminObjectId,

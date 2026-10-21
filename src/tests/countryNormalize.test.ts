@@ -21,8 +21,10 @@ describe("normalizeCountryInput", () => {
     expect(normalizeCountryInput(null)).toBe("");
   });
 
-  it("returns unknown values trimmed as-is", () => {
+  it("title-cases unknown country names from imports", () => {
     expect(normalizeCountryInput("  Narnia  ")).toBe("Narnia");
+    expect(normalizeCountryInput("south sudan")).toBe("South Sudan");
+    expect(normalizeCountryInput("KENYA")).toBe("Kenya");
   });
 });
 

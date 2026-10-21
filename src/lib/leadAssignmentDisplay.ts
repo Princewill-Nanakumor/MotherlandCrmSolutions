@@ -1,4 +1,5 @@
 import type { Lead } from "@/types/leads";
+import { capitalizeWords } from "@/lib/leadDisplayFormat";
 
 type AssigneeUser = {
   id: string;
@@ -32,17 +33,14 @@ export function isLeadAssignedToActiveUser(
   return activeUsers.some((user) => user.id === userId);
 }
 
-/** Title-case each word for display names (e.g. "john" → "John"). */
+/** Title-case every word for display names (e.g. "john doe" → "John Doe"). */
 export function formatPersonName(
   firstName?: string,
   lastName?: string,
 ): string {
-  const capitalize = (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return "";
-    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
-  };
-  return `${capitalize(firstName ?? "")} ${capitalize(lastName ?? "")}`.trim();
+  return capitalizeWords(
+    `${firstName ?? ""} ${lastName ?? ""}`.replace(/\s+/g, " ").trim(),
+  );
 }
 
 /** Lead has an assignment record that can be cleared via unassign. */

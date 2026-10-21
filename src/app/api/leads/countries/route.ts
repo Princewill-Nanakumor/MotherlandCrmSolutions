@@ -48,6 +48,7 @@ export async function GET() {
     const byKey = new Map<string, string>();
     for (const c of countries) {
       const canonical = normalizeCountryInput(c);
+      if (!canonical) continue;
       const key = canonical.toLowerCase();
       if (!byKey.has(key)) byKey.set(key, canonical);
     }

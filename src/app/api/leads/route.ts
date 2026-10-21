@@ -19,6 +19,7 @@ import {
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
 import { getAgentContactVisibilityFromDb } from "@/lib/getAgentContactVisibilityFromDb";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
+import { normalizeLeadSource } from "@/lib/leadDisplayFormat";
 import {
   checkTenantLeadImportAllowed,
   reconcileLeadQuotaOrRollback,
@@ -244,7 +245,7 @@ export async function POST(request: Request) {
           email: leadData.email.toLowerCase(),
           phone: leadData.phone || "",
           country: normalizeCountryInput(leadData.country || ""),
-          source: leadData.source || "Manual Entry",
+          source: normalizeLeadSource(leadData.source || "Manual Entry"),
           comments: leadData.comments || "No comments yet",
           status: leadData.status || "NEW",
           adminId: scopedAdminObjectId,
@@ -397,7 +398,7 @@ export async function POST(request: Request) {
               email: lead._normalizedEmail,
               phone: lead.phone || "",
               country: normalizeCountryInput(lead.country || ""),
-              source: lead.source || "—",
+              source: normalizeLeadSource(lead.source),
               comments: lead.comments || "No comments yet",
               status: lead.status || "NEW",
               importId: lead.importId,

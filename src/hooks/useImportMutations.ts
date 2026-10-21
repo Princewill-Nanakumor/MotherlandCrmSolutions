@@ -14,6 +14,7 @@ import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { invalidateAndRefetchLeadLists } from "@/lib/leadsListQuerySync";
 import { getPerImportLimitError } from "@/lib/importBatchLimits";
 import { IMPORT_CLIENT_CHUNK_SIZE } from "@/lib/importPipelineConfig";
+import { normalizeLeadSource } from "@/lib/leadDisplayFormat";
 
 /** @deprecated use IMPORT_CLIENT_CHUNK_SIZE from importPipelineConfig */
 export { IMPORT_CLIENT_CHUNK_SIZE };
@@ -273,10 +274,11 @@ export function useImportMutations({
           return {
             ...lead,
             importId,
-            source:
+            source: normalizeLeadSource(
               trimmedSource && !emptySource.has(trimmedSource)
                 ? trimmedSource
                 : sourceDefault,
+            ),
           };
         });
 

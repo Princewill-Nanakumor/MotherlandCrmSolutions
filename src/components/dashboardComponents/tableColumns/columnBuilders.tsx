@@ -14,7 +14,11 @@ import { formatLeadPhoneForTable } from "@/lib/phoneNormalize";
 import {
   formatLeadDisplayName,
   formatLeadDetailEmail,
+  formatLeadDetailSource,
+  capitalizeWords,
 } from "@/lib/leadDisplayFormat";
+import { formatPersonName } from "@/lib/leadAssignmentDisplay";
+import { normalizeCountryInput } from "@/lib/countryNormalize";
 import { isCheckboxEventTarget } from "@/lib/tableSelectHitTarget";
 
 export type SortField =
@@ -56,7 +60,7 @@ const getStatusStyle = (
       backgroundColor: `${statusObj.color}15`,
       color: statusObj.color,
       dotColor: statusObj.color,
-      label: statusObj.name,
+      label: capitalizeWords(statusObj.name),
     };
   }
   return DEFAULT_STATUS_STYLE;
@@ -269,7 +273,11 @@ export function buildCoreColumns(params: {
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="text-center font-medium text-gray-900! dark:text-white!">{row.original.country || "—"}</div>
+        <div className="text-center font-medium text-gray-900! dark:text-white!">
+          {row.original.country
+            ? normalizeCountryInput(row.original.country) || row.original.country
+            : "—"}
+        </div>
       ),
     },
     {
@@ -319,7 +327,11 @@ export function buildCoreColumns(params: {
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="text-center font-medium text-gray-900! dark:text-white!">{row.original.source || "—"}</div>
+        <div className="text-center font-medium text-gray-900! dark:text-white!">
+          {row.original.source
+            ? formatLeadDetailSource(row.original.source) || row.original.source
+            : "—"}
+        </div>
       ),
     },
     {
@@ -343,7 +355,9 @@ export function buildCoreColumns(params: {
         const user = users.find((u) => u.id === userId);
         return (
           <div className="text-center font-medium text-gray-900! dark:text-white!">
-            {user ? `${user.firstName} ${user.lastName}` : "Unassigned"}
+            {user
+              ? formatPersonName(user.firstName, user.lastName) || "Unassigned"
+              : "Unassigned"}
           </div>
         );
       },

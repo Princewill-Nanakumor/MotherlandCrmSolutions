@@ -5,6 +5,7 @@
 import mongoose from "mongoose";
 import Lead, { generateLeadId } from "@/models/Lead";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
+import { normalizeLeadSource } from "@/lib/leadDisplayFormat";
 import {
   checkTenantLeadImportAllowed,
   reconcileLeadQuotaOrRollback,
@@ -124,7 +125,7 @@ export async function bulkUpsertImportChunk(options: {
             email: lead._normalizedEmail,
             phone: lead.phone || "",
             country: normalizeCountryInput(lead.country || ""),
-            source: lead.source || "—",
+            source: normalizeLeadSource(lead.source),
             comments: lead.comments || "No comments yet",
             status: lead.status || "NEW",
             importId: importOid,

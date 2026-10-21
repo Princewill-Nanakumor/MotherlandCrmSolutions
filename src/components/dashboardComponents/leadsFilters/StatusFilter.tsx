@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useStatuses } from "@/context/StatusContext";
 import { MultiSelectFilter } from "./MultiSelectFilter";
+import { capitalizeWords } from "@/lib/leadDisplayFormat";
 
 interface StatusFilterProps {
   value: string[];
@@ -59,7 +60,8 @@ export const StatusFilter = ({
         const name = status.name ?? "";
         return {
           value: id,
-          label: name.charAt(0).toUpperCase() + name.slice(1).toLowerCase(),
+          // Title-case every word so "in progress" / "IN PROGRESS" → "In Progress"
+          label: capitalizeWords(name),
         };
       })
       .filter((opt): opt is { value: string; label: string } =>

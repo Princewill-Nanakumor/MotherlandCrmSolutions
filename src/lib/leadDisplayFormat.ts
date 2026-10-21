@@ -71,6 +71,20 @@ export function formatLeadDetailSource(source: string | null | undefined): strin
     .join(" - ");
 }
 
+const EMPTY_SOURCE_VALUES = new Set(["", "-", "—", "–"]);
+
+/**
+ * Persist source with each word capitalized so imports like "facebook ads"
+ * store and filter as "Facebook Ads". Placeholders stay as "—".
+ */
+export function normalizeLeadSource(
+  source: string | null | undefined,
+): string {
+  const trimmed = String(source ?? "").trim();
+  if (!trimmed || EMPTY_SOURCE_VALUES.has(trimmed)) return "—";
+  return formatLeadDetailSource(trimmed);
+}
+
 export function formatLeadDetailName(
   firstName?: string | null,
   lastName?: string | null,

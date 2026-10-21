@@ -5,6 +5,7 @@ import { connectMongoDB } from "@/lib/dbConfig";
 import mongoose from "mongoose";
 import { buildTenantLeadBaseQuery } from "@/lib/leadListQuery";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";
+import { formatLeadDetailSource } from "@/lib/leadDisplayFormat";
 
 export async function GET() {
   const perf = new ApiRoutePerf("GET /api/leads/sources");
@@ -45,8 +46,10 @@ export async function GET() {
       .filter((s) => s !== "" && s !== "-" && s !== "—");
     const byKey = new Map<string, string>();
     for (const s of trimmed) {
-      const key = s.toLowerCase();
-      if (!byKey.has(key)) byKey.set(key, s);
+      const display = formatLeadDetailSource(s);
+      if (!display) continue;
+      const key = display.toLowerCase();
+      if (!byKey.has(key)) byKey.set(key, display);
     }
     const sources = Array.from(byKey.values()).sort((a, b) =>
       a.localeCompare(b, undefined, { sensitivity: "base" }),

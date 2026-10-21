@@ -11,6 +11,7 @@ import {
   readFilterListCacheEntry,
   writeFilterListCache,
 } from "@/lib/filterListCache";
+import { formatPersonName } from "@/lib/leadAssignmentDisplay";
 
 const EMPTY_USERS: User[] = [];
 
@@ -115,7 +116,7 @@ export const UserFilter = ({
     const userOptions = filteredUsers
       .map((user) => ({
         value: user.id,
-        label: `${user.firstName} ${user.lastName}`,
+        label: formatPersonName(user.firstName, user.lastName),
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
 
