@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { ImportHistoryItem } from "@/types/import";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
 
 export const useImportHistory = () => {
   const queryClient = useQueryClient();
@@ -46,7 +47,7 @@ export const useImportHistory = () => {
 
       return result;
     },
-    onSuccess: async (data, deletedImportId) => {
+    onSuccess: (data, deletedImportId) => {
       queryClient.setQueryData<ImportHistoryItem[]>(
         ["import-history"],
         (oldData) => {
@@ -55,7 +56,17 @@ export const useImportHistory = () => {
         },
       );
 
-      await Promise.all([
+      // Toast as soon as DELETE succeeds — don't hold UI on table refetches.
+      toast({
+        title: "Success",
+        description:
+          data?.message || "Import record and leads deleted successfully",
+        variant: "success",
+      });
+
+      // Refresh related caches in the background (invalidate already refetches
+      // active observers; type:"all" covers off-screen lead/user tables).
+      void Promise.all([
         queryClient.invalidateQueries({ queryKey: ["import-usage-data"] }),
         queryClient.invalidateQueries({ queryKey: ["import-history"] }),
         queryClient.invalidateQueries({ queryKey: ["leads-stats"], exact: false }),
@@ -73,22 +84,9 @@ export const useImportHistory = () => {
             );
           },
         }),
+        // New/removed sheet sources must show in the filter without a refresh.
+        refetchLeadFilterOptions(queryClient),
       ]);
-
-      // Ensure inactive tables refetch too (all-leads and leads pages may be off-screen now).
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ["leads"], type: "all" }),
-        queryClient.refetchQueries({ queryKey: ["assignedLeads"], type: "all" }),
-        queryClient.refetchQueries({ queryKey: ["users"], type: "all" }),
-        queryClient.refetchQueries({ queryKey: ["leads-stats"], type: "all" }),
-      ]);
-
-      toast({
-        title: "Success",
-        description:
-          data?.message || "Import record and leads deleted successfully",
-        variant: "success",
-      });
     },
     onError: (error) => {
       toast({

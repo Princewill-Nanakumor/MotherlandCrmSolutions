@@ -42,4 +42,15 @@ describe("CSV import validation", () => {
       email: "ada@example.com",
     });
   });
+
+  it("reads Source from the sheet into lead.source", async () => {
+    const csv = [
+      "name,email,phone,country,Source",
+      "Ada Lovelace,ada@example.com,+15551234567,United States,Facebook Ads",
+    ].join("\n");
+
+    const leads = await processTextData(csv);
+    expect(leads).toHaveLength(1);
+    expect(leads[0].source).toBe("Facebook Ads");
+  });
 });

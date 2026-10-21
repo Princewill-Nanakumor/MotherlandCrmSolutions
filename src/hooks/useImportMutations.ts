@@ -260,6 +260,7 @@ export function useImportMutations({
         file.type === "text/plain" || file.type === "text/csv"
           ? "paste"
           : "excel";
+      const emptySource = new Set(["", "-", "—", "–"]);
 
       // Fast path: upload staging only (no lead writes yet).
       for (let chunkIndex = 0; chunkIndex < chunkTotal; chunkIndex++) {
@@ -267,11 +268,17 @@ export function useImportMutations({
         const slice = processedLeads.slice(start, start + chunkSize);
         const isLast = chunkIndex === chunkTotal - 1;
 
-        const payload = slice.map((lead) => ({
-          ...lead,
-          importId,
-          source: lead.source || sourceDefault,
-        }));
+        const payload = slice.map((lead) => {
+          const trimmedSource = String(lead.source ?? "").trim();
+          return {
+            ...lead,
+            importId,
+            source:
+              trimmedSource && !emptySource.has(trimmedSource)
+                ? trimmedSource
+                : sourceDefault,
+          };
+        });
 
         const stageResponse = await apiCallWithSessionRefresh(
           `/api/imports/${importId}/stage`,

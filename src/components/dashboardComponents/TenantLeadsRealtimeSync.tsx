@@ -225,10 +225,16 @@ export function TenantLeadsRealtimeSync() {
         eventType === "lead_created" ||
         eventType === "leads_imported" ||
         eventType === "lead_deleted" ||
-        eventType === "leads_deleted"
+        eventType === "leads_deleted" ||
+        eventType === "import_deleted" ||
+        eventType === "imports_cleared"
       ) {
         void invalidateAndRefetchLeadLists(queryClient, {
-          includeFilterOptions: eventType !== "lead_deleted" && eventType !== "leads_deleted",
+          includeFilterOptions:
+            eventType === "lead_created" ||
+            eventType === "leads_imported" ||
+            eventType === "import_deleted" ||
+            eventType === "imports_cleared",
         });
         void queryClient.invalidateQueries({
           predicate: (query) => {

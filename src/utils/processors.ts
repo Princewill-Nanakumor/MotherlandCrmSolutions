@@ -11,20 +11,37 @@ import { validateHeaders } from "./validation";
 
 const DEFAULT_STATUS = "NEW";
 
+function cellAt(
+  row: unknown[],
+  headers: string[],
+  header: string | undefined,
+): string {
+  if (!header) return "";
+  const index = headers.indexOf(header);
+  if (index < 0 || index >= row.length) return "";
+  return String(row[index] ?? "").trim();
+}
+
 export const processExcelFile = async (file: File): Promise<LeadRequest[]> => {
   try {
     const workbook = await readExcelFile(file);
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-    const headers: string[] = getHeaderRow(worksheet);
-
-    const rows = XLSX.utils.sheet_to_json(worksheet, {
+    // Read as a matrix so column index matches getHeaderRow — object-key
+    // lookup fails when sheet_to_json keeps untrimmed / differently keyed headers.
+    const matrix = XLSX.utils.sheet_to_json(worksheet, {
+      header: 1,
       raw: false,
       defval: "",
-    }) as Record<string, string>[];
+      blankrows: false,
+    }) as unknown[][];
 
-    if (!Array.isArray(rows) || rows.length === 0) {
+    if (!Array.isArray(matrix) || matrix.length < 2) {
       throw new Error("No data found in file");
     }
+
+    const headers: string[] =
+      matrix[0]?.map((h) => String(h ?? "").trim()) ?? getHeaderRow(worksheet);
+    const rows = matrix.slice(1);
 
     // Enhanced validation with detailed error messages
     const { missingFields, foundHeaders, errorMessage } =
@@ -56,38 +73,30 @@ export const processExcelFile = async (file: File): Promise<LeadRequest[]> => {
 
     const validLeads: LeadRequest[] = [];
     for (const row of rows) {
+      if (!Array.isArray(row)) continue;
+      if (row.every((v) => String(v ?? "").trim() === "")) continue;
+
       // Use "Name" or "Full Name" if available, else combine "First Name" + "Last Name"
       let fullName = "";
       if (nameHeader) {
-        fullName = String(row[nameHeader] || "").trim();
+        fullName = cellAt(row, headers, nameHeader);
       } else if (firstNameHeader && lastNameHeader) {
         fullName =
-          String(row[firstNameHeader] || "").trim() +
-          " " +
-          String(row[lastNameHeader] || "").trim();
+          `${cellAt(row, headers, firstNameHeader)} ${cellAt(row, headers, lastNameHeader)}`.trim();
       }
 
-      const email = emailHeader ? String(row[emailHeader] || "").trim() : "";
-      const phone = phoneHeader ? String(row[phoneHeader] || "").trim() : "";
+      const email = cellAt(row, headers, emailHeader);
+      const phone = cellAt(row, headers, phoneHeader);
 
-      // Only use source if header exists and is not country
-      let source = "—";
-      if (
-        sourceHeader &&
-        sourceHeader !== countryHeader &&
-        headers.includes(sourceHeader) &&
-        Object.prototype.hasOwnProperty.call(row, sourceHeader) &&
-        String(row[sourceHeader]).trim() !== ""
-      ) {
-        source = String(row[sourceHeader]).trim();
+      // Prefer sheet Source; leave empty when absent so staging can apply a default.
+      let source = "";
+      if (sourceHeader && sourceHeader !== countryHeader) {
+        source = cellAt(row, headers, sourceHeader);
       }
 
-      const comments = commentsHeader
-        ? String(row[commentsHeader] || "").trim() || "No comments yet"
-        : "No comments yet";
-      const country = countryHeader
-        ? String(row[countryHeader] || "").trim()
-        : "";
+      const commentsRaw = cellAt(row, headers, commentsHeader);
+      const comments = commentsRaw || "No comments yet";
+      const country = cellAt(row, headers, countryHeader);
 
       if (!fullName || !email || !isValidEmail(email)) {
         continue;
@@ -100,7 +109,7 @@ export const processExcelFile = async (file: File): Promise<LeadRequest[]> => {
         lastName,
         email,
         phone,
-        source,
+        source: source || undefined,
         comments,
         status: DEFAULT_STATUS,
         country,
@@ -267,16 +276,12 @@ export const processTextData = async (text: string): Promise<LeadRequest[]> => {
         ? values[headers.indexOf(phoneHeader)] || ""
         : "";
 
-      // Only use source if header exists and is not country
-      let source = "—";
-      if (
-        sourceHeader &&
-        sourceHeader !== countryHeader &&
-        headers.includes(sourceHeader) &&
-        values[headers.indexOf(sourceHeader)] &&
-        values[headers.indexOf(sourceHeader)].trim() !== ""
-      ) {
-        source = values[headers.indexOf(sourceHeader)].trim();
+      // Prefer sheet Source; leave empty when absent so staging can apply a default.
+      let source = "";
+      if (sourceHeader && sourceHeader !== countryHeader) {
+        const sourceIdx = headers.indexOf(sourceHeader);
+        source =
+          sourceIdx >= 0 ? (values[sourceIdx] || "").trim() : "";
       }
 
       const comments = commentsHeader
@@ -295,7 +300,7 @@ export const processTextData = async (text: string): Promise<LeadRequest[]> => {
         lastName,
         email,
         phone,
-        source,
+        source: source || undefined,
         comments,
         status: DEFAULT_STATUS,
         country,

@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { clearLeadFilterCaches } from "@/lib/filterListCache";
 
 /**
  * Filter dropdown metadata — separate from lead list data under ["leads", ...].
@@ -20,13 +21,17 @@ export const LEAD_FILTER_OPTIONS_STALE_MS = 60 * 60 * 1000;
 export const LEAD_FILTER_OPTIONS_GC_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Mark source/country dropdowns stale after create/import.
- * Active observers refetch; do not call on status/assignment/activity events.
+ * Refresh source/country dropdowns after create/import/delete without a full
+ * page reload. Clears sessionStorage seed data so remounts do not revive a
+ * stale list under the long staleTime, then refetches active and inactive
+ * filter queries.
  */
 export async function refetchLeadFilterOptions(
   queryClient: QueryClient,
 ): Promise<void> {
+  clearLeadFilterCaches();
   await queryClient.invalidateQueries({
     queryKey: [...leadFilterKeys.all],
+    refetchType: "all",
   });
 }

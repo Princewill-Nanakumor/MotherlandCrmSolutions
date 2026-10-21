@@ -1,11 +1,24 @@
-import { describe, expect, it } from "vitest";
+/**
+ * @vitest-environment jsdom
+ */
+import { afterEach, describe, expect, it } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
 import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
+import {
+  clearLeadFilterCaches,
+  filterCacheKey,
+  readFilterListCache,
+  writeFilterListCache,
+} from "@/lib/filterListCache";
 import {
   leadFilterKeys,
   refetchLeadFilterOptions,
 } from "@/lib/leadFilterQueries";
 import type { Lead } from "@/types/leads";
+
+afterEach(() => {
+  clearLeadFilterCaches();
+});
 
 function lead(overrides: Partial<Lead> & { _id: string; status: string }): Lead {
   return {
@@ -34,18 +47,22 @@ describe("React Query cache behaviors", () => {
     expect(next.lastActivityAt).toBeTruthy();
   });
 
-  it("refetchLeadFilterOptions invalidates source/country keys without forcing a double fetch", async () => {
+  it("refetchLeadFilterOptions clears session cache and refetches source/country keys", async () => {
     const qc = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
     let sourcesFetches = 0;
     const sourcesKey = [...leadFilterKeys.sources()];
     const countriesKey = [...leadFilterKeys.countries()];
+    const persistKey = filterCacheKey("sources", "user-1");
+
+    writeFilterListCache(persistKey, ["stale-source"]);
+    expect(readFilterListCache(persistKey)).toEqual(["stale-source"]);
 
     qc.setQueryDefaults(sourcesKey, {
       queryFn: async () => {
         sourcesFetches += 1;
-        return ["web"];
+        return sourcesFetches === 1 ? ["web"] : ["web", "Facebook Ads"];
       },
     });
     qc.setQueryDefaults(countriesKey, {
@@ -57,9 +74,10 @@ describe("React Query cache behaviors", () => {
     expect(sourcesFetches).toBe(1);
 
     await refetchLeadFilterOptions(qc);
-    expect(qc.getQueryState(sourcesKey)?.isInvalidated).toBe(true);
-    expect(qc.getQueryState(countriesKey)?.isInvalidated).toBe(true);
-    expect(sourcesFetches).toBe(1);
+
+    expect(readFilterListCache(persistKey)).toBeNull();
+    expect(sourcesFetches).toBe(2);
+    expect(qc.getQueryData(sourcesKey)).toEqual(["web", "Facebook Ads"]);
   });
 
   it("invalidate ['leads'] does not invalidate leadFilterOptions sources/countries", async () => {
