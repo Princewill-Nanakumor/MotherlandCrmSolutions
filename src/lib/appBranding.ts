@@ -194,18 +194,46 @@ export function buildBrandKeywords(branding: AppBranding): string[] {
   return [...new Set([...shared, ...brandExtra].filter(Boolean))];
 }
 
-function buildMetaDescription(branding: AppBranding): string {
+export function buildMetaDescription(branding: AppBranding): string {
   if (isVertexBrand(branding)) {
     return `${branding.displayName} is a modern CRM platform for sales teams. Import Excel & CSV leads, assign agents, track pipelines in real time, and close more deals.`;
   }
   return `${branding.displayName} (also known as ${branding.shortName} / Motherlands CRM) is a modern CRM platform for sales teams. Import Excel & CSV leads, assign agents, track pipelines in real time, and close more deals with Motherland CRM Solutions.`;
 }
 
-function buildMetaTitle(branding: AppBranding): string {
+export function buildMetaTitle(branding: AppBranding): string {
   if (isVertexBrand(branding)) {
     return `${branding.displayName} – Modern CRM Solutions`;
   }
   return `${branding.displayName} | Motherland CRM – Modern CRM Solutions`;
+}
+
+/** Home OG title — Vertex stays Vertex-only; Motherland keeps alternate brand phrasing. */
+export function buildHomeOpenGraphTitle(branding: AppBranding): string {
+  if (isVertexBrand(branding)) {
+    return `${branding.displayName} – CRM Software & Lead Management`;
+  }
+  return `${branding.displayName} | Motherland CRM Solutions`;
+}
+
+export function buildHomeOpenGraphDescription(branding: AppBranding): string {
+  if (isVertexBrand(branding)) {
+    return `${branding.displayName} — modern CRM software for lead import, team assignment, and real-time sales pipelines.`;
+  }
+  return `Motherland CRM — modern CRM software for lead import, team assignment, and real-time sales pipelines.`;
+}
+
+/** Rewrite hardcoded Motherland copy in marketing page descriptions for the active host brand. */
+export function brandifyMarketingCopy(
+  text: string,
+  branding: AppBranding,
+): string {
+  if (!isVertexBrand(branding)) return text;
+  return text
+    .replaceAll("Motherland CRM Solutions", branding.displayName)
+    .replaceAll("Motherlands CRM Solutions", branding.displayName)
+    .replaceAll("Motherlands CRM", branding.shortName)
+    .replaceAll("Motherland CRM", branding.displayName);
 }
 
 function brandAlternateNames(branding: AppBranding): string[] {

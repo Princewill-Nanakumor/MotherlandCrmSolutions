@@ -3,6 +3,10 @@ import { headers } from "next/headers";
 import HomePageClient from "@/components/homepageComponents/HomePageClient";
 import {
   buildBrandKeywords,
+  buildHomeOpenGraphDescription,
+  buildHomeOpenGraphTitle,
+  buildMetaDescription,
+  buildMetaTitle,
   getBrandingForHost,
 } from "@/lib/appBranding";
 
@@ -12,17 +16,19 @@ export async function generateMetadata(): Promise<Metadata> {
     headersList.get("x-forwarded-host") || headersList.get("host") || "";
   const branding = getBrandingForHost(host);
   const keywords = buildBrandKeywords(branding);
+  const title = buildMetaTitle(branding);
+  const description = buildMetaDescription(branding);
 
   return {
-    title: `${branding.displayName} | Motherland CRM – CRM Software & Lead Management`,
-    description: `${branding.displayName} (Motherland CRM / Motherlands CRM Solutions) is a real-time CRM for sales teams. Import Excel & CSV leads, assign agents, manage pipelines, and close deals faster.`,
+    title,
+    description,
     keywords,
     alternates: {
       canonical: "/",
     },
     openGraph: {
-      title: `${branding.displayName} | Motherland CRM Solutions`,
-      description: `Motherland CRM — modern CRM software for lead import, team assignment, and real-time sales pipelines.`,
+      title: buildHomeOpenGraphTitle(branding),
+      description: buildHomeOpenGraphDescription(branding),
       url: branding.origin,
       type: "website",
     },

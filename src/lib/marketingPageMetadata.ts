@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { getBrandingForHost } from "@/lib/appBranding";
+import {
+  brandifyMarketingCopy,
+  getBrandingForHost,
+} from "@/lib/appBranding";
 
 export async function marketingPageMetadata({
   title,
@@ -16,14 +19,15 @@ export async function marketingPageMetadata({
     headersList.get("x-forwarded-host") || headersList.get("host") || "";
   const branding = getBrandingForHost(host);
   const url = `${branding.origin}${path}`;
+  const brandedDescription = brandifyMarketingCopy(description, branding);
 
   return {
     title: `${title} | ${branding.displayName}`,
-    description,
+    description: brandedDescription,
     alternates: { canonical: path },
     openGraph: {
       title: `${title} | ${branding.displayName}`,
-      description,
+      description: brandedDescription,
       url,
       type: "website",
     },
