@@ -57,6 +57,7 @@ async function invalidateAfterImport(queryClient: QueryClient) {
       },
     }),
   ]);
+  // Lead lists + source/country options (Add Lead modal shares SourceFilter key).
   await Promise.all([
     invalidateAndRefetchLeadLists(queryClient),
     queryClient.refetchQueries({ queryKey: ["users"], type: "all" }),

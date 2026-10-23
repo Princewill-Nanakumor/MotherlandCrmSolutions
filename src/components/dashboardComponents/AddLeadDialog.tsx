@@ -1,8 +1,8 @@
 // src/components/dashboardComponents/AddLeadDialog.tsx
 "use client";
 
-import React, { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import React, { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { Loader2, Plus, AlertCircle } from "lucide-react";
 import {
@@ -27,6 +27,22 @@ import { invalidateAndRefetchLeadLists } from "@/lib/leadsListQuerySync";
 import { useToast } from "@/components/ui/use-toast";
 import { useStatuses } from "@/context/StatusContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import {
+  leadFilterKeys,
+  LEAD_FILTER_OPTIONS_GC_MS,
+  LEAD_FILTER_OPTIONS_STALE_MS,
+} from "@/lib/leadFilterQueries";
+import {
+  formatLeadDetailSource,
+  normalizeLeadSource,
+} from "@/lib/leadDisplayFormat";
+
+/** Select sentinel — Manual Entry means type your own source name. */
+const MANUAL_ENTRY_MODE = "__manual__";
+
+const SOURCE_SELECT_ITEM_CLASS =
+  "focus:bg-[color-mix(in_srgb,var(--brand-from)_14%,white)] focus:text-(--brand-from)! data-[state=checked]:bg-[color-mix(in_srgb,var(--brand-from)_14%,white)] data-[state=checked]:text-(--brand-from)! dark:focus:bg-[color-mix(in_srgb,var(--brand-from)_28%,#111827)] dark:data-[state=checked]:bg-[color-mix(in_srgb,var(--brand-from)_28%,#111827)]";
 
 interface AddLeadFormData {
   firstName: string;
@@ -51,9 +67,54 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
   const queryClient = useQueryClient();
   const [emailError, setEmailError] = useState<string | null>(null);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [sourceSelectValue, setSourceSelectValue] = useState<string>("");
+  const [manualSource, setManualSource] = useState("");
 
   // Fetch statuses from context
   const { statuses, isLoading: isLoadingStatuses } = useStatuses();
+
+  const {
+    data: fetchedSources = [],
+    isLoading: isLoadingSources,
+    refetch: refetchSources,
+  } = useQuery<string[]>({
+    queryKey: [...leadFilterKeys.sources()],
+    queryFn: async () => {
+      const response = await apiCallWithSessionRefresh("/api/leads/sources", {
+        cache: "no-store",
+        timeoutMs: 15_000,
+      });
+      if (!response.ok) throw new Error("Failed to fetch sources");
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    },
+    staleTime: LEAD_FILTER_OPTIONS_STALE_MS,
+    gcTime: LEAD_FILTER_OPTIONS_GC_MS,
+    refetchOnWindowFocus: false,
+    // Stay subscribed while mounted so import/create filter invalidation
+    // updates this list without a page refresh (same key as SourceFilter).
+    refetchOnMount: true,
+    placeholderData: (previous) => previous,
+  });
+
+  // When opening Add Lead after an import, pull the latest source list.
+  React.useEffect(() => {
+    if (!isOpen) return;
+    void refetchSources();
+  }, [isOpen, refetchSources]);
+
+  const existingSources = useMemo(() => {
+    const byKey = new Map<string, string>();
+    for (const raw of fetchedSources) {
+      const display = formatLeadDetailSource(raw);
+      if (!display) continue;
+      const key = display.toLowerCase();
+      if (!byKey.has(key)) byKey.set(key, display);
+    }
+    return Array.from(byKey.values()).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" }),
+    );
+  }, [fetchedSources]);
 
   const {
     register,
@@ -61,6 +122,7 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
     reset,
     formState: { errors },
     setValue,
+    clearErrors,
     watch,
   } = useForm<AddLeadFormData>({
     defaultValues: {
@@ -69,12 +131,22 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
       email: "",
       phone: "",
       country: "",
-      source: "Manual Entry",
+      source: "",
       status: statuses[0]?._id || statuses[0]?.id || "NEW",
     },
   });
 
+  // Keep source in RHF so required validation matches other fields
+  React.useEffect(() => {
+    register("source", {
+      validate: (value) =>
+        (typeof value === "string" && value.trim().length > 0) ||
+        "Source is required",
+    });
+  }, [register]);
+
   const selectedStatus = watch("status");
+  const isManualSource = sourceSelectValue === MANUAL_ENTRY_MODE;
 
   // Update default status when statuses load
   React.useEffect(() => {
@@ -82,6 +154,24 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
       setValue("status", statuses[0]?._id || statuses[0]?.id || "NEW");
     }
   }, [statuses, selectedStatus, setValue]);
+
+  const resetSourceFields = () => {
+    setSourceSelectValue("");
+    setManualSource("");
+    setValue("source", "", { shouldValidate: false });
+    clearErrors("source");
+  };
+
+  const handleSourceSelectChange = (value: string) => {
+    setSourceSelectValue(value);
+    if (value === MANUAL_ENTRY_MODE) {
+      setValue("source", manualSource.trim(), { shouldValidate: true });
+      return;
+    }
+    setManualSource("");
+    setValue("source", value, { shouldValidate: true });
+    clearErrors("source");
+  };
 
   // Check for duplicate email on blur
   const checkEmailExists = async (email: string) => {
@@ -141,9 +231,25 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
 
       return response.json();
     },
-    onSuccess: async () => {
+    onSuccess: async (_result, variables) => {
+      const savedSource = normalizeLeadSource(variables.source);
+      if (savedSource) {
+        queryClient.setQueryData<string[]>(
+          [...leadFilterKeys.sources()],
+          (prev) => {
+            const list = Array.isArray(prev) ? prev : [];
+            const key = savedSource.toLowerCase();
+            if (list.some((s) => s.toLowerCase() === key)) return list;
+            return [...list, savedSource].sort((a, b) =>
+              a.localeCompare(b, undefined, { sensitivity: "base" }),
+            );
+          },
+        );
+      }
+
       // Invalidate alone is not enough: all-leads uses refetchOnMount:false +
       // placeholderData, so force a refetch so the new row appears immediately.
+      // includeFilterOptions (default) clears session cache + refetches sources.
       await invalidateAndRefetchLeadLists(queryClient);
 
       toast({
@@ -159,9 +265,10 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
         email: "",
         phone: "",
         country: "",
-        source: "Manual Entry",
+        source: "",
         status: statuses[0]?._id || statuses[0]?.id || "NEW",
       });
+      resetSourceFields();
       onClose();
     },
     onError: (error: Error) => {
@@ -186,7 +293,14 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
       return;
     }
 
-    createLeadMutation.mutate(data);
+    const resolvedSource = (
+      isManualSource ? manualSource.trim() : sourceSelectValue || data.source
+    ).trim();
+
+    createLeadMutation.mutate({
+      ...data,
+      source: normalizeLeadSource(resolvedSource),
+    });
   };
 
   const handleClose = () => {
@@ -197,16 +311,22 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
         email: "",
         phone: "",
         country: "",
-        source: "Manual Entry",
+        source: "",
         status: statuses[0]?._id || statuses[0]?.id || "NEW",
       });
+      resetSourceFields();
       setEmailError(null);
       onClose();
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+    >
       <DialogContent className="sm:max-w-125 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -241,13 +361,21 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
 
           {/* Last Name */}
           <div className="space-y-2">
-            <Label htmlFor="lastName">Last Name</Label>
+            <Label htmlFor="lastName">
+              Last Name <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="lastName"
               placeholder="Doe"
-              {...register("lastName")}
+              {...register("lastName", {
+                required: "Last name is required",
+              })}
               disabled={createLeadMutation.isPending}
+              className={errors.lastName ? "border-red-500" : ""}
             />
+            {errors.lastName && (
+              <p className="text-sm text-red-500">{errors.lastName.message}</p>
+            )}
           </div>
 
           {/* Email */}
@@ -333,15 +461,66 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
             )}
           </div>
 
-          {/* Source */}
+          {/* Source — pick existing, or Manual Entry to type your own */}
           <div className="space-y-2">
-            <Label htmlFor="source">Source</Label>
-            <Input
-              id="source"
-              placeholder="Manual Entry"
-              {...register("source")}
-              disabled={createLeadMutation.isPending}
-            />
+            <Label htmlFor="source">
+              Source <span className="text-red-500">*</span>
+            </Label>
+            <Select
+              value={sourceSelectValue || undefined}
+              onValueChange={handleSourceSelectChange}
+              disabled={createLeadMutation.isPending || isLoadingSources}
+            >
+              <SelectTrigger
+                id="source"
+                className={
+                  errors.source && !isManualSource ? "border-red-500" : ""
+                }
+                aria-invalid={Boolean(errors.source && !isManualSource)}
+              >
+                <SelectValue
+                  placeholder={
+                    isLoadingSources ? "Loading sources..." : "Select a source"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  value={MANUAL_ENTRY_MODE}
+                  className={SOURCE_SELECT_ITEM_CLASS}
+                >
+                  Manual Entry
+                </SelectItem>
+                {existingSources.map((source) => (
+                  <SelectItem
+                    key={source}
+                    value={source}
+                    className={SOURCE_SELECT_ITEM_CLASS}
+                  >
+                    {source}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {isManualSource && (
+              <Input
+                id="manualSource"
+                placeholder="Type a source name"
+                value={manualSource}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setManualSource(next);
+                  setValue("source", next, { shouldValidate: true });
+                  if (next.trim()) clearErrors("source");
+                }}
+                disabled={createLeadMutation.isPending}
+                className={errors.source ? "border-red-500" : ""}
+                autoFocus
+              />
+            )}
+            {errors.source && (
+              <p className="text-sm text-red-500">{errors.source.message}</p>
+            )}
           </div>
 
           {/* Status */}
