@@ -40,7 +40,8 @@ export const processExcelFile = async (file: File): Promise<LeadRequest[]> => {
     }
 
     const headers: string[] =
-      matrix[0]?.map((h) => String(h ?? "").trim()) ?? getHeaderRow(worksheet);
+      matrix[0]?.map((h) => String(h ?? "").replace(/^\uFEFF/, "").trim()) ??
+      getHeaderRow(worksheet);
     const rows = matrix.slice(1);
 
     // Enhanced validation with detailed error messages
@@ -222,7 +223,7 @@ export const processTextData = async (text: string): Promise<LeadRequest[]> => {
       throw new Error("Data must contain headers and at least one data row");
     }
 
-    const headers = rows[0].map((h) => h.trim());
+    const headers = rows[0].map((h) => h.replace(/^\uFEFF/, "").trim());
 
     // Enhanced validation with detailed error messages
     const { missingFields, foundHeaders, errorMessage } =

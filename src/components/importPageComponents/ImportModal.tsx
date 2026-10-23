@@ -146,29 +146,29 @@ export function ImportModal({
                     <li>
                       <strong>Name</strong> – Use one of:
                       <ul className="pl-6 text-gray-600 list-none dark:text-gray-400">
-                        <li>• Name</li>
-                        <li>• Full name</li>
-                        <p>• First&nbsp;Name&nbsp;and&nbsp;Last&nbsp;Name</p>
+                        <li>• Name / name</li>
+                        <li>• Full Name / Full name / full name</li>
+                        <li>• First Name + Last Name</li>
                       </ul>
                     </li>
                     <li>
-                      <strong>Email</strong> &ndash; Use one of:
+                      <strong>Email</strong> – Use one of:
                       <ul className="pl-6 text-gray-600 list-none dark:text-gray-400">
-                        <li>• Email</li>
-                        <li>• Email Address</li>
+                        <li>• Email / email</li>
+                        <li>• Email Address / Email address / email Address</li>
                       </ul>
                     </li>
                     <li>
                       <strong>Phone</strong> – Use one of:
                       <ul className="pl-6 text-gray-600 list-none dark:text-gray-400">
-                        <li>• Phone</li>
-                        <li>• Phone Number</li>
+                        <li>• Phone / phone</li>
+                        <li>• Phone Number / Phone number</li>
                       </ul>
                     </li>
                     <li>
                       <strong>Country</strong> – Use:
                       <ul className="pl-6 text-gray-600 list-none dark:text-gray-400">
-                        <li>• Country</li>
+                        <li>• Country / country</li>
                       </ul>
                     </li>
                   </ul>

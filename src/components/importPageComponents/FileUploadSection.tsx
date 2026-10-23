@@ -115,10 +115,10 @@ export const FileUploadSection = ({
             larger files into multiple imports
           </li>
           <li>
-            Required columns: First Name, Last Name or Full Name, Email Address,
-            Phone Number, Country
+            Required columns: Full Name (or First + Last Name), Email, Phone
+            Number, Country
           </li>
-          <li>Headers must be case-sensitive and match exactly</li>
+          <li>Headers are case-insensitive (e.g. Full Name, Phone number)</li>
           <li>
             <button
               type="button"

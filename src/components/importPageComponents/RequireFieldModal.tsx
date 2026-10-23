@@ -20,33 +20,31 @@ export const RequiredFieldsModal = ({
         </h3>
         <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
           Your Excel/CSV file must contain the following column headers
-          (case-sensitive):
+          (case does not matter; spacing is flexible):
         </p>
         <ul className="pl-5 mb-4 space-y-2 text-sm text-gray-700 list-disc dark:text-gray-200">
           <li>
-            <span className="font-semibold">First Name</span> or{" "}
-            <span className="font-semibold">Full Name</span>
+            <span className="font-semibold">Full Name</span> / Full name — or{" "}
+            <span className="font-semibold">First Name</span> +{" "}
+            <span className="font-semibold">Last Name</span>
           </li>
           <li>
-            <span className="font-semibold">Last Name</span> (optional if Full
-            Name is provided)
+            <span className="font-semibold">Email</span> / email — or{" "}
+            <span className="font-semibold">Email Address</span> / Email address
+            / email Address
           </li>
           <li>
-            <span className="font-semibold">Email Address</span> or{" "}
-            <span className="font-semibold">Email</span>
+            <span className="font-semibold">Phone</span> / phone — or{" "}
+            <span className="font-semibold">Phone Number</span> / Phone number
           </li>
           <li>
-            <span className="font-semibold">Phone Number</span> or{" "}
-            <span className="font-semibold">Phone</span>
-          </li>
-          <li>
-            <span className="font-semibold">Country</span>
+            <span className="font-semibold">Country</span> / country
           </li>
         </ul>
         <div className="p-4 mb-4 border-l-4 border-yellow-400 rounded bg-yellow-50/80 dark:bg-yellow-900/20 backdrop-blur-sm dark:border-yellow-500">
           <p className="text-sm text-yellow-700 dark:text-yellow-300">
-            <span className="font-bold">Note:</span> Headers are case-sensitive.
-            Make sure they match exactly as shown above.
+            <span className="font-bold">Note:</span> Capitalization does not
+            matter — any first-letter casing is accepted.
           </p>
         </div>
         <div className="flex justify-end">

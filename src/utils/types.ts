@@ -63,7 +63,6 @@ export const headerMappings = {
 } as const;
 
 export const DEFAULT_STATUS = "NEW" as const;
-export const REQUIRED_FIELDS = ["name", "email", "phone", "country"] as const;
 
 export type ContactField = keyof typeof headerMappings;
 export type ValidStatus =

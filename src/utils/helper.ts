@@ -1,4 +1,13 @@
 import * as XLSX from "xlsx";
+import {
+  IMPORT_COUNTRY_HEADERS,
+  IMPORT_EMAIL_HEADERS,
+  IMPORT_FIRST_NAME_HEADERS,
+  IMPORT_LAST_NAME_HEADERS,
+  IMPORT_NAME_HEADERS,
+  IMPORT_PHONE_HEADERS,
+  IMPORT_SOURCE_HEADERS,
+} from "@/lib/importHeaderAliases";
 
 // Expanded ContactField type
 export type ContactField =
@@ -12,28 +21,49 @@ export type ContactField =
   | "country"
   | "comments";
 
-// Expanded header mappings for robust matching
+// Expanded header mappings for robust matching (casing variants included;
+// normalizeText makes matching case-insensitive either way).
 export const headerMappings: Record<ContactField, string[]> = {
-  name: ["name", "full name"],
-  "first name": ["first name", "firstname", "given name"],
-  "last name": ["last name", "lastname", "surname", "family name"],
-  email: ["email", "email address", "emails", "e-mail", "e-mails"],
-  phone: ["phone", "phone number", "mobile", "cell"],
+  name: [
+    ...IMPORT_NAME_HEADERS,
+    "contact name",
+    "customer name",
+    "client name",
+  ],
+  "first name": [...IMPORT_FIRST_NAME_HEADERS],
+  "last name": [...IMPORT_LAST_NAME_HEADERS],
+  email: [...IMPORT_EMAIL_HEADERS, "e mail", "e-mail address"],
+  phone: [
+    ...IMPORT_PHONE_HEADERS,
+    "phone no",
+    "phone #",
+    "telephone",
+    "tel",
+    "mobile number",
+    "cell phone",
+  ],
   source: [
-    "source",
-    "lead source",
+    ...IMPORT_SOURCE_HEADERS,
     "leadsource",
     "traffic source",
-    "origin",
     "company",
     "organization",
     "organisation",
     "business name",
     "company name",
   ],
-  status: ["status"],
-  country: ["country"],
-  comments: ["comments", "comment", "notes", "note"],
+  status: ["status", "Status", "STATUS"],
+  country: [...IMPORT_COUNTRY_HEADERS, "nation", "location", "Nation", "Location"],
+  comments: [
+    "comments",
+    "Comments",
+    "comment",
+    "Comment",
+    "notes",
+    "Notes",
+    "note",
+    "description",
+  ],
 };
 
 export function isValidEmail(email: string): boolean {
@@ -41,8 +71,20 @@ export function isValidEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
+/**
+ * Normalize sheet headers for matching. Handles Excel quirks that break
+ * naive `toLowerCase()` equality: BOM, NBSP / other unicode spaces,
+ * punctuation, and irregular spacing ("Full  Name", "Phone number").
+ */
 export function normalizeText(text: string): string {
-  return text.toLowerCase().trim().replace(/\s+/g, "");
+  return String(text ?? "")
+    .replace(/^\uFEFF/, "")
+    .normalize("NFKC")
+    .replace(/[\u00A0\u1680\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, " ")
+    .toLowerCase()
+    .trim()
+    .replace(/[*：:]+$/g, "")
+    .replace(/[^a-z0-9]+/g, "");
 }
 
 // Accepts ContactField or string for flexibility
@@ -52,24 +94,15 @@ export function findMatchingHeader(
 ): string | undefined {
   const normalizedHeaders = headers.map(normalizeText);
 
-  // Use headerMappings if available, else just try the field itself
   const possibleMatches = headerMappings[field as ContactField]?.map(
-    normalizeText
+    normalizeText,
   ) ?? [normalizeText(field)];
 
-  // Log the search process for debugging
-  // console.log(`Searching for ${field} header`);
-  // console.log("Normalized headers:", normalizedHeaders);
-  // console.log("Possible matches:", possibleMatches);
-
   const headerIndex = normalizedHeaders.findIndex((header) =>
-    possibleMatches.includes(header)
+    possibleMatches.includes(header),
   );
 
-  const foundHeader = headerIndex !== -1 ? headers[headerIndex] : undefined;
-  // console.log(`Found header for ${field}:`, foundHeader);
-
-  return foundHeader;
+  return headerIndex !== -1 ? headers[headerIndex] : undefined;
 }
 
 export function splitName(fullName: string): {
@@ -93,11 +126,11 @@ export const getHeaderRow = (worksheet: XLSX.WorkSheet): string[] => {
   for (let C = range.s.c; C <= range.e.c; ++C) {
     const cell = worksheet[XLSX.utils.encode_cell({ r: R, c: C })];
     const header = cell ? cell.v : "";
-    headers.push(header ? String(header).trim() : "");
+    headers.push(
+      header ? String(header).replace(/^\uFEFF/, "").trim() : "",
+    );
   }
 
-  // Log headers for debugging
-  // console.log("Found headers in Excel:", headers);
   return headers;
 };
 
