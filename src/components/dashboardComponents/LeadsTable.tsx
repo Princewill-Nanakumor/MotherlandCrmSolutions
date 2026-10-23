@@ -516,7 +516,7 @@ export default function LeadsTable({
           />
         </div>
 
-        <div className="min-h-[40vh] flex-1 overflow-auto sm:min-h-0">
+        <div className="min-h-0 flex-1 overflow-auto">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -549,7 +549,7 @@ export default function LeadsTable({
           </DndContext>
         </div>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 shrink-0">
+        <div className="shrink-0 border-t border-gray-200 px-2 py-3 dark:border-gray-700 sm:p-4">
           <TablePagination
             pageIndex={effectivePageIndex}
             pageCount={pageCount}

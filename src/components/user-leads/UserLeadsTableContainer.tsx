@@ -149,7 +149,7 @@ export const UserLeadsTableContainer: React.FC<
         />
       </div>
 
-      <div className="min-h-[40vh] flex-1 overflow-auto sm:min-h-0">
+      <div className="min-h-0 flex-1 overflow-auto">
         <UserLeadTable
           loading={loading}
           onLeadClick={onLeadClick}
@@ -161,7 +161,7 @@ export const UserLeadsTableContainer: React.FC<
       </div>
 
       {totalEntries > 0 && (
-        <div className="px-2 mb-4 border-t border-gray-200 dark:border-gray-700 shrink-0">
+        <div className="shrink-0 border-t border-gray-200 px-2 py-3 dark:border-gray-700 sm:px-2 sm:pb-4">
           <TablePagination
             pageIndex={pageIndex}
             pageCount={totalPages}
