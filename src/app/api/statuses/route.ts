@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
 import { canCreateStatus } from "@/lib/roles";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";
+import { StatusFormSchema } from "@/schemas/StatusFormSchema";
 
 // Define query type for MongoDB filters
 interface StatusQuery {
@@ -129,13 +130,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, color } = await req.json();
-    if (!name || !color) {
+    const body = await req.json();
+    const parsed = StatusFormSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { message: "Name and color are required" },
-        { status: 400 }
+        {
+          message:
+            parsed.error.issues[0]?.message || "Name and color are required",
+        },
+        { status: 400 },
       );
     }
+
+    const { name, color } = parsed.data;
 
     const newStatus = await withDbRetry(() =>
       Status.create({

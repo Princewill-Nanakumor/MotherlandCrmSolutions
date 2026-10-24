@@ -221,20 +221,19 @@ export function TenantLeadsRealtimeSync() {
 
       // Membership-changing events (create/import/delete) need a forced refetch —
       // invalidate alone leaves all-leads on stale placeholderData.
+      // Filter options (countries/sources) must refresh on delete too, or empty
+      // countries keep appearing in the All Countries dropdown.
       if (
         eventType === "lead_created" ||
         eventType === "leads_imported" ||
         eventType === "lead_deleted" ||
         eventType === "leads_deleted" ||
+        eventType === "bulk_deleted" ||
         eventType === "import_deleted" ||
         eventType === "imports_cleared"
       ) {
         void invalidateAndRefetchLeadLists(queryClient, {
-          includeFilterOptions:
-            eventType === "lead_created" ||
-            eventType === "leads_imported" ||
-            eventType === "import_deleted" ||
-            eventType === "imports_cleared",
+          includeFilterOptions: true,
         });
         void queryClient.invalidateQueries({
           predicate: (query) => {

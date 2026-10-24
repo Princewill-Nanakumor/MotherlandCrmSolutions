@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
 import { publishAdminLeadsUpdatedEvent } from "@/lib/ablyServer";
 import { canCreateStatus } from "@/lib/roles";
+import { StatusFormSchema } from "@/schemas/StatusFormSchema";
 
 // Helper to retry DB operation if connection fails
 async function withDbRetry<T>(
@@ -58,13 +59,19 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Invalid status ID" }, { status: 400 });
     }
 
-    const { name, color } = await req.json();
-    if (!name || !color) {
+    const body = await req.json();
+    const parsed = StatusFormSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { message: "Name and color are required" },
-        { status: 400 }
+        {
+          message:
+            parsed.error.issues[0]?.message || "Name and color are required",
+        },
+        { status: 400 },
       );
     }
+
+    const { name, color } = parsed.data;
 
     // Build query for multi-tenancy
     const query: {

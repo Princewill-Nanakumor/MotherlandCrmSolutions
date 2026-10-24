@@ -5,6 +5,7 @@ import { User } from "@/types/user.types";
 import { assignedLeadsKeys } from "@/hooks/useAssignedLeads";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { refetchLeadActivities } from "@/lib/leadActivitiesQuery";
+import { refetchLeadFilterOptions } from "@/lib/leadFilterQueries";
 
 type LeadsResponse = {
   leads: Lead[];
@@ -409,7 +410,7 @@ export function useLeadsMutations({
         variant: "destructive",
       });
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       mutationInProgressRef.current = false;
       updateLeadCaches(
         (lead) => (variables.leadIds.includes(lead._id) ? null : lead),
@@ -427,6 +428,8 @@ export function useLeadsMutations({
       queryClient.invalidateQueries({
         predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "leads-stats",
       });
+      // Drop stale country/source options that no longer have leads.
+      await refetchLeadFilterOptions(queryClient);
       toast({
         title: "Success!",
         description: `Successfully deleted ${variables.leadIds.length} lead(s)`,

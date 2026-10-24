@@ -2,6 +2,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Trash2, Pencil } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -31,12 +33,21 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Status } from "@/types/leads";
 import { useStatuses } from "@/context/StatusContext";
 import { reassignDeletedStatusInListCaches } from "@/lib/leadsListCache";
+import {
+  StatusFormSchema,
+  type StatusFormData,
+} from "@/schemas/StatusFormSchema";
 
 interface StatusModalProps {
   isOpen: boolean;
   onClose: () => void;
   onStatusCreated?: () => void;
 }
+
+const DEFAULT_STATUS_FORM: StatusFormData = {
+  name: "",
+  color: "#000000",
+};
 
 const StatusModal = ({
   isOpen,
@@ -46,10 +57,6 @@ const StatusModal = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { refreshStatuses } = useStatuses();
-  const [formData, setFormData] = useState({
-    name: "",
-    color: "#000000",
-  });
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -59,6 +66,19 @@ const StatusModal = ({
     null,
   );
   const [deletingStatusId, setDeletingStatusId] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<StatusFormData>({
+    resolver: zodResolver(StatusFormSchema),
+    defaultValues: DEFAULT_STATUS_FORM,
+  });
+
+  const watchedColor = watch("color");
 
   const isProtectedStatus = (status: Status) => {
     const statusId = status.id || status._id || "";
@@ -107,8 +127,7 @@ const StatusModal = ({
     }
   }, [isOpen, fetchStatuses]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (formData: StatusFormData) => {
     try {
       setIsCreating(true);
       const url = isEditing ? `/api/statuses/${editingId}` : "/api/statuses";
@@ -128,22 +147,20 @@ const StatusModal = ({
         );
       }
 
-      // Parse the response
       const newStatus = await response.json();
 
-      // ✅ OPTIMIZATION: Update local state immediately for instant UI feedback
       if (isEditing && editingId) {
         setStatuses((prev) =>
           prev.map((status) =>
-            status._id === editingId ? { ...status, ...formData } : status,
+            status._id === editingId || status.id === editingId
+              ? { ...status, ...formData }
+              : status,
           ),
         );
       } else {
-        // Add the new status to local state immediately
         setStatuses((prev) => [...prev, newStatus]);
       }
 
-      // Show success toast immediately
       toast({
         title: "Success!",
         description: `Status ${isEditing ? "updated" : "created"} successfully`,
@@ -196,7 +213,7 @@ const StatusModal = ({
 
   const handleEdit = (status: Status) => {
     if (isProtectedStatus(status)) return;
-    setFormData({
+    reset({
       name: status.name,
       color: status.color || "#000000",
     });
@@ -300,7 +317,7 @@ const StatusModal = ({
   };
 
   const resetForm = () => {
-    setFormData({ name: "", color: "#000000" });
+    reset(DEFAULT_STATUS_FORM);
     setIsEditing(false);
     setEditingId(null);
   };
@@ -323,42 +340,58 @@ const StatusModal = ({
           </DialogHeader>
           <div className="grid grid-cols-1 gap-6">
             {/* Create/Edit Status Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700! dark:text-white!">
+                <label
+                  htmlFor="status-name"
+                  className="text-sm font-medium text-gray-700! dark:text-white!"
+                >
                   Status Name
                 </label>
                 <Input
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  id="status-name"
                   placeholder="Enter status name"
-                  required
-                  className="mt-1"
+                  disabled={isCreating || !!deletingStatusId}
+                  className={
+                    errors.name ? "mt-1 border-red-500" : "mt-1"
+                  }
+                  aria-invalid={Boolean(errors.name)}
+                  {...register("name")}
                 />
+                {errors.name && (
+                  <p className="text-sm text-red-500">{errors.name.message}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700! dark:text-white!">
+                <label
+                  htmlFor="status-color"
+                  className="text-sm font-medium text-gray-700! dark:text-white!"
+                >
                   Select Color
                 </label>
                 <div className="flex gap-2">
                   <Input
+                    id="status-color"
                     type="color"
-                    value={formData.color}
-                    onChange={(e) =>
-                      setFormData({ ...formData, color: e.target.value })
+                    disabled={isCreating || !!deletingStatusId}
+                    className={
+                      errors.color
+                        ? "w-20 p-1 mt-1 border-red-500"
+                        : "w-20 p-1 mt-1"
                     }
-                    required
-                    className="w-20 p-1 mt-1"
+                    aria-invalid={Boolean(errors.color)}
+                    {...register("color")}
                   />
                   <div className="flex-1 p-2 border border-gray-200 rounded dark:border-gray-700">
                     <div
                       className="w-full h-full rounded"
-                      style={{ backgroundColor: formData.color }}
+                      style={{ backgroundColor: watchedColor || "#000000" }}
                     />
                   </div>
                 </div>
+                {errors.color && (
+                  <p className="text-sm text-red-500">{errors.color.message}</p>
+                )}
               </div>
               <DialogFooter>
                 {isEditing && (
