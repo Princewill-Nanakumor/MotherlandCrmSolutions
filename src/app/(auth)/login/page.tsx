@@ -388,11 +388,6 @@ export default function LoginPage() {
             background-color: transparent !important;
             background: transparent !important;
           }
-          /* Brand name beside logo (top bar only — not the white mobile sheet). */
-          body.is-login-page nav[data-chrome="transparent"] > div > div:first-child a > div,
-          body.is-login-page nav[data-chrome="transparent"] > div > div:first-child a > div span {
-            color: #ffffff !important;
-          }
           body.is-login-page div[class*="bg-white/10"],
           body.is-login-page [class*="SignInForm"],
           body.is-login-page [class*="signInForm"] {

@@ -35,11 +35,10 @@ import {
 } from "@/lib/leadFilterQueries";
 import {
   formatLeadDetailSource,
+  isProvidedLeadSource,
+  MANUAL_SOURCE_SELECT_VALUE,
   normalizeLeadSource,
 } from "@/lib/leadDisplayFormat";
-
-/** Select sentinel — Manual Entry means type your own source name. */
-const MANUAL_ENTRY_MODE = "__manual__";
 
 const SOURCE_SELECT_ITEM_CLASS =
   "focus:bg-[color-mix(in_srgb,var(--brand-from)_14%,white)] focus:text-(--brand-from)! data-[state=checked]:bg-[color-mix(in_srgb,var(--brand-from)_14%,white)] data-[state=checked]:text-(--brand-from)! dark:focus:bg-[color-mix(in_srgb,var(--brand-from)_28%,#111827)] dark:data-[state=checked]:bg-[color-mix(in_srgb,var(--brand-from)_28%,#111827)]";
@@ -67,11 +66,11 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
   const queryClient = useQueryClient();
   const [emailError, setEmailError] = useState<string | null>(null);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-  const [sourceSelectValue, setSourceSelectValue] = useState<string>("");
+  const [sourceSelectValue, setSourceSelectValue] = useState("");
   const [manualSource, setManualSource] = useState("");
 
-  // Fetch statuses from context
   const { statuses, isLoading: isLoadingStatuses } = useStatuses();
+  const defaultStatusId = statuses[0]?._id || statuses[0]?.id || "NEW";
 
   const {
     data: fetchedSources = [],
@@ -97,7 +96,6 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
     placeholderData: (previous) => previous,
   });
 
-  // When opening Add Lead after an import, pull the latest source list.
   React.useEffect(() => {
     if (!isOpen) return;
     void refetchSources();
@@ -108,6 +106,8 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
     for (const raw of fetchedSources) {
       const display = formatLeadDetailSource(raw);
       if (!display) continue;
+      // Dedicated "Manual Entry" option above — exclude DB copies.
+      if (display.toLowerCase() === "manual entry") continue;
       const key = display.toLowerCase();
       if (!byKey.has(key)) byKey.set(key, display);
     }
@@ -122,6 +122,7 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
     reset,
     formState: { errors },
     setValue,
+    setError,
     clearErrors,
     watch,
   } = useForm<AddLeadFormData>({
@@ -132,48 +133,65 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
       phone: "",
       country: "",
       source: "",
-      status: statuses[0]?._id || statuses[0]?.id || "NEW",
+      status: defaultStatusId,
     },
   });
 
-  // Keep source in RHF so required validation matches other fields
-  React.useEffect(() => {
-    register("source", {
-      validate: (value) =>
-        (typeof value === "string" && value.trim().length > 0) ||
-        "Source is required",
-    });
-  }, [register]);
-
   const selectedStatus = watch("status");
-  const isManualSource = sourceSelectValue === MANUAL_ENTRY_MODE;
+  const isManualSource = sourceSelectValue === MANUAL_SOURCE_SELECT_VALUE;
 
-  // Update default status when statuses load
+  const resolveSource = () =>
+    (isManualSource ? manualSource : sourceSelectValue).trim();
+
+  const ensureSourceValid = (): boolean => {
+    const resolved = resolveSource();
+    if (isProvidedLeadSource(resolved)) {
+      setValue("source", resolved, { shouldValidate: false });
+      clearErrors("source");
+      return true;
+    }
+    setValue("source", "", { shouldValidate: false });
+    setError("source", {
+      type: "required",
+      message: isManualSource ? "Enter a source name" : "Source is required",
+    });
+    return false;
+  };
+
   React.useEffect(() => {
     if (statuses.length > 0 && !selectedStatus) {
-      setValue("status", statuses[0]?._id || statuses[0]?.id || "NEW");
+      setValue("status", defaultStatusId);
     }
-  }, [statuses, selectedStatus, setValue]);
+  }, [statuses, selectedStatus, setValue, defaultStatusId]);
 
-  const resetSourceFields = () => {
+  const resetForm = () => {
+    reset({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      country: "",
+      source: "",
+      status: defaultStatusId,
+    });
     setSourceSelectValue("");
     setManualSource("");
-    setValue("source", "", { shouldValidate: false });
     clearErrors("source");
+    setEmailError(null);
   };
 
   const handleSourceSelectChange = (value: string) => {
     setSourceSelectValue(value);
-    if (value === MANUAL_ENTRY_MODE) {
-      setValue("source", manualSource.trim(), { shouldValidate: true });
+    if (value === MANUAL_SOURCE_SELECT_VALUE) {
+      setValue("source", manualSource.trim(), { shouldValidate: false });
+      clearErrors("source");
       return;
     }
     setManualSource("");
-    setValue("source", value, { shouldValidate: true });
+    setValue("source", value, { shouldValidate: false });
     clearErrors("source");
   };
 
-  // Check for duplicate email on blur
   const checkEmailExists = async (email: string) => {
     if (!email || !email.includes("@")) {
       setEmailError(null);
@@ -186,35 +204,26 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
     try {
       const response = await fetch(
         `/api/leads/check-email?email=${encodeURIComponent(email)}`,
-        {
-          credentials: "include",
-        },
+        { credentials: "include" },
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to check email");
-      }
+      if (!response.ok) throw new Error("Failed to check email");
 
       const data = await response.json();
-
       if (data.exists) {
         setEmailError(
           `This email already exists for ${data.lead.name}. Please use a different email.`,
         );
         return true;
       }
-
       return false;
     } catch (error) {
       console.error("Error checking email:", error);
-      // Don't block submission if check fails
       return false;
     } finally {
       setIsCheckingEmail(false);
     }
   };
 
-  // Create lead mutation
   const createLeadMutation = useMutation({
     mutationFn: async (leadData: AddLeadFormData) => {
       const response = await fetch("/api/leads", {
@@ -233,7 +242,7 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
     },
     onSuccess: async (_result, variables) => {
       const savedSource = normalizeLeadSource(variables.source);
-      if (savedSource) {
+      if (isProvidedLeadSource(savedSource)) {
         queryClient.setQueryData<string[]>(
           [...leadFilterKeys.sources()],
           (prev) => {
@@ -249,7 +258,6 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
 
       // Invalidate alone is not enough: all-leads uses refetchOnMount:false +
       // placeholderData, so force a refetch so the new row appears immediately.
-      // includeFilterOptions (default) clears session cache + refetches sources.
       await invalidateAndRefetchLeadLists(queryClient);
 
       toast({
@@ -258,17 +266,7 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
         variant: "success",
       });
 
-      // Reset form with default status
-      reset({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        country: "",
-        source: "",
-        status: statuses[0]?._id || statuses[0]?.id || "NEW",
-      });
-      resetSourceFields();
+      resetForm();
       onClose();
     },
     onError: (error: Error) => {
@@ -281,9 +279,9 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
   });
 
   const onSubmit = async (data: AddLeadFormData) => {
-    // Final email validation before submission
-    const emailExists = await checkEmailExists(data.email);
+    if (!ensureSourceValid()) return;
 
+    const emailExists = await checkEmailExists(data.email);
     if (emailExists) {
       toast({
         title: "Duplicate Email",
@@ -293,29 +291,15 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
       return;
     }
 
-    const resolvedSource = (
-      isManualSource ? manualSource.trim() : sourceSelectValue || data.source
-    ).trim();
-
     createLeadMutation.mutate({
       ...data,
-      source: normalizeLeadSource(resolvedSource),
+      source: normalizeLeadSource(resolveSource()),
     });
   };
 
   const handleClose = () => {
     if (!createLeadMutation.isPending && !isCheckingEmail) {
-      reset({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        country: "",
-        source: "",
-        status: statuses[0]?._id || statuses[0]?.id || "NEW",
-      });
-      resetSourceFields();
-      setEmailError(null);
+      resetForm();
       onClose();
     }
   };
@@ -339,8 +323,12 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* First Name */}
+        <form
+          onSubmit={handleSubmit(onSubmit, () => {
+            ensureSourceValid();
+          })}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <Label htmlFor="firstName">
               First Name <span className="text-red-500">*</span>
@@ -359,7 +347,6 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
             )}
           </div>
 
-          {/* Last Name */}
           <div className="space-y-2">
             <Label htmlFor="lastName">
               Last Name <span className="text-red-500">*</span>
@@ -378,7 +365,6 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
             )}
           </div>
 
-          {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email">
               Email <span className="text-red-500">*</span>
@@ -422,7 +408,6 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
             )}
           </div>
 
-          {/* Phone */}
           <div className="space-y-2">
             <Label htmlFor="phone">
               Phone <span className="text-red-500">*</span>
@@ -442,7 +427,6 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
             )}
           </div>
 
-          {/* Country */}
           <div className="space-y-2">
             <Label htmlFor="country">
               Country <span className="text-red-500">*</span>
@@ -461,7 +445,6 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
             )}
           </div>
 
-          {/* Source — pick existing, or Manual Entry to type your own */}
           <div className="space-y-2">
             <Label htmlFor="source">
               Source <span className="text-red-500">*</span>
@@ -486,7 +469,7 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem
-                  value={MANUAL_ENTRY_MODE}
+                  value={MANUAL_SOURCE_SELECT_VALUE}
                   className={SOURCE_SELECT_ITEM_CLASS}
                 >
                   Manual Entry
@@ -510,8 +493,8 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
                 onChange={(e) => {
                   const next = e.target.value;
                   setManualSource(next);
-                  setValue("source", next, { shouldValidate: true });
-                  if (next.trim()) clearErrors("source");
+                  setValue("source", next, { shouldValidate: false });
+                  if (isProvidedLeadSource(next)) clearErrors("source");
                 }}
                 disabled={createLeadMutation.isPending}
                 className={errors.source ? "border-red-500" : ""}
@@ -523,7 +506,6 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
             )}
           </div>
 
-          {/* Status */}
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select

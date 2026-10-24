@@ -73,6 +73,22 @@ export function formatLeadDetailSource(source: string | null | undefined): strin
 
 const EMPTY_SOURCE_VALUES = new Set(["", "-", "—", "–"]);
 
+/** Add Lead select sentinel — never persist as a real source. */
+export const MANUAL_SOURCE_SELECT_VALUE = "__manual__";
+
+/**
+ * True when the value is a real source name (not blank, placeholder, or UI sentinel).
+ * Use for create/update validation on client and server.
+ */
+export function isProvidedLeadSource(
+  source: string | null | undefined,
+): boolean {
+  const trimmed = String(source ?? "").trim();
+  if (!trimmed || EMPTY_SOURCE_VALUES.has(trimmed)) return false;
+  if (trimmed.toLowerCase() === MANUAL_SOURCE_SELECT_VALUE) return false;
+  return true;
+}
+
 /**
  * Persist source with each word capitalized so imports like "facebook ads"
  * store and filter as "Facebook Ads". Placeholders stay as "—".
@@ -80,9 +96,8 @@ const EMPTY_SOURCE_VALUES = new Set(["", "-", "—", "–"]);
 export function normalizeLeadSource(
   source: string | null | undefined,
 ): string {
-  const trimmed = String(source ?? "").trim();
-  if (!trimmed || EMPTY_SOURCE_VALUES.has(trimmed)) return "—";
-  return formatLeadDetailSource(trimmed);
+  if (!isProvidedLeadSource(source)) return "—";
+  return formatLeadDetailSource(String(source).trim());
 }
 
 export function formatLeadDetailName(

@@ -19,7 +19,10 @@ import {
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
 import { getAgentContactVisibilityFromDb } from "@/lib/getAgentContactVisibilityFromDb";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
-import { normalizeLeadSource } from "@/lib/leadDisplayFormat";
+import {
+  isProvidedLeadSource,
+  normalizeLeadSource,
+} from "@/lib/leadDisplayFormat";
 import {
   checkTenantLeadImportAllowed,
   reconcileLeadQuotaOrRollback,
@@ -224,6 +227,13 @@ export async function POST(request: Request) {
         );
       }
 
+      if (!isProvidedLeadSource(leadData.source)) {
+        return NextResponse.json(
+          { error: "Source is required" },
+          { status: 400 },
+        );
+      }
+
       if (!mongoose.connection.db) {
         throw new Error("Database connection not available");
       }
@@ -245,7 +255,7 @@ export async function POST(request: Request) {
           email: leadData.email.toLowerCase(),
           phone: leadData.phone || "",
           country: normalizeCountryInput(leadData.country || ""),
-          source: normalizeLeadSource(leadData.source || "Manual Entry"),
+          source: normalizeLeadSource(leadData.source),
           comments: leadData.comments || "No comments yet",
           status: leadData.status || "NEW",
           adminId: scopedAdminObjectId,
