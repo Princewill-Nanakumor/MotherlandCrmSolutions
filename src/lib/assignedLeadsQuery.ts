@@ -21,6 +21,8 @@ interface LeadFromAPI {
   lastName: string;
   email: string;
   phone?: string;
+  emails?: Lead["emails"];
+  phones?: Lead["phones"];
   country?: string;
   value?: number;
   source: string;
@@ -182,6 +184,8 @@ function mapAssignedLead(lead: LeadFromAPI): Lead {
     name: `${lead.firstName} ${lead.lastName}`,
     email: lead.email,
     phone: lead.phone,
+    ...(lead.emails !== undefined ? { emails: lead.emails } : {}),
+    ...(lead.phones !== undefined ? { phones: lead.phones } : {}),
     country: lead.country,
     value: lead.value,
     source: normalizeSource(lead.source) as LeadSource,

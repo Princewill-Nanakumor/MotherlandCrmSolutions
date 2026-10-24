@@ -9,8 +9,10 @@ import {
   Copy,
   Check,
   Tag,
+  Plus,
+  Trash2,
 } from "lucide-react";
-import { Lead } from "@/types/leads";
+import { Lead, type LeadContactEntry } from "@/types/leads";
 import { useToast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,12 @@ import {
 } from "@/lib/openDialerUrl";
 import { formatLeadDetailSource } from "@/lib/leadDisplayFormat";
 import { canEditLead } from "@/lib/roles";
+import {
+  MAX_LEAD_CONTACT_EXTRAS,
+  coerceContactEntries,
+  normalizeEmailEntries,
+  normalizePhoneEntries,
+} from "@/lib/leadContactEntries";
 
 async function writeTextToClipboard(text: string): Promise<boolean> {
   try {
@@ -79,7 +87,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
   const { data: session } = useSession();
   const { dialer } = useDialerSettings();
   const queryClient = useQueryClient();
-  const isAdmin = canEditLead(session?.user);
+  const canEditContact = canEditLead(session?.user);
   const { canViewPhoneNumbers, canViewEmails, isLoading: isLoadingPermission } =
     useCurrentUserPermission();
   const shouldMaskEmail = !canViewEmails;
@@ -87,9 +95,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isResolvingCall, setIsResolvingCall] = useState(false);
-  const [copiedField, setCopiedField] = useState<
-    "leadId" | "name" | "email" | "phone" | "country" | "source" | null
-  >(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Edit form state
   const [editedData, setEditedData] = useState({
@@ -99,13 +105,12 @@ export const ContactSection: FC<ContactSectionProps> = ({
     phone: lead?.phone || "",
     country: lead?.country || "",
     source: lead?.source || "",
+    emails: coerceContactEntries(lead?.emails),
+    phones: coerceContactEntries(lead?.phones),
   });
 
   const handleCopy = useCallback(
-    async (
-      text: string,
-      field: "leadId" | "name" | "email" | "phone" | "country" | "source",
-    ) => {
+    async (text: string, field: string) => {
       const value = text.trim();
       if (!value) {
         toast({
@@ -123,60 +128,94 @@ export const ContactSection: FC<ContactSectionProps> = ({
         return;
       }
       setCopiedField(field);
+      const label =
+        field === "leadId"
+          ? "Lead ID"
+          : field === "name"
+            ? "Name"
+            : field.startsWith("email")
+              ? "Email"
+              : field.startsWith("phone")
+                ? "Phone number"
+                : field === "country"
+                  ? "Country"
+                  : field === "source"
+                    ? "Source"
+                    : "Value";
       toast({
-        description: `${
-          field === "leadId"
-            ? "Lead ID"
-            : field === "name"
-              ? "Name"
-              : field === "email"
-                ? "Email"
-                : field === "phone"
-                  ? "Phone number"
-                  : field === "country"
-                    ? "Country"
-                    : "Source"
-        } copied to clipboard`,
+        description: `${label} copied to clipboard`,
       });
       setTimeout(() => setCopiedField(null), 2000);
     },
     [toast],
   );
 
-  const resolvePhoneForDial = useCallback(async (): Promise<string | null> => {
-    const fromLead = normalizePhoneForDialer(lead?.phone ?? "", lead?.country);
-    if (fromLead && !isMaskedContactValue(fromLead)) {
-      return fromLead;
-    }
+  const resolvePhoneForDial = useCallback(
+    async (preferred?: string): Promise<string | null> => {
+      if (preferred) {
+        const fromPreferred = normalizePhoneForDialer(
+          preferred,
+          lead?.country,
+        );
+        if (fromPreferred && !isMaskedContactValue(fromPreferred)) {
+          return fromPreferred;
+        }
+      }
 
-    if (!lead?._id) return null;
-
-    try {
-      const response = await apiCallWithSessionRefresh(`/api/leads/${lead._id}`, {
-        method: "GET",
-        cache: "no-store",
-      });
-      if (!response.ok) return null;
-
-      const data = (await response.json()) as Lead;
-      const fromDetail = normalizePhoneForDialer(
-        data.phone ?? "",
-        data.country ?? lead.country,
+      const fromLead = normalizePhoneForDialer(
+        lead?.phone ?? "",
+        lead?.country,
       );
-      if (!fromDetail || isMaskedContactValue(fromDetail)) return null;
-      return fromDetail;
-    } catch {
-      return null;
-    }
-  }, [lead]);
+      if (fromLead && !isMaskedContactValue(fromLead)) {
+        return fromLead;
+      }
+
+      if (!lead?._id) return null;
+
+      try {
+        const response = await apiCallWithSessionRefresh(
+          `/api/leads/${lead._id}`,
+          {
+            method: "GET",
+            cache: "no-store",
+          },
+        );
+        if (!response.ok) return null;
+
+        const data = (await response.json()) as Lead;
+        if (preferred) {
+          const match =
+            data.phones?.find(
+              (p) =>
+                p.value.replace(/\D/g, "") === preferred.replace(/\D/g, ""),
+            )?.value ?? preferred;
+          const fromExtra = normalizePhoneForDialer(
+            match,
+            data.country ?? lead.country,
+          );
+          if (fromExtra && !isMaskedContactValue(fromExtra)) return fromExtra;
+        }
+        const fromDetail = normalizePhoneForDialer(
+          data.phone ?? "",
+          data.country ?? lead.country,
+        );
+        if (!fromDetail || isMaskedContactValue(fromDetail)) return null;
+        return fromDetail;
+      } catch {
+        return null;
+      }
+    },
+    [lead],
+  );
 
   const handleCall = useCallback(
-    async () => {
+    async (phoneNumber?: string) => {
       if (isResolvingCall) return;
 
       setIsResolvingCall(true);
       try {
-        let cleanedNumber = (await resolvePhoneForDial()) ?? "";
+        let cleanedNumber =
+          (await resolvePhoneForDial(phoneNumber)) ?? "";
 
         if (!cleanedNumber) {
           toast({
@@ -265,43 +304,75 @@ export const ContactSection: FC<ContactSectionProps> = ({
         setIsResolvingCall(false);
       }
     },
-    [dialer, lead, session?.user?.id, queryClient, toast, isResolvingCall, resolvePhoneForDial]
+    [
+      dialer,
+      lead,
+      session?.user?.id,
+      queryClient,
+      toast,
+      isResolvingCall,
+      resolvePhoneForDial,
+    ],
   );
+
+  const syncEditedFromLead = useCallback((current: Lead) => {
+    setEditedData({
+      firstName: current.firstName || "",
+      lastName: current.lastName || "",
+      email: current.email || "",
+      phone: current.phone || "",
+      country: current.country || "",
+      source: current.source || "",
+      emails: coerceContactEntries(current.emails),
+      phones: coerceContactEntries(current.phones),
+    });
+  }, []);
 
   const handleEdit = useCallback(() => {
     if (lead) {
-      setEditedData({
-        firstName: lead.firstName || "",
-        lastName: lead.lastName || "",
-        email: lead.email || "",
-        phone: lead.phone || "",
-        country: lead.country || "",
-        source: lead.source || "",
-      });
+      syncEditedFromLead(lead);
       setIsEditing(true);
     }
-  }, [lead]);
+  }, [lead, syncEditedFromLead]);
 
   const handleCancel = useCallback(() => {
     setIsEditing(false);
-    if (lead) {
-      setEditedData({
-        firstName: lead.firstName || "",
-        lastName: lead.lastName || "",
-        email: lead.email || "",
-        phone: lead.phone || "",
-        country: lead.country || "",
-        source: lead.source || "",
+    if (lead) syncEditedFromLead(lead);
+  }, [lead, syncEditedFromLead]);
+
+  const handleRemoveEmail = useCallback(
+    (index: number) => {
+      setEditedData((prev) => ({
+        ...prev,
+        emails: prev.emails.filter((_, i) => i !== index),
+      }));
+      toast({
+        variant: "success",
+        description: "Email removed successfully",
       });
-    }
-  }, [lead]);
+    },
+    [toast],
+  );
+
+  const handleRemovePhone = useCallback(
+    (index: number) => {
+      setEditedData((prev) => ({
+        ...prev,
+        phones: prev.phones.filter((_, i) => i !== index),
+      }));
+      toast({
+        variant: "success",
+        description: "Phone number removed successfully",
+      });
+    },
+    [toast],
+  );
 
   const handleSave = useCallback(async () => {
     if (!lead || !onLeadUpdated) {
       return;
     }
 
-    // Validation
     if (!editedData.firstName.trim()) {
       toast({
         variant: "destructive",
@@ -318,12 +389,37 @@ export const ContactSection: FC<ContactSectionProps> = ({
       return;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(editedData.email)) {
       toast({
         variant: "destructive",
         description: "Please enter a valid email address",
+      });
+      return;
+    }
+
+    const primaryPhone =
+      normalizePhoneForDialer(editedData.phone, editedData.country) ||
+      editedData.phone.trim();
+
+    let emails: LeadContactEntry[];
+    let phones: LeadContactEntry[];
+    try {
+      emails = normalizeEmailEntries(editedData.emails, editedData.email);
+      phones = normalizePhoneEntries(
+        editedData.phones.map((p) => ({
+          ...p,
+          value:
+            normalizePhoneForDialer(p.value, editedData.country) ||
+            p.value.trim(),
+        })),
+        primaryPhone,
+      );
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        description:
+          err instanceof Error ? err.message : "Invalid contact details",
       });
       return;
     }
@@ -335,10 +431,10 @@ export const ContactSection: FC<ContactSectionProps> = ({
         ...lead,
         firstName: editedData.firstName.trim(),
         lastName: editedData.lastName.trim(),
-        email: editedData.email.trim(),
-        phone:
-          normalizePhoneForDialer(editedData.phone, editedData.country) ||
-          editedData.phone.trim(),
+        email: editedData.email.trim().toLowerCase(),
+        phone: primaryPhone,
+        emails,
+        phones,
         country: editedData.country.trim(),
         source: editedData.source?.trim(),
       };
@@ -349,6 +445,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
         setIsEditing(false);
         setTimeout(() => {
           toast({
+            variant: "success",
             description: "Contact information updated successfully",
           });
         }, 100);
@@ -381,7 +478,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
           Contact Information
         </h3>
         <div className="flex items-center gap-2">
-          {isAdmin && isExpanded && !isEditing && (
+          {canEditContact && isExpanded && !isEditing && (
             <Button
               variant="ghost"
               size="sm"
@@ -438,7 +535,69 @@ export const ContactSection: FC<ContactSectionProps> = ({
                   onEmailChange={(value) =>
                     setEditedData({ ...editedData, email: value })
                   }
+                  label="Email"
+                  required
                 />
+
+                {editedData.emails.map((entry, index) => (
+                  <div key={`email-extra-${index}`} className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <EmailField
+                        email={entry.value}
+                        isEditing={true}
+                        editedEmail={entry.value}
+                        onEmailChange={(value) => {
+                          const next = [...editedData.emails];
+                          next[index] = { ...next[index], value };
+                          setEditedData({ ...editedData, emails: next });
+                        }}
+                        label={
+                          entry.label
+                            ? `Email (${entry.label})`
+                            : `Email ${index + 2}`
+                        }
+                        required={false}
+                      />
+                      <Input
+                        value={entry.label || ""}
+                        onChange={(e) => {
+                          const next = [...editedData.emails];
+                          next[index] = {
+                            ...next[index],
+                            label: e.target.value,
+                          };
+                          setEditedData({ ...editedData, emails: next });
+                        }}
+                        placeholder="Label (optional, e.g. Work)"
+                        className="ml-8 w-[calc(100%-2rem)]"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveEmail(index)}
+                      className="mt-8 p-2 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                      aria-label="Remove email"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+
+                {editedData.emails.length < MAX_LEAD_CONTACT_EXTRAS && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditedData({
+                        ...editedData,
+                        emails: [...editedData.emails, { value: "", label: "" }],
+                      })
+                    }
+                    className="inline-flex items-center gap-1.5 ml-8 text-sm font-medium text-(--brand-from) hover:underline"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add email
+                  </button>
+                )}
 
                 <PhoneField
                   phone={lead.phone}
@@ -450,7 +609,69 @@ export const ContactSection: FC<ContactSectionProps> = ({
                   }
                   canViewPhoneNumbers={canViewPhoneNumbers}
                   isLoadingPermission={isLoadingPermission}
+                  label="Phone"
                 />
+
+                {editedData.phones.map((entry, index) => (
+                  <div key={`phone-extra-${index}`} className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <PhoneField
+                        phone={entry.value}
+                        countryHint={editedData.country}
+                        isEditing={true}
+                        editedPhone={entry.value}
+                        onPhoneChange={(value) => {
+                          const next = [...editedData.phones];
+                          next[index] = { ...next[index], value };
+                          setEditedData({ ...editedData, phones: next });
+                        }}
+                        canViewPhoneNumbers={canViewPhoneNumbers}
+                        label={
+                          entry.label
+                            ? `Phone (${entry.label})`
+                            : `Phone ${index + 2}`
+                        }
+                      />
+                      <Input
+                        value={entry.label || ""}
+                        onChange={(e) => {
+                          const next = [...editedData.phones];
+                          next[index] = {
+                            ...next[index],
+                            label: e.target.value,
+                          };
+                          setEditedData({ ...editedData, phones: next });
+                        }}
+                        placeholder="Label (optional, e.g. Mobile)"
+                        className="ml-8 w-[calc(100%-2rem)]"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhone(index)}
+                      className="mt-8 p-2 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                      aria-label="Remove phone"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+
+                {editedData.phones.length < MAX_LEAD_CONTACT_EXTRAS && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditedData({
+                        ...editedData,
+                        phones: [...editedData.phones, { value: "", label: "" }],
+                      })
+                    }
+                    className="inline-flex items-center gap-1.5 ml-8 text-sm font-medium text-(--brand-from) hover:underline"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add phone
+                  </button>
+                )}
 
                 <CountryField
                   country={lead.country}
@@ -529,7 +750,31 @@ export const ContactSection: FC<ContactSectionProps> = ({
                     : undefined
                 }
                 copied={canViewEmails ? copiedField === "email" : false}
+                label="Email"
               />
+
+              {coerceContactEntries(lead.emails).map((entry, index) => (
+                <EmailField
+                  key={`view-email-${index}-${entry.value}`}
+                  email={entry.value}
+                  isEditing={false}
+                  editedEmail=""
+                  onEmailChange={() => {}}
+                  maskForDisplay={shouldMaskEmail}
+                  onCopy={
+                    canViewEmails
+                      ? (text) => handleCopy(text, `email-${index}`)
+                      : undefined
+                  }
+                  copied={
+                    canViewEmails ? copiedField === `email-${index}` : false
+                  }
+                  label={
+                    entry.label ? `Email (${entry.label})` : `Email ${index + 2}`
+                  }
+                  required={false}
+                />
+              ))}
 
               <PhoneField
                 phone={lead.phone}
@@ -547,7 +792,36 @@ export const ContactSection: FC<ContactSectionProps> = ({
                 copied={canViewPhoneNumbers ? copiedField === "phone" : false}
                 canViewPhoneNumbers={canViewPhoneNumbers}
                 isLoadingPermission={isLoadingPermission}
+                label="Phone"
               />
+
+              {coerceContactEntries(lead.phones).map((entry, index) => (
+                <PhoneField
+                  key={`view-phone-${index}-${entry.value}`}
+                  phone={entry.value}
+                  countryHint={lead.country}
+                  isEditing={false}
+                  editedPhone=""
+                  onPhoneChange={() => {}}
+                  onCopy={
+                    canViewPhoneNumbers
+                      ? (text) => handleCopy(text, `phone-${index}`)
+                      : undefined
+                  }
+                  onCall={handleCall}
+                  isCallLoading={isResolvingCall}
+                  copied={
+                    canViewPhoneNumbers
+                      ? copiedField === `phone-${index}`
+                      : false
+                  }
+                  canViewPhoneNumbers={canViewPhoneNumbers}
+                  isLoadingPermission={isLoadingPermission}
+                  label={
+                    entry.label ? `Phone (${entry.label})` : `Phone ${index + 2}`
+                  }
+                />
+              ))}
 
               <CountryField
                 country={lead.country}

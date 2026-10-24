@@ -1,4 +1,4 @@
-import type { Lead } from "@/types/leads";
+import type { Lead, LeadContactEntry } from "@/types/leads";
 
 /** Normalize Mongo/ObjectId status values to a string id for list + badge lookups. */
 export function normalizeLeadStatusId(status: unknown): string {
@@ -15,6 +15,46 @@ export function normalizeLeadStatusId(status: unknown): string {
   return String(status);
 }
 
+/**
+ * List endpoints omit `emails`/`phones`. When syncing a richer panel/selected
+ * lead from a list row, keep extras that the list payload never includes.
+ * `undefined` means "list omitted"; `[]` means intentionally cleared.
+ */
+export function mergeLeadContactExtras(
+  incoming: Lead,
+  richer?: Pick<Lead, "emails" | "phones"> | null,
+): Lead {
+  if (!richer) return incoming;
+  return {
+    ...incoming,
+    emails:
+      incoming.emails !== undefined ? incoming.emails : richer.emails,
+    phones:
+      incoming.phones !== undefined ? incoming.phones : richer.phones,
+  };
+}
+
+/** Preserve extras from `richer` only when both leads share the same id. */
+export function mergeLeadContactExtrasIfSame(
+  incoming: Lead,
+  richer: Lead | null | undefined,
+): Lead {
+  if (!richer || richer._id !== incoming._id) return incoming;
+  return mergeLeadContactExtras(incoming, richer);
+}
+
+/**
+ * `undefined` on the updated lead means “field not part of this update”
+ * (e.g. status PATCH payloads), not “clear all extras”.
+ */
+function contactExtrasUnchanged(
+  original: LeadContactEntry[] | undefined,
+  updated: LeadContactEntry[] | undefined,
+): boolean {
+  if (updated === undefined) return true;
+  return JSON.stringify(updated) === JSON.stringify(original ?? []);
+}
+
 /** True when only the status field changed (already persisted via PATCH /status). */
 export function isStatusOnlyLeadUpdate(original: Lead, updated: Lead): boolean {
   const hasStatusChange =
@@ -25,6 +65,8 @@ export function isStatusOnlyLeadUpdate(original: Lead, updated: Lead): boolean {
     updated.lastName !== original.lastName ||
     updated.email !== original.email ||
     updated.phone !== original.phone ||
+    !contactExtrasUnchanged(original.emails, updated.emails) ||
+    !contactExtrasUnchanged(original.phones, updated.phones) ||
     updated.source !== original.source ||
     updated.country !== original.country ||
     updated.comments !== original.comments ||

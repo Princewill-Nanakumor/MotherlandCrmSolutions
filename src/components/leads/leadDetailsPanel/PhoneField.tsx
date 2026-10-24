@@ -20,6 +20,8 @@ interface PhoneFieldProps {
   canViewPhoneNumbers?: boolean; // Whether user can see full phone number
   isLoadingPermission?: boolean; // Whether permission is being loaded
   isCallLoading?: boolean;
+  /** Override the field label (e.g. "Phone (Mobile)"). */
+  label?: string;
 }
 
 export const PhoneField: FC<PhoneFieldProps> = ({
@@ -34,6 +36,7 @@ export const PhoneField: FC<PhoneFieldProps> = ({
   canViewPhoneNumbers = false,
   isLoadingPermission = false,
   isCallLoading = false,
+  label = "Phone",
 }) => {
   if (isEditing) {
     return (
@@ -41,7 +44,7 @@ export const PhoneField: FC<PhoneFieldProps> = ({
         <Phone className="w-5 h-5 mt-2 text-gray-400! dark:text-gray-500!" />
         <div className="flex-1">
           <label className="block mb-1 text-sm text-gray-500! dark:text-gray-400!">
-            Phone
+            {label}
           </label>
           <Input
             type="tel"
@@ -73,7 +76,7 @@ export const PhoneField: FC<PhoneFieldProps> = ({
       <Phone className="w-5 h-5 text-gray-400! dark:text-gray-500! cursor-pointer" />
 
       <div className="flex-1">
-        <p className="text-sm text-gray-500! dark:text-gray-400!">Phone</p>
+        <p className="text-sm text-gray-500! dark:text-gray-400!">{label}</p>
         <div className="flex items-center justify-between gap-2 min-w-0">
           {isLoadingPermission ? (
             <Skeleton className="w-32 h-5 bg-gray-200 dark:bg-gray-700" />

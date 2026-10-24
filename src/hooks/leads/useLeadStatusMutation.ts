@@ -5,8 +5,10 @@ import { useSession } from "next-auth/react";
 import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { Activity, Lead } from "@/types/leads";
 import {
+  mergeLeadContactExtras,
   normalizeLeadStatusId,
 } from "@/lib/leadClientUpdate";
+import { setLeadDetailQueryData } from "@/lib/leadPanelContact";
 import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
 
 type LeadsData =
@@ -200,16 +202,22 @@ export function useLeadStatusMutation({
       const statusChanged = updatedLeadPayload.statusChanged !== false;
       const updatedLead = { ...updatedLeadPayload };
       delete (updatedLead as { statusChanged?: boolean }).statusChanged;
-      const normalized: Lead = {
-        ...updatedLead,
-        status: normalizeLeadStatusId(updatedLead.status),
-      };
+      const previousDetail =
+        queryClient.getQueryData<Lead>(["lead", updatedLead._id]) ??
+        (updatedLead.id
+          ? queryClient.getQueryData<Lead>(["lead", updatedLead.id])
+          : undefined) ??
+        lead;
+      const normalized: Lead = mergeLeadContactExtras(
+        {
+          ...previousDetail,
+          ...updatedLead,
+          status: normalizeLeadStatusId(updatedLead.status),
+        },
+        previousDetail,
+      );
 
-      queryClient.setQueryData(["lead", normalized._id], normalized);
-      if (normalized.id && normalized.id !== normalized._id) {
-        queryClient.setQueryData(["lead", normalized.id], normalized);
-      }
-
+      setLeadDetailQueryData(queryClient, normalized);
       replaceLeadInLists(normalized._id, normalized);
 
       if (context && statusChanged) {

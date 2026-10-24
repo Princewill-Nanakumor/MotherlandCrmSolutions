@@ -11,6 +11,7 @@ import {
 import mongoose from "mongoose";
 import { singleLeadAccessFilter } from "@/lib/leadAssignmentQuery";
 import { canEditAnyLeadStatus, getTenantAdminId } from "@/lib/roles";
+import { coerceContactEntries } from "@/lib/leadContactEntries";
 
 interface LeadDoc {
   _id: mongoose.Types.ObjectId | string;
@@ -19,6 +20,8 @@ interface LeadDoc {
   lastName: string;
   email: string;
   phone?: string;
+  emails?: unknown;
+  phones?: unknown;
   country?: string;
   source?: string;
   status: string;
@@ -66,6 +69,8 @@ const LEAD_STATUS_PROJECTION = {
   lastName: 1,
   email: 1,
   phone: 1,
+  emails: 1,
+  phones: 1,
   country: 1,
   source: 1,
   status: 1,
@@ -94,6 +99,8 @@ function serializeLeadStatusResponse(
     lastName: lead.lastName,
     email: lead.email,
     phone: lead.phone,
+    emails: coerceContactEntries(lead.emails),
+    phones: coerceContactEntries(lead.phones),
     country: lead.country,
     source: lead.source,
     status: lead.status,

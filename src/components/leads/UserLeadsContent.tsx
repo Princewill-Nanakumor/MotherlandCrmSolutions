@@ -21,7 +21,10 @@ import {
   isPrefixedLeadId,
   normalizeLeadId,
 } from "@/lib/leadId";
-import { isStatusOnlyLeadUpdate } from "@/lib/leadClientUpdate";
+import {
+  isStatusOnlyLeadUpdate,
+  mergeLeadContactExtrasIfSame,
+} from "@/lib/leadClientUpdate";
 import { getLiveLeadParam } from "@/lib/liveSearchParams";
 import {
   readLiveSearchQuery,
@@ -249,7 +252,9 @@ export default function UserLeadsContent() {
 
       if (originalLead && isStatusOnlyLeadUpdate(originalLead, updatedLead)) {
         if (selectedLead?._id === updatedLead._id) {
-          setSelectedLead(updatedLead);
+          setSelectedLead(
+            mergeLeadContactExtrasIfSame(updatedLead, selectedLead),
+          );
         }
         return true;
       }
@@ -258,7 +263,9 @@ export default function UserLeadsContent() {
         await updateLead(updatedLead);
 
         if (selectedLead?._id === updatedLead._id) {
-          setSelectedLead(updatedLead);
+          setSelectedLead(
+            mergeLeadContactExtrasIfSame(updatedLead, selectedLead),
+          );
         }
 
         return true;

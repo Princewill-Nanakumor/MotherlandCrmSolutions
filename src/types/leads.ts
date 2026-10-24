@@ -1,5 +1,8 @@
 // src/types/leads.ts
 import mongoose from "mongoose";
+import type { LeadContactEntry } from "@/lib/leadContactEntries";
+
+export type { LeadContactEntry };
 
 // New interfaces for LeadDetailsPanel
 export interface Comments {
@@ -135,6 +138,8 @@ export interface ILead {
   lastName: string;
   email: string;
   phone: string;
+  emails?: LeadContactEntry[];
+  phones?: LeadContactEntry[];
   country: string;
   status: string;
   source: string;
@@ -168,6 +173,10 @@ export interface Lead {
   lastName: string;
   email: string;
   phone?: string;
+  /** Secondary emails (primary is `email`). */
+  emails?: LeadContactEntry[];
+  /** Secondary phones (primary is `phone`). */
+  phones?: LeadContactEntry[];
   country?: string;
   value?: number;
   source: string; // Allow any string value for source (Manual Entry, Import, etc.)

@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { randomUUID } from "crypto";
+import type { LeadContactEntry } from "@/lib/leadContactEntries";
 
 export interface ILead {
   _id: mongoose.Types.ObjectId;
@@ -8,6 +9,10 @@ export interface ILead {
   lastName: string;
   email: string;
   phone: string;
+  /** Secondary emails (primary remains `email`). */
+  emails?: LeadContactEntry[];
+  /** Secondary phones (primary remains `phone`). */
+  phones?: LeadContactEntry[];
   country: string;
   /** Legacy codes (e.g. NEW) or tenant Status document ObjectId string */
   status: string;
@@ -23,6 +28,14 @@ export interface ILead {
   updatedAt: Date;
   __v: number;
 }
+
+const contactEntrySchema = new Schema(
+  {
+    value: { type: String, required: true, trim: true },
+    label: { type: String, trim: true, default: undefined },
+  },
+  { _id: false },
+);
 
 const leadSchema = new Schema(
   {
@@ -51,6 +64,14 @@ const leadSchema = new Schema(
       required: true,
       trim: true,
       default: "",
+    },
+    emails: {
+      type: [contactEntrySchema],
+      default: [],
+    },
+    phones: {
+      type: [contactEntrySchema],
+      default: [],
     },
     country: {
       required: true,

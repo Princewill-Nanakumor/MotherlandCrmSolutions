@@ -11,7 +11,7 @@ import { DetailsSection } from "../leads/leadDetailsPanel/DetailsSection";
 import LeadStatus from "../leads/leadDetailsPanel/LeadStatus";
 import CommentsAndActivities from "../leads/leadDetailsPanel/CommentsAndActivities";
 import AdsImageSlider from "../ads/AdsImageSlider";
-import { useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { useSession } from "next-auth/react";
 import {
@@ -31,7 +31,13 @@ import {
 import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
 import { normalizeLeadStatusId } from "@/lib/leadClientUpdate";
 import { useCurrentUserPermission } from "@/hooks/useCurrentUserPermission";
-import { maskEmail, maskPhone } from "@/lib/contactMasking";
+import {
+  findLeadInQueryData,
+  mergeLeadForPanel,
+  panelContactSnapshotFromLead,
+  syncLeadContactToListCaches,
+  type PanelContactSnapshot,
+} from "@/lib/leadPanelContact";
 
 interface LeadDetailsPanelProps {
   lead: Lead | null;
@@ -42,52 +48,6 @@ interface LeadDetailsPanelProps {
   hasPrevious: boolean;
   hasNext: boolean;
   users?: User[];
-}
-
-/** Look up a single lead inside whatever shape leads-cache happens to be in. */
-function findLeadInQueryData(data: unknown, leadId: string): Lead | undefined {
-  if (Array.isArray(data)) {
-    return (data as Lead[]).find((l) => l?._id === leadId);
-  }
-  if (data && typeof data === "object") {
-    const d = data as { data?: Lead[]; leads?: Lead[] };
-    if (Array.isArray(d.data)) return d.data.find((l) => l?._id === leadId);
-    if (Array.isArray(d.leads)) return d.leads.find((l) => l?._id === leadId);
-  }
-  return undefined;
-}
-
-/** Keep list caches aligned with GET /api/leads/[id] so reconcile never re-applies masked contact. */
-function mergeContactIntoListCaches(
-  queryClient: QueryClient,
-  leadId: string,
-  email: string,
-  phone: string,
-) {
-  const patch = (old: unknown): unknown => {
-    const apply = (l: Lead): Lead =>
-      l._id === leadId ? { ...l, email, phone } : l;
-    if (Array.isArray(old)) {
-      return (old as Lead[]).map(apply);
-    }
-    if (
-      old &&
-      typeof old === "object" &&
-      Array.isArray((old as { leads?: Lead[] }).leads)
-    ) {
-      const d = old as { leads: Lead[]; total?: number; totalAll?: number };
-      return { ...d, leads: d.leads.map(apply) };
-    }
-    return old;
-  };
-  queryClient.setQueriesData(
-    { predicate: (q) => q.queryKey[0] === "leads" },
-    patch,
-  );
-  queryClient.setQueriesData(
-    { predicate: (q) => q.queryKey[0] === "assignedLeads" },
-    patch,
-  );
 }
 
 export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
@@ -115,15 +75,10 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   const [currentLead, setCurrentLead] = useState<Lead | null>(lead);
   const [isClosing, setIsClosing] = useState(false);
   const previousStatusRef = useRef<string | undefined>(undefined);
-  const previousLeadRef = useRef<Lead | null>(null);
   const originalTitleRef = useRef<string>("");
   const lastManualUpdateRef = useRef<number>(0);
-  /** Unmasked email/phone for the open lead; list queries may still be masked. */
-  const unmaskedForPanelRef = useRef<{
-    leadId: string;
-    email: string;
-    phone: string;
-  } | null>(null);
+  /** Unmasked contact for the open lead; list queries may still be masked / omit extras. */
+  const unmaskedForPanelRef = useRef<PanelContactSnapshot | null>(null);
   const lastPanelLeadIdRef = useRef<string | null>(null);
   const currentLeadRef = useRef<Lead | null>(lead);
 
@@ -167,8 +122,15 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     }
 
     previousStatusRef.current = lead.status;
-    previousLeadRef.current = lead;
-    setCurrentLead(lead);
+    setCurrentLead(
+      mergeLeadForPanel(
+        lead,
+        unmaskedForPanelRef.current,
+        currentLeadRef.current?._id === lead._id
+          ? currentLeadRef.current
+          : null,
+      ),
+    );
   }, [lead]);
 
   // List APIs (e.g. /api/leads/assigned) may return masked contact fields; load
@@ -187,21 +149,13 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         const data = (await res.json()) as Lead;
         if (!data?._id || cancelled) return;
 
-        unmaskedForPanelRef.current = {
-          leadId: data._id,
-          email: data.email,
-          phone: data.phone ?? "",
-        };
-        // Keep list caches aligned with what this viewer is allowed to see.
-        mergeContactIntoListCaches(
+        unmaskedForPanelRef.current = panelContactSnapshotFromLead(data);
+        // List caches stay permission-masked; panel keeps full contact for dialer/copy.
+        syncLeadContactToListCaches(
           queryClient,
-          data._id,
-          canViewEmails
-            ? data.email
-            : maskEmail(data.email || "", false),
-          canViewPhoneNumbers
-            ? data.phone ?? ""
-            : maskPhone(data.phone || "", false),
+          data,
+          canViewEmails,
+          canViewPhoneNumbers,
         );
         setCurrentLead((prev) =>
           prev && prev._id === data._id
@@ -209,6 +163,8 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
                 ...prev,
                 email: data.email,
                 phone: data.phone,
+                emails: data.emails ?? [],
+                phones: data.phones ?? [],
                 assignedTo: data.assignedTo ?? null,
                 status: data.status ?? prev.status,
                 updatedAt: data.updatedAt ?? prev.updatedAt,
@@ -271,25 +227,20 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         const freshLead = (await response.json()) as Lead;
         if (!freshLead?._id || isDisposed) return;
 
-        unmaskedForPanelRef.current = {
-          leadId: freshLead._id,
-          email: freshLead.email,
-          phone: freshLead.phone ?? "",
-        };
+        unmaskedForPanelRef.current = panelContactSnapshotFromLead(freshLead);
         applyRemoteLeadStatusToListCaches(
           queryClient,
           freshLead._id,
           normalizeLeadStatusId(freshLead.status),
           { touchActivity: true },
         );
-        mergeContactIntoListCaches(
+        syncLeadContactToListCaches(
           queryClient,
-          freshLead._id,
-          freshLead.email,
-          freshLead.phone ?? "",
+          freshLead,
+          canViewEmails,
+          canViewPhoneNumbers,
         );
         previousStatusRef.current = freshLead.status;
-        previousLeadRef.current = freshLead;
         setCurrentLead(freshLead);
       } catch (error) {
         console.error(
@@ -415,7 +366,14 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       // Do NOT detach/release — TenantLeadsRealtimeSync owns the shared
       // tenant channel. Detaching here dropped remote comment events.
     };
-  }, [isOpen, lead?._id, queryClient, session?.user?.id]);
+  }, [
+    isOpen,
+    lead?._id,
+    queryClient,
+    session?.user?.id,
+    canViewEmails,
+    canViewPhoneNumbers,
+  ]);
 
   // Single subscription to the leads cache. Earlier we had two effects doing
   // the same job — one debounced subscriber and one mount-only check — which
@@ -475,14 +433,13 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       // overwriting realtime state.
       if (candidateUpdatedAt <= currentTs) return;
 
-      const merged =
-        unmaskedForPanelRef.current?.leadId === candidate._id
-          ? {
-              ...candidate,
-              email: unmaskedForPanelRef.current.email,
-              phone: unmaskedForPanelRef.current.phone,
-            }
-          : candidate;
+      const merged = mergeLeadForPanel(
+        candidate,
+        unmaskedForPanelRef.current,
+        currentLeadRef.current?._id === candidate._id
+          ? currentLeadRef.current
+          : null,
+      );
 
       previousStatusRef.current = merged.status;
       setCurrentLead(merged);
@@ -528,22 +485,43 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   const handleLeadUpdated = useCallback(async (updatedLead: Lead) => {
     try {
       previousStatusRef.current = updatedLead.status;
-      previousLeadRef.current = updatedLead;
       lastManualUpdateRef.current = Date.now();
-      unmaskedForPanelRef.current = {
-        leadId: updatedLead._id,
-        email: updatedLead.email,
-        phone: updatedLead.phone ?? "",
-      };
-      setCurrentLead(updatedLead);
+      const merged = mergeLeadForPanel(
+        updatedLead,
+        unmaskedForPanelRef.current,
+        currentLeadRef.current?._id === updatedLead._id
+          ? currentLeadRef.current
+          : null,
+      );
+      unmaskedForPanelRef.current = panelContactSnapshotFromLead(merged);
+      setCurrentLead(merged);
 
-      const result = await onLeadUpdatedRef.current(updatedLead);
+      const result = await onLeadUpdatedRef.current(merged);
+      if (result) {
+        const fromCache = queryClient.getQueryData<Lead>([
+          "lead",
+          updatedLead._id,
+        ]);
+        const resolved = mergeLeadForPanel(
+          fromCache ?? merged,
+          unmaskedForPanelRef.current,
+          merged,
+        );
+        unmaskedForPanelRef.current = panelContactSnapshotFromLead(resolved);
+        syncLeadContactToListCaches(
+          queryClient,
+          resolved,
+          canViewEmails,
+          canViewPhoneNumbers,
+        );
+        setCurrentLead(resolved);
+      }
       return result;
     } catch (error) {
       console.error("Error in handleLeadUpdated:", error);
       return false;
     }
-  }, []);
+  }, [queryClient, canViewEmails, canViewPhoneNumbers]);
 
   const handleRequestClose = useCallback(() => {
     if (isClosing) return;

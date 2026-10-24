@@ -27,11 +27,16 @@ import {
   shouldDismissOpenLeadForSearchChange,
 } from "@/lib/leadListSearchParams";
 import { LeadsSectionCollapse } from "./LeadsSectionCollapse";
-import { useSetIsPanelOpen, useSetSelectedLead } from "@/stores/leadsStore";
+import {
+  useSelectedLead,
+  useSetIsPanelOpen,
+  useSetSelectedLead,
+} from "@/stores/leadsStore";
 import {
   DASHBOARD_PAGE_INSET_BODY_CLASS,
   DASHBOARD_PAGE_SHELL_FILL_CLASS,
 } from "@/lib/dashboardPageShell";
+import { isStatusOnlyLeadUpdate } from "@/lib/leadClientUpdate";
 
 interface LeadsPageContentProps {
   searchQuery?: string;
@@ -48,6 +53,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
   const isOnline = useNetworkStatus();
   const { showHeader, showControls } = useToggleContext();
   const { updateLeadAsync } = useUpdateLead();
+  const selectedLead = useSelectedLead();
   const setSelectedLead = useSetSelectedLead();
   const setIsPanelOpen = useSetIsPanelOpen();
   const prevSearchQueryRef = useRef(searchQuery);
@@ -125,6 +131,15 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
 
   const handleLeadUpdate = useCallback(
     async (updatedLead: Lead) => {
+      // Status is already persisted via PATCH /status; skip a full PUT that
+      // could omit/clear secondary emails & phones.
+      if (
+        selectedLead &&
+        selectedLead._id === updatedLead._id &&
+        isStatusOnlyLeadUpdate(selectedLead, updatedLead)
+      ) {
+        return true;
+      }
       try {
         await updateLeadAsync(updatedLead);
         return true;
@@ -133,7 +148,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
         return false;
       }
     },
-    [updateLeadAsync],
+    [selectedLead, updateLeadAsync],
   );
 
   const handleDialogClose = useCallback(() => {

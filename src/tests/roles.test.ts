@@ -140,4 +140,15 @@ describe("roles helpers", () => {
       }),
     ).toEqual({ status: "CONTACTED", comments: "Called" });
   });
+
+  it("strips secondary emails/phones from agent lead updates", () => {
+    const agent = { role: USER_ROLES.AGENT, permissions: [] };
+    expect(
+      stripDisallowedLeadUpdateFields(agent, {
+        emails: [{ value: "extra@example.com" }],
+        phones: [{ value: "+15551212" }],
+        status: "CONTACTED",
+      }),
+    ).toEqual({ status: "CONTACTED" });
+  });
 });

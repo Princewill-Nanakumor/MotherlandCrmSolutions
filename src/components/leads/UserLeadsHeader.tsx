@@ -1,7 +1,7 @@
 // src/components/leads/UserLeadsHeader.tsx
 "use client";
 
-import { Users, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 import {
   DASHBOARD_PAGE_SUBTITLE_CLASS,
   DASHBOARD_PAGE_TITLE_CLASS,
@@ -44,12 +44,7 @@ export const UserLeadsHeader: React.FC<UserLeadsHeaderProps> = ({
     <div className={DASHBOARD_PAGE_INSET_HEADER_CLASS}>
       <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1
-            className={`flex flex-wrap items-center gap-2 sm:gap-3 ${DASHBOARD_PAGE_TITLE_CLASS}`}
-          >
-            <Users className="h-7 w-7 shrink-0 text-blue-600! dark:text-blue-400!" />
-            My Leads
-          </h1>
+          <h1 className={DASHBOARD_PAGE_TITLE_CLASS}>My Leads</h1>
           <p className={DASHBOARD_PAGE_SUBTITLE_CLASS}>
             View and manage your assigned leads
           </p>

@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, use, useCallback } from "react";
+import { useEffect, useState, use, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,13 @@ import { LeadDetailsSkeleton } from "@/components/dashboardComponents/LeadDetail
 import { Lead } from "@/types/leads";
 import { useLeadDetails, useUpdateLead } from "@/hooks/useLeadDetails";
 import { useAppBranding } from "@/components/AppBrandingProvider";
-import { isStatusOnlyLeadUpdate, normalizeLeadStatusId } from "@/lib/leadClientUpdate";
+import {
+  isStatusOnlyLeadUpdate,
+  mergeLeadContactExtras,
+  mergeLeadContactExtrasIfSame,
+  normalizeLeadStatusId,
+} from "@/lib/leadClientUpdate";
+import { setLeadDetailQueryData } from "@/lib/leadPanelContact";
 import { canAccessAllLeads } from "@/lib/roles";
 
 export type LeadDetailsRouteMode = "admin" | "agent";
@@ -47,6 +53,7 @@ function LeadDetailsPageShell({
 }) {
   const { shortName } = useAppBranding();
   const [currentLead, setCurrentLead] = useState<Lead>(lead);
+  const currentLeadRef = useRef(currentLead);
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({
@@ -56,12 +63,15 @@ function LeadDetailsPageShell({
   });
 
   useEffect(() => {
-    setCurrentLead(lead);
-    if (lead) {
-      const fullName = `${lead.firstName || ""} ${lead.lastName || ""}`.trim();
-      const leadTitle = fullName || "Lead Details";
-      document.title = `${leadTitle} - ${shortName}`;
-    }
+    currentLeadRef.current = currentLead;
+  }, [currentLead]);
+
+  useEffect(() => {
+    // Detail query can briefly omit emails/phones (e.g. older status payloads).
+    // Keep extras already shown on this page.
+    setCurrentLead((prev) => mergeLeadContactExtrasIfSame(lead, prev));
+    const fullName = `${lead.firstName || ""} ${lead.lastName || ""}`.trim();
+    document.title = `${fullName || "Lead Details"} - ${shortName}`;
   }, [lead, shortName]);
 
   const toggleSection = useCallback((section: string) => {
@@ -73,16 +83,25 @@ function LeadDetailsPageShell({
 
   const handleLeadUpdated = useCallback(
     async (updatedLead: Lead) => {
+      const restore = () =>
+        setCurrentLead(
+          mergeLeadContactExtrasIfSame(lead, currentLeadRef.current),
+        );
       try {
-        setCurrentLead(updatedLead);
-        const ok = await onLeadUpdated(updatedLead);
+        const merged = mergeLeadContactExtrasIfSame(
+          updatedLead,
+          currentLeadRef.current,
+        );
+        setCurrentLead(merged);
+        const ok = await onLeadUpdated(merged);
         if (!ok) {
-          setCurrentLead(lead);
+          restore();
+          return false;
         }
-        return ok;
+        return true;
       } catch (error) {
         console.error("Error in handleLeadUpdated:", error);
-        setCurrentLead(lead);
+        restore();
         return false;
       }
     },
@@ -187,17 +206,20 @@ export function LeadDetailsRoutePage({ mode, params }: LeadDetailsRoutePageProps
   const handleLeadUpdated = useCallback(
     async (updatedLead: Lead) => {
       if (lead && isStatusOnlyLeadUpdate(lead, updatedLead)) {
-        const normalized: Lead = {
-          ...updatedLead,
-          status: normalizeLeadStatusId(updatedLead.status),
-        };
-        queryClient.setQueryData(["lead", normalized._id], normalized);
-        if (normalized.id && normalized.id !== normalized._id) {
-          queryClient.setQueryData(["lead", normalized.id], normalized);
-        }
+        setLeadDetailQueryData(
+          queryClient,
+          mergeLeadContactExtras(
+            {
+              ...updatedLead,
+              status: normalizeLeadStatusId(updatedLead.status),
+            },
+            lead,
+          ),
+        );
         return true;
       }
       try {
+        // useUpdateLead.onSuccess already writes ["lead", id] + list caches.
         await updateLeadAsync(updatedLead);
         return true;
       } catch (updateError) {

@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { Lead } from "@/types/leads";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
+import { setLeadDetailQueryData } from "@/lib/leadPanelContact";
 
 function patchLeadInListCache(
   data: unknown,
@@ -142,6 +143,15 @@ export const useUpdateLead = () => {
         comments: updatedLead.comments,
       };
 
+      // Only send extras when the caller included them. Status-only payloads omit
+      // these fields — defaulting to [] would wipe secondary contacts in Mongo.
+      if (updatedLead.emails !== undefined) {
+        cleanedData.emails = updatedLead.emails;
+      }
+      if (updatedLead.phones !== undefined) {
+        cleanedData.phones = updatedLead.phones;
+      }
+
       if (assignedToId !== undefined && assignedToId !== null) {
         cleanedData.assignedTo = assignedToId;
       }
@@ -173,11 +183,7 @@ export const useUpdateLead = () => {
       return (await response.json()) as Lead;
     },
     onSuccess: (updatedLead) => {
-      queryClient.setQueryData(["lead", updatedLead._id], updatedLead);
-      if (updatedLead.id && updatedLead.id !== updatedLead._id) {
-        queryClient.setQueryData(["lead", updatedLead.id], updatedLead);
-      }
-
+      setLeadDetailQueryData(queryClient, updatedLead);
       patchLeadAcrossListQueries(
         queryClient,
         updatedLead._id,

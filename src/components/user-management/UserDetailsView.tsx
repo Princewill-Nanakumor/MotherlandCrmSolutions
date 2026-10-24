@@ -388,6 +388,55 @@ export function UserDetailsView({
         </div>
       </div>
 
+      {/* Lead contact visibility — agents / sub-admins */}
+      {(user.role === "AGENT" || user.role === "SUBADMIN") && (
+        <div className="space-y-4">
+          <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b border-gray-200 dark:border-gray-700 dark:text-gray-50!">
+            Lead contact visibility
+          </h3>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="flex gap-3 items-start">
+              <div className="p-2 mt-1 bg-purple-100 rounded-lg dark:bg-purple-900/30">
+                {user.canViewEmails ? (
+                  <Eye className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                ) : (
+                  <EyeOff className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-gray-500! dark:text-gray-400!">
+                  Email addresses
+                </p>
+                <p className="text-base font-medium text-gray-900! dark:text-gray-50!">
+                  {user.canViewEmails
+                    ? "Unmasked (primary + additional)"
+                    : "Masked (primary + additional)"}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 items-start">
+              <div className="p-2 mt-1 bg-green-100 rounded-lg dark:bg-green-900/30">
+                {user.canViewPhoneNumbers ? (
+                  <Eye className="w-5 h-5 text-green-600 dark:text-green-400" />
+                ) : (
+                  <EyeOff className="w-5 h-5 text-green-600 dark:text-green-400" />
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-gray-500! dark:text-gray-400!">
+                  Phone numbers
+                </p>
+                <p className="text-base font-medium text-gray-900! dark:text-gray-50!">
+                  {user.canViewPhoneNumbers
+                    ? "Unmasked (primary + additional)"
+                    : "Masked (primary + additional)"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Account Information */}
       <div className="space-y-4">
         <h3 className="pb-2 text-lg font-semibold text-gray-900! border-b border-gray-200 dark:border-gray-700 dark:text-gray-50!">

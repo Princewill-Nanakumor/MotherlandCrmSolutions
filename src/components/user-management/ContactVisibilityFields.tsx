@@ -21,13 +21,15 @@ export function ContactVisibilityFields({
       field: "canViewEmails" as const,
       checked: canViewEmails,
       label: "Unmask email addresses",
-      description: "Show full lead emails instead of a masked address",
+      description:
+        "Show full primary and additional lead emails instead of a masked address",
     },
     {
       field: "canViewPhoneNumbers" as const,
       checked: canViewPhoneNumbers,
       label: "Unmask phone numbers",
-      description: "Show full lead phone numbers instead of the last 4 digits",
+      description:
+        "Show full primary and additional lead phones instead of the last 4 digits",
     },
   ];
 
@@ -38,7 +40,7 @@ export function ContactVisibilityFields({
       </p>
       <p className="text-xs text-gray-500 dark:text-gray-400">
         Choose whether this person can see full emails and phone numbers on the
-        leads table and lead details panel.
+        leads table and lead details panel (including extra contacts).
       </p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {items.map((item) => (

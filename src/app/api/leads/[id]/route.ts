@@ -28,6 +28,12 @@ import {
   canUpdateLeadStatusOnAccessibleLead,
   isTenantStaff,
 } from "@/lib/roles";
+import {
+  coerceContactEntries,
+  normalizeEmailEntries,
+  normalizePhoneEntries,
+} from "@/lib/leadContactEntries";
+import { maskEmail, maskPhone } from "@/lib/contactMasking";
 
 function buildLeadAccessFilter(
   session: Session,
@@ -44,23 +50,6 @@ function buildLeadAccessFilter(
   return {
     $and: [core, agentAssignedToUserClause(session.user.id)],
   };
-}
-
-function maskEmail(email: string, visible: boolean): string {
-  if (visible || !email) return email;
-  const at = email.indexOf("@");
-  if (at <= 0) return "••••••••";
-  const local = email.slice(0, at);
-  const domain = email.slice(at + 1);
-  const keep = Math.min(2, local.length);
-  return `${local.slice(0, keep)}•••@${domain}`;
-}
-
-function maskPhone(phone: string, visible: boolean): string {
-  if (visible || !phone) return phone;
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length <= 4) return "••••";
-  return `••••••${digits.slice(-4)}`;
 }
 
 // Helper to get user details for assignedTo
@@ -235,6 +224,9 @@ export async function GET(
         typeof lead.phone === "string" ? lead.phone : "",
         true,
       ),
+      // Detail route returns full contact (dialer/copy); list routes may still mask.
+      emails: coerceContactEntries(lead.emails),
+      phones: coerceContactEntries(lead.phones),
       source: lead.source && lead.source !== "-" ? lead.source : "—",
       status: lead.status,
       country: normalizeCountryInput(lead.country || ""),
@@ -350,6 +342,48 @@ export async function PUT(
         updatePayload.country = normalizeCountryInput(
           String(updateData.country || ""),
         );
+
+      const nextPrimaryEmail =
+        typeof updatePayload.email === "string"
+          ? updatePayload.email
+          : String(currentLead.email || "");
+      const nextPrimaryPhone =
+        typeof updatePayload.phone === "string"
+          ? updatePayload.phone
+          : String(currentLead.phone || "");
+
+      if (updateData.emails !== undefined) {
+        try {
+          updatePayload.emails = normalizeEmailEntries(
+            updateData.emails,
+            nextPrimaryEmail,
+          );
+        } catch (err) {
+          return NextResponse.json(
+            {
+              error:
+                err instanceof Error ? err.message : "Invalid emails",
+            },
+            { status: 400 },
+          );
+        }
+      }
+      if (updateData.phones !== undefined) {
+        try {
+          updatePayload.phones = normalizePhoneEntries(
+            updateData.phones,
+            nextPrimaryPhone,
+          );
+        } catch (err) {
+          return NextResponse.json(
+            {
+              error:
+                err instanceof Error ? err.message : "Invalid phones",
+            },
+            { status: 400 },
+          );
+        }
+      }
     }
 
     if (allowStatus && updateData.status !== undefined) {
@@ -456,6 +490,8 @@ export async function PUT(
         typeof updatedLead.phone === "string" ? updatedLead.phone : "",
         true,
       ),
+      emails: coerceContactEntries(updatedLead.emails),
+      phones: coerceContactEntries(updatedLead.phones),
       source: updatedLead.source,
       status: updatedLead.status,
       country: normalizeCountryInput(updatedLead.country || ""),

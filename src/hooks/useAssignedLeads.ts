@@ -20,6 +20,8 @@ interface LeadUpdatePayload {
   lastName?: string;
   email?: string;
   phone?: string;
+  emails?: Lead["emails"];
+  phones?: Lead["phones"];
   country?: string;
   value?: number;
   source?: string;
@@ -41,6 +43,8 @@ const updateLead = async (
     apiPayload.lastName = updatedLead.lastName;
   if (updatedLead.email !== undefined) apiPayload.email = updatedLead.email;
   if (updatedLead.phone !== undefined) apiPayload.phone = updatedLead.phone;
+  if (updatedLead.emails !== undefined) apiPayload.emails = updatedLead.emails;
+  if (updatedLead.phones !== undefined) apiPayload.phones = updatedLead.phones;
   if (updatedLead.country !== undefined)
     apiPayload.country = updatedLead.country;
   if (updatedLead.value !== undefined) apiPayload.value = updatedLead.value;

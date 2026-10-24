@@ -187,6 +187,8 @@ const LEAD_CONTACT_UPDATE_FIELDS = [
   "lastName",
   "email",
   "phone",
+  "emails",
+  "phones",
   "country",
   "source",
 ] as const;

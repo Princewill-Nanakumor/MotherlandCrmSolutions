@@ -2,7 +2,7 @@
 import { FC } from "react";
 import { Mail, Copy, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { maskEmail } from "@/lib/contactMasking";
+import { isMaskedContactValue, maskEmail } from "@/lib/contactMasking";
 import { formatLeadDetailEmail } from "@/lib/leadDisplayFormat";
 
 interface EmailFieldProps {
@@ -14,6 +14,10 @@ interface EmailFieldProps {
   maskForDisplay?: boolean;
   onCopy?: (text: string) => void;
   copied?: boolean;
+  /** Override the field label (e.g. "Email (Work)"). */
+  label?: string;
+  /** Primary email shows required marker in edit mode. */
+  required?: boolean;
 }
 
 export const EmailField: FC<EmailFieldProps> = ({
@@ -24,6 +28,8 @@ export const EmailField: FC<EmailFieldProps> = ({
   maskForDisplay = false,
   onCopy,
   copied = false,
+  label = "Email",
+  required = true,
 }) => {
   if (isEditing) {
     return (
@@ -31,7 +37,8 @@ export const EmailField: FC<EmailFieldProps> = ({
         <Mail className="w-5 h-5 mt-2 text-gray-400! dark:text-gray-500!" />
         <div className="flex-1">
           <label className="block mb-1 text-sm text-gray-500! dark:text-gray-400!">
-            Email *
+            {label}
+            {required ? " *" : ""}
           </label>
           <Input
             type="email"
@@ -46,7 +53,7 @@ export const EmailField: FC<EmailFieldProps> = ({
   }
 
   const fullEmail = (email ?? "").trim();
-  const looksServerMasked = /[•\u2022]/.test(fullEmail);
+  const looksServerMasked = isMaskedContactValue(fullEmail);
   const displayEmailRaw =
     maskForDisplay && fullEmail && !looksServerMasked
       ? maskEmail(fullEmail, false)
@@ -59,7 +66,7 @@ export const EmailField: FC<EmailFieldProps> = ({
     <div className="flex items-center gap-3 text-gray-700! dark:text-gray-300!">
       <Mail className="w-5 h-5 text-gray-400! dark:text-gray-500!" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-gray-500! dark:text-gray-400!">Email</p>
+        <p className="text-sm text-gray-500! dark:text-gray-400!">{label}</p>
         <div className="flex items-center justify-between gap-2">
           <p className="min-w-0 break-all text-gray-900! dark:text-white!">
             {displayEmail || "—"}

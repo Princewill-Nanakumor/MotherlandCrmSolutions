@@ -30,6 +30,7 @@ import { useTableConfiguration } from "./TableConfiguration";
 import { useColumnOrder } from "@/hooks/useColumnOrder";
 import { useColumnVisibility } from "@/hooks/useColumnVisibility";
 import { useClearLeadSelectionOnEscape } from "@/hooks/useClearLeadSelectionOnEscape";
+import { mergeLeadContactExtrasIfSame } from "@/lib/leadClientUpdate";
 
 function leadRowNeedsPanelResync(prev: Lead, next: Lead): boolean {
   const prevAssignee =
@@ -282,7 +283,10 @@ export default function LeadsTable({
         if (updatedLead) {
           // Update selectedLead if key fields have changed (status, updatedAt, etc.)
           if (leadRowNeedsPanelResync(selectedLead, updatedLead)) {
-            setSelectedLead(updatedLead);
+            // List rows omit emails/phones — keep extras already loaded in the panel.
+            setSelectedLead(
+              mergeLeadContactExtrasIfSame(updatedLead, selectedLead),
+            );
           }
         }
         // If lead not found but URL has param, keep panel open with current selectedLead
@@ -304,7 +308,9 @@ export default function LeadsTable({
           updatedLead.email !== selectedLead.email ||
           updatedLead.phone !== selectedLead.phone
         ) {
-          setSelectedLead(updatedLead);
+          setSelectedLead(
+            mergeLeadContactExtrasIfSame(updatedLead, selectedLead),
+          );
         }
       } else {
         // Lead not found in full leads array AND no URL param - lead was deleted

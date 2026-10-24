@@ -35,7 +35,7 @@ interface DashboardNavbarProps {
 }
 
 const leadsToggleButtonClassName =
-  "flex items-center justify-center rounded-md transition-colors border border-white/20 dark:border-gray-600/50 brand-navbar-text bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 p-2 sm:gap-1 sm:px-3 sm:py-1.5 sm:text-xs sm:font-medium";
+  "flex items-center justify-center rounded-md transition-colors border border-white/40 dark:border-gray-600/50 bg-white hover:bg-gray-100 text-(--brand-navbar-from) dark:bg-white/10 dark:hover:bg-white/20 dark:text-gray-100 p-2 sm:gap-1 sm:px-3 sm:py-1.5 sm:text-xs sm:font-medium";
 
 export default function DashboardNavbar({
   onSearch,
@@ -58,7 +58,7 @@ export default function DashboardNavbar({
     <button
       type="button"
       onClick={toggleMobileNav}
-      className="inline-flex md:hidden items-center justify-center rounded-md p-2 border border-white/20 dark:border-gray-600/50 brand-navbar-text bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20"
+      className="inline-flex md:hidden items-center justify-center rounded-md p-2 border border-white/40 dark:border-gray-600/50 bg-white hover:bg-gray-100 text-(--brand-navbar-from) dark:bg-white/10 dark:hover:bg-white/20 dark:text-gray-100"
       aria-label={mobileNavOpen ? "Close navigation menu" : "Open navigation menu"}
       aria-expanded={mobileNavOpen}
     >
