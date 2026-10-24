@@ -1866,8 +1866,16 @@ p[class*="text-white!"],
 span[class*="text-white"],
 span[class*="text-white!"],
 a[class*="text-white"],
-a[class*="text-white!"] {
+a[class*="text-white!"],
+div[class*="text-white"],
+div[class*="text-white!"] {
   color: white !important;
+}
+
+/* Motherland hero auth pages: keep top-bar brand name white on the photo bg */
+html.auth-hero-page nav[data-chrome="transparent"] > div > div:first-child a > div,
+html.auth-hero-page nav[data-chrome="transparent"] > div > div:first-child a > div span {
+  color: #ffffff !important;
 }
 
 .dark h2[class*="text-white"],
@@ -1877,7 +1885,9 @@ a[class*="text-white!"] {
 .dark span[class*="text-white"],
 .dark span[class*="text-white!"],
 .dark a[class*="text-white"],
-.dark a[class*="text-white!"] {
+.dark a[class*="text-white!"],
+.dark div[class*="text-white"],
+.dark div[class*="text-white!"] {
   color: white !important;
 }
 

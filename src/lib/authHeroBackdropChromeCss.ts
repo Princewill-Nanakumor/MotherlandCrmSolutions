@@ -34,6 +34,11 @@ export function getAuthHeroBackdropChromeCss(pageClass: string): string {
             background-color: transparent !important;
             background: transparent !important;
           }
+          /* Brand name beside logo (top bar only — not the white mobile sheet). */
+          body.${pageClass} nav[data-chrome="transparent"] > div > div:first-child a > div,
+          body.${pageClass} nav[data-chrome="transparent"] > div > div:first-child a > div span {
+            color: #ffffff !important;
+          }
           body.${pageClass} div[class*="bg-white/10"] {
             background-color: rgba(255, 255, 255, 0.1) !important;
             background: rgba(255, 255, 255, 0.1) !important;
