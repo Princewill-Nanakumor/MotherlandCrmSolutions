@@ -48,8 +48,8 @@ export function HomepageDashboardMenu({
 
   if (variant === "mobile") {
     return (
-      <div className="pb-2 mb-1 space-y-1 border-b border-gray-100">
-        <p className="px-3 pt-1 pb-1 text-[11px] font-semibold tracking-wide uppercase text-gray-400">
+      <div className="space-y-1 border-b border-gray-100 pb-2">
+        <p className="px-3 pb-1 text-[11px] font-semibold tracking-wide uppercase text-gray-400">
           {displayName}
         </p>
         {items.map((item) => {
@@ -59,7 +59,7 @@ export function HomepageDashboardMenu({
               key={item.href}
               href={item.href}
               onClick={onNavigate}
-              className="flex items-center gap-2.5 h-10 px-3 text-sm font-medium text-gray-800 transition-colors rounded-xl hover:brand-soft-bg hover:text-(--brand-from)"
+              className="flex items-center gap-2.5 h-11 px-3 text-sm font-medium text-gray-800 transition-colors rounded-xl hover:brand-soft-bg hover:text-(--brand-from)"
             >
               <Icon className="w-4 h-4 brand-icon shrink-0" />
               {item.label}

@@ -1,13 +1,13 @@
 // src/components/homepageComponents/Navabar.tsx
 "use client";
 
-import React, { useEffect, useId, useRef, useState } from "react";
+import React, { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { signOutWithoutInterstitial } from "@/lib/signOutClient";
 import { Loader2, LogIn, LogOut, Menu, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { hasAuthorizedSession } from "@/lib/sessionUtils";
 import { useAppBranding } from "@/components/AppBrandingProvider";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
@@ -18,12 +18,41 @@ import {
 } from "@/lib/marketingNav";
 import { HomepageDashboardMenu } from "@/components/homepageComponents/HomepageDashboardMenu";
 
+const MOBILE_SHEET_SPRING = {
+  type: "spring" as const,
+  stiffness: 380,
+  damping: 36,
+  mass: 0.85,
+};
+
+const MOBILE_SHEET_EXIT = {
+  duration: 0.55,
+  ease: [0.4, 0, 0.2, 1] as const,
+};
+
+const mobileListVariants: Variants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.035, delayChildren: 0.08 },
+  },
+};
+
+const mobileItemVariants: Variants = {
+  hidden: { opacity: 0, x: -16 },
+  show: { opacity: 1, x: 0 },
+};
+
+const mobileBlockVariants: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0 },
+};
+
 function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse bg-gray-200 rounded ${className}`} />;
 }
 
 export default function Navbar() {
-  const { displayName } = useAppBranding();
+  const { displayName, shortName } = useAppBranding();
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
@@ -38,7 +67,6 @@ export default function Navbar() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const isAuthed = hasAuthorizedSession(status, session);
 
   const showMarketingLinks = isMarketingPath(pathname);
@@ -114,6 +142,8 @@ export default function Navbar() {
     await signOutWithoutInterstitial("/", router, { intentional: true });
   };
 
+  const closeMenu = () => setMenuOpen(false);
+
   const textLinkClass = cn(
     "text-sm font-medium transition-colors duration-300",
     useSolidChrome
@@ -131,11 +161,26 @@ export default function Navbar() {
   const primaryButtonClass =
     "inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg shadow-md transition-all duration-200 brand-gradient text-white! hover:brightness-95";
 
+  const iconButtonClass = cn(
+    "inline-flex items-center justify-center w-11 h-11 rounded-xl border transition-all duration-300 shrink-0",
+    useSolidChrome
+      ? "border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)] bg-white text-(--brand-from) shadow-sm hover:brand-soft-bg"
+      : "border-white/30 bg-white/15 text-white backdrop-blur-md hover:bg-white/25",
+  );
+
+  const mobileNavLinkClass = (href: string) =>
+    cn(
+      "flex items-center h-11 px-3 text-sm font-medium transition-colors rounded-xl hover:brand-soft-bg hover:text-(--brand-from)",
+      pathname === href
+        ? "text-(--brand-from) brand-soft-bg"
+        : "text-gray-800",
+    );
+
   const showSignUp = !isAuthed && !isSignupPage;
   const showSignIn = !isAuthed && !isLoginPage;
 
   return (
-    <motion.nav
+    <nav
       data-chrome={useSolidChrome ? "solid" : "transparent"}
       className={cn(
         "fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-2",
@@ -143,9 +188,6 @@ export default function Navbar() {
           ? "bg-white/95 backdrop-blur-md shadow-md border-b border-gray-200"
           : "bg-transparent border-b border-white/20",
       )}
-      // Keep nav mounted across marketing routes; only entrance-animate once.
-      initial={false}
-      animate={{ y: 0 }}
     >
       <div className="flex items-center justify-between gap-3 mx-auto max-w-7xl">
         <div className="min-w-0">
@@ -160,7 +202,9 @@ export default function Navbar() {
                 useSolidChrome ? "text-gray-900" : "text-white!",
               )}
             >
-              {displayName}
+              {/* Mobile uses shortName (no trailing “Solution”). */}
+              <span className="lg:hidden">{shortName}</span>
+              <span className="hidden lg:inline">{displayName}</span>
             </div>
           </Link>
         </div>
@@ -242,78 +286,109 @@ export default function Navbar() {
           )}
         </div>
 
-        <div className="flex items-center lg:hidden">
-          <button
-            ref={menuButtonRef}
-            type="button"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={menuOpen}
-            aria-controls={menuId}
-            onClick={() => setMenuOpen((open) => !open)}
-            className={cn(
-              "inline-flex items-center justify-center w-11 h-11 rounded-xl border transition-all duration-300",
-              useSolidChrome
-                ? "border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)] bg-white text-(--brand-from) shadow-sm hover:brand-soft-bg"
-                : "border-white/30 bg-white/15 text-white backdrop-blur-md hover:bg-white/25",
-            )}
-          >
-            {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
+        {!menuOpen && (
+          <div className="flex items-center lg:hidden">
+            <button
+              type="button"
+              aria-label="Open menu"
+              aria-expanded={false}
+              aria-controls={menuId}
+              onClick={() => setMenuOpen(true)}
+              className={iconButtonClass}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {menuOpen && (
-        <>
-          <button
-            type="button"
-            aria-label="Close menu overlay"
-            className="fixed inset-0 z-40 bg-black/45 backdrop-blur-[2px] lg:hidden"
-            onClick={() => setMenuOpen(false)}
-          />
-
-          <div
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
             id={menuId}
+            key="mobile-nav-menu"
             role="dialog"
             aria-modal="true"
-            aria-label="Account menu"
-            className="fixed top-17 right-3 left-3 z-50 overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--brand-from)_22%,transparent)] bg-white shadow-2xl sm:left-auto sm:right-4 sm:w-88 lg:hidden"
+            aria-label="Navigation menu"
+            className="fixed inset-0 z-50 flex h-dvh flex-col bg-white lg:hidden"
+            initial={{ opacity: 0, x: "-100%" }}
+            animate={{ opacity: 1, x: 0, y: 0 }}
+            exit={{
+              opacity: 0,
+              y: "-100%",
+              transition: MOBILE_SHEET_EXIT,
+            }}
+            transition={MOBILE_SHEET_SPRING}
           >
-            <div className="px-4 pt-4 pb-3 border-b border-gray-100">
-              <p className="text-xs font-semibold tracking-wide uppercase text-(--brand-from)">
-                {showMarketingLinks ? "Menu" : "Account"}
-              </p>
-              <p className="mt-1 text-sm font-semibold text-gray-900 truncate">
-                {displayName}
-              </p>
-            </div>
+            <motion.div
+              className="flex shrink-0 items-center justify-between gap-3 px-4 py-3 border-b border-gray-100"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.06, duration: 0.22 }}
+            >
+              <Link
+                href="/"
+                onClick={closeMenu}
+                className="flex items-center min-w-0 gap-2.5"
+              >
+                <MotherlandLogo
+                  className="w-10 h-10 rounded-2xl shrink-0"
+                  title={`${displayName} Logo`}
+                />
+                <p className="text-base font-semibold text-gray-900 truncate">
+                  {shortName}
+                </p>
+              </Link>
+              <button
+                type="button"
+                aria-label="Close menu"
+                onClick={closeMenu}
+                className={cn(
+                  iconButtonClass,
+                  "border-[color-mix(in_srgb,var(--brand-from)_28%,transparent)] bg-white text-(--brand-from) shadow-sm hover:brand-soft-bg",
+                )}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </motion.div>
 
-            <div className="p-3 space-y-2">
+            <motion.div
+              className="flex-1 overflow-y-auto overscroll-contain px-3 py-3 space-y-1"
+              initial="hidden"
+              animate="show"
+              variants={mobileListVariants}
+            >
               {showMarketingLinks && (
-                <div className="pb-2 mb-1 space-y-1 border-b border-gray-100">
+                <div className="space-y-1 border-b border-gray-100 pb-2">
                   {MARKETING_NAV_LINKS.map((link) => (
-                    <Link
+                    <motion.div
                       key={link.href}
-                      href={link.href}
-                      onClick={() => setMenuOpen(false)}
-                      className={cn(
-                        "flex items-center h-10 px-3 text-sm font-medium transition-colors rounded-xl hover:brand-soft-bg hover:text-(--brand-from)",
-                        pathname === link.href
-                          ? "text-(--brand-from) brand-soft-bg"
-                          : "text-gray-800",
-                      )}
+                      variants={mobileItemVariants}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
                     >
-                      {link.label}
-                    </Link>
+                      <Link
+                        href={link.href}
+                        onClick={closeMenu}
+                        className={mobileNavLinkClass(link.href)}
+                      >
+                        {link.label}
+                      </Link>
+                    </motion.div>
                   ))}
                 </div>
               )}
+
               {status === "loading" ? (
                 <div className="px-1 py-1 space-y-2">
                   <Skeleton className="w-full h-11" />
                   <Skeleton className="w-full h-11" />
                 </div>
               ) : isAuthed ? (
-                <>
+                <motion.div
+                  className="space-y-1"
+                  variants={mobileBlockVariants}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                >
                   {isNavigating ? (
                     <div className="flex items-center justify-center h-11 rounded-xl brand-soft-bg">
                       <Loader2 className="w-5 h-5 animate-spin brand-icon" />
@@ -323,7 +398,7 @@ export default function Navbar() {
                       variant="mobile"
                       solid
                       linkClassName={textLinkClass}
-                      onNavigate={() => setMenuOpen(false)}
+                      onNavigate={closeMenu}
                     />
                   )}
                   <button
@@ -334,13 +409,17 @@ export default function Navbar() {
                     <LogOut className="w-4 h-4" />
                     Sign Out
                   </button>
-                </>
+                </motion.div>
               ) : (
-                <>
+                <motion.div
+                  className="flex flex-col gap-2 pt-1"
+                  variants={mobileBlockVariants}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                >
                   {showSignUp && (
                     <Link
                       href="/signup"
-                      onClick={() => setMenuOpen(false)}
+                      onClick={closeMenu}
                       className={cn(
                         "flex items-center justify-center h-11 text-sm font-medium rounded-xl hover:brightness-95",
                         isLoginPage
@@ -354,19 +433,19 @@ export default function Navbar() {
                   {showSignIn && (
                     <Link
                       href="/login"
-                      onClick={() => setMenuOpen(false)}
+                      onClick={closeMenu}
                       className="flex items-center justify-center gap-2 h-11 text-sm font-medium text-white rounded-xl brand-gradient hover:brightness-95"
                     >
                       <LogIn className="w-4 h-4" />
                       Sign In
                     </Link>
                   )}
-                </>
+                </motion.div>
               )}
-            </div>
-          </div>
-        </>
-      )}
-    </motion.nav>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </nav>
   );
 }

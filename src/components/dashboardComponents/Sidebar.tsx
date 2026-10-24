@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { X } from "lucide-react";
@@ -24,7 +25,7 @@ import {
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { displayName } = useAppBranding();
+  const { displayName, shortName } = useAppBranding();
   const { data: session, status } = useSession();
   const router = useRouter();
   const { open: mobileOpen, close: closeMobile } = useSidebarMobile();
@@ -194,15 +195,19 @@ export default function Sidebar() {
               )}
             >
               <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-[color-mix(in_srgb,var(--brand-from)_20%,transparent)] dark:border-gray-700">
-                <div className="flex items-center gap-2 min-w-0">
+                <Link
+                  href="/"
+                  onClick={closeMobile}
+                  className="flex items-center gap-2 min-w-0"
+                >
                   <MotherlandLogo
                     className="h-9 w-9 rounded-xl shrink-0"
                     title={`${displayName} Logo`}
                   />
                   <span className="text-sm font-semibold truncate text-gray-900! dark:text-white!">
-                    {displayName}
+                    {shortName}
                   </span>
-                </div>
+                </Link>
                 <button
                   type="button"
                   onClick={closeMobile}
