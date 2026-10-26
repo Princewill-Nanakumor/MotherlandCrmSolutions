@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import Lead, { generateLeadId } from "@/models/Lead";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
 import { normalizeLeadSource } from "@/lib/leadDisplayFormat";
+import { coercePhoneImportValue } from "@/lib/phoneNormalize";
 import {
   checkTenantLeadImportAllowed,
   reconcileLeadQuotaOrRollback,
@@ -123,7 +124,7 @@ export async function bulkUpsertImportChunk(options: {
             firstName: lead.firstName || "",
             lastName: lead.lastName || "",
             email: lead._normalizedEmail,
-            phone: lead.phone || "",
+            phone: coercePhoneImportValue(lead.phone) || "",
             country: normalizeCountryInput(lead.country || ""),
             source: normalizeLeadSource(lead.source),
             comments: lead.comments || "No comments yet",

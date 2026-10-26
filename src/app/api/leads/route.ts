@@ -23,6 +23,7 @@ import {
   isProvidedLeadSource,
   normalizeLeadSource,
 } from "@/lib/leadDisplayFormat";
+import { coercePhoneImportValue } from "@/lib/phoneNormalize";
 import {
   checkTenantLeadImportAllowed,
   reconcileLeadQuotaOrRollback,
@@ -253,7 +254,7 @@ export async function POST(request: Request) {
           firstName: leadData.firstName,
           lastName: leadData.lastName,
           email: leadData.email.toLowerCase(),
-          phone: leadData.phone || "",
+          phone: coercePhoneImportValue(leadData.phone) || "",
           country: normalizeCountryInput(leadData.country || ""),
           source: normalizeLeadSource(leadData.source),
           comments: leadData.comments || "No comments yet",
@@ -406,7 +407,7 @@ export async function POST(request: Request) {
               firstName: lead.firstName,
               lastName: lead.lastName,
               email: lead._normalizedEmail,
-              phone: lead.phone || "",
+              phone: coercePhoneImportValue(lead.phone) || "",
               country: normalizeCountryInput(lead.country || ""),
               source: normalizeLeadSource(lead.source),
               comments: lead.comments || "No comments yet",

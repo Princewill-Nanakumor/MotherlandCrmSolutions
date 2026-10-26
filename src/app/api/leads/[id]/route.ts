@@ -34,6 +34,7 @@ import {
   normalizePhoneEntries,
 } from "@/lib/leadContactEntries";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
+import { coercePhoneImportValue } from "@/lib/phoneNormalize";
 
 function buildLeadAccessFilter(
   session: Session,
@@ -334,8 +335,9 @@ export async function PUT(
           .toLowerCase()
           .trim();
       }
-      if (updateData.phone !== undefined)
-        updatePayload.phone = String(updateData.phone || "").trim();
+      if (updateData.phone !== undefined) {
+        updatePayload.phone = coercePhoneImportValue(updateData.phone);
+      }
       if (updateData.source !== undefined)
         updatePayload.source = String(updateData.source || "").trim();
       if (updateData.country !== undefined)

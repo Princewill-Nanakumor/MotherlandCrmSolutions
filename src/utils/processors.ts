@@ -8,6 +8,7 @@ import {
   splitName,
 } from "./helper";
 import { validateHeaders } from "./validation";
+import { coercePhoneImportValue } from "@/lib/phoneNormalize";
 
 const DEFAULT_STATUS = "NEW";
 
@@ -19,7 +20,24 @@ function cellAt(
   if (!header) return "";
   const index = headers.indexOf(header);
   if (index < 0 || index >= row.length) return "";
-  return String(row[index] ?? "").trim();
+  const value = row[index];
+  if (value == null || value === "") return "";
+  // Whole numbers from Excel (ids, zips) — avoid String(1.23e11) → "1.23e+11".
+  if (typeof value === "number" && Number.isFinite(value) && Math.trunc(value) === value) {
+    return coercePhoneImportValue(value);
+  }
+  return String(value).trim();
+}
+
+function phoneAt(
+  row: unknown[],
+  headers: string[],
+  header: string | undefined,
+): string {
+  if (!header) return "";
+  const index = headers.indexOf(header);
+  if (index < 0 || index >= row.length) return "";
+  return coercePhoneImportValue(row[index]);
 }
 
 export const processExcelFile = async (file: File): Promise<LeadRequest[]> => {
@@ -28,9 +46,11 @@ export const processExcelFile = async (file: File): Promise<LeadRequest[]> => {
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     // Read as a matrix so column index matches getHeaderRow — object-key
     // lookup fails when sheet_to_json keeps untrimmed / differently keyed headers.
+    // raw:true keeps phone cells as JS numbers (exact within safe integer
+    // range) instead of Excel's scientific display text like "3.53895E+11".
     const matrix = XLSX.utils.sheet_to_json(worksheet, {
       header: 1,
-      raw: false,
+      raw: true,
       defval: "",
       blankrows: false,
     }) as unknown[][];
@@ -87,7 +107,7 @@ export const processExcelFile = async (file: File): Promise<LeadRequest[]> => {
       }
 
       const email = cellAt(row, headers, emailHeader);
-      const phone = cellAt(row, headers, phoneHeader);
+      const phone = phoneAt(row, headers, phoneHeader);
 
       // Prefer sheet Source; leave empty when absent so staging can apply a default.
       let source = "";
@@ -274,7 +294,7 @@ export const processTextData = async (text: string): Promise<LeadRequest[]> => {
         ? values[headers.indexOf(emailHeader)] || ""
         : "";
       const phone = phoneHeader
-        ? values[headers.indexOf(phoneHeader)] || ""
+        ? coercePhoneImportValue(values[headers.indexOf(phoneHeader)] || "")
         : "";
 
       // Prefer sheet Source; leave empty when absent so staging can apply a default.
