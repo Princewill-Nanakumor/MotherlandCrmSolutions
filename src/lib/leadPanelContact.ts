@@ -1,6 +1,10 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { Lead, LeadContactEntry } from "@/types/leads";
-import { maskEmail, maskPhone } from "@/lib/contactMasking";
+import {
+  isMaskedContactValue,
+  maskEmail,
+  maskPhone,
+} from "@/lib/contactMasking";
 import { maskContactEntries } from "@/lib/leadContactEntries";
 import { mergeLeadContactExtras } from "@/lib/leadClientUpdate";
 
@@ -41,6 +45,11 @@ export function findLeadInQueryData(
 /**
  * Apply unmasked panel contact onto a list/cache lead, then keep extras from
  * a richer in-panel lead when the incoming row omitted `emails`/`phones`.
+ *
+ * Snapshot email/phone are only used when the incoming values look masked
+ * (agent list rows). Never overwrite a deliberate panel edit with the old
+ * snapshot — that made "new primary + old primary as Email 2" look like a
+ * duplicate of the still-stale primary.
  */
 export function mergeLeadForPanel(
   incoming: Lead,
@@ -51,8 +60,12 @@ export function mergeLeadForPanel(
     snapshot && snapshot.leadId === incoming._id
       ? {
           ...incoming,
-          email: snapshot.email,
-          phone: snapshot.phone,
+          email: isMaskedContactValue(incoming.email)
+            ? snapshot.email
+            : incoming.email,
+          phone: isMaskedContactValue(incoming.phone)
+            ? snapshot.phone
+            : (incoming.phone ?? ""),
           emails:
             incoming.emails !== undefined
               ? incoming.emails
