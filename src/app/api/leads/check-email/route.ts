@@ -5,43 +5,41 @@ import { connectMongoDB } from "@/lib/dbConfig";
 import Lead from "@/models/Lead";
 import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
+import { getTenantAdminId } from "@/lib/roles";
 
 /**
  * GET /api/leads/check-email?email=xxx
- * Checks if a lead with the given email already exists for the current admin
+ * Checks if a lead with the given email already exists for the current tenant.
  */
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const email = searchParams.get("email");
+    const adminId = getTenantAdminId(session.user);
+    if (!adminId) {
+      return NextResponse.json(
+        { error: "Admin scope unresolved" },
+        { status: 403 },
+      );
+    }
 
+    const email = new URL(request.url).searchParams.get("email");
     if (!email) {
       return NextResponse.json(
         { error: "Email parameter is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     await connectMongoDB();
 
-    // Build query with multi-tenancy filter
-    const query: { email: string; adminId?: mongoose.Types.ObjectId } = {
+    const existingLead = await Lead.findOne({
       email: email.toLowerCase().trim(),
-    };
-
-    // Filter by adminId for multi-tenancy
-    if (session.user.role === "ADMIN") {
-      query.adminId = new mongoose.Types.ObjectId(session.user.id);
-    } else if (session.user.role === "AGENT" && session.user.adminId) {
-      query.adminId = new mongoose.Types.ObjectId(session.user.adminId);
-    }
-
-    const existingLead = await Lead.findOne(query)
+      adminId: new mongoose.Types.ObjectId(adminId),
+    })
       .select("_id email firstName lastName")
       .lean<{
         _id: mongoose.Types.ObjectId;
@@ -60,7 +58,7 @@ export async function GET(request: NextRequest) {
             name: `${existingLead.firstName} ${existingLead.lastName}`,
           },
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -69,7 +67,7 @@ export async function GET(request: NextRequest) {
     console.error("Error checking email:", error);
     return NextResponse.json(
       { error: "Failed to check email" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

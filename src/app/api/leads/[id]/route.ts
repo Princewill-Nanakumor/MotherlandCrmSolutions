@@ -1,4 +1,3 @@
-// /Users/safeconnection/Downloads/drivecrm-main/src/app/api/leads/[id]/route.ts
 import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
@@ -33,8 +32,17 @@ import {
   normalizeEmailEntries,
   normalizePhoneEntries,
 } from "@/lib/leadContactEntries";
+import {
+  diffLeadContactChanges,
+  summarizeLeadContactUpdateDetails,
+} from "@/lib/leadContactUpdateActivity";
+import {
+  collectLeadPhoneValues,
+  findTenantLeadByPhone,
+} from "@/lib/leadPhoneLookup";
 import { maskEmail, maskPhone } from "@/lib/contactMasking";
 import { coercePhoneImportValue } from "@/lib/phoneNormalize";
+import Activity from "@/models/Activity";
 
 function buildLeadAccessFilter(
   session: Session,
@@ -413,6 +421,79 @@ export async function PUT(
       }
     }
 
+    const contactUpdateSlice: Record<string, unknown> = {};
+    for (const key of [
+      "firstName",
+      "lastName",
+      "email",
+      "phone",
+      "country",
+      "source",
+      "emails",
+      "phones",
+    ] as const) {
+      if (Object.prototype.hasOwnProperty.call(updatePayload, key)) {
+        contactUpdateSlice[key] = updatePayload[key];
+      }
+    }
+
+    // Compare against normalized current values so format-only diffs don't log.
+    const contactBefore: Record<string, unknown> = {
+      firstName: String(currentLead.firstName ?? "").trim(),
+      lastName: String(currentLead.lastName ?? "").trim(),
+      email: String(currentLead.email ?? "")
+        .toLowerCase()
+        .trim(),
+      phone: coercePhoneImportValue(currentLead.phone) || "",
+      country: normalizeCountryInput(String(currentLead.country || "")),
+      source: String(currentLead.source ?? "").trim(),
+      emails: coerceContactEntries(currentLead.emails),
+      phones: coerceContactEntries(currentLead.phones),
+    };
+    const contactChanges = diffLeadContactChanges(
+      contactBefore,
+      contactUpdateSlice,
+    );
+
+    if (
+      Object.prototype.hasOwnProperty.call(contactUpdateSlice, "phone") ||
+      Object.prototype.hasOwnProperty.call(contactUpdateSlice, "phones")
+    ) {
+      const phoneValues = collectLeadPhoneValues({
+        phone: Object.prototype.hasOwnProperty.call(contactUpdateSlice, "phone")
+          ? String(contactUpdateSlice.phone ?? "")
+          : undefined,
+        phones: Object.prototype.hasOwnProperty.call(
+          contactUpdateSlice,
+          "phones",
+        )
+          ? (contactUpdateSlice.phones as Array<{ value?: string } | string>)
+          : undefined,
+      });
+      for (const phoneValue of phoneValues) {
+        const conflict = await findTenantLeadByPhone(
+          String(adminScopeId),
+          phoneValue,
+          { excludeLeadId: String(currentLead._id) },
+        );
+        if (conflict) {
+          return NextResponse.json(
+            {
+              error: `Phone ${phoneValue} already exists for ${conflict.firstName} ${conflict.lastName}`,
+            },
+            { status: 400 },
+          );
+        }
+      }
+    }
+
+    const contactActivityAt =
+      contactChanges.length > 0 ? new Date() : null;
+    if (contactActivityAt) {
+      updatePayload.lastActivityAt = contactActivityAt;
+      updatePayload.updatedAt = contactActivityAt;
+    }
+
     const hasMeaningfulUpdate = Object.keys(updatePayload).some(
       (key) => key !== "updatedAt",
     );
@@ -469,6 +550,36 @@ export async function PUT(
         { error: "Failed to retrieve updated lead" },
         { status: 500 },
       );
+    }
+
+    if (
+      contactActivityAt &&
+      contactChanges.length > 0 &&
+      updateResult.modifiedCount > 0
+    ) {
+      try {
+        await Activity.create({
+          type: "UPDATE",
+          userId: new mongoose.Types.ObjectId(session.user.id),
+          details: summarizeLeadContactUpdateDetails(contactChanges),
+          leadId: updatedLead._id,
+          adminId: new mongoose.Types.ObjectId(String(adminScopeId)),
+          timestamp: contactActivityAt,
+          metadata: {
+            changes: contactChanges,
+            performedBy: {
+              id: session.user.id,
+              firstName: session.user.firstName ?? "",
+              lastName: session.user.lastName ?? "",
+            },
+          },
+        });
+      } catch (activityError) {
+        console.error(
+          "Error logging lead contact update activity:",
+          activityError,
+        );
+      }
     }
 
     // Populate assignedTo with user details for the response

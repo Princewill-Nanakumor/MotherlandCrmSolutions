@@ -4,7 +4,7 @@
 import React, { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { Loader2, Plus, AlertCircle } from "lucide-react";
+import { Loader2, Plus, AlertCircle, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +39,11 @@ import {
   MANUAL_SOURCE_SELECT_VALUE,
   normalizeLeadSource,
 } from "@/lib/leadDisplayFormat";
+import {
+  MAX_LEAD_CONTACT_EXTRAS,
+  type LeadContactEntry,
+} from "@/lib/leadContactEntries";
+import { isCheckablePhone, phoneDigitsOnly } from "@/lib/phoneCheck";
 
 const SOURCE_SELECT_ITEM_CLASS =
   "focus:bg-[color-mix(in_srgb,var(--brand-from)_14%,white)] focus:text-(--brand-from)! data-[state=checked]:bg-[color-mix(in_srgb,var(--brand-from)_14%,white)] data-[state=checked]:text-(--brand-from)! dark:focus:bg-[color-mix(in_srgb,var(--brand-from)_28%,#111827)] dark:data-[state=checked]:bg-[color-mix(in_srgb,var(--brand-from)_28%,#111827)]";
@@ -51,7 +56,11 @@ interface AddLeadFormData {
   country: string;
   source: string;
   status: string;
+  emails?: LeadContactEntry[];
+  phones?: LeadContactEntry[];
 }
+
+const emptyContactEntry = (): LeadContactEntry => ({ value: "", label: "" });
 
 interface AddLeadDialogProps {
   isOpen: boolean;
@@ -66,8 +75,24 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
   const queryClient = useQueryClient();
   const [emailError, setEmailError] = useState<string | null>(null);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [extraEmailErrors, setExtraEmailErrors] = useState<
+    Record<number, string>
+  >({});
+  const [checkingExtraEmailIndex, setCheckingExtraEmailIndex] = useState<
+    number | null
+  >(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [isCheckingPhone, setIsCheckingPhone] = useState(false);
+  const [extraPhoneErrors, setExtraPhoneErrors] = useState<
+    Record<number, string>
+  >({});
+  const [checkingExtraPhoneIndex, setCheckingExtraPhoneIndex] = useState<
+    number | null
+  >(null);
   const [sourceSelectValue, setSourceSelectValue] = useState("");
   const [manualSource, setManualSource] = useState("");
+  const [extraEmails, setExtraEmails] = useState<LeadContactEntry[]>([]);
+  const [extraPhones, setExtraPhones] = useState<LeadContactEntry[]>([]);
 
   const { statuses, isLoading: isLoadingStatuses } = useStatuses();
   const defaultStatusId = statuses[0]?._id || statuses[0]?.id || "NEW";
@@ -176,8 +201,17 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
     });
     setSourceSelectValue("");
     setManualSource("");
+    setExtraEmails([]);
+    setExtraPhones([]);
     clearErrors("source");
     setEmailError(null);
+    setIsCheckingEmail(false);
+    setExtraEmailErrors({});
+    setCheckingExtraEmailIndex(null);
+    setPhoneError(null);
+    setIsCheckingPhone(false);
+    setExtraPhoneErrors({});
+    setCheckingExtraPhoneIndex(null);
   };
 
   const handleSourceSelectChange = (value: string) => {
@@ -192,6 +226,24 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
     clearErrors("source");
   };
 
+  const lookupEmailInDatabase = async (
+    email: string,
+  ): Promise<{ exists: boolean; leadName?: string }> => {
+    const response = await fetch(
+      `/api/leads/check-email?email=${encodeURIComponent(email)}`,
+      { credentials: "include" },
+    );
+    if (!response.ok) throw new Error("Failed to check email");
+    const data = (await response.json()) as {
+      exists?: boolean;
+      lead?: { name?: string };
+    };
+    if (data.exists) {
+      return { exists: true, leadName: data.lead?.name };
+    }
+    return { exists: false };
+  };
+
   const checkEmailExists = async (email: string) => {
     if (!email || !email.includes("@")) {
       setEmailError(null);
@@ -202,16 +254,10 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
     setEmailError(null);
 
     try {
-      const response = await fetch(
-        `/api/leads/check-email?email=${encodeURIComponent(email)}`,
-        { credentials: "include" },
-      );
-      if (!response.ok) throw new Error("Failed to check email");
-
-      const data = await response.json();
-      if (data.exists) {
+      const result = await lookupEmailInDatabase(email);
+      if (result.exists) {
         setEmailError(
-          `This email already exists for ${data.lead.name}. Please use a different email.`,
+          `This email already exists for ${result.leadName ?? "another lead"}. Please use a different email.`,
         );
         return true;
       }
@@ -221,6 +267,176 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
       return false;
     } finally {
       setIsCheckingEmail(false);
+    }
+  };
+
+  const clearExtraEmailError = (index: number) => {
+    setExtraEmailErrors((prev) => {
+      if (!(index in prev)) return prev;
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+  };
+
+  const checkExtraEmailExists = async (index: number, email: string) => {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized || !normalized.includes("@")) {
+      clearExtraEmailError(index);
+      return false;
+    }
+
+    const primary = String(watch("email") || "")
+      .trim()
+      .toLowerCase();
+    if (primary && normalized === primary) {
+      setExtraEmailErrors((prev) => ({
+        ...prev,
+        [index]:
+          "This is already the primary email — use a different address",
+      }));
+      return true;
+    }
+
+    const duplicateIndex = extraEmails.findIndex(
+      (entry, i) =>
+        i !== index && entry.value.trim().toLowerCase() === normalized,
+    );
+    if (duplicateIndex >= 0) {
+      setExtraEmailErrors((prev) => ({
+        ...prev,
+        [index]: "This email is already listed above",
+      }));
+      return true;
+    }
+
+    setCheckingExtraEmailIndex(index);
+    clearExtraEmailError(index);
+
+    try {
+      const result = await lookupEmailInDatabase(normalized);
+      if (result.exists) {
+        setExtraEmailErrors((prev) => ({
+          ...prev,
+          [index]: `This email already exists for ${result.leadName ?? "another lead"}. Please use a different email.`,
+        }));
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error checking extra email:", error);
+      return false;
+    } finally {
+      setCheckingExtraEmailIndex((current) =>
+        current === index ? null : current,
+      );
+    }
+  };
+
+  const lookupPhoneInDatabase = async (
+    phone: string,
+  ): Promise<{ exists: boolean; leadName?: string }> => {
+    const response = await fetch(
+      `/api/leads/check-phone?phone=${encodeURIComponent(phone)}`,
+      { credentials: "include" },
+    );
+    if (!response.ok) throw new Error("Failed to check phone");
+    const data = (await response.json()) as {
+      exists?: boolean;
+      lead?: { name?: string };
+    };
+    if (data.exists) {
+      return { exists: true, leadName: data.lead?.name };
+    }
+    return { exists: false };
+  };
+
+  const checkPhoneExists = async (phone: string) => {
+    if (!isCheckablePhone(phone)) {
+      setPhoneError(null);
+      return false;
+    }
+
+    setIsCheckingPhone(true);
+    setPhoneError(null);
+
+    try {
+      const result = await lookupPhoneInDatabase(phone);
+      if (result.exists) {
+        setPhoneError(
+          `This phone already exists for ${result.leadName ?? "another lead"}. Please use a different number.`,
+        );
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error checking phone:", error);
+      return false;
+    } finally {
+      setIsCheckingPhone(false);
+    }
+  };
+
+  const clearExtraPhoneError = (index: number) => {
+    setExtraPhoneErrors((prev) => {
+      if (!(index in prev)) return prev;
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+  };
+
+  const checkExtraPhoneExists = async (index: number, phone: string) => {
+    if (!isCheckablePhone(phone)) {
+      clearExtraPhoneError(index);
+      return false;
+    }
+
+    const digits = phoneDigitsOnly(phone);
+    const primaryDigits = phoneDigitsOnly(watch("phone") || "");
+    if (primaryDigits && digits === primaryDigits) {
+      setExtraPhoneErrors((prev) => ({
+        ...prev,
+        [index]:
+          "This is already the primary phone — use a different number",
+      }));
+      return true;
+    }
+
+    const duplicateIndex = extraPhones.findIndex(
+      (entry, i) =>
+        i !== index &&
+        isCheckablePhone(entry.value) &&
+        phoneDigitsOnly(entry.value) === digits,
+    );
+    if (duplicateIndex >= 0) {
+      setExtraPhoneErrors((prev) => ({
+        ...prev,
+        [index]: "This phone is already listed above",
+      }));
+      return true;
+    }
+
+    setCheckingExtraPhoneIndex(index);
+    clearExtraPhoneError(index);
+
+    try {
+      const result = await lookupPhoneInDatabase(phone);
+      if (result.exists) {
+        setExtraPhoneErrors((prev) => ({
+          ...prev,
+          [index]: `This phone already exists for ${result.leadName ?? "another lead"}. Please use a different number.`,
+        }));
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error checking extra phone:", error);
+      return false;
+    } finally {
+      setCheckingExtraPhoneIndex((current) =>
+        current === index ? null : current,
+      );
     }
   };
 
@@ -291,14 +507,62 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
       return;
     }
 
+    for (let i = 0; i < extraEmails.length; i++) {
+      const value = extraEmails[i]?.value?.trim() ?? "";
+      if (!value) continue;
+      const extraExists = await checkExtraEmailExists(i, value);
+      if (extraExists) {
+        toast({
+          title: "Duplicate Email",
+          description: `Email ${i + 2} is already in use. Please use a different email.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    const phoneExists = await checkPhoneExists(data.phone);
+    if (phoneExists) {
+      toast({
+        title: "Duplicate Phone",
+        description: "A lead with this phone number already exists.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    for (let i = 0; i < extraPhones.length; i++) {
+      const value = extraPhones[i]?.value?.trim() ?? "";
+      if (!value) continue;
+      const extraExists = await checkExtraPhoneExists(i, value);
+      if (extraExists) {
+        toast({
+          title: "Duplicate Phone",
+          description: `Phone ${i + 2} is already in use. Please use a different number.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     createLeadMutation.mutate({
       ...data,
       source: normalizeLeadSource(resolveSource()),
+      emails: extraEmails,
+      phones: extraPhones,
     });
   };
 
+  const hasExtraEmailErrors = Object.keys(extraEmailErrors).length > 0;
+  const hasExtraPhoneErrors = Object.keys(extraPhoneErrors).length > 0;
+  const isValidatingContacts =
+    isCheckingEmail ||
+    checkingExtraEmailIndex !== null ||
+    isCheckingPhone ||
+    checkingExtraPhoneIndex !== null;
+
   const handleClose = () => {
-    if (!createLeadMutation.isPending && !isCheckingEmail) {
+    if (!createLeadMutation.isPending && !isValidatingContacts) {
       resetForm();
       onClose();
     }
@@ -406,24 +670,279 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
                 <AlertDescription>{emailError}</AlertDescription>
               </Alert>
             )}
+
+            {extraEmails.map((entry, index) => {
+              const extraError = extraEmailErrors[index];
+              const isCheckingExtra = checkingExtraEmailIndex === index;
+              return (
+                <div
+                  key={`add-email-extra-${index}`}
+                  className="flex items-start gap-2"
+                >
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="space-y-1">
+                      <Label htmlFor={`extra-email-${index}`}>
+                        {entry.label
+                          ? `Email (${entry.label})`
+                          : `Email ${index + 2}`}
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id={`extra-email-${index}`}
+                          type="email"
+                          placeholder="another@example.com"
+                          value={entry.value}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            clearExtraEmailError(index);
+                            setExtraEmails((prev) => {
+                              const next = [...prev];
+                              next[index] = { ...next[index], value };
+                              return next;
+                            });
+                          }}
+                          onBlur={(e) =>
+                            void checkExtraEmailExists(index, e.target.value)
+                          }
+                          disabled={
+                            createLeadMutation.isPending || isCheckingExtra
+                          }
+                          className={
+                            extraError
+                              ? "border-red-500 pr-10"
+                              : isCheckingExtra
+                                ? "pr-10"
+                                : ""
+                          }
+                        />
+                        {isCheckingExtra && (
+                          <div className="absolute -translate-y-1/2 right-3 top-1/2">
+                            <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                          </div>
+                        )}
+                      </div>
+                      {extraError && (
+                        <Alert variant="destructive" className="mt-2">
+                          <AlertCircle className="w-4 h-4" />
+                          <AlertDescription>{extraError}</AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                    <Input
+                      value={entry.label || ""}
+                      onChange={(e) => {
+                        const label = e.target.value;
+                        setExtraEmails((prev) => {
+                          const next = [...prev];
+                          next[index] = { ...next[index], label };
+                          return next;
+                        });
+                      }}
+                      placeholder="Label (optional, e.g. Work)"
+                      disabled={createLeadMutation.isPending}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExtraEmails((prev) =>
+                        prev.filter((_, i) => i !== index),
+                      );
+                      setExtraEmailErrors((prev) => {
+                        const next: Record<number, string> = {};
+                        for (const [key, message] of Object.entries(prev)) {
+                          const i = Number(key);
+                          if (i < index) next[i] = message;
+                          else if (i > index) next[i - 1] = message;
+                        }
+                        return next;
+                      });
+                      setCheckingExtraEmailIndex((current) => {
+                        if (current == null) return null;
+                        if (current === index) return null;
+                        if (current > index) return current - 1;
+                        return current;
+                      });
+                    }}
+                    disabled={createLeadMutation.isPending}
+                    className="mt-7 p-2 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                    aria-label="Remove email"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })}
+
+            {extraEmails.length < MAX_LEAD_CONTACT_EXTRAS && (
+              <button
+                type="button"
+                onClick={() =>
+                  setExtraEmails((prev) => [...prev, emptyContactEntry()])
+                }
+                disabled={createLeadMutation.isPending}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-(--brand-from) hover:underline"
+              >
+                <Plus className="w-4 h-4" />
+                Add email
+              </button>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="phone">
               Phone <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="+1 234 567 8900"
-              {...register("phone", {
-                required: "Phone number is required",
-              })}
-              disabled={createLeadMutation.isPending}
-              className={errors.phone ? "border-red-500" : ""}
-            />
+            <div className="relative">
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+1 234 567 8900"
+                {...register("phone", {
+                  required: "Phone number is required",
+                  onChange: () => setPhoneError(null),
+                  onBlur: (e) => void checkPhoneExists(e.target.value),
+                })}
+                disabled={createLeadMutation.isPending || isCheckingPhone}
+                className={
+                  errors.phone || phoneError
+                    ? "border-red-500 pr-10"
+                    : isCheckingPhone
+                      ? "pr-10"
+                      : ""
+                }
+              />
+              {isCheckingPhone && (
+                <div className="absolute -translate-y-1/2 right-3 top-1/2">
+                  <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                </div>
+              )}
+            </div>
             {errors.phone && (
               <p className="text-sm text-red-500">{errors.phone.message}</p>
+            )}
+            {phoneError && !errors.phone && (
+              <Alert variant="destructive" className="mt-2">
+                <AlertCircle className="w-4 h-4" />
+                <AlertDescription>{phoneError}</AlertDescription>
+              </Alert>
+            )}
+
+            {extraPhones.map((entry, index) => {
+              const extraError = extraPhoneErrors[index];
+              const isCheckingExtra = checkingExtraPhoneIndex === index;
+              return (
+                <div
+                  key={`add-phone-extra-${index}`}
+                  className="flex items-start gap-2"
+                >
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="space-y-1">
+                      <Label htmlFor={`extra-phone-${index}`}>
+                        {entry.label
+                          ? `Phone (${entry.label})`
+                          : `Phone ${index + 2}`}
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id={`extra-phone-${index}`}
+                          type="tel"
+                          placeholder="+1 234 567 8901"
+                          value={entry.value}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            clearExtraPhoneError(index);
+                            setExtraPhones((prev) => {
+                              const next = [...prev];
+                              next[index] = { ...next[index], value };
+                              return next;
+                            });
+                          }}
+                          onBlur={(e) =>
+                            void checkExtraPhoneExists(index, e.target.value)
+                          }
+                          disabled={
+                            createLeadMutation.isPending || isCheckingExtra
+                          }
+                          className={
+                            extraError
+                              ? "border-red-500 pr-10"
+                              : isCheckingExtra
+                                ? "pr-10"
+                                : ""
+                          }
+                        />
+                        {isCheckingExtra && (
+                          <div className="absolute -translate-y-1/2 right-3 top-1/2">
+                            <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                          </div>
+                        )}
+                      </div>
+                      {extraError && (
+                        <Alert variant="destructive" className="mt-2">
+                          <AlertCircle className="w-4 h-4" />
+                          <AlertDescription>{extraError}</AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                    <Input
+                      value={entry.label || ""}
+                      onChange={(e) => {
+                        const label = e.target.value;
+                        setExtraPhones((prev) => {
+                          const next = [...prev];
+                          next[index] = { ...next[index], label };
+                          return next;
+                        });
+                      }}
+                      placeholder="Label (optional, e.g. Mobile)"
+                      disabled={createLeadMutation.isPending}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExtraPhones((prev) =>
+                        prev.filter((_, i) => i !== index),
+                      );
+                      setExtraPhoneErrors((prev) => {
+                        const next: Record<number, string> = {};
+                        for (const [key, message] of Object.entries(prev)) {
+                          const i = Number(key);
+                          if (i < index) next[i] = message;
+                          else if (i > index) next[i - 1] = message;
+                        }
+                        return next;
+                      });
+                      setCheckingExtraPhoneIndex((current) => {
+                        if (current == null) return null;
+                        if (current === index) return null;
+                        if (current > index) return current - 1;
+                        return current;
+                      });
+                    }}
+                    disabled={createLeadMutation.isPending}
+                    className="mt-7 p-2 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                    aria-label="Remove phone"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })}
+
+            {extraPhones.length < MAX_LEAD_CONTACT_EXTRAS && (
+              <button
+                type="button"
+                onClick={() =>
+                  setExtraPhones((prev) => [...prev, emptyContactEntry()])
+                }
+                disabled={createLeadMutation.isPending}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-(--brand-from) hover:underline"
+              >
+                <Plus className="w-4 h-4" />
+                Add phone
+              </button>
             )}
           </div>
 
@@ -571,7 +1090,12 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
             <Button
               type="submit"
               disabled={
-                createLeadMutation.isPending || isCheckingEmail || !!emailError
+                createLeadMutation.isPending ||
+                isValidatingContacts ||
+                !!emailError ||
+                hasExtraEmailErrors ||
+                !!phoneError ||
+                hasExtraPhoneErrors
               }
               className="text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
             >
@@ -580,7 +1104,7 @@ export const AddLeadDialog: React.FC<AddLeadDialogProps> = ({
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Creating...
                 </>
-              ) : isCheckingEmail ? (
+              ) : isValidatingContacts ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Validating...

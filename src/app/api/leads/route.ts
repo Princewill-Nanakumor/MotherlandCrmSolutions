@@ -25,6 +25,14 @@ import {
 } from "@/lib/leadDisplayFormat";
 import { coercePhoneImportValue } from "@/lib/phoneNormalize";
 import {
+  normalizeEmailEntries,
+  normalizePhoneEntries,
+} from "@/lib/leadContactEntries";
+import {
+  collectLeadPhoneValues,
+  findTenantLeadByPhone,
+} from "@/lib/leadPhoneLookup";
+import {
   checkTenantLeadImportAllowed,
   reconcileLeadQuotaOrRollback,
 } from "@/lib/tenantLeadImportLimits";
@@ -250,11 +258,50 @@ export async function POST(request: Request) {
       }
 
       try {
+        const primaryEmail = String(leadData.email).toLowerCase().trim();
+        const primaryPhone = coercePhoneImportValue(leadData.phone) || "";
+        let emails;
+        let phones;
+        try {
+          emails = normalizeEmailEntries(leadData.emails, primaryEmail);
+          phones = normalizePhoneEntries(leadData.phones, primaryPhone);
+        } catch (err) {
+          return NextResponse.json(
+            {
+              error:
+                err instanceof Error
+                  ? err.message
+                  : "Invalid additional emails or phones",
+            },
+            { status: 400 },
+          );
+        }
+
+        for (const phoneValue of collectLeadPhoneValues({
+          phone: primaryPhone,
+          phones,
+        })) {
+          const conflict = await findTenantLeadByPhone(
+            scopedAdminId,
+            phoneValue,
+          );
+          if (conflict) {
+            return NextResponse.json(
+              {
+                error: `Phone ${phoneValue} already exists for ${conflict.firstName} ${conflict.lastName}`,
+              },
+              { status: 400 },
+            );
+          }
+        }
+
         const newLead = await Lead.create({
           firstName: leadData.firstName,
           lastName: leadData.lastName,
-          email: leadData.email.toLowerCase(),
-          phone: coercePhoneImportValue(leadData.phone) || "",
+          email: primaryEmail,
+          phone: primaryPhone,
+          emails,
+          phones,
           country: normalizeCountryInput(leadData.country || ""),
           source: normalizeLeadSource(leadData.source),
           comments: leadData.comments || "No comments yet",

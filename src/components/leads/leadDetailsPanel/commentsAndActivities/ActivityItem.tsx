@@ -11,6 +11,7 @@ import {
   getActivityDescription,
   getStatusColor,
   getStatusDisplayLabel,
+  ContactChangesDetails,
   ReminderActivityDetails,
 } from "./ActivityHelpers";
 import { formatDate, getUserDisplayName } from "./utils";
@@ -159,31 +160,7 @@ export const ActivityItem: FC<ActivityItemProps> = ({
             <ReminderActivityDetails metadata={activity.metadata} />
           )}
 
-          {/* Changes metadata */}
-          {activity.metadata?.changes &&
-            activity.metadata.changes.length > 0 && (
-              <div className="mt-2 text-sm text-gray-600! dark:text-gray-300!">
-                <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border-l-4 border-blue-300 dark:border-blue-500 shadow-sm">
-                  <span className="font-semibold text-blue-700! dark:text-blue-300! uppercase tracking-wide text-xs mr-1">
-                    Changes:
-                  </span>
-                  <div className="mt-1 space-y-1">
-                    {activity.metadata.changes.map((change, index) => (
-                      <div key={index} className="text-xs">
-                        <span className="font-medium">{change.field}:</span>{" "}
-                        <span className="text-gray-500">
-                          {change.oldValue || "empty"}
-                        </span>{" "}
-                        <ArrowRight className="inline w-2 h-2 mx-1" />{" "}
-                        <span className="text-gray-700! dark:text-gray-200!">
-                          {change.newValue || "empty"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+          <ContactChangesDetails changes={activity.metadata?.changes} />
         </div>
       </div>
     </div>
