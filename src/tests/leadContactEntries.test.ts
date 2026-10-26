@@ -24,7 +24,16 @@ describe("leadContactEntries", () => {
         [{ value: "primary@example.com" }],
         "primary@example.com",
       ),
-    ).toThrow(/Duplicate email/i);
+    ).toThrow(/already the primary email/i);
+  });
+
+  it("allows the former primary as a secondary after the primary changes", () => {
+    expect(
+      normalizeEmailEntries(
+        [{ value: "shanediane1@gmail.com" }],
+        "Sean.chidley@yahoomail.com",
+      ),
+    ).toEqual([{ value: "shanediane1@gmail.com" }]);
   });
 
   it("normalizes secondary phones and rejects digit duplicates", () => {

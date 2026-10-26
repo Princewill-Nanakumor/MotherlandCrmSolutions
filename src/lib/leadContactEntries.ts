@@ -30,6 +30,14 @@ function asRawEntries(input: unknown): unknown[] {
   return input;
 }
 
+function duplicateEmailError(value: string, primary: string): Error {
+  return new Error(
+    value === primary
+      ? `${value} is already the primary email — use a different address for Email 2+`
+      : `Duplicate email: ${value}`,
+  );
+}
+
 /**
  * Normalize secondary emails. Skips empty values. Throws on invalid shape,
  * over cap, invalid email, or duplicate (vs primary or within list).
@@ -50,9 +58,7 @@ export function normalizeEmailEntries(
       if (!EMAIL_RE.test(value)) {
         throw new Error(`Invalid extra email: ${value}`);
       }
-      if (seen.has(value)) {
-        throw new Error(`Duplicate email: ${value}`);
-      }
+      if (seen.has(value)) throw duplicateEmailError(value, primary);
       seen.add(value);
       out.push({ value });
       continue;
@@ -67,9 +73,7 @@ export function normalizeEmailEntries(
     if (!EMAIL_RE.test(value)) {
       throw new Error(`Invalid extra email: ${value}`);
     }
-    if (seen.has(value)) {
-      throw new Error(`Duplicate email: ${value}`);
-    }
+    if (seen.has(value)) throw duplicateEmailError(value, primary);
     seen.add(value);
     const label = normalizeContactEntryLabel(
       (raw as { label?: unknown }).label,

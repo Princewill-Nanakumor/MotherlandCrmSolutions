@@ -521,10 +521,10 @@ export const ContactSection: FC<ContactSectionProps> = ({
                   editedFirstName={editedData.firstName}
                   editedLastName={editedData.lastName}
                   onFirstNameChange={(value) =>
-                    setEditedData({ ...editedData, firstName: value })
+                    setEditedData((prev) => ({ ...prev, firstName: value }))
                   }
                   onLastNameChange={(value) =>
-                    setEditedData({ ...editedData, lastName: value })
+                    setEditedData((prev) => ({ ...prev, lastName: value }))
                   }
                 />
 
@@ -533,7 +533,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
                   isEditing={true}
                   editedEmail={editedData.email}
                   onEmailChange={(value) =>
-                    setEditedData({ ...editedData, email: value })
+                    setEditedData((prev) => ({ ...prev, email: value }))
                   }
                   label="Email"
                   required
@@ -547,9 +547,11 @@ export const ContactSection: FC<ContactSectionProps> = ({
                         isEditing={true}
                         editedEmail={entry.value}
                         onEmailChange={(value) => {
-                          const next = [...editedData.emails];
-                          next[index] = { ...next[index], value };
-                          setEditedData({ ...editedData, emails: next });
+                          setEditedData((prev) => {
+                            const next = [...prev.emails];
+                            next[index] = { ...next[index], value };
+                            return { ...prev, emails: next };
+                          });
                         }}
                         label={
                           entry.label
@@ -561,12 +563,12 @@ export const ContactSection: FC<ContactSectionProps> = ({
                       <Input
                         value={entry.label || ""}
                         onChange={(e) => {
-                          const next = [...editedData.emails];
-                          next[index] = {
-                            ...next[index],
-                            label: e.target.value,
-                          };
-                          setEditedData({ ...editedData, emails: next });
+                          const label = e.target.value;
+                          setEditedData((prev) => {
+                            const next = [...prev.emails];
+                            next[index] = { ...next[index], label };
+                            return { ...prev, emails: next };
+                          });
                         }}
                         placeholder="Label (optional, e.g. Work)"
                         className="ml-8 w-[calc(100%-2rem)]"
@@ -587,10 +589,10 @@ export const ContactSection: FC<ContactSectionProps> = ({
                   <button
                     type="button"
                     onClick={() =>
-                      setEditedData({
-                        ...editedData,
-                        emails: [...editedData.emails, { value: "", label: "" }],
-                      })
+                      setEditedData((prev) => ({
+                        ...prev,
+                        emails: [...prev.emails, { value: "", label: "" }],
+                      }))
                     }
                     className="inline-flex items-center gap-1.5 ml-8 text-sm font-medium text-(--brand-from) hover:underline"
                   >
@@ -605,7 +607,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
                   isEditing={true}
                   editedPhone={editedData.phone}
                   onPhoneChange={(value) =>
-                    setEditedData({ ...editedData, phone: value })
+                    setEditedData((prev) => ({ ...prev, phone: value }))
                   }
                   canViewPhoneNumbers={canViewPhoneNumbers}
                   isLoadingPermission={isLoadingPermission}
@@ -621,9 +623,11 @@ export const ContactSection: FC<ContactSectionProps> = ({
                         isEditing={true}
                         editedPhone={entry.value}
                         onPhoneChange={(value) => {
-                          const next = [...editedData.phones];
-                          next[index] = { ...next[index], value };
-                          setEditedData({ ...editedData, phones: next });
+                          setEditedData((prev) => {
+                            const next = [...prev.phones];
+                            next[index] = { ...next[index], value };
+                            return { ...prev, phones: next };
+                          });
                         }}
                         canViewPhoneNumbers={canViewPhoneNumbers}
                         label={
@@ -635,12 +639,12 @@ export const ContactSection: FC<ContactSectionProps> = ({
                       <Input
                         value={entry.label || ""}
                         onChange={(e) => {
-                          const next = [...editedData.phones];
-                          next[index] = {
-                            ...next[index],
-                            label: e.target.value,
-                          };
-                          setEditedData({ ...editedData, phones: next });
+                          const label = e.target.value;
+                          setEditedData((prev) => {
+                            const next = [...prev.phones];
+                            next[index] = { ...next[index], label };
+                            return { ...prev, phones: next };
+                          });
                         }}
                         placeholder="Label (optional, e.g. Mobile)"
                         className="ml-8 w-[calc(100%-2rem)]"
@@ -661,10 +665,10 @@ export const ContactSection: FC<ContactSectionProps> = ({
                   <button
                     type="button"
                     onClick={() =>
-                      setEditedData({
-                        ...editedData,
-                        phones: [...editedData.phones, { value: "", label: "" }],
-                      })
+                      setEditedData((prev) => ({
+                        ...prev,
+                        phones: [...prev.phones, { value: "", label: "" }],
+                      }))
                     }
                     className="inline-flex items-center gap-1.5 ml-8 text-sm font-medium text-(--brand-from) hover:underline"
                   >
@@ -678,7 +682,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
                   isEditing={true}
                   editedCountry={editedData.country}
                   onCountryChange={(value) =>
-                    setEditedData({ ...editedData, country: value })
+                    setEditedData((prev) => ({ ...prev, country: value }))
                   }
                 />
 
@@ -691,7 +695,10 @@ export const ContactSection: FC<ContactSectionProps> = ({
                     <Input
                       value={editedData.source}
                       onChange={(e) =>
-                        setEditedData({ ...editedData, source: e.target.value })
+                        setEditedData((prev) => ({
+                          ...prev,
+                          source: e.target.value,
+                        }))
                       }
                       placeholder="Enter source"
                       className="w-full"
