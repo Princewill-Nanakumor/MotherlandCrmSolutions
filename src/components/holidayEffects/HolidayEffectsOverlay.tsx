@@ -35,8 +35,9 @@ export function HolidayEffectsOverlay({
     <div
       aria-hidden
       className={cn(
-        "pointer-events-none fixed inset-0 z-80 overflow-hidden contain:strict",
-        paused && "holiday-effects-paused invisible",
+        // Stay mounted while paused so resume is instant (no remount / "reload").
+        "pointer-events-none fixed inset-0 z-80 overflow-hidden [contain:strict]",
+        paused && "holiday-effects-paused opacity-0",
       )}
     >
       <style>{PAUSE_STYLE}</style>

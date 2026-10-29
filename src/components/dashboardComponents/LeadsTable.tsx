@@ -1,14 +1,8 @@
 // src/components/dashboardComponents/LeadsTable.tsx
 "use client";
 
-import {
-  startTransition,
-  useMemo,
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-} from "react";
+import { useMemo, useEffect, useState, useCallback, useRef } from "react";
+import { flushSync } from "react-dom";
 import dynamic from "next/dynamic";
 import { useSearchParams, usePathname } from "next/navigation";
 import { DEFAULT_LEAD_PAGE_SIZE } from "@/lib/leadPageSize";
@@ -365,10 +359,10 @@ export default function LeadsTable({
       if (lead) {
         // Lead exists - update selectedLead if it's different
         if (!selectedLead || selectedLead._id !== lead._id) {
-          startTransition(() => {
-            setSelectedLead(lead);
+          flushSync(() => {
             setIsPanelOpen(true);
           });
+          setSelectedLead(lead);
         }
       }
       // If lead not found but URL has param, keep panel open with current selectedLead

@@ -1,7 +1,8 @@
 // src/components/leads/UserLeadsContent.tsx
 "use client";
 
-import { startTransition, useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { flushSync } from "react-dom";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Lead } from "@/types/leads";
 import { FilterLogic } from "@/components/user-leads/FilterLogic";
@@ -12,6 +13,10 @@ import { useLeadsURLManagement } from "@/hooks/useLeadsURLManagement";
 import { useSearchContext } from "@/context/SearchContext";
 import { useToggleContext } from "@/context/ToggleContext";
 import { useAssignedLeads } from "@/hooks/useAssignedLeads";
+import {
+  useIsPanelOpen,
+  useSetIsPanelOpen,
+} from "@/stores/leadsStore";
 import { RefetchIndicator } from "@/components/ui/RefetchIndicator";
 import { UserLeadsMainContent } from "@/components/leads/UserLeadsMainContent";
 import { UserLeadsPageLoadingShell } from "@/components/leads/UserLeadsPageLoadingShell";
@@ -57,9 +62,11 @@ export default function UserLeadsContent() {
     isLoading: subscriptionLoading,
   } = useSubscriptionData();
 
-  // Local state for UI
+  // Local state for UI — panel open lives in the leads store so holiday
+  // effects can pause immediately (same path as All Leads).
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const isPanelOpen = useIsPanelOpen();
+  const setIsPanelOpen = useSetIsPanelOpen();
   const [filterByCountry, setFilterByCountry] = useState<string[]>([]);
   const [filterByStatus, setFilterByStatus] = useState<string[]>([]);
   const [filterBySource, setFilterBySource] = useState<string[]>([]);
@@ -243,7 +250,13 @@ export default function UserLeadsContent() {
     setSelectedLead(null);
     setIsPanelOpen(false);
     removeOpenLeadFromLiveUrl();
-  }, [searchQuery]);
+  }, [searchQuery, setIsPanelOpen]);
+
+  useEffect(() => {
+    return () => {
+      setIsPanelOpen(false);
+    };
+  }, [setIsPanelOpen]);
 
   // Lead update handler with React Query mutation
   const handleLeadUpdated = useCallback(
@@ -388,30 +401,31 @@ export default function UserLeadsContent() {
         !selectedLead || selectedLead._id !== urlLead._id;
       const needsPanelOpen = !isPanelOpen;
       if (needsLeadUpdate || needsPanelOpen) {
-        startTransition(() => {
-          if (needsLeadUpdate) setSelectedLead(urlLead);
-          if (needsPanelOpen) setIsPanelOpen(true);
-        });
+        if (needsPanelOpen) {
+          flushSync(() => {
+            setIsPanelOpen(true);
+          });
+        }
+        if (needsLeadUpdate) setSelectedLead(urlLead);
       }
     }
   }, [searchParams, leads, isPanelOpen, selectedLead, isRefetching]);
 
   // Row click handler: open side panel and sync URL
   const handleRowClick = useCallback((lead: Lead) => {
-    handleURLLeadClick(lead);
-    startTransition(() => {
-      setSelectedLead(lead);
+    // Pause holiday effects in this same click tick before the panel mounts.
+    flushSync(() => {
       setIsPanelOpen(true);
     });
+    handleURLLeadClick(lead);
+    setSelectedLead(lead);
   }, [handleURLLeadClick]);
 
   // Panel close handler: update local state and URL
   const handlePanelCloseLocal = useCallback(() => {
     handleURLPanelClose();
-    startTransition(() => {
-      setIsPanelOpen(false);
-      setSelectedLead(null);
-    });
+    setSelectedLead(null);
+    setIsPanelOpen(false);
   }, [handleURLPanelClose]);
 
   // Panel navigation handler: move to prev/next lead and sync URL
@@ -433,10 +447,8 @@ export default function UserLeadsContent() {
 
       const newLead = sortedLeads[newIndex];
       handleURLNavigation(direction, currentSelectedLead, sortedLeads);
-      startTransition(() => {
-        setSelectedLead(newLead);
-        setIsPanelOpen(true);
-      });
+      setSelectedLead(newLead);
+      setIsPanelOpen(true);
     },
     [handleURLNavigation],
   );

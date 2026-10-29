@@ -1,7 +1,8 @@
 // src/components/dashboardComponents/PanelNavigation.tsx
 "use client";
 
-import { startTransition, useCallback } from "react";
+import { useCallback } from "react";
+import { flushSync } from "react-dom";
 import { Lead } from "@/types/leads";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -49,7 +50,7 @@ export const usePanelNavigation = ({
         router.replace(query ? `?${query}` : "?", { scroll: false });
       }
     },
-    [router, searchParams]
+    [router, searchParams],
   );
 
   // Stable event handlers
@@ -59,23 +60,20 @@ export const usePanelNavigation = ({
         return;
       }
 
-      // Keep the click responsive: URL sync first, then open the heavy panel
-      // as a non-urgent transition so the table stays interactive.
-      updateUrl(lead);
-      startTransition(() => {
-        setSelectedLead(lead);
+      // Pause holiday effects in this same click tick before the panel mounts.
+      flushSync(() => {
         setIsPanelOpen(true);
       });
+      updateUrl(lead);
+      setSelectedLead(lead);
     },
-    [setSelectedLead, setIsPanelOpen, updateUrl]
+    [setSelectedLead, setIsPanelOpen, updateUrl],
   );
 
   const handlePanelClose = useCallback(() => {
     updateUrl(null);
-    startTransition(() => {
-      setSelectedLead(null);
-      setIsPanelOpen(false);
-    });
+    setSelectedLead(null);
+    setIsPanelOpen(false);
   }, [setSelectedLead, setIsPanelOpen, updateUrl]);
 
   const handleNavigate = useCallback(
@@ -83,7 +81,7 @@ export const usePanelNavigation = ({
       if (!selectedLead) return;
 
       const currentIndex = sortedLeads.findIndex(
-        (lead) => lead._id === selectedLead._id
+        (lead) => lead._id === selectedLead._id,
       );
       let newLead: Lead | null = null;
 
@@ -98,12 +96,10 @@ export const usePanelNavigation = ({
 
       if (newLead) {
         updateUrl(newLead);
-        startTransition(() => {
-          setSelectedLead(newLead);
-        });
+        setSelectedLead(newLead);
       }
     },
-    [sortedLeads, selectedLead, setSelectedLead, updateUrl]
+    [sortedLeads, selectedLead, setSelectedLead, updateUrl],
   );
 
   const currentIndex = selectedLead
