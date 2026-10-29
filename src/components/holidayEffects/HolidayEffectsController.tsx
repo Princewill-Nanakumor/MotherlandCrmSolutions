@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { resolveActiveHolidayEffect } from "@/lib/holidayEffects/resolveActiveHolidayEffect";
 import { HOLIDAY_EFFECTS_DEFAULT_ENABLED } from "@/lib/holidayEffects/holidayEffectsConfig";
 import type { HolidayEffectResolution } from "@/lib/holidayEffects/types";
+import { useIsPanelOpen } from "@/stores/leadsStore";
 
 const LOCAL_STORAGE_ENABLED_KEY = "holidayEffectsEnabled";
 
@@ -44,6 +45,9 @@ function usePrefersReducedMotion(): boolean {
 export function HolidayEffectsController() {
   const pathname = usePathname() || "";
   const reduceMotion = usePrefersReducedMotion();
+  // Pause holiday CSS animations while the lead panel is open so open/close
+  // stays responsive during heavy panel mounts.
+  const isPanelOpen = useIsPanelOpen();
 
   const [mounted, setMounted] = useState(false);
   const [enabled, setEnabled] = useState(HOLIDAY_EFFECTS_DEFAULT_ENABLED);
@@ -74,6 +78,10 @@ export function HolidayEffectsController() {
   if (!resolution || reduceMotion) return null;
 
   return (
-    <HolidayEffectsOverlay resolution={resolution} reducedMotion={false} />
+    <HolidayEffectsOverlay
+      resolution={resolution}
+      reducedMotion={false}
+      paused={isPanelOpen}
+    />
   );
 }

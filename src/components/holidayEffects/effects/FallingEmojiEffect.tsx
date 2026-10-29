@@ -1,23 +1,43 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { motion } from "framer-motion";
 import type { HolidayIntensity } from "@/lib/holidayEffects/types";
 
+/** Kept low — holiday overlays share the main thread with the CRM UI. */
 const INTENSITY_TO_COUNT: Record<HolidayIntensity, number> = {
-  low: 8,
-  medium: 14,
-  high: 22,
+  low: 5,
+  medium: 8,
+  high: 12,
 };
+
+const FALL_STYLE = `
+@keyframes holiday-emoji-fall {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
+  8% { opacity: 0.85; }
+  85% { opacity: 0.85; }
+  100% { transform: translate3d(var(--holiday-drift, 0px), 110vh, 0) rotate(var(--holiday-rot, 0deg)); opacity: 0; }
+}
+.holiday-emoji-fall {
+  position: absolute;
+  top: -8%;
+  will-change: transform, opacity;
+  animation-name: holiday-emoji-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  user-select: none;
+  pointer-events: none;
+}
+`;
 
 function seededParticle(i: number) {
   const left = ((i * 37) % 100) + (i % 5);
   return {
     left: `${Math.min(96, left)}%`,
-    delay: (i % 8) * 0.35,
-    duration: 7 + (i % 5) * 1.2,
+    delay: (i % 8) * 0.45,
+    duration: 8 + (i % 5) * 1.4,
     size: 14 + (i % 4) * 4,
-    drift: i % 2 === 0 ? 18 : -18,
+    drift: `${i % 2 === 0 ? 18 : -18}px`,
+    rot: `${i % 2 === 0 ? 18 : -18}deg`,
   };
 }
 
@@ -30,7 +50,7 @@ export function FallingEmojiEffect({
   intensity: HolidayIntensity;
   testId: string;
 }) {
-  const count = INTENSITY_TO_COUNT[intensity] ?? 14;
+  const count = INTENSITY_TO_COUNT[intensity] ?? 8;
   const emojiKey = emojis.join("\0");
   const particles = useMemo(() => {
     const list = emojiKey.split("\0");
@@ -43,27 +63,24 @@ export function FallingEmojiEffect({
 
   return (
     <div data-testid={testId} className="absolute inset-0">
+      <style>{FALL_STYLE}</style>
       {particles.map((p) => (
-        <motion.span
+        <span
           key={p.i}
-          className="absolute top-[-8%] select-none"
-          style={{ left: p.left, fontSize: p.size }}
-          initial={{ y: 0, opacity: 0, rotate: 0 }}
-          animate={{
-            y: "110vh",
-            x: [0, p.drift, 0],
-            opacity: [0, 0.9, 0.9, 0],
-            rotate: [0, p.drift, 0],
-          }}
-          transition={{
-            duration: p.duration,
-            delay: p.delay,
-            repeat: Infinity,
-            ease: "linear",
-          }}
+          className="holiday-emoji-fall"
+          style={
+            {
+              left: p.left,
+              fontSize: p.size,
+              animationDuration: `${p.duration}s`,
+              animationDelay: `${p.delay}s`,
+              "--holiday-drift": p.drift,
+              "--holiday-rot": p.rot,
+            } as React.CSSProperties
+          }
         >
           {p.emoji}
-        </motion.span>
+        </span>
       ))}
     </div>
   );

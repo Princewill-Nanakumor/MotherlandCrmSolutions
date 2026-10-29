@@ -110,6 +110,10 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
     const seen = seenIdsRef.current ?? new Set<string>();
     const aliases = motionKeyAliasRef.current;
     const currentIds = new Set(combinedItems.map((item) => item.id));
+    // First paint after comments/activities load: seed as known so we don't
+    // run enter animations on every row (main-thread freeze on open).
+    const isInitialPopulation =
+      prevItemsRef.current.length === 0 && combinedItems.length > 0;
 
     const replaceableOptimistic = [
       ...prevItemsRef.current.filter(
@@ -137,7 +141,12 @@ export const CombinedTimeline: FC<CombinedTimelineProps> = ({
     const nextEntering = new Set<string>();
     for (const item of combinedItems) {
       keys.set(item.id, aliases.get(item.id) ?? item.id);
-      if (!seen.has(item.id)) nextEntering.add(item.id);
+      if (seen.has(item.id)) continue;
+      if (isInitialPopulation) {
+        seen.add(item.id);
+        continue;
+      }
+      nextEntering.add(item.id);
     }
     return { enteringIds: nextEntering, motionKeys: keys };
   }, [combinedItems]);

@@ -1,7 +1,14 @@
 // src/components/dashboardComponents/LeadDetailsPanel.tsx
 "use client";
 
-import React, { FC, useState, useCallback, useRef, useEffect } from "react";
+import React, {
+  FC,
+  startTransition,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+} from "react";
 import { motion } from "framer-motion";
 import { Lead } from "@/types/leads";
 import { User } from "@/types/user.types";
@@ -150,13 +157,8 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
         if (!data?._id || cancelled) return;
 
         unmaskedForPanelRef.current = panelContactSnapshotFromLead(data);
-        // List caches stay permission-masked; panel keeps full contact for dialer/copy.
-        syncLeadContactToListCaches(
-          queryClient,
-          data,
-          canViewEmails,
-          canViewPhoneNumbers,
-        );
+        // Update panel contact immediately; defer list-cache patch so opening a
+        // lead doesn't re-render the full table on the same frame.
         setCurrentLead((prev) =>
           prev && prev._id === data._id
             ? {
@@ -171,6 +173,14 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
               }
             : prev,
         );
+        startTransition(() => {
+          syncLeadContactToListCaches(
+            queryClient,
+            data,
+            canViewEmails,
+            canViewPhoneNumbers,
+          );
+        });
       } catch {
         /* ignore */
       }
@@ -234,14 +244,16 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           normalizeLeadStatusId(freshLead.status),
           { touchActivity: true },
         );
-        syncLeadContactToListCaches(
-          queryClient,
-          freshLead,
-          canViewEmails,
-          canViewPhoneNumbers,
-        );
         previousStatusRef.current = freshLead.status;
         setCurrentLead(freshLead);
+        startTransition(() => {
+          syncLeadContactToListCaches(
+            queryClient,
+            freshLead,
+            canViewEmails,
+            canViewPhoneNumbers,
+          );
+        });
       } catch (error) {
         console.error(
           "Failed to sync lead details from realtime event:",
@@ -508,13 +520,15 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
           merged,
         );
         unmaskedForPanelRef.current = panelContactSnapshotFromLead(resolved);
-        syncLeadContactToListCaches(
-          queryClient,
-          resolved,
-          canViewEmails,
-          canViewPhoneNumbers,
-        );
         setCurrentLead(resolved);
+        startTransition(() => {
+          syncLeadContactToListCaches(
+            queryClient,
+            resolved,
+            canViewEmails,
+            canViewPhoneNumbers,
+          );
+        });
       }
       return result;
     } catch (error) {

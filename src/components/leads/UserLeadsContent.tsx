@@ -1,7 +1,7 @@
 // src/components/leads/UserLeadsContent.tsx
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { startTransition, useState, useEffect, useCallback, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Lead } from "@/types/leads";
 import { FilterLogic } from "@/components/user-leads/FilterLogic";
@@ -384,25 +384,34 @@ export default function UserLeadsContent() {
     }
 
     if (urlLead) {
-      if (!selectedLead || selectedLead._id !== urlLead._id) {
-        setSelectedLead(urlLead);
+      const needsLeadUpdate =
+        !selectedLead || selectedLead._id !== urlLead._id;
+      const needsPanelOpen = !isPanelOpen;
+      if (needsLeadUpdate || needsPanelOpen) {
+        startTransition(() => {
+          if (needsLeadUpdate) setSelectedLead(urlLead);
+          if (needsPanelOpen) setIsPanelOpen(true);
+        });
       }
-      if (!isPanelOpen) setIsPanelOpen(true);
     }
   }, [searchParams, leads, isPanelOpen, selectedLead, isRefetching]);
 
   // Row click handler: open side panel and sync URL
   const handleRowClick = useCallback((lead: Lead) => {
-    setSelectedLead(lead);
-    setIsPanelOpen(true);
     handleURLLeadClick(lead);
+    startTransition(() => {
+      setSelectedLead(lead);
+      setIsPanelOpen(true);
+    });
   }, [handleURLLeadClick]);
 
   // Panel close handler: update local state and URL
   const handlePanelCloseLocal = useCallback(() => {
-    setIsPanelOpen(false);
-    setSelectedLead(null);
     handleURLPanelClose();
+    startTransition(() => {
+      setIsPanelOpen(false);
+      setSelectedLead(null);
+    });
   }, [handleURLPanelClose]);
 
   // Panel navigation handler: move to prev/next lead and sync URL
@@ -423,9 +432,11 @@ export default function UserLeadsContent() {
       if (newIndex < 0 || newIndex >= sortedLeads.length) return;
 
       const newLead = sortedLeads[newIndex];
-      setSelectedLead(newLead);
-      setIsPanelOpen(true);
       handleURLNavigation(direction, currentSelectedLead, sortedLeads);
+      startTransition(() => {
+        setSelectedLead(newLead);
+        setIsPanelOpen(true);
+      });
     },
     [handleURLNavigation],
   );

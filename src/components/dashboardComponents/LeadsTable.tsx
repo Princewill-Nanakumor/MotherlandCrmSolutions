@@ -1,11 +1,18 @@
 // src/components/dashboardComponents/LeadsTable.tsx
 "use client";
 
-import { useMemo, useEffect, useState, useCallback, useRef } from "react";
+import {
+  startTransition,
+  useMemo,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams, usePathname } from "next/navigation";
 import { DEFAULT_LEAD_PAGE_SIZE } from "@/lib/leadPageSize";
 import { EmptyStateAdminLeadsTable } from "./EmptyStateAdminLeadsTable";
-import LeadDetailsPanel from "@/components/dashboardComponents/LeadDetailsPanel";
 import { Lead } from "@/types/leads";
 import { User } from "@/types/user.types";
 import { TableHeader as CustomTableHeader } from "@/components/leads/LeadsTable/TableHeader";
@@ -31,6 +38,11 @@ import { useColumnOrder } from "@/hooks/useColumnOrder";
 import { useColumnVisibility } from "@/hooks/useColumnVisibility";
 import { useClearLeadSelectionOnEscape } from "@/hooks/useClearLeadSelectionOnEscape";
 import { mergeLeadContactExtrasIfSame } from "@/lib/leadClientUpdate";
+
+const LeadDetailsPanel = dynamic(
+  () => import("@/components/dashboardComponents/LeadDetailsPanel"),
+  { ssr: false },
+);
 
 function leadRowNeedsPanelResync(prev: Lead, next: Lead): boolean {
   const prevAssignee =
@@ -353,8 +365,10 @@ export default function LeadsTable({
       if (lead) {
         // Lead exists - update selectedLead if it's different
         if (!selectedLead || selectedLead._id !== lead._id) {
-          setSelectedLead(lead);
-          setIsPanelOpen(true);
+          startTransition(() => {
+            setSelectedLead(lead);
+            setIsPanelOpen(true);
+          });
         }
       }
       // If lead not found but URL has param, keep panel open with current selectedLead

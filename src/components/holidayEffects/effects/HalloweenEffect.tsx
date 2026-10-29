@@ -104,7 +104,7 @@ export function HalloweenEffect({ intensity }: { intensity: HolidayIntensity }) 
         testId="holiday-effect-halloween-bats"
       />
       <FallingEmojiEffect
-        emojis={["🎃", "👻", "🕷️", "🕸️"]}
+        emojis={["🎃", "👻"]}
         intensity={intensity}
         testId="holiday-effect-halloween-pumpkins"
       />

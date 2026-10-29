@@ -1,7 +1,7 @@
 // src/components/dashboardComponents/PanelNavigation.tsx
 "use client";
 
-import { useCallback } from "react";
+import { startTransition, useCallback } from "react";
 import { Lead } from "@/types/leads";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -59,17 +59,23 @@ export const usePanelNavigation = ({
         return;
       }
 
-      setSelectedLead(lead);
-      setIsPanelOpen(true);
+      // Keep the click responsive: URL sync first, then open the heavy panel
+      // as a non-urgent transition so the table stays interactive.
       updateUrl(lead);
+      startTransition(() => {
+        setSelectedLead(lead);
+        setIsPanelOpen(true);
+      });
     },
     [setSelectedLead, setIsPanelOpen, updateUrl]
   );
 
   const handlePanelClose = useCallback(() => {
-    setSelectedLead(null);
-    setIsPanelOpen(false);
     updateUrl(null);
+    startTransition(() => {
+      setSelectedLead(null);
+      setIsPanelOpen(false);
+    });
   }, [setSelectedLead, setIsPanelOpen, updateUrl]);
 
   const handleNavigate = useCallback(
@@ -91,8 +97,10 @@ export const usePanelNavigation = ({
       }
 
       if (newLead) {
-        setSelectedLead(newLead);
         updateUrl(newLead);
+        startTransition(() => {
+          setSelectedLead(newLead);
+        });
       }
     },
     [sortedLeads, selectedLead, setSelectedLead, updateUrl]

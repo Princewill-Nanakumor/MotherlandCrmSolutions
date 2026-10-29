@@ -84,7 +84,8 @@ export const HOLIDAY_EFFECT_RULES: HolidayEffectRule[] = [
       endDay: 31,
     },
     effectType: "halloween-bats",
-    intensity: "medium",
+    // Keep light so bats/pumpkins don't compete with lead-panel opens.
+    intensity: "low",
   },
   {
     id: "thanksgiving",

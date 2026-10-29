@@ -28,7 +28,7 @@ import {
 } from "@/lib/leadListSearchParams";
 import { LeadsSectionCollapse } from "./LeadsSectionCollapse";
 import {
-  useSelectedLead,
+  useLeadsStore,
   useSetIsPanelOpen,
   useSetSelectedLead,
 } from "@/stores/leadsStore";
@@ -53,7 +53,8 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
   const isOnline = useNetworkStatus();
   const { showHeader, showControls } = useToggleContext();
   const { updateLeadAsync } = useUpdateLead();
-  const selectedLead = useSelectedLead();
+  // Don't subscribe to selectedLead here — that re-renders the whole page on
+  // every row click and freezes the table while the panel mounts.
   const setSelectedLead = useSetSelectedLead();
   const setIsPanelOpen = useSetIsPanelOpen();
   const prevSearchQueryRef = useRef(searchQuery);
@@ -133,6 +134,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
     async (updatedLead: Lead) => {
       // Status is already persisted via PATCH /status; skip a full PUT that
       // could omit/clear secondary emails & phones.
+      const selectedLead = useLeadsStore.getState().selectedLead;
       if (
         selectedLead &&
         selectedLead._id === updatedLead._id &&
@@ -148,7 +150,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
         return false;
       }
     },
-    [selectedLead, updateLeadAsync],
+    [updateLeadAsync],
   );
 
   const handleDialogClose = useCallback(() => {
