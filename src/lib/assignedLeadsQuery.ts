@@ -55,6 +55,8 @@ export type AssignedLeadsQueryFilters = {
   statusFilterMode: FilterMode;
   sourceFilterMode: FilterMode;
   searchQuery: string;
+  sortField?: string;
+  sortOrder?: "asc" | "desc";
 };
 
 export const assignedLeadsKeys = {
@@ -80,6 +82,8 @@ export function buildAssignedLeadsQueryKey(
     filters.statusFilterMode,
     filters.sourceFilterMode,
     filters.searchQuery,
+    filters.sortField ?? "lastActivityAt",
+    filters.sortOrder ?? "desc",
   ] as const;
 }
 
@@ -107,6 +111,7 @@ export function resolveAssignedLeadsQueryFilters(
 ): AssignedLeadsQueryFilters {
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const pageSize = parseLeadPageSize(searchParams.get("pageSize"));
+  const sortOrderParam = searchParams.get("sortOrder");
   return {
     page,
     pageSize,
@@ -117,6 +122,11 @@ export function resolveAssignedLeadsQueryFilters(
     statusFilterMode: parseFilterMode(searchParams.get("statusMode")),
     sourceFilterMode: parseFilterMode(searchParams.get("sourceMode")),
     searchQuery,
+    sortField: searchParams.get("sortField") || "lastActivityAt",
+    sortOrder:
+      sortOrderParam === "asc" || sortOrderParam === "desc"
+        ? sortOrderParam
+        : "desc",
   };
 }
 
@@ -226,6 +236,8 @@ export async function fetchAssignedLeadsPage(
   if (searchTrimmed) {
     params.set("search", searchTrimmed);
   }
+  params.set("sortField", filters.sortField ?? "lastActivityAt");
+  params.set("sortOrder", filters.sortOrder ?? "desc");
 
   let url = `/api/leads/assigned?${params.toString()}`;
   if (searchTrimmed && url.includes("search=")) {

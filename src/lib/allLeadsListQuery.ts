@@ -31,6 +31,8 @@ export type AllLeadsQueryFilters = {
   sourceFilterMode: FilterMode;
   userFilterMode: FilterMode;
   searchQuery: string;
+  sortField?: string;
+  sortOrder?: "asc" | "desc";
 };
 
 function getInitialFilterValue(
@@ -80,6 +82,7 @@ export function resolveAllLeadsQueryFilters(
   searchParams: URLSearchParams,
   searchQuery: string,
   filterByUser: string,
+  sort?: { sortField?: string; sortOrder?: "asc" | "desc" },
 ): AllLeadsQueryFilters {
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const pageSize = parseAllLeadsPageSizeOption(searchParams.get("pageSize"));
@@ -124,6 +127,8 @@ export function resolveAllLeadsQueryFilters(
       "include",
     ),
     searchQuery,
+    sortField: sort?.sortField ?? "lastActivityAt",
+    sortOrder: sort?.sortOrder ?? "desc",
   };
 }
 
@@ -141,6 +146,8 @@ export function buildAllLeadsQueryKey(filters: AllLeadsQueryFilters) {
     filters.sourceFilterMode,
     filters.userFilterMode,
     filters.searchQuery,
+    filters.sortField ?? "lastActivityAt",
+    filters.sortOrder ?? "desc",
   ] as const;
 }
 
@@ -176,6 +183,8 @@ export async function fetchAllLeadsPage(
   if (searchTrimmed) {
     params.set("search", searchTrimmed);
   }
+  params.set("sortField", filters.sortField ?? "lastActivityAt");
+  params.set("sortOrder", filters.sortOrder ?? "desc");
 
   let url = `/api/leads/all?${params.toString()}`;
   if (searchTrimmed && url.includes("search=")) {

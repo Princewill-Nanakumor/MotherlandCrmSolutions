@@ -120,6 +120,8 @@ export default function UserLeadsContent() {
     statusFilterMode,
     sourceFilterMode,
     searchQuery,
+    sortField,
+    sortOrder,
   });
 
   // Helper to parse URL params into string arrays (JSON array or legacy string)
@@ -296,6 +298,7 @@ export default function UserLeadsContent() {
       const { newField, newOrder } = handleURLSort(field, sortField, sortOrder);
       setSortField(newField);
       setSortOrder(newOrder);
+      setPageIndex(0);
     },
     [handleURLSort, sortField, sortOrder],
   );

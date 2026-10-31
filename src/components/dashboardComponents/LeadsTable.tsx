@@ -266,14 +266,21 @@ export default function LeadsTable({
   const { sortedLeads, handleSort } = useTableSorting({
     leads,
     sortField: (stableSorting[0]?.id as SortField) || "lastActivityAt",
-    sortOrder: stableSorting[0]?.desc ? "desc" : "asc",
+    sortOrder: stableSorting[0]?.desc === false ? "asc" : "desc",
     users,
     searchQuery,
+    serverSorted: isServerPagination,
     onSortChange: useCallback(
       (field, order) => {
         setSorting([{ id: field, desc: order === "desc" }]);
+        // New sort order is a new result universe — return to page 1.
+        if (isServerPagination && onServerPageChange) {
+          onServerPageChange(1);
+        } else {
+          setPageIndex(0);
+        }
       },
-      [setSorting],
+      [setSorting, isServerPagination, onServerPageChange],
     ),
   });
 
@@ -465,7 +472,7 @@ export default function LeadsTable({
 
   const { columns } = useTableColumns({
     sortField: (stableSorting[0]?.id as SortField) || "lastActivityAt",
-    sortOrder: stableSorting[0]?.desc ? "desc" : "asc",
+    sortOrder: stableSorting[0]?.desc === false ? "asc" : "desc",
     handleSort,
     allSelected,
     someSelected,

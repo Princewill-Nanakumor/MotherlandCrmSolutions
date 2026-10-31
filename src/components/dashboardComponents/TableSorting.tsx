@@ -9,6 +9,10 @@ import {
   isPrefixedLeadId,
   normalizeLeadId,
 } from "@/lib/leadId";
+import {
+  defaultLeadListSortOrder,
+  isLeadListServerSortField,
+} from "@/lib/leadListSort";
 
 type SortField =
   | "leadId"
@@ -32,6 +36,11 @@ interface TableSortingProps {
   users: User[];
   searchQuery?: string;
   onSortChange: (field: SortField, order: SortOrder) => void;
+  /**
+   * When true, the current `leads` page is already ordered by the API for
+   * server-supported sort fields — skip a second client re-sort.
+   */
+  serverSorted?: boolean;
 }
 
 export const useTableSorting = ({
@@ -41,6 +50,7 @@ export const useTableSorting = ({
   users,
   searchQuery = "",
   onSortChange,
+  serverSorted = false,
 }: TableSortingProps) => {
   // Search function: matches leadId, name, email, phone. Normalizes phone to digits so e.g. "+1 819-962-5286" matches "18199625286".
   const searchLeads = (leads: Lead[], query: string): Lead[] => {
@@ -90,10 +100,17 @@ export const useTableSorting = ({
   const sortedLeads = useMemo(() => {
     if (!Array.isArray(leads) || leads.length === 0) return [];
 
-    // First apply search filter
-    const filteredLeads = searchLeads(leads, searchQuery);
+    // API already filtered this page (search / country / status / source / user).
+    // Re-filtering here would shrink the page and break totals.
+    if (serverSorted && isLeadListServerSortField(sortField)) {
+      return leads;
+    }
 
-    // Then apply sorting
+    const filteredLeads = serverSorted
+      ? leads
+      : searchLeads(leads, searchQuery);
+
+    // Page-local sort only for columns the API cannot order (e.g. commentCount).
     return [...filteredLeads].sort((a, b) => {
       const multiplier = sortOrder === "asc" ? 1 : -1;
 
@@ -183,12 +200,16 @@ export const useTableSorting = ({
           return 0;
       }
     });
-  }, [leads, searchQuery, sortField, sortOrder, users]);
+  }, [leads, searchQuery, sortField, sortOrder, users, serverSorted]);
 
   const handleSort = useCallback(
     (field: SortField) => {
       const newOrder =
-        sortField === field && sortOrder === "asc" ? "desc" : "asc";
+        sortField === field
+          ? sortOrder === "asc"
+            ? "desc"
+            : "asc"
+          : defaultLeadListSortOrder(field);
       onSortChange(field, newOrder);
     },
     [sortField, sortOrder, onSortChange]

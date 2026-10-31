@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { useLeadsStore } from "@/stores/leadsStore";
+import { useLeadsStore, useSorting } from "@/stores/leadsStore";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useToast } from "@/components/ui/use-toast";
 import { getAvailableCountries } from "../utils/LeadsUtils";
@@ -132,6 +132,10 @@ export const useLeadsPage = (
     }));
   };
 
+  const tableSorting = useSorting();
+  const sortField = (tableSorting[0]?.id as string) || "lastActivityAt";
+  const sortOrder = tableSorting[0]?.desc === false ? "asc" : "desc";
+
   // ===== LEADS QUERY (use searchQuery prop in key so navbar search refetches immediately) =====
   const leadsQueryKey = buildAllLeadsQueryKey({
     page,
@@ -145,6 +149,8 @@ export const useLeadsPage = (
     sourceFilterMode: uiState.sourceFilterMode,
     userFilterMode: uiState.userFilterMode,
     searchQuery,
+    sortField,
+    sortOrder,
   });
 
   const {
@@ -186,6 +192,8 @@ export const useLeadsPage = (
         sourceFilterMode: uiState.sourceFilterMode,
         userFilterMode: uiState.userFilterMode,
         searchQuery,
+        sortField,
+        sortOrder,
       }),
     enabled: isAuthenticated,
     staleTime: ALL_LEADS_QUERY_STALE_MS,

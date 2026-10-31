@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { connectMongoDB } from "@/lib/dbConfig";
 import mongoose from "mongoose";
-import { Db, ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 import {
   buildTenantLeadBaseQuery,
   buildLeadSearchConditions,
@@ -19,6 +19,11 @@ import {
 } from "@/lib/countryNormalize";
 import { canAccessAllLeads, getTenantAdminId, isAdmin, isTenantStaff } from "@/lib/roles";
 import { agentAssignedToUserClause } from "@/lib/leadAssignmentQuery";
+import {
+  buildLeadListMongoSort,
+  parseLeadListSort,
+} from "@/lib/leadListSort";
+import { ensureTenantLastCommentBackfill } from "@/lib/leadLastComment";
 import type { ApiRoutePerf } from "@/lib/apiRoutePerf";
 
 interface SessionUser {
@@ -59,7 +64,8 @@ const LEADS_LIST_PROJECTION = {
   updatedAt: 1,
   statusChangedAt: 1,
   lastActivityAt: 1,
-  comments: 1,
+  lastComment: 1,
+  lastCommentDate: 1,
 } as const;
 
 function getCachedTotalAll(cacheKey: string): number | null {
@@ -87,7 +93,8 @@ function safeObjectIdToString(id: unknown): string | null {
 }
 
 async function getAssignedToUser(
-  db: Db,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: { collection: (name: string) => any },
   assignedTo: unknown,
   userMap: Map<string, UserData>,
 ): Promise<{ id: string; firstName: string; lastName: string; email?: string } | null> {
@@ -216,6 +223,11 @@ export async function getAllLeadsForSession(
   const sourceMode = searchParams.get("sourceMode") === "exclude" ? "exclude" : "include";
   const userMode = searchParams.get("userMode") === "exclude" ? "exclude" : "include";
   const rawSearch = searchParams.get("search") || "";
+  const { sortField, sortOrder } = parseLeadListSort(
+    searchParams.get("sortField"),
+    searchParams.get("sortOrder"),
+  );
+  const mongoSort = buildLeadListMongoSort(sortField, sortOrder);
 
   await connectMongoDB();
   perf?.mark("connectMongoDB");
@@ -367,11 +379,28 @@ export async function getAllLeadsForSession(
     perf?.mark("countDocuments(filter)");
   }
 
+  const tenantId = getTenantAdminId(sessionUser);
+  const adminIdForComments = tenantId ? new ObjectId(tenantId) : null;
+
+  // Existing tenants may lack denormalized lastComment* — backfill once
+  // before sorting/paginating by those columns.
+  if (
+    (sortField === "lastCommentDate" || sortField === "lastComment") &&
+    adminIdForComments
+  ) {
+    await ensureTenantLastCommentBackfill(db, adminIdForComments);
+    perf?.mark("lastComment-backfill");
+  }
+
+  // Filter → sort → paginate. allowDiskUse avoids hard failures when a
+  // country/status/source/search filter leaves a large set that isn't fully
+  // covered by a compound index for the active sortField.
   const leads = await db
     .collection("leads")
     .find(filter)
     .project(LEADS_LIST_PROJECTION)
-    .sort({ lastActivityAt: -1, updatedAt: -1, createdAt: -1 })
+    .sort(mongoSort)
+    .allowDiskUse(true)
     .skip((page - 1) * pageSize)
     .limit(pageSize)
     .toArray();
@@ -395,41 +424,22 @@ export async function getAllLeadsForSession(
     users.forEach((user) => userMap.set(user._id.toString(), user as UserData));
   }
   perf?.mark("assigned-users-lookup");
-
-  const tenantId = getTenantAdminId(sessionUser);
-  const adminIdForComments = tenantId ? new ObjectId(tenantId) : null;
   const leadIds = leads.map(
     (lead: Record<string, unknown>) =>
       (lead._id instanceof ObjectId ? lead._id : new ObjectId(safeObjectIdToString(lead._id) || "")),
   );
 
-  const lastCommentsMap = new Map<string, { content: string; createdAt: Date }>();
+  // lastComment / lastCommentDate come from denormalized lead fields (kept in
+  // sync on comment CRUD + one-shot tenant backfill). Only count aggregations
+  // remain for the commentCount column.
   const commentCountsMap = new Map<string, number>();
   const activityCountsMap = new Map<string, number>();
   if (adminIdForComments && leadIds.length > 0) {
-    interface LastCommentResult {
-      _id: ObjectId;
-      content: string;
-      createdAt: Date;
-    }
     interface CountResult {
       _id: ObjectId;
       count: number;
     }
-    const [lastComments, commentCounts, activityCounts] = await Promise.all([
-      db
-        .collection("comments")
-        .aggregate<LastCommentResult>([
-          {
-            $match: {
-              leadId: { $in: leadIds },
-              $or: [{ adminId: adminIdForComments }, { adminId: { $exists: false } }],
-            },
-          },
-          { $sort: { createdAt: -1 } },
-          { $group: { _id: "$leadId", content: { $first: "$content" }, createdAt: { $first: "$createdAt" } } },
-        ])
-        .toArray(),
+    const [commentCounts, activityCounts] = await Promise.all([
       db
         .collection("comments")
         .aggregate<CountResult>([
@@ -456,9 +466,6 @@ export async function getAllLeadsForSession(
         ])
         .toArray(),
     ]);
-    lastComments.forEach((comment) =>
-      lastCommentsMap.set(comment._id.toString(), { content: comment.content, createdAt: comment.createdAt }),
-    );
     commentCounts.forEach((result) => commentCountsMap.set(result._id.toString(), result.count));
     activityCounts.forEach((result) => activityCountsMap.set(result._id.toString(), result.count));
   }
@@ -468,10 +475,17 @@ export async function getAllLeadsForSession(
     leads.map(async (lead: Record<string, unknown>) => {
       let assignedToUser = null;
       if (lead.assignedTo) {
-        assignedToUser = await getAssignedToUser(db as unknown as Db, lead.assignedTo, userMap);
+        assignedToUser = await getAssignedToUser(db, lead.assignedTo, userMap);
       }
       const leadIdString = safeObjectIdToString(lead._id) || "";
-      const lastComment = lastCommentsMap.get(leadIdString);
+      const denormContent =
+        typeof lead.lastComment === "string" ? lead.lastComment : null;
+      const denormDate = lead.lastCommentDate;
+      const resolvedCommentDate = denormDate
+        ? denormDate instanceof Date
+          ? denormDate.toISOString()
+          : String(denormDate)
+        : null;
       const timelineCount = (commentCountsMap.get(leadIdString) || 0) + (activityCountsMap.get(leadIdString) || 0);
       return {
         _id: leadIdString,
@@ -509,13 +523,9 @@ export async function getAllLeadsForSession(
           : lead.updatedAt instanceof Date
             ? lead.updatedAt.toISOString()
             : (lead.updatedAt as string) || undefined,
-        comments: (lead.comments as string) || "",
-        lastComment: lastComment?.content || null,
-        lastCommentDate: lastComment?.createdAt
-          ? lastComment.createdAt instanceof Date
-            ? lastComment.createdAt.toISOString()
-            : (lastComment.createdAt as unknown as string)
-          : null,
+        comments: "",
+        lastComment: denormContent,
+        lastCommentDate: resolvedCommentDate,
         commentCount: timelineCount,
       };
     }),

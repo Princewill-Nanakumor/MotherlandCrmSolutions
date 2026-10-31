@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lead } from "@/types/leads";
 import { normalizeLeadId } from "@/lib/leadId";
+import { defaultLeadListSortOrder } from "@/lib/leadListSort";
 
 type SortField = "leadId" | "name" | "country" | "status" | "source" | "lastActivityAt" | "assignedTo" | "createdAt" | "statusChangedAt" | "lastComment" | "lastCommentDate" | "commentCount";
 type SortOrder = "asc" | "desc";
@@ -89,10 +90,16 @@ export const useLeadsURLManagement = () => {
   const handleSort = useCallback(
     (field: SortField, currentField: SortField, currentOrder: SortOrder) => {
       const newOrder: SortOrder =
-        currentField === field && currentOrder === "asc" ? "desc" : "asc";
+        currentField === field
+          ? currentOrder === "asc"
+            ? "desc"
+            : "asc"
+          : defaultLeadListSortOrder(field);
       const params = createParams();
       params.set("sortField", field);
       params.set("sortOrder", newOrder);
+      // Sorting changes the result universe — always restart at page 1.
+      params.set("page", "1");
       pushWithParams(params);
       return { newField: field, newOrder };
     },

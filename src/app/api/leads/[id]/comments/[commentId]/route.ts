@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { connectMongoDB } from "@/lib/dbConfig";
 import { authOptions } from "@/lib/auth";
 import Comment from "@/models/Comment";
-import Lead from "@/models/Lead";
 import mongoose from "mongoose";
 import {
   publishAdminLeadsUpdatedEvent,
@@ -13,6 +12,7 @@ import {
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { findAccessibleLead } from "@/lib/leadAssignmentQuery";
 import { canAccessAllLeads, canDeleteComments, getTenantAdminId } from "@/lib/roles";
+import { syncLeadLastCommentFields } from "@/lib/leadLastComment";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";
 import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
 import {
@@ -185,15 +185,12 @@ export async function PUT(request: Request) {
       );
     }
 
-    await Lead.updateOne(
-      { _id: auth.comment.leadId, adminId },
-      {
-        $set: {
-          lastActivityAt: updated.updatedAt,
-          updatedAt: updated.updatedAt,
-        },
-      },
-    );
+    const db = mongoose.connection.db;
+    if (db) {
+      await syncLeadLastCommentFields(db, auth.comment.leadId, adminId, {
+        activityAt: updated.updatedAt,
+      });
+    }
 
     try {
       await publishLeadUpdatedEvent(adminId.toString(), canonicalLeadId, {
@@ -274,11 +271,10 @@ export async function DELETE(request: Request) {
         );
       }
 
-      const activityAt = new Date();
-      await Lead.updateOne(
-        { _id: auth.comment.leadId, adminId },
-        { $set: { lastActivityAt: activityAt, updatedAt: activityAt } },
-      );
+      const db = mongoose.connection.db;
+      if (db) {
+        await syncLeadLastCommentFields(db, auth.comment.leadId, adminId);
+      }
       perf.mark("touchLeadActivity");
 
       try {

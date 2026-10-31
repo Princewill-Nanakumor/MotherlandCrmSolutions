@@ -5,7 +5,6 @@ import mongoose from "mongoose";
 import { connectMongoDB } from "@/lib/dbConfig";
 import { authOptions } from "@/lib/auth";
 import Comment, { IComment } from "@/models/Comment";
-import Lead from "@/models/Lead";
 import {
   publishAdminLeadsUpdatedEvent,
   publishLeadUpdatedEvent,
@@ -13,6 +12,7 @@ import {
 import { unauthorizedResponse, forbiddenResponse } from "@/lib/apiResponses";
 import { findAccessibleLead } from "@/lib/leadAssignmentQuery";
 import { canAccessAllLeads, getTenantAdminId } from "@/lib/roles";
+import { syncLeadLastCommentFields } from "@/lib/leadLastComment";
 import { ApiRoutePerf } from "@/lib/apiRoutePerf";
 import { apiPerfJsonResponse } from "@/lib/apiPerfJsonResponse";
 import {
@@ -184,15 +184,12 @@ export async function POST(request: Request) {
       },
     });
 
-    await Lead.updateOne(
-      { _id: leadObjectId },
-      {
-        $set: {
-          lastActivityAt: savedComment.createdAt,
-          updatedAt: savedComment.createdAt,
-        },
-      },
-    );
+    const db = mongoose.connection.db;
+    if (db) {
+      await syncLeadLastCommentFields(db, leadObjectId, adminId, {
+        activityAt: savedComment.createdAt,
+      });
+    }
 
     try {
       await publishLeadUpdatedEvent(adminId.toString(), canonicalLeadId, {

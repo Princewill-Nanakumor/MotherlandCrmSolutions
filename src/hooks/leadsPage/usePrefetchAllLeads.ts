@@ -20,14 +20,18 @@ export function usePrefetchAllLeads(searchQuery: string) {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const filterByUser = useLeadsStore((state) => state.filterByUser);
+  const sorting = useLeadsStore((state) => state.sorting);
 
   useEffect(() => {
     if (!hasAuthorizedSession(status, session) || !searchParams) return;
 
+    const sortField = sorting[0]?.id || "lastActivityAt";
+    const sortOrder = sorting[0]?.desc === false ? "asc" : "desc";
     const filters = resolveAllLeadsQueryFilters(
       searchParams,
       searchQuery,
       filterByUser,
+      { sortField, sortOrder },
     );
     const queryKey = buildAllLeadsQueryKey(filters);
 
@@ -36,5 +40,13 @@ export function usePrefetchAllLeads(searchQuery: string) {
       queryFn: () => fetchAllLeadsPage(filters),
       staleTime: ALL_LEADS_QUERY_STALE_MS,
     });
-  }, [status, session, searchParams, searchQuery, filterByUser, queryClient]);
+  }, [
+    status,
+    session,
+    searchParams,
+    searchQuery,
+    filterByUser,
+    sorting,
+    queryClient,
+  ]);
 }

@@ -24,6 +24,10 @@ export interface ILead {
   adminId: mongoose.Types.ObjectId;
   statusChangedAt?: Date;
   lastActivityAt?: Date;
+  /** Denormalized latest comment body for list columns / sort. */
+  lastComment?: string | null;
+  /** Denormalized latest comment time — indexed for server list sort. */
+  lastCommentDate?: Date | null;
   createdAt: Date;
   updatedAt: Date;
   __v: number;
@@ -121,6 +125,14 @@ const leadSchema = new Schema(
       type: Date,
       default: null,
     },
+    lastComment: {
+      type: String,
+      default: null,
+    },
+    lastCommentDate: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -149,6 +161,16 @@ leadSchema.index({
   updatedAt: -1,
   createdAt: -1,
 });
+// Last-comment column sort on All Leads / assigned lists.
+leadSchema.index({ adminId: 1, lastCommentDate: -1 });
+// Filter + default activity sort (country / status / source facets).
+leadSchema.index({ adminId: 1, country: 1, lastActivityAt: -1 });
+leadSchema.index({ adminId: 1, status: 1, lastActivityAt: -1 });
+leadSchema.index({ adminId: 1, source: 1, lastActivityAt: -1 });
+// Filter + last-comment date sort (same facets).
+leadSchema.index({ adminId: 1, country: 1, lastCommentDate: -1 });
+leadSchema.index({ adminId: 1, status: 1, lastCommentDate: -1 });
+leadSchema.index({ adminId: 1, source: 1, lastCommentDate: -1 });
 
 // Generate collision-resistant public lead ID.
 export function generateLeadId(): string {

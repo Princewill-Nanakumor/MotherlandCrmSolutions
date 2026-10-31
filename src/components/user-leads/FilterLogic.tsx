@@ -9,6 +9,7 @@ import {
   getAvailableSources,
 } from "@/utils/LeadsUtils";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
+import { isLeadListServerSortField } from "@/lib/leadListSort";
 
 type SortField =
   | "leadId"
@@ -37,7 +38,7 @@ interface FilterLogicProps {
   sortOrder: SortOrder;
   isDataReady: boolean;
   searchQuery?: string;
-  /** When true, `leads` is already the current server page — only sort locally. */
+  /** When true, `leads` is already the filtered/sorted server page — skip client filter/sort for API fields. */
   serverFiltered?: boolean;
   children: (props: {
     filteredLeads: Lead[];
@@ -173,6 +174,11 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
       return [];
     }
 
+    // Server already ordered this page for supported sort fields.
+    if (serverFiltered && isLeadListServerSortField(sortField)) {
+      return filteredLeads;
+    }
+
     return [...filteredLeads].sort((a, b) => {
       let aValue: string | number = "";
       let bValue: string | number = "";
@@ -282,7 +288,7 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
         return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
       }
     });
-  }, [filteredLeads, sortField, sortOrder, isDataReady]);
+  }, [filteredLeads, sortField, sortOrder, isDataReady, serverFiltered]);
 
   return children({
     filteredLeads,
