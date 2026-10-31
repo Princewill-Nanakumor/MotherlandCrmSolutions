@@ -109,6 +109,9 @@ export function useLeadStatusMutation({
             lastComment: normalized.lastComment ?? existingLead.lastComment,
             lastCommentDate:
               normalized.lastCommentDate ?? existingLead.lastCommentDate,
+            lastCallInitiatedAt:
+              normalized.lastCallInitiatedAt ??
+              existingLead.lastCallInitiatedAt,
             commentCount:
               normalized.commentCount ?? existingLead.commentCount,
             lastActivityAt:

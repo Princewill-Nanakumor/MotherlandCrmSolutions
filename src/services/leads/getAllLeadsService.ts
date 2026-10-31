@@ -24,6 +24,7 @@ import {
   parseLeadListSort,
 } from "@/lib/leadListSort";
 import { ensureTenantLastCommentBackfill } from "@/lib/leadLastComment";
+import { ensureTenantLastCallBackfill } from "@/lib/leadLastCall";
 import type { ApiRoutePerf } from "@/lib/apiRoutePerf";
 
 interface SessionUser {
@@ -66,6 +67,7 @@ const LEADS_LIST_PROJECTION = {
   lastActivityAt: 1,
   lastComment: 1,
   lastCommentDate: 1,
+  lastCallInitiatedAt: 1,
 } as const;
 
 function getCachedTotalAll(cacheKey: string): number | null {
@@ -382,14 +384,20 @@ export async function getAllLeadsForSession(
   const tenantId = getTenantAdminId(sessionUser);
   const adminIdForComments = tenantId ? new ObjectId(tenantId) : null;
 
-  // Existing tenants may lack denormalized lastComment* — backfill once
-  // before sorting/paginating by those columns.
+  // Existing tenants may lack denormalized lastComment* / lastCall* — backfill
+  // once so list columns show historical timeline data (panel already has it).
   if (
     (sortField === "lastCommentDate" || sortField === "lastComment") &&
     adminIdForComments
   ) {
     await ensureTenantLastCommentBackfill(db, adminIdForComments);
     perf?.mark("lastComment-backfill");
+  }
+  // Always backfill calls on list load (memoized per tenant) so the column
+  // populates without requiring a sort click.
+  if (adminIdForComments) {
+    await ensureTenantLastCallBackfill(db, adminIdForComments);
+    perf?.mark("lastCall-backfill");
   }
 
   // Filter → sort → paginate. allowDiskUse avoids hard failures when a
@@ -429,17 +437,31 @@ export async function getAllLeadsForSession(
       (lead._id instanceof ObjectId ? lead._id : new ObjectId(safeObjectIdToString(lead._id) || "")),
   );
 
-  // lastComment / lastCommentDate come from denormalized lead fields (kept in
-  // sync on comment CRUD + one-shot tenant backfill). Only count aggregations
-  // remain for the commentCount column.
+  // lastComment / lastCommentDate / lastCallInitiatedAt come from denormalized
+  // lead fields. Count aggregations power the Timeline column. For any row
+  // still missing lastCallInitiatedAt (pre-denorm calls), hydrate from the
+  // same CALL_INITIATED activities the panel timeline shows.
   const commentCountsMap = new Map<string, number>();
   const activityCountsMap = new Map<string, number>();
+  const lastCallMap = new Map<string, Date>();
   if (adminIdForComments && leadIds.length > 0) {
     interface CountResult {
       _id: ObjectId;
       count: number;
     }
-    const [commentCounts, activityCounts] = await Promise.all([
+    interface LastCallResult {
+      _id: ObjectId;
+      at: Date;
+    }
+    const leadsMissingCall = leads.filter((lead) => !lead.lastCallInitiatedAt);
+    const missingCallLeadIds = leadsMissingCall.map(
+      (lead: Record<string, unknown>) =>
+        lead._id instanceof ObjectId
+          ? lead._id
+          : new ObjectId(safeObjectIdToString(lead._id) || ""),
+    );
+
+    const [commentCounts, activityCounts, lastCalls] = await Promise.all([
       db
         .collection("comments")
         .aggregate<CountResult>([
@@ -465,9 +487,49 @@ export async function getAllLeadsForSession(
           { $group: { _id: "$leadId", count: { $sum: 1 } } },
         ])
         .toArray(),
+      missingCallLeadIds.length > 0
+        ? db
+            .collection("activities")
+            .aggregate<LastCallResult>([
+              {
+                $match: {
+                  leadId: { $in: missingCallLeadIds },
+                  type: "CALL_INITIATED",
+                  $or: [
+                    { adminId: adminIdForComments },
+                    { adminId: { $exists: false } },
+                  ],
+                },
+              },
+              { $sort: { timestamp: -1 } },
+              {
+                $group: {
+                  _id: "$leadId",
+                  at: { $first: "$timestamp" },
+                },
+              },
+            ])
+            .toArray()
+        : Promise.resolve([] as LastCallResult[]),
     ]);
     commentCounts.forEach((result) => commentCountsMap.set(result._id.toString(), result.count));
     activityCounts.forEach((result) => activityCountsMap.set(result._id.toString(), result.count));
+    if (lastCalls.length > 0) {
+      const writeOps = lastCalls.map((row) => {
+        const at =
+          row.at instanceof Date ? row.at : new Date(row.at as string | number | Date);
+        lastCallMap.set(row._id.toString(), at);
+        return {
+          updateOne: {
+            filter: { _id: row._id, adminId: adminIdForComments },
+            update: { $set: { lastCallInitiatedAt: at } },
+          },
+        };
+      });
+      void db.collection("leads").bulkWrite(writeOps, { ordered: false }).catch((err: unknown) => {
+        console.error("Failed to write-through lastCallInitiatedAt:", err);
+      });
+    }
   }
   perf?.mark("comment-activity-aggregations");
 
@@ -485,6 +547,12 @@ export async function getAllLeadsForSession(
         ? denormDate instanceof Date
           ? denormDate.toISOString()
           : String(denormDate)
+        : null;
+      const callAt = lead.lastCallInitiatedAt ?? lastCallMap.get(leadIdString) ?? null;
+      const resolvedCallAt = callAt
+        ? callAt instanceof Date
+          ? callAt.toISOString()
+          : String(callAt)
         : null;
       const timelineCount = (commentCountsMap.get(leadIdString) || 0) + (activityCountsMap.get(leadIdString) || 0);
       return {
@@ -526,6 +594,7 @@ export async function getAllLeadsForSession(
         comments: "",
         lastComment: denormContent,
         lastCommentDate: resolvedCommentDate,
+        lastCallInitiatedAt: resolvedCallAt,
         commentCount: timelineCount,
       };
     }),

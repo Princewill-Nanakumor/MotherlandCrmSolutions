@@ -10,6 +10,7 @@ export type SortField =
   | "statusChangedAt"
   | "lastComment"
   | "lastCommentDate"
+  | "lastCallInitiatedAt"
   | "commentCount";
 
 export type SortOrder = "asc" | "desc";

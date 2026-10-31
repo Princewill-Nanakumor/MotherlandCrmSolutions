@@ -19,6 +19,8 @@ function patchLeadInListCache(
     ...updated,
     lastComment: updated.lastComment ?? existing.lastComment,
     lastCommentDate: updated.lastCommentDate ?? existing.lastCommentDate,
+    lastCallInitiatedAt:
+      updated.lastCallInitiatedAt ?? existing.lastCallInitiatedAt,
     commentCount: updated.commentCount ?? existing.commentCount,
     lastActivityAt: updated.lastActivityAt ?? existing.lastActivityAt,
   });

@@ -21,19 +21,8 @@ import { formatPersonName } from "@/lib/leadAssignmentDisplay";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
 import { isCheckboxEventTarget } from "@/lib/tableSelectHitTarget";
 
-export type SortField =
-  | "leadId"
-  | "name"
-  | "country"
-  | "status"
-  | "source"
-  | "lastActivityAt"
-  | "createdAt"
-  | "assignedTo"
-  | "statusChangedAt"
-  | "lastComment"
-  | "lastCommentDate"
-  | "commentCount";
+import type { SortField } from "@/types/table";
+export type { SortField };
 
 const DEFAULT_STATUS_STYLE = {
   backgroundColor: "#EEF2FF",
@@ -489,6 +478,31 @@ export function buildTimelineColumns(params: {
       ),
       cell: ({ row }) => {
         const dt = formatDate(row.original.lastCommentDate);
+        if (!dt) return <div className="text-center font-medium text-gray-900! dark:text-white!">—</div>;
+        return (
+          <div className="text-sm text-center font-medium text-gray-900! dark:text-white!">
+            <div>{dt.dateStr}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{dt.timeStr}</div>
+          </div>
+        );
+      },
+    },
+    {
+      id: "lastCallInitiatedAt",
+      header: () => (
+        <Button
+          variant="ghost"
+          onClick={() => handleSort("lastCallInitiatedAt")}
+          className={headerButtonClass("center")}
+        >
+          <span className={headerLabelClass(sortField, "lastCallInitiatedAt")}>
+            Last Call Initiated
+          </span>
+          {sortIcon("lastCallInitiatedAt")}
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const dt = formatDate(row.original.lastCallInitiatedAt);
         if (!dt) return <div className="text-center font-medium text-gray-900! dark:text-white!">—</div>;
         return (
           <div className="text-sm text-center font-medium text-gray-900! dark:text-white!">

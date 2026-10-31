@@ -314,6 +314,8 @@ export function TableContent({
                   const isCreatedAtCell = cell.column.id === "createdAt";
                   const isLastCommentDateCell =
                     cell.column.id === "lastCommentDate";
+                  const isLastCallInitiatedAtCell =
+                    cell.column.id === "lastCallInitiatedAt";
 
                   return (
                     <TableCell
@@ -331,7 +333,8 @@ export function TableContent({
                                 isAssignedToCell ||
                                 isCreatedAtCell ||
                                 isLastCommentCell ||
-                                isLastCommentDateCell
+                                isLastCommentDateCell ||
+                                isLastCallInitiatedAtCell
                               ? "text-center"
                               : "text-left"
                         }

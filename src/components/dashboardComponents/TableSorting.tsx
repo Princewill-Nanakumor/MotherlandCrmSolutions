@@ -13,21 +13,7 @@ import {
   defaultLeadListSortOrder,
   isLeadListServerSortField,
 } from "@/lib/leadListSort";
-
-type SortField =
-  | "leadId"
-  | "name"
-  | "country"
-  | "status"
-  | "source"
-  | "lastActivityAt"
-  | "createdAt"
-  | "assignedTo"
-  | "statusChangedAt"
-  | "lastComment"
-  | "lastCommentDate"
-  | "commentCount";
-type SortOrder = "asc" | "desc";
+import type { SortField, SortOrder } from "@/types/table";
 
 interface TableSortingProps {
   leads: Lead[];
@@ -186,6 +172,18 @@ export const useTableSorting = ({
           const dateA = a.lastCommentDate ? new Date(a.lastCommentDate).getTime() : 0;
           const dateB = b.lastCommentDate ? new Date(b.lastCommentDate).getTime() : 0;
           // Leads without comments should go to the end
+          if (dateA === 0 && dateB !== 0) return 1 * multiplier;
+          if (dateA !== 0 && dateB === 0) return -1 * multiplier;
+          if (dateA === 0 && dateB === 0) return 0;
+          return (dateA - dateB) * multiplier;
+        }
+        case "lastCallInitiatedAt": {
+          const dateA = a.lastCallInitiatedAt
+            ? new Date(a.lastCallInitiatedAt).getTime()
+            : 0;
+          const dateB = b.lastCallInitiatedAt
+            ? new Date(b.lastCallInitiatedAt).getTime()
+            : 0;
           if (dateA === 0 && dateB !== 0) return 1 * multiplier;
           if (dateA !== 0 && dateB === 0) return -1 * multiplier;
           if (dateA === 0 && dateB === 0) return 0;

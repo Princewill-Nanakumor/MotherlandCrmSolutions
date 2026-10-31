@@ -186,6 +186,7 @@ export interface Lead {
   comments?: Comment[];
   lastComment?: string;
   lastCommentDate?: string;
+  lastCallInitiatedAt?: string;
   commentCount?: number;
   lastActivityAt?: string;
   assignedTo?: {

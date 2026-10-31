@@ -1,6 +1,7 @@
 import { Lead, LeadSource } from "@/types/leads";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { parseLeadPageSize } from "@/lib/leadPageSize";
+import { parseLeadListUiSort } from "@/lib/leadListSort";
 
 export const ASSIGNED_LEADS_QUERY_STALE_MS = 2 * 60 * 1000;
 export const ASSIGNED_LEADS_QUERY_TIMEOUT_MS = 90_000;
@@ -30,6 +31,7 @@ interface LeadFromAPI {
   comments?: string;
   lastComment?: string;
   lastCommentDate?: string;
+  lastCallInitiatedAt?: string;
   lastActivityAt?: string;
   commentCount?: number;
   assignedAt?: string;
@@ -111,7 +113,10 @@ export function resolveAssignedLeadsQueryFilters(
 ): AssignedLeadsQueryFilters {
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const pageSize = parseLeadPageSize(searchParams.get("pageSize"));
-  const sortOrderParam = searchParams.get("sortOrder");
+  const { sortField, sortOrder } = parseLeadListUiSort(
+    searchParams.get("sortField"),
+    searchParams.get("sortOrder"),
+  );
   return {
     page,
     pageSize,
@@ -122,11 +127,8 @@ export function resolveAssignedLeadsQueryFilters(
     statusFilterMode: parseFilterMode(searchParams.get("statusMode")),
     sourceFilterMode: parseFilterMode(searchParams.get("sourceMode")),
     searchQuery,
-    sortField: searchParams.get("sortField") || "lastActivityAt",
-    sortOrder:
-      sortOrderParam === "asc" || sortOrderParam === "desc"
-        ? sortOrderParam
-        : "desc",
+    sortField,
+    sortOrder,
   };
 }
 
@@ -203,6 +205,7 @@ function mapAssignedLead(lead: LeadFromAPI): Lead {
     comments: undefined,
     lastComment: lead.lastComment,
     lastCommentDate: lead.lastCommentDate,
+    lastCallInitiatedAt: lead.lastCallInitiatedAt,
     lastActivityAt: lead.lastActivityAt,
     commentCount: lead.commentCount,
     assignedTo: normalizeAssignedTo(lead.assignedTo),

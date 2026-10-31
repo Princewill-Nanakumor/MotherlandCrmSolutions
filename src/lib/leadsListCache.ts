@@ -282,6 +282,53 @@ function patchPaginatedLeadsAssignmentClear(
 }
 
 /**
+ * Update list rows when a softphone call is initiated from the lead panel.
+ */
+export function patchLeadLastCallInitiatedInListCaches(
+  queryClient: QueryClient,
+  leadId: string,
+  lastCallInitiatedAt: string,
+): void {
+  if (!leadId || !lastCallInitiatedAt) return;
+
+  const applyLead = (lead: Lead): Lead =>
+    lead._id === leadId
+      ? {
+          ...lead,
+          lastCallInitiatedAt,
+          lastActivityAt: lastCallInitiatedAt,
+          updatedAt: lastCallInitiatedAt,
+        }
+      : lead;
+
+  const queries = queryClient.getQueryCache().findAll({
+    predicate: (query) => isLeadsListRoot(query.queryKey),
+  });
+
+  for (const query of queries) {
+    queryClient.setQueryData(query.queryKey, (old: unknown) => {
+      if (Array.isArray(old)) {
+        return (old as Lead[]).map(applyLead);
+      }
+      if (old && typeof old === "object") {
+        const withLeads = old as {
+          leads?: Lead[];
+          data?: Lead[];
+          [key: string]: unknown;
+        };
+        if (Array.isArray(withLeads.leads)) {
+          return { ...withLeads, leads: withLeads.leads.map(applyLead) };
+        }
+        if (Array.isArray(withLeads.data)) {
+          return { ...withLeads, data: withLeads.data.map(applyLead) };
+        }
+      }
+      return old;
+    });
+  }
+}
+
+/**
  * Drop leads from every assigned-leads list cache (agent My Leads) and clear
  * assignment on matching rows in paginated all-leads caches.
  */

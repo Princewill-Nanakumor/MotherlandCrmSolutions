@@ -4,9 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Lead } from "@/types/leads";
 import { normalizeLeadId } from "@/lib/leadId";
 import { defaultLeadListSortOrder } from "@/lib/leadListSort";
+import type { SortField, SortOrder } from "@/components/leads/userLeadsTypes";
 
-type SortField = "leadId" | "name" | "country" | "status" | "source" | "lastActivityAt" | "assignedTo" | "createdAt" | "statusChangedAt" | "lastComment" | "lastCommentDate" | "commentCount";
-type SortOrder = "asc" | "desc";
 type FilterMode = "include" | "exclude";
 
 export const useLeadsURLManagement = () => {

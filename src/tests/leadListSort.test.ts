@@ -3,14 +3,21 @@ import {
   buildLeadListMongoSort,
   defaultLeadListSortOrder,
   isLeadListServerSortField,
+  isLeadListUiSortField,
   parseLeadListSort,
+  parseLeadListUiSort,
 } from "@/lib/leadListSort";
 
 describe("leadListSort", () => {
-  it("defaults lastCommentDate to desc and maps name to firstName", () => {
+  it("defaults lastCommentDate and lastCallInitiatedAt to desc", () => {
     expect(defaultLeadListSortOrder("lastCommentDate")).toBe("desc");
+    expect(defaultLeadListSortOrder("lastCallInitiatedAt")).toBe("desc");
     expect(parseLeadListSort("lastCommentDate", null)).toEqual({
       sortField: "lastCommentDate",
+      sortOrder: "desc",
+    });
+    expect(parseLeadListSort("lastCallInitiatedAt", null)).toEqual({
+      sortField: "lastCallInitiatedAt",
       sortOrder: "desc",
     });
     expect(buildLeadListMongoSort("name", "asc")).toMatchObject({
@@ -34,6 +41,7 @@ describe("leadListSort", () => {
     // pagination stays globally ordered within any filtered subset.
     for (const field of [
       "lastCommentDate",
+      "lastCallInitiatedAt",
       "lastActivityAt",
       "createdAt",
       "status",
@@ -52,5 +60,19 @@ describe("leadListSort", () => {
       sortOrder: "asc",
     });
     expect(isLeadListServerSortField("assignedTo")).toBe(false);
+  });
+
+  it("accepts UI-only sort fields for URL/prefetch parsing", () => {
+    expect(isLeadListUiSortField("commentCount")).toBe(true);
+    expect(isLeadListUiSortField("assignedTo")).toBe(true);
+    expect(isLeadListUiSortField("lastCallInitiatedAt")).toBe(true);
+    expect(parseLeadListUiSort("commentCount", null)).toEqual({
+      sortField: "commentCount",
+      sortOrder: "asc",
+    });
+    expect(parseLeadListUiSort("nope", null)).toEqual({
+      sortField: "lastActivityAt",
+      sortOrder: "desc",
+    });
   });
 });

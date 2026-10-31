@@ -239,6 +239,8 @@ export function UserLeadsTableContent({
                   const isCreatedAtCell = cell.column.id === "createdAt";
                   const isLastCommentDateCell =
                     cell.column.id === "lastCommentDate";
+                  const isLastCallInitiatedAtCell =
+                    cell.column.id === "lastCallInitiatedAt";
                   const isLeadIdCell = cell.column.id === "leadId";
                   const isEmailCell = cell.column.id === "email";
 
@@ -257,6 +259,7 @@ export function UserLeadsTableContent({
                                 isCreatedAtCell ||
                                 isLastCommentCell ||
                                 isLastCommentDateCell ||
+                                isLastCallInitiatedAtCell ||
                                 isEmailCell
                               ? "text-center"
                               : "text-left"

@@ -19,6 +19,7 @@ export const DEFAULT_COLUMN_ORDER: ColumnOrderState = [
   "source",
   "assignedTo",
   "lastCommentDate",
+  "lastCallInitiatedAt",
   "createdAt",
   "statusChangedAt",
   "lastComment",

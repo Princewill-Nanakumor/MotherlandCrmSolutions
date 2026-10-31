@@ -10,26 +10,12 @@ import { useColumnOrder } from "@/hooks/useColumnOrder";
 import { useColumnVisibility } from "@/hooks/useColumnVisibility";
 import { useMemo, useCallback } from "react";
 import type { ColumnOrderState } from "@tanstack/react-table";
+import type { SortField, SortOrder } from "@/components/leads/userLeadsTypes";
 
 /** Agent leads table does not include an "Assigned To" column; strip if present from shared column-order storage. */
 function columnOrderWithoutAssignedTo(order: ColumnOrderState): ColumnOrderState {
   return order.filter((id) => id !== "assignedTo");
 }
-
-type SortField =
-  | "leadId"
-  | "name"
-  | "country"
-  | "status"
-  | "source"
-  | "lastActivityAt"
-  | "assignedTo"
-  | "createdAt"
-  | "statusChangedAt"
-  | "lastComment"
-  | "lastCommentDate"
-  | "commentCount";
-type SortOrder = "asc" | "desc";
 
 interface UserLeadsTableContainerProps {
   loading: boolean;

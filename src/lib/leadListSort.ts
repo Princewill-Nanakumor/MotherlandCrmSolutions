@@ -6,6 +6,7 @@ const LEAD_LIST_SERVER_SORT_FIELDS = [
   "statusChangedAt",
   "lastCommentDate",
   "lastComment",
+  "lastCallInitiatedAt",
   "country",
   "source",
   "status",
@@ -33,6 +34,7 @@ export function defaultLeadListSortOrder(
 ): LeadListSortOrder {
   switch (field) {
     case "lastCommentDate":
+    case "lastCallInitiatedAt":
     case "lastActivityAt":
     case "createdAt":
     case "updatedAt":
@@ -49,6 +51,33 @@ export function parseLeadListSort(
 ): { sortField: LeadListServerSortField; sortOrder: LeadListSortOrder } {
   const sortField = isLeadListServerSortField(sortFieldRaw)
     ? sortFieldRaw
+    : "lastActivityAt";
+  const sortOrder: LeadListSortOrder =
+    sortOrderRaw === "asc" || sortOrderRaw === "desc"
+      ? sortOrderRaw
+      : defaultLeadListSortOrder(sortField);
+  return { sortField, sortOrder };
+}
+
+/** UI-only sorts that stay page-local (not in Mongo list sort). */
+const LEAD_LIST_UI_ONLY_SORT_FIELDS = new Set(["assignedTo", "commentCount"]);
+
+/** Server sort fields plus UI-only columns used in table headers / URL state. */
+export function isLeadListUiSortField(
+  field: string | null | undefined,
+): boolean {
+  return (
+    isLeadListServerSortField(field) ||
+    (typeof field === "string" && LEAD_LIST_UI_ONLY_SORT_FIELDS.has(field))
+  );
+}
+
+export function parseLeadListUiSort(
+  sortFieldRaw: string | null,
+  sortOrderRaw: string | null,
+): { sortField: string; sortOrder: LeadListSortOrder } {
+  const sortField = isLeadListUiSortField(sortFieldRaw)
+    ? (sortFieldRaw as string)
     : "lastActivityAt";
   const sortOrder: LeadListSortOrder =
     sortOrderRaw === "asc" || sortOrderRaw === "desc"

@@ -101,12 +101,19 @@ export async function POST(req: Request) {
             );
           }
 
+          const lastCallInitiatedAt = activityAt.toISOString();
           await Lead.updateOne(
             {
               _id: new mongoose.Types.ObjectId(validLeadId),
               adminId: new mongoose.Types.ObjectId(adminScope),
             },
-            { $set: { lastActivityAt: activityAt, updatedAt: activityAt } },
+            {
+              $set: {
+                lastCallInitiatedAt: activityAt,
+                lastActivityAt: activityAt,
+                updatedAt: activityAt,
+              },
+            },
           );
 
           try {
@@ -114,11 +121,13 @@ export async function POST(req: Request) {
               type: "call_initiated",
               leadId: validLeadId,
               activityId,
+              lastCallInitiatedAt,
             });
             await publishAdminLeadsUpdatedEvent(String(adminScope), {
               type: "call_initiated",
               leadId: validLeadId,
               activityId,
+              lastCallInitiatedAt,
             });
           } catch (publishError) {
             console.error(

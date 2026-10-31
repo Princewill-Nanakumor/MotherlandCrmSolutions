@@ -444,6 +444,38 @@ export const useUserLeadsTableColumns = ({
         },
         enableSorting: true,
       },
+      {
+        id: "lastCallInitiatedAt",
+        header: () => (
+          <Button
+            variant="ghost"
+            onClick={() => handleSort("lastCallInitiatedAt")}
+            className={headerButtonClass("center")}
+          >
+            <span className={headerLabelClass("lastCallInitiatedAt")}>
+              Last Call Initiated
+            </span>
+            {sortIcon("lastCallInitiatedAt")}
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const dt = formatDateTime(row.original.lastCallInitiatedAt);
+          if (!dt) {
+            return (
+              <div className="text-center text-sm font-medium text-gray-900! dark:text-white!">
+                —
+              </div>
+            );
+          }
+          return (
+            <div className="text-center text-sm font-medium text-gray-900! dark:text-white!">
+              <div>{dt.date}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{dt.time}</div>
+            </div>
+          );
+        },
+        enableSorting: true,
+      },
       actionsColumn,
       {
         id: "commentCount",

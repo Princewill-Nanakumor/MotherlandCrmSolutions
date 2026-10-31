@@ -28,6 +28,8 @@ export interface ILead {
   lastComment?: string | null;
   /** Denormalized latest comment time — indexed for server list sort. */
   lastCommentDate?: Date | null;
+  /** Denormalized latest softphone/call initiate time — indexed for list sort. */
+  lastCallInitiatedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
   __v: number;
@@ -133,6 +135,10 @@ const leadSchema = new Schema(
       type: Date,
       default: null,
     },
+    lastCallInitiatedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -171,6 +177,11 @@ leadSchema.index({ adminId: 1, source: 1, lastActivityAt: -1 });
 leadSchema.index({ adminId: 1, country: 1, lastCommentDate: -1 });
 leadSchema.index({ adminId: 1, status: 1, lastCommentDate: -1 });
 leadSchema.index({ adminId: 1, source: 1, lastCommentDate: -1 });
+// Last call initiated column sort.
+leadSchema.index({ adminId: 1, lastCallInitiatedAt: -1 });
+leadSchema.index({ adminId: 1, country: 1, lastCallInitiatedAt: -1 });
+leadSchema.index({ adminId: 1, status: 1, lastCallInitiatedAt: -1 });
+leadSchema.index({ adminId: 1, source: 1, lastCallInitiatedAt: -1 });
 
 // Generate collision-resistant public lead ID.
 export function generateLeadId(): string {

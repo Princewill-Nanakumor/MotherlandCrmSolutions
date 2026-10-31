@@ -1,5 +1,6 @@
 // src/types/table.ts
 export type SortField =
+  | "leadId"
   | "name"
   | "country"
   | "status"
@@ -7,5 +8,9 @@ export type SortField =
   | "lastActivityAt"
   | "createdAt"
   | "assignedTo"
-  | "statusChangedAt";
+  | "statusChangedAt"
+  | "lastComment"
+  | "lastCommentDate"
+  | "lastCallInitiatedAt"
+  | "commentCount";
 export type SortOrder = "asc" | "desc";

@@ -21,6 +21,7 @@ import { RefetchIndicator } from "@/components/ui/RefetchIndicator";
 import { UserLeadsMainContent } from "@/components/leads/UserLeadsMainContent";
 import { UserLeadsPageLoadingShell } from "@/components/leads/UserLeadsPageLoadingShell";
 import { SortField, SortOrder } from "@/components/leads/userLeadsTypes";
+import { parseLeadListUiSort } from "@/lib/leadListSort";
 import {
   isLegacyNumericLeadId,
   isPrefixedLeadId,
@@ -38,6 +39,20 @@ import {
 } from "@/lib/leadListSearchParams";
 import { parseLeadPageSize, snapLeadPageSize } from "@/lib/leadPageSize";
 import { humanizeDashboardFetchError } from "@/lib/mongoConnectionError";
+
+function parseAgentSortFromUrl(searchParams: URLSearchParams): {
+  sortField: SortField;
+  sortOrder: SortOrder;
+} {
+  const parsed = parseLeadListUiSort(
+    searchParams.get("sortField"),
+    searchParams.get("sortOrder"),
+  );
+  return {
+    sortField: parsed.sortField as SortField,
+    sortOrder: parsed.sortOrder,
+  };
+}
 
 export default function UserLeadsContent() {
   const searchParams = useSearchParams()!;
@@ -89,15 +104,13 @@ export default function UserLeadsContent() {
         | "exclude",
   );
 
-  // Get sort parameters from URL or use defaults
-  const [sortField, setSortField] = useState<SortField>(() => {
-    const urlSortField = searchParams.get("sortField") as SortField;
-    return urlSortField || "lastActivityAt";
-  });
-  const [sortOrder, setSortOrder] = useState<SortOrder>(() => {
-    const urlSortOrder = searchParams.get("sortOrder") as SortOrder;
-    return urlSortOrder || "desc";
-  });
+  // Get sort parameters from URL or use defaults (same fields as All Leads)
+  const [sortField, setSortField] = useState<SortField>(
+    () => parseAgentSortFromUrl(searchParams).sortField,
+  );
+  const [sortOrder, setSortOrder] = useState<SortOrder>(
+    () => parseAgentSortFromUrl(searchParams).sortOrder,
+  );
 
   const {
     leads,
@@ -173,6 +186,9 @@ export default function UserLeadsContent() {
         | "include"
         | "exclude",
     );
+    const nextSort = parseAgentSortFromUrl(searchParams);
+    setSortField(nextSort.sortField);
+    setSortOrder(nextSort.sortOrder);
     const nextPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     setPageIndex(nextPage - 1);
     setPageSize(parseLeadPageSize(searchParams.get("pageSize")));

@@ -10,21 +10,7 @@ import {
 } from "@/utils/LeadsUtils";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
 import { isLeadListServerSortField } from "@/lib/leadListSort";
-
-type SortField =
-  | "leadId"
-  | "name"
-  | "country"
-  | "status"
-  | "source"
-  | "lastActivityAt"
-  | "assignedTo"
-  | "createdAt"
-  | "statusChangedAt"
-  | "lastComment"
-  | "lastCommentDate"
-  | "commentCount";
-type SortOrder = "asc" | "desc";
+import type { SortField, SortOrder } from "@/components/leads/userLeadsTypes";
 
 interface FilterLogicProps {
   leads: Lead[];
@@ -267,6 +253,18 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
             : 0;
           const dateB = b.lastCommentDate
             ? new Date(b.lastCommentDate).getTime()
+            : 0;
+          if (dateA === 0 && dateB !== 0) return sortOrder === "asc" ? 1 : -1;
+          if (dateA !== 0 && dateB === 0) return sortOrder === "asc" ? -1 : 1;
+          if (dateA === 0 && dateB === 0) return 0;
+          return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+        }
+        case "lastCallInitiatedAt": {
+          const dateA = a.lastCallInitiatedAt
+            ? new Date(a.lastCallInitiatedAt).getTime()
+            : 0;
+          const dateB = b.lastCallInitiatedAt
+            ? new Date(b.lastCallInitiatedAt).getTime()
             : 0;
           if (dateA === 0 && dateB !== 0) return sortOrder === "asc" ? 1 : -1;
           if (dateA !== 0 && dateB === 0) return sortOrder === "asc" ? -1 : 1;

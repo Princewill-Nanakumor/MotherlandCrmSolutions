@@ -23,6 +23,7 @@ const CENTER_ALIGNED_COLUMNS = new Set([
   "statusChangedAt",
   "lastComment",
   "lastCommentDate",
+  "lastCallInitiatedAt",
   "leadId",
 ]);
 

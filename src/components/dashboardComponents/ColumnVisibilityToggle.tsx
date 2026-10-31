@@ -44,6 +44,7 @@ const getColumnLabels = (
     statusChangedAt: "Last status change",
     lastComment: "Last Comment",
     lastCommentDate: "Last Comment Date",
+    lastCallInitiatedAt: "Last Call Initiated",
     commentCount: "Timeline",
   };
 

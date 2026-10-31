@@ -8,7 +8,10 @@ import {
   ADMIN_LEADS_UPDATED_EVENT,
   getAdminLeadsChannelName,
 } from "@/lib/realtime";
-import { removeLeadsFromAssignedLeadsCaches } from "@/lib/leadsListCache";
+import {
+  patchLeadLastCallInitiatedInListCaches,
+  removeLeadsFromAssignedLeadsCaches,
+} from "@/lib/leadsListCache";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import {
   invalidateLeadActivitiesTimeline,
@@ -60,6 +63,7 @@ export function TenantLeadsRealtimeSync() {
         leadIds?: string[];
         status?: string;
         activityId?: string;
+        lastCallInitiatedAt?: string;
         commentId?: string;
         reminderId?: string;
         deletedLeads?: number;
@@ -113,6 +117,9 @@ export function TenantLeadsRealtimeSync() {
             void invalidateLeadActivitiesTimeline(queryClient, leadId);
           }
           if (eventType === "call_initiated") {
+            const callAt =
+              eventData.lastCallInitiatedAt || new Date().toISOString();
+            patchLeadLastCallInitiatedInListCaches(queryClient, leadId, callAt);
             void invalidateLeadActivitiesTimeline(queryClient, leadId);
             void queryClient.invalidateQueries({
               queryKey: ["lead", leadId],
