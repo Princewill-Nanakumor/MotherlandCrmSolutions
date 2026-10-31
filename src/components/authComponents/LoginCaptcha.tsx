@@ -45,8 +45,11 @@ export function LoginCaptcha({
   const [secondsLeft, setSecondsLeft] = useState(CAPTCHA_TTL_SECONDS);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [issuing, setIssuing] = useState(true);
+  /** Drives the ready-state enter animation after the spinner finishes. */
+  const [codeVisible, setCodeVisible] = useState(false);
 
   const isLight = appearance === "onLight";
+  const showCode = !issuing && !loadError && Boolean(masked);
 
   // Keep the latest callbacks in a ref so loadIssue stays referentially stable
   // and effects do not re-run (and re-issue captchas) on every parent render.
@@ -69,7 +72,9 @@ export function LoginCaptcha({
     abortRef.current = controller;
 
     setLoadError(null);
+    setMasked("");
     setIssuing(true);
+    setCodeVisible(false);
     callbacksRef.current.onCaptchaStateChange?.("loading");
     callbacksRef.current.onChange("");
 
@@ -84,7 +89,12 @@ export function LoginCaptcha({
         credentials: "include",
         signal: controller.signal,
       });
-      let d: { ok?: boolean; masked?: string; expiresIn?: number; error?: string };
+      let d: {
+        ok?: boolean;
+        masked?: string;
+        expiresIn?: number;
+        error?: string;
+      };
       try {
         d = await r.json();
       } catch {
@@ -103,9 +113,7 @@ export function LoginCaptcha({
       );
       callbacksRef.current.onCaptchaStateChange?.("ready");
     } catch (e) {
-      if (
-        e instanceof DOMException && e.name === "AbortError"
-      ) {
+      if (e instanceof DOMException && e.name === "AbortError") {
         return;
       }
       if (controller.signal.aborted) return;
@@ -148,6 +156,19 @@ export function LoginCaptcha({
     return () => clearInterval(timer);
   }, [disabled, issuing, loadError, loadIssue]);
 
+  // Soft enter: wait a frame after the code is ready so CSS can transition
+  // from opacity-0 / translate instead of popping in and shifting the form.
+  useEffect(() => {
+    if (!showCode) {
+      setCodeVisible(false);
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      setCodeVisible(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [showCode]);
+
   const labelClass = isLight
     ? "text-sm font-medium text-gray-800"
     : "text-sm font-semibold text-white!";
@@ -160,13 +181,17 @@ export function LoginCaptcha({
   const timerClass = isLight
     ? "text-xs font-medium text-gray-600"
     : "text-xs font-semibold text-white/80!";
+  const loadingShellClass = isLight ? "bg-gray-50" : "bg-white/10";
 
   return (
-    <div className="space-y-2" data-auth-captcha="">
+    <div
+      className="space-y-2 duration-300 ease-out animate-in fade-in-0 slide-in-from-top-2"
+      data-auth-captcha=""
+    >
       <div className="flex items-center">
         <label
           htmlFor="login-captcha-input"
-          className={`flex items-center gap-2 ${labelClass}`}
+          className={`flex gap-2 items-center ${labelClass}`}
         >
           <ShieldCheck
             className={`w-4 h-4 ${isLight ? "brand-icon" : "text-white!"}`}
@@ -176,51 +201,75 @@ export function LoginCaptcha({
       </div>
 
       {loadError ? (
-        <p className={`text-sm ${isLight ? "text-red-600" : "text-red-200!"}`}>
+        <p
+          className={`text-sm duration-200 animate-in fade-in-0 ${isLight ? "text-red-600" : "text-red-200!"}`}
+        >
           {loadError}
         </p>
-      ) : issuing ? (
-        <div
-          className={`flex items-center gap-2 p-3 rounded-lg ${isLight ? "bg-gray-50" : "bg-white/10"}`}
-        >
-          <Loader2
-            className={`w-5 h-5 animate-spin ${isLight ? "brand-icon" : "text-white!"}`}
-          />
-          <span
-            className={`text-sm ${isLight ? "text-gray-600" : "text-white/90!"}`}
-          >
-            Loading security check…
-          </span>
-        </div>
       ) : (
-        <>
-          <div className={boxClass}>
-            <span className={monoClass} aria-live="polite">
-              {masked}
-            </span>
-            <span className={timerClass}>Expires in {secondsLeft}s</span>
+        // Reserve final captcha height while loading so the form below does
+        // not jump when the code + input replace the spinner.
+        <div className="relative min-h-29">
+          <div
+            aria-hidden={!issuing}
+            className={`absolute inset-0 flex items-start transition-opacity duration-200 ease-out ${
+              issuing ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+          >
+            <div
+              className={`flex gap-2 items-center p-3 w-full rounded-lg ${loadingShellClass}`}
+            >
+              <Loader2
+                className={`h-5 w-5 animate-spin ${isLight ? "brand-icon" : "text-white!"}`}
+              />
+              <span
+                className={`text-sm ${isLight ? "text-gray-600" : "text-white/90!"}`}
+              >
+                Loading security check…
+              </span>
+            </div>
           </div>
 
-          <input
-            id="login-captcha-input"
-            type="text"
-            inputMode="numeric"
-            pattern="\d*"
-            maxLength={CAPTCHA_LENGTH}
-            value={value}
-            onChange={(e) => {
-              const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 6);
-              onChange(digitsOnly);
-            }}
-            placeholder="Enter the 6-digit code"
-            disabled={disabled}
-            className={`w-full py-3 px-3 rounded-lg border text-sm font-semibold transition-[border-color,background-color,box-shadow] duration-200 ease-out focus:outline-none focus-visible:outline-none ${
-              isLight
-                ? "bg-white text-gray-900 border-gray-300 focus-visible:border-(--brand-focus) focus-visible:ring-2 focus-visible:ring-(--brand-focus)/40"
-                : "border-white/20 bg-white/10 text-white! placeholder:font-semibold placeholder:text-white/70"
-            } ${disabled ? "cursor-not-allowed opacity-75" : ""}`}
-          />
-        </>
+          <div
+            className={`space-y-2 transition-[opacity,transform] duration-300 ease-out ${
+              codeVisible
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-2 pointer-events-none"
+            }`}
+          >
+            <div className={boxClass}>
+              <span className={monoClass} aria-live="polite">
+                {masked || "······"}
+              </span>
+              <span className={timerClass}>
+                Expires in {showCode ? `${secondsLeft}s` : "—"}
+              </span>
+            </div>
+
+            <input
+              id="login-captcha-input"
+              type="text"
+              inputMode="numeric"
+              pattern="\d*"
+              maxLength={CAPTCHA_LENGTH}
+              value={value}
+              onChange={(e) => {
+                const digitsOnly = e.target.value
+                  .replace(/\D/g, "")
+                  .slice(0, 6);
+                onChange(digitsOnly);
+              }}
+              placeholder="Enter the 6-digit code"
+              disabled={disabled || !showCode}
+              tabIndex={showCode ? 0 : -1}
+              className={`w-full rounded-lg border px-3 py-3 text-sm font-semibold transition-[border-color,background-color,box-shadow,opacity] duration-200 ease-out focus:outline-none focus-visible:outline-none ${
+                isLight
+                  ? "text-gray-900 bg-white border-gray-300 focus-visible:border-(--brand-focus) focus-visible:ring-2 focus-visible:ring-(--brand-focus)/40"
+                  : "border-white/20 bg-white/10 text-white! placeholder:font-semibold placeholder:text-white/70"
+              } ${disabled || !showCode ? "cursor-not-allowed opacity-75" : ""}`}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
@@ -239,16 +288,14 @@ export function RobotVerifyButton({
       disabled={disabled}
       onClick={onClick}
       className={`
-        w-fit transition-all duration-200 text-sm
-        flex items-center justify-start gap-3
+        flex w-fit items-center justify-start gap-3 text-sm transition-all duration-200
         ${
           isLight
-            ? "border-2 py-4 px-4 rounded-md border-(--brand-from) bg-transparent text-(--brand-from)!"
-            : "rounded-full border border-white/20 bg-white/10 py-3 px-5 text-white!"
+            ? "rounded-md border-2 border-(--brand-from) bg-transparent px-4 py-4 text-(--brand-from)!":"rounded-full border border-white/20 bg-white/10 px-5 py-3 text-white!"
         }
         ${
           disabled
-            ? "opacity-60 cursor-not-allowed"
+            ? "cursor-not-allowed opacity-60"
             : isLight
               ? "hover:bg-[color-mix(in_srgb,var(--brand-from)_12%,white)]"
               : "hover:border-white/30 hover:bg-white/15"
@@ -260,15 +307,13 @@ export function RobotVerifyButton({
         className={`inline-block shrink-0 bg-transparent ${
           isLight
             ? "w-6 h-6 border-2 rounded-xs border-(--brand-from)"
-            : "h-5 w-5 rounded border border-white/50"
+            : "w-5 h-5 rounded border border-white/50"
         }`}
       />
       <span
         className={`text-sm ${
           isLight
-            ? "font-normal text-(--brand-from)!"
-            : "font-semibold text-white!"
-        }`}
+            ? "font-normal text-(--brand-from)!":"font-semibold text-white!"}`}
       >
         I&apos;m not a robot
       </span>
