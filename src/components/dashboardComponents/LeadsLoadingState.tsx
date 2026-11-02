@@ -4,29 +4,78 @@
 import { Component, ReactNode } from "react";
 import { RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Table";
 
+const SKELETON_COLUMN_COUNT = 6;
+const SKELETON_ROW_COUNT = 20;
+
+const PulseBar = ({ className = "h-4 w-full" }: { className?: string }) => (
+  <div
+    className={`animate-pulse rounded bg-gray-200 dark:bg-gray-700 ${className}`}
+  />
+);
+
+/** Full-size bootstrap table skeleton (fills remaining page height like the live table card). */
 export const TableSkeleton = () => (
-  <div className="h-full min-h-65 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
-    <div className="animate-pulse">
-      {/* Table header skeleton */}
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="w-1/4 h-4 bg-gray-200 rounded dark:bg-gray-700"></div>
-      </div>
-      {/* Table rows skeleton */}
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div
-          key={i}
-          className="px-6 py-4 border-b border-gray-200 dark:border-gray-700"
-        >
-          <div className="flex items-center space-x-4">
-            <div className="w-1/6 h-4 bg-gray-200 rounded dark:bg-gray-700"></div>
-            <div className="w-1/4 h-4 bg-gray-200 rounded dark:bg-gray-700"></div>
-            <div className="w-1/6 h-4 bg-gray-200 rounded dark:bg-gray-700"></div>
-            <div className="w-1/6 h-4 bg-gray-200 rounded dark:bg-gray-700"></div>
-            <div className="w-1/6 h-4 bg-gray-200 rounded dark:bg-gray-700"></div>
-          </div>
-        </div>
-      ))}
+  <div
+    className="flex min-h-65 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+    role="status"
+    aria-label="Loading table"
+  >
+    <div className="min-h-0 flex-1 overflow-auto">
+      <Table className="table-fixed">
+        <TableHeader className="bg-gray-100 dark:bg-gray-800">
+          <TableRow>
+            {Array.from({ length: SKELETON_COLUMN_COUNT }).map((_, index) => (
+              <TableHead
+                key={`skeleton-header-${index}`}
+                className={
+                  index === 0
+                    ? "w-12 px-3 border-r border-gray-200 dark:border-gray-700"
+                    : "px-4"
+                }
+              >
+                <PulseBar />
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody className="dark:bg-gray-800">
+          {Array.from({ length: SKELETON_ROW_COUNT }).map((_, rowIndex) => (
+            <TableRow
+              key={`skeleton-row-${rowIndex}`}
+              className="bg-white dark:bg-gray-800"
+            >
+              {Array.from({ length: SKELETON_COLUMN_COUNT }).map(
+                (_, colIndex) => (
+                  <TableCell
+                    key={`skeleton-cell-${rowIndex}-${colIndex}`}
+                    className={`border-b border-gray-200 py-3.5 dark:border-gray-700 ${
+                      colIndex === 0
+                        ? "border-r border-gray-200 px-3 dark:border-gray-700"
+                        : "px-4"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {colIndex === 0 && (
+                        <PulseBar className="h-4 w-4 shrink-0" />
+                      )}
+                      <PulseBar className="h-4 min-w-0 flex-1" />
+                    </div>
+                  </TableCell>
+                ),
+              )}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   </div>
 );

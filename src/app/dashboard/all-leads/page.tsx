@@ -29,7 +29,7 @@ const AllLeadsPage: React.FC = () => {
   usePrefetchAllLeads(searchQuery);
 
   return (
-    <div className="h-full min-h-0">
+    <div className="flex h-full min-h-0 flex-col">
       <LeadsPageContent
         searchQuery={searchQuery}
         setLayoutLoading={setLayoutLoading}

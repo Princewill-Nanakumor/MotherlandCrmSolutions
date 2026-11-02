@@ -7,7 +7,6 @@ import {
   isLeadListServerSortField,
   isLeadListUiSortField,
   isPageResortListSortField,
-  leadsListSortMatchesQueryKey,
   parseLeadListSort,
   parseLeadListUiSort,
   sortLeadsForListPage,
@@ -118,28 +117,6 @@ describe("leadListSort", () => {
     expect(isPageResortListSortField("lastComment")).toBe(true);
     expect(isPageResortListSortField("statusChangedAt")).toBe(true);
     expect(isPageResortListSortField("country")).toBe(false);
-    const key = [
-      "leads",
-      1,
-      80,
-      "all",
-      [],
-      [],
-      [],
-      "include",
-      "include",
-      "include",
-      "include",
-      "",
-      "lastCallInitiatedAt",
-      "desc",
-    ];
-    expect(leadsListSortMatchesQueryKey(key, "lastCallInitiatedAt", "desc")).toBe(
-      true,
-    );
-    expect(leadsListSortMatchesQueryKey(key, "lastActivityAt", "desc")).toBe(
-      false,
-    );
   });
 
   it("reorders a page after lastActivityAt changes from a comment", () => {

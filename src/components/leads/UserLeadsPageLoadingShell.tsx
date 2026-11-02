@@ -23,14 +23,17 @@ export function UserLeadsPageLoadingShell({
 }: UserLeadsPageLoadingShellProps) {
   return (
     <div
-      className="flex h-full min-h-0 min-w-0 max-w-full flex-col overflow-x-hidden overflow-y-auto rounded-lg border bg-background dark:bg-gray-800"
+      className="flex h-full min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-hidden rounded-lg border bg-background dark:bg-gray-800"
       data-testid="user-leads-bootstrap-shell"
     >
       {showHeader && (
         <UserLeadsHeader shouldShowLoading counts={EMPTY_COUNTS} />
       )}
       {showControls && <FilterControlsLoadingShell compactTop={!showHeader} />}
-      <div className="min-h-65 min-w-0 flex-1 px-4 pb-4 sm:px-6">
+      <div
+        className="flex min-h-0 min-w-0 w-full flex-1 flex-col px-4 pb-4 sm:px-6"
+        data-testid="user-leads-table-loading"
+      >
         <TableSkeleton />
       </div>
     </div>

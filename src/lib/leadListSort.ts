@@ -147,17 +147,6 @@ export function getListSortFromQueryKey(key: readonly unknown[]): {
   return { sortField, sortOrder };
 }
 
-/** False when sort changed — skip placeholder so the table doesn't keep old order. */
-export function leadsListSortMatchesQueryKey(
-  queryKey: readonly unknown[] | undefined,
-  sortField: string,
-  sortOrder: string,
-): boolean {
-  if (!queryKey || queryKey.length < 14) return false;
-  const prev = getListSortFromQueryKey(queryKey);
-  return prev.sortField === sortField && prev.sortOrder === sortOrder;
-}
-
 function activityTimeMs(lead: Lead): number {
   const raw = lead.lastActivityAt || lead.updatedAt || lead.createdAt;
   const ms = raw ? new Date(raw).getTime() : 0;

@@ -37,7 +37,7 @@ export default function UserLeadsPage() {
   usePrefetchAssignedLeads();
 
   return (
-    <div className="h-full min-h-0">
+    <div className="flex h-full min-h-0 flex-col">
       <UserLeadsContent />
 
       {process.env.NODE_ENV === "development" && (
