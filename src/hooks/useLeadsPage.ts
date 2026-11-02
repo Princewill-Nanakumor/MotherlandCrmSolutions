@@ -26,6 +26,7 @@ import {
   humanizeDashboardFetchError,
   isRetryableFilterFetch,
 } from "@/lib/mongoConnectionError";
+import { getLiveLeadParam } from "@/lib/liveSearchParams";
 
 export const useLeadsPage = (
   searchQuery: string,
@@ -379,8 +380,14 @@ export const useLeadsPage = (
 
   // Table skeleton only until the first leads page arrives; lookups load independently.
   const shouldShowLoading = isLoadingLeads && leads.length === 0 && !leadsError;
+  // Don't unmount LeadsTable/panel while URL still has an open lead (last filtered
+  // row can drop total to 0 on status change).
   const showEmptyState =
-    !isLoadingLeads && !isRefetchingLeads && leadsTotal === 0 && !leadsError;
+    !isLoadingLeads &&
+    !isRefetchingLeads &&
+    leadsTotal === 0 &&
+    !leadsError &&
+    !getLiveLeadParam(searchParams);
 
   // ===== OPTIMIZED EVENT HANDLERS =====
   const handleAssignLeads = useCallback(async () => {
