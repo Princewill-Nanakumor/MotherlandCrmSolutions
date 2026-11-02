@@ -1,12 +1,28 @@
 import { describe, expect, it } from "vitest";
+import type { Lead } from "@/types/leads";
 import {
   buildLeadListMongoSort,
   defaultLeadListSortOrder,
+  getListSortFromQueryKey,
   isLeadListServerSortField,
   isLeadListUiSortField,
   parseLeadListSort,
   parseLeadListUiSort,
+  sortLeadsForListPage,
 } from "@/lib/leadListSort";
+
+function leadStub(partial: Partial<Lead> & { _id: string }): Lead {
+  return {
+    firstName: "A",
+    lastName: "B",
+    email: "a@b.c",
+    source: "Manual",
+    status: "NEW",
+    createdAt: "2024-01-01T00:00:00.000Z",
+    updatedAt: "2024-01-01T00:00:00.000Z",
+    ...partial,
+  };
+}
 
 describe("leadListSort", () => {
   it("defaults lastCommentDate and lastCallInitiatedAt to desc", () => {
@@ -74,5 +90,82 @@ describe("leadListSort", () => {
       sortField: "lastActivityAt",
       sortOrder: "desc",
     });
+  });
+
+  it("reads sort from leads / assignedLeads query keys", () => {
+    expect(
+      getListSortFromQueryKey([
+        "leads",
+        1,
+        80,
+        "all",
+        [],
+        [],
+        [],
+        "include",
+        "exclude",
+        "include",
+        "include",
+        "",
+        "lastCommentDate",
+        "asc",
+      ]),
+    ).toEqual({ sortField: "lastCommentDate", sortOrder: "asc" });
+  });
+
+  it("reorders a page after lastActivityAt changes from a comment", () => {
+    const older = leadStub({
+      _id: "old",
+      lastActivityAt: "2024-01-01T00:00:00.000Z",
+    });
+    const commented = leadStub({
+      _id: "new",
+      lastActivityAt: "2024-06-01T00:00:00.000Z",
+      lastCommentDate: "2024-06-01T00:00:00.000Z",
+      lastComment: "hello",
+    });
+    expect(
+      sortLeadsForListPage([older, commented], "lastActivityAt", "desc").map(
+        (l) => l._id,
+      ),
+    ).toEqual(["new", "old"]);
+    expect(
+      sortLeadsForListPage([older, commented], "lastActivityAt", "asc").map(
+        (l) => l._id,
+      ),
+    ).toEqual(["old", "new"]);
+  });
+
+  it("reorders status, call, and name sorts", () => {
+    const a = leadStub({
+      _id: "a",
+      status: "NEW",
+      firstName: "Zed",
+      lastName: "A",
+      lastCallInitiatedAt: "2024-01-01T00:00:00.000Z",
+      statusChangedAt: "2024-01-01T00:00:00.000Z",
+    });
+    const b = leadStub({
+      _id: "b",
+      status: "WON",
+      firstName: "Amy",
+      lastName: "B",
+      lastCallInitiatedAt: "2024-06-01T00:00:00.000Z",
+      statusChangedAt: "2024-06-01T00:00:00.000Z",
+    });
+    expect(
+      sortLeadsForListPage([a, b], "status", "asc").map((l) => l._id),
+    ).toEqual(["a", "b"]);
+    expect(
+      sortLeadsForListPage([a, b], "lastCallInitiatedAt", "desc").map(
+        (l) => l._id,
+      ),
+    ).toEqual(["b", "a"]);
+    expect(
+      sortLeadsForListPage([a, b], "name", "asc").map((l) => l._id),
+    ).toEqual(["b", "a"]);
+    expect(
+      sortLeadsForListPage([a, b], "statusChangedAt", "desc").map((l) => l._id),
+    ).toEqual(["b", "a"]);
   });
 });

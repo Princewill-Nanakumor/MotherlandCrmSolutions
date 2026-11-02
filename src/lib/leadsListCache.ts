@@ -1,6 +1,7 @@
 import type { QueryClient, QueryKey } from "@tanstack/react-query";
 import type { Lead } from "@/types/leads";
 import { normalizeLeadStatusId } from "@/lib/leadClientUpdate";
+import { transformLeadsListCacheData } from "@/lib/leadListSort";
 
 type TimestampPatch = {
   statusChangedAt?: string;
@@ -18,7 +19,7 @@ function isLeadsListRoot(key: QueryKey): boolean {
 /**
  * Paginated all-leads keys from `useLeadsPage`:
  * ["leads", page, pageSize, user, country[], status[], source[],
- *  countryMode, statusMode, sourceMode, userMode, search]
+ *  countryMode, statusMode, sourceMode, userMode, search, sortField, sortOrder]
  */
 function getStatusFilterFromQueryKey(key: QueryKey): {
   ids: string[];
@@ -34,7 +35,7 @@ function getStatusFilterFromQueryKey(key: QueryKey): {
     };
   }
   // ["assignedLeads", "list", userId, page, pageSize, country[], status[], source[],
-  //  countryMode, statusMode, sourceMode, search]
+  //  countryMode, statusMode, sourceMode, search, sortField, sortOrder]
   if (key[0] === "assignedLeads" && key[1] === "list" && key.length >= 10) {
     const raw = key[6];
     if (!Array.isArray(raw) || raw.length === 0) return null;
@@ -64,79 +65,47 @@ function patchListDataForStatusChange(
   const statusId = normalizeLeadStatusId(newStatus);
   const filter = getStatusFilterFromQueryKey(queryKey);
   const shouldKeep = !filter || matchesStatusFilter(statusId, filter);
+  let removed = 0;
 
-  const applyLead = (lead: Lead): Lead | null => {
-    if (lead._id !== leadId) return lead;
-    if (!shouldKeep) return null;
+  const next = transformLeadsListCacheData(
+    old,
+    Array.isArray(queryKey) ? queryKey : [],
+    (rows) => {
+      const nextRows: Lead[] = [];
+      for (const lead of rows) {
+        if (lead._id !== leadId) {
+          nextRows.push(lead);
+          continue;
+        }
+        if (!shouldKeep) {
+          removed += 1;
+          continue;
+        }
+        nextRows.push({
+          ...lead,
+          status: statusId,
+          ...timestamps,
+        });
+      }
+      return nextRows;
+    },
+  );
+
+  if (
+    removed > 0 &&
+    next &&
+    typeof next === "object" &&
+    !Array.isArray(next) &&
+    typeof (next as { total?: number }).total === "number"
+  ) {
+    const withTotal = next as { total: number; [key: string]: unknown };
     return {
-      ...lead,
-      status: statusId,
-      ...timestamps,
+      ...withTotal,
+      total: Math.max(0, withTotal.total - removed),
     };
-  };
-
-  if (Array.isArray(old)) {
-    const next: Lead[] = [];
-    for (const lead of old as Lead[]) {
-      const updated = applyLead(lead);
-      if (updated) next.push(updated);
-    }
-    return next;
   }
 
-  if (old && typeof old === "object") {
-    const withLeads = old as {
-      leads?: Lead[];
-      data?: Lead[];
-      total?: number;
-      totalAll?: number;
-      [key: string]: unknown;
-    };
-
-    if (Array.isArray(withLeads.leads)) {
-      let removed = 0;
-      const nextLeads: Lead[] = [];
-      for (const lead of withLeads.leads) {
-        const updated = applyLead(lead);
-        if (updated === null) {
-          removed += 1;
-          continue;
-        }
-        nextLeads.push(updated);
-      }
-      return {
-        ...withLeads,
-        leads: nextLeads,
-        total:
-          typeof withLeads.total === "number"
-            ? Math.max(0, withLeads.total - removed)
-            : withLeads.total,
-      };
-    }
-
-    if (Array.isArray(withLeads.data)) {
-      let removed = 0;
-      const nextData: Lead[] = [];
-      for (const lead of withLeads.data) {
-        const updated = applyLead(lead);
-        if (updated === null) {
-          removed += 1;
-          continue;
-        }
-        nextData.push(updated);
-      }
-      return {
-        ...withLeads,
-        data: nextData,
-        total:
-          typeof withLeads.total === "number"
-            ? Math.max(0, withLeads.total - removed)
-            : withLeads.total,
-      };
-    }
-  }
-
-  return old;
+  return next;
 }
 
 /**
@@ -179,39 +148,25 @@ export function applyRemoteLeadStatusToListCaches(
 
 function patchListDataForDeletedStatus(
   old: unknown,
+  queryKey: QueryKey,
   deletedStatusKeys: Set<string>,
   replacementStatus: string,
   timestamps: TimestampPatch,
 ): unknown {
-  const applyLead = (lead: Lead): Lead => {
-    const current = normalizeLeadStatusId(lead.status);
-    if (!deletedStatusKeys.has(current)) return lead;
-    return {
-      ...lead,
-      status: replacementStatus,
-      ...timestamps,
-    };
-  };
-
-  if (Array.isArray(old)) {
-    return (old as Lead[]).map(applyLead);
-  }
-
-  if (old && typeof old === "object") {
-    const withLeads = old as {
-      leads?: Lead[];
-      data?: Lead[];
-      [key: string]: unknown;
-    };
-    if (Array.isArray(withLeads.leads)) {
-      return { ...withLeads, leads: withLeads.leads.map(applyLead) };
-    }
-    if (Array.isArray(withLeads.data)) {
-      return { ...withLeads, data: withLeads.data.map(applyLead) };
-    }
-  }
-
-  return old;
+  return transformLeadsListCacheData(
+    old,
+    Array.isArray(queryKey) ? queryKey : [],
+    (rows) =>
+      rows.map((lead) => {
+        const current = normalizeLeadStatusId(lead.status);
+        if (!deletedStatusKeys.has(current)) return lead;
+        return {
+          ...lead,
+          status: replacementStatus,
+          ...timestamps,
+        };
+      }),
+  );
 }
 
 /**
@@ -242,6 +197,7 @@ export function reassignDeletedStatusInListCaches(
     queryClient.setQueryData(query.queryKey, (old: unknown) =>
       patchListDataForDeletedStatus(
         old,
+        query.queryKey,
         keys,
         replacementStatus,
         timestamps,
@@ -256,31 +212,6 @@ function uniqueLeadIds(leadIds: string[]): string[] {
   );
 }
 
-function patchPaginatedLeadsAssignmentClear(
-  old: unknown,
-  leadIds: Set<string>,
-): unknown {
-  const clearLead = (lead: Lead): Lead =>
-    leadIds.has(lead._id) ? { ...lead, assignedTo: null } : lead;
-
-  if (old && typeof old === "object") {
-    const withLeads = old as {
-      leads?: Lead[];
-      data?: Lead[];
-      [key: string]: unknown;
-    };
-
-    if (Array.isArray(withLeads.leads)) {
-      return { ...withLeads, leads: withLeads.leads.map(clearLead) };
-    }
-    if (Array.isArray(withLeads.data)) {
-      return { ...withLeads, data: withLeads.data.map(clearLead) };
-    }
-  }
-
-  return old;
-}
-
 /**
  * Update list rows when a softphone call is initiated from the lead panel.
  */
@@ -291,40 +222,28 @@ export function patchLeadLastCallInitiatedInListCaches(
 ): void {
   if (!leadId || !lastCallInitiatedAt) return;
 
-  const applyLead = (lead: Lead): Lead =>
-    lead._id === leadId
-      ? {
-          ...lead,
-          lastCallInitiatedAt,
-          lastActivityAt: lastCallInitiatedAt,
-          updatedAt: lastCallInitiatedAt,
-        }
-      : lead;
-
   const queries = queryClient.getQueryCache().findAll({
     predicate: (query) => isLeadsListRoot(query.queryKey),
   });
 
   for (const query of queries) {
-    queryClient.setQueryData(query.queryKey, (old: unknown) => {
-      if (Array.isArray(old)) {
-        return (old as Lead[]).map(applyLead);
-      }
-      if (old && typeof old === "object") {
-        const withLeads = old as {
-          leads?: Lead[];
-          data?: Lead[];
-          [key: string]: unknown;
-        };
-        if (Array.isArray(withLeads.leads)) {
-          return { ...withLeads, leads: withLeads.leads.map(applyLead) };
-        }
-        if (Array.isArray(withLeads.data)) {
-          return { ...withLeads, data: withLeads.data.map(applyLead) };
-        }
-      }
-      return old;
-    });
+    queryClient.setQueryData(query.queryKey, (old: unknown) =>
+      transformLeadsListCacheData(
+        old,
+        Array.isArray(query.queryKey) ? query.queryKey : [],
+        (rows) =>
+          rows.map((lead) =>
+            lead._id === leadId
+              ? {
+                  ...lead,
+                  lastCallInitiatedAt,
+                  lastActivityAt: lastCallInitiatedAt,
+                  updatedAt: lastCallInitiatedAt,
+                }
+              : lead,
+          ),
+      ),
+    );
   }
 }
 
@@ -349,37 +268,47 @@ export function removeLeadsFromAssignedLeadsCaches(
 
     if (key[0] === "assignedLeads" && key[1] === "list") {
       queryClient.setQueryData(key, (old: unknown) => {
-        const drop = (lead: Lead) => !ids.has(lead._id);
-        if (Array.isArray(old)) {
-          return (old as Lead[]).filter(drop);
+        let removed = 0;
+        const next = transformLeadsListCacheData(old, key, (rows) => {
+          const kept = rows.filter((lead) => !ids.has(lead._id));
+          removed = rows.length - kept.length;
+          return kept;
+        });
+        if (
+          removed > 0 &&
+          next &&
+          typeof next === "object" &&
+          !Array.isArray(next)
+        ) {
+          const withTotals = next as {
+            total?: number;
+            totalAll?: number;
+            [key: string]: unknown;
+          };
+          return {
+            ...withTotals,
+            total:
+              typeof withTotals.total === "number"
+                ? Math.max(0, withTotals.total - removed)
+                : withTotals.total,
+            totalAll:
+              typeof withTotals.totalAll === "number"
+                ? Math.max(0, withTotals.totalAll - removed)
+                : withTotals.totalAll,
+          };
         }
-        if (old && typeof old === "object") {
-          const withLeads = old as { leads?: Lead[]; total?: number; totalAll?: number };
-          if (Array.isArray(withLeads.leads)) {
-            const nextLeads = withLeads.leads.filter(drop);
-            const removed = withLeads.leads.length - nextLeads.length;
-            return {
-              ...withLeads,
-              leads: nextLeads,
-              total:
-                typeof withLeads.total === "number"
-                  ? Math.max(0, withLeads.total - removed)
-                  : withLeads.total,
-              totalAll:
-                typeof withLeads.totalAll === "number"
-                  ? Math.max(0, withLeads.totalAll - removed)
-                  : withLeads.totalAll,
-            };
-          }
-        }
-        return old;
+        return next;
       });
       continue;
     }
 
     if (key[0] === "leads") {
       queryClient.setQueryData(key, (old: unknown) =>
-        patchPaginatedLeadsAssignmentClear(old, ids),
+        transformLeadsListCacheData(old, key, (rows) =>
+          rows.map((lead) =>
+            ids.has(lead._id) ? { ...lead, assignedTo: null } : lead,
+          ),
+        ),
       );
     }
   }

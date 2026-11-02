@@ -8,12 +8,13 @@ import {
 import { Lead } from "@/types/leads";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { setLeadDetailQueryData } from "@/lib/leadPanelContact";
+import { transformLeadsListCacheData } from "@/lib/leadListSort";
 
-function patchLeadInListCache(
-  data: unknown,
+function patchLeadAcrossListQueries(
+  queryClient: QueryClient,
   leadId: string,
   updated: Lead,
-): unknown {
+) {
   const mergeLead = (existing: Lead) => ({
     ...existing,
     ...updated,
@@ -25,37 +26,22 @@ function patchLeadInListCache(
     lastActivityAt: updated.lastActivityAt ?? existing.lastActivityAt,
   });
 
-  if (Array.isArray(data)) {
-    return (data as Lead[]).map((l) => (l._id === leadId ? mergeLead(l) : l));
-  }
-  if (
-    data &&
-    typeof data === "object" &&
-    Array.isArray((data as { leads?: Lead[] }).leads)
-  ) {
-    const d = data as { leads: Lead[]; total?: number; totalAll?: number };
-    return {
-      ...d,
-      leads: d.leads.map((l) => (l._id === leadId ? mergeLead(l) : l)),
-    };
-  }
-  return data;
-}
+  const queries = queryClient.getQueryCache().findAll({
+    predicate: (query) =>
+      Array.isArray(query.queryKey) &&
+      (query.queryKey[0] === "leads" || query.queryKey[0] === "assignedLeads"),
+  });
 
-function patchLeadAcrossListQueries(
-  queryClient: QueryClient,
-  leadId: string,
-  updated: Lead,
-) {
-  const patcher = (old: unknown) => patchLeadInListCache(old, leadId, updated);
-  queryClient.setQueriesData(
-    { predicate: (q) => q.queryKey[0] === "leads" },
-    patcher,
-  );
-  queryClient.setQueriesData(
-    { predicate: (q) => q.queryKey[0] === "assignedLeads" },
-    patcher,
-  );
+  for (const query of queries) {
+    queryClient.setQueryData(query.queryKey, (old: unknown) =>
+      transformLeadsListCacheData(
+        old,
+        Array.isArray(query.queryKey) ? query.queryKey : [],
+        (rows) =>
+          rows.map((lead) => (lead._id === leadId ? mergeLead(lead) : lead)),
+      ),
+    );
+  }
 }
 
 /**

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
-import { applyRemoteLeadStatusToListCaches, removeLeadsFromAssignedLeadsCaches } from "@/lib/leadsListCache";
+import {
+  applyRemoteLeadStatusToListCaches,
+  patchLeadLastCallInitiatedInListCaches,
+  removeLeadsFromAssignedLeadsCaches,
+} from "@/lib/leadsListCache";
 import type { Lead } from "@/types/leads";
 
 function lead(overrides: Partial<Lead> & { _id: string; status: string }): Lead {
@@ -142,5 +146,88 @@ describe("removeLeadsFromAssignedLeadsCaches", () => {
 
     const next = queryClient.getQueryData<{ leads: Lead[] }>(key);
     expect(next?.leads[0].assignedTo).toBeNull();
+  });
+});
+
+describe("patchLeadLastCallInitiatedInListCaches", () => {
+  it("updates call fields and re-sorts by lastCallInitiatedAt", () => {
+    const queryClient = new QueryClient();
+    const key = [
+      "leads",
+      1,
+      80,
+      "all",
+      [],
+      [],
+      [],
+      "include",
+      "include",
+      "include",
+      "include",
+      "",
+      "lastCallInitiatedAt",
+      "desc",
+    ];
+    queryClient.setQueryData(key, {
+      leads: [
+        lead({
+          _id: "stay",
+          status: "NEW",
+          lastCallInitiatedAt: "2024-05-01T00:00:00.000Z",
+          lastActivityAt: "2024-05-01T00:00:00.000Z",
+        }),
+        lead({
+          _id: "called",
+          status: "NEW",
+          lastCallInitiatedAt: "2024-01-01T00:00:00.000Z",
+          lastActivityAt: "2024-01-01T00:00:00.000Z",
+        }),
+      ],
+      total: 2,
+    });
+
+    patchLeadLastCallInitiatedInListCaches(
+      queryClient,
+      "called",
+      "2024-06-01T12:00:00.000Z",
+    );
+
+    const next = queryClient.getQueryData<{ leads: Lead[] }>(key);
+    expect(next?.leads.map((l) => l._id)).toEqual(["called", "stay"]);
+    expect(next?.leads[0]?.lastCallInitiatedAt).toBe("2024-06-01T12:00:00.000Z");
+  });
+});
+
+describe("status list cache re-sort", () => {
+  it("reorders remaining rows when sorted by status", () => {
+    const queryClient = new QueryClient();
+    const key = [
+      "leads",
+      1,
+      80,
+      "all",
+      [],
+      [],
+      [],
+      "include",
+      "include",
+      "include",
+      "include",
+      "",
+      "status",
+      "asc",
+    ];
+    queryClient.setQueryData(key, {
+      leads: [
+        lead({ _id: "a", status: "NEW" }),
+        lead({ _id: "b", status: "CONTACTED" }),
+      ],
+      total: 2,
+    });
+
+    applyRemoteLeadStatusToListCaches(queryClient, "a", "WON");
+
+    const next = queryClient.getQueryData<{ leads: Lead[] }>(key);
+    expect(next?.leads.map((l) => l.status)).toEqual(["CONTACTED", "WON"]);
   });
 });

@@ -3,14 +3,14 @@ import type { Comment } from "@/components/leads/leadDetailsPanel/commentsAndAct
 import { transformComment } from "@/components/leads/leadDetailsPanel/commentsAndActivities/utils";
 import { viewerKnowsLead, type TimelineRefreshOptions } from "@/lib/leadTimelineAccess";
 import { removeTimelineRowsById, timelineRowId, upsertTimelineRowsById } from "@/lib/timelineCacheMerge";
+import { transformLeadsListCacheData } from "@/lib/leadListSort";
 import type { Lead } from "@/types/leads";
 
-/** Keep leads / assignedLeads list rows in sync when comment data changes. */
-export function patchLeadListCachesFromComments(
-  queryClient: QueryClient,
+function patchLeadInArray(
+  rows: Lead[],
   leadId: string,
   nextComments: Comment[],
-): void {
+): Lead[] {
   const latestComment =
     nextComments.length > 0
       ? [...nextComments].sort(
@@ -19,59 +19,46 @@ export function patchLeadListCachesFromComments(
         )[0]
       : undefined;
 
-  const patchLeadArray = (rows: Lead[] = []): Lead[] =>
-    rows.map((lead) => {
-      if (lead._id !== leadId) return lead;
+  return rows.map((lead) => {
+    if (lead._id !== leadId) return lead;
 
-      const nextLastComment = latestComment?.content;
-      const nextLastCommentDate = latestComment?.createdAt;
-      const fallbackActivityAt =
-        lead.statusChangedAt || lead.updatedAt || lead.createdAt;
+    const nextLastComment = latestComment?.content;
+    const nextLastCommentDate = latestComment?.createdAt;
+    const fallbackActivityAt =
+      lead.statusChangedAt || lead.updatedAt || lead.createdAt;
 
-      return {
-        ...lead,
-        lastComment: nextLastComment,
-        lastCommentDate: nextLastCommentDate,
-        lastActivityAt: nextLastCommentDate || fallbackActivityAt,
-        commentCount: Math.max(0, nextComments.length),
-      };
-    });
+    return {
+      ...lead,
+      lastComment: nextLastComment,
+      lastCommentDate: nextLastCommentDate,
+      lastActivityAt: nextLastCommentDate || fallbackActivityAt,
+      updatedAt: nextLastCommentDate || lead.updatedAt,
+      commentCount: Math.max(0, nextComments.length),
+    };
+  });
+}
 
-  const patchUnknownShape = (oldData: unknown): unknown => {
-    if (Array.isArray(oldData)) {
-      return patchLeadArray(oldData as Lead[]);
-    }
+/** Keep leads / assignedLeads list rows in sync when comment data changes. */
+export function patchLeadListCachesFromComments(
+  queryClient: QueryClient,
+  leadId: string,
+  nextComments: Comment[],
+): void {
+  const queries = queryClient.getQueryCache().findAll({
+    predicate: (query) =>
+      Array.isArray(query.queryKey) &&
+      (query.queryKey[0] === "leads" || query.queryKey[0] === "assignedLeads"),
+  });
 
-    if (oldData && typeof oldData === "object") {
-      const typed = oldData as {
-        leads?: Lead[];
-        data?: Lead[];
-        assignedLeads?: Lead[];
-      };
-
-      if (Array.isArray(typed.leads)) {
-        return { ...typed, leads: patchLeadArray(typed.leads) };
-      }
-
-      if (Array.isArray(typed.assignedLeads)) {
-        return { ...typed, assignedLeads: patchLeadArray(typed.assignedLeads) };
-      }
-
-      if (Array.isArray(typed.data)) {
-        return { ...typed, data: patchLeadArray(typed.data) };
-      }
-    }
-
-    return oldData;
-  };
-
-  queryClient.setQueriesData(
-    {
-      predicate: (query) =>
-        query.queryKey[0] === "leads" || query.queryKey[0] === "assignedLeads",
-    },
-    patchUnknownShape,
-  );
+  for (const query of queries) {
+    queryClient.setQueryData(query.queryKey, (old: unknown) =>
+      transformLeadsListCacheData(
+        old,
+        Array.isArray(query.queryKey) ? query.queryKey : [],
+        (rows) => patchLeadInArray(rows, leadId, nextComments),
+      ),
+    );
+  }
 }
 
 /** Drop a deleted comment immediately — do not refetch, which can restore it. */

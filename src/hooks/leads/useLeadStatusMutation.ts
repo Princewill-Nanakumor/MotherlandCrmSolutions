@@ -10,6 +10,7 @@ import {
 } from "@/lib/leadClientUpdate";
 import { setLeadDetailQueryData } from "@/lib/leadPanelContact";
 import { applyRemoteLeadStatusToListCaches } from "@/lib/leadsListCache";
+import { transformLeadsListCacheData } from "@/lib/leadListSort";
 
 type LeadsData =
   | Lead[]
@@ -44,32 +45,6 @@ function isLeadsListQueryKey(key: QueryKey): boolean {
   return key[0] === "leads" || key[0] === "assignedLeads";
 }
 
-function patchLeadInData(
-  data: LeadsData,
-  leadId: string,
-  patch: (lead: Lead) => Lead,
-): LeadsData {
-  if (!data) return data;
-  if (Array.isArray(data)) {
-    return data.map((l) => (l._id === leadId ? patch(l) : l));
-  }
-  if (typeof data === "object") {
-    if ("data" in data && Array.isArray(data.data)) {
-      return {
-        ...data,
-        data: data.data.map((l) => (l._id === leadId ? patch(l) : l)),
-      };
-    }
-    if ("leads" in data && Array.isArray(data.leads)) {
-      return {
-        ...data,
-        leads: data.leads.map((l) => (l._id === leadId ? patch(l) : l)),
-      };
-    }
-  }
-  return data;
-}
-
 type StatusMutationResponse = Lead & { statusChanged?: boolean };
 
 export function useLeadStatusMutation({
@@ -100,27 +75,41 @@ export function useLeadStatusMutation({
       applyRemoteLeadStatusToListCaches(queryClient, leadId, normalized.status, {
         touchActivity: true,
       });
-      queryClient.setQueriesData<LeadsData>(
-        { predicate: (q) => isLeadsListQueryKey(q.queryKey) },
-        (oldData) =>
-          patchLeadInData(oldData, leadId, (existingLead) => ({
-            ...existingLead,
-            ...normalized,
-            lastComment: normalized.lastComment ?? existingLead.lastComment,
-            lastCommentDate:
-              normalized.lastCommentDate ?? existingLead.lastCommentDate,
-            lastCallInitiatedAt:
-              normalized.lastCallInitiatedAt ??
-              existingLead.lastCallInitiatedAt,
-            commentCount:
-              normalized.commentCount ?? existingLead.commentCount,
-            lastActivityAt:
-              normalized.lastActivityAt ??
-              existingLead.lastActivityAt ??
-              normalized.statusChangedAt ??
-              existingLead.statusChangedAt,
-          })),
-      );
+      const queries = queryClient.getQueryCache().findAll({
+        predicate: (q) => isLeadsListQueryKey(q.queryKey),
+      });
+      for (const query of queries) {
+        queryClient.setQueryData(query.queryKey, (oldData: LeadsData) =>
+          transformLeadsListCacheData(
+            oldData,
+            Array.isArray(query.queryKey) ? query.queryKey : [],
+            (rows) =>
+              rows.map((existingLead) =>
+                existingLead._id === leadId
+                  ? {
+                      ...existingLead,
+                      ...normalized,
+                      lastComment:
+                        normalized.lastComment ?? existingLead.lastComment,
+                      lastCommentDate:
+                        normalized.lastCommentDate ??
+                        existingLead.lastCommentDate,
+                      lastCallInitiatedAt:
+                        normalized.lastCallInitiatedAt ??
+                        existingLead.lastCallInitiatedAt,
+                      commentCount:
+                        normalized.commentCount ?? existingLead.commentCount,
+                      lastActivityAt:
+                        normalized.lastActivityAt ??
+                        existingLead.lastActivityAt ??
+                        normalized.statusChangedAt ??
+                        existingLead.statusChangedAt,
+                    }
+                  : existingLead,
+              ),
+          ) as LeadsData,
+        );
+      }
     },
     [queryClient],
   );
