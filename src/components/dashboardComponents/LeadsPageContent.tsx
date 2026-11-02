@@ -321,6 +321,10 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                       return statusObj?.name ?? statusId;
                     })}
                     filterBySource={uiState.filterBySource}
+                    userFilterMode={uiState.userFilterMode}
+                    countryFilterMode={uiState.countryFilterMode}
+                    statusFilterMode={uiState.statusFilterMode}
+                    sourceFilterMode={uiState.sourceFilterMode}
                     users={users}
                     onClearFilters={handleClearFilters}
                     searchQuery={searchQuery}
@@ -348,6 +352,10 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
                     filterByCountry={uiState.filterByCountry}
                     filterByStatus={uiState.filterByStatus}
                     filterBySource={uiState.filterBySource}
+                    userFilterMode={uiState.userFilterMode}
+                    countryFilterMode={uiState.countryFilterMode}
+                    statusFilterMode={uiState.statusFilterMode}
+                    sourceFilterMode={uiState.sourceFilterMode}
                   />
                 </div>
               )}

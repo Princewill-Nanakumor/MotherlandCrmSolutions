@@ -74,6 +74,7 @@ import {
   normalizeLeadId,
 } from "@/lib/leadId";
 import { getLiveLeadParam } from "@/lib/liveSearchParams";
+import type { LeadFilterMode } from "@/lib/leadEmptyFilterDescription";
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -99,6 +100,10 @@ interface LeadsTableProps {
   filterByCountry?: string | string[];
   filterByStatus?: string | string[];
   filterBySource?: string | string[];
+  userFilterMode?: LeadFilterMode;
+  countryFilterMode?: LeadFilterMode;
+  statusFilterMode?: LeadFilterMode;
+  sourceFilterMode?: LeadFilterMode;
 }
 
 export default function LeadsTable({
@@ -119,6 +124,10 @@ export default function LeadsTable({
   filterByCountry = "all",
   filterByStatus = "all",
   filterBySource = "all",
+  userFilterMode = "include",
+  countryFilterMode = "include",
+  statusFilterMode = "include",
+  sourceFilterMode = "include",
 }: LeadsTableProps) {
   const pathname = usePathname() || "";
   const isServerPagination = typeof serverTotalRows === "number";
@@ -549,13 +558,22 @@ export default function LeadsTable({
                   searchQuery={searchQuery}
                   filterByUser={userFilter}
                   filterByCountry={countryFilter}
-                  filterByStatus={statusFilter}
+                  filterByStatus={statusFilter.map((statusId) => {
+                    const statusObj = statuses.find(
+                      (s) => s.id === statusId || s.name === statusId,
+                    );
+                    return statusObj?.name ?? statusId;
+                  })}
                   filterBySource={sourceFilter}
+                  userFilterMode={userFilterMode}
+                  countryFilterMode={countryFilterMode}
+                  statusFilterMode={statusFilterMode}
+                  sourceFilterMode={sourceFilterMode}
                   hasFilters={
-                    filterByUser !== "all" ||
-                    filterByCountry !== "all" ||
-                    filterByStatus !== "all" ||
-                    filterBySource !== "all"
+                    userFilter.length > 0 ||
+                    countryFilter.length > 0 ||
+                    statusFilter.length > 0 ||
+                    sourceFilter.length > 0
                   }
                   users={users}
                 />

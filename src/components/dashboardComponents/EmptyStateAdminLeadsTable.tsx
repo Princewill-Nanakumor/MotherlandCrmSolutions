@@ -1,12 +1,10 @@
 // src/components/dashboardComponents/EmptyStateAdminLeadsTable.tsx
 import React from "react";
-
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  // Add other fields if needed
-}
+import {
+  describeLeadEmptyFilters,
+  type LeadFilterMode,
+} from "@/lib/leadEmptyFilterDescription";
+import type { User } from "@/types/user.types";
 
 interface EmptyStateAdminLeadsTableProps {
   searchQuery?: string;
@@ -14,6 +12,10 @@ interface EmptyStateAdminLeadsTableProps {
   filterByCountry?: string | string[];
   filterByStatus?: string | string[];
   filterBySource?: string | string[];
+  userFilterMode?: LeadFilterMode;
+  countryFilterMode?: LeadFilterMode;
+  statusFilterMode?: LeadFilterMode;
+  sourceFilterMode?: LeadFilterMode;
   hasFilters?: boolean;
   users?: User[];
 }
@@ -26,11 +28,14 @@ export const EmptyStateAdminLeadsTable: React.FC<
   filterByCountry = "all",
   filterByStatus = "all",
   filterBySource = "all",
+  userFilterMode = "include",
+  countryFilterMode = "include",
+  statusFilterMode = "include",
+  sourceFilterMode = "include",
   hasFilters = false,
   users = [],
 }) => {
   const getEmptyStateContent = () => {
-    // Search-specific empty state
     if (searchQuery) {
       return {
         icon: (
@@ -54,50 +59,18 @@ export const EmptyStateAdminLeadsTable: React.FC<
       };
     }
 
-    // Filter-specific empty state
     if (hasFilters) {
-      // Helper to normalize filter values to arrays
-      const normalizeFilter = (filter: string | string[] | undefined): string[] => {
-        if (!filter) return [];
-        if (Array.isArray(filter)) return filter;
-        return filter === "all" ? [] : [filter];
-      };
-
-      const filters: string[] = [];
-      const userFilter = normalizeFilter(filterByUser);
-      if (userFilter.length > 0) {
-        if (userFilter.includes("unassigned")) {
-          filters.push("unassigned leads");
-        }
-        const userIds = userFilter.filter((id) => id !== "unassigned");
-        if (userIds.length > 0) {
-          const userNames = userIds
-            .map((id) => {
-              const user = users?.find((u) => u.id === id);
-              return user ? `${user.firstName} ${user.lastName}` : null;
-            })
-            .filter(Boolean);
-          if (userNames.length > 0) {
-            filters.push(`leads assigned to ${userNames.join(", ")}`);
-          }
-        }
-      }
-      const countryFilter = normalizeFilter(filterByCountry);
-      if (countryFilter.length > 0) {
-        filters.push(`leads from ${countryFilter.join(", ")}`);
-      }
-      const statusFilter = normalizeFilter(filterByStatus);
-      if (statusFilter.length > 0) {
-        if (statusFilter.length === 1) {
-          filters.push(`leads with status "${statusFilter[0]}"`);
-        } else {
-          filters.push(`leads with ${statusFilter.length} selected statuses`);
-        }
-      }
-      const sourceFilter = normalizeFilter(filterBySource);
-      if (sourceFilter.length > 0) {
-        filters.push(`leads from source "${sourceFilter.join(", ")}"`);
-      }
+      const filters = describeLeadEmptyFilters({
+        filterByUser,
+        filterByCountry,
+        filterByStatus,
+        filterBySource,
+        userFilterMode,
+        countryFilterMode,
+        statusFilterMode,
+        sourceFilterMode,
+        users,
+      });
 
       return {
         icon: (
@@ -116,14 +89,16 @@ export const EmptyStateAdminLeadsTable: React.FC<
           </svg>
         ),
         title: "No leads found",
-        description: `No leads match your current filters: ${filters.join(
-          ", "
-        )}. Try adjusting your filters or clearing them.`,
+        description:
+          filters.length > 0
+            ? `No leads match your current filters: ${filters.join(
+                ", ",
+              )}. Try adjusting your filters or clearing them.`
+            : "No leads match your current filters. Try adjusting your filters or clearing them.",
         action: "Clear filters or adjust search criteria",
       };
     }
 
-    // General empty state (no leads at all)
     return {
       icon: (
         <svg
