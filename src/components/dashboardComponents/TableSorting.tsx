@@ -12,7 +12,6 @@ import {
 import {
   defaultLeadListSortOrder,
   isLeadListServerSortField,
-  isPageResortListSortField,
   sortLeadsForListPage,
 } from "@/lib/leadListSort";
 import type { SortField, SortOrder } from "@/types/table";
@@ -90,13 +89,10 @@ export const useTableSorting = ({
 
     // API already filtered this page (search / country / status / source / user).
     // Re-filtering here would shrink the page and break totals.
-    // Nullable denorm columns (call/comment/statusChanged) may need a page
-    // re-order so the visible column matches the header sort.
+    // Still re-order the visible page so comment/call/status patches that update
+    // denorm fields move the row immediately (same as Last Comment Date).
     if (serverSorted && isLeadListServerSortField(sortField)) {
-      if (isPageResortListSortField(sortField)) {
-        return sortLeadsForListPage(leads, sortField, sortOrder);
-      }
-      return leads;
+      return sortLeadsForListPage(leads, sortField, sortOrder);
     }
 
     const filteredLeads = serverSorted

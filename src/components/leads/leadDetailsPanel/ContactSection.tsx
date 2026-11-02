@@ -36,6 +36,7 @@ import {
 } from "@/lib/openDialerUrl";
 import { formatLeadDetailSource } from "@/lib/leadDisplayFormat";
 import { canEditLead } from "@/lib/roles";
+import { patchLeadLastCallInitiatedInListCaches } from "@/lib/leadsListCache";
 import {
   MAX_LEAD_CONTACT_EXTRAS,
   coerceContactEntries,
@@ -208,6 +209,23 @@ export const ContactSection: FC<ContactSectionProps> = ({
     [lead],
   );
 
+  const syncCallInitiatedToListCaches = useCallback(
+    (leadId: string) => {
+      // Same as comments: patch list caches immediately so Last Call /
+      // activity sorts move this row without waiting on Ably.
+      patchLeadLastCallInitiatedInListCaches(
+        queryClient,
+        leadId,
+        new Date().toISOString(),
+      );
+      void queryClient.invalidateQueries({
+        queryKey: ["activities", leadId],
+        refetchType: "active",
+      });
+    },
+    [queryClient],
+  );
+
   const handleCall = useCallback(
     async (phoneNumber?: string) => {
       if (isResolvingCall) return;
@@ -250,10 +268,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
               }),
             });
             if (response.ok && lead?._id) {
-              void queryClient.invalidateQueries({
-                queryKey: ["activities", lead._id],
-                refetchType: "active",
-              });
+              syncCallInitiatedToListCaches(lead._id);
             }
           } catch {
             /* ignore */
@@ -279,18 +294,14 @@ export const ContactSection: FC<ContactSectionProps> = ({
 
           if (response.ok) {
             if (lead?._id) {
-              void queryClient.invalidateQueries({
-                queryKey: ["activities", lead._id],
-                refetchType: "active",
-              });
+              syncCallInitiatedToListCaches(lead._id);
             }
             // Invalidate call logs for the current user who made the call
             // React Query will automatically refetch any active queries (if modal is open)
-            // This ensures the call logs modal shows the latest data immediately without page refresh
             if (session?.user?.id) {
               queryClient.invalidateQueries({
                 queryKey: callLogsKeys.user(session.user.id),
-                refetchType: "active", // Only refetch if query is currently being used (modal is open)
+                refetchType: "active",
               });
             }
           }
@@ -312,6 +323,7 @@ export const ContactSection: FC<ContactSectionProps> = ({
       toast,
       isResolvingCall,
       resolvePhoneForDial,
+      syncCallInitiatedToListCaches,
     ],
   );
 

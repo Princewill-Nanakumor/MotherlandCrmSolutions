@@ -11,7 +11,6 @@ import {
 import { normalizeCountryInput } from "@/lib/countryNormalize";
 import {
   isLeadListServerSortField,
-  isPageResortListSortField,
   sortLeadsForListPage,
 } from "@/lib/leadListSort";
 import type { SortField, SortOrder } from "@/components/leads/userLeadsTypes";
@@ -165,12 +164,9 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
     }
 
     // Server already ordered this page for supported sort fields.
-    // Re-order nullable denorm columns so the visible page matches the header.
+    // Re-order locally so call/comment/status patches move the row immediately.
     if (serverFiltered && isLeadListServerSortField(sortField)) {
-      if (isPageResortListSortField(sortField)) {
-        return sortLeadsForListPage(filteredLeads, sortField, sortOrder);
-      }
-      return filteredLeads;
+      return sortLeadsForListPage(filteredLeads, sortField, sortOrder);
     }
 
     return [...filteredLeads].sort((a, b) => {
