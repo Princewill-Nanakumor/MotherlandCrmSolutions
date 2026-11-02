@@ -23,20 +23,15 @@ import { UserLeadsPageLoadingShell } from "@/components/leads/UserLeadsPageLoadi
 import { SortField, SortOrder } from "@/components/leads/userLeadsTypes";
 import { parseLeadListUiSort } from "@/lib/leadListSort";
 import {
-  isLegacyNumericLeadId,
-  isPrefixedLeadId,
-  normalizeLeadId,
-} from "@/lib/leadId";
-import {
   isStatusOnlyLeadUpdate,
   mergeLeadContactExtrasIfSame,
 } from "@/lib/leadClientUpdate";
-import { getLiveLeadParam } from "@/lib/liveSearchParams";
 import {
   readLiveSearchQuery,
   removeOpenLeadFromLiveUrl,
   shouldDismissOpenLeadForSearchChange,
 } from "@/lib/leadListSearchParams";
+import { useRestoreLeadPanelFromUrl } from "@/hooks/useRestoreLeadPanelFromUrl";
 import { parseLeadPageSize, snapLeadPageSize } from "@/lib/leadPageSize";
 import { humanizeDashboardFetchError } from "@/lib/mongoConnectionError";
 
@@ -385,50 +380,16 @@ export default function UserLeadsContent() {
     [handleURLSourceModeChange],
   );
 
-  // Keep selected lead/panel synced from URL like /dashboard/all-leads.
-  useEffect(() => {
-    // Previous rows stay mounted while the next search loads. Don't slide
-    // that lead's panel open again from a stale `lead` param.
-    if (isRefetching) return;
-
-    const leadIdParam = getLiveLeadParam(searchParams);
-    if (!leadIdParam) {
-      if (isPanelOpen || selectedLead) {
-        setIsPanelOpen(false);
-        setSelectedLead(null);
-      }
-      return;
-    }
-
-    let urlLead: Lead | undefined;
-    if (isLegacyNumericLeadId(leadIdParam)) {
-      const numericId = parseInt(leadIdParam, 10);
-      urlLead = leads.find(
-        (l) => normalizeLeadId(l.leadId) === normalizeLeadId(numericId),
-      );
-    } else if (isPrefixedLeadId(leadIdParam)) {
-      urlLead = leads.find(
-        (l) =>
-          normalizeLeadId(l.leadId).toUpperCase() === leadIdParam.toUpperCase(),
-      );
-    } else {
-      urlLead = leads.find((l) => l._id === leadIdParam);
-    }
-
-    if (urlLead) {
-      const needsLeadUpdate =
-        !selectedLead || selectedLead._id !== urlLead._id;
-      const needsPanelOpen = !isPanelOpen;
-      if (needsLeadUpdate || needsPanelOpen) {
-        if (needsPanelOpen) {
-          flushSync(() => {
-            setIsPanelOpen(true);
-          });
-        }
-        if (needsLeadUpdate) setSelectedLead(urlLead);
-      }
-    }
-  }, [searchParams, leads, isPanelOpen, selectedLead, isRefetching]);
+  useRestoreLeadPanelFromUrl({
+    searchParams,
+    leads,
+    isRefetching,
+    selectedLead,
+    setSelectedLead,
+    setIsPanelOpen,
+    clearSelectionWhenNoLeadParam: true,
+    isPanelOpen,
+  });
 
   // Row click handler: open side panel and sync URL
   const handleRowClick = useCallback((lead: Lead) => {

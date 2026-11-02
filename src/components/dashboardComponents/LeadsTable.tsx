@@ -68,13 +68,9 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import {
-  isLegacyNumericLeadId,
-  isPrefixedLeadId,
-  normalizeLeadId,
-} from "@/lib/leadId";
 import { getLiveLeadParam } from "@/lib/liveSearchParams";
 import type { LeadFilterMode } from "@/lib/leadEmptyFilterDescription";
+import { useRestoreLeadPanelFromUrl } from "@/hooks/useRestoreLeadPanelFromUrl";
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -293,99 +289,39 @@ export default function LeadsTable({
     ),
   });
 
-  // Keep selectedLead in sync with full leads array (incl. assignment changes).
+  // Keep selectedLead in sync with the list; close only when deleted and URL has no lead=.
   useEffect(() => {
-    const leadIdParam = getLiveLeadParam(searchParams);
-
-    // If URL has lead parameter, NEVER close the panel (lead might be filtered out)
-    if (leadIdParam && selectedLead) {
-      // Just update selectedLead if we have newer data, but keep panel open
-      if (leads.length > 0) {
-        const updatedLead = leads.find((l) => l._id === selectedLead._id);
-        if (updatedLead) {
-          // Update selectedLead if key fields have changed (status, updatedAt, etc.)
-          if (leadRowNeedsPanelResync(selectedLead, updatedLead)) {
-            // List rows omit emails/phones — keep extras already loaded in the panel.
-            setSelectedLead(
-              mergeLeadContactExtrasIfSame(updatedLead, selectedLead),
-            );
-          }
-        }
-        // If lead not found but URL has param, keep panel open with current selectedLead
-        // (lead is filtered out, not deleted)
-      }
-      return; // Don't proceed to closing logic if URL has lead param
-    }
-
-    // Only check for deletion if there's NO lead parameter in URL
-    if (selectedLead && leads.length > 0 && !leadIdParam) {
-      const updatedLead = leads.find((l) => l._id === selectedLead._id);
-      if (updatedLead) {
-        // Update selectedLead if key fields have changed
-        if (
-          updatedLead.status !== selectedLead.status ||
-          updatedLead.updatedAt !== selectedLead.updatedAt ||
-          updatedLead.firstName !== selectedLead.firstName ||
-          updatedLead.lastName !== selectedLead.lastName ||
-          updatedLead.email !== selectedLead.email ||
-          updatedLead.phone !== selectedLead.phone
-        ) {
-          setSelectedLead(
-            mergeLeadContactExtrasIfSame(updatedLead, selectedLead),
-          );
-        }
-      } else {
-        // Lead not found in full leads array AND no URL param - lead was deleted
-        setSelectedLead(null);
-        setIsPanelOpen(false);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leads, selectedLead?._id, searchParams]); // Include searchParams to check for lead param
-
-  // ✅ FIX: Read lead parameter from URL and open panel automatically
-  // ✅ FIX: Keep panel open even if lead is filtered out (only close if lead is deleted)
-  useEffect(() => {
-    // While a new search is in flight, `leads` is still the previous page.
-    // Opening from the URL here mounts the previous lead's panel again.
-    if (isRefetching) return;
+    if (!selectedLead || leads.length === 0) return;
 
     const leadIdParam = getLiveLeadParam(searchParams);
+    const updatedLead = leads.find((l) => l._id === selectedLead._id);
 
-    if (leadIdParam && leads.length > 0) {
-      // Always search in full leads array (not filtered sortedLeads)
-      // This ensures we find the lead even if it's been filtered out
-      const isNumericId = isLegacyNumericLeadId(leadIdParam);
-      let lead: Lead | undefined;
-
-      if (isNumericId) {
-        const numericId = parseInt(leadIdParam, 10);
-        lead = leads.find(
-          (l) => normalizeLeadId(l.leadId) === normalizeLeadId(numericId)
+    if (updatedLead) {
+      if (leadRowNeedsPanelResync(selectedLead, updatedLead)) {
+        // List rows omit emails/phones — keep extras already loaded in the panel.
+        setSelectedLead(
+          mergeLeadContactExtrasIfSame(updatedLead, selectedLead),
         );
-      } else if (isPrefixedLeadId(leadIdParam)) {
-        lead = leads.find(
-          (l) =>
-            normalizeLeadId(l.leadId).toUpperCase() === leadIdParam.toUpperCase()
-        );
-      } else {
-        lead = leads.find((l) => l._id === leadIdParam);
       }
-
-      if (lead) {
-        // Lead exists - update selectedLead if it's different
-        if (!selectedLead || selectedLead._id !== lead._id) {
-          flushSync(() => {
-            setIsPanelOpen(true);
-          });
-          setSelectedLead(lead);
-        }
-      }
-      // If lead not found but URL has param, keep panel open with current selectedLead
-      // (lead might be filtered out, not deleted - don't close panel)
+      return;
     }
+
+    // Lead not on this page: keep panel if URL still points at it (filtered out).
+    if (leadIdParam) return;
+
+    setSelectedLead(null);
+    setIsPanelOpen(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, leads, isRefetching]);
+  }, [leads, selectedLead?._id, searchParams]);
+
+  useRestoreLeadPanelFromUrl({
+    searchParams,
+    leads,
+    isRefetching,
+    selectedLead,
+    setSelectedLead,
+    setIsPanelOpen,
+  });
 
   // ⚡ Adjust pageIndex when filtered results change (client-side only)
   useEffect(() => {
