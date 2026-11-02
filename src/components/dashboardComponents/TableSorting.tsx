@@ -12,6 +12,8 @@ import {
 import {
   defaultLeadListSortOrder,
   isLeadListServerSortField,
+  isPageResortListSortField,
+  sortLeadsForListPage,
 } from "@/lib/leadListSort";
 import type { SortField, SortOrder } from "@/types/table";
 
@@ -88,7 +90,12 @@ export const useTableSorting = ({
 
     // API already filtered this page (search / country / status / source / user).
     // Re-filtering here would shrink the page and break totals.
+    // Nullable denorm columns (call/comment/statusChanged) may need a page
+    // re-order so the visible column matches the header sort.
     if (serverSorted && isLeadListServerSortField(sortField)) {
+      if (isPageResortListSortField(sortField)) {
+        return sortLeadsForListPage(leads, sortField, sortOrder);
+      }
       return leads;
     }
 

@@ -75,6 +75,21 @@ export function isLeadListUiSortField(
   );
 }
 
+/**
+ * Nullable / denorm columns that can disagree with Mongo order on a page
+ * (null tie-break, or hydrate after sort). Re-order the visible page for these.
+ */
+const PAGE_RESORT_LIST_SORT_FIELDS = new Set([
+  "lastCallInitiatedAt",
+  "lastCommentDate",
+  "lastComment",
+  "statusChangedAt",
+]);
+
+export function isPageResortListSortField(field: string): boolean {
+  return PAGE_RESORT_LIST_SORT_FIELDS.has(field);
+}
+
 export function parseLeadListUiSort(
   sortFieldRaw: string | null,
   sortOrderRaw: string | null,
@@ -130,6 +145,17 @@ export function getListSortFromQueryKey(key: readonly unknown[]): {
     typeof key[12] === "string" && key[12] ? key[12] : "lastActivityAt";
   const sortOrder: LeadListSortOrder = key[13] === "asc" ? "asc" : "desc";
   return { sortField, sortOrder };
+}
+
+/** False when sort changed — skip placeholder so the table doesn't keep old order. */
+export function leadsListSortMatchesQueryKey(
+  queryKey: readonly unknown[] | undefined,
+  sortField: string,
+  sortOrder: string,
+): boolean {
+  if (!queryKey || queryKey.length < 14) return false;
+  const prev = getListSortFromQueryKey(queryKey);
+  return prev.sortField === sortField && prev.sortOrder === sortOrder;
 }
 
 function activityTimeMs(lead: Lead): number {

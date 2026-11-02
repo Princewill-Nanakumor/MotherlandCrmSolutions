@@ -27,6 +27,7 @@ import {
   isRetryableFilterFetch,
 } from "@/lib/mongoConnectionError";
 import { getLiveLeadParam } from "@/lib/liveSearchParams";
+import { leadsListSortMatchesQueryKey } from "@/lib/leadListSort";
 
 export const useLeadsPage = (
   searchQuery: string,
@@ -203,7 +204,20 @@ export const useLeadsPage = (
     refetchOnWindowFocus: true,
     retry: 2,
     refetchOnMount: false,
-    placeholderData: (previousData) => previousData ?? lastLeadsDataRef.current,
+    placeholderData: (previousData, previousQuery) => {
+      // Keep previous rows for filter/search tweaks, but not when sort changes.
+      if (
+        previousQuery?.queryKey &&
+        !leadsListSortMatchesQueryKey(
+          previousQuery.queryKey,
+          sortField,
+          sortOrder,
+        )
+      ) {
+        return undefined;
+      }
+      return previousData ?? lastLeadsDataRef.current;
+    },
   });
 
   if (leadsData !== undefined) {

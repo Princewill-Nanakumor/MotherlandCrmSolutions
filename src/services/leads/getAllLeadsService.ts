@@ -21,11 +21,14 @@ import { canAccessAllLeads, getTenantAdminId, isAdmin, isTenantStaff } from "@/l
 import { agentAssignedToUserClause } from "@/lib/leadAssignmentQuery";
 import {
   buildLeadListMongoSort,
+  isPageResortListSortField,
   parseLeadListSort,
+  sortLeadsForListPage,
 } from "@/lib/leadListSort";
 import { ensureTenantLastCommentBackfill } from "@/lib/leadLastComment";
 import { ensureTenantLastCallBackfill } from "@/lib/leadLastCall";
 import type { ApiRoutePerf } from "@/lib/apiRoutePerf";
+import type { Lead } from "@/types/leads";
 
 interface SessionUser {
   id: string;
@@ -393,8 +396,9 @@ export async function getAllLeadsForSession(
     await ensureTenantLastCommentBackfill(db, adminIdForComments);
     perf?.mark("lastComment-backfill");
   }
-  // Always backfill calls on list load (memoized per tenant) so the column
-  // populates without requiring a sort click.
+  // Always backfill calls on list load (memoized per tenant) so Mongo can
+  // sort/paginate by lastCallInitiatedAt before skip/limit. Page hydration
+  // below is only a safety net for rows still missing the denorm field.
   if (adminIdForComments) {
     await ensureTenantLastCallBackfill(db, adminIdForComments);
     perf?.mark("lastCall-backfill");
@@ -601,8 +605,21 @@ export async function getAllLeadsForSession(
   );
   perf?.mark("transform");
 
+  // Re-order the page for nullable denorm sorts (last call / last comment /
+  // status changed) so visible values match the header after hydrate/nulls.
+  const orderedLeads = isPageResortListSortField(sortField)
+    ? (sortLeadsForListPage(
+        transformedLeads as unknown as Lead[],
+        sortField,
+        sortOrder,
+      ) as unknown as typeof transformedLeads)
+    : transformedLeads;
+  if (orderedLeads !== transformedLeads) {
+    perf?.mark("page-resort-after-hydrate");
+  }
+
   return {
-    leads: transformedLeads,
+    leads: orderedLeads,
     total: totalCount,
     totalAll: totalAllCount,
   };

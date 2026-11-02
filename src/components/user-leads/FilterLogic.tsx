@@ -9,7 +9,11 @@ import {
   getAvailableSources,
 } from "@/utils/LeadsUtils";
 import { normalizeCountryInput } from "@/lib/countryNormalize";
-import { isLeadListServerSortField } from "@/lib/leadListSort";
+import {
+  isLeadListServerSortField,
+  isPageResortListSortField,
+  sortLeadsForListPage,
+} from "@/lib/leadListSort";
 import type { SortField, SortOrder } from "@/components/leads/userLeadsTypes";
 
 interface FilterLogicProps {
@@ -161,7 +165,11 @@ export const FilterLogic: React.FC<FilterLogicProps> = ({
     }
 
     // Server already ordered this page for supported sort fields.
+    // Re-order nullable denorm columns so the visible page matches the header.
     if (serverFiltered && isLeadListServerSortField(sortField)) {
+      if (isPageResortListSortField(sortField)) {
+        return sortLeadsForListPage(filteredLeads, sortField, sortOrder);
+      }
       return filteredLeads;
     }
 

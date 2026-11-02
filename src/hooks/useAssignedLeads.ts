@@ -11,6 +11,7 @@ import {
   type AssignedLeadsListResponse,
   type AssignedLeadsQueryFilters,
 } from "@/lib/assignedLeadsQuery";
+import { leadsListSortMatchesQueryKey } from "@/lib/leadListSort";
 
 export { assignedLeadsKeys } from "@/lib/assignedLeadsQuery";
 
@@ -124,7 +125,19 @@ export const useAssignedLeads = (filters: AssignedLeadsQueryFilters) => {
     refetchOnWindowFocus: "always",
     refetchOnMount: false,
     refetchOnReconnect: true,
-    placeholderData: (previousData) => previousData ?? lastLeadsDataRef.current,
+    placeholderData: (previousData, previousQuery) => {
+      if (
+        previousQuery?.queryKey &&
+        !leadsListSortMatchesQueryKey(
+          previousQuery.queryKey,
+          filters.sortField ?? "lastActivityAt",
+          filters.sortOrder ?? "desc",
+        )
+      ) {
+        return undefined;
+      }
+      return previousData ?? lastLeadsDataRef.current;
+    },
     retry: (failureCount, err) => {
       if (err?.message?.includes("Unauthorized")) {
         return false;
