@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { flushSync } from "react-dom";
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import type { Lead } from "@/types/leads";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
@@ -57,14 +56,10 @@ export function useRestoreLeadPanelFromUrl({
     if (fromList) {
       urlLeadRestoreRef.current = leadIdParam;
       if (!selectedLead || selectedLead._id !== fromList._id) {
-        flushSync(() => {
-          setIsPanelOpen(true);
-        });
+        setIsPanelOpen(true);
         setSelectedLead(fromList);
       } else if (clearSelectionWhenNoLeadParam && !isPanelOpen) {
-        flushSync(() => {
-          setIsPanelOpen(true);
-        });
+        setIsPanelOpen(true);
       }
       return;
     }
@@ -72,9 +67,7 @@ export function useRestoreLeadPanelFromUrl({
     if (selectedLead && leadMatchesUrlParam(selectedLead, leadIdParam)) {
       urlLeadRestoreRef.current = leadIdParam;
       if (clearSelectionWhenNoLeadParam && !isPanelOpen) {
-        flushSync(() => {
-          setIsPanelOpen(true);
-        });
+        setIsPanelOpen(true);
       }
       return;
     }
@@ -95,9 +88,7 @@ export function useRestoreLeadPanelFromUrl({
         }
         const fetched = (await response.json()) as Lead;
         if (cancelled || !fetched?._id) return;
-        flushSync(() => {
-          setIsPanelOpen(true);
-        });
+        setIsPanelOpen(true);
         setSelectedLead(fetched);
       } catch {
         if (!cancelled) urlLeadRestoreRef.current = null;

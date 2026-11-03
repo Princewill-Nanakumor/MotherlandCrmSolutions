@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { flushSync } from "react-dom";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Lead } from "@/types/leads";
 import { FilterLogic } from "@/components/user-leads/FilterLogic";
@@ -393,13 +392,11 @@ export default function UserLeadsContent() {
 
   // Row click handler: open side panel and sync URL
   const handleRowClick = useCallback((lead: Lead) => {
-    // Pause holiday effects in this same click tick before the panel mounts.
-    flushSync(() => {
-      setIsPanelOpen(true);
-    });
+    // Batch open + selection in one render so the click stays responsive.
+    setIsPanelOpen(true);
     handleURLLeadClick(lead);
     setSelectedLead(lead);
-  }, [handleURLLeadClick]);
+  }, [handleURLLeadClick, setIsPanelOpen, setSelectedLead]);
 
   // Panel close handler: update local state and URL
   const handlePanelCloseLocal = useCallback(() => {

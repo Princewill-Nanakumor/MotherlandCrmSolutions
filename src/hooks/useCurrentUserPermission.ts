@@ -59,11 +59,13 @@ export const useCurrentUserPermission = () => {
     queryKey: ["current-user-permission", session?.user?.id ?? "anonymous"],
     queryFn: fetchCurrentUser,
     enabled: hasAuthorizedSession(status, session),
-    staleTime: 30 * 1000, // 30 seconds - refresh more frequently
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: 1,
-    refetchOnWindowFocus: true, // Refetch when user returns to window
-    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    // Avoid refetching /me on every panel mount — that re-ran lead detail
+    // hydrate when permission flags resolved again.
+    refetchOnMount: true,
   });
 
   // Prefer live /me flags; fall back to JWT while the first fetch is in flight

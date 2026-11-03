@@ -88,6 +88,10 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   const unmaskedForPanelRef = useRef<PanelContactSnapshot | null>(null);
   const lastPanelLeadIdRef = useRef<string | null>(null);
   const currentLeadRef = useRef<Lead | null>(lead);
+  const canViewEmailsRef = useRef(canViewEmails);
+  const canViewPhoneNumbersRef = useRef(canViewPhoneNumbers);
+  canViewEmailsRef.current = canViewEmails;
+  canViewPhoneNumbersRef.current = canViewPhoneNumbers;
 
   useEffect(() => {
     currentLeadRef.current = currentLead;
@@ -146,6 +150,9 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     if (!isOpen || !lead?._id || !session?.user?.id) return;
 
     let cancelled = false;
+    let idleId: number | null = null;
+    let timeoutId: number | null = null;
+
     (async () => {
       try {
         const res = await apiCallWithSessionRefresh(`/api/leads/${lead._id}`, {
@@ -173,14 +180,22 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
               }
             : prev,
         );
-        startTransition(() => {
-          syncLeadContactToListCaches(
-            queryClient,
-            data,
-            canViewEmails,
-            canViewPhoneNumbers,
-          );
-        });
+        const syncList = () => {
+          if (cancelled) return;
+          startTransition(() => {
+            syncLeadContactToListCaches(
+              queryClient,
+              data,
+              canViewEmailsRef.current,
+              canViewPhoneNumbersRef.current,
+            );
+          });
+        };
+        if (typeof requestIdleCallback !== "undefined") {
+          idleId = requestIdleCallback(syncList, { timeout: 1200 });
+        } else {
+          timeoutId = window.setTimeout(syncList, 0);
+        }
       } catch {
         /* ignore */
       }
@@ -188,15 +203,12 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
 
     return () => {
       cancelled = true;
+      if (idleId != null && typeof cancelIdleCallback !== "undefined") {
+        cancelIdleCallback(idleId);
+      }
+      if (timeoutId != null) clearTimeout(timeoutId);
     };
-  }, [
-    isOpen,
-    lead?._id,
-    session?.user?.id,
-    queryClient,
-    canViewEmails,
-    canViewPhoneNumbers,
-  ]);
+  }, [isOpen, lead?._id, session?.user?.id, queryClient]);
 
   // Realtime sync: single tenant channel (filter by leadId / leadIds).
   useEffect(() => {
@@ -540,10 +552,10 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   const handleRequestClose = useCallback(() => {
     if (isClosing) return;
     setIsClosing(true);
-    // Match the slide-out tween so close feels instant after the animation.
+    // Match the slide-out tween (keep slightly under paint so close feels snappy).
     setTimeout(() => {
       onClose();
-    }, 180);
+    }, 140);
   }, [isClosing, onClose]);
 
   useEffect(() => {
@@ -602,7 +614,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       className="fixed inset-x-0 top-18 bottom-0 z-50 flex w-full flex-col overflow-hidden bg-white dark:bg-gray-800 md:inset-x-auto md:right-0 md:bottom-13 md:w-[min(80%,1200px)] md:flex-row md:border-l-2 md:border-gray-200 dark:md:border-gray-700"
       initial={{ x: "100%" }}
       animate={{ x: isClosing ? "100%" : 0 }}
-      transition={{ type: "tween", duration: 0.18, ease: "easeOut" }}
+      transition={{ type: "tween", duration: 0.14, ease: "easeOut" }}
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain md:flex-row md:overflow-hidden">
         <div className="flex w-full min-w-0 shrink-0 flex-col border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 md:h-full md:w-2/5 md:min-h-0 md:overflow-hidden md:border-b-0 md:border-r">

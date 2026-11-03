@@ -1,4 +1,8 @@
 import { runOncePerKey } from "@/lib/oncePerKey";
+import {
+  hasTenantDenormFlag,
+  setTenantDenormFlag,
+} from "@/lib/tenantDenormFlags";
 
 /**
  * Structural Db so callers can pass either top-level `mongodb.Db` or
@@ -9,13 +13,13 @@ type MongoDb = { collection: (name: string) => any };
 
 type ObjectIdLike = { toString(): string };
 
-/** In-flight / completed backfills keyed by tenant adminId. */
+/** In-flight / completed backfills keyed by tenant adminId (per process). */
 const lastCallBackfills = new Map<string, Promise<void>>();
 
 /**
- * One-shot per process/tenant: copy latest CALL_INITIATED activity onto leads
- * so `lastCallInitiatedAt` can be sorted/paginated with an index.
- * Concurrent list requests share one in-flight run (all-leads + assigned).
+ * One-shot per tenant (durable across serverless instances): copy latest
+ * CALL_INITIATED activity onto leads so `lastCallInitiatedAt` can be sorted
+ * with an index. Concurrent callers share one in-flight run.
  */
 export async function ensureTenantLastCallBackfill(
   db: MongoDb,
@@ -23,6 +27,10 @@ export async function ensureTenantLastCallBackfill(
 ): Promise<void> {
   const key = adminId.toString();
   return runOncePerKey(lastCallBackfills, key, async () => {
+    if (await hasTenantDenormFlag(db, adminId, "lastCallBackfilledAt")) {
+      return;
+    }
+
     type Row = { _id: ObjectIdLike; createdAt: Date };
     const latestByLead = await db
       .collection("activities")
@@ -65,5 +73,7 @@ export async function ensureTenantLastCallBackfill(
         { ordered: false },
       );
     }
+
+    await setTenantDenormFlag(db, adminId, "lastCallBackfilledAt");
   });
 }

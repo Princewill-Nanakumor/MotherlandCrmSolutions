@@ -387,8 +387,9 @@ export async function getAllLeadsForSession(
   const tenantId = getTenantAdminId(sessionUser);
   const adminIdForComments = tenantId ? new ObjectId(tenantId) : null;
 
-  // Existing tenants may lack denormalized lastComment* / lastCall* — backfill
-  // once so list columns show historical timeline data (panel already has it).
+  // Denorm backfills only when that column is the active sort (same for
+  // comments + calls). Page hydration below fills display gaps. Flags in
+  // tenant_denorm_flags make the heavy pass one-shot across Netlify instances.
   if (
     (sortField === "lastCommentDate" || sortField === "lastComment") &&
     adminIdForComments
@@ -396,10 +397,7 @@ export async function getAllLeadsForSession(
     await ensureTenantLastCommentBackfill(db, adminIdForComments);
     perf?.mark("lastComment-backfill");
   }
-  // Always backfill calls on list load (one shared in-flight job per tenant
-  // across /api/leads/all and /api/leads/assigned) so Mongo can sort/paginate
-  // by lastCallInitiatedAt. Page hydration below covers any remaining gaps.
-  if (adminIdForComments) {
+  if (sortField === "lastCallInitiatedAt" && adminIdForComments) {
     await ensureTenantLastCallBackfill(db, adminIdForComments);
     perf?.mark("lastCall-backfill");
   }

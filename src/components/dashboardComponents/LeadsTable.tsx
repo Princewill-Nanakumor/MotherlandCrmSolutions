@@ -2,7 +2,6 @@
 "use client";
 
 import { useMemo, useEffect, useState, useCallback, useRef } from "react";
-import { flushSync } from "react-dom";
 import dynamic from "next/dynamic";
 import { useSearchParams, usePathname } from "next/navigation";
 import { DEFAULT_LEAD_PAGE_SIZE } from "@/lib/leadPageSize";
@@ -32,11 +31,9 @@ import { useColumnOrder } from "@/hooks/useColumnOrder";
 import { useColumnVisibility } from "@/hooks/useColumnVisibility";
 import { useClearLeadSelectionOnEscape } from "@/hooks/useClearLeadSelectionOnEscape";
 import { mergeLeadContactExtrasIfSame } from "@/lib/leadClientUpdate";
+import { loadLeadDetailsPanel } from "@/lib/leadDetailsPanelLoad";
 
-const LeadDetailsPanel = dynamic(
-  () => import("@/components/dashboardComponents/LeadDetailsPanel"),
-  { ssr: false },
-);
+const LeadDetailsPanel = dynamic(loadLeadDetailsPanel, { ssr: false });
 
 function leadRowNeedsPanelResync(prev: Lead, next: Lead): boolean {
   const prevAssignee =
@@ -150,6 +147,12 @@ export default function LeadsTable({
   const storeSelectedLeads = useSelectedLeads();
   const setStoreSelectedLeads = useSetSelectedLeads();
   const isInitializedRef = useRef(false);
+
+  // Warm the panel chunk while the table is idle so the first row click
+  // does not wait on JS download/parse.
+  useEffect(() => {
+    void loadLeadDetailsPanel();
+  }, []);
 
   // URL and pagination state (LOCAL ONLY - no store). When server-side, use serverPage prop so filter change shows page 1 immediately.
   const searchParams = useSearchParams()!;

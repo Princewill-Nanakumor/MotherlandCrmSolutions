@@ -2,7 +2,6 @@
 "use client";
 
 import { useCallback } from "react";
-import { flushSync } from "react-dom";
 import { Lead } from "@/types/leads";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -60,10 +59,8 @@ export const usePanelNavigation = ({
         return;
       }
 
-      // Pause holiday effects in this same click tick before the panel mounts.
-      flushSync(() => {
-        setIsPanelOpen(true);
-      });
+      // Batch open + selection in one render so the click stays responsive.
+      setIsPanelOpen(true);
       updateUrl(lead);
       setSelectedLead(lead);
     },

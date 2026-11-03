@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { UserLeadsHeader } from "@/components/leads/UserLeadsHeader";
 import { UserLeadsFilterControls } from "@/components/leads/UserLeadsFilterControls";
@@ -12,11 +13,9 @@ import {
   DASHBOARD_PAGE_INSET_BODY_CLASS,
   DASHBOARD_PAGE_SHELL_FILL_CLASS,
 } from "@/lib/dashboardPageShell";
+import { loadLeadDetailsPanel } from "@/lib/leadDetailsPanelLoad";
 
-const LeadDetailsPanel = dynamic(
-  () => import("@/components/dashboardComponents/LeadDetailsPanel"),
-  { ssr: false },
-);
+const LeadDetailsPanel = dynamic(loadLeadDetailsPanel, { ssr: false });
 
 interface UserLeadsMainContentProps {
   loading: boolean;
@@ -150,6 +149,10 @@ export function UserLeadsMainContent({
   onPageChange,
   isRefetching = false,
 }: UserLeadsMainContentProps) {
+  useEffect(() => {
+    void loadLeadDetailsPanel();
+  }, []);
+
   const totalPages = Math.max(1, Math.ceil(leadsTotal / pageSize) || 1);
   const counts: CountsData = isDataReady
     ? {

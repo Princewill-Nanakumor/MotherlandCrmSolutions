@@ -1,4 +1,8 @@
 import { runOncePerKey } from "@/lib/oncePerKey";
+import {
+  hasTenantDenormFlag,
+  setTenantDenormFlag,
+} from "@/lib/tenantDenormFlags";
 
 /**
  * Structural Db so callers can pass either top-level `mongodb.Db` or
@@ -81,9 +85,9 @@ export async function syncLeadLastCommentFields(
 }
 
 /**
- * One-shot per process/tenant: copy latest comment onto leads so
- * `lastCommentDate` can be sorted/paginated with an index.
- * Concurrent list requests share one in-flight run (all-leads + assigned).
+ * One-shot per tenant (durable across serverless instances): copy latest
+ * comment onto leads so `lastCommentDate` can be sorted with an index.
+ * Concurrent callers share one in-flight run.
  */
 export async function ensureTenantLastCommentBackfill(
   db: MongoDb,
@@ -91,6 +95,10 @@ export async function ensureTenantLastCommentBackfill(
 ): Promise<void> {
   const key = adminId.toString();
   return runOncePerKey(lastCommentBackfills, key, async () => {
+    if (await hasTenantDenormFlag(db, adminId, "lastCommentBackfilledAt")) {
+      return;
+    }
+
     type Row = { _id: ObjectIdLike; content: string; createdAt: Date };
     const latestByLead = await db
       .collection("comments")
@@ -132,6 +140,8 @@ export async function ensureTenantLastCommentBackfill(
         { ordered: false },
       );
     }
+
+    await setTenantDenormFlag(db, adminId, "lastCommentBackfilledAt");
   });
 }
 
