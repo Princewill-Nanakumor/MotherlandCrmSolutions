@@ -193,7 +193,6 @@ export const CommentsAndActivitiesCombined: FC<
   // Fetch activities (excluding COMMENT type)
   const {
     data: activities = [],
-    isLoading: isLoadingActivities,
     error: activitiesError,
   } = useQuery<Activity[], Error>({
     queryKey: ["activities", leadId],
@@ -573,7 +572,6 @@ export const CommentsAndActivitiesCombined: FC<
   // Don't block the whole timeline on activities — comments often return first.
   const isLoading = isLoadingComments;
   const hasError = commentsError || activitiesError;
-  const activitiesPending = isLoadingActivities;
 
   if (hasError) {
     console.error(
@@ -609,12 +607,6 @@ export const CommentsAndActivitiesCombined: FC<
 
         {/* Combined Timeline */}
         <div className="flex min-h-0 w-full flex-col md:flex-1 md:overflow-hidden">
-          {activitiesPending ? (
-            <div className="mb-2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 shrink-0">
-              <Loader2 className="h-3.5 w-3.5 animate-spin brand-icon" />
-              Loading activity history…
-            </div>
-          ) : null}
           <div className="mb-3 flex flex-wrap items-center gap-1 shrink-0">
             {(
               [

@@ -115,21 +115,10 @@ async function measureOpenClose(
   // Activities may stream in after comments (progressive timeline).
   try {
     await expect
-      .poll(
-        async () => panel.getByText(/changed status|Loading activity/i).count(),
-        { timeout: 45_000 },
-      )
-      .toBeGreaterThan(0);
-    // Prefer "changed status" as ready; loading indicator means still pending.
-    const stillLoading = await panel
-      .getByText(/Loading activity history/i)
-      .isVisible()
-      .catch(() => false);
-    if (stillLoading) {
-      await expect(panel.getByText(/Loading activity history/i)).toBeHidden({
+      .poll(async () => panel.getByText(/changed status/i).count(), {
         timeout: 45_000,
-      });
-    }
+      })
+      .toBeGreaterThan(0);
     activitiesReadyMs = Date.now() - t0;
   } catch {
     activitiesReadyMs = null;

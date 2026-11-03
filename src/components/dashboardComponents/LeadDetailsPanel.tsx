@@ -17,6 +17,7 @@ import { ContactSection } from "../leads/leadDetailsPanel/ContactSection";
 import { DetailsSection } from "../leads/leadDetailsPanel/DetailsSection";
 import LeadStatus from "../leads/leadDetailsPanel/LeadStatus";
 import dynamic from "next/dynamic";
+import { Loader2 } from "lucide-react";
 import AdsImageSlider from "../ads/AdsImageSlider";
 
 const CommentsAndActivities = dynamic(
@@ -25,7 +26,7 @@ const CommentsAndActivities = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex flex-1 items-center justify-center p-6">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-transparent dark:border-gray-600" />
+        <Loader2 className="h-8 w-8 animate-spin brand-icon" />
       </div>
     ),
   },
@@ -712,7 +713,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
             />
           ) : (
             <div className="flex flex-1 items-center justify-center p-6">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-transparent dark:border-gray-600" />
+              <Loader2 className="h-8 w-8 animate-spin brand-icon" />
             </div>
           )}
         </div>
