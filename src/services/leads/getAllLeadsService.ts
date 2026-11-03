@@ -396,9 +396,9 @@ export async function getAllLeadsForSession(
     await ensureTenantLastCommentBackfill(db, adminIdForComments);
     perf?.mark("lastComment-backfill");
   }
-  // Always backfill calls on list load (memoized per tenant) so Mongo can
-  // sort/paginate by lastCallInitiatedAt before skip/limit. Page hydration
-  // below is only a safety net for rows still missing the denorm field.
+  // Always backfill calls on list load (one shared in-flight job per tenant
+  // across /api/leads/all and /api/leads/assigned) so Mongo can sort/paginate
+  // by lastCallInitiatedAt. Page hydration below covers any remaining gaps.
   if (adminIdForComments) {
     await ensureTenantLastCallBackfill(db, adminIdForComments);
     perf?.mark("lastCall-backfill");

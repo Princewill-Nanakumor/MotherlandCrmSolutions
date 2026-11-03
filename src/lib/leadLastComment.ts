@@ -1,3 +1,5 @@
+import { runOncePerKey } from "@/lib/oncePerKey";
+
 /**
  * Structural Db so callers can pass either top-level `mongodb.Db` or
  * mongoose's nested driver `Db` without dual-package assignability errors.
@@ -7,7 +9,8 @@ type MongoDb = { collection: (name: string) => any };
 
 type ObjectIdLike = { toString(): string };
 
-const backfilledTenantIds = new Set<string>();
+/** In-flight / completed backfills keyed by tenant adminId. */
+const lastCommentBackfills = new Map<string, Promise<void>>();
 
 type LeadLastCommentSnapshot = {
   content: string;
@@ -80,57 +83,55 @@ export async function syncLeadLastCommentFields(
 /**
  * One-shot per process/tenant: copy latest comment onto leads so
  * `lastCommentDate` can be sorted/paginated with an index.
+ * Concurrent list requests share one in-flight run (all-leads + assigned).
  */
 export async function ensureTenantLastCommentBackfill(
   db: MongoDb,
   adminId: ObjectIdLike,
 ): Promise<void> {
   const key = adminId.toString();
-  if (backfilledTenantIds.has(key)) return;
-
-  type Row = { _id: ObjectIdLike; content: string; createdAt: Date };
-  const latestByLead = await db
-    .collection("comments")
-    .aggregate([
-      {
-        $match: {
-          $or: [{ adminId }, { adminId: { $exists: false } }],
-        },
-      },
-      { $sort: { createdAt: -1 } },
-      {
-        $group: {
-          _id: "$leadId",
-          content: { $first: "$content" },
-          createdAt: { $first: "$createdAt" },
-        },
-      },
-    ])
-    .toArray();
-
-  const chunkSize = 500;
-  for (let i = 0; i < latestByLead.length; i += chunkSize) {
-    const chunk = latestByLead.slice(i, i + chunkSize) as Row[];
-    if (chunk.length === 0) continue;
-    await db.collection("leads").bulkWrite(
-      chunk.map((row) => ({
-        updateOne: {
-          filter: { _id: row._id, adminId },
-          update: {
-            $set: {
-              lastComment: String(row.content ?? ""),
-              lastCommentDate:
-                row.createdAt instanceof Date
-                  ? row.createdAt
-                  : new Date(row.createdAt),
-            },
+  return runOncePerKey(lastCommentBackfills, key, async () => {
+    type Row = { _id: ObjectIdLike; content: string; createdAt: Date };
+    const latestByLead = await db
+      .collection("comments")
+      .aggregate([
+        {
+          $match: {
+            $or: [{ adminId }, { adminId: { $exists: false } }],
           },
         },
-      })),
-      { ordered: false },
-    );
-  }
+        { $sort: { createdAt: -1 } },
+        {
+          $group: {
+            _id: "$leadId",
+            content: { $first: "$content" },
+            createdAt: { $first: "$createdAt" },
+          },
+        },
+      ])
+      .toArray();
 
-  backfilledTenantIds.add(key);
+    const chunkSize = 500;
+    for (let i = 0; i < latestByLead.length; i += chunkSize) {
+      const chunk = latestByLead.slice(i, i + chunkSize) as Row[];
+      await db.collection("leads").bulkWrite(
+        chunk.map((row) => ({
+          updateOne: {
+            filter: { _id: row._id, adminId },
+            update: {
+              $set: {
+                lastComment: String(row.content ?? ""),
+                lastCommentDate:
+                  row.createdAt instanceof Date
+                    ? row.createdAt
+                    : new Date(row.createdAt),
+              },
+            },
+          },
+        })),
+        { ordered: false },
+      );
+    }
+  });
 }
 
