@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { resolveActiveHolidayEffect } from "@/lib/holidayEffects/resolveActiveHolidayEffect";
 import { HOLIDAY_EFFECTS_DEFAULT_ENABLED } from "@/lib/holidayEffects/holidayEffectsConfig";
+import { claimHolidayEndedBanner } from "@/lib/holidayEffects/holidayEndedBanner";
 import type { HolidayEffectResolution } from "@/lib/holidayEffects/types";
 import { useIsPanelOpen } from "@/stores/leadsStore";
+import { HolidayEffectEndedBanner } from "@/components/holidayEffects/HolidayEffectEndedBanner";
 
 const LOCAL_STORAGE_ENABLED_KEY = "holidayEffectsEnabled";
 
@@ -42,6 +44,11 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
+type EndedHoliday = {
+  ruleId: string;
+  label: string;
+};
+
 export function HolidayEffectsController() {
   const pathname = usePathname() || "";
   const searchParams = useSearchParams();
@@ -53,6 +60,9 @@ export function HolidayEffectsController() {
   const [mounted, setMounted] = useState(false);
   const [enabled, setEnabled] = useState(HOLIDAY_EFFECTS_DEFAULT_ENABLED);
   const [now, setNow] = useState(() => new Date());
+  const [endedHoliday, setEndedHoliday] = useState<EndedHoliday | null>(null);
+  const previousResolutionRef = useRef<HolidayEffectResolution | null>(null);
+  const seenActiveRef = useRef(false);
 
   // ?holidayPreview=<ruleId> forces an effect for QA (e.g. christmas).
   // ?holidayEffects=0 disables regardless of date / localStorage.
@@ -93,14 +103,48 @@ export function HolidayEffectsController() {
     });
   }, [now, enabled, pathname, previewRuleId]);
 
+  useEffect(() => {
+    if (!mounted) return;
+
+    const previous = previousResolutionRef.current;
+    if (resolution) {
+      seenActiveRef.current = true;
+    } else if (
+      previous &&
+      seenActiveRef.current &&
+      claimHolidayEndedBanner(previous.ruleId, now.getUTCFullYear())
+    ) {
+      setEndedHoliday({
+        ruleId: previous.ruleId,
+        label: previous.label,
+      });
+    }
+
+    previousResolutionRef.current = resolution;
+  }, [mounted, resolution, now]);
+
+  const dismissEndedBanner = useCallback(() => {
+    setEndedHoliday(null);
+  }, []);
+
   if (!mounted) return null;
-  if (!resolution || reduceMotion) return null;
 
   return (
-    <HolidayEffectsOverlay
-      resolution={resolution}
-      reducedMotion={false}
-      paused={isPanelOpen}
-    />
+    <>
+      {resolution && !reduceMotion ? (
+        <HolidayEffectsOverlay
+          resolution={resolution}
+          reducedMotion={false}
+          paused={isPanelOpen}
+        />
+      ) : null}
+      {endedHoliday ? (
+        <HolidayEffectEndedBanner
+          ruleId={endedHoliday.ruleId}
+          label={endedHoliday.label}
+          onDismiss={dismissEndedBanner}
+        />
+      ) : null}
+    </>
   );
 }

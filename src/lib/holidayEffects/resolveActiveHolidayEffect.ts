@@ -55,6 +55,7 @@ export function resolveActiveHolidayEffect(
     if (!matchRule) return null;
     return {
       ruleId: matchRule.id,
+      label: matchRule.label,
       effectType: matchRule.effectType,
       intensity: matchRule.intensity,
     };
@@ -65,6 +66,7 @@ export function resolveActiveHolidayEffect(
     if (!previewRule) return null;
     return {
       ruleId: previewRule.id,
+      label: previewRule.label,
       effectType: previewRule.effectType,
       intensity: previewRule.intensity,
     };
@@ -75,6 +77,7 @@ export function resolveActiveHolidayEffect(
 
   return {
     ruleId: matched.id,
+    label: matched.label,
     effectType: matched.effectType,
     intensity: matched.intensity,
   };

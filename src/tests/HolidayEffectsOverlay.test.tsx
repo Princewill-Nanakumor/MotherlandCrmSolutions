@@ -39,6 +39,7 @@ const findEffect = (testId: string) =>
 describe("HolidayEffectsOverlay", () => {
   const valentine: HolidayEffectResolution = {
     ruleId: "valentine",
+    label: "Valentine's Day",
     effectType: "valentine-cupid",
     intensity: "medium",
   };
@@ -55,6 +56,7 @@ describe("HolidayEffectsOverlay", () => {
       <HolidayEffectsOverlay
         resolution={{
           ruleId: "christmas",
+          label: "Christmas",
           effectType: "christmas-snow",
           intensity: "medium",
         }}
@@ -69,6 +71,7 @@ describe("HolidayEffectsOverlay", () => {
       <HolidayEffectsOverlay
         resolution={{
           ruleId: "new-year",
+          label: "New Year",
           effectType: "new-year-confetti",
           intensity: "high",
         }}
@@ -83,6 +86,7 @@ describe("HolidayEffectsOverlay", () => {
       <HolidayEffectsOverlay
         resolution={{
           ruleId: "halloween",
+          label: "Halloween",
           effectType: "halloween-bats",
           intensity: "medium",
         }}

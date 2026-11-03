@@ -30,6 +30,8 @@ export type HolidayEffectRule = {
 
 export type HolidayEffectResolution = {
   ruleId: string;
+  /** Human label from the matching rule (e.g. "Halloween"). */
+  label: string;
   effectType: HolidayEffectType;
   intensity: HolidayIntensity;
 };

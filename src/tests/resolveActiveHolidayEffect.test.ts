@@ -24,6 +24,7 @@ describe("resolveActiveHolidayEffect", () => {
       enabled: true,
     });
     expect(res?.ruleId).toBe("halloween");
+    expect(res?.label).toBe("Halloween");
     expect(res?.effectType).toBe("halloween-bats");
   });
 
