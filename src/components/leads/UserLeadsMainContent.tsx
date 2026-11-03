@@ -14,6 +14,7 @@ import {
   DASHBOARD_PAGE_SHELL_FILL_CLASS,
 } from "@/lib/dashboardPageShell";
 import { loadLeadDetailsPanel } from "@/lib/leadDetailsPanelLoad";
+import { useMountedLeadPanel } from "@/hooks/useMountedLeadPanel";
 
 const LeadDetailsPanel = dynamic(loadLeadDetailsPanel, { ssr: false });
 
@@ -26,7 +27,6 @@ interface UserLeadsMainContentProps {
   availableStatuses: string[];
   availableSources: string[];
   selectedLead: Lead | null;
-  isPanelOpen: boolean;
   filterByCountry: string[];
   filterByStatus: string[];
   filterBySource: string[];
@@ -117,7 +117,6 @@ export function UserLeadsMainContent({
   availableStatuses,
   availableSources,
   selectedLead,
-  isPanelOpen,
   filterByCountry,
   filterByStatus,
   filterBySource,
@@ -152,6 +151,11 @@ export function UserLeadsMainContent({
   useEffect(() => {
     void loadLeadDetailsPanel();
   }, []);
+
+  // Keep exit animation mounted after close; gate on data ready like before.
+  const { mountedLead, panelOpen, clearMountedLead } = useMountedLeadPanel(
+    isDataReady ? selectedLead : null,
+  );
 
   const totalPages = Math.max(1, Math.ceil(leadsTotal / pageSize) || 1);
   const counts: CountsData = isDataReady
@@ -229,13 +233,16 @@ export function UserLeadsMainContent({
         )}
       </div>
 
-      {isPanelOpen && selectedLead && isDataReady && (
+      {mountedLead && (
         <LeadDetailsPanel
-          lead={selectedLead}
-          isOpen={isPanelOpen}
+          lead={mountedLead}
+          isOpen={panelOpen}
           onClose={handlePanelClose}
+          onExited={clearMountedLead}
           onLeadUpdated={handleLeadUpdated}
-          onNavigate={(direction) => handleNavigation(direction, selectedLead, sortedLeads)}
+          onNavigate={(direction) =>
+            handleNavigation(direction, mountedLead, sortedLeads)
+          }
           hasPrevious={currentIndex > 0}
           hasNext={currentIndex < sortedLeads.length - 1}
         />

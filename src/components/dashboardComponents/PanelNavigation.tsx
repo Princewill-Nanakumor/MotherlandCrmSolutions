@@ -4,24 +4,36 @@
 import { useCallback } from "react";
 import { Lead } from "@/types/leads";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  useCloseLeadPanel,
+  useOpenLeadPanel,
+} from "@/stores/leadsStore";
 
 interface PanelNavigationProps {
   selectedLead: Lead | null;
   sortedLeads: Lead[];
-  setSelectedLead: (lead: Lead | null) => void;
-  setIsPanelOpen: (open: boolean) => void;
+}
+
+function scheduleUrlUpdate(update: () => void) {
+  // Keep the click handler free of history work so the row/panel can paint first.
+  if (typeof window === "undefined") {
+    update();
+    return;
+  }
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(update);
+  });
 }
 
 export const usePanelNavigation = ({
   selectedLead,
   sortedLeads,
-  setSelectedLead,
-  setIsPanelOpen,
 }: PanelNavigationProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const openLeadPanel = useOpenLeadPanel();
+  const closeLeadPanel = useCloseLeadPanel();
 
-  // Memoized URL update function
   const updateUrl = useCallback(
     (lead: Lead | null) => {
       const params =
@@ -30,7 +42,6 @@ export const usePanelNavigation = ({
           : new URLSearchParams(searchParams ?? undefined);
 
       if (lead) {
-        // Use leadId if available, otherwise fall back to _id
         const idToUse = lead.leadId ? lead.leadId.toString() : lead._id;
         params.set("lead", idToUse);
         params.set("name", `${lead.firstName || ""}-${lead.lastName || ""}`);
@@ -52,26 +63,21 @@ export const usePanelNavigation = ({
     [router, searchParams],
   );
 
-  // Stable event handlers
   const handleRowClick = useCallback(
     (lead: Lead) => {
-      if (!lead?._id) {
-        return;
-      }
+      if (!lead?._id) return;
 
-      // Batch open + selection in one render so the click stays responsive.
-      setIsPanelOpen(true);
-      updateUrl(lead);
-      setSelectedLead(lead);
+      // One store write → one subscriber pass for selection + panel open.
+      openLeadPanel(lead);
+      scheduleUrlUpdate(() => updateUrl(lead));
     },
-    [setSelectedLead, setIsPanelOpen, updateUrl],
+    [openLeadPanel, updateUrl],
   );
 
   const handlePanelClose = useCallback(() => {
-    updateUrl(null);
-    setSelectedLead(null);
-    setIsPanelOpen(false);
-  }, [setSelectedLead, setIsPanelOpen, updateUrl]);
+    closeLeadPanel();
+    scheduleUrlUpdate(() => updateUrl(null));
+  }, [closeLeadPanel, updateUrl]);
 
   const handleNavigate = useCallback(
     (direction: "prev" | "next") => {
@@ -92,11 +98,11 @@ export const usePanelNavigation = ({
       }
 
       if (newLead) {
-        updateUrl(newLead);
-        setSelectedLead(newLead);
+        openLeadPanel(newLead);
+        scheduleUrlUpdate(() => updateUrl(newLead));
       }
     },
-    [sortedLeads, selectedLead, setSelectedLead, updateUrl],
+    [sortedLeads, selectedLead, openLeadPanel, updateUrl],
   );
 
   const currentIndex = selectedLead

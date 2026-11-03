@@ -27,11 +27,7 @@ import {
   shouldDismissOpenLeadForSearchChange,
 } from "@/lib/leadListSearchParams";
 import { LeadsSectionCollapse } from "./LeadsSectionCollapse";
-import {
-  useLeadsStore,
-  useSetIsPanelOpen,
-  useSetSelectedLead,
-} from "@/stores/leadsStore";
+import { useCloseLeadPanel, useLeadsStore } from "@/stores/leadsStore";
 import {
   DASHBOARD_PAGE_INSET_BODY_CLASS,
   DASHBOARD_PAGE_SHELL_FILL_CLASS,
@@ -55,8 +51,7 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
   const { updateLeadAsync } = useUpdateLead();
   // Don't subscribe to selectedLead here — that re-renders the whole page on
   // every row click and freezes the table while the panel mounts.
-  const setSelectedLead = useSetSelectedLead();
-  const setIsPanelOpen = useSetIsPanelOpen();
+  const closeLeadPanel = useCloseLeadPanel();
   const prevSearchQueryRef = useRef(searchQuery);
 
   // Close the open lead before paint when search changes. The table otherwise
@@ -76,10 +71,9 @@ const LeadsPageContent: React.FC<LeadsPageContentProps> = ({
       return;
     }
 
-    setSelectedLead(null);
-    setIsPanelOpen(false);
+    closeLeadPanel();
     removeOpenLeadFromLiveUrl();
-  }, [searchQuery, setIsPanelOpen, setSelectedLead]);
+  }, [searchQuery, closeLeadPanel]);
 
   const {
     users,

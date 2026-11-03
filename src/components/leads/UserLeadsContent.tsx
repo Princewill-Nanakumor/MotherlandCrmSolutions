@@ -13,8 +13,10 @@ import { useSearchContext } from "@/context/SearchContext";
 import { useToggleContext } from "@/context/ToggleContext";
 import { useAssignedLeads } from "@/hooks/useAssignedLeads";
 import {
-  useIsPanelOpen,
-  useSetIsPanelOpen,
+  useCloseLeadPanel,
+  useOpenLeadPanel,
+  useSelectedLead,
+  useSetSelectedLead,
 } from "@/stores/leadsStore";
 import { RefetchIndicator } from "@/components/ui/RefetchIndicator";
 import { UserLeadsMainContent } from "@/components/leads/UserLeadsMainContent";
@@ -71,11 +73,11 @@ export default function UserLeadsContent() {
     isLoading: subscriptionLoading,
   } = useSubscriptionData();
 
-  // Local state for UI — panel open lives in the leads store so holiday
-  // effects can pause immediately (same path as All Leads).
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const isPanelOpen = useIsPanelOpen();
-  const setIsPanelOpen = useSetIsPanelOpen();
+  // Same store path as All Leads: one write opens selection + panel.
+  const selectedLead = useSelectedLead();
+  const setSelectedLead = useSetSelectedLead();
+  const openLeadPanel = useOpenLeadPanel();
+  const closeLeadPanel = useCloseLeadPanel();
   const [filterByCountry, setFilterByCountry] = useState<string[]>([]);
   const [filterByStatus, setFilterByStatus] = useState<string[]>([]);
   const [filterBySource, setFilterBySource] = useState<string[]>([]);
@@ -259,16 +261,15 @@ export default function UserLeadsContent() {
     ) {
       return;
     }
-    setSelectedLead(null);
-    setIsPanelOpen(false);
+    closeLeadPanel();
     removeOpenLeadFromLiveUrl();
-  }, [searchQuery, setIsPanelOpen]);
+  }, [searchQuery, closeLeadPanel]);
 
   useEffect(() => {
     return () => {
-      setIsPanelOpen(false);
+      closeLeadPanel();
     };
-  }, [setIsPanelOpen]);
+  }, [closeLeadPanel]);
 
   // Lead update handler with React Query mutation
   const handleLeadUpdated = useCallback(
@@ -384,28 +385,32 @@ export default function UserLeadsContent() {
     leads,
     isRefetching,
     selectedLead,
-    setSelectedLead,
-    setIsPanelOpen,
     clearSelectionWhenNoLeadParam: true,
-    isPanelOpen,
   });
 
-  // Row click handler: open side panel and sync URL
+  // Row click — same openLeadPanel path as All Leads; URL after paint.
   const handleRowClick = useCallback((lead: Lead) => {
-    // Batch open + selection in one render so the click stays responsive.
-    setIsPanelOpen(true);
-    handleURLLeadClick(lead);
-    setSelectedLead(lead);
-  }, [handleURLLeadClick, setIsPanelOpen, setSelectedLead]);
+    openLeadPanel(lead);
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => handleURLLeadClick(lead));
+      });
+    } else {
+      handleURLLeadClick(lead);
+    }
+  }, [handleURLLeadClick, openLeadPanel]);
 
-  // Panel close handler: update local state and URL
   const handlePanelCloseLocal = useCallback(() => {
-    handleURLPanelClose();
-    setSelectedLead(null);
-    setIsPanelOpen(false);
-  }, [handleURLPanelClose]);
+    closeLeadPanel();
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => handleURLPanelClose());
+      });
+    } else {
+      handleURLPanelClose();
+    }
+  }, [handleURLPanelClose, closeLeadPanel]);
 
-  // Panel navigation handler: move to prev/next lead and sync URL
   const handlePanelNavigationLocal = useCallback(
     (
       direction: "prev" | "next",
@@ -423,11 +428,18 @@ export default function UserLeadsContent() {
       if (newIndex < 0 || newIndex >= sortedLeads.length) return;
 
       const newLead = sortedLeads[newIndex];
-      handleURLNavigation(direction, currentSelectedLead, sortedLeads);
-      setSelectedLead(newLead);
-      setIsPanelOpen(true);
+      openLeadPanel(newLead);
+      if (typeof window !== "undefined") {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() =>
+            handleURLNavigation(direction, currentSelectedLead, sortedLeads),
+          );
+        });
+      } else {
+        handleURLNavigation(direction, currentSelectedLead, sortedLeads);
+      }
     },
-    [handleURLNavigation],
+    [handleURLNavigation, openLeadPanel],
   );
 
   // Keep last-good payload as ready data (placeholder / lastLeadsDataRef).
@@ -524,7 +536,6 @@ export default function UserLeadsContent() {
                   availableStatuses={availableStatuses}
                   availableSources={availableSources}
                   selectedLead={selectedLead}
-                  isPanelOpen={isPanelOpen}
                   filterByCountry={filterByCountry}
                   filterByStatus={filterByStatus}
                   filterBySource={filterBySource}

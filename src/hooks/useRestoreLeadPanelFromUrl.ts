@@ -9,17 +9,19 @@ import {
   findLeadByUrlParam,
   leadMatchesUrlParam,
 } from "@/lib/leadUrlParam";
+import {
+  useCloseLeadPanel,
+  useIsPanelOpen,
+  useOpenLeadPanel,
+} from "@/stores/leadsStore";
 
 type UseRestoreLeadPanelFromUrlArgs = {
   searchParams: URLSearchParams | ReadonlyURLSearchParams | null;
   leads: Lead[];
   isRefetching: boolean;
   selectedLead: Lead | null;
-  setSelectedLead: (lead: Lead | null) => void;
-  setIsPanelOpen: (open: boolean) => void;
   /** When true, clear selection if URL has no `lead` (agent leads). */
   clearSelectionWhenNoLeadParam?: boolean;
-  isPanelOpen?: boolean;
 };
 
 /**
@@ -31,12 +33,12 @@ export function useRestoreLeadPanelFromUrl({
   leads,
   isRefetching,
   selectedLead,
-  setSelectedLead,
-  setIsPanelOpen,
   clearSelectionWhenNoLeadParam = false,
-  isPanelOpen = false,
 }: UseRestoreLeadPanelFromUrlArgs): void {
   const urlLeadRestoreRef = useRef<string | null>(null);
+  const openLeadPanel = useOpenLeadPanel();
+  const closeLeadPanel = useCloseLeadPanel();
+  const isPanelOpen = useIsPanelOpen();
 
   useEffect(() => {
     // While a new search is in flight, `leads` is still the previous page.
@@ -46,8 +48,7 @@ export function useRestoreLeadPanelFromUrl({
     if (!leadIdParam) {
       urlLeadRestoreRef.current = null;
       if (clearSelectionWhenNoLeadParam && (isPanelOpen || selectedLead)) {
-        setIsPanelOpen(false);
-        setSelectedLead(null);
+        closeLeadPanel();
       }
       return;
     }
@@ -55,19 +56,16 @@ export function useRestoreLeadPanelFromUrl({
     const fromList = findLeadByUrlParam(leads, leadIdParam);
     if (fromList) {
       urlLeadRestoreRef.current = leadIdParam;
-      if (!selectedLead || selectedLead._id !== fromList._id) {
-        setIsPanelOpen(true);
-        setSelectedLead(fromList);
-      } else if (clearSelectionWhenNoLeadParam && !isPanelOpen) {
-        setIsPanelOpen(true);
+      if (!selectedLead || selectedLead._id !== fromList._id || !isPanelOpen) {
+        openLeadPanel(fromList);
       }
       return;
     }
 
     if (selectedLead && leadMatchesUrlParam(selectedLead, leadIdParam)) {
       urlLeadRestoreRef.current = leadIdParam;
-      if (clearSelectionWhenNoLeadParam && !isPanelOpen) {
-        setIsPanelOpen(true);
+      if (!isPanelOpen) {
+        openLeadPanel(selectedLead);
       }
       return;
     }
@@ -88,8 +86,7 @@ export function useRestoreLeadPanelFromUrl({
         }
         const fetched = (await response.json()) as Lead;
         if (cancelled || !fetched?._id) return;
-        setIsPanelOpen(true);
-        setSelectedLead(fetched);
+        openLeadPanel(fetched);
       } catch {
         if (!cancelled) urlLeadRestoreRef.current = null;
       }

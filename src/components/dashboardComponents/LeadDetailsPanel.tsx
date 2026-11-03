@@ -16,8 +16,20 @@ import { LeadHeader } from "../leads/leadDetailsPanel/LeadHeader";
 import { ContactSection } from "../leads/leadDetailsPanel/ContactSection";
 import { DetailsSection } from "../leads/leadDetailsPanel/DetailsSection";
 import LeadStatus from "../leads/leadDetailsPanel/LeadStatus";
-import CommentsAndActivities from "../leads/leadDetailsPanel/CommentsAndActivities";
+import dynamic from "next/dynamic";
 import AdsImageSlider from "../ads/AdsImageSlider";
+
+const CommentsAndActivities = dynamic(
+  () => import("../leads/leadDetailsPanel/CommentsAndActivities"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-transparent dark:border-gray-600" />
+      </div>
+    ),
+  },
+);
 import { useQueryClient } from "@tanstack/react-query";
 import { apiCallWithSessionRefresh } from "@/lib/apiUtils";
 import { useSession } from "next-auth/react";
@@ -50,6 +62,8 @@ interface LeadDetailsPanelProps {
   lead: Lead | null;
   isOpen: boolean;
   onClose: () => void;
+  /** Called after the exit slide finishes so parents can unmount. */
+  onExited?: () => void;
   onLeadUpdated: (updatedLead: Lead) => Promise<boolean>;
   onNavigate: (direction: "prev" | "next") => void;
   hasPrevious: boolean;
@@ -57,10 +71,13 @@ interface LeadDetailsPanelProps {
   users?: User[];
 }
 
+const PANEL_SLIDE_SECONDS = 0.1;
+
 export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   lead,
   isOpen,
   onClose,
+  onExited,
   onLeadUpdated,
   onNavigate,
   hasPrevious,
@@ -80,7 +97,9 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   const { data: session } = useSession();
   const { canViewEmails, canViewPhoneNumbers } = useCurrentUserPermission();
   const [currentLead, setCurrentLead] = useState<Lead | null>(lead);
-  const [isClosing, setIsClosing] = useState(false);
+  /** Shell (header) first; body next frame; timeline the frame after. */
+  const [showBody, setShowBody] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
   const previousStatusRef = useRef<string | undefined>(undefined);
   const originalTitleRef = useRef<string>("");
   const lastManualUpdateRef = useRef<number>(0);
@@ -96,6 +115,24 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   useEffect(() => {
     currentLeadRef.current = currentLead;
   }, [currentLead]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setShowBody(false);
+      setShowTimeline(false);
+      return;
+    }
+    let bodyRaf = 0;
+    let timelineRaf = 0;
+    bodyRaf = requestAnimationFrame(() => {
+      setShowBody(true);
+      timelineRaf = requestAnimationFrame(() => setShowTimeline(true));
+    });
+    return () => {
+      cancelAnimationFrame(bodyRaf);
+      cancelAnimationFrame(timelineRaf);
+    };
+  }, [isOpen, lead?._id]);
 
   useEffect(() => {
     if (!lead) return;
@@ -549,14 +586,15 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     }
   }, [queryClient, canViewEmails, canViewPhoneNumbers]);
 
+  // Clear parent selection/URL immediately; parent keeps us mounted until onExited.
   const handleRequestClose = useCallback(() => {
-    if (isClosing) return;
-    setIsClosing(true);
-    // Match the slide-out tween (keep slightly under paint so close feels snappy).
-    setTimeout(() => {
-      onClose();
-    }, 140);
-  }, [isClosing, onClose]);
+    if (!isOpen) return;
+    onClose();
+  }, [isOpen, onClose]);
+
+  const handleExitComplete = useCallback(() => {
+    if (!isOpen) onExited?.();
+  }, [isOpen, onExited]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -604,7 +642,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
     };
   }, []);
 
-  if (!currentLead?._id || !isOpen) {
+  if (!currentLead?._id) {
     return null;
   }
 
@@ -613,8 +651,13 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       data-lead-details-panel=""
       className="fixed inset-x-0 top-18 bottom-0 z-50 flex w-full flex-col overflow-hidden bg-white dark:bg-gray-800 md:inset-x-auto md:right-0 md:bottom-13 md:w-[min(80%,1200px)] md:flex-row md:border-l-2 md:border-gray-200 dark:md:border-gray-700"
       initial={{ x: "100%" }}
-      animate={{ x: isClosing ? "100%" : 0 }}
-      transition={{ type: "tween", duration: 0.14, ease: "easeOut" }}
+      animate={{ x: isOpen ? 0 : "100%" }}
+      transition={{
+        type: "tween",
+        duration: PANEL_SLIDE_SECONDS,
+        ease: "easeOut",
+      }}
+      onAnimationComplete={handleExitComplete}
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain md:flex-row md:overflow-hidden">
         <div className="flex w-full min-w-0 shrink-0 flex-col border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 md:h-full md:w-2/5 md:min-h-0 md:overflow-hidden md:border-b-0 md:border-r">
@@ -626,36 +669,52 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
             hasNext={hasNext}
           />
           <div className="space-y-4 p-4 min-h-0 sm:space-y-6 sm:p-6 md:flex-1 md:overflow-y-auto">
-            <LeadStatus
-              lead={currentLead}
-              users={users}
-              onLeadUpdated={handleLeadUpdated}
-            />
-            <ContactSection
-              lead={currentLead}
-              isExpanded={expandedSections.contact}
-              onToggle={() => toggleSection("contact")}
-              onLeadUpdated={handleLeadUpdated}
-            />
-            <AdsImageSlider
-              isExpanded={expandedSections.ads}
-              onToggle={() => toggleSection("ads")}
-            />
-            <DetailsSection
-              lead={currentLead}
-              isExpanded={expandedSections.details}
-              onToggle={() => toggleSection("details")}
-              users={users}
-              onLeadUpdated={handleLeadUpdated}
-            />
+            {showBody ? (
+              <>
+                <LeadStatus
+                  lead={currentLead}
+                  users={users}
+                  onLeadUpdated={handleLeadUpdated}
+                />
+                <ContactSection
+                  lead={currentLead}
+                  isExpanded={expandedSections.contact}
+                  onToggle={() => toggleSection("contact")}
+                  onLeadUpdated={handleLeadUpdated}
+                />
+                <AdsImageSlider
+                  isExpanded={expandedSections.ads}
+                  onToggle={() => toggleSection("ads")}
+                />
+                <DetailsSection
+                  lead={currentLead}
+                  isExpanded={expandedSections.details}
+                  onToggle={() => toggleSection("details")}
+                  users={users}
+                  onLeadUpdated={handleLeadUpdated}
+                />
+              </>
+            ) : (
+              <div className="space-y-4 animate-pulse">
+                <div className="h-10 rounded bg-gray-200 dark:bg-gray-700" />
+                <div className="h-24 rounded bg-gray-200 dark:bg-gray-700" />
+                <div className="h-24 rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
+            )}
           </div>
         </div>
         <div className="flex flex-col flex-1 min-w-0 min-h-0 bg-white dark:bg-gray-800 md:overflow-hidden">
-          <CommentsAndActivities
-            lead={currentLead}
-            onLeadUpdated={handleLeadUpdated}
-            key={currentLead._id}
-          />
+          {showTimeline ? (
+            <CommentsAndActivities
+              lead={currentLead}
+              onLeadUpdated={handleLeadUpdated}
+              key={currentLead._id}
+            />
+          ) : (
+            <div className="flex flex-1 items-center justify-center p-6">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-transparent dark:border-gray-600" />
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

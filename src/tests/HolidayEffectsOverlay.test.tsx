@@ -107,4 +107,17 @@ describe("HolidayEffectsOverlay", () => {
       screen.queryByTestId("holiday-effect-cupid-arrow"),
     ).not.toBeInTheDocument();
   });
+
+  it("does not render when paused=true", () => {
+    render(
+      <HolidayEffectsOverlay
+        resolution={valentine}
+        reducedMotion={false}
+        paused
+      />,
+    );
+    expect(
+      screen.queryByTestId("holiday-effect-cupid-arrow"),
+    ).not.toBeInTheDocument();
+  });
 });

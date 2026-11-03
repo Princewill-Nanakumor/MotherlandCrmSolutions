@@ -15,7 +15,7 @@ import { Table } from "@/components/ui/Table";
 import {
   useSelectedLead,
   useSetSelectedLead,
-  useSetIsPanelOpen,
+  useCloseLeadPanel,
   useSorting,
   useSetSorting,
   useSelectedLeads,
@@ -32,6 +32,7 @@ import { useColumnVisibility } from "@/hooks/useColumnVisibility";
 import { useClearLeadSelectionOnEscape } from "@/hooks/useClearLeadSelectionOnEscape";
 import { mergeLeadContactExtrasIfSame } from "@/lib/leadClientUpdate";
 import { loadLeadDetailsPanel } from "@/lib/leadDetailsPanelLoad";
+import { useMountedLeadPanel } from "@/hooks/useMountedLeadPanel";
 
 const LeadDetailsPanel = dynamic(loadLeadDetailsPanel, { ssr: false });
 
@@ -141,7 +142,9 @@ export default function LeadsTable({
   // Store hooks (NOT for pagination)
   const selectedLead = useSelectedLead();
   const setSelectedLead = useSetSelectedLead();
-  const setIsPanelOpen = useSetIsPanelOpen();
+  const closeLeadPanel = useCloseLeadPanel();
+  const { mountedLead, panelOpen, clearMountedLead } =
+    useMountedLeadPanel(selectedLead);
   const sorting = useSorting();
   const setSorting = useSetSorting();
   const storeSelectedLeads = useSelectedLeads();
@@ -312,8 +315,7 @@ export default function LeadsTable({
     // Lead not on this page: keep panel if URL still points at it (filtered out).
     if (leadIdParam) return;
 
-    setSelectedLead(null);
-    setIsPanelOpen(false);
+    closeLeadPanel();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leads, selectedLead?._id, searchParams]);
 
@@ -322,8 +324,6 @@ export default function LeadsTable({
     leads,
     isRefetching,
     selectedLead,
-    setSelectedLead,
-    setIsPanelOpen,
   });
 
   // ⚡ Adjust pageIndex when filtered results change (client-side only)
@@ -401,8 +401,6 @@ export default function LeadsTable({
     usePanelNavigation({
       selectedLead,
       sortedLeads,
-      setSelectedLead,
-      setIsPanelOpen,
     });
 
   // When a lead is updated from the panel, update the store so the panel shows new data
@@ -536,13 +534,14 @@ export default function LeadsTable({
         </div>
       </div>
 
-      {selectedLead && (
+      {mountedLead && (
         <LeadDetailsPanel
-          lead={selectedLead}
-          isOpen={true}
+          lead={mountedLead}
+          isOpen={panelOpen}
           users={users}
           onLeadUpdated={handleLeadUpdatedFromPanel}
           onClose={handlePanelClose}
+          onExited={clearMountedLead}
           onNavigate={handleNavigate}
           hasPrevious={currentIndex > 0}
           hasNext={currentIndex < sortedLeads.length - 1}

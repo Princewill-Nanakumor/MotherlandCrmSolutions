@@ -26,9 +26,12 @@ interface LeadsState {
   ) => void;
   setSelectedLeads: (leads: Lead[]) => void;
   setSelectedLead: (lead: Lead | null) => void;
+  /** Open details panel + select lead in one store write (one subscriber pass). */
+  openLeadPanel: (lead: Lead) => void;
+  /** Close details panel + clear selection in one store write. */
+  closeLeadPanel: () => void;
   setFilterByUser: (filter: string) => void;
   setFilterByCountry: (filter: string) => void;
-  setIsPanelOpen: (open: boolean) => void;
   setLoadingLeads: (loading: boolean) => void;
   setLoadingUsers: (loading: boolean) => void;
   setLoadingStatuses: (loading: boolean) => void;
@@ -162,6 +165,10 @@ export const useLeadsStore = create<LeadsState>()(
           }),
         setSelectedLeads: (selectedLeads) => set({ selectedLeads }),
         setSelectedLead: (selectedLead) => set({ selectedLead }),
+        openLeadPanel: (lead) =>
+          set({ selectedLead: lead, isPanelOpen: true }),
+        closeLeadPanel: () =>
+          set({ selectedLead: null, isPanelOpen: false }),
         setFilterByUser: (filterByUser) =>
           set((state) => {
             const filteredLeads = getFilteredLeads(
@@ -188,7 +195,6 @@ export const useLeadsStore = create<LeadsState>()(
               selectedLeads: [],
             };
           }),
-        setIsPanelOpen: (isPanelOpen) => set({ isPanelOpen }),
         setLoadingLeads: (isLoadingLeads) => set({ isLoadingLeads }),
         setLoadingUsers: (isLoadingUsers) => set({ isLoadingUsers }),
         setLoadingStatuses: (isLoadingStatuses) => set({ isLoadingStatuses }),
@@ -358,8 +364,10 @@ export const useAssignedLeadsCount = () =>
   );
 export const useSetSelectedLead = () =>
   useLeadsStore((state) => state.setSelectedLead);
-export const useSetIsPanelOpen = () =>
-  useLeadsStore((state) => state.setIsPanelOpen);
+export const useOpenLeadPanel = () =>
+  useLeadsStore((state) => state.openLeadPanel);
+export const useCloseLeadPanel = () =>
+  useLeadsStore((state) => state.closeLeadPanel);
 export const useSetSelectedLeads = () =>
   useLeadsStore((state) => state.setSelectedLeads);
 export const useSetFilterByUser = () =>
