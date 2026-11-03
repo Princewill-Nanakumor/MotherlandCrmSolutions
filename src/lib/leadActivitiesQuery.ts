@@ -3,6 +3,7 @@ import {
   isActivitiesQueryActive,
   type TimelineRefreshOptions,
 } from "@/lib/leadTimelineAccess";
+import { fetchPanelActivities } from "@/lib/leadPanelTimelinePrefetch";
 import { removeTimelineRowsById, timelineRowId, upsertTimelineRowsById } from "@/lib/timelineCacheMerge";
 import type { Activity, Lead } from "@/types/leads";
 
@@ -69,16 +70,7 @@ export async function refreshActivitiesCacheForLead(
   }
 
   try {
-    const response = await fetch(`/api/leads/${leadId}/activities?limit=100`, {
-      cache: "no-store",
-      credentials: "same-origin",
-    });
-    if (!response.ok) return null;
-
-    const responseData = await response.json();
-    const activities = (
-      Array.isArray(responseData) ? responseData : []
-    ) as Activity[];
+    const activities = await fetchPanelActivities(leadId);
     let merged = activities;
     queryClient.setQueryData(
       ["activities", leadId],

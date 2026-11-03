@@ -200,6 +200,8 @@ activitySchema.index({ type: 1 });
 activitySchema.index({ "metadata.oldStatusId": 1 });
 activitySchema.index({ "metadata.newStatusId": 1 });
 activitySchema.index({ leadId: 1, adminId: 1 });
+/** Panel timeline: lead + tenant scoped, newest first (skips COMMENT via query filter). */
+activitySchema.index({ leadId: 1, adminId: 1, timestamp: -1 });
 activitySchema.index({ adminId: 1, timestamp: -1 });
 
 // Add new indexes for user activities

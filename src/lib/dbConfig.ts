@@ -118,12 +118,12 @@ export const connectMongoDB = async (): Promise<typeof mongoose> => {
     const MONGODB_URI_WITH_DB = getMongoDBUri();
     const options = getConnectionOptions();
 
-    // Ensure models are registered BEFORE connecting
-    await ensureModelsRegistered();
-
+    // Warm path: skip model-import work when the pool is already usable.
     if (isConnectionUsable()) {
       return mongoose;
     }
+
+    await ensureModelsRegistered();
 
     if (globalWithCache.mongooseCache.promise) {
       return await globalWithCache.mongooseCache.promise;

@@ -12,7 +12,7 @@ import {
   PhoneCall,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { Activity, Status } from "@/types/leads";
+import { Activity } from "@/types/leads";
 import { isTaboolaLeadImportActivity } from "@/lib/leadActivityDisplay";
 import { Comment, CombinedItem } from "./commentsAndActivities/types";
 import { canDeleteComments } from "@/lib/roles";
@@ -47,7 +47,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAblyConnectionHealthy } from "@/hooks/useAblyAwareRefetchInterval";
+import { useStatuses } from "@/context/StatusContext";
 import { LeadPanelTabButton } from "./LeadPanelTabTransition";
+import {
+  fetchPanelActivities,
+  fetchPanelComments,
+} from "@/lib/leadPanelTimelinePrefetch";
 
 function truncatePreview(text: string, max = 120): string {
   const trimmed = text.trim();
@@ -172,18 +177,7 @@ export const CommentsAndActivitiesCombined: FC<
     error: commentsError,
   } = useQuery<Comment[], Error>({
     queryKey: ["comments", leadId],
-    queryFn: async (): Promise<Comment[]> => {
-      const response = await fetch(`/api/leads/${leadId}/comments`, {
-        cache: "no-store",
-        credentials: "same-origin",
-      });
-      if (!response.ok) {
-        if (response.status === 404) return [];
-        throw new Error(`Failed to fetch comments: ${response.status}`);
-      }
-      const data = await response.json();
-      return data.map(transformComment);
-    },
+    queryFn: () => fetchPanelComments(leadId),
     enabled: !!leadId,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
@@ -193,24 +187,8 @@ export const CommentsAndActivitiesCombined: FC<
     refetchOnMount: false,
   });
 
-  // Fetch statuses for activities
-  const { data: statuses = [] } = useQuery<Status[], Error>({
-    queryKey: ["statuses"],
-    queryFn: async (): Promise<Status[]> => {
-      const response = await fetch("/api/statuses", {
-        cache: "no-store",
-        headers: {
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch statuses");
-      return response.json();
-    },
-    staleTime: 30 * 1000,
-    gcTime: 30 * 60 * 1000,
-    refetchOnMount: true,
-  });
+  // Statuses already loaded by the dashboard StatusProvider — no extra /api/statuses.
+  const { statuses } = useStatuses();
 
   // Fetch activities (excluding COMMENT type)
   const {
@@ -219,26 +197,14 @@ export const CommentsAndActivitiesCombined: FC<
     error: activitiesError,
   } = useQuery<Activity[], Error>({
     queryKey: ["activities", leadId],
-    queryFn: async (): Promise<Activity[]> => {
-      const response = await fetch(
-        `/api/leads/${leadId}/activities?limit=100`,
-        { cache: "no-store", credentials: "same-origin" },
-      );
-      if (!response.ok) {
-        if (response.status === 404) return [];
-        throw new Error(`Failed to fetch activities: ${response.status}`);
-      }
-      const responseData = await response.json();
-      return Array.isArray(responseData) ? responseData : [];
-    },
+    queryFn: () => fetchPanelActivities(leadId),
     enabled: !!leadId,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     retry: (failureCount, error) =>
       failureCount < 2 && !error.message.includes("404"),
     refetchOnWindowFocus: false,
-    // Background Ably no longer prefetches for list-only viewers; remount if stale.
-    refetchOnMount: true,
+    refetchOnMount: false,
   });
 
   // Combine and sort comments and activities by timestamp (newest first)
@@ -604,8 +570,10 @@ export const CommentsAndActivitiesCombined: FC<
     [activities, pendingDeleteActivityId],
   );
 
-  const isLoading = isLoadingComments || isLoadingActivities;
+  // Don't block the whole timeline on activities — comments often return first.
+  const isLoading = isLoadingComments;
   const hasError = commentsError || activitiesError;
+  const activitiesPending = isLoadingActivities;
 
   if (hasError) {
     console.error(
@@ -641,6 +609,12 @@ export const CommentsAndActivitiesCombined: FC<
 
         {/* Combined Timeline */}
         <div className="flex min-h-0 w-full flex-col md:flex-1 md:overflow-hidden">
+          {activitiesPending ? (
+            <div className="mb-2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 shrink-0">
+              <Loader2 className="h-3.5 w-3.5 animate-spin brand-icon" />
+              Loading activity history…
+            </div>
+          ) : null}
           <div className="mb-3 flex flex-wrap items-center gap-1 shrink-0">
             {(
               [

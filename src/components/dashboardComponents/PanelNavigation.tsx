@@ -2,12 +2,14 @@
 "use client";
 
 import { useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Lead } from "@/types/leads";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   useCloseLeadPanel,
   useOpenLeadPanel,
 } from "@/stores/leadsStore";
+import { prefetchLeadPanelTimeline } from "@/lib/leadPanelTimelinePrefetch";
 
 interface PanelNavigationProps {
   selectedLead: Lead | null;
@@ -31,6 +33,7 @@ export const usePanelNavigation = ({
 }: PanelNavigationProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const openLeadPanel = useOpenLeadPanel();
   const closeLeadPanel = useCloseLeadPanel();
 
@@ -67,11 +70,13 @@ export const usePanelNavigation = ({
     (lead: Lead) => {
       if (!lead?._id) return;
 
+      // Kick off timeline fetches before the panel chunk mounts.
+      prefetchLeadPanelTimeline(queryClient, lead._id);
       // One store write → one subscriber pass for selection + panel open.
       openLeadPanel(lead);
       scheduleUrlUpdate(() => updateUrl(lead));
     },
-    [openLeadPanel, updateUrl],
+    [openLeadPanel, queryClient, updateUrl],
   );
 
   const handlePanelClose = useCallback(() => {
@@ -98,11 +103,12 @@ export const usePanelNavigation = ({
       }
 
       if (newLead) {
+        prefetchLeadPanelTimeline(queryClient, newLead._id);
         openLeadPanel(newLead);
         scheduleUrlUpdate(() => updateUrl(newLead));
       }
     },
-    [sortedLeads, selectedLead, openLeadPanel, updateUrl],
+    [sortedLeads, selectedLead, openLeadPanel, queryClient, updateUrl],
   );
 
   const currentIndex = selectedLead

@@ -3,7 +3,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Lead } from "@/types/leads";
+import { prefetchLeadPanelTimeline } from "@/lib/leadPanelTimelinePrefetch";
 import { FilterLogic } from "@/components/user-leads/FilterLogic";
 import { URLStateManager } from "../user-leads/URLStatemanager";
 import { SubscriptionGuard } from "@/components/user-leads/SubscriptionGuard";
@@ -74,6 +76,7 @@ export default function UserLeadsContent() {
   } = useSubscriptionData();
 
   // Same store path as All Leads: one write opens selection + panel.
+  const queryClient = useQueryClient();
   const selectedLead = useSelectedLead();
   const setSelectedLead = useSetSelectedLead();
   const openLeadPanel = useOpenLeadPanel();
@@ -390,6 +393,7 @@ export default function UserLeadsContent() {
 
   // Row click — same openLeadPanel path as All Leads; URL after paint.
   const handleRowClick = useCallback((lead: Lead) => {
+    if (lead?._id) prefetchLeadPanelTimeline(queryClient, lead._id);
     openLeadPanel(lead);
     if (typeof window !== "undefined") {
       window.requestAnimationFrame(() => {
@@ -398,7 +402,7 @@ export default function UserLeadsContent() {
     } else {
       handleURLLeadClick(lead);
     }
-  }, [handleURLLeadClick, openLeadPanel]);
+  }, [handleURLLeadClick, openLeadPanel, queryClient]);
 
   const handlePanelCloseLocal = useCallback(() => {
     closeLeadPanel();
@@ -428,6 +432,7 @@ export default function UserLeadsContent() {
       if (newIndex < 0 || newIndex >= sortedLeads.length) return;
 
       const newLead = sortedLeads[newIndex];
+      if (newLead?._id) prefetchLeadPanelTimeline(queryClient, newLead._id);
       openLeadPanel(newLead);
       if (typeof window !== "undefined") {
         window.requestAnimationFrame(() => {
@@ -439,7 +444,7 @@ export default function UserLeadsContent() {
         handleURLNavigation(direction, currentSelectedLead, sortedLeads);
       }
     },
-    [handleURLNavigation, openLeadPanel],
+    [handleURLNavigation, openLeadPanel, queryClient],
   );
 
   // Keep last-good payload as ready data (placeholder / lastLeadsDataRef).
