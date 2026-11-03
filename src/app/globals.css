@@ -1892,6 +1892,48 @@ html.auth-hero-page nav[data-chrome="transparent"] > div > div:first-child a > d
 }
 
 
+/* Lead details panel: shell + left sidebar scale together past laptop widths. */
+@media (min-width: 768px) {
+  .lead-details-panel-shell {
+    width: min(88vw, 1100px);
+  }
+  .lead-details-panel-sidebar {
+    width: min(40%, 26rem);
+  }
+}
+@media (min-width: 1280px) {
+  .lead-details-panel-shell {
+    width: min(80vw, 1320px);
+  }
+  .lead-details-panel-sidebar {
+    width: min(38%, 30rem);
+  }
+}
+@media (min-width: 1536px) {
+  .lead-details-panel-shell {
+    width: min(74vw, 1520px);
+  }
+  .lead-details-panel-sidebar {
+    width: min(36%, 36rem);
+  }
+}
+@media (min-width: 1920px) {
+  .lead-details-panel-shell {
+    width: min(68vw, 1720px);
+  }
+  .lead-details-panel-sidebar {
+    width: min(35%, 40rem);
+  }
+}
+@media (min-width: 2560px) {
+  .lead-details-panel-shell {
+    width: min(62vw, 1960px);
+  }
+  .lead-details-panel-sidebar {
+    width: min(34%, 44rem);
+  }
+}
+
 /* Lead details panel scrollbars (replaces <style jsx> to avoid React DOM warnings) */
 .lead-panel-scroll {
   scrollbar-width: thin;

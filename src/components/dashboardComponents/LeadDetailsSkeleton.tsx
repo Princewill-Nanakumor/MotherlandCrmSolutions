@@ -6,7 +6,7 @@ export const LeadDetailsSkeleton = () => {
     <div className="flex h-full min-h-0 flex-col bg-white dark:bg-gray-800">
       <div className="flex flex-1 min-h-0 bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700">
         {/* Left Panel - Lead Details Skeleton */}
-        <div className="w-2/5 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-800/50">
+        <div className="lead-details-panel-sidebar flex w-2/5 min-w-0 shrink-0 flex-col border-r border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
           {/* Header Skeleton */}
           <div className="p-4 border-b-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <div className="flex items-center gap-4">

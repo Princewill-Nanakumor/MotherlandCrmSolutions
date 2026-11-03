@@ -650,7 +650,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
   return (
     <motion.div
       data-lead-details-panel=""
-      className="fixed inset-x-0 top-18 bottom-0 z-50 flex w-full flex-col overflow-hidden bg-white dark:bg-gray-800 md:inset-x-auto md:right-0 md:bottom-13 md:w-[min(80%,1200px)] md:flex-row md:border-l-2 md:border-gray-200 dark:md:border-gray-700"
+      className="lead-details-panel-shell fixed inset-x-0 top-18 bottom-0 z-50 flex w-full flex-col overflow-hidden bg-white dark:bg-gray-800 md:inset-x-auto md:right-0 md:bottom-13 md:flex-row md:border-l-2 md:border-gray-200 dark:md:border-gray-700"
       initial={{ x: "100%" }}
       animate={{ x: isOpen ? 0 : "100%" }}
       transition={{
@@ -661,7 +661,7 @@ export const LeadDetailsPanel: FC<LeadDetailsPanelProps> = ({
       onAnimationComplete={handleExitComplete}
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain md:flex-row md:overflow-hidden">
-        <div className="flex w-full min-w-0 shrink-0 flex-col border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 md:h-full md:w-2/5 md:min-h-0 md:overflow-hidden md:border-b-0 md:border-r">
+        <div className="lead-details-panel-sidebar flex w-full min-w-0 shrink-0 flex-col border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 md:h-full md:min-h-0 md:overflow-hidden md:border-b-0 md:border-r">
           <LeadHeader
             lead={currentLead}
             onClose={handleRequestClose}
