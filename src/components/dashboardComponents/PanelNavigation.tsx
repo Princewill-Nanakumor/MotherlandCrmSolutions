@@ -8,13 +8,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   useCloseLeadPanel,
   useOpenLeadPanel,
+  useSelectedLead,
 } from "@/stores/leadsStore";
 import { prefetchLeadPanelTimeline } from "@/lib/leadPanelTimelinePrefetch";
-
-interface PanelNavigationProps {
-  selectedLead: Lead | null;
-  sortedLeads: Lead[];
-}
 
 function scheduleUrlUpdate(update: () => void) {
   // Keep the click handler free of history work so the row/panel can paint first.
@@ -27,17 +23,11 @@ function scheduleUrlUpdate(update: () => void) {
   });
 }
 
-export const usePanelNavigation = ({
-  selectedLead,
-  sortedLeads,
-}: PanelNavigationProps) => {
+function useLeadPanelUrl() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const queryClient = useQueryClient();
-  const openLeadPanel = useOpenLeadPanel();
-  const closeLeadPanel = useCloseLeadPanel();
 
-  const updateUrl = useCallback(
+  return useCallback(
     (lead: Lead | null) => {
       const params =
         typeof window !== "undefined"
@@ -65,6 +55,28 @@ export const usePanelNavigation = ({
     },
     [router, searchParams],
   );
+}
+
+/** Close panel + clear lead= from the URL (panel host). */
+export const useLeadPanelClose = () => {
+  const closeLeadPanel = useCloseLeadPanel();
+  const updateUrl = useLeadPanelUrl();
+
+  return useCallback(() => {
+    closeLeadPanel();
+    scheduleUrlUpdate(() => updateUrl(null));
+  }, [closeLeadPanel, updateUrl]);
+};
+
+/**
+ * Row open — does not subscribe to selectedLead, so the table host can stay
+ * mounted without re-rendering on every panel selection change.
+ */
+export const useLeadPanelRowActions = () => {
+  const queryClient = useQueryClient();
+  const openLeadPanel = useOpenLeadPanel();
+  const updateUrl = useLeadPanelUrl();
+  const handlePanelClose = useLeadPanelClose();
 
   const handleRowClick = useCallback(
     (lead: Lead) => {
@@ -79,10 +91,17 @@ export const usePanelNavigation = ({
     [openLeadPanel, queryClient, updateUrl],
   );
 
-  const handlePanelClose = useCallback(() => {
-    closeLeadPanel();
-    scheduleUrlUpdate(() => updateUrl(null));
-  }, [closeLeadPanel, updateUrl]);
+  return { handleRowClick, handlePanelClose };
+};
+
+/**
+ * Prev/next + index for the panel host only (subscribes to selectedLead).
+ */
+export const useLeadPanelHostNavigation = (sortedLeads: Lead[]) => {
+  const selectedLead = useSelectedLead();
+  const queryClient = useQueryClient();
+  const openLeadPanel = useOpenLeadPanel();
+  const updateUrl = useLeadPanelUrl();
 
   const handleNavigate = useCallback(
     (direction: "prev" | "next") => {
@@ -116,8 +135,6 @@ export const usePanelNavigation = ({
     : -1;
 
   return {
-    handleRowClick,
-    handlePanelClose,
     handleNavigate,
     currentIndex,
   };

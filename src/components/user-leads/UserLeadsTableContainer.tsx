@@ -11,6 +11,7 @@ import { useColumnVisibility } from "@/hooks/useColumnVisibility";
 import { useMemo, useCallback } from "react";
 import type { ColumnOrderState } from "@tanstack/react-table";
 import type { SortField, SortOrder } from "@/components/leads/userLeadsTypes";
+import { LeadsTableScroll } from "@/components/leads/LeadsTableScroll";
 
 /** Agent leads table does not include an "Assigned To" column; strip if present from shared column-order storage. */
 function columnOrderWithoutAssignedTo(order: ColumnOrderState): ColumnOrderState {
@@ -24,7 +25,6 @@ interface UserLeadsTableContainerProps {
   pageIndex: number;
   totalEntries: number;
   totalPages: number;
-  selectedLead: Lead | null;
   sortField: SortField;
   sortOrder: SortOrder;
   onLeadClick: (lead: Lead) => void;
@@ -43,7 +43,6 @@ export const UserLeadsTableContainer: React.FC<
   pageIndex,
   totalEntries,
   totalPages,
-  selectedLead,
   sortField,
   sortOrder,
   onLeadClick,
@@ -135,16 +134,15 @@ export const UserLeadsTableContainer: React.FC<
         />
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
+      <LeadsTableScroll className="min-h-0 flex-1 overflow-auto">
         <UserLeadTable
           loading={loading}
           onLeadClick={onLeadClick}
-          selectedLead={selectedLead}
           table={table}
           columnOrder={columnOrder}
           setColumnOrder={setColumnOrder}
         />
-      </div>
+      </LeadsTableScroll>
 
       {totalEntries > 0 && (
         <div className="shrink-0 border-t border-gray-200 px-2 py-3 dark:border-gray-700 sm:px-2 sm:pb-4">

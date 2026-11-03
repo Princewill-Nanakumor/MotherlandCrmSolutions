@@ -6,6 +6,7 @@ import { Table } from "@/components/ui/Table";
 import { Table as TanstackTable } from "@tanstack/react-table";
 import { Lead } from "@/types/leads";
 import { UserLeadsTableContent } from "./UserLeadsTableContent";
+import { SelectedLeadRowHighlight } from "@/components/leads/SelectedLeadRowHighlight";
 import {
   DndContext,
   closestCenter,
@@ -20,7 +21,6 @@ import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 interface UserLeadTableProps {
   loading: boolean;
   onLeadClick: (lead: Lead) => void;
-  selectedLead: Lead | null;
   table: TanstackTable<Lead>;
   columnOrder: string[];
   setColumnOrder: (
@@ -32,7 +32,6 @@ interface UserLeadTableProps {
 export function UserLeadTable({
   loading,
   onLeadClick,
-  selectedLead,
   table,
   columnOrder,
   setColumnOrder,
@@ -75,11 +74,11 @@ export function UserLeadTable({
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <Table>
+      <SelectedLeadRowHighlight />
+      <Table containerClassName="overflow-visible">
         <UserLeadsTableContent
           table={table}
           onRowClick={handleRowClick}
-          selectedLead={selectedLead}
           isLoading={loading}
         />
       </Table>

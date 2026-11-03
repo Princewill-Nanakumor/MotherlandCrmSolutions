@@ -17,7 +17,7 @@ import { useAssignedLeads } from "@/hooks/useAssignedLeads";
 import {
   useCloseLeadPanel,
   useOpenLeadPanel,
-  useSelectedLead,
+  useLeadsStore,
   useSetSelectedLead,
 } from "@/stores/leadsStore";
 import { RefetchIndicator } from "@/components/ui/RefetchIndicator";
@@ -34,7 +34,6 @@ import {
   removeOpenLeadFromLiveUrl,
   shouldDismissOpenLeadForSearchChange,
 } from "@/lib/leadListSearchParams";
-import { useRestoreLeadPanelFromUrl } from "@/hooks/useRestoreLeadPanelFromUrl";
 import { parseLeadPageSize, snapLeadPageSize } from "@/lib/leadPageSize";
 import { humanizeDashboardFetchError } from "@/lib/mongoConnectionError";
 
@@ -76,8 +75,9 @@ export default function UserLeadsContent() {
   } = useSubscriptionData();
 
   // Same store path as All Leads: one write opens selection + panel.
+  // Do not subscribe to selectedLead here — that re-renders the whole page
+  // (and every table row) on panel open/close.
   const queryClient = useQueryClient();
-  const selectedLead = useSelectedLead();
   const setSelectedLead = useSetSelectedLead();
   const openLeadPanel = useOpenLeadPanel();
   const closeLeadPanel = useCloseLeadPanel();
@@ -278,6 +278,7 @@ export default function UserLeadsContent() {
   const handleLeadUpdated = useCallback(
     async (updatedLead: Lead) => {
       const originalLead = leads.find((l) => l._id === updatedLead._id);
+      const selectedLead = useLeadsStore.getState().selectedLead;
 
       if (originalLead && isStatusOnlyLeadUpdate(originalLead, updatedLead)) {
         if (selectedLead?._id === updatedLead._id) {
@@ -291,9 +292,10 @@ export default function UserLeadsContent() {
       try {
         await updateLead(updatedLead);
 
-        if (selectedLead?._id === updatedLead._id) {
+        const latestSelected = useLeadsStore.getState().selectedLead;
+        if (latestSelected?._id === updatedLead._id) {
           setSelectedLead(
-            mergeLeadContactExtrasIfSame(updatedLead, selectedLead),
+            mergeLeadContactExtrasIfSame(updatedLead, latestSelected),
           );
         }
 
@@ -303,7 +305,7 @@ export default function UserLeadsContent() {
         return false;
       }
     },
-    [updateLead, selectedLead?._id, leads],
+    [updateLead, leads, setSelectedLead],
   );
 
   // Sort handler - Fixed to provide all required arguments
@@ -382,14 +384,6 @@ export default function UserLeadsContent() {
     },
     [handleURLSourceModeChange],
   );
-
-  useRestoreLeadPanelFromUrl({
-    searchParams,
-    leads,
-    isRefetching,
-    selectedLead,
-    clearSelectionWhenNoLeadParam: true,
-  });
 
   // Row click — same openLeadPanel path as All Leads; URL after paint.
   const handleRowClick = useCallback((lead: Lead) => {
@@ -540,7 +534,6 @@ export default function UserLeadsContent() {
                   availableCountries={availableCountries}
                   availableStatuses={availableStatuses}
                   availableSources={availableSources}
-                  selectedLead={selectedLead}
                   filterByCountry={filterByCountry}
                   filterByStatus={filterByStatus}
                   filterBySource={filterBySource}
@@ -548,13 +541,6 @@ export default function UserLeadsContent() {
                   sortOrder={sortOrder}
                   showHeader={showHeader}
                   showControls={showControls}
-                  currentIndex={
-                    selectedLead && isDataReady
-                      ? sortedLeads.findIndex(
-                          (lead) => lead._id === selectedLead._id,
-                        )
-                      : -1
-                  }
                   totalLeads={leadsTotalAll}
                   leadsTotal={leadsTotal}
                   searchQuery={searchQuery}

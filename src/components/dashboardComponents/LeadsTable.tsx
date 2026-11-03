@@ -24,7 +24,11 @@ import {
 import { SortField } from "@/types/table";
 import { useTableSorting } from "./TableSorting";
 import { useRowSelection } from "./RowSelection";
-import { usePanelNavigation } from "./PanelNavigation";
+import {
+  useLeadPanelClose,
+  useLeadPanelHostNavigation,
+  useLeadPanelRowActions,
+} from "./PanelNavigation";
 import { useTableColumns } from "./TableColumns";
 import { useTableConfiguration } from "./TableConfiguration";
 import { useColumnOrder } from "@/hooks/useColumnOrder";
@@ -33,6 +37,21 @@ import { useClearLeadSelectionOnEscape } from "@/hooks/useClearLeadSelectionOnEs
 import { mergeLeadContactExtrasIfSame } from "@/lib/leadClientUpdate";
 import { loadLeadDetailsPanel } from "@/lib/leadDetailsPanelLoad";
 import { useMountedLeadPanel } from "@/hooks/useMountedLeadPanel";
+import { SelectedLeadRowHighlight } from "@/components/leads/SelectedLeadRowHighlight";
+import { LeadsTableScroll } from "@/components/leads/LeadsTableScroll";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { getLiveLeadParam } from "@/lib/liveSearchParams";
+import type { LeadFilterMode } from "@/lib/leadEmptyFilterDescription";
+import { useRestoreLeadPanelFromUrl } from "@/hooks/useRestoreLeadPanelFromUrl";
 
 const LeadDetailsPanel = dynamic(loadLeadDetailsPanel, { ssr: false });
 
@@ -55,20 +74,87 @@ function leadRowNeedsPanelResync(prev: Lead, next: Lead): boolean {
     String(nextAssignee ?? "") !== String(prevAssignee ?? "")
   );
 }
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { getLiveLeadParam } from "@/lib/liveSearchParams";
-import type { LeadFilterMode } from "@/lib/leadEmptyFilterDescription";
-import { useRestoreLeadPanelFromUrl } from "@/hooks/useRestoreLeadPanelFromUrl";
+
+/** Subscribes to selectedLead — keep out of the table render path. */
+function LeadsTablePanelHost({
+  leads,
+  sortedLeads,
+  users,
+  isRefetching,
+  onLeadUpdated,
+}: {
+  leads: Lead[];
+  sortedLeads: Lead[];
+  users: User[];
+  isRefetching: boolean;
+  onLeadUpdated: (lead: Lead) => Promise<boolean>;
+}) {
+  const searchParams = useSearchParams()!;
+  const selectedLead = useSelectedLead();
+  const setSelectedLead = useSetSelectedLead();
+  const closeLeadPanel = useCloseLeadPanel();
+  const { mountedLead, panelOpen, clearMountedLead } =
+    useMountedLeadPanel(selectedLead);
+  const handlePanelClose = useLeadPanelClose();
+  const { handleNavigate, currentIndex } =
+    useLeadPanelHostNavigation(sortedLeads);
+
+  useRestoreLeadPanelFromUrl({
+    searchParams,
+    leads,
+    isRefetching,
+    selectedLead,
+  });
+
+  // Keep selectedLead in sync with the list; close only when deleted and URL has no lead=.
+  useEffect(() => {
+    if (!selectedLead || leads.length === 0) return;
+
+    const leadIdParam = getLiveLeadParam(searchParams);
+    const updatedLead = leads.find((l) => l._id === selectedLead._id);
+
+    if (updatedLead) {
+      if (leadRowNeedsPanelResync(selectedLead, updatedLead)) {
+        setSelectedLead(
+          mergeLeadContactExtrasIfSame(updatedLead, selectedLead),
+        );
+      }
+      return;
+    }
+
+    if (leadIdParam) return;
+
+    closeLeadPanel();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leads, selectedLead?._id, searchParams]);
+
+  const handleLeadUpdatedFromPanel = useCallback(
+    async (updatedLead: Lead) => {
+      const ok = await onLeadUpdated(updatedLead);
+      if (ok) {
+        setSelectedLead(updatedLead);
+      }
+      return ok;
+    },
+    [onLeadUpdated, setSelectedLead],
+  );
+
+  if (!mountedLead) return null;
+
+  return (
+    <LeadDetailsPanel
+      lead={mountedLead}
+      isOpen={panelOpen}
+      users={users}
+      onLeadUpdated={handleLeadUpdatedFromPanel}
+      onClose={handlePanelClose}
+      onExited={clearMountedLead}
+      onNavigate={handleNavigate}
+      hasPrevious={currentIndex > 0}
+      hasNext={currentIndex < sortedLeads.length - 1}
+    />
+  );
+}
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -139,17 +225,14 @@ export default function LeadsTable({
   const countryFilter = normalizeFilter(filterByCountry);
   const statusFilter = normalizeFilter(filterByStatus);
   const sourceFilter = normalizeFilter(filterBySource);
-  // Store hooks (NOT for pagination)
-  const selectedLead = useSelectedLead();
-  const setSelectedLead = useSetSelectedLead();
-  const closeLeadPanel = useCloseLeadPanel();
-  const { mountedLead, panelOpen, clearMountedLead } =
-    useMountedLeadPanel(selectedLead);
+  // Store hooks (NOT for pagination). Do not subscribe to selectedLead here —
+  // that re-renders every mounted row on panel open/close.
   const sorting = useSorting();
   const setSorting = useSetSorting();
   const storeSelectedLeads = useSelectedLeads();
   const setStoreSelectedLeads = useSetSelectedLeads();
   const isInitializedRef = useRef(false);
+  const { handleRowClick } = useLeadPanelRowActions();
 
   // Warm the panel chunk while the table is idle so the first row click
   // does not wait on JS download/parse.
@@ -295,37 +378,6 @@ export default function LeadsTable({
     ),
   });
 
-  // Keep selectedLead in sync with the list; close only when deleted and URL has no lead=.
-  useEffect(() => {
-    if (!selectedLead || leads.length === 0) return;
-
-    const leadIdParam = getLiveLeadParam(searchParams);
-    const updatedLead = leads.find((l) => l._id === selectedLead._id);
-
-    if (updatedLead) {
-      if (leadRowNeedsPanelResync(selectedLead, updatedLead)) {
-        // List rows omit emails/phones — keep extras already loaded in the panel.
-        setSelectedLead(
-          mergeLeadContactExtrasIfSame(updatedLead, selectedLead),
-        );
-      }
-      return;
-    }
-
-    // Lead not on this page: keep panel if URL still points at it (filtered out).
-    if (leadIdParam) return;
-
-    closeLeadPanel();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leads, selectedLead?._id, searchParams]);
-
-  useRestoreLeadPanelFromUrl({
-    searchParams,
-    leads,
-    isRefetching,
-    selectedLead,
-  });
-
   // ⚡ Adjust pageIndex when filtered results change (client-side only)
   useEffect(() => {
     if (isServerPagination) return;
@@ -397,25 +449,6 @@ export default function LeadsTable({
     },
   });
 
-  const { handleRowClick, handlePanelClose, handleNavigate, currentIndex } =
-    usePanelNavigation({
-      selectedLead,
-      sortedLeads,
-    });
-
-  // When a lead is updated from the panel, update the store so the panel shows new data
-  // (e.g. after status change the lead may no longer be in the filtered list)
-  const handleLeadUpdatedFromPanel = useCallback(
-    async (updatedLead: Lead) => {
-      const ok = await onLeadUpdated(updatedLead);
-      if (ok) {
-        setSelectedLead(updatedLead);
-      }
-      return ok;
-    },
-    [onLeadUpdated, setSelectedLead],
-  );
-
   const { columns } = useTableColumns({
     sortField: (stableSorting[0]?.id as SortField) || "lastActivityAt",
     sortOrder: stableSorting[0]?.desc === false ? "asc" : "desc",
@@ -483,13 +516,14 @@ export default function LeadsTable({
           />
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto">
+        <LeadsTableScroll className="min-h-0 flex-1 overflow-auto">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <Table>
+            <SelectedLeadRowHighlight />
+            <Table containerClassName="overflow-visible">
               {showEmptyState ? (
                 <EmptyStateAdminLeadsTable
                   searchQuery={searchQuery}
@@ -515,15 +549,11 @@ export default function LeadsTable({
                   users={users}
                 />
               ) : (
-                <TableContent
-                  table={table}
-                  onRowClick={handleRowClick}
-                  selectedLead={selectedLead}
-                />
+                <TableContent table={table} onRowClick={handleRowClick} />
               )}
             </Table>
           </DndContext>
-        </div>
+        </LeadsTableScroll>
 
         <div className="shrink-0 border-t border-gray-200 px-2 py-3 dark:border-gray-700 sm:p-4">
           <TablePagination
@@ -534,19 +564,13 @@ export default function LeadsTable({
         </div>
       </div>
 
-      {mountedLead && (
-        <LeadDetailsPanel
-          lead={mountedLead}
-          isOpen={panelOpen}
-          users={users}
-          onLeadUpdated={handleLeadUpdatedFromPanel}
-          onClose={handlePanelClose}
-          onExited={clearMountedLead}
-          onNavigate={handleNavigate}
-          hasPrevious={currentIndex > 0}
-          hasNext={currentIndex < sortedLeads.length - 1}
-        />
-      )}
+      <LeadsTablePanelHost
+        leads={leads}
+        sortedLeads={sortedLeads}
+        users={users}
+        isRefetching={isRefetching}
+        onLeadUpdated={onLeadUpdated}
+      />
     </>
   );
 }

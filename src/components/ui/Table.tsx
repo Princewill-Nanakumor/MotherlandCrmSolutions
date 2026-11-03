@@ -5,20 +5,29 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-const Table = React.forwardRef<
-  HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => {
-  return (
-    <div className="relative w-full overflow-auto">
-      <table
-        ref={ref}
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...props}
-      />
-    </div>
-  );
-});
+type TableProps = React.HTMLAttributes<HTMLTableElement> & {
+  /** Classes for the wrapper around `<table>`. Leads tables use overflow-visible so the outer LeadsTableScroll owns scrolling (virtualization). */
+  containerClassName?: string;
+};
+
+const Table = React.forwardRef<HTMLTableElement, TableProps>(
+  ({ className, containerClassName, ...props }, ref) => {
+    return (
+      <div
+        className={cn(
+          "relative w-full",
+          containerClassName ?? "overflow-auto",
+        )}
+      >
+        <table
+          ref={ref}
+          className={cn("w-full caption-bottom text-sm", className)}
+          {...props}
+        />
+      </div>
+    );
+  },
+);
 Table.displayName = "Table";
 
 const TableHeader = React.forwardRef<

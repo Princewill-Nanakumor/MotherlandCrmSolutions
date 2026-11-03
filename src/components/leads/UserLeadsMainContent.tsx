@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import { UserLeadsHeader } from "@/components/leads/UserLeadsHeader";
 import { UserLeadsFilterControls } from "@/components/leads/UserLeadsFilterControls";
 import { UserLeadsTableContainer } from "@/components/user-leads/UserLeadsTableContainer";
@@ -15,6 +16,8 @@ import {
 } from "@/lib/dashboardPageShell";
 import { loadLeadDetailsPanel } from "@/lib/leadDetailsPanelLoad";
 import { useMountedLeadPanel } from "@/hooks/useMountedLeadPanel";
+import { useSelectedLead } from "@/stores/leadsStore";
+import { useRestoreLeadPanelFromUrl } from "@/hooks/useRestoreLeadPanelFromUrl";
 
 const LeadDetailsPanel = dynamic(loadLeadDetailsPanel, { ssr: false });
 
@@ -26,7 +29,6 @@ interface UserLeadsMainContentProps {
   availableCountries: string[];
   availableStatuses: string[];
   availableSources: string[];
-  selectedLead: Lead | null;
   filterByCountry: string[];
   filterByStatus: string[];
   filterBySource: string[];
@@ -34,7 +36,6 @@ interface UserLeadsMainContentProps {
   sortOrder: SortOrder;
   showHeader: boolean;
   showControls: boolean;
-  currentIndex: number;
   totalLeads: number;
   leadsTotal: number;
   searchQuery?: string;
@@ -108,6 +109,63 @@ function EmptyState({ searchQuery }: { searchQuery: string }) {
   );
 }
 
+/** Subscribes to selectedLead — keep out of the table render path. */
+function UserLeadsPanelHost({
+  isDataReady,
+  sortedLeads,
+  isRefetching,
+  handlePanelClose,
+  handleLeadUpdated,
+  handleNavigation,
+}: {
+  isDataReady: boolean;
+  sortedLeads: Lead[];
+  isRefetching: boolean;
+  handlePanelClose: () => void;
+  handleLeadUpdated: (lead: Lead) => Promise<boolean>;
+  handleNavigation: (
+    direction: "prev" | "next",
+    selectedLead: Lead,
+    sortedLeads: Lead[],
+  ) => void;
+}) {
+  const searchParams = useSearchParams();
+  const selectedLead = useSelectedLead();
+  const { mountedLead, panelOpen, clearMountedLead } = useMountedLeadPanel(
+    isDataReady ? selectedLead : null,
+  );
+
+  useRestoreLeadPanelFromUrl({
+    searchParams,
+    leads: sortedLeads,
+    isRefetching,
+    selectedLead,
+    clearSelectionWhenNoLeadParam: true,
+  });
+
+  const currentIndex =
+    selectedLead && isDataReady
+      ? sortedLeads.findIndex((lead) => lead._id === selectedLead._id)
+      : -1;
+
+  if (!mountedLead) return null;
+
+  return (
+    <LeadDetailsPanel
+      lead={mountedLead}
+      isOpen={panelOpen}
+      onClose={handlePanelClose}
+      onExited={clearMountedLead}
+      onLeadUpdated={handleLeadUpdated}
+      onNavigate={(direction) =>
+        handleNavigation(direction, mountedLead, sortedLeads)
+      }
+      hasPrevious={currentIndex > 0}
+      hasNext={currentIndex < sortedLeads.length - 1}
+    />
+  );
+}
+
 export function UserLeadsMainContent({
   loading,
   shouldShowLoading,
@@ -116,7 +174,6 @@ export function UserLeadsMainContent({
   availableCountries,
   availableStatuses,
   availableSources,
-  selectedLead,
   filterByCountry,
   filterByStatus,
   filterBySource,
@@ -124,7 +181,6 @@ export function UserLeadsMainContent({
   sortOrder,
   showHeader,
   showControls,
-  currentIndex,
   totalLeads,
   leadsTotal,
   searchQuery = "",
@@ -151,11 +207,6 @@ export function UserLeadsMainContent({
   useEffect(() => {
     void loadLeadDetailsPanel();
   }, []);
-
-  // Keep exit animation mounted after close; gate on data ready like before.
-  const { mountedLead, panelOpen, clearMountedLead } = useMountedLeadPanel(
-    isDataReady ? selectedLead : null,
-  );
 
   const totalPages = Math.max(1, Math.ceil(leadsTotal / pageSize) || 1);
   const counts: CountsData = isDataReady
@@ -218,7 +269,6 @@ export function UserLeadsMainContent({
               pageIndex={pageIndex}
               totalEntries={leadsTotal}
               totalPages={totalPages}
-              selectedLead={selectedLead}
               sortField={sortField}
               sortOrder={sortOrder}
               onLeadClick={handleLeadClick}
@@ -233,20 +283,14 @@ export function UserLeadsMainContent({
         )}
       </div>
 
-      {mountedLead && (
-        <LeadDetailsPanel
-          lead={mountedLead}
-          isOpen={panelOpen}
-          onClose={handlePanelClose}
-          onExited={clearMountedLead}
-          onLeadUpdated={handleLeadUpdated}
-          onNavigate={(direction) =>
-            handleNavigation(direction, mountedLead, sortedLeads)
-          }
-          hasPrevious={currentIndex > 0}
-          hasNext={currentIndex < sortedLeads.length - 1}
-        />
-      )}
+      <UserLeadsPanelHost
+        isDataReady={isDataReady}
+        sortedLeads={sortedLeads}
+        isRefetching={isRefetching}
+        handlePanelClose={handlePanelClose}
+        handleLeadUpdated={handleLeadUpdated}
+        handleNavigation={handleNavigation}
+      />
     </div>
   );
 }

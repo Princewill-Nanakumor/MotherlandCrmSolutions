@@ -354,6 +354,9 @@ export const useLeadsStore = create<LeadsState>()(
 
 export const useSelectedLead = () =>
   useLeadsStore((state) => state.selectedLead);
+/** Id-only subscription — use for row highlight without re-rendering on lead field updates. */
+export const useSelectedLeadId = () =>
+  useLeadsStore((state) => state.selectedLead?._id ?? null);
 export const useSelectedLeads = () =>
   useLeadsStore((state) => state.selectedLeads);
 export const useAssignedLeadsCount = () =>

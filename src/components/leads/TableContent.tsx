@@ -19,11 +19,11 @@ import {
 import { DraggableColumnHeader } from "@/components/dashboardComponents/DraggableColumnHeader";
 import { useTableStatuses } from "@/hooks/useTableStatuses";
 import { isCheckboxEventTarget } from "@/lib/tableSelectHitTarget";
+import { useVirtualizedLeadRows } from "@/hooks/useVirtualizedLeadRows";
 
 interface TableContentProps {
   table: TanstackTable<Lead>;
   onRowClick: (lead: Lead, event: React.MouseEvent) => void;
-  selectedLead: Lead | null;
   isLoading?: boolean;
 }
 
@@ -93,10 +93,44 @@ const TableSkeleton = ({
   </>
 );
 
+function handleLeadRowClick(
+  lead: Lead,
+  event: React.MouseEvent,
+  onRowClick: (lead: Lead, event: React.MouseEvent) => void,
+) {
+  const target = event.target as HTMLElement | null;
+  if (!target) return;
+
+  if (
+    target.closest("[data-select-cell]") ||
+    isCheckboxEventTarget(target)
+  ) {
+    return;
+  }
+
+  if (
+    target.closest(
+      "button, a, input, textarea, select, [data-slot='checkbox'], [role='button']",
+    )
+  ) {
+    return;
+  }
+
+  if (
+    target.closest("svg") &&
+    target.closest(
+      "button, a, input, textarea, select, [data-slot='checkbox'], [role='button']",
+    )
+  ) {
+    return;
+  }
+
+  onRowClick(lead, event);
+}
+
 export function TableContent({
   table,
   onRowClick,
-  selectedLead,
   isLoading = false,
 }: TableContentProps) {
   const columnIds = table
@@ -105,6 +139,15 @@ export function TableContent({
     .map((col) => col.id);
   const { data: statuses = [], isLoading: isStatusLoading } =
     useTableStatuses();
+  const rows = table.getRowModel().rows;
+  const {
+    virtualize,
+    virtualItems,
+    paddingTop,
+    paddingBottom,
+    measureElement,
+  } = useVirtualizedLeadRows(rows);
+  const colSpan = table.getAllColumns().length;
 
   const getStatusStyle = (leadStatus: string) => {
     const status = statuses.find((s) => s._id === leadStatus);
@@ -150,12 +193,11 @@ export function TableContent({
           style={
             {
               ...getStatusStyle(leadStatus),
-              // expose status color as CSS variable for dark mode text
               "--status-color": statusColor,
             } as React.CSSProperties
           }
           className="flex items-center gap-1.5 dark:border-gray-700 w-full max-w-30 justify-center"
-          title={statusName} // Tooltip for full text
+          title={statusName}
         >
           <div
             className="w-1.5 h-1.5 rounded-full shrink-0"
@@ -180,14 +222,96 @@ export function TableContent({
     12,
   );
 
-  // Show skeleton when loading
   if (showLoadingState) {
     return <TableSkeleton columnCount={columnCount} rowCount={rowCount} />;
   }
 
+  const renderDataRow = (
+    row: (typeof rows)[number],
+    virtualIndex?: number,
+  ) => {
+    const lead = row.original;
+
+    return (
+      <TableRow
+        key={row.id}
+        data-lead-id={lead._id}
+        data-index={virtualIndex}
+        ref={virtualize ? measureElement : undefined}
+        onClick={(event) => handleLeadRowClick(lead, event, onRowClick)}
+        className="cursor-pointer transition-colors duration-150 ease-in-out bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/80"
+        style={{
+          borderLeft: "4px solid transparent",
+          borderBottom: "1px solid var(--tw-prose-invert-borders, #374151)",
+        }}
+      >
+        {row.getVisibleCells().map((cell) => {
+          const isStatusCell = cell.column.id === "status";
+          const isLastCommentCell = cell.column.id === "lastComment";
+          const isCommentCountCell = cell.column.id === "commentCount";
+          const isActionsCell = cell.column.id === "actions";
+          const isSelectCell = cell.column.id === "select";
+          const isSourceCell = cell.column.id === "source";
+          const isPhoneCell = cell.column.id === "phone";
+          const isCountryCell = cell.column.id === "country";
+          const isAssignedToCell = cell.column.id === "assignedTo";
+          const isCreatedAtCell = cell.column.id === "createdAt";
+          const isLastCommentDateCell = cell.column.id === "lastCommentDate";
+          const isLastCallInitiatedAtCell =
+            cell.column.id === "lastCallInitiatedAt";
+
+          return (
+            <TableCell
+              key={cell.id}
+              className={`
+                py-3.5
+                text-gray-800 dark:text-gray-300
+                ${
+                  isSelectCell || isActionsCell
+                    ? "text-center"
+                    : isCommentCountCell ||
+                        isSourceCell ||
+                        isPhoneCell ||
+                        isCountryCell ||
+                        isAssignedToCell ||
+                        isCreatedAtCell ||
+                        isLastCommentCell ||
+                        isLastCommentDateCell ||
+                        isLastCallInitiatedAtCell
+                      ? "text-center"
+                      : "text-left"
+                }
+                ${
+                  isSelectCell
+                    ? "relative w-10 min-w-10 px-0 border-r border-gray-200 dark:border-gray-700"
+                    : isStatusCell
+                      ? "w-32 min-w-30 px-4"
+                      : isLastCommentCell
+                        ? "max-w-50 px-4"
+                        : "px-4"
+                }
+              `}
+              onClick={
+                isSelectCell
+                  ? (e) => {
+                      e.stopPropagation();
+                    }
+                  : undefined
+              }
+            >
+              {cell.column.id === "status"
+                ? renderStatus(lead.status)
+                : flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </TableCell>
+          );
+        })}
+      </TableRow>
+    );
+  };
+
   return (
     <>
-      <TableHeader className="bg-gray-100 border-t dark:bg-gray-700">
+      <TableHeader className="bg-gray-100 border-t dark:bg-gray-700 sticky top-0 z-10">
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={generateUniqueKey("header-group", headerGroup.id)}>
             <SortableContext
@@ -239,139 +363,38 @@ export function TableContent({
         ))}
       </TableHeader>
       <TableBody className="dark:bg-gray-800">
-        {table.getRowModel().rows.length ? (
-          table.getRowModel().rows.map((row) => {
-            const lead = row.original;
-            const isSelected = selectedLead && lead._id === selectedLead._id;
-
-            return (
-              <TableRow
-                key={row.id}
-                data-state={isSelected ? "selected" : undefined}
-                onClick={(event) => {
-                  const target = event.target as HTMLElement | null;
-                  if (!target) return;
-
-                  // Checkbox column: never open the details panel (padding or control).
-                  if (
-                    target.closest("[data-select-cell]") ||
-                    isCheckboxEventTarget(target)
-                  ) {
-                    return;
-                  }
-
-                  // Prevent row "open panel" when the user clicks any interactive
-                  // UI inside the row (checkbox, links, buttons, inputs, etc).
-                  // This avoids selection "jumping" when multi-selecting rows.
-                  if (
-                    target.closest(
-                      "button, a, input, textarea, select, [data-slot='checkbox'], [role='button']",
-                    )
-                  ) {
-                    return;
-                  }
-
-                  // Ignore clicks that happen on icons/SVG that are inside an
-                  // interactive control.
-                  if (
-                    target.closest("svg") &&
-                    target.closest(
-                      "button, a, input, textarea, select, [data-slot='checkbox'], [role='button']",
-                    )
-                  ) {
-                    return;
-                  }
-
-                  onRowClick(lead, event);
-                }}
-                className={`
-                  cursor-pointer transition-colors duration-150 ease-in-out
-                  ${
-                    isSelected
-                      ? "bg-gray-50 dark:bg-gray-600"
-                      : "bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/80"
-                  }
-                `}
-                style={{
-                  borderLeft: isSelected
-                    ? "4px solid var(--brand-from)"
-                    : "4px solid transparent",
-                  borderBottom: isSelected
-                    ? "2px solid var(--brand-from)"
-                    : "1px solid var(--tw-prose-invert-borders, #374151)",
-                }}
-              >
-                {row.getVisibleCells().map((cell) => {
-                  const isStatusCell = cell.column.id === "status";
-                  const isLastCommentCell = cell.column.id === "lastComment";
-                  const isCommentCountCell = cell.column.id === "commentCount";
-                  const isActionsCell = cell.column.id === "actions";
-                  const isSelectCell = cell.column.id === "select";
-                  const isSourceCell = cell.column.id === "source";
-                  const isPhoneCell = cell.column.id === "phone";
-                  const isCountryCell = cell.column.id === "country";
-                  const isAssignedToCell = cell.column.id === "assignedTo";
-                  const isCreatedAtCell = cell.column.id === "createdAt";
-                  const isLastCommentDateCell =
-                    cell.column.id === "lastCommentDate";
-                  const isLastCallInitiatedAtCell =
-                    cell.column.id === "lastCallInitiatedAt";
-
-                  return (
-                    <TableCell
-                      key={cell.id}
-                      className={`
-                        py-3.5
-                        ${isSelected ? "text-gray-900 dark:text-white" : "text-gray-800 dark:text-gray-300"}
-                        ${
-                          isSelectCell || isActionsCell
-                            ? "text-center"
-                            : isCommentCountCell ||
-                                isSourceCell ||
-                                isPhoneCell ||
-                                isCountryCell ||
-                                isAssignedToCell ||
-                                isCreatedAtCell ||
-                                isLastCommentCell ||
-                                isLastCommentDateCell ||
-                                isLastCallInitiatedAtCell
-                              ? "text-center"
-                              : "text-left"
-                        }
-                        ${
-                          isSelectCell
-                            ? "relative w-10 min-w-10 px-0 border-r border-gray-200 dark:border-gray-700"
-                            : isStatusCell
-                              ? "w-32 min-w-30 px-4"
-                              : isLastCommentCell
-                                ? "max-w-50 px-4"
-                                : "px-4"
-                        }
-                      `}
-                      onClick={
-                        isSelectCell
-                          ? (e) => {
-                              e.stopPropagation();
-                            }
-                          : undefined
-                      }
-                    >
-                      {cell.column.id === "status"
-                        ? renderStatus(lead.status)
-                        : flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            );
-          })
+        {rows.length ? (
+          virtualize ? (
+            <>
+              {paddingTop > 0 ? (
+                <tr aria-hidden="true">
+                  <td
+                    colSpan={colSpan}
+                    style={{ height: paddingTop, padding: 0, border: 0 }}
+                  />
+                </tr>
+              ) : null}
+              {virtualItems.map((virtualRow) => {
+                const row = rows[virtualRow.index];
+                if (!row) return null;
+                return renderDataRow(row, virtualRow.index);
+              })}
+              {paddingBottom > 0 ? (
+                <tr aria-hidden="true">
+                  <td
+                    colSpan={colSpan}
+                    style={{ height: paddingBottom, padding: 0, border: 0 }}
+                  />
+                </tr>
+              ) : null}
+            </>
+          ) : (
+            rows.map((row) => renderDataRow(row))
+          )
         ) : (
           <TableRow>
             <TableCell
-              colSpan={table.getAllColumns().length}
+              colSpan={colSpan}
               className="h-24 text-center text-gray-600 dark:text-gray-400 dark:bg-gray-800"
             >
               No results found
