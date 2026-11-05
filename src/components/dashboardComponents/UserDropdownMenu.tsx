@@ -1,7 +1,8 @@
 // src/components/dashboardComponents/UserDropdownMenu.tsx
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, type ReactNode } from "react";
 import { createPortal, flushSync } from "react-dom";
+import Link from "next/link";
 import { UserCircle, LogOut, User, Settings } from "lucide-react";
 import { MotherlandLogo } from "@/components/brand/MotherlandLogo";
 import { useRouter } from "next/navigation";
@@ -10,6 +11,38 @@ import { BalanceDisplay } from "./BalanceDisplay";
 import { PlanDisplay } from "./PlanDisplay";
 import { ShieldSpinnerGlyph } from "./LeadsLoadingState";
 import { useNavbarPresenceIndicator } from "@/hooks/useNavbarPresenceIndicator";
+
+const menuLinkClassName =
+  "flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out";
+
+function MenuLink({
+  href,
+  disabled,
+  onNavigate,
+  className,
+  children,
+  "aria-label": ariaLabel,
+}: {
+  href: string;
+  disabled: boolean;
+  onNavigate: (event: React.MouseEvent<HTMLAnchorElement>) => void;
+  className: string;
+  children: ReactNode;
+  "aria-label"?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onNavigate}
+      aria-label={ariaLabel}
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : undefined}
+      className={`${className}${disabled ? " pointer-events-none opacity-50" : ""}`}
+    >
+      {children}
+    </Link>
+  );
+}
 
 export interface UserDropdownMenuProps {
   session: {
@@ -68,25 +101,14 @@ export function UserDropdownMenu({
     (session?.user?.isSuperAdmin === true ||
       userProfile?.isSuperAdmin === true);
 
-  const handleProfile = () => {
+  const handleMenuLinkClick = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+  ) => {
+    if (logoutLoading) {
+      event.preventDefault();
+      return;
+    }
     setDropdownOpen(false);
-    router.push("/dashboard/profile");
-  };
-
-  const handleSettings = () => {
-    setDropdownOpen(false);
-    router.push("/dashboard/settings");
-  };
-
-  const handleAdminManagement = () => {
-    setDropdownOpen(false);
-    router.push("/dashboard/admin-management");
-  };
-
-  const handleSubscriptionStatusClick = () => {
-    if (!isAdmin) return;
-    setDropdownOpen(false);
-    router.push("/dashboard/subscription");
   };
 
   const handleLogout = async () => {
@@ -165,56 +187,54 @@ export function UserDropdownMenu({
               </p>
               {isAdmin && (
                 <div className="mt-2 space-y-1">
-                  {/* Balance Display */}
                   <BalanceDisplay
                     balance={userProfile?.balance}
                     loading={balanceLoading}
                   />
-
-                  {/* Plan Display — click opens subscription for admins */}
-                  <button
-                    type="button"
-                    onClick={handleSubscriptionStatusClick}
+                  <MenuLink
+                    href="/dashboard/subscription"
                     disabled={logoutLoading}
-                    className="w-full text-left rounded-xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-focus) disabled:pointer-events-none disabled:opacity-50"
+                    onNavigate={handleMenuLinkClick}
+                    className={`block w-full rounded-xl text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-focus)${
+                      logoutLoading ? "" : " cursor-pointer"
+                    }`}
                     aria-label="View subscription"
                   >
                     <PlanDisplay isAdmin={isAdmin} />
-                  </button>
+                  </MenuLink>
                 </div>
               )}
             </div>
           </div>
-          {/* Menu Items */}
           <div className="py-1 ml-4">
-            <button
-              type="button"
-              onClick={handleProfile}
+            <MenuLink
+              href="/dashboard/profile"
               disabled={logoutLoading}
-              className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out disabled:pointer-events-none disabled:opacity-50"
+              onNavigate={handleMenuLinkClick}
+              className={menuLinkClassName}
             >
               <User className="w-4 h-4 mr-3 brand-icon" />
               Profile
-            </button>
-            <button
-              type="button"
-              onClick={handleSettings}
+            </MenuLink>
+            <MenuLink
+              href="/dashboard/settings"
               disabled={logoutLoading}
-              className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out disabled:pointer-events-none disabled:opacity-50"
+              onNavigate={handleMenuLinkClick}
+              className={menuLinkClassName}
             >
               <Settings className="w-4 h-4 mr-3 text-blue-500 dark:text-blue-400" />
               Settings
-            </button>
+            </MenuLink>
             {isSuperAdmin ? (
-              <button
-                type="button"
-                onClick={handleAdminManagement}
+              <MenuLink
+                href="/dashboard/admin-management"
                 disabled={logoutLoading}
-                className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700! dark:text-gray-200! hover:bg-purple-50 dark:hover:bg-gray-700/80 transition-colors duration-150 ease-in-out disabled:pointer-events-none disabled:opacity-50"
+                onNavigate={handleMenuLinkClick}
+                className={menuLinkClassName}
               >
                 <MotherlandLogo className="mr-3 h-4 w-4 rounded-[22%]" />
                 Admin management
-              </button>
+              </MenuLink>
             ) : null}
           </div>
           <div className="py-1 ml-4">
