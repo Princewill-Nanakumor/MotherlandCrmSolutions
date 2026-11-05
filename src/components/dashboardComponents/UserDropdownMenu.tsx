@@ -19,25 +19,22 @@ function MenuLink({
   href,
   disabled,
   onNavigate,
-  className,
   children,
-  "aria-label": ariaLabel,
 }: {
   href: string;
   disabled: boolean;
   onNavigate: (event: React.MouseEvent<HTMLAnchorElement>) => void;
-  className: string;
   children: ReactNode;
-  "aria-label"?: string;
 }) {
   return (
     <Link
       href={href}
       onClick={onNavigate}
-      aria-label={ariaLabel}
       aria-disabled={disabled || undefined}
       tabIndex={disabled ? -1 : undefined}
-      className={`${className}${disabled ? " pointer-events-none opacity-50" : ""}`}
+      className={`${menuLinkClassName}${
+        disabled ? " pointer-events-none opacity-50" : ""
+      }`}
     >
       {children}
     </Link>
@@ -106,6 +103,17 @@ export function UserDropdownMenu({
   ) => {
     if (logoutLoading) {
       event.preventDefault();
+      return;
+    }
+    // Cmd/Ctrl/middle-click must keep the <a> mounted so the browser can
+    // open a new tab (closing the menu unmounts the link mid-click).
+    if (
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      event.button !== 0
+    ) {
       return;
     }
     setDropdownOpen(false);
@@ -191,17 +199,7 @@ export function UserDropdownMenu({
                     balance={userProfile?.balance}
                     loading={balanceLoading}
                   />
-                  <MenuLink
-                    href="/dashboard/subscription"
-                    disabled={logoutLoading}
-                    onNavigate={handleMenuLinkClick}
-                    className={`block w-full rounded-xl text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-focus)${
-                      logoutLoading ? "" : " cursor-pointer"
-                    }`}
-                    aria-label="View subscription"
-                  >
-                    <PlanDisplay isAdmin={isAdmin} />
-                  </MenuLink>
+                  <PlanDisplay isAdmin={isAdmin} />
                 </div>
               )}
             </div>
@@ -211,7 +209,6 @@ export function UserDropdownMenu({
               href="/dashboard/profile"
               disabled={logoutLoading}
               onNavigate={handleMenuLinkClick}
-              className={menuLinkClassName}
             >
               <User className="w-4 h-4 mr-3 brand-icon" />
               Profile
@@ -220,7 +217,6 @@ export function UserDropdownMenu({
               href="/dashboard/settings"
               disabled={logoutLoading}
               onNavigate={handleMenuLinkClick}
-              className={menuLinkClassName}
             >
               <Settings className="w-4 h-4 mr-3 text-blue-500 dark:text-blue-400" />
               Settings
@@ -230,7 +226,6 @@ export function UserDropdownMenu({
                 href="/dashboard/admin-management"
                 disabled={logoutLoading}
                 onNavigate={handleMenuLinkClick}
-                className={menuLinkClassName}
               >
                 <MotherlandLogo className="mr-3 h-4 w-4 rounded-[22%]" />
                 Admin management
