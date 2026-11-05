@@ -173,7 +173,7 @@ export const CommentsAndActivitiesCombined: FC<
   // Fetch comments
   const {
     data: comments = [],
-    isLoading: isLoadingComments,
+    isPending: isPendingComments,
     error: commentsError,
   } = useQuery<Comment[], Error>({
     queryKey: ["comments", leadId],
@@ -193,6 +193,7 @@ export const CommentsAndActivitiesCombined: FC<
   // Fetch activities (excluding COMMENT type)
   const {
     data: activities = [],
+    isPending: isPendingActivities,
     error: activitiesError,
   } = useQuery<Activity[], Error>({
     queryKey: ["activities", leadId],
@@ -569,8 +570,8 @@ export const CommentsAndActivitiesCombined: FC<
     [activities, pendingDeleteActivityId],
   );
 
-  // Don't block the whole timeline on activities — comments often return first.
-  const isLoading = isLoadingComments;
+  // Both must resolve before paint so the sorted timeline does not jump.
+  const isLoading = isPendingComments || isPendingActivities;
   const hasError = commentsError || activitiesError;
 
   if (hasError) {
