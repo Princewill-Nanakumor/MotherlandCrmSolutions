@@ -13,7 +13,10 @@ import {
 } from "@/components/ui/select";
 import { User } from "@/types/user.types";
 import { Lead } from "@/types/leads";
-import { MAX_ASSIGNED_LEADS_PER_AGENT } from "@/lib/leadAssignmentQuery";
+import {
+  MAX_ASSIGNED_LEADS_PER_AGENT,
+  MAX_ASSIGNED_LEADS_PER_SUBADMIN,
+} from "@/lib/leadAssignmentQuery";
 import {
   formatPersonName,
   getLeadAssignedDisplayName,
@@ -126,8 +129,9 @@ export function AssignLeadsDialog({
             )}
 
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Each agent can have at most {MAX_ASSIGNED_LEADS_PER_AGENT} assigned
-              leads on their leads page.
+              Agents can have at most {MAX_ASSIGNED_LEADS_PER_AGENT} assigned
+              leads; sub-admins can have at most{" "}
+              {MAX_ASSIGNED_LEADS_PER_SUBADMIN}.
             </p>
 
             <div className="space-y-2">

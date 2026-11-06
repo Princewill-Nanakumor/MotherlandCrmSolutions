@@ -2,7 +2,7 @@
  * Times All Leads bulk ops through the real HTTP APIs:
  *   assign → reassign → bulk status → unassign
  *
- * Cap is MAX_ASSIGNED_LEADS_PER_AGENT (500). Default size 500; use 200 for a quicker pass.
+ * Cap is MAX_ASSIGNED_LEADS_PER_AGENT. Default size 500; use 200 for a quicker pass.
  *
  *   npm run test:assign-bulk-bench          # 500
  *   npm run test:assign-bulk-bench:200      # 200
@@ -11,6 +11,7 @@
  * Needs .env MONGODB_URI + running Next (Playwright webServer or your npm run dev).
  */
 import { expect, test } from "@playwright/test";
+import { MAX_ASSIGNED_LEADS_PER_AGENT } from "../src/lib/leadAssignmentQuery";
 import {
   E2E_ADMIN_EMAIL,
   E2E_AGENT_EMAIL,
@@ -22,7 +23,7 @@ import {
 import { importLeadsWithRetry } from "./helpers/assignmentUi";
 
 const enabled = process.env.ASSIGN_BULK_BENCH === "1";
-const MAX_ASSIGNED = 500;
+const MAX_ASSIGNED = MAX_ASSIGNED_LEADS_PER_AGENT;
 const size = Math.min(
   MAX_ASSIGNED,
   Math.max(1, Number(process.env.ASSIGN_BENCH_SIZE || 500)),

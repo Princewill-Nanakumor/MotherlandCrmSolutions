@@ -29,7 +29,7 @@ const rounds = Math.max(
   Math.min(4, Number(process.env.PANEL_BENCH_ROUNDS || 3)),
 );
 
-/** My Leads max page size is 500; even steps of 20 (250 snaps to 260). */
+/** My Leads Show sizes used for open/close benches (even steps of 20). */
 const DEFAULT_SIZES = [20, 60, 100, 250, 300, 400, 500];
 
 function parseSizes(): number[] {

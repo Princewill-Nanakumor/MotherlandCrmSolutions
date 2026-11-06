@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
+import { ALL_LEADS_MAX_PAGE_SIZE } from "@/lib/leadPageSize";
 
-/** Align with agent assignment cap and bulk status limit. */
-export const MAX_BULK_LEAD_OPS = 500;
+/** Max leads in one assign/unassign/status request (All Leads Show max). */
+export const MAX_BULK_LEAD_OPS = ALL_LEADS_MAX_PAGE_SIZE;
 
 export const ACTIVITY_INSERT_CHUNK = 250;
 

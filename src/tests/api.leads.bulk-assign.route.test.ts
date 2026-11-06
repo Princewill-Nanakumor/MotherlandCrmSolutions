@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import mongoose from "mongoose";
+import { MAX_ASSIGNED_LEADS_PER_AGENT } from "@/lib/leadAssignmentQuery";
 
 const getServerSession = vi.fn();
 const publishAdminLeadsUpdatedEvent = vi.fn().mockResolvedValue(undefined);
@@ -202,11 +203,12 @@ describe("POST /api/leads/assign bulk correctness", () => {
     expect(ablyPayload.leadIds).toHaveLength(450);
   });
 
-  it("rejects reassignment when it would push the agent over the 500 cap", async () => {
-    // 10 leads currently on another agent; target already at 495 → would become 505
+  it("rejects reassignment when it would push the agent over the assignment cap", async () => {
+    // 10 leads on another agent; target already near cap → would exceed max
+    const currentCount = MAX_ASSIGNED_LEADS_PER_AGENT - 5;
     const leads = buildLeads(10, 0, { reassignedFromOther: 10 });
     const leadIds = leads.map((lead) => lead._id.toString());
-    const mock = createMockDb(leads, 495);
+    const mock = createMockDb(leads, currentCount);
 
     Object.defineProperty(mongoose.connection, "db", {
       configurable: true,
@@ -224,7 +226,11 @@ describe("POST /api/leads/assign bulk correctness", () => {
     expect(res.status).toBe(400);
     const body = (await res.json()) as { success?: boolean; message?: string };
     expect(body.success).toBe(false);
-    expect(body.message).toMatch(/already have 495 assigned leads/);
+    expect(body.message).toMatch(
+      new RegExp(
+        `already has ${currentCount} assigned leads \\(maximum ${MAX_ASSIGNED_LEADS_PER_AGENT}\\)`,
+      ),
+    );
     expect(mock.getUpdateManyFilter()).toBeNull();
   });
 });

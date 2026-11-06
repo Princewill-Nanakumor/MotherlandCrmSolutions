@@ -59,6 +59,7 @@ interface UserLeadsMainContentProps {
   ) => void;
   pageSize: number;
   pageIndex: number;
+  pageSizeOptions?: { value: string; label: string }[];
   onPageSizeChange: (value: string) => void;
   onPageChange: (newPageIndex: number) => void;
   isRefetching?: boolean;
@@ -200,6 +201,7 @@ export function UserLeadsMainContent({
   handleNavigation,
   pageSize,
   pageIndex,
+  pageSizeOptions,
   onPageSizeChange,
   onPageChange,
   isRefetching = false,
@@ -267,6 +269,7 @@ export function UserLeadsMainContent({
               leads={shouldShowLoading ? [] : sortedLeads}
               pageSize={pageSize}
               pageIndex={pageIndex}
+              pageSizeOptions={pageSizeOptions}
               totalEntries={leadsTotal}
               totalPages={totalPages}
               sortField={sortField}

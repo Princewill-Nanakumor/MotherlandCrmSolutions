@@ -1,7 +1,16 @@
 import mongoose from "mongoose";
 
-/** Agent assigned-lead cap (server paginates the My Leads list). */
+/** Assigned-lead cap for AGENT assignees. */
 export const MAX_ASSIGNED_LEADS_PER_AGENT = 500;
+/** Assigned-lead cap for SUBADMIN assignees. */
+export const MAX_ASSIGNED_LEADS_PER_SUBADMIN = 2000;
+
+export function maxAssignedLeadsForRole(role?: string | null): number {
+  // Compare to string literal — avoid importing `@/lib/roles` (mocked in assign route tests).
+  return role === "SUBADMIN"
+    ? MAX_ASSIGNED_LEADS_PER_SUBADMIN
+    : MAX_ASSIGNED_LEADS_PER_AGENT;
+}
 
 /**
  * Matches leads assigned to the given user across storage shapes:
@@ -116,31 +125,23 @@ export async function countLeadsAssignedToAgent(
 }
 
 export function formatAssignmentCapacityError(
-  agentFirstName: string,
-  agentLastName: string,
-  currentCount: number,
-  attemptedNetNew: number,
+  role?: string | null,
+  currentCount = 0,
 ): string {
-  const remaining = Math.max(0, MAX_ASSIGNED_LEADS_PER_AGENT - currentCount);
-  return `Cannot assign ${attemptedNetNew} lead(s) to ${agentFirstName} ${agentLastName}. They already have ${currentCount} assigned leads (maximum ${MAX_ASSIGNED_LEADS_PER_AGENT}). You can assign at most ${remaining} more.`;
+  const max = maxAssignedLeadsForRole(role);
+  const remaining = Math.max(0, max - currentCount);
+  return `This user already has ${currentCount} assigned leads (maximum ${max}). You can assign at most ${remaining} more.`;
 }
 
 export function assertAssignmentCapacity(
-  agentFirstName: string,
-  agentLastName: string,
   currentCount: number,
   netNewAssignments: number,
+  role?: string | null,
 ): void {
   if (netNewAssignments <= 0) return;
-  if (currentCount + netNewAssignments <= MAX_ASSIGNED_LEADS_PER_AGENT) return;
-  throw new Error(
-    formatAssignmentCapacityError(
-      agentFirstName,
-      agentLastName,
-      currentCount,
-      netNewAssignments,
-    ),
-  );
+  const max = maxAssignedLeadsForRole(role);
+  if (currentCount + netNewAssignments <= max) return;
+  throw new Error(formatAssignmentCapacityError(role, currentCount));
 }
 
 /**

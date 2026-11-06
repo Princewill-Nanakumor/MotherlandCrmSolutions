@@ -1,8 +1,9 @@
 // src/components/leads/UserLeadsContent.tsx
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Lead } from "@/types/leads";
 import { prefetchLeadPanelTimeline } from "@/lib/leadPanelTimelinePrefetch";
@@ -34,7 +35,13 @@ import {
   removeOpenLeadFromLiveUrl,
   shouldDismissOpenLeadForSearchChange,
 } from "@/lib/leadListSearchParams";
-import { parseLeadPageSize, snapLeadPageSize } from "@/lib/leadPageSize";
+import {
+  maxMyLeadsPageSizeForRole,
+  myLeadsPageSizeOptionsForRole,
+  myLeadsPageSizeSelectOptionsForRole,
+  parseLeadPageSize,
+  snapLeadPageSize,
+} from "@/lib/leadPageSize";
 import { humanizeDashboardFetchError } from "@/lib/mongoConnectionError";
 
 function parseAgentSortFromUrl(searchParams: URLSearchParams): {
@@ -56,6 +63,17 @@ export default function UserLeadsContent() {
   const pathname = usePathname() || "";
   const { searchQuery } = useSearchContext();
   const toggleContext = useToggleContext();
+  const { data: session } = useSession();
+  const staffRole = session?.user?.role;
+  const myLeadsPageMax = maxMyLeadsPageSizeForRole(staffRole);
+  const myLeadsPageOptions = useMemo(
+    () => myLeadsPageSizeOptionsForRole(staffRole),
+    [staffRole],
+  );
+  const myLeadsPageSelectOptions = useMemo(
+    () => myLeadsPageSizeSelectOptionsForRole(staffRole),
+    [staffRole],
+  );
 
   // Use toggle context if available, otherwise default values
   const showHeader = toggleContext?.showHeader ?? true;
@@ -65,7 +83,7 @@ export default function UserLeadsContent() {
     Math.max(0, parseInt(searchParams.get("page") || "1", 10) - 1),
   );
   const [pageSize, setPageSize] = useState(() =>
-    parseLeadPageSize(searchParams.get("pageSize")),
+    parseLeadPageSize(searchParams.get("pageSize"), myLeadsPageMax),
   );
 
   const {
@@ -190,8 +208,10 @@ export default function UserLeadsContent() {
     setSortOrder(nextSort.sortOrder);
     const nextPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     setPageIndex(nextPage - 1);
-    setPageSize(parseLeadPageSize(searchParams.get("pageSize")));
-  }, [searchParams]);
+    setPageSize(
+      parseLeadPageSize(searchParams.get("pageSize"), myLeadsPageMax),
+    );
+  }, [searchParams, myLeadsPageMax]);
 
   // Custom hooks - called at component level (only for sort + filters on this page)
   const {
@@ -218,7 +238,7 @@ export default function UserLeadsContent() {
     (value: string) => {
       const newSize = parseInt(value, 10);
       if (Number.isNaN(newSize) || newSize <= 0) return;
-      const size = snapLeadPageSize(newSize);
+      const size = snapLeadPageSize(newSize, myLeadsPageOptions);
       if (size === pageSize && pageIndex === 0) {
         return;
       }
@@ -231,7 +251,7 @@ export default function UserLeadsContent() {
       const url = query ? `${pathname}?${query}` : pathname;
       window.history.replaceState(null, "", url);
     },
-    [createParams, pageIndex, pageSize, pathname],
+    [createParams, myLeadsPageOptions, pageIndex, pageSize, pathname],
   );
 
   const handlePageChange = useCallback(
@@ -560,6 +580,7 @@ export default function UserLeadsContent() {
                   handleNavigation={handlePanelNavigationLocal}
                   pageSize={pageSize}
                   pageIndex={pageIndex}
+                  pageSizeOptions={myLeadsPageSelectOptions}
                   onPageSizeChange={handlePageSizeChange}
                   onPageChange={handlePageChange}
                   isRefetching={isRefetching && isDataReady}

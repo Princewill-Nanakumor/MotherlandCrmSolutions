@@ -166,10 +166,9 @@ export async function POST(request: Request) {
       );
       try {
         assertAssignmentCapacity(
-          assignedToUser.firstName,
-          assignedToUser.lastName,
           currentCount,
           netNewAssignments,
+          assignedToUser.role,
         );
       } catch (capacityError) {
         return NextResponse.json(

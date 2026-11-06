@@ -87,7 +87,9 @@ export async function POST(request: Request) {
       userQuery.adminId = adminScope;
 
       const [assignedToUser, assignedByUser] = await Promise.all([
-        User.findOne(userQuery).select("firstName lastName").session(dbSession),
+        User.findOne(userQuery)
+          .select("firstName lastName role")
+          .session(dbSession),
         User.findById(session.user.id)
           .select("firstName lastName")
           .session(dbSession),
@@ -108,12 +110,7 @@ export async function POST(request: Request) {
           new mongoose.Types.ObjectId(adminScope),
           userId,
         );
-        assertAssignmentCapacity(
-          assignedToUser.firstName,
-          assignedToUser.lastName,
-          currentCount,
-          1,
-        );
+        assertAssignmentCapacity(currentCount, 1, assignedToUser.role);
       }
 
       // Update the lead

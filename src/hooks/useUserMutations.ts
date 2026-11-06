@@ -23,10 +23,15 @@ export type UserUpdateBody = UserFormEditData & {
 
 export type UpdateUserVariables = { userId: string; body: UserUpdateBody };
 
+export type UpdateUserResult = {
+  user: User;
+  message: string;
+};
+
 export async function updateUserRequest(
   userId: string,
   body: UserUpdateBody,
-): Promise<User> {
+): Promise<UpdateUserResult> {
   const response = await apiCallWithSessionRefresh(`/api/users`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -46,7 +51,13 @@ export async function updateUserRequest(
 
   const updated = data.data || data.user;
   if (!updated) throw { message: "No user data returned from server." };
-  return updated as User;
+  return {
+    user: updated as User,
+    message:
+      typeof data.message === "string"
+        ? data.message
+        : "User updated successfully",
+  };
 }
 
 export async function invalidateUserCachesAfterWrite(
@@ -173,23 +184,23 @@ export function useUserMutations({
     ...updateUserMutation,
     mutateAsync: async (variables: UpdateUserVariables) => {
       try {
-        const updated = await updateUserMutation.mutateAsync(variables);
+        const result = await updateUserMutation.mutateAsync(variables);
         upsertUserInUsersCache(queryClient, {
-          ...updated,
-          id: String(updated.id),
+          ...result.user,
+          id: String(result.user.id),
         });
-        onUserUpdated?.(updated);
+        onUserUpdated?.(result.user);
         scheduleUsersCacheReconcile(queryClient, {
           includeCurrentUserPermission: true,
           onRefreshUsers,
         });
-        return updated;
+        return result;
       } catch (error: unknown) {
         console.error("Update user error details:", error);
         throw error;
       }
     },
-  } satisfies UseMutationResult<User, unknown, UpdateUserVariables>;
+  } satisfies UseMutationResult<UpdateUserResult, unknown, UpdateUserVariables>;
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {

@@ -16,6 +16,7 @@ interface UserLeadTableControlsProps {
   onPageSizeChange: (value: string) => void;
   table: Table<Lead>;
   isRefetching?: boolean;
+  pageSizeOptions?: { value: string; label: string }[];
 }
 
 export default function UserLeadTableControls({
@@ -25,6 +26,7 @@ export default function UserLeadTableControls({
   onPageSizeChange,
   table,
   isRefetching = false,
+  pageSizeOptions = LEAD_PAGE_SIZE_SELECT_OPTIONS,
 }: UserLeadTableControlsProps) {
   const { start, end } = leadEntriesRange(pageIndex, pageSize, totalEntries);
   const totalLabel = totalEntries.toLocaleString();
@@ -38,7 +40,7 @@ export default function UserLeadTableControls({
         <FilterSelect
           value={pageSize.toString()}
           onChange={onPageSizeChange}
-          options={LEAD_PAGE_SIZE_SELECT_OPTIONS}
+          options={pageSizeOptions}
           placeholder={pageSize.toString()}
           className="w-20 sm:w-25"
           showActiveHighlight={false}

@@ -86,7 +86,7 @@ describe("parseLeadListPagination", () => {
         new URLSearchParams("page=1&pageSize=9999"),
         ALL_LEADS_MAX_PAGE_SIZE,
       ),
-    ).toEqual({ page: 1, pageSize: 1000, skip: 0 });
+    ).toEqual({ page: 1, pageSize: ALL_LEADS_MAX_PAGE_SIZE, skip: 0 });
   });
 });
 

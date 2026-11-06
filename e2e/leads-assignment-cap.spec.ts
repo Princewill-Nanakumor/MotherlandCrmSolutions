@@ -1,9 +1,10 @@
 /**
- * Proves the 500-leads-per-agent assignment cap is enforced end-to-end.
+ * Proves the per-agent assignment cap is enforced end-to-end.
  *
  *   npm run test:leads-assignment-cap
  */
 import { expect, test } from "@playwright/test";
+import { MAX_ASSIGNED_LEADS_PER_AGENT } from "../src/lib/leadAssignmentQuery";
 import {
   E2E_ADMIN_EMAIL,
   E2E_AGENT_EMAIL,
@@ -13,12 +14,10 @@ import {
 } from "./helpers/auth";
 import { importLeadsWithRetry } from "./helpers/assignmentUi";
 
-const MAX_ASSIGNED_LEADS_PER_AGENT = 500;
-
 const enabled = process.env.LEADS_ASSIGNMENT_CAP === "1";
 const extra = Number(process.env.LEADS_ASSIGNMENT_CAP_EXTRA || 10);
 
-test.describe("agent assignment cap (500)", () => {
+test.describe(`agent assignment cap (${MAX_ASSIGNED_LEADS_PER_AGENT})`, () => {
   test.skip(!enabled, "Set LEADS_ASSIGNMENT_CAP=1 to run");
 
   test(`assign ${MAX_ASSIGNED_LEADS_PER_AGENT} ok, ${MAX_ASSIGNED_LEADS_PER_AGENT + 1} rejected`, async ({
@@ -82,7 +81,12 @@ test.describe("agent assignment cap (500)", () => {
     });
     expect(assignOneMore.status).toBe(400);
     const capBody = assignOneMore.body as { message?: string };
-    expect(capBody.message || "").toMatch(/maximum 500|at most 0 more/i);
+    expect(capBody.message || "").toMatch(
+      new RegExp(
+        `already has ${MAX_ASSIGNED_LEADS_PER_AGENT} assigned leads \\(maximum ${MAX_ASSIGNED_LEADS_PER_AGENT}\\)`,
+        "i",
+      ),
+    );
 
     const agentPage = await browser.newPage();
     await loginAs(agentPage, E2E_AGENT_EMAIL, E2E_PASSWORD);

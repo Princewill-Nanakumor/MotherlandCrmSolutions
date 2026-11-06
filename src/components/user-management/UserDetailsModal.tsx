@@ -20,6 +20,7 @@ import { UserFormEditSchema, UserFormEditData } from "@/schemas/UserFormSchema";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { useSession } from "next-auth/react";
 import type { User } from "./UserTableColumns";
+import type { UpdateUserResult } from "@/hooks/useUserMutations";
 import { useToast } from "@/components/ui/use-toast";
 
 interface UserDetailsModalProps {
@@ -32,7 +33,7 @@ interface UserDetailsModalProps {
       canViewEmails?: boolean;
     },
     userId: string,
-  ) => Promise<void>;
+  ) => Promise<UpdateUserResult | void>;
   /** Called after visibility toggles persist so parent can sync selection and usage. */
   onUserPersisted?: (user: User) => void;
   /** True while the shared CRUD update mutation (form save) is in flight. */
@@ -174,7 +175,7 @@ export function UserDetailsModal({
     clearErrors();
 
     try {
-      await onUpdate(
+      const result = await onUpdate(
         {
           ...formData,
           canViewEmails: formData.canViewEmails === true,
@@ -182,13 +183,17 @@ export function UserDetailsModal({
         },
         displayUser.id,
       );
+      const updatedUser = result?.user;
       setLocalUser((prev) =>
         prev
           ? {
               ...prev,
-              ...formData,
-              canViewEmails: formData.canViewEmails === true,
-              canViewPhoneNumbers: formData.canViewPhoneNumbers === true,
+              ...(updatedUser ?? formData),
+              canViewEmails:
+                updatedUser?.canViewEmails ?? formData.canViewEmails === true,
+              canViewPhoneNumbers:
+                updatedUser?.canViewPhoneNumbers ??
+                formData.canViewPhoneNumbers === true,
             }
           : prev,
       );
@@ -197,7 +202,7 @@ export function UserDetailsModal({
       setIsLoading(false);
       toast({
         title: "Success",
-        description: "User updated successfully",
+        description: result?.message || "User updated successfully",
         variant: "success",
       });
     } catch (error: unknown) {

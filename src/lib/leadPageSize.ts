@@ -1,8 +1,16 @@
+import {
+  MAX_ASSIGNED_LEADS_PER_AGENT,
+  MAX_ASSIGNED_LEADS_PER_SUBADMIN,
+} from "@/lib/leadAssignmentQuery";
+
 /** Default Show-entries size (first even option). */
 export const DEFAULT_LEAD_PAGE_SIZE = 20;
-export const MAX_LEAD_PAGE_SIZE = 500;
-/** All-leads Show list continues past 500 through 1000. */
-export const ALL_LEADS_MAX_PAGE_SIZE = 1000;
+/** My Leads Show max for AGENT (matches assignment cap). */
+export const MAX_LEAD_PAGE_SIZE = MAX_ASSIGNED_LEADS_PER_AGENT;
+/** All Leads Show list — high enough for bulk assign of 1000+ in one page. */
+export const ALL_LEADS_MAX_PAGE_SIZE = 2000;
+/** My Leads Show max for SUBADMIN (matches assignment cap). */
+export const SUBADMIN_MAX_LEAD_PAGE_SIZE = MAX_ASSIGNED_LEADS_PER_SUBADMIN;
 const LEAD_PAGE_SIZE_STEP = 20;
 
 function evenPageSizeOptions(max: number): number[] {
@@ -19,14 +27,23 @@ function toSelectOptions(sizes: number[]) {
   }));
 }
 
-/** Even page sizes from 20 to 500 (My Leads, users). */
+export function maxMyLeadsPageSizeForRole(role?: string | null): number {
+  return role === "SUBADMIN"
+    ? SUBADMIN_MAX_LEAD_PAGE_SIZE
+    : MAX_LEAD_PAGE_SIZE;
+}
+
+/** Even page sizes from 20 to agent My Leads max. */
 export const LEAD_PAGE_SIZE_OPTIONS: number[] =
   evenPageSizeOptions(MAX_LEAD_PAGE_SIZE);
 
-/** Even page sizes from 20 to 1000 (All Leads only). */
+/** Even page sizes from 20 to All Leads max. */
 export const ALL_LEADS_PAGE_SIZE_OPTIONS: number[] = evenPageSizeOptions(
   ALL_LEADS_MAX_PAGE_SIZE,
 );
+
+/** Sub-admin My Leads Show uses the same ladder as All Leads (both max 2000). */
+export const SUBADMIN_LEAD_PAGE_SIZE_OPTIONS = ALL_LEADS_PAGE_SIZE_OPTIONS;
 
 export const LEAD_PAGE_SIZE_SELECT_OPTIONS = toSelectOptions(
   LEAD_PAGE_SIZE_OPTIONS,
@@ -35,6 +52,25 @@ export const LEAD_PAGE_SIZE_SELECT_OPTIONS = toSelectOptions(
 export const ALL_LEADS_PAGE_SIZE_SELECT_OPTIONS = toSelectOptions(
   ALL_LEADS_PAGE_SIZE_OPTIONS,
 );
+
+export const SUBADMIN_LEAD_PAGE_SIZE_SELECT_OPTIONS =
+  ALL_LEADS_PAGE_SIZE_SELECT_OPTIONS;
+
+export function myLeadsPageSizeOptionsForRole(
+  role?: string | null,
+): number[] {
+  return role === "SUBADMIN"
+    ? SUBADMIN_LEAD_PAGE_SIZE_OPTIONS
+    : LEAD_PAGE_SIZE_OPTIONS;
+}
+
+export function myLeadsPageSizeSelectOptionsForRole(
+  role?: string | null,
+): { value: string; label: string }[] {
+  return role === "SUBADMIN"
+    ? SUBADMIN_LEAD_PAGE_SIZE_SELECT_OPTIONS
+    : LEAD_PAGE_SIZE_SELECT_OPTIONS;
+}
 
 export function clampLeadPageSize(
   size: number,

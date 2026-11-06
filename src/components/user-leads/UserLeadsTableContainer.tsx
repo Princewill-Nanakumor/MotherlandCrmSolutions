@@ -23,6 +23,7 @@ interface UserLeadsTableContainerProps {
   leads: Lead[];
   pageSize: number;
   pageIndex: number;
+  pageSizeOptions?: { value: string; label: string }[];
   totalEntries: number;
   totalPages: number;
   sortField: SortField;
@@ -41,6 +42,7 @@ export const UserLeadsTableContainer: React.FC<
   leads,
   pageSize,
   pageIndex,
+  pageSizeOptions,
   totalEntries,
   totalPages,
   sortField,
@@ -131,6 +133,7 @@ export const UserLeadsTableContainer: React.FC<
           onPageSizeChange={onPageSizeChange}
           table={table}
           isRefetching={isRefetching}
+          pageSizeOptions={pageSizeOptions}
         />
       </div>
 

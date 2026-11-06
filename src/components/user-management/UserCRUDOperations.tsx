@@ -4,7 +4,10 @@
 import { useCallback } from "react";
 import type { User } from "@/components/user-management/UserTableColumns";
 import type { UserFormCreateData, UserFormEditData } from "@/schemas/UserFormSchema";
-import { useUserMutations } from "@/hooks/useUserMutations";
+import {
+  useUserMutations,
+  type UpdateUserResult,
+} from "@/hooks/useUserMutations";
 
 interface UserCRUDOperationsProps {
   onUserCreated?: (user: User) => void;
@@ -16,7 +19,7 @@ interface UserCRUDOperationsProps {
     handleUpdateUser: (
       userData: UserFormEditData,
       userId: string,
-    ) => Promise<User>;
+    ) => Promise<UpdateUserResult>;
     handleDeleteUser: (userId: string) => Promise<void>;
     handleResetPassword: (userId: string, password: string) => Promise<void>;
     isCreating: boolean;

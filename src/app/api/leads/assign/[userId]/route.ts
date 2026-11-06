@@ -162,7 +162,7 @@ export async function POST(request: Request) {
 
     const targetUser = await db.collection("users").findOne(
       { _id: new mongoose.Types.ObjectId(userId) },
-      { projection: { firstName: 1, lastName: 1 } },
+      { projection: { role: 1 } },
     );
 
     if (!targetUser) {
@@ -194,10 +194,9 @@ export async function POST(request: Request) {
       );
       try {
         assertAssignmentCapacity(
-          String(targetUser.firstName ?? "Agent"),
-          String(targetUser.lastName ?? ""),
           currentCount,
           netNewAssignments,
+          typeof targetUser.role === "string" ? targetUser.role : null,
         );
       } catch (capacityError) {
         return NextResponse.json(

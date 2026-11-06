@@ -82,10 +82,9 @@ export async function POST(request: Request) {
       );
       try {
         assertAssignmentCapacity(
-          String(user.firstName ?? "Agent"),
-          String(user.lastName ?? ""),
           currentCount,
           netNewAssignments,
+          typeof user.role === "string" ? user.role : null,
         );
       } catch (capacityError) {
         return NextResponse.json(

@@ -14,6 +14,7 @@ import {
   sanitizeSubAdminPermissions,
   sanitizeTeamRole,
 } from "@/lib/roles";
+import { agentLeadsInTenantFilter } from "@/lib/leadAssignmentQuery";
 import { invalidateSessionRbacCache } from "@/lib/sessionRbac";
 import { probeMongoQuery } from "@/lib/mongoPerfProbe";
 import type { ApiRoutePerf } from "@/lib/apiRoutePerf";
@@ -75,6 +76,85 @@ interface UserQuery {
 const TRIAL_LIMITS = {
   maxUsers: SUBSCRIPTION_TRIAL_DEFAULT_MAX_USERS,
 };
+
+/**
+ * Clears assignment only — lead status is unchanged (same as /api/leads/unassign).
+ * Used when deleting a team user.
+ */
+async function unassignAllLeadsFromTeamUser(options: {
+  db: NonNullable<typeof mongoose.connection.db>;
+  tenantAdminId: mongoose.Types.ObjectId;
+  teamUser: {
+    _id: mongoose.Types.ObjectId;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  sessionUser: SessionUser;
+  dbSession?: mongoose.ClientSession;
+}): Promise<{ unassignedLeadsCount: number }> {
+  const { db, tenantAdminId, teamUser, sessionUser, dbSession } = options;
+  const assignedFilter = agentLeadsInTenantFilter(
+    tenantAdminId,
+    teamUser._id.toString(),
+  );
+  const sessionOpts = dbSession ? { session: dbSession } : {};
+  const assignedLeads = (await db
+    .collection("leads")
+    .find(assignedFilter, sessionOpts)
+    .toArray()) as LeadDocument[];
+
+  if (assignedLeads.length === 0) {
+    return { unassignedLeadsCount: 0 };
+  }
+
+  const now = new Date();
+  await db.collection("leads").updateMany(
+    assignedFilter,
+    {
+      $set: {
+        assignedTo: null,
+        updatedAt: now,
+        lastActivityAt: now,
+      },
+      $unset: { assignedAt: "", assignedBy: "" },
+    },
+    sessionOpts,
+  );
+
+  const actorId = new mongoose.Types.ObjectId(sessionUser.id);
+  const assignedFrom = {
+    id: teamUser._id.toString(),
+    firstName: teamUser.firstName,
+    lastName: teamUser.lastName,
+    email: teamUser.email,
+  };
+  const assignedBy = {
+    id: sessionUser.id,
+    firstName: sessionUser.firstName || "Admin",
+    lastName: sessionUser.lastName || "User",
+  };
+
+  await db.collection("activities").insertMany(
+    assignedLeads.map((lead) => ({
+      type: "ASSIGNMENT",
+      userId: actorId,
+      details: `Lead unassigned due to user deletion: ${teamUser.firstName} ${teamUser.lastName}`,
+      leadId: lead._id,
+      adminId: tenantAdminId,
+      timestamp: now,
+      metadata: {
+        assignedTo: null,
+        assignedFrom,
+        assignedBy,
+        reason: "user_deletion",
+      },
+    })),
+    sessionOpts,
+  );
+
+  return { unassignedLeadsCount: assignedLeads.length };
+}
 
 /** -1 in `maxUsers`/`maxLeads` means unlimited. */
 function isUnlimited(n: number | undefined): boolean {
@@ -593,62 +673,27 @@ export async function deleteUserForAdmin(
     const tenantObjectId = new mongoose.Types.ObjectId(tenantId);
     try {
       await dbSession.withTransaction(async () => {
-        const assignedFilter = {
-          adminId: tenantObjectId,
-          $or: [
-            { assignedTo: new mongoose.Types.ObjectId(userId) },
-            { "assignedTo._id": new mongoose.Types.ObjectId(userId) },
-          ],
-        };
-        const assignedLeads = (await db
-          .collection("leads")
-          .find(assignedFilter)
-          .toArray()) as LeadDocument[];
-
-        assignedLeadsCount = assignedLeads.length;
-        const now = new Date();
-        // Keep lead status — same as /api/leads/unassign. Only clear assignment.
-        await db.collection("leads").updateMany(assignedFilter, {
-          $set: {
-            assignedTo: null,
-            updatedAt: now,
-            lastActivityAt: now,
+        const unassignResult = await unassignAllLeadsFromTeamUser({
+          db,
+          tenantAdminId: tenantObjectId,
+          teamUser: {
+            _id: userToDelete._id,
+            firstName: userToDelete.firstName,
+            lastName: userToDelete.lastName,
+            email: userToDelete.email,
           },
-          $unset: { assignedAt: "", assignedBy: "" },
+          sessionUser,
+          dbSession,
         });
+        assignedLeadsCount = unassignResult.unassignedLeadsCount;
 
-        await Promise.all(
-          assignedLeads.map(async (lead) => {
-            await db.collection("activities").insertOne({
-              type: "ASSIGNMENT",
-              userId: new mongoose.Types.ObjectId(sessionUser.id),
-              details: `Lead unassigned due to user deletion: ${userToDelete.firstName} ${userToDelete.lastName}`,
-              leadId: lead._id,
-              adminId: tenantObjectId,
-              timestamp: now,
-              metadata: {
-                assignedTo: null,
-                assignedFrom: {
-                  id: userToDelete._id.toString(),
-                  firstName: userToDelete.firstName,
-                  lastName: userToDelete.lastName,
-                  email: userToDelete.email,
-                },
-                assignedBy: {
-                  id: sessionUser.id,
-                  firstName: sessionUser.firstName || "Admin",
-                  lastName: sessionUser.lastName || "User",
-                },
-                reason: "user_deletion",
-              },
-            });
-          }),
+        const deleteUserResult = await db.collection("users").deleteOne(
+          {
+            _id: new mongoose.Types.ObjectId(userId),
+            adminId: tenantObjectId,
+          },
+          { session: dbSession },
         );
-
-        const deleteUserResult = await db.collection("users").deleteOne({
-          _id: new mongoose.Types.ObjectId(userId),
-          adminId: tenantObjectId,
-        });
         if (deleteUserResult.deletedCount === 0) {
           throw new Error("Failed to delete user");
         }

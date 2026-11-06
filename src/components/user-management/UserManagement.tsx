@@ -275,10 +275,11 @@ export default function UsersManagement({
               }}
               onUpdate={async (userData, userId) => {
                 try {
-                  const updatedUser = await handleUpdateUser(userData, userId);
-                  if (updatedUser) {
-                    setSelectedUserForDetails(updatedUser as User);
+                  const result = await handleUpdateUser(userData, userId);
+                  if (result?.user) {
+                    setSelectedUserForDetails(result.user);
                   }
+                  return result;
                 } catch (error) {
                   console.error("Error updating user:", error);
                   throw error;
